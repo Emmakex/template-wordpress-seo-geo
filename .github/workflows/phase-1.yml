@@ -1,0 +1,43 @@
+name: Phase 1 Package CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'scripts/ci/validate-phase1.sh'
+      - '.github/workflows/phase-1.yml'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
+      - 'scripts/ci/validate-phase1.sh'
+      - '.github/workflows/phase-1.yml'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase-1-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-contract:
+    name: Package contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Runtime versions
+        run: php -v
+
+      - name: Validate shell syntax
+        run: bash -n scripts/ci/validate-phase1.sh
+
+      - name: Validate Phase 1 package contract
+        run: bash scripts/ci/validate-phase1.sh

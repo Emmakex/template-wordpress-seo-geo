@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.wp.org/wp/7.1/theme.json",
+  "version": 3,
+  "settings": {
+    "appearanceTools": true,
+    "layout": {
+      "contentSize": "720px",
+      "wideSize": "1200px"
+    },
+    "spacing": {
+      "units": ["px", "rem", "em", "%", "vw", "vh"]
+    },
+    "typography": {
+      "fluid": true
+    }
+  },
+  "styles": {
+    "spacing": {
+      "blockGap": "1.5rem"
+    },
+    "typography": {
+      "lineHeight": "1.6"
+    },
+    "elements": {
+      "button": {
+        "typography": {
+          "fontWeight": "600"
+        }
+      }
+    }
+  }
+}

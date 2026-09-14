@@ -4,9 +4,9 @@ The roadmap follows the project rule **finish before advancing**. A phase closes
 
 ## Phase 0 — Foundation and contracts
 
-Status: **in progress**
+Status: **complete**
 
-Deliverables:
+Completed:
 
 - repository bootstrap;
 - product vision;
@@ -19,42 +19,62 @@ Deliverables:
 - engineering rules;
 - CI/diagnostic contract;
 - initial repository skeleton;
-- minimal CI validating the foundation structure.
-
-Exit criteria:
-
-- docs are committed on feature branch;
-- CI runs and produces structured diagnostics on failure;
-- PR reviewed/merged;
-- main branch verification complete.
+- Foundation CI validating the documented contract;
+- PR #1 merged after CI success;
+- post-merge `main` verification passed.
 
 ## Phase 1 — Minimal installable packages
 
+Status: **in progress**
+
+### Microphase 1A — package skeleton and static contract
+
 Deliverables:
 
-### Theme
+#### Theme
 - valid `style.css` metadata;
 - `theme.json` v3;
 - required `templates/index.html`;
 - header/footer parts;
 - basic page/single/archive/404 templates;
-- skip link and accessible landmarks;
-- ES/EN-ready project strings where PHP strings exist.
+- semantic `<main>` landmarks so WordPress core can provide its block-template skip link;
+- no unnecessary project-owned frontend strings in static templates.
 
-### Core plugin
+#### Core plugin
 - valid plugin bootstrap;
-- PSR-4-ish/internal autoload strategy documented;
-- service container/registry kept intentionally small;
-- activation/deactivation safety;
-- language service interface;
-- compatibility detector interface;
-- no SEO output yet beyond safe scaffolding.
+- minimal namespace autoloader;
+- safe activation/deactivation behavior;
+- language provider interface + native adapter;
+- normalized LanguageManager facade;
+- runtime integration detector interface/implementation;
+- no SEO/Schema output yet.
 
-Exit criteria:
+#### Validation
+- required package files;
+- PHP syntax;
+- `theme.json` v3 parse/contract;
+- theme/plugin headers and text domains;
+- semantic main landmark on every shipped template;
+- structured diagnostic on contract failure.
+
+### Microphase 1B — real WordPress activation smoke
+
+Pending after 1A is green:
+
+- install theme/plugin in a clean WordPress fixture;
+- activate plugin;
+- activate theme;
+- request representative frontend/admin paths;
+- assert no PHP fatal/warning introduced by project code;
+- record exact supported WordPress/PHP test matrix.
+
+### Phase 1 exit criteria
+
 - theme installs/activates;
 - plugin installs/activates;
-- no PHP warnings/notices in supported environment;
-- coding/static checks pass.
+- no project PHP warnings/notices in supported fixture;
+- coding/static checks required by the supported matrix pass;
+- documentation matches the tested compatibility matrix.
 
 ## Phase 2 — Design system + performance baseline
 
