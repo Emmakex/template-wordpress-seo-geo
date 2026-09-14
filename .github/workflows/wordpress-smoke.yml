@@ -1,0 +1,45 @@
+name: WordPress Smoke CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'scripts/ci/wordpress-smoke.sh'
+      - '.github/workflows/wordpress-smoke.yml'
+      - 'docs/COMPATIBILITY.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
+      - 'scripts/ci/wordpress-smoke.sh'
+      - '.github/workflows/wordpress-smoke.yml'
+      - 'docs/COMPATIBILITY.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wordpress-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wordpress-smoke:
+    name: WordPress activation smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker runtime
+        run: docker version
+
+      - name: Validate smoke script syntax
+        run: bash -n scripts/ci/wordpress-smoke.sh
+
+      - name: WordPress 7.1 / PHP 8.2 activation smoke
+        run: bash scripts/ci/wordpress-smoke.sh
