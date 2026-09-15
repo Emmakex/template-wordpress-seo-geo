@@ -29,7 +29,9 @@ Status: **in progress**
 
 ### Microphase 1A — package skeleton and static contract
 
-Deliverables:
+Status: **complete**
+
+Completed:
 
 #### Theme
 - valid `style.css` metadata;
@@ -55,18 +57,30 @@ Deliverables:
 - `theme.json` v3 parse/contract;
 - theme/plugin headers and text domains;
 - semantic main landmark on every shipped template;
-- structured diagnostic on contract failure.
+- structured diagnostic on contract failure;
+- PR #2 and post-merge `main` Foundation/Package CI passed.
 
 ### Microphase 1B — real WordPress activation smoke
 
-Pending after 1A is green:
+Status: **in progress**
+
+Target tested baseline:
+
+- WordPress 7.1.x;
+- PHP 8.2+;
+- WP-CLI 2.12.x for CI installation/activation;
+- MariaDB 11.8.x for the disposable CI fixture.
+
+Required validation:
 
 - install theme/plugin in a clean WordPress fixture;
 - activate plugin;
 - activate theme;
+- verify Core language/integration services initialize;
 - request representative frontend/admin paths;
-- assert no PHP fatal/warning introduced by project code;
-- record exact supported WordPress/PHP test matrix.
+- assert no PHP fatal/warning/notice or uncaught runtime error;
+- record exact supported WordPress/PHP/database test matrix;
+- emit structured diagnostics on any failed sub-contract.
 
 ### Phase 1 exit criteria
 
