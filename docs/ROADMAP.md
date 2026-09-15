@@ -144,9 +144,9 @@ PR #5 was merged. Post-merge `main` SHA `01928349f8e1ffd19f22d8f098a22c400b3bc2f
 
 ### Microphase 2B — reusable core patterns
 
-Status: **in progress on `feature/phase-2b-core-patterns`**
+Status: **complete**
 
-Implemented scope:
+Delivered:
 
 - native theme `/patterns` registration model;
 - hero pattern;
@@ -161,29 +161,50 @@ Implemented scope:
 - semantic design-token consumption;
 - no embedded scripts/styles, remote dependencies or third-party blocks;
 - `docs/PATTERNS.md`;
-- dedicated structured `Pattern Contract CI`.
+- dedicated structured `Pattern Contract CI`;
+- real WordPress registry acceptance for all seven patterns.
 
-Required closure:
-
-- all seven pattern PHP files pass syntax/WPCS/PHPStan as applicable;
-- Pattern Contract CI proves headers, slugs, i18n, native blocks, token use, H1/Schema ownership and dependency rules;
-- real WordPress 7.1 smoke proves all expected theme pattern slugs are registered after activation;
-- Foundation/Package/Design System/PHP Quality gates affected by the change remain green;
-- PR merge + post-merge `main` verification.
+PR #6 was merged as `80d5f316daf642b754fa9385d161c7bd571ce73d`. Post-merge `main` passed Foundation, Package, Design System, PHP Quality, Pattern Contract and WordPress Smoke; the runtime smoke confirmed **7/7 theme patterns registered**.
 
 ### Microphase 2C — responsive + accessibility acceptance
 
-Pending after 2B closes.
+Status: **implementation and PR validation complete; merge/post-merge verification pending**
 
-Scope:
+Delivered on PR #7:
 
-- representative ES/EN fixture pages;
-- keyboard interaction;
-- visible focus;
-- reduced-motion contract;
-- heading/landmark checks;
-- responsive overflow/reflow;
-- automated accessibility scan plus manual-contract assertions where automation is insufficient.
+- representative EN and ES WordPress fixture pages composed from registered theme patterns;
+- locked Node 24 browser-test toolchain with Playwright 1.63.0 and axe 4.13.0 integration;
+- Chromium acceptance at 320 × 800, 768 × 1024 and 1440 × 900;
+- WCAG A/AA automated axe scan without baseline rule suppressions;
+- one-banner/one-main/one-contentinfo and single-H1 assertions;
+- heading hierarchy assertions;
+- horizontal overflow/reflow assertions;
+- keyboard reachability and visible `:focus-visible` assertions;
+- skip-link activation with required main-target focus;
+- reduced-motion assertion;
+- WordPress runtime diagnostics;
+- semantic native primary navigation instead of the invalid empty Navigation fallback observed in the fixture;
+- server-side focusability for the main skip-link target without frontend JavaScript;
+- `docs/ACCESSIBILITY_ACCEPTANCE.md`;
+- dedicated `Accessibility & Responsive CI`.
+
+Implementation candidate `97a8be8bf2dc092a3afb144863d6deee40ef6aa8` passed all seven relevant gates:
+
+- Foundation CI `34918471009`;
+- Phase 1 Package CI `34918470910`;
+- Design System CI `34918470964`;
+- PHP Quality CI `34918471012` — WPCS + PHPStan level 6;
+- Pattern Contract CI `34918471015`;
+- WordPress Smoke CI `34918470983`;
+- Accessibility & Responsive CI `34918470902` — **24/24 browser tests passed**.
+
+Adoption findings with reusable lessons are recorded as `ERR-2026-003`, `ERR-2026-004` and `ERR-2026-005`.
+
+Required closure before 2D starts:
+
+- final documentation SHA passes affected gates;
+- PR #7 squash merge;
+- relevant post-merge `main` checks pass.
 
 ### Microphase 2D — performance baseline and budgets
 
