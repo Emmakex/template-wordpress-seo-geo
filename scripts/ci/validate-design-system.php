@@ -64,7 +64,7 @@ function value_at( array $data, array $path ): mixed {
 /**
  * Build a slug => value map from WordPress preset arrays.
  *
- * @param mixed  $presets Raw preset list.
+ * @param mixed  $presets   Raw preset list.
  * @param string $value_key Value field to expose.
  * @return array<string, string>
  */
@@ -133,27 +133,27 @@ try {
 }
 
 $exact_contract = array(
-	'$schema'                               => 'https://schemas.wp.org/wp/7.1/theme.json',
-	'version'                               => 3,
-	'settings.color.custom'                 => false,
-	'settings.color.defaultPalette'         => false,
-	'settings.color.customGradient'         => false,
-	'settings.color.defaultGradients'       => false,
-	'settings.spacing.customSpacingSize'    => false,
-	'settings.spacing.defaultSpacingSizes'  => false,
-	'settings.typography.customFontSize'    => false,
-	'settings.typography.defaultFontSizes'  => false,
-	'settings.typography.dropCap'           => false,
-	'settings.layout.contentSize'           => '720px',
-	'settings.layout.wideSize'              => '1200px',
-	'styles.color.background'               => 'var:preset|color|base',
-	'styles.color.text'                     => 'var:preset|color|contrast',
-	'styles.typography.fontFamily'          => 'var:preset|font-family|system-sans',
-	'styles.typography.fontSize'            => 'var:preset|font-size|md',
-	'styles.elements.link.color.text'       => 'var:preset|color|accent',
-	'styles.elements.link.typography.textDecoration' => 'underline',
-	'styles.elements.button.color.background' => 'var:preset|color|accent',
-	'styles.elements.button.color.text'       => 'var:preset|color|accent-contrast',
+	'$schema'                                         => 'https://schemas.wp.org/wp/7.1/theme.json',
+	'version'                                         => 3,
+	'settings.color.custom'                           => false,
+	'settings.color.defaultPalette'                   => false,
+	'settings.color.customGradient'                   => false,
+	'settings.color.defaultGradients'                 => false,
+	'settings.spacing.customSpacingSize'              => false,
+	'settings.spacing.defaultSpacingSizes'            => false,
+	'settings.typography.customFontSize'              => false,
+	'settings.typography.defaultFontSizes'            => false,
+	'settings.typography.dropCap'                     => false,
+	'settings.layout.contentSize'                     => '720px',
+	'settings.layout.wideSize'                        => '1200px',
+	'styles.color.background'                         => 'var:preset|color|base',
+	'styles.color.text'                               => 'var:preset|color|contrast',
+	'styles.typography.fontFamily'                    => 'var:preset|font-family|system-sans',
+	'styles.typography.fontSize'                      => 'var:preset|font-size|md',
+	'styles.elements.link.color.text'                 => 'var:preset|color|accent',
+	'styles.elements.link.typography.textDecoration'  => 'underline',
+	'styles.elements.button.color.background'         => 'var:preset|color|accent',
+	'styles.elements.button.color.text'               => 'var:preset|color|accent-contrast',
 );
 
 foreach ( $exact_contract as $dot_path => $expected ) {
@@ -230,7 +230,7 @@ $contrast_contracts = array(
 	array( 'accent-contrast', 'accent-strong', 4.5 ),
 );
 
-foreach ( $contrast_contracts as array( $foreground_slug, $background_slug, $minimum ) ) {
+foreach ( $contrast_contracts as list( $foreground_slug, $background_slug, $minimum ) ) {
 	$ratio = contrast_ratio( $colors[ $foreground_slug ], $colors[ $background_slug ] );
 	if ( $ratio + 0.0001 < $minimum ) {
 		fail_contract(
