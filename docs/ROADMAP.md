@@ -62,33 +62,53 @@ Completed:
 
 ### Microphase 1B — real WordPress activation smoke
 
-Status: **in progress**
+Status: **complete on PR; pending post-merge main verification**
 
-Target tested baseline:
+Tested baseline:
 
 - WordPress 7.1.x;
 - PHP 8.2+;
 - WP-CLI 2.12.x for CI installation/activation;
 - MariaDB 11.8.x for the disposable CI fixture.
 
-Required validation:
+Completed validation:
 
-- install theme/plugin in a clean WordPress fixture;
-- activate plugin;
-- activate theme;
-- verify Core language/integration services initialize;
-- request representative frontend/admin paths;
-- assert no PHP fatal/warning/notice or uncaught runtime error;
-- record exact supported WordPress/PHP/database test matrix;
-- emit structured diagnostics on any failed sub-contract.
+- theme/plugin copied into a clean WordPress fixture;
+- WordPress installed through WP-CLI;
+- plugin activated and verified active;
+- theme activated and verified active;
+- Core language service resolved `native`;
+- clean SEO integration detector resolved `native`;
+- frontend request returned rendered HTML;
+- `/wp-admin/` resolved through the expected login flow;
+- runtime/debug logs contained no PHP fatal/warning/notice or uncaught error;
+- exact compatibility matrix documented in `docs/COMPATIBILITY.md`;
+- first CI integration incident captured and resolved as `ERR-2026-001`.
+
+Passing focused validation: WordPress Smoke CI run `34911497605`, job `104199821991`.
+
+### Microphase 1C — WordPress coding standards and static analysis
+
+Status: **pending after 1B post-merge verification**
+
+Required before Phase 1 can close:
+
+- define reproducible PHP dev-tool dependencies;
+- WordPress Coding Standards gate for project PHP;
+- PHP static analysis at a documented initial level;
+- keep tooling scoped to project-owned package PHP;
+- structured diagnostics for lint/static-analysis failures;
+- document justified exclusions/baseline rather than silently suppressing errors.
 
 ### Phase 1 exit criteria
 
 - theme installs/activates;
 - plugin installs/activates;
 - no project PHP warnings/notices in supported fixture;
-- coding/static checks required by the supported matrix pass;
-- documentation matches the tested compatibility matrix.
+- WordPress Coding Standards gate passes;
+- documented PHP static-analysis gate passes;
+- documentation matches the tested compatibility matrix;
+- all Phase 1 PRs pass required CI and post-merge `main` verification.
 
 ## Phase 2 — Design system + performance baseline
 
