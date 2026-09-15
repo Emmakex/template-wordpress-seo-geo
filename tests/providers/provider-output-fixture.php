@@ -13,7 +13,7 @@ if ( ! is_string( $seo_geo_provider_fixture ) || '' === $seo_geo_provider_fixtur
 	return;
 }
 
-$seo_geo_provider_fixture_canonical   = home_url( '/provider-seo-fixture/' );
+$seo_geo_provider_fixture_canonical   = home_url( '/provider-seo-canonical/' );
 $seo_geo_provider_fixture_description = 'SEO GEO provider interoperability description.';
 
 switch ( $seo_geo_provider_fixture ) {
