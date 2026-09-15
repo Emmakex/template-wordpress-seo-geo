@@ -168,7 +168,7 @@ PR #6 was merged as `80d5f316daf642b754fa9385d161c7bd571ce73d`. Post-merge `main
 
 ### Microphase 2C — responsive + accessibility acceptance
 
-Status: **implementation and PR validation complete; merge/post-merge verification pending**
+Status: **complete**
 
 Delivered on PR #7:
 
@@ -188,35 +188,54 @@ Delivered on PR #7:
 - `docs/ACCESSIBILITY_ACCEPTANCE.md`;
 - dedicated `Accessibility & Responsive CI`.
 
-Implementation candidate `97a8be8bf2dc092a3afb144863d6deee40ef6aa8` passed all seven relevant gates:
+PR #7 was squash-merged as `6c64528d58be3192ede8616256cbf43650eb15cb`. Post-merge `main` passed all seven established gates:
 
-- Foundation CI `34918471009`;
-- Phase 1 Package CI `34918470910`;
-- Design System CI `34918470964`;
-- PHP Quality CI `34918471012` — WPCS + PHPStan level 6;
-- Pattern Contract CI `34918471015`;
-- WordPress Smoke CI `34918470983`;
-- Accessibility & Responsive CI `34918470902` — **24/24 browser tests passed**.
+- Foundation CI `34919171184`;
+- Phase 1 Package CI `34919171310`;
+- Design System CI `34919171290`;
+- PHP Quality CI `34919171239`;
+- Pattern Contract CI `34919171215`;
+- WordPress Smoke CI `34919171238`;
+- Accessibility & Responsive CI `34919171224`.
 
-Adoption findings with reusable lessons are recorded as `ERR-2026-003`, `ERR-2026-004` and `ERR-2026-005`.
-
-Required closure before 2D starts:
-
-- final documentation SHA passes affected gates;
-- PR #7 squash merge;
-- relevant post-merge `main` checks pass.
+The browser gate retained **24/24 passing EN/ES acceptance cases**. Adoption findings with reusable lessons are recorded as `ERR-2026-003`, `ERR-2026-004` and `ERR-2026-005`.
 
 ### Microphase 2D — performance baseline and budgets
 
-Pending after 2C closes.
+Status: **in progress on PR #8 (`feature/phase-2d-performance-baseline`)**
 
-Scope:
+Implemented:
 
-- Lighthouse representative fixtures;
-- CSS/JS/HTML size measurements;
-- no unnecessary third-party requests;
-- lock initial numeric performance budgets from real fixture evidence;
-- regression gate for future phases.
+- dedicated `Performance Baseline CI`;
+- Lighthouse 13.4.1 against disposable WordPress 7.1 / PHP 8.2 fixtures;
+- three samples per language with median aggregation;
+- representative EN/ES pages reused from the proven Phase 2C content fixture;
+- performance score, FCP/LCP/CLS/TBT/Speed Index measurement;
+- HTML/CSS/JS/image/total transfer measurement;
+- request, third-party-request, project-JS and DOM-size measurement;
+- raw Lighthouse JSON retained as workflow evidence;
+- structured failure diagnostics;
+- authoritative machine-readable budgets in `tests/performance/budgets.json`;
+- measured baseline and rationale in `docs/PERFORMANCE_BASELINE.md`.
+
+Reference observation run `34925805108` measured:
+
+- Lighthouse performance: 100 EN / 100 ES;
+- LCP median: 653.46 ms EN / 664.39 ms ES;
+- CLS: 0 / 0;
+- TBT: 0 ms / 0 ms;
+- total transfer: 20,063 B / 20,274 B;
+- requests: 5 / 5;
+- third-party requests: 0 / 0;
+- project-owned frontend JS: 0 B / 0 B;
+- DOM nodes: 88 / 88.
+
+Budgets are now set to `enforce`. Required closure:
+
+- enforced budgets pass on a fresh PR run;
+- Phase 2D documentation matches the accepted measurement contract;
+- PR #8 squash merge;
+- relevant post-merge `main` checks pass.
 
 ### Phase 2 exit criteria
 
@@ -224,7 +243,8 @@ Scope:
 - responsive/UX acceptance passes in ES+EN;
 - keyboard/focus/reduced-motion checks pass;
 - performance baseline is recorded and guarded;
-- numeric budgets reflect representative pages rather than guessed thresholds.
+- numeric budgets reflect representative pages rather than guessed thresholds;
+- Phase 2D merge and post-merge verification are green.
 
 ## Phase 3 — Native SEO foundation
 
