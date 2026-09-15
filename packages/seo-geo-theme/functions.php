@@ -41,7 +41,7 @@ function seo_geo_theme_focusable_main_landmark( string $block_content, array $bl
 
 	$processor = new WP_HTML_Tag_Processor( $block_content );
 
-	if ( ! $processor->next_tag( 'MAIN' ) ) {
+	if ( ! $processor->next_tag( array( 'tag_name' => 'MAIN' ) ) ) {
 		return $block_content;
 	}
 
