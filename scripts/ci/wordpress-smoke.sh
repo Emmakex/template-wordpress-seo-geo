@@ -191,6 +191,29 @@ SEO_PROVIDER="$(wp_cli eval 'echo \SeoGeo\Core\Plugin::integrations()?->seo_prov
 [[ "$SEO_PROVIDER" == "native" ]] \
   || fail_smoke "integration-service" "SEO integration detector did not resolve the clean fixture as native" "native" "$SEO_PROVIDER" "wp eval SEO provider"
 
+printf '[smoke] Verifying native theme pattern registration.\n'
+PATTERN_STATE="$(wp_cli eval '
+$expected = array(
+    "seo-geo-theme/hero",
+    "seo-geo-theme/cta",
+    "seo-geo-theme/services-features",
+    "seo-geo-theme/trust-proof",
+    "seo-geo-theme/faq",
+    "seo-geo-theme/author-profile",
+    "seo-geo-theme/contact",
+);
+$registry = WP_Block_Patterns_Registry::get_instance();
+$missing = array();
+foreach ( $expected as $slug ) {
+    if ( ! $registry->is_registered( $slug ) ) {
+        $missing[] = $slug;
+    }
+}
+echo empty( $missing ) ? "ok:7" : "missing:" . implode( ",", $missing );
+' 2>/dev/null | tr -d '\r\n')"
+[[ "$PATTERN_STATE" == "ok:7" ]] \
+  || fail_smoke "theme-pattern-registry" "Expected all Phase 2B theme patterns to be registered in WordPress" "ok:7" "$PATTERN_STATE" "wp eval WP_Block_Patterns_Registry"
+
 printf '[smoke] Requesting frontend and admin routes.\n'
 curl -fsS "$BASE_URL/" -o "$HOME_BODY" \
   || fail_smoke "frontend-request" "WordPress frontend request failed" "HTTP 2xx" "curl failure" "curl frontend"
@@ -214,4 +237,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted a fatal, warning, notice or uncaught error" "no PHP runtime diagnostics" "$MATCH" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; plugin and theme active; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$PROVIDER" "$SEO_PROVIDER"
+printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; plugin and theme active; 7/7 theme patterns registered; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$PROVIDER" "$SEO_PROVIDER"
