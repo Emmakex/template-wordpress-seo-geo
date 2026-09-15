@@ -257,23 +257,73 @@ All exit criteria are satisfied:
 
 ## Phase 3 — Native SEO foundation
 
-Deliverables:
+Status: **in progress**
 
-- indexability resolver;
-- canonical resolver;
-- meta description;
-- robots meta;
-- Open Graph baseline;
-- breadcrumb data;
-- single-provider ownership model;
-- Yoast/Rank Math/AIOSEO detection/adapters as scoped;
-- tests for duplicate-output prevention.
+Phase 3 is split so native signal ownership is proven before external SEO-provider interoperability is claimed.
 
-Exit criteria:
+### Microphase 3A — native SEO authority and core signals
 
-- one canonical/robots owner per fixture;
-- no duplicate output with supported SEO integrations;
-- localized canonical behavior tested.
+Status: **complete**
+
+Delivered on PR #10:
+
+- server-authoritative `SeoOutputAuthority` for canonical, meta description and robots;
+- explicit `IndexabilityResolver` with `indexable`, `noindex-follow`, `noindex-nofollow`, `redirect`, `not-found` and `410-gone` states;
+- canonical resolution for native indexable HTML;
+- native meta-description resolution with conservative source rules and a documented product length ceiling;
+- page-level robots policy through WordPress's `wp_robots` filter rather than a second independent robots renderer;
+- removal/replacement of WordPress Core's `rel_canonical` callback only while native Core owns canonical output;
+- clean-runtime ownership fallback to supported external provider detection;
+- real WordPress smoke assertions for exactly one canonical, exactly one expected description and `noindex,follow` search behavior;
+- no frontend JavaScript;
+- public contract in `docs/NATIVE_SEO.md`;
+- Foundation CI now requires the native SEO contract.
+
+PR #10 passed its six required gates and was squash-merged as `405e2bc13ccc33dea6bcef99fe1342faa18b2fcb`. Post-merge `main` passed all six gates triggered by the change:
+
+- Foundation CI `34929248429`;
+- Phase 1 Package CI `34929248493`;
+- PHP Quality CI `34929248627`;
+- WordPress Smoke CI `34929248475`;
+- Accessibility & Responsive CI `34929248621`;
+- Performance Baseline CI `34929248399`.
+
+Adoption findings were fixed in code rather than suppressed:
+
+- WPCS `MetaDescriptionResolver.php:70`, source `Universal.Operators.DisallowShortTernary.Found`, signature `738b94d70c77`;
+- PHPStan `CanonicalResolver.php:44`, identifier `function.alreadyNarrowedType`, signature `50c0653ad762`.
+
+### Microphase 3B — supported SEO-provider interoperability
+
+Status: **pending**
+
+Planned scope:
+
+- verify current supported integration APIs for Yoast SEO, Rank Math and AIOSEO;
+- provider-specific ownership/adapters only where needed;
+- real WordPress fixtures per supported provider;
+- duplicate canonical, robots and meta-description prevention tests;
+- confirm native Core output remains disabled for overlapping signals when a supported provider is authoritative;
+- document supported provider versions/behavior without claiming compatibility beyond tested fixtures.
+
+### Microphase 3C — remaining native discovery metadata
+
+Status: **pending**
+
+Planned scope:
+
+- Open Graph baseline under the same single-owner model;
+- breadcrumb data contract reusable by visible UI and later Schema;
+- provider coexistence acceptance for new overlapping output;
+- no Schema graph ownership yet.
+
+### Phase 3 exit criteria
+
+- one canonical/robots/meta-description owner per fixture;
+- no duplicate overlapping output with supported SEO integrations;
+- Open Graph baseline follows the same authority model;
+- breadcrumb data has one reusable contract;
+- localized canonical behavior is tested before Phase 3 is declared complete.
 
 ## Phase 4 — Multilingual core
 
