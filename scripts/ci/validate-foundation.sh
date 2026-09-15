@@ -45,6 +45,7 @@ required_paths=(
   "docs/PRODUCT_VISION.md"
   "docs/ARCHITECTURE.md"
   "docs/SEO_GEO_SPEC.md"
+  "docs/NATIVE_SEO.md"
   "docs/MULTILINGUAL.md"
   "docs/PERFORMANCE.md"
   "docs/ACCESSIBILITY.md"
