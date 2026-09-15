@@ -256,6 +256,12 @@
         "typography": {
           "fontWeight": "600",
           "lineHeight": "1.2"
+        },
+        ":focus-visible": {
+          "color": {
+            "background": "var:preset|color|accent-strong",
+            "text": "var:preset|color|accent-contrast"
+          }
         }
       },
       "caption": {
@@ -299,6 +305,12 @@
         },
         "typography": {
           "textDecoration": "underline"
+        },
+        ":focus-visible": {
+          "color": {
+            "background": "var:preset|color|accent",
+            "text": "var:preset|color|accent-contrast"
+          }
         }
       }
     }
