@@ -2,8 +2,8 @@
 /**
  * Runtime integration detector.
  *
- * Detection is informational in Phase 1. Provider delegation is implemented
- * in later phases so no output ownership changes yet.
+ * Detection is separate from output readiness so an installed provider cannot
+ * suppress native SEO before it is ready to emit complete frontend metadata.
  *
  * @package SeoGeoCore
  */
@@ -35,6 +35,30 @@ final class RuntimeIntegrationDetector implements IntegrationDetectorInterface {
 		}
 
 		return 'native';
+	}
+
+	/**
+	 * Return whether the detected SEO provider is ready to own frontend output.
+	 *
+	 * Rank Math intentionally separates activation from completion of its setup
+	 * wizard. Until its public Helper reports configured, native Core remains the
+	 * output authority so canonical, description and robots cannot disappear.
+	 *
+	 * @return bool
+	 */
+	public function seo_provider_ready(): bool {
+		$provider = $this->seo_provider();
+
+		if ( 'rank-math' !== $provider ) {
+			return true;
+		}
+
+		$callback = array( '\\RankMath\\Helper', 'is_configured' );
+		if ( ! is_callable( $callback ) ) {
+			return false;
+		}
+
+		return (bool) call_user_func( $callback );
 	}
 
 	/**
