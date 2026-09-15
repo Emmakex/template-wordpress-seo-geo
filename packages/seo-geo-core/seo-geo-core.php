@@ -4,8 +4,8 @@
  * Plugin URI: https://github.com/Emmakex/template-wordpress-seo-geo
  * Description: Durable SEO, GEO, multilingual and Schema foundation for the SEO GEO Starter theme.
  * Version: 0.1.0
- * Requires at least: 6.6
- * Requires PHP: 8.1
+ * Requires at least: 7.1
+ * Requires PHP: 8.2
  * Author: Eduardo Yauri
  * Text Domain: seo-geo-core
  * Domain Path: /languages

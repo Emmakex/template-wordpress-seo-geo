@@ -91,4 +91,51 @@ Only durable follow-up information.
 
 ## Current entries
 
-No material incidents recorded yet.
+## ERR-2026-001 — WP-CLI Docker command lost the `wp` executable
+
+**Status:** resolved
+**First seen:** 2026-09-15
+**Last seen:** 2026-09-15
+**Area:** ci / integration
+**Signature:** `01a4c5b523c6`
+**Reference:** PR #3; failing run `34911349884` / job `104199306024`; passing run `34911497605` / job `104199821991`
+
+### Symptom / context
+
+The first real WordPress activation smoke reached the WP-CLI installation step and failed before WordPress core installation. The runtime error was:
+
+```text
+/usr/local/bin/docker-entrypoint.sh: exec: line 11: core: not found
+```
+
+The structured diagnostic reduced the failure to `WordPress Smoke CI -> wordpress-runtime-smoke -> wp core install` rather than requiring manual review of the full Docker image-pull log.
+
+### Root cause
+
+Confirmed. The smoke helper invoked the `wordpress:cli-2.12.0-php8.2` image with arguments beginning at `core install`. Supplying explicit arguments to `docker run` replaces the image CMD, so the container entrypoint attempted to execute `core` as the binary. The WP-CLI executable itself (`wp`) was omitted.
+
+### Solution
+
+The `wp_cli()` helper now executes:
+
+```text
+wordpress:cli-2.12.0-php8.2 wp <subcommand> ...
+```
+
+while preserving the shared WordPress volume, Docker network, database environment and Debian WordPress UID mapping.
+
+### Validation
+
+Resolved by WordPress Smoke CI run `34911497605`, job `104199821991`. The corrected fixture completed WordPress installation, activated `seo-geo-core` and `seo-geo-theme`, resolved `language=native` and `seo-provider=native`, served frontend/admin requests and completed runtime diagnostics without PHP fatal errors, warnings, notices or uncaught errors.
+
+### Prevention / guardrail
+
+Keep all WP-CLI calls behind the single `wp_cli()` helper so image invocation semantics are defined once. The runtime smoke itself is the guardrail: a missing executable prefix fails before theme/plugin activation and emits a stable structured signature.
+
+### Regression coverage
+
+`scripts/ci/wordpress-smoke.sh` exercises `wp core install`, plugin activation, theme activation, service initialization and frontend/admin HTTP requests using the same helper.
+
+### Notes/history
+
+Do not infer Docker image CMD behavior from the logical command name. When `docker run IMAGE args...` supplies arguments explicitly, verify whether the image entrypoint expects a binary name or a subcommand.
