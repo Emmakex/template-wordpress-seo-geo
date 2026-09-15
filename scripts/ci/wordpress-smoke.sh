@@ -25,6 +25,8 @@ DB_ROOT_PASSWORD="root-smoke-password"
 
 TMP_DIR="$(mktemp -d)"
 HOME_BODY="${TMP_DIR}/home.html"
+PAGE_BODY="${TMP_DIR}/native-seo-page.html"
+SEARCH_BODY="${TMP_DIR}/search.html"
 ADMIN_BODY="${TMP_DIR}/admin.html"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
@@ -191,6 +193,14 @@ SEO_PROVIDER="$(wp_cli eval 'echo \SeoGeo\Core\Plugin::integrations()?->seo_prov
 [[ "$SEO_PROVIDER" == "native" ]] \
   || fail_smoke "integration-service" "SEO integration detector did not resolve the clean fixture as native" "native" "$SEO_PROVIDER" "wp eval SEO provider"
 
+SEO_AUTHORITY="$(wp_cli eval 'echo \SeoGeo\Core\Plugin::seo_authority()?->provider() ?? "missing";' 2>/dev/null | tr -d '\r\n')"
+[[ "$SEO_AUTHORITY" == "native" ]] \
+  || fail_smoke "seo-authority" "SEO output authority did not resolve the clean fixture as native" "native" "$SEO_AUTHORITY" "wp eval SEO authority"
+
+CANONICAL_AUTHORITY="$(wp_cli eval 'echo ( \SeoGeo\Core\Plugin::seo_authority()?->native_owns( \SeoGeo\Core\Seo\SeoOutputAuthority::SIGNAL_CANONICAL ) ?? false ) ? "native" : "delegated";' 2>/dev/null | tr -d '\r\n')"
+[[ "$CANONICAL_AUTHORITY" == "native" ]] \
+  || fail_smoke "canonical-authority" "Native Core does not own canonical output in a clean fixture" "native" "$CANONICAL_AUTHORITY" "wp eval canonical authority"
+
 printf '[smoke] Verifying native theme pattern registration.\n'
 PATTERN_STATE="$(wp_cli eval '
 $expected = array(
@@ -214,11 +224,31 @@ echo empty( $missing ) ? "ok:7" : "missing:" . implode( ",", $missing );
 [[ "$PATTERN_STATE" == "ok:7" ]] \
   || fail_smoke "theme-pattern-registry" "Expected all Phase 2B theme patterns to be registered in WordPress" "ok:7" "$PATTERN_STATE" "wp eval WP_Block_Patterns_Registry"
 
-printf '[smoke] Requesting frontend and admin routes.\n'
+printf '[smoke] Creating native SEO fixture content.\n'
+wp_cli rewrite structure '/%postname%/' --hard >/dev/null \
+  || fail_smoke "rewrite-structure" "Could not configure pretty permalinks for SEO fixture" "/%postname%/" "rewrite command failed" "wp rewrite structure"
+wp_cli option update blogdescription 'Native SEO home description.' >/dev/null \
+  || fail_smoke "blog-description" "Could not configure native home description fixture" "fixture description saved" "option update failed" "wp option update blogdescription"
+POST_ID="$(wp_cli post create \
+  --post_type=post \
+  --post_status=publish \
+  --post_title='Native SEO Fixture' \
+  --post_name='native-seo-fixture' \
+  --post_excerpt='Native SEO fixture description.' \
+  --post_content='Native SEO fixture body used to validate canonical and metadata ownership.' \
+  --porcelain 2>/dev/null | tr -d '\r\n')"
+[[ "$POST_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "seo-fixture-post" "Could not create native SEO fixture post" "numeric post ID" "$POST_ID" "wp post create"
+
+printf '[smoke] Requesting frontend, SEO fixture, search and admin routes.\n'
 curl -fsS "$BASE_URL/" -o "$HOME_BODY" \
   || fail_smoke "frontend-request" "WordPress frontend request failed" "HTTP 2xx" "curl failure" "curl frontend"
+curl -fsS "$BASE_URL/native-seo-fixture/" -o "$PAGE_BODY" \
+  || fail_smoke "seo-page-request" "Native SEO fixture request failed" "HTTP 2xx" "curl failure" "curl native SEO fixture"
+curl -fsS "${BASE_URL}/?s=unlikely-native-seo-query" -o "$SEARCH_BODY" \
+  || fail_smoke "search-request" "Native SEO search fixture request failed" "HTTP 2xx" "curl failure" "curl search fixture"
 curl -fsSL "$BASE_URL/wp-admin/" -o "$ADMIN_BODY" \
-  || fail_smoke "admin-request" "WordPress admin route did not resolve to a valid response" "HTTP 2xx after redirect" "curl failure" "curl wp-admin"
+  || fail_smoke "admin-request" "Admin route did not resolve to a valid response" "HTTP 2xx after redirect" "curl failure" "curl wp-admin"
 
 if ! grep -qi '<body' "$HOME_BODY"; then
   fail_smoke "frontend-body" "Frontend response is not a rendered HTML document" "HTML body" "body element not found" "inspect frontend response"
@@ -227,6 +257,40 @@ fi
 if ! grep -qi 'wp-login' "$ADMIN_BODY"; then
   fail_smoke "admin-body" "Admin route did not resolve to the expected login flow" "WordPress login response" "login marker not found" "inspect admin response"
 fi
+
+printf '[smoke] Verifying native SEO output ownership.\n'
+HOME_CANONICAL_COUNT="$(grep -o 'rel="canonical"' "$HOME_BODY" | wc -l | tr -d ' ')"
+[[ "$HOME_CANONICAL_COUNT" == "1" ]] \
+  || fail_smoke "home-canonical-count" "Home page must expose exactly one canonical" "1" "$HOME_CANONICAL_COUNT" "inspect home canonical tags"
+
+PAGE_CANONICAL_COUNT="$(grep -o 'rel="canonical"' "$PAGE_BODY" | wc -l | tr -d ' ')"
+[[ "$PAGE_CANONICAL_COUNT" == "1" ]] \
+  || fail_smoke "page-canonical-count" "Native SEO fixture must expose exactly one canonical" "1" "$PAGE_CANONICAL_COUNT" "inspect fixture canonical tags"
+
+EXPECTED_CANONICAL="${BASE_URL}/native-seo-fixture/"
+if ! grep -Fq "<link rel=\"canonical\" href=\"${EXPECTED_CANONICAL}\" />" "$PAGE_BODY"; then
+  fail_smoke "page-canonical-value" "Native SEO fixture canonical does not match its public permalink" "$EXPECTED_CANONICAL" "canonical href mismatch" "inspect fixture canonical href"
+fi
+
+PAGE_DESCRIPTION_COUNT="$(grep -o 'name="description"' "$PAGE_BODY" | wc -l | tr -d ' ')"
+[[ "$PAGE_DESCRIPTION_COUNT" == "1" ]] \
+  || fail_smoke "page-description-count" "Native SEO fixture must expose exactly one meta description" "1" "$PAGE_DESCRIPTION_COUNT" "inspect fixture meta descriptions"
+
+if ! grep -Fq '<meta name="description" content="Native SEO fixture description." />' "$PAGE_BODY"; then
+  fail_smoke "page-description-value" "Native SEO fixture description does not match the resolved excerpt" "Native SEO fixture description." "description mismatch" "inspect fixture meta description"
+fi
+
+SEARCH_CANONICAL_COUNT="$(grep -o 'rel="canonical"' "$SEARCH_BODY" | wc -l | tr -d ' ')"
+[[ "$SEARCH_CANONICAL_COUNT" == "0" ]] \
+  || fail_smoke "search-canonical-count" "Noindex search fixture must not expose a native canonical" "0" "$SEARCH_CANONICAL_COUNT" "inspect search canonical tags"
+
+SEARCH_ROBOTS_COUNT="$(grep -o "name='robots'" "$SEARCH_BODY" | wc -l | tr -d ' ')"
+[[ "$SEARCH_ROBOTS_COUNT" == "1" ]] \
+  || fail_smoke "search-robots-count" "Search fixture must expose exactly one WordPress robots meta tag" "1" "$SEARCH_ROBOTS_COUNT" "inspect search robots tags"
+
+SEARCH_ROBOTS_LINE="$(grep -i "name='robots'" "$SEARCH_BODY" | head -n 1 | tr -d '\r')"
+[[ "$SEARCH_ROBOTS_LINE" == *"noindex"* && "$SEARCH_ROBOTS_LINE" == *"follow"* && "$SEARCH_ROBOTS_LINE" != *"nofollow"* ]] \
+  || fail_smoke "search-robots-policy" "Search fixture must resolve to noindex,follow" "robots contains noindex and follow without nofollow" "$SEARCH_ROBOTS_LINE" "inspect search robots policy"
 
 printf '[smoke] Checking runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
@@ -237,4 +301,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted a fatal, warning, notice or uncaught error" "no PHP runtime diagnostics" "$MATCH" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; plugin and theme active; 7/7 theme patterns registered; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$PROVIDER" "$SEO_PROVIDER"
+printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; plugin/theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"
