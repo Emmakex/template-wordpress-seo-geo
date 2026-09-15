@@ -26,14 +26,37 @@ function readReport(page, index) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
+function extractDomNodes(lhr) {
+  const legacy = lhr.audits?.['dom-size']?.numericValue;
+  if (Number.isFinite(legacy)) return legacy;
+
+  const insight = lhr.audits?.['dom-size-insight'];
+  const queue = [...(insight?.details?.items ?? [])];
+  while (queue.length) {
+    const item = queue.shift();
+    if (!item || typeof item !== 'object') continue;
+    if (Array.isArray(item.items)) queue.push(...item.items);
+
+    const statistic = String(item.statistic ?? '').toLowerCase();
+    if (statistic !== 'total elements' && statistic !== 'total dom elements') continue;
+
+    if (Number.isFinite(item.value)) return Number(item.value);
+    if (item.value && Number.isFinite(item.value.value)) return Number(item.value.value);
+  }
+
+  return null;
+}
+
 function pageMetrics(page) {
   const reports = Array.from({ length: reportCount }, (_, i) => readReport(page, i + 1));
   const snapshots = reports.map((lhr) => {
     const requests = lhr.audits?.['network-requests']?.details?.items ?? [];
     const finalUrl = new URL(lhr.finalUrl);
-    const sameOrigin = (url) => {
+    const sameOriginOrNonNetwork = (url) => {
       try {
-        return new URL(url).origin === finalUrl.origin;
+        const parsed = new URL(url);
+        if (!['http:', 'https:'].includes(parsed.protocol)) return true;
+        return parsed.origin === finalUrl.origin;
       } catch {
         return true;
       }
@@ -45,8 +68,7 @@ function pageMetrics(page) {
       .filter((item) => item.resourceType === 'Script')
       .filter((item) => /\/wp-content\/(themes\/seo-geo-theme|plugins\/seo-geo-core)\//.test(item.url ?? ''))
       .reduce((sum, item) => sum + (Number(item.transferSize) || 0), 0);
-    const thirdPartyRequests = requests.filter((item) => !sameOrigin(item.url ?? '')).length;
-    const domAudit = lhr.audits?.['dom-size'];
+    const thirdPartyRequests = requests.filter((item) => !sameOriginOrNonNetwork(item.url ?? '')).length;
 
     return {
       performanceScore: (lhr.categories?.performance?.score ?? 0) * 100,
@@ -63,7 +85,7 @@ function pageMetrics(page) {
       totalRequests: requests.length,
       thirdPartyRequests,
       projectJavaScriptBytes: projectJs,
-      domNodes: domAudit?.numericValue ?? null,
+      domNodes: extractDomNodes(lhr),
     };
   });
 
