@@ -1,0 +1,94 @@
+name: Accessibility & Responsive CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'tests/browser/**'
+      - 'tests/fixtures/**'
+      - 'scripts/ci/browser-acceptance.sh'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.js'
+      - '.github/workflows/accessibility-responsive.yml'
+      - 'docs/ACCESSIBILITY.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'tests/browser/**'
+      - 'tests/fixtures/**'
+      - 'scripts/ci/browser-acceptance.sh'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.js'
+      - '.github/workflows/accessibility-responsive.yml'
+      - 'docs/ACCESSIBILITY.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: accessibility-responsive-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-acceptance:
+    name: EN/ES browser acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node 24 toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Runtime versions
+        run: |
+          node --version
+          npm --version
+          docker version
+
+      - name: Validate acceptance scripts
+        run: |
+          bash -n scripts/ci/browser-acceptance.sh
+          npm run test:browser:check
+
+      - name: Install exact browser test dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Verify pinned direct dependency versions
+        run: npm ls --depth=0 --omit=optional
+
+      - name: Bootstrap lockfile capture
+        if: ${{ hashFiles('package-lock.json') != '' }}
+        run: |
+          echo 'SEO_GEO_LOCKFILE_BASE64_BEGIN'
+          base64 -w0 package-lock.json
+          echo
+          echo 'SEO_GEO_LOCKFILE_BASE64_END'
+
+      - name: Install Chromium runtime
+        run: npx playwright install --with-deps chromium
+
+      - name: WordPress EN/ES accessibility and responsive acceptance
+        run: bash scripts/ci/browser-acceptance.sh
+
+      - name: Preserve browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-responsive-diagnostics
+          path: |
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
