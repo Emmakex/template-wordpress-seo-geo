@@ -12,8 +12,16 @@ declare(strict_types=1);
 
 namespace SeoGeo\Core\Integrations;
 
+/**
+ * Detects supported SEO and multilingual integrations at runtime.
+ */
 final class RuntimeIntegrationDetector implements IntegrationDetectorInterface {
-	public function seoProvider(): string {
+	/**
+	 * Return the active SEO provider identifier.
+	 *
+	 * @return string
+	 */
+	public function seo_provider(): string {
 		if ( defined( 'WPSEO_VERSION' ) ) {
 			return 'yoast';
 		}
@@ -29,7 +37,12 @@ final class RuntimeIntegrationDetector implements IntegrationDetectorInterface {
 		return 'native';
 	}
 
-	public function languageProvider(): string {
+	/**
+	 * Return the active language provider identifier.
+	 *
+	 * @return string
+	 */
+	public function language_provider(): string {
 		if ( defined( 'ICL_SITEPRESS_VERSION' ) ) {
 			return 'wpml';
 		}
