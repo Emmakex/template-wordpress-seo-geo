@@ -69,8 +69,12 @@ final class Plugin {
 
 		self::$integration_detector = new RuntimeIntegrationDetector();
 		self::$language_manager     = new LanguageManager( new NativeWordPressAdapter() );
-		self::$seo_authority        = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
-		self::$native_seo           = new NativeSeoPresenter(
+
+		$detected_provider      = self::$integration_detector->seo_provider();
+		$authoritative_provider = self::$integration_detector->seo_provider_ready() ? $detected_provider : 'native';
+
+		self::$seo_authority = new SeoOutputAuthority( $authoritative_provider );
+		self::$native_seo    = new NativeSeoPresenter(
 			self::$seo_authority,
 			new IndexabilityResolver(),
 			new CanonicalResolver(),
