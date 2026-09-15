@@ -5,6 +5,7 @@ on:
     paths:
       - 'packages/seo-geo-theme/theme.json'
       - 'scripts/ci/validate-design-system.php'
+      - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
       - 'docs/ROADMAP.md'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'packages/seo-geo-theme/theme.json'
       - 'scripts/ci/validate-design-system.php'
+      - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
       - 'docs/ROADMAP.md'
@@ -41,8 +43,11 @@ jobs:
           php-version: '8.2'
           coverage: none
 
+      - name: Validate diagnostic wrapper syntax
+        run: bash -n scripts/ci/php-lint-diagnostic.sh
+
       - name: Validate design-system script syntax
-        run: php -l scripts/ci/validate-design-system.php
+        run: bash scripts/ci/php-lint-diagnostic.sh scripts/ci/validate-design-system.php
 
       - name: Validate semantic tokens and contrast
         run: php scripts/ci/validate-design-system.php
