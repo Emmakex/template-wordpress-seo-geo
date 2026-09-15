@@ -5,7 +5,10 @@
  * Categories: about, text
  * Description: A reusable author or expert profile that emphasizes identity, role and first-hand expertise.
  * Viewport Width: 900
+ *
+ * @package SeoGeoTheme
  */
+
 ?>
 <!-- wp:group {"align":"wide","backgroundColor":"surface","style":{"border":{"radius":"var:preset|border-radius|lg"},"spacing":{"padding":{"top":"var:preset|spacing|xl","right":"var:preset|spacing|xl","bottom":"var:preset|spacing|xl","left":"var:preset|spacing|xl"}}},"layout":{"type":"constrained"}} -->
 <div class="wp-block-group alignwide has-surface-background-color has-background" style="border-radius:var(--wp--preset--border-radius--lg);padding-top:var(--wp--preset--spacing--xl);padding-right:var(--wp--preset--spacing--xl);padding-bottom:var(--wp--preset--spacing--xl);padding-left:var(--wp--preset--spacing--xl)">
