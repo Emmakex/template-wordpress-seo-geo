@@ -17,48 +17,32 @@ Completed:
 - accessibility contract;
 - preset model;
 - engineering rules;
-- CI/diagnostic contract;
+- structured CI/diagnostic contract;
 - initial repository skeleton;
-- Foundation CI validating the documented contract;
-- PR #1 merged after CI success;
-- post-merge `main` verification passed.
+- Foundation CI;
+- PR #1 + post-merge `main` verification.
 
 ## Phase 1 — Minimal installable packages
 
-Status: **in progress — final microphase 1C**
+Status: **complete**
 
 ### Microphase 1A — package skeleton and static contract
 
 Status: **complete**
 
-Completed:
+Delivered:
 
-#### Theme
-- valid `style.css` metadata;
-- `theme.json` v3;
-- required `templates/index.html`;
-- header/footer parts;
-- basic page/single/archive/404 templates;
-- semantic `<main>` landmarks so WordPress core can provide its block-template skip link;
-- no unnecessary project-owned frontend strings in static templates.
-
-#### Core plugin
-- valid plugin bootstrap;
-- minimal namespace autoloader;
+- installable block-theme skeleton;
+- valid `theme.json` v3 and theme metadata;
+- index/page/single/archive/404 block templates;
+- semantic `<main>` landmarks;
+- Core plugin bootstrap and namespace autoloader;
 - safe activation/deactivation behavior;
-- language provider interface + native adapter;
-- normalized LanguageManager facade;
-- runtime integration detector interface/implementation;
-- no SEO/Schema output yet.
+- language provider interface/native adapter/LanguageManager;
+- runtime integration detector;
+- structured Phase 1 package contract.
 
-#### Validation
-- required package files;
-- PHP syntax;
-- `theme.json` v3 parse/contract;
-- theme/plugin headers and text domains;
-- semantic main landmark on every shipped template;
-- structured diagnostic on contract failure;
-- PR #2 and post-merge `main` Foundation/Package CI passed.
+PR #2 and post-merge package/foundation validation passed.
 
 ### Microphase 1B — real WordPress activation smoke
 
@@ -68,94 +52,142 @@ Tested baseline:
 
 - WordPress 7.1.x;
 - PHP 8.2+;
-- WP-CLI 2.12.x for CI installation/activation;
-- MariaDB 11.8.x for the disposable CI fixture.
+- WP-CLI 2.12.x;
+- MariaDB 11.8.x.
 
-Completed validation:
+Validated:
 
-- theme/plugin copied into a clean WordPress fixture;
-- WordPress installed through WP-CLI;
-- plugin activated and verified active;
-- theme activated and verified active;
-- Core language service resolved `native`;
-- clean SEO integration detector resolved `native`;
-- frontend request returned rendered HTML;
-- `/wp-admin/` resolved through the expected login flow;
-- runtime/debug logs contained no PHP fatal/warning/notice or uncaught error;
-- exact compatibility matrix documented in `docs/COMPATIBILITY.md`;
-- first CI integration incident captured and resolved as `ERR-2026-001`.
+- clean WordPress install;
+- plugin/theme activation and active state;
+- native language + SEO provider service resolution;
+- frontend and `/wp-admin/` HTTP paths;
+- no project PHP fatal/warning/notice or uncaught runtime error;
+- disposable fixture cleanup;
+- compatibility matrix in `docs/COMPATIBILITY.md`.
 
-Passing PR validation: WordPress Smoke CI run `34911640680`.
-Passing post-merge `main` validation: WordPress Smoke CI run `34911791718`.
+`ERR-2026-001` captured the first WP-CLI Docker integration failure and its regression guard.
 
 ### Microphase 1C — WordPress coding standards and static analysis
 
-Status: **in progress on PR #4**
+Status: **complete**
 
-Implemented:
+Delivered:
 
-- exact pinned PHP development toolchain in `composer.json`;
-- WPCS `3.4.1` / PHPCS `3.13.6` gate;
-- PHPStan `2.2.14` + `phpstan-wordpress` `2.0.4` at level 6;
-- WordPress `7.1.0` stubs;
-- project-only PHP scope;
-- no PHPStan baseline or ignored-error file;
-- structured diagnostics extracting first WPCS file/line/sniff or PHPStan file/line/identifier;
-- quality workflow isolated from unrelated gates;
-- dependency-resolution artifact for the generated Composer lock;
-- Core API adjusted to WordPress snake_case conventions before public SEO behavior exists;
-- runtime smoke updated and revalidated after the method-name changes.
+- exact pinned PHP quality dependencies + committed `composer.lock`;
+- WPCS 3.4.1 / PHPCS 3.13.6;
+- PHPStan 2.2.14 + `phpstan-wordpress` 2.0.4 at level 6;
+- WordPress 7.1 stubs;
+- project-owned PHP scope;
+- no PHPStan baseline or ignored-error list;
+- structured first-error extraction for WPCS/PHPStan;
+- WordPress snake_case Core API;
+- only two documented WPCS filename-convention exceptions required by the namespaced PSR-style class-path contract.
 
-Narrow documented WPCS exception:
+Adoption findings closed:
 
-- `WordPress.Files.FileName.InvalidClassFileName`;
-- `WordPress.Files.FileName.NotHyphenatedLowercase`.
+- WPCS first diagnostic: `seo-geo-core.php:27:30`, source `Universal.NamingConventions.NoReservedKeywordParameterNames.classFound`, signature `e85b79b82c63`;
+- PHPStan first diagnostic: `LanguageManager.php:77`, identifier `nullCoalesce.offset`, signature `def4f1ee7592`;
+- both were fixed in code rather than suppressed.
 
-These two sniffs only conflict with the deliberate namespaced PSR-style class-path/autoload contract. No security, escaping, documentation or API naming rules are suppressed.
+PR #4 validation passed and was merged. Post-merge `main` SHA `fff40e24d93a3036f159ef1b7062338c1bc78805` passed:
 
-Observed initial adoption failure:
-
-- WPCS correctly exposed reserved parameter naming, camelCase methods, missing PHPDoc and filename convention conflicts;
-- the first structured diagnostic identified `seo-geo-core.php:27:30`, source `Universal.NamingConventions.NoReservedKeywordParameterNames.classFound`, signature `e85b79b82c63`;
-- real code findings were fixed; only the two architectural filename sniffs were excluded.
-
-Current required closure:
-
-- clean WPCS rerun;
-- clean PHPStan level 6 run;
-- final PR #4 required gates green;
-- merge;
-- post-merge `main` verification green.
+- Foundation CI run `34913626730`;
+- Phase 1 Package CI run `34913626714`;
+- WordPress Smoke CI run `34913626741`;
+- PHP Quality CI run `34913626770`.
 
 ### Phase 1 exit criteria
 
+All exit criteria are satisfied:
+
 - theme installs/activates;
 - plugin installs/activates;
-- no project PHP warnings/notices in supported fixture;
-- WordPress Coding Standards gate passes;
-- documented PHP static-analysis gate passes;
-- documentation matches the tested compatibility matrix;
-- all Phase 1 PRs pass required CI and post-merge `main` verification.
-
-Phase 2 may not begin until every item above is complete.
+- supported runtime is clean;
+- WPCS passes;
+- PHPStan level 6 passes;
+- compatibility documentation matches CI;
+- required PR and post-merge validation is green.
 
 ## Phase 2 — Design system + performance baseline
 
-Deliverables:
+Status: **in progress**
 
-- design tokens in `theme.json`;
-- typography/spacing/color primitives;
-- system/local font policy implementation;
-- core patterns: hero, CTA, services, trust, FAQ, author, contact;
-- per-block stylesheet strategy;
-- representative fixture pages;
-- Lighthouse/performance baseline;
-- lock initial numeric asset/performance budgets based on real fixtures.
+Phase 2 is deliberately split so visual work cannot outrun accessibility/performance acceptance.
+
+### Microphase 2A — semantic design system
+
+Status: **in progress on `feature/phase-2a-design-system`**
+
+Scope:
+
+- semantic color tokens;
+- automated critical contrast pairs;
+- system-only font families;
+- stable + bounded fluid typography scale;
+- spacing scale;
+- border-radius scale;
+- curated WordPress editor presets;
+- global body/heading/link/button/caption styles via `theme.json`;
+- zero remote font requests;
+- design-system documentation;
+- dedicated structured Design System CI.
 
 Exit criteria:
-- responsive/UX acceptance ES+EN;
-- keyboard/focus/reduced-motion checks;
-- baseline performance recorded and guarded.
+
+- WordPress accepts the updated theme in the real runtime smoke;
+- Design System CI validates token sets and contrast;
+- Package/Foundation/PHP Quality gates affected by the change remain green;
+- PR merge + post-merge `main` verification.
+
+### Microphase 2B — reusable core patterns
+
+Pending after 2A closes.
+
+Planned patterns:
+
+- hero;
+- CTA;
+- services/features;
+- trust/proof;
+- FAQ;
+- author/profile;
+- contact.
+
+Patterns must consume semantic tokens rather than duplicate raw design values.
+
+### Microphase 2C — responsive + accessibility acceptance
+
+Pending after 2B closes.
+
+Scope:
+
+- representative ES/EN fixture pages;
+- keyboard interaction;
+- visible focus;
+- reduced-motion contract;
+- heading/landmark checks;
+- responsive overflow/reflow;
+- automated accessibility scan plus manual-contract assertions where automation is insufficient.
+
+### Microphase 2D — performance baseline and budgets
+
+Pending after 2C closes.
+
+Scope:
+
+- Lighthouse representative fixtures;
+- CSS/JS/HTML size measurements;
+- no unnecessary third-party requests;
+- lock initial numeric performance budgets from real fixture evidence;
+- regression gate for future phases.
+
+### Phase 2 exit criteria
+
+- reusable design tokens and core patterns complete;
+- responsive/UX acceptance passes in ES+EN;
+- keyboard/focus/reduced-motion checks pass;
+- performance baseline is recorded and guarded;
+- numeric budgets reflect representative pages rather than guessed thresholds.
 
 ## Phase 3 — Native SEO foundation
 
@@ -172,6 +204,7 @@ Deliverables:
 - tests for duplicate-output prevention.
 
 Exit criteria:
+
 - one canonical/robots owner per fixture;
 - no duplicate output with supported SEO integrations;
 - localized canonical behavior tested.
@@ -190,6 +223,7 @@ Deliverables:
 - ES/EN integration fixtures.
 
 Exit criteria:
+
 - reciprocal valid alternates;
 - current-language canonical;
 - correct HTML lang/OG locale/Schema language hooks;
@@ -201,12 +235,13 @@ Deliverables:
 
 - graph builder;
 - stable entity IDs;
-- Website/WebPage/Organization/Person/ProfilePage/Article/BreadcrumbList;
+- WebSite/WebPage/Organization/Person/ProfilePage/Article/BreadcrumbList;
 - local business entity support;
 - locale-aware graph fields;
 - visible-content consistency invariants.
 
 Exit criteria:
+
 - valid parseable JSON-LD;
 - deterministic node IDs;
 - no duplicate overlapping graph with supported providers;
@@ -225,6 +260,7 @@ Deliverables:
 - cache/invalidation strategy.
 
 Exit criteria:
+
 - optional features can be disabled cleanly;
 - no SEO canonical/indexability conflicts;
 - multilingual alternates correct;

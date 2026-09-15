@@ -52,7 +52,9 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/MULTILINGUAL.md`
 - `docs/PERFORMANCE.md`
 - `docs/ACCESSIBILITY.md`
+- `docs/DESIGN_SYSTEM.md`
 - `docs/PRESETS.md`
+- `docs/COMPATIBILITY.md`
 - `docs/CI_QUALITY_GATES.md`
 - `docs/ROADMAP.md`
 - `docs/engineering/GLOBAL_ENGINEERING_RULES.md`

@@ -139,3 +139,59 @@ Keep all WP-CLI calls behind the single `wp_cli()` helper so image invocation se
 ### Notes/history
 
 Do not infer Docker image CMD behavior from the logical command name. When `docker run IMAGE args...` supplies arguments explicitly, verify whether the image entrypoint expects a binary name or a subcommand.
+
+## ERR-2026-002 — Design-system validator used invalid foreach destructuring
+
+**Status:** resolved
+**First seen:** 2026-09-15
+**Last seen:** 2026-09-15
+**Area:** ci / theme
+**Signature:** `fb38eec22c88`
+**Reference:** PR #5; failing Design System CI run `34914017559` / job `104207579105`; passing run `34914490756` / job `104209041351`
+
+### Symptom / context
+
+The first Phase 2A Design System CI run failed before the semantic-token/contrast contract executed. PHP lint reported:
+
+```text
+PHP Parse error: syntax error, unexpected token ")", expecting "->" or "?->" or "{" or "[" in scripts/ci/validate-design-system.php on line 233
+```
+
+Because the failing step was a direct `php -l` invocation, the initial failure itself was still raw log output rather than the repository's structured diagnostic format.
+
+### Root cause
+
+Confirmed. The contrast loop attempted to destructure each tuple with:
+
+```php
+foreach ( $contrast_contracts as array( $foreground_slug, $background_slug, $minimum ) )
+```
+
+`array(...)` is an array-construction expression, not valid foreach destructuring syntax. PHP foreach destructuring must use `list(...)` or square-bracket destructuring.
+
+### Solution
+
+The loop now uses `list( $foreground_slug, $background_slug, $minimum )`. In addition, `scripts/ci/php-lint-diagnostic.sh` was added as a reusable wrapper around `php -l` so syntax failures report pipeline, run, job, step, command, file/line, expected/received and a deterministic signature.
+
+### Validation
+
+Design System CI run `34914490756`, job `104209041351`, passed all steps:
+
+- diagnostic wrapper shell syntax;
+- PHP syntax for `validate-design-system.php`;
+- semantic design-system contract;
+- automated critical contrast calculations.
+
+The successful contract output confirmed 8 semantic colors, 8 spacing tokens, 7 font sizes, system fonts only and all critical contrast pairs passing.
+
+### Prevention / guardrail
+
+CI validators are production engineering code too. PHP validator syntax must go through `scripts/ci/php-lint-diagnostic.sh` rather than a raw `php -l` workflow command. This guarantees future validator parse errors are reduced to the same actionable diagnostic contract as application/test failures.
+
+### Regression coverage
+
+`.github/workflows/design-system.yml` validates the diagnostic wrapper with `bash -n`, then lints `scripts/ci/validate-design-system.php` through the wrapper before executing the design-system contract.
+
+### Notes/history
+
+When destructuring tuples in PHP foreach loops, use `list(...)` or `[...]`; do not use `array(...)` as if it were a destructuring form.
