@@ -93,12 +93,12 @@ Only durable follow-up information.
 
 ## ERR-2026-001 — WP-CLI Docker command lost the `wp` executable
 
-**Status:** mitigated; validation pending
+**Status:** resolved
 **First seen:** 2026-09-15
 **Last seen:** 2026-09-15
 **Area:** ci / integration
 **Signature:** `01a4c5b523c6`
-**Reference:** PR #3; WordPress Smoke CI run `34911349884`; job `104199306024`
+**Reference:** PR #3; failing run `34911349884` / job `104199306024`; passing run `34911497605` / job `104199821991`
 
 ### Symptom / context
 
@@ -126,7 +126,7 @@ while preserving the shared WordPress volume, Docker network, database environme
 
 ### Validation
 
-Pending focused rerun of WordPress Smoke CI on PR #3. This entry must be changed to `resolved` only after the same installation/activation path passes.
+Resolved by WordPress Smoke CI run `34911497605`, job `104199821991`. The corrected fixture completed WordPress installation, activated `seo-geo-core` and `seo-geo-theme`, resolved `language=native` and `seo-provider=native`, served frontend/admin requests and completed runtime diagnostics without PHP fatal errors, warnings, notices or uncaught errors.
 
 ### Prevention / guardrail
 
