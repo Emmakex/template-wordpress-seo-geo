@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "providers": {
+    "yoast": {
+      "slug": "wordpress-seo",
+      "version": "28.4",
+      "wordpress_tested": "7.1"
+    },
+    "rank-math": {
+      "slug": "seo-by-rank-math",
+      "version": "1.0.278",
+      "wordpress_tested": "7.1"
+    },
+    "aioseo": {
+      "slug": "all-in-one-seo-pack",
+      "version": "5.0.1.1",
+      "wordpress_tested": "7.1"
+    }
+  }
+}
