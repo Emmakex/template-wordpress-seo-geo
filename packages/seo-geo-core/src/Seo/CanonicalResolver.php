@@ -41,7 +41,7 @@ final class CanonicalResolver {
 			$paged     = max( 1, (int) get_query_var( 'paged', 1 ) );
 			$candidate = get_pagenum_link( $paged, false );
 
-			if ( is_string( $candidate ) && '' !== $candidate ) {
+			if ( '' !== $candidate ) {
 				$url = $candidate;
 			}
 		}
