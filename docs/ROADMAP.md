@@ -110,9 +110,9 @@ All exit criteria are satisfied:
 
 ## Phase 2 — Design system + performance baseline
 
-Status: **in progress**
+Status: **complete**
 
-Phase 2 is deliberately split so visual work cannot outrun accessibility/performance acceptance.
+Phase 2 was deliberately split so visual work could not outrun accessibility/performance acceptance.
 
 ### Microphase 2A — semantic design system
 
@@ -202,9 +202,9 @@ The browser gate retained **24/24 passing EN/ES acceptance cases**. Adoption fin
 
 ### Microphase 2D — performance baseline and budgets
 
-Status: **in progress on PR #8 (`feature/phase-2d-performance-baseline`)**
+Status: **complete**
 
-Implemented:
+Delivered on PR #8:
 
 - dedicated `Performance Baseline CI`;
 - Lighthouse 13.4.1 against disposable WordPress 7.1 / PHP 8.2 fixtures;
@@ -215,7 +215,7 @@ Implemented:
 - request, third-party-request, project-JS and DOM-size measurement;
 - raw Lighthouse JSON retained as workflow evidence;
 - structured failure diagnostics;
-- authoritative machine-readable budgets in `tests/performance/budgets.json`;
+- authoritative machine-readable enforced budgets in `tests/performance/budgets.json`;
 - measured baseline and rationale in `docs/PERFORMANCE_BASELINE.md`.
 
 Reference observation run `34925805108` measured:
@@ -230,21 +230,30 @@ Reference observation run `34925805108` measured:
 - project-owned frontend JS: 0 B / 0 B;
 - DOM nodes: 88 / 88.
 
-Budgets are now set to `enforce`. Required closure:
+PR #8 passed all eight PR gates with budgets in `enforce` mode and was squash-merged as `d34f04b763eef372b0ef73c93f30cbfb3d722713`. Post-merge `main` passed all eight gates:
 
-- enforced budgets pass on a fresh PR run;
-- Phase 2D documentation matches the accepted measurement contract;
-- PR #8 squash merge;
-- relevant post-merge `main` checks pass.
+- Foundation CI `34926357735`;
+- Phase 1 Package CI `34926357777`;
+- Design System CI `34926357715`;
+- PHP Quality CI `34926357745`;
+- Pattern Contract CI `34926357760`;
+- WordPress Smoke CI `34926357714`;
+- Accessibility & Responsive CI `34926357742`;
+- Performance Baseline CI `34926357784`.
+
+The enforced base budgets remain the authoritative regression contract; field Core Web Vitals still require production field evidence and are not inferred from Lighthouse lab timings.
 
 ### Phase 2 exit criteria
 
-- reusable design tokens and core patterns complete;
+All exit criteria are satisfied:
+
+- reusable design tokens and core patterns are complete;
 - responsive/UX acceptance passes in ES+EN;
 - keyboard/focus/reduced-motion checks pass;
 - performance baseline is recorded and guarded;
-- numeric budgets reflect representative pages rather than guessed thresholds;
-- Phase 2D merge and post-merge verification are green.
+- numeric budgets are derived from representative pages rather than guessed thresholds;
+- Phase 2D PR and post-merge verification are green;
+- Phase 2 documentation reflects the final verified state.
 
 ## Phase 3 — Native SEO foundation
 
