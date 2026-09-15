@@ -1,0 +1,74 @@
+name: SEO Provider Interoperability CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-core/**'
+      - 'tests/providers/**'
+      - 'scripts/ci/provider-interoperability.sh'
+      - '.github/workflows/provider-interoperability.yml'
+      - 'docs/NATIVE_SEO.md'
+      - 'docs/SEO_PROVIDER_INTEROPERABILITY.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-core/**'
+      - 'tests/providers/**'
+      - 'scripts/ci/provider-interoperability.sh'
+      - '.github/workflows/provider-interoperability.yml'
+      - 'docs/NATIVE_SEO.md'
+      - 'docs/SEO_PROVIDER_INTEROPERABILITY.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: provider-interoperability-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  provider-interoperability:
+    name: ${{ matrix.provider }} interoperability
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - yoast
+          - rank-math
+          - aioseo
+
+    env:
+      PROVIDER: ${{ matrix.provider }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP 8.2 fixture syntax
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Runtime versions
+        run: |
+          php --version
+          python3 --version
+          docker version
+
+      - name: Validate provider fixture configuration
+        run: python3 -m json.tool tests/providers/providers.json >/dev/null
+
+      - name: Validate provider scripts
+        run: |
+          bash -n scripts/ci/provider-interoperability.sh
+          php -l tests/providers/provider-output-fixture.php
+
+      - name: WordPress provider interoperability
+        run: bash scripts/ci/provider-interoperability.sh
