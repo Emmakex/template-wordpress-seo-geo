@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "mode": "observe",
+  "global": {
+    "maxThirdPartyRequests": 0,
+    "maxProjectJavaScriptBytes": 0
+  },
+  "pages": {}
+}
