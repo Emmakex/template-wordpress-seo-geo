@@ -24,14 +24,14 @@ define( 'SEO_GEO_CORE_FILE', __FILE__ );
 define( 'SEO_GEO_CORE_DIR', plugin_dir_path( __FILE__ ) );
 
 spl_autoload_register(
-	static function ( string $class ): void {
+	static function ( string $class_name ): void {
 		$prefix = 'SeoGeo\\Core\\';
 
-		if ( 0 !== strncmp( $class, $prefix, strlen( $prefix ) ) ) {
+		if ( 0 !== strncmp( $class_name, $prefix, strlen( $prefix ) ) ) {
 			return;
 		}
 
-		$relative = substr( $class, strlen( $prefix ) );
+		$relative = substr( $class_name, strlen( $prefix ) );
 		$path     = SEO_GEO_CORE_DIR . 'src/' . str_replace( '\\', '/', $relative ) . '.php';
 
 		if ( is_readable( $path ) ) {

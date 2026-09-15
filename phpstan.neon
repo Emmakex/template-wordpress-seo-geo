@@ -1,0 +1,10 @@
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+  level: 6
+  paths:
+    - packages/seo-geo-theme
+    - packages/seo-geo-core
+  tmpDir: .phpstan-cache
+  reportUnmatchedIgnoredErrors: true

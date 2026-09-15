@@ -1,0 +1,72 @@
+name: PHP Quality CI
+
+on:
+  pull_request:
+    paths:
+      - 'composer.json'
+      - 'composer.lock'
+      - 'phpcs.xml.dist'
+      - 'phpstan.neon'
+      - 'packages/**/*.php'
+      - 'scripts/ci/php-quality.sh'
+      - '.github/workflows/php-quality.yml'
+      - 'docs/CI_QUALITY_GATES.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'composer.json'
+      - 'composer.lock'
+      - 'phpcs.xml.dist'
+      - 'phpstan.neon'
+      - 'packages/**/*.php'
+      - 'scripts/ci/php-quality.sh'
+      - '.github/workflows/php-quality.yml'
+      - 'docs/CI_QUALITY_GATES.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: php-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php-quality:
+    name: WPCS + PHPStan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP 8.2 toolchain
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          extensions: filter, libxml, mbstring, simplexml, tokenizer, xmlreader, xmlwriter
+          coverage: none
+
+      - name: Validate quality script syntax
+        run: bash -n scripts/ci/php-quality.sh
+
+      - name: Resolve/install pinned PHP quality dependencies
+        run: bash scripts/ci/php-quality.sh deps
+
+      - name: Preserve resolved Composer lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-quality-composer-lock
+          path: composer.lock
+          if-no-files-found: error
+          retention-days: 2
+
+      - name: WordPress Coding Standards
+        run: bash scripts/ci/php-quality.sh phpcs
+
+      - name: PHPStan level 6
+        run: bash scripts/ci/php-quality.sh phpstan

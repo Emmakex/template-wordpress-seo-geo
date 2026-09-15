@@ -13,12 +13,28 @@ use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
 use SeoGeo\Core\Language\NativeWordPressAdapter;
 
+/**
+ * Coordinates the Phase 1 Core lifecycle and shared services.
+ */
 final class Plugin {
+	/**
+	 * Normalized language service.
+	 *
+	 * @var LanguageManager|null
+	 */
 	private static ?LanguageManager $language_manager = null;
+
+	/**
+	 * Runtime integration detector.
+	 *
+	 * @var RuntimeIntegrationDetector|null
+	 */
 	private static ?RuntimeIntegrationDetector $integration_detector = null;
 
 	/**
 	 * Register lifecycle hooks without producing frontend output.
+	 *
+	 * @param string $plugin_file Absolute path to the plugin bootstrap file.
 	 */
 	public static function boot( string $plugin_file ): void {
 		register_activation_hook( $plugin_file, array( self::class, 'activate' ) );
@@ -52,16 +68,26 @@ final class Plugin {
 	}
 
 	/**
-	 * Deactivation intentionally preserves configuration/data.
+	 * Deactivation intentionally preserves configuration and data.
 	 */
 	public static function deactivate(): void {
 		// No destructive work on deactivation.
 	}
 
+	/**
+	 * Get the normalized language service when initialized.
+	 *
+	 * @return LanguageManager|null
+	 */
 	public static function language(): ?LanguageManager {
 		return self::$language_manager;
 	}
 
+	/**
+	 * Get the runtime integration detector when initialized.
+	 *
+	 * @return RuntimeIntegrationDetector|null
+	 */
 	public static function integrations(): ?RuntimeIntegrationDetector {
 		return self::$integration_detector;
 	}

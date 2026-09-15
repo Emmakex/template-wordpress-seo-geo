@@ -183,11 +183,11 @@ wp_cli plugin is-active seo-geo-core >/dev/null \
 wp_cli theme is-active seo-geo-theme >/dev/null \
   || fail_smoke "theme-state" "SEO GEO Starter is not active after activation" "active" "inactive" "wp theme is-active seo-geo-theme"
 
-PROVIDER="$(wp_cli eval 'echo \SeoGeo\Core\Plugin::language()?->providerId() ?? "missing";' 2>/dev/null | tr -d '\r\n')"
+PROVIDER="$(wp_cli eval 'echo \SeoGeo\Core\Plugin::language()?->provider_id() ?? "missing";' 2>/dev/null | tr -d '\r\n')"
 [[ "$PROVIDER" == "native" ]] \
   || fail_smoke "language-service" "Language service did not initialize with the native provider" "native" "$PROVIDER" "wp eval language provider"
 
-SEO_PROVIDER="$(wp_cli eval 'echo \SeoGeo\Core\Plugin::integrations()?->seoProvider() ?? "missing";' 2>/dev/null | tr -d '\r\n')"
+SEO_PROVIDER="$(wp_cli eval 'echo \SeoGeo\Core\Plugin::integrations()?->seo_provider() ?? "missing";' 2>/dev/null | tr -d '\r\n')"
 [[ "$SEO_PROVIDER" == "native" ]] \
   || fail_smoke "integration-service" "SEO integration detector did not resolve the clean fixture as native" "native" "$SEO_PROVIDER" "wp eval SEO provider"
 
