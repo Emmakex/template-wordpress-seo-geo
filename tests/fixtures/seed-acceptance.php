@@ -3,11 +3,12 @@
  * Seed representative browser-acceptance pages.
  *
  * Run with WP-CLI eval-file inside the disposable CI WordPress fixture.
+ * Do not add a strict_types declaration here: WP-CLI evaluates this file
+ * inside generated code, so declare(strict_types=1) would no longer be the
+ * first statement and PHP would abort before the fixture can run.
  *
  * @package SeoGeoAcceptance
  */
-
-declare(strict_types=1);
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
