@@ -122,7 +122,7 @@ $allowed_presets = array(
 );
 
 $seen_slugs = array();
-foreach ( $expected as $filename => array( $expected_slug, $expected_categories ) ) {
+foreach ( $expected as $filename => list( $expected_slug, $expected_categories ) ) {
 	$path    = PATTERN_DIR . '/' . $filename;
 	$content = (string) file_get_contents( $path );
 
@@ -180,7 +180,7 @@ foreach ( $expected as $filename => array( $expected_slug, $expected_categories 
 
 	preg_match_all( '/var:preset\|([a-z-]+)\|([a-z0-9-]+)/i', $content, $preset_matches, PREG_SET_ORDER );
 	foreach ( $preset_matches as $preset_match ) {
-		$type = strtolower( $preset_match[1] );
+		$type       = strtolower( $preset_match[1] );
 		$slug_value = strtolower( $preset_match[2] );
 		if ( ! isset( $allowed_presets[ $type ][ $slug_value ] ) ) {
 			fail_pattern_contract( 'unknown-preset', 'Pattern references a preset that is not defined by theme.json.', $path, 'defined semantic preset', $preset_match[0] );
