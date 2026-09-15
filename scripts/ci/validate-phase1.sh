@@ -84,6 +84,14 @@ if ! grep -q '^Text Domain: seo-geo-theme$' packages/seo-geo-theme/style.css; th
   fail_contract "theme-text-domain" "Theme text domain does not match the project contract" "seo-geo-theme" "missing or changed" "packages/seo-geo-theme/style.css"
 fi
 
+if ! grep -q '^Requires at least: 7\.1$' packages/seo-geo-theme/style.css; then
+  fail_contract "theme-wordpress-baseline" "Theme WordPress baseline does not match the tested contract" "Requires at least: 7.1" "missing or changed" "packages/seo-geo-theme/style.css"
+fi
+
+if ! grep -q '^Requires PHP: 8\.2$' packages/seo-geo-theme/style.css; then
+  fail_contract "theme-php-baseline" "Theme PHP baseline does not match the tested contract" "Requires PHP: 8.2" "missing or changed" "packages/seo-geo-theme/style.css"
+fi
+
 if ! grep -q '^ \* Plugin Name: SEO GEO Core$' packages/seo-geo-core/seo-geo-core.php; then
   fail_contract "plugin-header" "Plugin header is missing the expected Plugin Name" "SEO GEO Core plugin header" "missing or changed" "packages/seo-geo-core/seo-geo-core.php"
 fi
@@ -92,10 +100,18 @@ if ! grep -q '^ \* Text Domain: seo-geo-core$' packages/seo-geo-core/seo-geo-cor
   fail_contract "plugin-text-domain" "Plugin text domain does not match the project contract" "seo-geo-core" "missing or changed" "packages/seo-geo-core/seo-geo-core.php"
 fi
 
+if ! grep -q '^ \* Requires at least: 7\.1$' packages/seo-geo-core/seo-geo-core.php; then
+  fail_contract "plugin-wordpress-baseline" "Plugin WordPress baseline does not match the tested contract" "Requires at least: 7.1" "missing or changed" "packages/seo-geo-core/seo-geo-core.php"
+fi
+
+if ! grep -q '^ \* Requires PHP: 8\.2$' packages/seo-geo-core/seo-geo-core.php; then
+  fail_contract "plugin-php-baseline" "Plugin PHP baseline does not match the tested contract" "Requires PHP: 8.2" "missing or changed" "packages/seo-geo-core/seo-geo-core.php"
+fi
+
 for template in packages/seo-geo-theme/templates/*.html; do
   if ! grep -q '"tagName":"main"' "$template"; then
     fail_contract "semantic-main" "Block template has no semantic main landmark: ${template}" "tagName=main" "missing" "$template"
   fi
 done
 
-printf 'Phase 1 package contract OK: %d required files; PHP syntax, theme.json and package headers validated.\n' "${#required_paths[@]}"
+printf 'Phase 1 package contract OK: %d required files; PHP syntax, theme.json, runtime baselines and package headers validated.\n' "${#required_paths[@]}"
