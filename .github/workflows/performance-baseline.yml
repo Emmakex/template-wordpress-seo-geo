@@ -1,0 +1,89 @@
+name: Performance Baseline CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'tests/performance/**'
+      - 'tests/fixtures/**'
+      - 'scripts/ci/performance-baseline.sh'
+      - 'scripts/ci/performance-report.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/performance-baseline.yml'
+      - 'docs/PERFORMANCE.md'
+      - 'docs/PERFORMANCE_BASELINE.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'tests/performance/**'
+      - 'tests/fixtures/**'
+      - 'scripts/ci/performance-baseline.sh'
+      - 'scripts/ci/performance-report.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/performance-baseline.yml'
+      - 'docs/PERFORMANCE.md'
+      - 'docs/PERFORMANCE_BASELINE.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: performance-baseline-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  performance-baseline:
+    name: EN/ES Lighthouse baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node 24 toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Runtime versions
+        run: |
+          node --version
+          npm --version
+          docker version
+
+      - name: Validate performance scripts
+        run: |
+          bash -n scripts/ci/performance-baseline.sh
+          node --check scripts/ci/performance-report.mjs
+          node -e "JSON.parse(require('fs').readFileSync('tests/performance/budgets.json', 'utf8'))"
+
+      - name: Install locked browser runtime dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify pinned browser dependencies
+        run: npm ls --depth=0 --omit=optional
+
+      - name: Install Chromium runtime
+        run: npx playwright install --with-deps chromium
+
+      - name: WordPress Lighthouse baseline and budgets
+        run: bash scripts/ci/performance-baseline.sh
+
+      - name: Preserve performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-baseline-evidence
+          path: performance-results/
+          if-no-files-found: ignore
+          retention-days: 7

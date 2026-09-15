@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "mode": "enforce",
+  "global": {
+    "maxThirdPartyRequests": 0,
+    "maxProjectJavaScriptBytes": 0
+  },
+  "pages": {
+    "en": {
+      "minPerformanceScore": 95,
+      "maxLcpMs": 1200,
+      "maxCls": 0.05,
+      "maxTbtMs": 100,
+      "maxTotalBytes": 26624,
+      "maxHtmlBytes": 14336,
+      "maxCssBytes": 4096,
+      "maxJsBytes": 8192,
+      "maxRequests": 7,
+      "maxDomNodes": 112
+    },
+    "es": {
+      "minPerformanceScore": 95,
+      "maxLcpMs": 1200,
+      "maxCls": 0.05,
+      "maxTbtMs": 100,
+      "maxTotalBytes": 26624,
+      "maxHtmlBytes": 14336,
+      "maxCssBytes": 4096,
+      "maxJsBytes": 8192,
+      "maxRequests": 7,
+      "maxDomNodes": 112
+    }
+  }
+}

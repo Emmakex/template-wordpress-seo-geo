@@ -14,7 +14,7 @@ The project aligns with current Core Web Vitals guidance for good user experienc
 
 Reference: https://developers.google.com/search/docs/appearance/core-web-vitals
 
-These are field-oriented targets. CI lab budgets are proxies and must be calibrated so they catch regressions without pretending to guarantee field results.
+These are field-oriented targets. CI lab budgets are proxies and must catch regressions without pretending to guarantee field results.
 
 ## Frontend defaults
 
@@ -85,28 +85,52 @@ Dynamic endpoints such as Markdown/llms output must define deterministic cache b
 
 ## Performance budgets
 
-Initial CI budgets will be conservative until representative fixtures exist. The target contract is:
+Phase 2D locks the initial numeric CI budgets from representative real WordPress fixture evidence rather than guessed thresholds.
 
-- zero project-owned console errors;
-- no blocking third-party requests in the base fixture;
-- no project-owned render-blocking JS in the base fixture;
-- bounded CSS/JS transfer sizes tracked per release;
-- Lighthouse regression threshold for representative pages;
-- HTML document size and DOM complexity watched for major regressions.
+The authoritative machine-readable contract is `tests/performance/budgets.json`. The current base fixture enforces, for both EN and ES:
 
-Exact numeric bundle/transfer budgets will be locked in Phase 2 after the first real theme patterns provide a meaningful baseline.
+- Lighthouse performance score >= 95;
+- lab LCP <= 1,200 ms;
+- lab CLS <= 0.05;
+- Total Blocking Time <= 100 ms;
+- total transfer <= 26,624 B;
+- HTML transfer <= 14,336 B;
+- external CSS transfer <= 4,096 B;
+- total JavaScript transfer <= 8,192 B;
+- requests <= 7;
+- DOM nodes <= 112;
+- third-party requests = 0;
+- project-owned frontend JavaScript = 0 B.
+
+These budgets are regression controls for the current foundation fixture. They are not universal budgets for every future preset or content-heavy page. A scoped feature/preset may need its own measured contract, but it must not silently weaken the base fixture.
+
+The measured baseline, rationale, runner evidence and limitations are recorded in `docs/PERFORMANCE_BASELINE.md`.
 
 ## Measurement strategy
 
 CI/lab:
-- Lighthouse on representative fixtures;
-- static asset size report;
-- optional WebPageTest/PSI integration later if stable and cost-effective.
+- Lighthouse 13.4.1 on representative EN/ES WordPress fixtures;
+- three samples per language with median aggregation;
+- transfer sizes by resource type;
+- total requests, third-party requests and project-owned JS;
+- DOM size;
+- clean WordPress runtime diagnostics;
+- raw Lighthouse JSON preserved as CI evidence.
 
 Production:
 - Search Console Core Web Vitals and/or RUM when a deployment enables it;
 - compare field data against lab assumptions;
 - log material performance regressions in `docs/engineering/ERRORS_AND_SOLUTIONS.md`.
+
+## Budget-change rule
+
+A failing budget is not fixed by raising a number without evidence. A deliberate budget change requires:
+
+- before/after measurement;
+- the reason the extra cost is necessary;
+- the user/product benefit;
+- validation that the broader field targets remain realistic;
+- updated documentation and regression coverage.
 
 ## Acceptance
 
