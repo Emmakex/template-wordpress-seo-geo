@@ -74,6 +74,6 @@ final class LanguageManager {
 		$locale = str_replace( '-', '_', $this->current_locale() );
 		$parts  = explode( '_', $locale );
 
-		return strtolower( $parts[0] ?? $locale );
+		return strtolower( $parts[0] );
 	}
 }
