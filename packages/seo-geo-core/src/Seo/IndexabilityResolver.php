@@ -62,7 +62,7 @@ final class IndexabilityResolver {
 		 */
 		$filtered = apply_filters( 'seo_geo_indexability_state', $state );
 
-		if ( is_string( $filtered ) && in_array( $filtered, self::STATES, true ) ) {
+		if ( in_array( $filtered, self::STATES, true ) ) {
 			return $filtered;
 		}
 
