@@ -49,6 +49,7 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/PRODUCT_VISION.md`
 - `docs/ARCHITECTURE.md`
 - `docs/SEO_GEO_SPEC.md`
+- `docs/NATIVE_SEO.md`
 - `docs/MULTILINGUAL.md`
 - `docs/PERFORMANCE.md`
 - `docs/ACCESSIBILITY.md`
