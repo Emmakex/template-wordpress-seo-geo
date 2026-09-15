@@ -65,9 +65,14 @@ final class MetaDescriptionResolver {
 			return null;
 		}
 
+		$charset = get_bloginfo( 'charset' );
+		if ( '' === $charset ) {
+			$charset = 'UTF-8';
+		}
+
 		$text = strip_shortcodes( $source );
 		$text = wp_strip_all_tags( $text, true );
-		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ?: 'UTF-8' );
+		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, $charset );
 		$text = preg_replace( '/\s+/u', ' ', $text );
 
 		if ( ! is_string( $text ) ) {
