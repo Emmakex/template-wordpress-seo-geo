@@ -44,10 +44,10 @@ final class NativeSeoPresenter {
 	/**
 	 * Create the native presenter.
 	 *
-	 * @param SeoOutputAuthority     $authority    Output authority.
-	 * @param IndexabilityResolver   $indexability Indexability resolver.
-	 * @param CanonicalResolver      $canonical    Canonical resolver.
-	 * @param MetaDescriptionResolver $description Description resolver.
+	 * @param SeoOutputAuthority      $authority    Output authority.
+	 * @param IndexabilityResolver    $indexability Indexability resolver.
+	 * @param CanonicalResolver       $canonical    Canonical resolver.
+	 * @param MetaDescriptionResolver $description  Description resolver.
 	 */
 	public function __construct(
 		SeoOutputAuthority $authority,
