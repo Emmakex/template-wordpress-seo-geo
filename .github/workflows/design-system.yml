@@ -1,0 +1,48 @@
+name: Design System CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/theme.json'
+      - 'scripts/ci/validate-design-system.php'
+      - '.github/workflows/design-system.yml'
+      - 'docs/DESIGN_SYSTEM.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-theme/theme.json'
+      - 'scripts/ci/validate-design-system.php'
+      - '.github/workflows/design-system.yml'
+      - 'docs/DESIGN_SYSTEM.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: design-system-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  design-system:
+    name: Theme token contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Validate design-system script syntax
+        run: php -l scripts/ci/validate-design-system.php
+
+      - name: Validate semantic tokens and contrast
+        run: php scripts/ci/validate-design-system.php
