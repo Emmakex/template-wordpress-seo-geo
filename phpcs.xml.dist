@@ -17,10 +17,12 @@
   <rule ref="WordPress">
     <!--
       The Core intentionally uses a small namespaced autoloader and PSR-style
-      class paths. WordPress.Files.FileName.InvalidClassFileName assumes the
-      classic class-*.php convention, so that filename-only sniff is excluded.
-      All other WordPress rules remain active.
+      class paths. The two filename sniffs below enforce classic WordPress
+      lowercase/class-*.php filenames, which are incompatible with that
+      deliberate autoload contract. Only filename convention is excluded;
+      all naming, documentation, security and interoperability rules remain on.
     -->
     <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+    <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
   </rule>
 </ruleset>
