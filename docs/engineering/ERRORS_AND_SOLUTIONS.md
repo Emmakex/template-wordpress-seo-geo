@@ -140,14 +140,14 @@ Keep all WP-CLI calls behind the single `wp_cli()` helper so image invocation se
 
 Do not infer Docker image CMD behavior from the logical command name. When `docker run IMAGE args...` supplies arguments explicitly, verify whether the image entrypoint expects a binary name or a subcommand.
 
-## ERR-2026-002 — Design-system validator used invalid foreach destructuring
+## ERR-2026-002 — CI validator used invalid foreach destructuring
 
 **Status:** resolved
 **First seen:** 2026-09-15
 **Last seen:** 2026-09-15
 **Area:** ci / theme
-**Signature:** `fb38eec22c88`
-**Reference:** PR #5; failing Design System CI run `34914017559` / job `104207579105`; passing run `34914490756` / job `104209041351`
+**Signatures:** initial `fb38eec22c88`; recurrence `4d480edaa2d5`
+**Reference:** PR #5 and PR #6; initial failing run `34914017559` / job `104207579105`; recurrence run `34915126783` / job `104210994598`
 
 ### Symptom / context
 
@@ -157,41 +157,60 @@ The first Phase 2A Design System CI run failed before the semantic-token/contras
 PHP Parse error: syntax error, unexpected token ")", expecting "->" or "?->" or "{" or "[" in scripts/ci/validate-design-system.php on line 233
 ```
 
-Because the failing step was a direct `php -l` invocation, the initial failure itself was still raw log output rather than the repository's structured diagnostic format.
+The same root cause reappeared while introducing the Phase 2B pattern validator. This time the structured lint wrapper immediately reduced it to:
+
+```text
+file_line: scripts/ci/validate-patterns.php:125
+error_signature: 4d480edaa2d5
+```
+
+The recurrence happened during development and was blocked by CI before merge.
 
 ### Root cause
 
-Confirmed. The contrast loop attempted to destructure each tuple with:
+Confirmed. Both validators attempted tuple destructuring with `array(...)`, for example:
 
 ```php
-foreach ( $contrast_contracts as array( $foreground_slug, $background_slug, $minimum ) )
+foreach ( $expected as $filename => array( $expected_slug, $expected_categories ) )
 ```
 
-`array(...)` is an array-construction expression, not valid foreach destructuring syntax. PHP foreach destructuring must use `list(...)` or square-bracket destructuring.
+`array(...)` constructs an array; it is not valid foreach destructuring syntax. PHP foreach destructuring must use `list(...)` or square-bracket destructuring.
 
 ### Solution
 
-The loop now uses `list( $foreground_slug, $background_slug, $minimum )`. In addition, `scripts/ci/php-lint-diagnostic.sh` was added as a reusable wrapper around `php -l` so syntax failures report pipeline, run, job, step, command, file/line, expected/received and a deterministic signature.
+Both loops use `list(...)`. `scripts/ci/php-lint-diagnostic.sh` wraps `php -l` so syntax failures report pipeline, run, job, step, command, file/line, expected/received and a deterministic signature.
+
+After the PR #6 recurrence, the wrapper was strengthened with an explicit pre-lint guard for the repeated `foreach ... as array(` pattern. If it appears again in a linted CI PHP file, the diagnostic reports a **confirmed** root cause and instructs the developer to use `list(...)` or `[...]` before generic PHP parsing begins.
 
 ### Validation
 
-Design System CI run `34914490756`, job `104209041351`, passed all steps:
+Initial resolution:
 
-- diagnostic wrapper shell syntax;
-- PHP syntax for `validate-design-system.php`;
-- semantic design-system contract;
-- automated critical contrast calculations.
+- Design System CI run `34914490756`, job `104209041351`, passed wrapper syntax, PHP syntax, semantic-token validation and contrast calculations.
 
-The successful contract output confirmed 8 semantic colors, 8 spacing tokens, 7 font sizes, system fonts only and all critical contrast pairs passing.
+Recurrence resolution:
+
+- Pattern Contract CI run `34915350804` passed all seven pattern PHP files and the reusable pattern contract after the `list(...)` fix;
+- PHP Quality CI run `34915350787` passed WPCS and PHPStan level 6 after pattern header corrections;
+- WordPress Smoke CI run `34915478691`, job `104212048598`, confirmed the real WordPress fixture with **7/7 theme patterns registered**.
 
 ### Prevention / guardrail
 
-CI validators are production engineering code too. PHP validator syntax must go through `scripts/ci/php-lint-diagnostic.sh` rather than a raw `php -l` workflow command. This guarantees future validator parse errors are reduced to the same actionable diagnostic contract as application/test failures.
+CI validators are production engineering code too. PHP validator syntax must go through `scripts/ci/php-lint-diagnostic.sh` rather than raw `php -l` workflow commands.
+
+The wrapper now has two layers:
+
+1. a targeted guard for the known invalid `foreach ... as array(` destructuring class;
+2. generic PHP syntax linting for every other parse failure.
+
+This does not claim developers can never type the same mistake; it ensures the known class cannot pass the validation boundary silently or reach merge.
 
 ### Regression coverage
 
-`.github/workflows/design-system.yml` validates the diagnostic wrapper with `bash -n`, then lints `scripts/ci/validate-design-system.php` through the wrapper before executing the design-system contract.
+- `.github/workflows/design-system.yml` lints `validate-design-system.php` through the wrapper before executing its contract;
+- `.github/workflows/patterns.yml` lints `validate-patterns.php` and all seven theme pattern PHP files through the same wrapper;
+- `scripts/ci/php-lint-diagnostic.sh` contains the targeted recurrence guard before invoking `php -l`.
 
 ### Notes/history
 
-When destructuring tuples in PHP foreach loops, use `list(...)` or `[...]`; do not use `array(...)` as if it were a destructuring form.
+When destructuring tuples in PHP foreach loops, use `list(...)` or `[...]`; never use `array(...)` as a destructuring form. A recurrence should update this incident rather than create a duplicate root-cause entry.

@@ -116,44 +116,60 @@ Phase 2 is deliberately split so visual work cannot outrun accessibility/perform
 
 ### Microphase 2A — semantic design system
 
-Status: **in progress on `feature/phase-2a-design-system`**
+Status: **complete**
 
-Scope:
+Delivered:
 
 - semantic color tokens;
-- automated critical contrast pairs;
-- system-only font families;
+- automated critical WCAG contrast pairs;
+- system-only Sans/Serif font families with no remote font requests;
 - stable + bounded fluid typography scale;
 - spacing scale;
 - border-radius scale;
 - curated WordPress editor presets;
 - global body/heading/link/button/caption styles via `theme.json`;
-- zero remote font requests;
-- design-system documentation;
-- dedicated structured Design System CI.
+- dedicated `Design System CI`;
+- `docs/DESIGN_SYSTEM.md`;
+- structured PHP lint diagnostics for validator code.
 
-Exit criteria:
+`ERR-2026-002` captured and closed the first Design System validator syntax failure. The invalid foreach destructuring was fixed in code, and `scripts/ci/php-lint-diagnostic.sh` now ensures validator parse failures are structured instead of raw log output.
 
-- WordPress accepts the updated theme in the real runtime smoke;
-- Design System CI validates token sets and contrast;
-- Package/Foundation/PHP Quality gates affected by the change remain green;
-- PR merge + post-merge `main` verification.
+PR #5 was merged. Post-merge `main` SHA `01928349f8e1ffd19f22d8f098a22c400b3bc2f1` passed:
+
+- Foundation CI run `34914619987`;
+- Phase 1 Package CI run `34914619939`;
+- Design System CI run `34914619985`;
+- PHP Quality CI run `34914620034`;
+- WordPress Smoke CI run `34914620027`.
 
 ### Microphase 2B — reusable core patterns
 
-Pending after 2A closes.
+Status: **in progress on `feature/phase-2b-core-patterns`**
 
-Planned patterns:
+Implemented scope:
 
-- hero;
-- CTA;
-- services/features;
-- trust/proof;
-- FAQ;
-- author/profile;
-- contact.
+- native theme `/patterns` registration model;
+- hero pattern;
+- CTA pattern;
+- services/features pattern;
+- trust/proof pattern with no fabricated claims;
+- FAQ pattern using native Details blocks and no Schema ownership;
+- author/profile pattern;
+- dependency-free contact pattern;
+- translation-ready escaped project copy;
+- no reusable H1 ownership;
+- semantic design-token consumption;
+- no embedded scripts/styles, remote dependencies or third-party blocks;
+- `docs/PATTERNS.md`;
+- dedicated structured `Pattern Contract CI`.
 
-Patterns must consume semantic tokens rather than duplicate raw design values.
+Required closure:
+
+- all seven pattern PHP files pass syntax/WPCS/PHPStan as applicable;
+- Pattern Contract CI proves headers, slugs, i18n, native blocks, token use, H1/Schema ownership and dependency rules;
+- real WordPress 7.1 smoke proves all expected theme pattern slugs are registered after activation;
+- Foundation/Package/Design System/PHP Quality gates affected by the change remain green;
+- PR merge + post-merge `main` verification.
 
 ### Microphase 2C — responsive + accessibility acceptance
 

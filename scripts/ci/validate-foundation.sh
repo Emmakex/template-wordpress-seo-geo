@@ -49,6 +49,7 @@ required_paths=(
   "docs/PERFORMANCE.md"
   "docs/ACCESSIBILITY.md"
   "docs/DESIGN_SYSTEM.md"
+  "docs/PATTERNS.md"
   "docs/PRESETS.md"
   "docs/COMPATIBILITY.md"
   "docs/CI_QUALITY_GATES.md"

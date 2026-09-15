@@ -44,6 +44,33 @@ JSON
   exit 1
 fi
 
+invalid_destructuring="$(grep -nE -m1 'foreach[[:space:]]*\([^)]*as[[:space:]]+(array[[:space:]]*\()' "$TARGET" || true)"
+if [[ -n "$invalid_destructuring" ]]; then
+  line="${invalid_destructuring%%:*}"
+  primary="Invalid foreach destructuring uses array(...); PHP requires list(...) or [...]."
+  file_line="${TARGET}:${line}"
+  sig="$(signature "php-lint:foreach-array-destructuring:${file_line}")"
+  cat <<JSON
+{
+  "schema_version": 1,
+  "pipeline": $(json_escape "$PIPELINE"),
+  "run_id": $(json_escape "$RUN_ID"),
+  "run_attempt": $(json_escape "$RUN_ATTEMPT"),
+  "job": $(json_escape "$JOB"),
+  "step": "php-lint",
+  "command": $(json_escape "php-lint-diagnostic ${TARGET}"),
+  "exit_code": 1,
+  "primary_error": $(json_escape "$primary"),
+  "file_line": $(json_escape "$file_line"),
+  "expected": "foreach destructuring with list(...) or [...]",
+  "received": "foreach destructuring with array(...) construction syntax",
+  "error_signature": $(json_escape "$sig"),
+  "root_cause_status": "confirmed"
+}
+JSON
+  exit 1
+fi
+
 output="$(php -l "$TARGET" 2>&1)"
 status=$?
 

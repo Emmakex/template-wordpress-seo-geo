@@ -53,6 +53,7 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/PERFORMANCE.md`
 - `docs/ACCESSIBILITY.md`
 - `docs/DESIGN_SYSTEM.md`
+- `docs/PATTERNS.md`
 - `docs/PRESETS.md`
 - `docs/COMPATIBILITY.md`
 - `docs/CI_QUALITY_GATES.md`

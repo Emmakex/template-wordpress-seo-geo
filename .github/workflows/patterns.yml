@@ -1,0 +1,61 @@
+name: Pattern Contract CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/patterns/**'
+      - 'packages/seo-geo-theme/theme.json'
+      - 'scripts/ci/validate-patterns.php'
+      - 'scripts/ci/php-lint-diagnostic.sh'
+      - '.github/workflows/patterns.yml'
+      - 'docs/PATTERNS.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-theme/patterns/**'
+      - 'packages/seo-geo-theme/theme.json'
+      - 'scripts/ci/validate-patterns.php'
+      - 'scripts/ci/php-lint-diagnostic.sh'
+      - '.github/workflows/patterns.yml'
+      - 'docs/PATTERNS.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: patterns-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  patterns:
+    name: Reusable pattern contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Validate diagnostic wrapper syntax
+        run: bash -n scripts/ci/php-lint-diagnostic.sh
+
+      - name: Validate pattern PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ci/php-lint-diagnostic.sh scripts/ci/validate-patterns.php
+          while IFS= read -r file; do
+            bash scripts/ci/php-lint-diagnostic.sh "$file"
+          done < <(find packages/seo-geo-theme/patterns -maxdepth 1 -type f -name '*.php' -print | sort)
+
+      - name: Validate reusable pattern contract
+        run: php scripts/ci/validate-patterns.php
