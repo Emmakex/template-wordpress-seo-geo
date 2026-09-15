@@ -25,7 +25,7 @@ Completed:
 
 ## Phase 1 — Minimal installable packages
 
-Status: **in progress**
+Status: **in progress — final microphase 1C**
 
 ### Microphase 1A — package skeleton and static contract
 
@@ -62,7 +62,7 @@ Completed:
 
 ### Microphase 1B — real WordPress activation smoke
 
-Status: **complete on PR; pending post-merge main verification**
+Status: **complete**
 
 Tested baseline:
 
@@ -85,20 +85,47 @@ Completed validation:
 - exact compatibility matrix documented in `docs/COMPATIBILITY.md`;
 - first CI integration incident captured and resolved as `ERR-2026-001`.
 
-Passing focused validation: WordPress Smoke CI run `34911497605`, job `104199821991`.
+Passing PR validation: WordPress Smoke CI run `34911640680`.
+Passing post-merge `main` validation: WordPress Smoke CI run `34911791718`.
 
 ### Microphase 1C — WordPress coding standards and static analysis
 
-Status: **pending after 1B post-merge verification**
+Status: **in progress on PR #4**
 
-Required before Phase 1 can close:
+Implemented:
 
-- define reproducible PHP dev-tool dependencies;
-- WordPress Coding Standards gate for project PHP;
-- PHP static analysis at a documented initial level;
-- keep tooling scoped to project-owned package PHP;
-- structured diagnostics for lint/static-analysis failures;
-- document justified exclusions/baseline rather than silently suppressing errors.
+- exact pinned PHP development toolchain in `composer.json`;
+- WPCS `3.4.1` / PHPCS `3.13.6` gate;
+- PHPStan `2.2.14` + `phpstan-wordpress` `2.0.4` at level 6;
+- WordPress `7.1.0` stubs;
+- project-only PHP scope;
+- no PHPStan baseline or ignored-error file;
+- structured diagnostics extracting first WPCS file/line/sniff or PHPStan file/line/identifier;
+- quality workflow isolated from unrelated gates;
+- dependency-resolution artifact for the generated Composer lock;
+- Core API adjusted to WordPress snake_case conventions before public SEO behavior exists;
+- runtime smoke updated and revalidated after the method-name changes.
+
+Narrow documented WPCS exception:
+
+- `WordPress.Files.FileName.InvalidClassFileName`;
+- `WordPress.Files.FileName.NotHyphenatedLowercase`.
+
+These two sniffs only conflict with the deliberate namespaced PSR-style class-path/autoload contract. No security, escaping, documentation or API naming rules are suppressed.
+
+Observed initial adoption failure:
+
+- WPCS correctly exposed reserved parameter naming, camelCase methods, missing PHPDoc and filename convention conflicts;
+- the first structured diagnostic identified `seo-geo-core.php:27:30`, source `Universal.NamingConventions.NoReservedKeywordParameterNames.classFound`, signature `e85b79b82c63`;
+- real code findings were fixed; only the two architectural filename sniffs were excluded.
+
+Current required closure:
+
+- clean WPCS rerun;
+- clean PHPStan level 6 run;
+- final PR #4 required gates green;
+- merge;
+- post-merge `main` verification green.
 
 ### Phase 1 exit criteria
 
@@ -109,6 +136,8 @@ Required before Phase 1 can close:
 - documented PHP static-analysis gate passes;
 - documentation matches the tested compatibility matrix;
 - all Phase 1 PRs pass required CI and post-merge `main` verification.
+
+Phase 2 may not begin until every item above is complete.
 
 ## Phase 2 — Design system + performance baseline
 
