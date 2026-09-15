@@ -1,12 +1,12 @@
 # SEO GEO Theme
 
-This package will become the installable lightweight WordPress block theme.
+Installable lightweight WordPress block theme for the reusable SEO + GEO foundation.
 
 ## Owns
 
 - `theme.json` design tokens and global styles;
 - templates and template parts;
-- reusable block patterns;
+- reusable native block patterns;
 - theme-specific CSS/JS only when required;
 - semantic document structure;
 - accessible presentation defaults.
@@ -22,6 +22,23 @@ This package will become the installable lightweight WordPress block theme.
 
 Those belong to `packages/seo-geo-core`.
 
-## Phase 1 target
+## Current foundation
 
-The first installable version will include `style.css`, `theme.json` v3, `templates/index.html`, core template parts and basic page/single/archive/404 templates.
+The theme currently provides:
+
+- `theme.json` v3 semantic design system;
+- system-font typography with no remote font dependency;
+- page/single/archive/404 block templates;
+- header/footer template parts;
+- seven reusable native patterns in `patterns/`:
+  - hero;
+  - CTA;
+  - services/features;
+  - trust/proof;
+  - FAQ;
+  - author/profile;
+  - contact.
+
+Patterns use theme presets instead of creating a second visual system. They do not emit Schema, own page-level H1s, embed remote assets or require third-party blocks.
+
+See `docs/DESIGN_SYSTEM.md` and `docs/PATTERNS.md` for the contracts enforced by CI.
