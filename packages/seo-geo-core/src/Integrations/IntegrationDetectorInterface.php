@@ -9,8 +9,21 @@ declare(strict_types=1);
 
 namespace SeoGeo\Core\Integrations;
 
+/**
+ * Defines the normalized runtime integration detector contract.
+ */
 interface IntegrationDetectorInterface {
-	public function seoProvider(): string;
+	/**
+	 * Return the active SEO provider identifier.
+	 *
+	 * @return string
+	 */
+	public function seo_provider(): string;
 
-	public function languageProvider(): string;
+	/**
+	 * Return the active language provider identifier.
+	 *
+	 * @return string
+	 */
+	public function language_provider(): string;
 }
