@@ -5,7 +5,10 @@
  * Categories: featured
  * Description: Three reusable cards for services, features or capability summaries.
  * Viewport Width: 1200
+ *
+ * @package SeoGeoTheme
  */
+
 ?>
 <!-- wp:group {"align":"wide","style":{"spacing":{"padding":{"top":"var:preset|spacing|2xl","bottom":"var:preset|spacing|2xl"}}},"layout":{"type":"constrained"}} -->
 <div class="wp-block-group alignwide" style="padding-top:var(--wp--preset--spacing--2-xl);padding-bottom:var(--wp--preset--spacing--2-xl)">
