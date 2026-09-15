@@ -105,6 +105,7 @@ wp_cli() {
     -e "WORDPRESS_DB_PASSWORD=${DB_PASSWORD}" \
     -e "WORDPRESS_DB_NAME=${DB_NAME}" \
     "$WPCLI_IMAGE" \
+    wp \
     "$@" \
     --path=/var/www/html
 }
