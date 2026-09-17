@@ -216,7 +216,7 @@ final class NativeLanguageRouter {
 			}
 		}
 
-		return str_replace( '\\"', '"', $output );
+		return $output;
 	}
 
 	/**
