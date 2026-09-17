@@ -8,6 +8,7 @@ on:
       - 'packages/seo-geo-core/src/Runtime.php'
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/native-language-smoke.sh'
+      - 'scripts/ci/native-routing-smoke.sh'
       - '.github/workflows/native-multilingual.yml'
       - 'docs/MULTILINGUAL.md'
       - 'docs/NATIVE_MULTILINGUAL.md'
@@ -21,6 +22,7 @@ on:
       - 'packages/seo-geo-core/src/Runtime.php'
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/native-language-smoke.sh'
+      - 'scripts/ci/native-routing-smoke.sh'
       - '.github/workflows/native-multilingual.yml'
       - 'docs/MULTILINGUAL.md'
       - 'docs/NATIVE_MULTILINGUAL.md'
@@ -37,7 +39,7 @@ jobs:
   native-language:
     name: Zero-plugin native language contract
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -53,6 +55,7 @@ jobs:
         run: |
           bash -n scripts/build-theme-package.sh
           bash -n scripts/ci/native-language-smoke.sh
+          bash -n scripts/ci/native-routing-smoke.sh
           php -l packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php
           php -l packages/seo-geo-core/src/Language/NativeLanguageRouter.php
           php -l packages/seo-geo-core/src/Language/NativeWordPressAdapter.php
@@ -61,3 +64,6 @@ jobs:
 
       - name: WordPress zero-plugin native language acceptance
         run: bash scripts/ci/native-language-smoke.sh
+
+      - name: WordPress zero-plugin native routing acceptance
+        run: bash scripts/ci/native-routing-smoke.sh
