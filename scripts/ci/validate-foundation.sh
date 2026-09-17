@@ -48,6 +48,7 @@ required_paths=(
   "docs/NATIVE_SEO.md"
   "docs/DISCOVERY_METADATA.md"
   "docs/MULTILINGUAL.md"
+  "docs/NATIVE_MULTILINGUAL.md"
   "docs/PERFORMANCE.md"
   "docs/ACCESSIBILITY.md"
   "docs/DESIGN_SYSTEM.md"
@@ -62,11 +63,14 @@ required_paths=(
   "packages/seo-geo-theme/inc/seo-geo-core/bootstrap.php"
   "packages/seo-geo-core/README.md"
   "packages/seo-geo-core/src/Runtime.php"
+  "packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php"
   "packages/seo-geo-core/src/Seo/OpenGraphResolver.php"
   "packages/seo-geo-core/src/Seo/BreadcrumbResolver.php"
   "scripts/build-theme-package.sh"
   "scripts/ci/self-contained-theme-smoke.sh"
+  "scripts/ci/native-language-smoke.sh"
   ".github/workflows/self-contained-theme.yml"
+  ".github/workflows/native-multilingual.yml"
   "presets/README.md"
 )
 

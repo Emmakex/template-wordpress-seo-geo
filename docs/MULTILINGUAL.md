@@ -6,30 +6,36 @@ Multilingual support is part of the foundation, not a later compatibility patch.
 
 Customer-facing functionality ships EN/ES together. Strings must be internationalization-ready from the first implementation.
 
+The product baseline is the **self-contained theme with its embedded runtime**. No multilingual plugin is required to declare the native language set. The Phase 4A configuration contract is defined in `docs/NATIVE_MULTILINGUAL.md`.
+
 ## Adapter model
 
-The Core plugin exposes one language service and hides vendor-specific APIs behind adapters:
+The Core runtime exposes one language service and hides provider-specific APIs behind adapters:
 
 ```text
 LanguageManager
 ├── NativeWordPressAdapter
-├── WPMLAdapter
-└── PolylangAdapter
+│   └── NativeLanguageConfiguration  (baseline)
+├── WPMLAdapter                       (optional future adapter)
+└── PolylangAdapter                   (optional future adapter)
 ```
 
-Other modules never call WPML or Polylang directly. They request normalized data such as:
+Other modules never read multilingual plugin APIs or the native WordPress option directly. They request normalized data such as:
 
 - current language/locale;
-- default language;
-- translated resource URL;
-- alternate URLs;
+- default language/locale;
+- configured language map;
+- translated resource URL once routing/translation relationships exist;
+- alternate URLs once hreflang support exists;
 - locale-aware home URL;
 - whether a translation exists;
 - language direction where needed.
 
+Phase 4A intentionally implements only the configuration-facing subset. URL relationships and locale switching are separate microphases so incomplete configuration cannot publish contradictory SEO signals.
+
 ## URL strategy
 
-The adapter must support clean localized URLs, for example:
+The native runtime must support clean localized URLs, for example:
 
 ```text
 /es/servicios/seo/
@@ -37,7 +43,9 @@ The adapter must support clean localized URLs, for example:
 /ca/serveis/seo/
 ```
 
-Slug translation belongs to the selected multilingual provider/preset strategy. The Core does not invent aliases independently of WordPress routing.
+Declaring a language in `seo_geo_native_languages` does not create those routes by itself. Native route ownership, request locale switching and translated slug relationships require their own implementation and acceptance gate.
+
+When an optional external multilingual provider is used later, slug translation belongs to that provider/preset strategy. The Core does not invent aliases independently of the authoritative routing system.
 
 ## Hreflang
 
@@ -112,12 +120,13 @@ All customer-facing strings must:
 - escape output according to context after translation;
 - ship EN/ES translations together for project-owned user-facing changes.
 
-## Initial integration priority
+## Integration priority
 
-1. Native/no multilingual plugin (single-language sites remain valid).
-2. WPML adapter.
-3. Polylang adapter.
-4. WooCommerce multilingual integration in ecommerce phase.
+1. Native WordPress fallback plus native language configuration, with no multilingual plugin required.
+2. Native localized routing, locale switching and reciprocal hreflang acceptance.
+3. Optional WPML adapter after the native baseline is complete.
+4. Optional Polylang adapter after the native baseline is complete.
+5. WooCommerce multilingual integration in the ecommerce phase.
 
 ## Multilingual acceptance gates
 
@@ -134,3 +143,5 @@ For any change that affects URLs, metadata, templates or content discovery, test
 - sitemaps/provider integration does not duplicate entries;
 - llms/Markdown alternates preserve locale if those features are enabled;
 - customer-facing strings exist in EN and ES.
+
+Phase 4A has a narrower acceptance gate by design: it proves native monolingual fallback, valid ES/EN configuration and atomic invalid-configuration fallback without changing routes or metadata ownership.

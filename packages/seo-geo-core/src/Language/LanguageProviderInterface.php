@@ -15,29 +15,45 @@ namespace SeoGeo\Core\Language;
 interface LanguageProviderInterface {
 	/**
 	 * Return the stable provider identifier.
-	 *
-	 * @return string
 	 */
 	public function id(): string;
 
 	/**
 	 * Return the current WordPress locale.
-	 *
-	 * @return string
 	 */
 	public function current_locale(): string;
 
 	/**
+	 * Return the current normalized language code.
+	 */
+	public function current_language_code(): string;
+
+	/**
 	 * Return the configured default locale.
-	 *
-	 * @return string
 	 */
 	public function default_locale(): string;
 
 	/**
-	 * Report whether the active provider supports multiple languages.
+	 * Return the configured default language code.
+	 */
+	public function default_language_code(): string;
+
+	/**
+	 * Return the available language-code to locale map.
 	 *
-	 * @return bool
+	 * @return array<string, string>
+	 */
+	public function available_languages(): array;
+
+	/**
+	 * Resolve a configured locale for a language code.
+	 *
+	 * @param string $language_code Normalized language code to resolve.
+	 */
+	public function locale_for_language( string $language_code ): ?string;
+
+	/**
+	 * Report whether the active provider supports multiple languages.
 	 */
 	public function is_multilingual(): bool;
 }

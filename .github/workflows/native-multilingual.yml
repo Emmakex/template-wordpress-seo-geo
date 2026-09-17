@@ -1,0 +1,62 @@
+name: Native Multilingual CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/src/Language/**'
+      - 'packages/seo-geo-core/src/Runtime.php'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/native-language-smoke.sh'
+      - '.github/workflows/native-multilingual.yml'
+      - 'docs/MULTILINGUAL.md'
+      - 'docs/NATIVE_MULTILINGUAL.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/src/Language/**'
+      - 'packages/seo-geo-core/src/Runtime.php'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/native-language-smoke.sh'
+      - '.github/workflows/native-multilingual.yml'
+      - 'docs/MULTILINGUAL.md'
+      - 'docs/NATIVE_MULTILINGUAL.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-multilingual-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-language:
+    name: Zero-plugin native language contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          bash --version | head -n 1
+          python3 --version
+          docker version
+
+      - name: Validate language acceptance scripts
+        run: |
+          bash -n scripts/build-theme-package.sh
+          bash -n scripts/ci/native-language-smoke.sh
+          php -l packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php
+          php -l packages/seo-geo-core/src/Language/NativeWordPressAdapter.php
+          php -l packages/seo-geo-core/src/Language/LanguageManager.php
+          php -l packages/seo-geo-core/src/Runtime.php
+
+      - name: WordPress zero-plugin native language acceptance
+        run: bash scripts/ci/native-language-smoke.sh

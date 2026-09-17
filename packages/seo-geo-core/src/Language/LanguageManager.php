@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\Core\Language;
 
 /**
- * Exposes one normalized language API to the rest of the Core plugin.
+ * Exposes one normalized language API to the rest of Core.
  */
 final class LanguageManager {
 	/**
@@ -31,8 +31,6 @@ final class LanguageManager {
 
 	/**
 	 * Return the active provider identifier.
-	 *
-	 * @return string
 	 */
 	public function provider_id(): string {
 		return $this->provider->id();
@@ -40,40 +38,54 @@ final class LanguageManager {
 
 	/**
 	 * Return the current locale.
-	 *
-	 * @return string
 	 */
 	public function current_locale(): string {
 		return $this->provider->current_locale();
 	}
 
 	/**
+	 * Return the current normalized language code.
+	 */
+	public function current_language_code(): string {
+		return $this->provider->current_language_code();
+	}
+
+	/**
 	 * Return the default locale.
-	 *
-	 * @return string
 	 */
 	public function default_locale(): string {
 		return $this->provider->default_locale();
 	}
 
 	/**
-	 * Report whether the active provider is multilingual.
-	 *
-	 * @return bool
+	 * Return the default normalized language code.
 	 */
-	public function is_multilingual(): bool {
-		return $this->provider->is_multilingual();
+	public function default_language_code(): string {
+		return $this->provider->default_language_code();
 	}
 
 	/**
-	 * Return the normalized two-letter-or-provider language code.
+	 * Return the normalized language-code to locale map.
 	 *
-	 * @return string
+	 * @return array<string, string>
 	 */
-	public function current_language_code(): string {
-		$locale = str_replace( '-', '_', $this->current_locale() );
-		$parts  = explode( '_', $locale );
+	public function available_languages(): array {
+		return $this->provider->available_languages();
+	}
 
-		return strtolower( $parts[0] );
+	/**
+	 * Resolve a configured WordPress locale for a language code.
+	 *
+	 * @param string $language_code Normalized language code to resolve.
+	 */
+	public function locale_for_language( string $language_code ): ?string {
+		return $this->provider->locale_for_language( $language_code );
+	}
+
+	/**
+	 * Report whether the active provider is multilingual.
+	 */
+	public function is_multilingual(): bool {
+		return $this->provider->is_multilingual();
 	}
 }

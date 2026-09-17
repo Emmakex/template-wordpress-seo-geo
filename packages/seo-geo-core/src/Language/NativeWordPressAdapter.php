@@ -1,6 +1,6 @@
 <?php
 /**
- * Native single-language WordPress adapter.
+ * Native WordPress language adapter.
  *
  * @package SeoGeoCore
  */
@@ -10,13 +10,27 @@ declare(strict_types=1);
 namespace SeoGeo\Core\Language;
 
 /**
- * Adapts a standard single-language WordPress install to the language contract.
+ * Adapts WordPress and the native language configuration to the language contract.
  */
 final class NativeWordPressAdapter implements LanguageProviderInterface {
 	/**
-	 * Return the stable provider identifier.
+	 * Native server-side configuration.
 	 *
-	 * @return string
+	 * @var NativeLanguageConfiguration
+	 */
+	private NativeLanguageConfiguration $configuration;
+
+	/**
+	 * Create the native adapter.
+	 *
+	 * @param NativeLanguageConfiguration|null $configuration Validated configuration.
+	 */
+	public function __construct( ?NativeLanguageConfiguration $configuration = null ) {
+		$this->configuration = $configuration ?? NativeLanguageConfiguration::from_wordpress();
+	}
+
+	/**
+	 * Return the stable provider identifier.
 	 */
 	public function id(): string {
 		return 'native';
@@ -25,29 +39,66 @@ final class NativeWordPressAdapter implements LanguageProviderInterface {
 	/**
 	 * Return the current WordPress locale.
 	 *
-	 * @return string
+	 * Phase 4A does not change request routing or switch locales. It reports the
+	 * locale that WordPress already resolved for the current execution context.
 	 */
 	public function current_locale(): string {
 		return get_locale();
 	}
 
 	/**
-	 * Return the configured default locale.
-	 *
-	 * @return string
+	 * Return the current normalized language code.
 	 */
-	public function default_locale(): string {
-		$locale = (string) get_option( 'WPLANG', '' );
+	public function current_language_code(): string {
+		$current_locale = $this->current_locale();
+		$configured     = $this->configuration->language_for_locale( $current_locale );
 
-		return '' !== $locale ? $locale : 'en_US';
+		if ( null !== $configured ) {
+			return $configured;
+		}
+
+		$parts = preg_split( '/[_-]/', $current_locale );
+		$code  = is_array( $parts ) && isset( $parts[0] ) ? strtolower( $parts[0] ) : '';
+
+		return 1 === preg_match( '/^[a-z]{2,3}$/', $code ) ? $code : $this->default_language_code();
 	}
 
 	/**
-	 * Native WordPress mode represents a single-language site.
+	 * Return the configured default locale.
+	 */
+	public function default_locale(): string {
+		return $this->configuration->default_locale();
+	}
+
+	/**
+	 * Return the configured default language code.
+	 */
+	public function default_language_code(): string {
+		return $this->configuration->default_language_code();
+	}
+
+	/**
+	 * Return all configured native languages.
 	 *
-	 * @return bool
+	 * @return array<string, string>
+	 */
+	public function available_languages(): array {
+		return $this->configuration->languages();
+	}
+
+	/**
+	 * Resolve a configured locale for a language code.
+	 *
+	 * @param string $language_code Normalized language code to resolve.
+	 */
+	public function locale_for_language( string $language_code ): ?string {
+		return $this->configuration->locale_for( $language_code );
+	}
+
+	/**
+	 * Report whether more than one native language is configured.
 	 */
 	public function is_multilingual(): bool {
-		return false;
+		return $this->configuration->is_multilingual();
 	}
 }
