@@ -54,6 +54,7 @@ jobs:
           bash -n scripts/build-theme-package.sh
           bash -n scripts/ci/native-language-smoke.sh
           php -l packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php
+          php -l packages/seo-geo-core/src/Language/NativeLanguageRouter.php
           php -l packages/seo-geo-core/src/Language/NativeWordPressAdapter.php
           php -l packages/seo-geo-core/src/Language/LanguageManager.php
           php -l packages/seo-geo-core/src/Runtime.php
