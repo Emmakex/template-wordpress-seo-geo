@@ -296,21 +296,40 @@ Adoption findings were fixed in code rather than suppressed:
 
 ### Microphase 3B — self-contained native SEO/GEO runtime
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #13:
 
-- extract context-neutral `SeoGeo\Core\Runtime` from the optional plugin wrapper;
-- boot the runtime directly from the theme;
-- build one installable theme package that embeds `packages/seo-geo-core/src` under `inc/seo-geo-core/src`;
-- prove the built theme works on WordPress 7.1 / PHP 8.2 with **zero active plugins**;
-- prove the runtime class is loaded from the theme bundle, not from `wp-content/plugins`;
-- preserve exactly one canonical and one expected meta description on an indexable fixture;
-- preserve one `noindex` robots output on a search fixture;
-- preserve clean PHP runtime diagnostics;
-- keep third-party plugin compatibility outside the critical path.
+- context-neutral `SeoGeo\Core\Runtime` extracted from the transitional plugin wrapper;
+- theme-owned runtime bootstrap under `inc/seo-geo-core/bootstrap.php`;
+- single-theme build through `scripts/build-theme-package.sh`;
+- reusable Core source embedded into the distributable theme under `inc/seo-geo-core/src`;
+- standalone Core plugin wrapper demoted to optional compatibility/development packaging;
+- dedicated `Self-contained Theme CI`;
+- real WordPress 7.1 / PHP 8.2 acceptance with **zero active plugins**;
+- explicit assertion that `wp-content/plugins/seo-geo-core` is absent;
+- reflection assertion proving `SeoGeo\Core\Runtime` is loaded from the built theme bundle;
+- native SEO authority preserved without an SEO plugin;
+- exactly one canonical and one expected meta description on an indexable fixture;
+- exactly one search robots meta containing `noindex`;
+- clean PHP runtime/debug logs;
+- Foundation contract hardened so the embedded bootstrap, Runtime, build script and zero-plugin workflow cannot silently disappear.
 
-PR #12 explored Yoast/Rank Math/AIOSEO interoperability but was intentionally closed unmerged after the product direction was clarified. That work is not part of the baseline dependency model.
+PR #12 explored Yoast/Rank Math/AIOSEO interoperability but was intentionally closed unmerged after the product direction was clarified. Third-party provider compatibility is optional and outside the baseline critical path.
+
+PR #13 passed all nine PR gates and was squash-merged as `a320cd3033e2a5ea0fbcc83dffac500a7eaf8c88`. Post-merge `main` passed all nine gates:
+
+- Accessibility & Responsive CI `35257573280`;
+- Self-contained Theme CI `35257573577`;
+- Design System CI `35257573373`;
+- Foundation CI `35257573446`;
+- WordPress Smoke CI `35257573636`;
+- Pattern Contract CI `35257573645`;
+- Performance Baseline CI `35257573410`;
+- PHP Quality CI `35257573415`;
+- Phase 1 Package CI `35257573523`.
+
+The dedicated zero-plugin post-merge run `35257573577` proves the distribution invariant on real WordPress rather than inferring it from repository layout. The first adoption run exposed a CI-harness namespace-escaping defect, recorded as `ERR-2026-006`; the runtime itself did not require a product fix.
 
 ### Microphase 3C — native discovery metadata
 
