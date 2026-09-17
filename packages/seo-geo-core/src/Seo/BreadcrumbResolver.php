@@ -105,7 +105,7 @@ final class BreadcrumbResolver {
 					continue;
 				}
 
-				$url = get_permalink( $ancestor );
+				$url     = get_permalink( $ancestor );
 				$items[] = $this->item(
 					get_the_title( $ancestor ),
 					is_string( $url ) ? $url : null,
@@ -117,7 +117,7 @@ final class BreadcrumbResolver {
 			if ( 0 < $posts_page_id ) {
 				$posts_page = get_post( $posts_page_id );
 				if ( $posts_page instanceof WP_Post ) {
-					$url = get_permalink( $posts_page );
+					$url     = get_permalink( $posts_page );
 					$items[] = $this->item(
 						get_the_title( $posts_page ),
 						is_string( $url ) ? $url : null,
@@ -159,7 +159,7 @@ final class BreadcrumbResolver {
 					continue;
 				}
 
-				$url = get_term_link( $ancestor );
+				$url     = get_term_link( $ancestor );
 				$items[] = $this->item(
 					$ancestor->name,
 					is_string( $url ) ? $url : null,
