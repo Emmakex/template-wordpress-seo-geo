@@ -75,6 +75,8 @@ final class LanguageManager {
 
 	/**
 	 * Resolve a configured WordPress locale for a language code.
+	 *
+	 * @param string $language_code Normalized language code to resolve.
 	 */
 	public function locale_for_language( string $language_code ): ?string {
 		return $this->provider->locale_for_language( $language_code );
