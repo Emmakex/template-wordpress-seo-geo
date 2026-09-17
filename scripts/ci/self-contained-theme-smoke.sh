@@ -118,12 +118,13 @@ printf '[self-contained] Building installable theme with embedded Core.\n'
 bash scripts/build-theme-package.sh "$BUILT_THEME" \
   || fail_smoke "theme-build" "Could not assemble self-contained theme" "build succeeds" "build failed" "bash scripts/build-theme-package.sh"
 
-[[ -f "${BUILT_THEME}/inc/seo-geo-core/src/Runtime.php" ]] \
-  || fail_smoke "embedded-runtime" "Built theme does not contain embedded SEO/GEO runtime" "Runtime.php bundled" "missing"
-[[ -f "${BUILT_THEME}/inc/seo-geo-core/src/Seo/OpenGraphResolver.php" ]] \
-  || fail_smoke "embedded-open-graph" "Built theme does not contain Open Graph resolver" "OpenGraphResolver.php bundled" "missing"
-[[ -f "${BUILT_THEME}/inc/seo-geo-core/src/Seo/BreadcrumbResolver.php" ]] \
-  || fail_smoke "embedded-breadcrumbs" "Built theme does not contain breadcrumb resolver" "BreadcrumbResolver.php bundled" "missing"
+for required_file in \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Runtime.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Seo/OpenGraphResolver.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Seo/BreadcrumbResolver.php"; do
+  [[ -f "$required_file" ]] \
+    || fail_smoke "embedded-runtime-file" "Built theme is missing embedded SEO/GEO runtime source" "${required_file}" "missing"
+done
 
 printf '[self-contained] Starting isolated WordPress fixture.\n'
 docker network create "$NETWORK" >/dev/null \
@@ -143,6 +144,7 @@ docker run -d \
 
 wait_for_db \
   || fail_smoke "database-ready" "MariaDB did not become ready" "database ready" "timeout"
+
 docker run -d \
   --name "$WP_CONTAINER" \
   --network "$NETWORK" \
@@ -209,7 +211,6 @@ if ! AUTHORITY="$(wp_cli eval 'echo \SeoGeo\Core\Runtime::seo_authority()?->prov
   ERROR_TEXT="$(tr -d '\r' <"$AUTHORITY_EVAL_ERROR" | head -c 240)"
   fail_smoke "authority-eval" "Could not resolve native SEO authority" "native authority available" "${ERROR_TEXT:-wp eval failed}" "wp eval Runtime::seo_authority"
 fi
-
 [[ "$AUTHORITY" == "native" ]] \
   || fail_smoke "native-authority" "Theme-only runtime must own native SEO output" "native" "$AUTHORITY" "Runtime::seo_authority"
 
@@ -261,13 +262,13 @@ OG_IMAGE_COUNT="$(grep -Eio '<meta[^>]+property=["'\'']og:image["'\''][^>]*>' "$
 [[ "$OG_IMAGE_COUNT" == "0" ]] \
   || fail_smoke "open-graph-image" "Fixture without featured image or site icon must not fabricate og:image" "0" "$OG_IMAGE_COUNT"
 
-if ! BREADCRUMBS_JSON="$(wp_cli eval "\$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
+if ! BREADCRUMBS_JSON="$(wp_cli eval "global \$wp_query; \$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$BREADCRUMB_EVAL_ERROR" | head -c 240)"
   fail_smoke "breadcrumb-eval" "Could not resolve breadcrumb data contract" "root and current post items" "${ERROR_TEXT:-wp eval failed}" "wp eval Runtime::breadcrumbs"
 fi
 
 if ! BREADCRUMB_RESULT="$(python3 -c 'import json,sys; items=json.loads(sys.argv[1]); base=sys.argv[2].rstrip("/")+"/"; target=base+"self-contained-seo-fixture/"; assert len(items) >= 2; assert items[0].get("url") == base and items[0].get("current") is False; assert items[-1].get("label") == "Self-contained SEO Fixture"; assert items[-1].get("url") == target and items[-1].get("current") is True; assert sum(1 for item in items if item.get("current") is True) == 1; print("ok")' "$BREADCRUMBS_JSON" "$BASE_URL" 2>&1)"; then
-  fail_smoke "breadcrumb-contract" "Breadcrumb data contract is incorrect" "root plus one current post item" "$BREADCRUMB_RESULT" "Runtime::breadcrumbs()->resolve()"
+  fail_smoke "breadcrumb-contract" "Breadcrumb data contract is incorrect" "root plus one current post item" "${BREADCRUMB_RESULT}; json=${BREADCRUMBS_JSON}" "Runtime::breadcrumbs()->resolve()"
 fi
 
 curl -fsS "${BASE_URL}/?s=self-contained" -o "$SEARCH_BODY" \
