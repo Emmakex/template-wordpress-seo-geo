@@ -1,6 +1,6 @@
 <?php
 /**
- * Main plugin coordinator.
+ * Plugin wrapper for the context-neutral SEO/GEO runtime.
  *
  * @package SeoGeoCore
  */
@@ -11,47 +11,14 @@ namespace SeoGeo\Core;
 
 use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
-use SeoGeo\Core\Language\NativeWordPressAdapter;
-use SeoGeo\Core\Seo\CanonicalResolver;
-use SeoGeo\Core\Seo\IndexabilityResolver;
-use SeoGeo\Core\Seo\MetaDescriptionResolver;
-use SeoGeo\Core\Seo\NativeSeoPresenter;
 use SeoGeo\Core\Seo\SeoOutputAuthority;
 
 /**
- * Coordinates the Core lifecycle and shared services.
+ * Preserves the optional standalone plugin entry point.
  */
 final class Plugin {
 	/**
-	 * Normalized language service.
-	 *
-	 * @var LanguageManager|null
-	 */
-	private static ?LanguageManager $language_manager = null;
-
-	/**
-	 * Runtime integration detector.
-	 *
-	 * @var RuntimeIntegrationDetector|null
-	 */
-	private static ?RuntimeIntegrationDetector $integration_detector = null;
-
-	/**
-	 * SEO output authority.
-	 *
-	 * @var SeoOutputAuthority|null
-	 */
-	private static ?SeoOutputAuthority $seo_authority = null;
-
-	/**
-	 * Native SEO presenter.
-	 *
-	 * @var NativeSeoPresenter|null
-	 */
-	private static ?NativeSeoPresenter $native_seo = null;
-
-	/**
-	 * Register lifecycle hooks.
+	 * Register plugin lifecycle hooks.
 	 *
 	 * @param string $plugin_file Absolute path to the plugin bootstrap file.
 	 */
@@ -62,37 +29,23 @@ final class Plugin {
 	}
 
 	/**
-	 * Initialize shared services and native SEO output ownership.
+	 * Initialize the shared runtime from plugin packaging.
 	 */
 	public static function initialize(): void {
-		load_plugin_textdomain( 'seo-geo-core', false, dirname( plugin_basename( SEO_GEO_CORE_FILE ) ) . '/languages' );
+		if ( defined( 'SEO_GEO_CORE_FILE' ) ) {
+			load_plugin_textdomain( 'seo-geo-core', false, dirname( plugin_basename( SEO_GEO_CORE_FILE ) ) . '/languages' );
+		}
 
-		self::$integration_detector = new RuntimeIntegrationDetector();
-		self::$language_manager     = new LanguageManager( new NativeWordPressAdapter() );
-		self::$seo_authority        = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
-		self::$native_seo           = new NativeSeoPresenter(
-			self::$seo_authority,
-			new IndexabilityResolver(),
-			new CanonicalResolver(),
-			new MetaDescriptionResolver()
-		);
-		self::$native_seo->register();
-
-		/**
-		 * Fires after Core shared services are ready.
-		 *
-		 * @param LanguageManager            $language_manager     Normalized language service.
-		 * @param RuntimeIntegrationDetector $integration_detector Runtime integration detector.
-		 * @param SeoOutputAuthority          $seo_authority        SEO output authority.
-		 */
-		do_action( 'seo_geo_core_ready', self::$language_manager, self::$integration_detector, self::$seo_authority );
+		Runtime::initialize();
 	}
 
 	/**
 	 * Persist only the installed code version.
 	 */
 	public static function activate(): void {
-		update_option( 'seo_geo_core_version', SEO_GEO_CORE_VERSION, false );
+		if ( defined( 'SEO_GEO_CORE_VERSION' ) ) {
+			update_option( 'seo_geo_core_version', SEO_GEO_CORE_VERSION, false );
+		}
 	}
 
 	/**
@@ -104,28 +57,22 @@ final class Plugin {
 
 	/**
 	 * Get the normalized language service when initialized.
-	 *
-	 * @return LanguageManager|null
 	 */
 	public static function language(): ?LanguageManager {
-		return self::$language_manager;
+		return Runtime::language();
 	}
 
 	/**
 	 * Get the runtime integration detector when initialized.
-	 *
-	 * @return RuntimeIntegrationDetector|null
 	 */
 	public static function integrations(): ?RuntimeIntegrationDetector {
-		return self::$integration_detector;
+		return Runtime::integrations();
 	}
 
 	/**
 	 * Get the SEO output authority when initialized.
-	 *
-	 * @return SeoOutputAuthority|null
 	 */
 	public static function seo_authority(): ?SeoOutputAuthority {
-		return self::$seo_authority;
+		return Runtime::seo_authority();
 	}
 }
