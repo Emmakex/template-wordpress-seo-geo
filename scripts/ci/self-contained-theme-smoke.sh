@@ -29,6 +29,7 @@ RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
 RUNTIME_EVAL_ERROR="${TMP_DIR}/runtime-eval.stderr"
 AUTHORITY_EVAL_ERROR="${TMP_DIR}/authority-eval.stderr"
+BREADCRUMB_EVAL_ERROR="${TMP_DIR}/breadcrumb-eval.stderr"
 
 signature() {
   printf '%s' "$1" | sha256sum | cut -c1-12
@@ -119,6 +120,10 @@ bash scripts/build-theme-package.sh "$BUILT_THEME" \
 
 [[ -f "${BUILT_THEME}/inc/seo-geo-core/src/Runtime.php" ]] \
   || fail_smoke "embedded-runtime" "Built theme does not contain embedded SEO/GEO runtime" "Runtime.php bundled" "missing"
+[[ -f "${BUILT_THEME}/inc/seo-geo-core/src/Seo/OpenGraphResolver.php" ]] \
+  || fail_smoke "embedded-open-graph" "Built theme does not contain Open Graph resolver" "OpenGraphResolver.php bundled" "missing"
+[[ -f "${BUILT_THEME}/inc/seo-geo-core/src/Seo/BreadcrumbResolver.php" ]] \
+  || fail_smoke "embedded-breadcrumbs" "Built theme does not contain breadcrumb resolver" "BreadcrumbResolver.php bundled" "missing"
 
 printf '[self-contained] Starting isolated WordPress fixture.\n'
 docker network create "$NETWORK" >/dev/null \
@@ -138,7 +143,6 @@ docker run -d \
 
 wait_for_db \
   || fail_smoke "database-ready" "MariaDB did not become ready" "database ready" "timeout"
-
 docker run -d \
   --name "$WP_CONTAINER" \
   --network "$NETWORK" \
@@ -235,6 +239,37 @@ DESCRIPTION_COUNT="$(grep -Eio '<meta[^>]+name=["'\'']description["'\''][^>]*>' 
 grep -Fq 'Self-contained SEO GEO native description.' "$PAGE_BODY" \
   || fail_smoke "description-value" "Native meta description is incorrect" "fixture excerpt" "expected description absent"
 
+printf '[self-contained] Checking native Open Graph metadata.\n'
+for property in title type url site_name description locale; do
+  OG_COUNT="$(grep -Eio "<meta[^>]+property=[\"']og:${property}[\"'][^>]*>" "$PAGE_BODY" | wc -l | tr -d ' ')"
+  [[ "$OG_COUNT" == "1" ]] \
+    || fail_smoke "open-graph-${property}-count" "Open Graph property must be emitted exactly once" "1" "$OG_COUNT" "grep og:${property}"
+done
+
+grep -Eq 'property=["'\'']og:type["'\''][^>]+content=["'\'']article["'\'']' "$PAGE_BODY" \
+  || fail_smoke "open-graph-type" "Singular post must use article Open Graph type" "article" "expected value absent"
+grep -Fq 'Self-contained SEO Fixture' "$PAGE_BODY" \
+  || fail_smoke "open-graph-title" "Open Graph title must derive from document title" "fixture title present" "expected title absent"
+grep -Eq "property=[\"']og:url[\"'][^>]+content=[\"']${BASE_URL}/self-contained-seo-fixture/[\"']" "$PAGE_BODY" \
+  || fail_smoke "open-graph-url" "Open Graph URL must equal canonical" "${BASE_URL}/self-contained-seo-fixture/" "expected value absent"
+grep -Eq 'property=["'\'']og:site_name["'\''][^>]+content=["'\'']Self-contained SEO GEO["'\'']' "$PAGE_BODY" \
+  || fail_smoke "open-graph-site-name" "Open Graph site name is incorrect" "Self-contained SEO GEO" "expected value absent"
+grep -Eq 'property=["'\'']og:description["'\''][^>]+content=["'\'']Self-contained SEO GEO native description\.["'\'']' "$PAGE_BODY" \
+  || fail_smoke "open-graph-description" "Open Graph description must reuse native description" "fixture excerpt" "expected value absent"
+
+OG_IMAGE_COUNT="$(grep -Eio '<meta[^>]+property=["'\'']og:image["'\''][^>]*>' "$PAGE_BODY" | wc -l | tr -d ' ')"
+[[ "$OG_IMAGE_COUNT" == "0" ]] \
+  || fail_smoke "open-graph-image" "Fixture without featured image or site icon must not fabricate og:image" "0" "$OG_IMAGE_COUNT"
+
+if ! BREADCRUMBS_JSON="$(wp_cli eval "\$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
+  ERROR_TEXT="$(tr -d '\r' <"$BREADCRUMB_EVAL_ERROR" | head -c 240)"
+  fail_smoke "breadcrumb-eval" "Could not resolve breadcrumb data contract" "root and current post items" "${ERROR_TEXT:-wp eval failed}" "wp eval Runtime::breadcrumbs"
+fi
+
+if ! BREADCRUMB_RESULT="$(python3 -c 'import json,sys; items=json.loads(sys.argv[1]); base=sys.argv[2].rstrip("/")+"/"; target=base+"self-contained-seo-fixture/"; assert len(items) >= 2; assert items[0].get("url") == base and items[0].get("current") is False; assert items[-1].get("label") == "Self-contained SEO Fixture"; assert items[-1].get("url") == target and items[-1].get("current") is True; assert sum(1 for item in items if item.get("current") is True) == 1; print("ok")' "$BREADCRUMBS_JSON" "$BASE_URL" 2>&1)"; then
+  fail_smoke "breadcrumb-contract" "Breadcrumb data contract is incorrect" "root plus one current post item" "$BREADCRUMB_RESULT" "Runtime::breadcrumbs()->resolve()"
+fi
+
 curl -fsS "${BASE_URL}/?s=self-contained" -o "$SEARCH_BODY" \
   || fail_smoke "search-request" "Could not request search fixture" "HTTP 2xx" "curl failed"
 ROBOTS_COUNT="$(grep -Eio '<meta[^>]+name=["'\'']robots["'\''][^>]*>' "$SEARCH_BODY" | wc -l | tr -d ' ')"
@@ -242,6 +277,10 @@ ROBOTS_COUNT="$(grep -Eio '<meta[^>]+name=["'\'']robots["'\''][^>]*>' "$SEARCH_B
   || fail_smoke "robots-count" "Search fixture must expose exactly one robots meta element" "1" "$ROBOTS_COUNT"
 grep -Eiq 'content=["'\''][^"'\'']*noindex' "$SEARCH_BODY" \
   || fail_smoke "robots-value" "Search fixture must be noindex" "robots contains noindex" "noindex absent"
+
+SEARCH_OG_COUNT="$(grep -Eio '<meta[^>]+property=["'\'']og:[a-z_:.-]+["'\''][^>]*>' "$SEARCH_BODY" | wc -l | tr -d ' ')"
+[[ "$SEARCH_OG_COUNT" == "0" ]] \
+  || fail_smoke "search-open-graph" "Noindex search fixture must not expose native Open Graph metadata" "0" "$SEARCH_OG_COUNT"
 
 printf '[self-contained] Checking PHP runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
@@ -252,4 +291,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted diagnostics" "no fatal/warning/notice/uncaught error" "$MATCH"
 fi
 
-printf 'Self-contained theme OK: zero active plugins; Runtime loaded from theme; canonical=1; description=1; search robots noindex; no PHP diagnostics.\n'
+printf 'Self-contained theme OK: zero plugins; native SEO + Open Graph; breadcrumbs contract; no PHP diagnostics.\n'
