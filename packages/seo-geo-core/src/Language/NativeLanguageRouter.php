@@ -129,7 +129,8 @@ final class NativeLanguageRouter {
 					continue;
 				}
 
-				$localized_regex               = '^' . $escaped_prefix . '/' . $base_regex;
+				$localized_regex = '^' . $escaped_prefix . '/' . $base_regex;
+
 				$localized[ $localized_regex ] = $this->append_language_query_var( $query, $language_code );
 			}
 		}
