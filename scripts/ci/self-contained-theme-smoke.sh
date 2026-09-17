@@ -27,6 +27,8 @@ PAGE_BODY="${TMP_DIR}/page.html"
 SEARCH_BODY="${TMP_DIR}/search.html"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
+RUNTIME_EVAL_ERROR="${TMP_DIR}/runtime-eval.stderr"
+AUTHORITY_EVAL_ERROR="${TMP_DIR}/authority-eval.stderr"
 
 signature() {
   printf '%s' "$1" | sha256sum | cut -c1-12
@@ -189,13 +191,21 @@ if docker exec "$WP_CONTAINER" test -d /var/www/html/wp-content/plugins/seo-geo-
   fail_smoke "plugin-absent" "SEO GEO Core plugin directory must not be installed" "plugin directory absent" "directory exists"
 fi
 
-RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \\SeoGeo\\Core\\Runtime::class ); echo (string) $r->getFileName();' 2>/dev/null | tr -d '\r\n')"
+if ! RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $r->getFileName();' 2>"$RUNTIME_EVAL_ERROR" | tr -d '\r\n')"; then
+  ERROR_TEXT="$(tr -d '\r' <"$RUNTIME_EVAL_ERROR" | head -c 240)"
+  fail_smoke "runtime-eval" "Could not resolve embedded runtime class" "Runtime class available from theme" "${ERROR_TEXT:-wp eval failed}" "wp eval ReflectionClass Runtime"
+fi
+
 case "$RUNTIME_FILE" in
   */wp-content/themes/seo-geo-theme/inc/seo-geo-core/src/Runtime.php) ;;
   *) fail_smoke "runtime-origin" "SEO/GEO runtime was not loaded from the theme bundle" "theme/inc/seo-geo-core/src/Runtime.php" "$RUNTIME_FILE" "ReflectionClass Runtime" ;;
 esac
 
-AUTHORITY="$(wp_cli eval 'echo \\SeoGeo\\Core\\Runtime::seo_authority()?->provider() ?? "missing";' 2>/dev/null | tr -d '\r\n')"
+if ! AUTHORITY="$(wp_cli eval 'echo \SeoGeo\Core\Runtime::seo_authority()?->provider() ?? "missing";' 2>"$AUTHORITY_EVAL_ERROR" | tr -d '\r\n')"; then
+  ERROR_TEXT="$(tr -d '\r' <"$AUTHORITY_EVAL_ERROR" | head -c 240)"
+  fail_smoke "authority-eval" "Could not resolve native SEO authority" "native authority available" "${ERROR_TEXT:-wp eval failed}" "wp eval Runtime::seo_authority"
+fi
+
 [[ "$AUTHORITY" == "native" ]] \
   || fail_smoke "native-authority" "Theme-only runtime must own native SEO output" "native" "$AUTHORITY" "Runtime::seo_authority"
 
