@@ -68,7 +68,9 @@ required_paths=(
   "packages/seo-geo-core/src/Seo/BreadcrumbResolver.php"
   "scripts/build-theme-package.sh"
   "scripts/ci/self-contained-theme-smoke.sh"
+  "scripts/ci/native-language-smoke.sh"
   ".github/workflows/self-contained-theme.yml"
+  ".github/workflows/native-multilingual.yml"
   "presets/README.md"
 )
 
