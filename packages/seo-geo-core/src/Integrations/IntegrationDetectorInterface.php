@@ -21,16 +21,6 @@ interface IntegrationDetectorInterface {
 	public function seo_provider(): string;
 
 	/**
-	 * Return whether the detected SEO provider is ready to own frontend output.
-	 *
-	 * Detection and output authority are intentionally separate: an active
-	 * provider can still require initial setup before it emits complete metadata.
-	 *
-	 * @return bool
-	 */
-	public function seo_provider_ready(): bool;
-
-	/**
 	 * Return the active language provider identifier.
 	 *
 	 * @return string
