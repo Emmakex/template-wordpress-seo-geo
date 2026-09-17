@@ -61,6 +61,7 @@ final class NativeLanguageRouter {
 		add_filter( 'query_vars', array( $this, 'filter_query_vars' ) );
 		add_filter( 'rewrite_rules_array', array( $this, 'filter_rewrite_rules' ), 20 );
 		add_action( 'parse_request', array( $this, 'activate_request_locale' ), 20 );
+		add_filter( 'redirect_canonical', array( $this, 'filter_canonical_redirect' ), 20, 2 );
 	}
 
 	/**
@@ -117,9 +118,7 @@ final class NativeLanguageRouter {
 	public function filter_rewrite_rules( array $rules ): array {
 		$localized = array();
 
-		foreach ( $this->configuration->languages() as $language_code => $locale ) {
-			unset( $locale );
-
+		foreach ( array_keys( $this->configuration->languages() ) as $language_code ) {
 			$escaped_prefix = preg_quote( $language_code, '#' );
 			$localized[ '^' . $escaped_prefix . '/?$' ] = 'index.php?' . self::QUERY_VAR . '=' . rawurlencode( $language_code );
 
@@ -152,8 +151,10 @@ final class NativeLanguageRouter {
 			return;
 		}
 
-		$locale = $this->configuration->locale_for( $requested );
-		if ( null === $locale || ! $this->matched_language_prefix( $wp->matched_rule, $requested ) ) {
+		$locale       = $this->configuration->locale_for( $requested );
+		$matched_rule = is_string( $wp->matched_rule ) ? $wp->matched_rule : '';
+
+		if ( null === $locale || ! $this->matched_language_prefix( $matched_rule, $requested ) ) {
 			unset( $wp->query_vars[ self::QUERY_VAR ] );
 			return;
 		}
@@ -176,6 +177,20 @@ final class NativeLanguageRouter {
 	 */
 	public function filter_active_locale( string $locale ): string {
 		return $this->active_locale ?? $locale;
+	}
+
+	/**
+	 * Prevent WordPress from canonical-redirecting a validated localized route
+	 * back to its unprefixed permalink while 4B routing is active.
+	 *
+	 * @param string|false $redirect_url  Proposed redirect URL.
+	 * @param string       $requested_url Original requested URL.
+	 * @return string|false
+	 */
+	public function filter_canonical_redirect( string|false $redirect_url, string $requested_url ): string|false {
+		unset( $requested_url );
+
+		return $this->is_localized_request() ? false : $redirect_url;
 	}
 
 	/**
