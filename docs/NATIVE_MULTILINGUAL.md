@@ -78,9 +78,10 @@ The following remain outside 4A and must be implemented with their own acceptanc
 
 ## Acceptance
 
-The self-contained WordPress fixture must prove both states with zero active plugins:
+The self-contained WordPress fixture must prove three states with zero active plugins:
 
 1. no native language option -> single-language fallback;
-2. valid ES/EN option -> multilingual language map with Spanish default and English locale lookup, while the current WordPress request locale remains unchanged until routing is implemented.
+2. valid ES/EN option -> multilingual language map with Spanish default and English locale lookup, while the current WordPress request locale remains unchanged until routing is implemented;
+3. malformed duplicate-locale option -> the entire configuration is rejected and the runtime returns to the single-language fallback instead of partially applying it.
 
 The acceptance fixture must continue to pass native SEO, accessibility and performance regression gates.
