@@ -259,9 +259,9 @@ All exit criteria are satisfied:
 
 ## Phase 3 — Native SEO foundation + self-contained packaging
 
-Status: **in progress**
+Status: **complete**
 
-Phase 3 now has one overriding product invariant: **a clean WordPress installation plus the built theme must provide the baseline SEO/GEO behavior with zero required plugins**.
+Phase 3 established one overriding product invariant: **a clean WordPress installation plus the built theme provides the baseline SEO/GEO behavior with zero required plugins**.
 
 ### Microphase 3A — native SEO authority and core signals
 
@@ -333,25 +333,44 @@ The dedicated zero-plugin post-merge run `35257573577` proves the distribution i
 
 ### Microphase 3C — native discovery metadata
 
-Status: **pending**
+Status: **complete**
 
-Planned scope:
+Delivered on PR #15:
 
-- native Open Graph baseline;
-- breadcrumb data contract reusable by visible UI and later Schema;
-- native title/social description policy;
-- no Schema graph ownership yet;
-- no third-party provider required for acceptance.
+- native `OpenGraphResolver` under the same single-owner SEO authority model;
+- `og:title`, `og:type`, `og:url`, `og:site_name`, `og:description` and `og:locale` for indexable public HTML;
+- `og:url` reuses the canonical resolver and `og:description` reuses the native description resolver;
+- `og:image` only when a real featured image or WordPress site icon exists, with no fabricated placeholder;
+- no native Open Graph output for the noindex search fixture;
+- reusable data-only `BreadcrumbResolver` exposed through `Runtime::breadcrumbs()` for later visible UI and `BreadcrumbList` Schema reuse;
+- no Schema graph ownership and no Twitter/X-card ownership added in this phase;
+- Foundation contract expanded for the discovery metadata layer;
+- zero-plugin WordPress smoke expanded to validate Open Graph and breadcrumb behavior in the built theme.
+
+PR #15 passed all seven workflows triggered by the final candidate and was squash-merged as `12a0b4a75b2980ad29211b474a6277ec30ea23ac`. Post-merge `main` passed all seven triggered gates:
+
+- Self-contained Theme CI `35262006328`;
+- WordPress Smoke CI `35262006347`;
+- Accessibility & Responsive CI `35262006358`;
+- PHP Quality CI `35262006369`;
+- Phase 1 Package CI `35262006374`;
+- Foundation CI `35262006388`;
+- Performance Baseline CI `35262006444`.
+
+The zero-plugin acceptance proves the built theme preserves canonical/meta-description/robots ownership while adding native Open Graph and root + current-item breadcrumb data. The WP-CLI query-scope fixture defect found during adoption is recorded as `ERR-2026-007`; it was fixed in the test harness rather than hidden with a suppression.
 
 ### Phase 3 exit criteria
+
+All exit criteria are satisfied:
 
 - built distribution is one installable theme;
 - zero active plugins are required in the baseline acceptance fixture;
 - canonical/robots/meta-description output remains single-owner and deterministic;
 - Open Graph baseline follows the native ownership model;
 - breadcrumb data has one reusable contract;
-- performance/accessibility budgets remain green after embedding the runtime;
-- optional compatibility code is not required for the product to boot.
+- performance/accessibility budgets remain green after embedding and extending the runtime;
+- optional compatibility code is not required for the product to boot;
+- Phase 3 implementation and post-merge verification are green on `main`.
 
 ## Phase 4 — Native multilingual core
 

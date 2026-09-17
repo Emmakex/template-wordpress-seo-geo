@@ -364,3 +364,47 @@ When PHP source is already contained in a single-quoted shell argument, escape f
 ### Regression coverage
 
 `scripts/ci/self-contained-theme-smoke.sh` contains explicit exit-status/stderr handling for both the ReflectionClass runtime-origin probe and the native-authority probe. `Self-contained Theme CI` runs that smoke against the built theme on every relevant PR and `main` push.
+
+## ERR-2026-007 — `wp eval` breadcrumb fixture used a local query instead of WordPress's global query
+
+**Status:** resolved
+**First seen:** 2026-09-17
+**Last seen:** 2026-09-17
+**Area:** ci / integration
+**Signature:** `2f37ceea3167`
+**Reference:** PR #15; failing Self-contained Theme CI run `35261299294` / job `105337536013`; passing PR run `35261611652`; post-merge passing run `35262006328`
+
+### Symptom / context
+
+The first Phase 3C zero-plugin acceptance passed Open Graph assertions but failed the breadcrumb data assertion. The fixture created a `WP_Query` for the representative post inside `wp eval`, yet `BreadcrumbResolver` did not observe the request as singular and the Python contract check raised an `AssertionError`.
+
+The resolver itself worked through normal HTTP requests; the mismatch existed only in the WP-CLI evaluation fixture.
+
+### Root cause
+
+Confirmed. The `wp eval` code assigned a local `$wp_query` variable. WordPress conditional functions such as `is_singular()` consult the global query object, so the resolver continued to see the WP-CLI command's original global query state rather than the fixture query.
+
+### Solution
+
+The acceptance probe now declares `global $wp_query` before assigning the fixture `WP_Query`. It then advances that query to the representative post before resolving breadcrumbs.
+
+The failure path was also improved so a future breadcrumb-contract mismatch includes the raw JSON returned by the resolver instead of only a generic Python `AssertionError`.
+
+### Validation
+
+- Self-contained Theme CI run `35261611652` passed the full zero-plugin Phase 3C acceptance after the fixture correction;
+- PR #15 passed all seven workflows triggered by the contract;
+- PR #15 was squash-merged as `12a0b4a75b2980ad29211b474a6277ec30ea23ac`;
+- post-merge Self-contained Theme CI run `35262006328` passed again on `main`.
+
+The passing fixture proves the built theme resolves root + current-post breadcrumb data alongside native Open Graph, canonical, description and robots behavior with zero active plugins.
+
+### Prevention / guardrail
+
+When a `wp eval` acceptance probe depends on WordPress conditional tags or query globals, explicitly bind the real global query state or use a real HTTP request whose query lifecycle WordPress controls. Do not assume a local variable named `$wp_query` changes global request semantics.
+
+Critical data-contract assertions should include the observed serialized payload in structured diagnostics so fixture-state problems can be distinguished from resolver bugs quickly.
+
+### Regression coverage
+
+`scripts/ci/self-contained-theme-smoke.sh` now sets `global $wp_query`, creates the representative singular query, advances it, resolves `Runtime::breadcrumbs()`, and validates the returned JSON shape. `Self-contained Theme CI` runs this path on every relevant PR and `main` push.
