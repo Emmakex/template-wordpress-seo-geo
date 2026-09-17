@@ -108,7 +108,7 @@ final class BreadcrumbResolver {
 				$url     = get_permalink( $ancestor );
 				$items[] = $this->item(
 					get_the_title( $ancestor ),
-					is_string( $url ) ? $url : null,
+					$url,
 					false
 				);
 			}
@@ -120,7 +120,7 @@ final class BreadcrumbResolver {
 					$url     = get_permalink( $posts_page );
 					$items[] = $this->item(
 						get_the_title( $posts_page ),
-						is_string( $url ) ? $url : null,
+						$url,
 						false
 					);
 				}
@@ -130,7 +130,7 @@ final class BreadcrumbResolver {
 		$url     = get_permalink( $post );
 		$items[] = $this->item(
 			get_the_title( $post ),
-			is_string( $url ) ? $url : null,
+			$url,
 			true
 		);
 
@@ -162,7 +162,7 @@ final class BreadcrumbResolver {
 				$url     = get_term_link( $ancestor );
 				$items[] = $this->item(
 					$ancestor->name,
-					is_string( $url ) ? $url : null,
+					$url,
 					false
 				);
 			}
