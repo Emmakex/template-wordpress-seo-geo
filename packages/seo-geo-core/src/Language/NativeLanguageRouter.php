@@ -120,6 +120,7 @@ final class NativeLanguageRouter {
 
 		foreach ( array_keys( $this->configuration->languages() ) as $language_code ) {
 			$escaped_prefix = preg_quote( $language_code, '#' );
+
 			$localized[ '^' . $escaped_prefix . '/?$' ] = 'index.php?' . self::QUERY_VAR . '=' . rawurlencode( $language_code );
 
 			foreach ( $rules as $regex => $query ) {
