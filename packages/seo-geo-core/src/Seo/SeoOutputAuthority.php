@@ -16,6 +16,7 @@ final class SeoOutputAuthority {
 	public const SIGNAL_CANONICAL        = 'canonical';
 	public const SIGNAL_META_DESCRIPTION = 'meta_description';
 	public const SIGNAL_ROBOTS           = 'robots';
+	public const SIGNAL_OPEN_GRAPH       = 'open_graph';
 
 	/**
 	 * Active provider identifier.
@@ -33,6 +34,7 @@ final class SeoOutputAuthority {
 		self::SIGNAL_CANONICAL,
 		self::SIGNAL_META_DESCRIPTION,
 		self::SIGNAL_ROBOTS,
+		self::SIGNAL_OPEN_GRAPH,
 	);
 
 	/**
