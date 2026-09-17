@@ -11,6 +11,7 @@ namespace SeoGeo\Core;
 
 use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
+use SeoGeo\Core\Language\NativeLanguageConfiguration;
 use SeoGeo\Core\Language\NativeWordPressAdapter;
 use SeoGeo\Core\Seo\BreadcrumbResolver;
 use SeoGeo\Core\Seo\CanonicalResolver;
@@ -68,8 +69,10 @@ final class Runtime {
 		}
 
 		self::$integration_detector = new RuntimeIntegrationDetector();
-		self::$language_manager     = new LanguageManager( new NativeWordPressAdapter() );
-		self::$seo_authority        = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
+
+		$language_configuration = NativeLanguageConfiguration::from_wordpress();
+		self::$language_manager = new LanguageManager( new NativeWordPressAdapter( $language_configuration ) );
+		self::$seo_authority    = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
 
 		$indexability = new IndexabilityResolver();
 		$canonical    = new CanonicalResolver();
