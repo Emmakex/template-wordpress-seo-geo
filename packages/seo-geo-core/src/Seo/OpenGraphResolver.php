@@ -99,23 +99,15 @@ final class OpenGraphResolver {
 		/**
 		 * Filters the native Open Graph property map.
 		 *
-		 * Non-string keys/values and non-Open-Graph properties are discarded after
-		 * the filter so customizations cannot emit arbitrary head markup.
+		 * Callbacks must preserve the array<string, string> contract. Property names
+		 * outside the Open Graph/article namespaces and empty values are discarded.
 		 *
 		 * @param array<string, string> $metadata Open Graph property map.
 		 */
 		$filtered = apply_filters( 'seo_geo_open_graph_metadata', $metadata );
+		$output   = array();
 
-		if ( ! is_array( $filtered ) ) {
-			return $metadata;
-		}
-
-		$output = array();
 		foreach ( $filtered as $property => $content ) {
-			if ( ! is_string( $property ) || ! is_string( $content ) ) {
-				continue;
-			}
-
 			if ( 1 !== preg_match( '/^(?:og|article):[a-z0-9:_-]+$/', $property ) ) {
 				continue;
 			}
