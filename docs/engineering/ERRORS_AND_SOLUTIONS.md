@@ -313,3 +313,54 @@ A skip link is not considered accepted merely because the anchor exists or chang
 ### Regression coverage
 
 `tests/browser/accessibility.spec.js` tabs to `.skip-link`, activates it with Enter and requires the `main` landmark to be focused for EN and ES across the three browser viewports.
+
+## ERR-2026-006 — Self-contained smoke hid invalid `wp eval` namespace escaping
+
+**Status:** resolved
+**First seen:** 2026-09-17
+**Last seen:** 2026-09-17
+**Area:** ci / integration
+**Signature:** `423ffeca3a8d`
+**Reference:** PR #13; failing Self-contained Theme CI run `35256708093` / job `105322014375`; passing PR run `35257079331`; post-merge passing run `35257573577`
+
+### Symptom / context
+
+The first zero-plugin acceptance successfully built the theme and confirmed the embedded `Runtime.php` file existed, but the runtime-origin assertion reported an empty value when it attempted to reflect `SeoGeo\Core\Runtime` through `wp eval`.
+
+This initially looked like the theme bootstrap had failed to load the embedded runtime.
+
+### Root cause
+
+Confirmed. The shell command passed a PHP expression to `wp eval` with doubled namespace separators as if the PHP source itself needed shell-style escaping. Inside the already single-quoted shell argument, that produced an invalid PHP namespace expression. The helper also redirected stderr away, so the command failure was converted into an apparently valid empty observed value.
+
+The product runtime and theme build were not the cause.
+
+### Solution
+
+The self-contained smoke now:
+
+- passes a valid PHP expression using `\SeoGeo\Core\Runtime` as PHP source inside the single-quoted shell argument;
+- checks the `wp eval` command exit status before interpreting stdout;
+- captures stderr to dedicated files;
+- emits structured `runtime-eval` or `authority-eval` diagnostics when evaluation itself fails.
+
+The runtime-origin assertion remains strict: a successful evaluation must resolve to the embedded theme path.
+
+### Validation
+
+- PR Self-contained Theme CI run `35257079331` passed the complete zero-plugin acceptance after the test fix;
+- PR #13 then passed all nine required gates;
+- PR #13 was squash-merged as `a320cd3033e2a5ea0fbcc83dffac500a7eaf8c88`;
+- post-merge Self-contained Theme CI run `35257573577` passed again on `main`.
+
+The passing acceptance proves zero active plugins, no installed `seo-geo-core` plugin directory, runtime origin inside the theme bundle, native canonical/meta/robots behavior and clean PHP diagnostics.
+
+### Prevention / guardrail
+
+Never treat empty stdout from a critical `wp eval` command as application state until the command exit status has been checked. Critical WP-CLI eval probes must preserve stderr and route execution failures through the structured diagnostic contract.
+
+When PHP source is already contained in a single-quoted shell argument, escape for valid PHP syntax, not for a second shell/parser layer that does not exist.
+
+### Regression coverage
+
+`scripts/ci/self-contained-theme-smoke.sh` contains explicit exit-status/stderr handling for both the ReflectionClass runtime-origin probe and the native-authority probe. `Self-contained Theme CI` runs that smoke against the built theme on every relevant PR and `main` push.
