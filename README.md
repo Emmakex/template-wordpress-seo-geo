@@ -1,21 +1,26 @@
 # Template WordPress SEO + GEO
 
-Reusable WordPress foundation for fast, technically clean, multilingual websites designed for classic search engines and modern AI-assisted discovery.
+Reusable **self-contained WordPress block theme** for fast, technically clean, multilingual websites designed for classic search engines and modern AI-assisted discovery.
+
+The installable product is intentionally **plugin-independent**: its SEO/GEO foundation ships inside the theme package. Third-party plugins may be added by a project later, but none are required for the baseline to work.
 
 ## ES
 
 Este repositorio define una base reutilizable para lanzar sitios WordPress con cinco pilares obligatorios:
 
 1. **Performance first**: Core Web Vitals, carga mínima de CSS/JS, imágenes optimizadas y HTML ligero.
-2. **SEO técnico sólido**: indexabilidad, canonical, robots, sitemaps, metadatos, enlazado y Schema coherente.
+2. **SEO técnico nativo**: indexabilidad, canonical, robots, sitemaps, metadatos, enlazado y Schema coherente sin depender de plugins SEO externos.
 3. **GEO (Generative Engine Optimization)**: contenido semántico, entidades, autores, fuentes, acceso de crawlers y formatos auxiliares para agentes, sin sustituir los fundamentos SEO.
-4. **Multidioma desde el núcleo**: ES/EN como idiomas de primera clase, arquitectura compatible con WPML y Polylang, hreflang, canonical y Schema localizados.
+4. **Multidioma desde el núcleo**: ES/EN como idiomas de primera clase, con una base nativa que puede ampliarse mediante integraciones opcionales.
 5. **Accesibilidad**: HTML semántico, teclado, foco, contraste, movimiento reducido y patrones compatibles con WCAG.
 
-La solución se divide en dos paquetes para evitar acoplar funcionalidad al diseño:
+### Producto instalable
 
-- `packages/seo-geo-theme`: block theme ligero; presentación, design tokens, templates, parts y patterns.
-- `packages/seo-geo-core`: plugin funcional; SEO, Schema, GEO, idiomas, sitemaps, crawlers, markdown, rendimiento e integraciones.
+El objetivo de distribución es **un único theme instalable**:
+
+- `packages/seo-geo-theme`: block theme ligero con presentación, design tokens, templates, parts, patterns y bootstrap del runtime SEO/GEO nativo.
+- `packages/seo-geo-core/src`: fuente reutilizable de la lógica SEO/GEO que se **empaqueta dentro del theme** durante el build; no es un plugin obligatorio.
+- `scripts/build-theme-package.sh`: construye el paquete autosuficiente y embebe el runtime en `inc/seo-geo-core/src`.
 
 Presets previstos: `corporate`, `local-business`, `ecommerce`, `publisher`.
 
@@ -24,15 +29,18 @@ Presets previstos: `corporate`, `local-business`, `ecommerce`, `publisher`.
 This repository defines a reusable WordPress foundation built around five mandatory pillars:
 
 1. **Performance first**: Core Web Vitals, minimal CSS/JS, optimized images and lean HTML.
-2. **Strong technical SEO**: indexability, canonicals, robots, sitemaps, metadata, internal linking and coherent Schema.
+2. **Native technical SEO**: indexability, canonicals, robots, sitemaps, metadata, internal linking and coherent Schema without a required SEO plugin.
 3. **GEO (Generative Engine Optimization)**: semantic content, entities, authors, sources, crawler access and optional agent-friendly formats without replacing SEO fundamentals.
-4. **Multilingual by design**: ES/EN are first-class languages, with WPML/Polylang adapters, localized hreflang, canonicals and Schema.
+4. **Multilingual by design**: ES/EN are first-class languages with a native baseline that can be extended through optional integrations.
 5. **Accessibility**: semantic HTML, keyboard support, focus states, contrast, reduced motion and WCAG-aware patterns.
 
-The solution is split to avoid coupling functionality to presentation:
+### Installable product
 
-- `packages/seo-geo-theme`: lightweight block theme for presentation, design tokens, templates, parts and patterns.
-- `packages/seo-geo-core`: functional plugin for SEO, Schema, GEO, language handling, sitemaps, crawlers, Markdown, performance and integrations.
+The distribution target is **one installable theme**:
+
+- `packages/seo-geo-theme`: lightweight block theme containing presentation, design tokens, templates, parts, patterns and the native SEO/GEO runtime bootstrap.
+- `packages/seo-geo-core/src`: reusable SEO/GEO source that is **bundled into the theme** during the build; it is not a required plugin.
+- `scripts/build-theme-package.sh`: assembles the self-contained theme and embeds the runtime under `inc/seo-geo-core/src`.
 
 Planned presets: `corporate`, `local-business`, `ecommerce`, `publisher`.
 

@@ -58,7 +58,12 @@ required_paths=(
   "docs/engineering/GLOBAL_ENGINEERING_RULES.md"
   "docs/engineering/ERRORS_AND_SOLUTIONS.md"
   "packages/seo-geo-theme/README.md"
+  "packages/seo-geo-theme/inc/seo-geo-core/bootstrap.php"
   "packages/seo-geo-core/README.md"
+  "packages/seo-geo-core/src/Runtime.php"
+  "scripts/build-theme-package.sh"
+  "scripts/ci/self-contained-theme-smoke.sh"
+  ".github/workflows/self-contained-theme.yml"
   "presets/README.md"
 )
 

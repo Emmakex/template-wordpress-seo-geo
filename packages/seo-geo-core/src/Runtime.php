@@ -1,0 +1,102 @@
+<?php
+/**
+ * Context-neutral SEO/GEO runtime.
+ *
+ * @package SeoGeoCore
+ */
+
+declare(strict_types=1);
+
+namespace SeoGeo\Core;
+
+use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
+use SeoGeo\Core\Language\LanguageManager;
+use SeoGeo\Core\Language\NativeWordPressAdapter;
+use SeoGeo\Core\Seo\CanonicalResolver;
+use SeoGeo\Core\Seo\IndexabilityResolver;
+use SeoGeo\Core\Seo\MetaDescriptionResolver;
+use SeoGeo\Core\Seo\NativeSeoPresenter;
+use SeoGeo\Core\Seo\SeoOutputAuthority;
+
+/**
+ * Boots SEO/GEO services independently from plugin or theme packaging.
+ */
+final class Runtime {
+	/**
+	 * Normalized language service.
+	 *
+	 * @var LanguageManager|null
+	 */
+	private static ?LanguageManager $language_manager = null;
+
+	/**
+	 * Runtime integration detector.
+	 *
+	 * @var RuntimeIntegrationDetector|null
+	 */
+	private static ?RuntimeIntegrationDetector $integration_detector = null;
+
+	/**
+	 * SEO output authority.
+	 *
+	 * @var SeoOutputAuthority|null
+	 */
+	private static ?SeoOutputAuthority $seo_authority = null;
+
+	/**
+	 * Native SEO presenter.
+	 *
+	 * @var NativeSeoPresenter|null
+	 */
+	private static ?NativeSeoPresenter $native_seo = null;
+
+	/**
+	 * Initialize shared services once.
+	 */
+	public static function initialize(): void {
+		if ( null !== self::$integration_detector ) {
+			return;
+		}
+
+		self::$integration_detector = new RuntimeIntegrationDetector();
+		self::$language_manager     = new LanguageManager( new NativeWordPressAdapter() );
+		self::$seo_authority        = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
+		self::$native_seo           = new NativeSeoPresenter(
+			self::$seo_authority,
+			new IndexabilityResolver(),
+			new CanonicalResolver(),
+			new MetaDescriptionResolver()
+		);
+		self::$native_seo->register();
+
+		/**
+		 * Fires after shared SEO/GEO services are ready.
+		 *
+		 * @param LanguageManager            $language_manager     Normalized language service.
+		 * @param RuntimeIntegrationDetector $integration_detector Runtime integration detector.
+		 * @param SeoOutputAuthority          $seo_authority        SEO output authority.
+		 */
+		do_action( 'seo_geo_core_ready', self::$language_manager, self::$integration_detector, self::$seo_authority );
+	}
+
+	/**
+	 * Get the normalized language service when initialized.
+	 */
+	public static function language(): ?LanguageManager {
+		return self::$language_manager;
+	}
+
+	/**
+	 * Get the runtime integration detector when initialized.
+	 */
+	public static function integrations(): ?RuntimeIntegrationDetector {
+		return self::$integration_detector;
+	}
+
+	/**
+	 * Get the SEO output authority when initialized.
+	 */
+	public static function seo_authority(): ?SeoOutputAuthority {
+		return self::$seo_authority;
+	}
+}

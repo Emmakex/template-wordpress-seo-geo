@@ -1,6 +1,8 @@
 # SEO GEO Theme
 
-Installable lightweight WordPress block theme for the reusable SEO + GEO foundation.
+Installable **self-contained WordPress block theme** for the reusable SEO + GEO foundation.
+
+A clean WordPress installation plus the built theme must provide the documented baseline with **zero required plugins**.
 
 ## Owns
 
@@ -9,18 +11,26 @@ Installable lightweight WordPress block theme for the reusable SEO + GEO foundat
 - reusable native block patterns;
 - theme-specific CSS/JS only when required;
 - semantic document structure;
-- accessible presentation defaults.
+- accessible presentation defaults;
+- bootstrap of the embedded SEO/GEO runtime;
+- native canonical/meta/robots/indexability behavior;
+- future native Schema, GEO, crawler and sitemap extensions that form part of the baseline product.
 
-## Does not own
+## Embedded runtime
 
-- canonical/robots/meta policy;
-- durable Schema/entity data;
-- hreflang/language-provider logic;
-- sitemap ownership;
-- crawler policy;
-- `llms.txt` or Markdown endpoint behavior.
+The committed loader lives at:
 
-Those belong to `packages/seo-geo-core`.
+```text
+inc/seo-geo-core/bootstrap.php
+```
+
+During distribution, `scripts/build-theme-package.sh` embeds the reusable Core source under:
+
+```text
+inc/seo-geo-core/src/
+```
+
+The built theme therefore does not require `seo-geo-core` to exist in `wp-content/plugins`.
 
 ## Current foundation
 
@@ -37,8 +47,12 @@ The theme currently provides:
   - trust/proof;
   - FAQ;
   - author/profile;
-  - contact.
+  - contact;
+- embedded native SEO runtime for canonical, meta description and robots/indexability;
+- zero-plugin acceptance through `Self-contained Theme CI`.
 
-Patterns use theme presets instead of creating a second visual system. They do not emit Schema, own page-level H1s, embed remote assets or require third-party blocks.
+Patterns use theme presets instead of creating a second visual system. They do not emit duplicate Schema, own page-level H1s, embed remote assets or require third-party blocks.
 
-See `docs/DESIGN_SYSTEM.md` and `docs/PATTERNS.md` for the contracts enforced by CI.
+Optional integrations may be added later for compatibility with projects that deliberately install external systems, but they are not prerequisites for the baseline.
+
+See `docs/ARCHITECTURE.md`, `docs/NATIVE_SEO.md`, `docs/DESIGN_SYSTEM.md` and `docs/PATTERNS.md` for the contracts enforced by CI.

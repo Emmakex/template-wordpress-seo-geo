@@ -1,32 +1,41 @@
 # SEO GEO Core
 
-This package will become the installable WordPress plugin that owns durable SEO/GEO behavior independent of the active theme.
+Reusable source library for the native SEO/GEO runtime embedded in the installable `seo-geo-theme` package.
 
-## Planned modules
+This directory is **not a required WordPress plugin dependency**. The product build copies `src/` into the theme so a clean WordPress installation can use the SEO/GEO baseline with zero active plugins.
+
+`seo-geo-core.php` remains temporarily as an optional compatibility/development wrapper while the migration is completed. It delegates to the same context-neutral `SeoGeo\Core\Runtime` and is outside the required installation path.
+
+## Runtime modules
 
 ```text
 src/
-├── Crawlers/
-├── Geo/
 ├── Integrations/
 ├── Language/
-├── Markdown/
-├── Performance/
-├── Schema/
 ├── Seo/
-└── Sitemaps/
+└── Runtime.php
 ```
+
+Future native modules will include Schema, GEO, crawlers, sitemaps and other machine-discovery capabilities as their phases close.
 
 ## Core rules
 
-- exactly one authoritative provider per public SEO signal;
+- native SEO/GEO works without third-party plugins;
+- exactly one authoritative owner per public SEO signal;
 - server-side capability/provider decisions;
 - no secrets/private content in discovery surfaces;
-- language resolution behind adapters;
-- EN/ES customer-facing strings together;
-- optional GEO mechanisms never override canonical/indexability truth;
-- integrations delegate rather than duplicate output.
+- EN/ES behavior is designed as a first-class contract;
+- GEO mechanisms never override canonical/indexability truth;
+- WordPress core primitives are reused before custom infrastructure;
+- optional integrations prevent conflicts or enhance deliberate external setups, but never become baseline dependencies;
+- the context-neutral runtime initializes only once even if more than one packaging wrapper is present during development.
 
-## Phase 1 target
+## Distribution
 
-The first installable version will contain a safe plugin bootstrap, module registration skeleton, language-provider interface, integration detection boundary and activation smoke tests. SEO output will be added in later closed phases rather than prematurely mixed into scaffolding.
+`scripts/build-theme-package.sh` copies this source tree into:
+
+```text
+seo-geo-theme/inc/seo-geo-core/src/
+```
+
+`Self-contained Theme CI` proves the resulting theme boots the runtime from that location with zero active plugins.

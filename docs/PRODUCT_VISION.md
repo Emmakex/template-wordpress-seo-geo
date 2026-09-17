@@ -2,20 +2,21 @@
 
 ## Purpose
 
-Create a reusable WordPress starter kit that lets a team launch high-quality websites quickly without trading away performance, technical SEO, multilingual correctness, accessibility or future compatibility with AI-assisted discovery.
+Create a reusable **self-contained WordPress block theme** that lets a team launch high-quality websites quickly without trading away performance, technical SEO, multilingual correctness, accessibility or future compatibility with AI-assisted discovery.
 
-The product is not a page-builder bundle and not an SEO plugin clone. It is an opinionated foundation that supplies safe defaults, reusable patterns and automated quality gates.
+The product is not a page-builder bundle and not a wrapper around third-party SEO plugins. It is an opinionated foundation that supplies native SEO/GEO behavior, safe defaults, reusable patterns and automated quality gates in one installable theme package.
 
 ## Product principles
 
 1. **Performance is architecture, not a cleanup task.** Avoid unnecessary runtime dependencies, third-party assets and global CSS/JS.
 2. **SEO fundamentals come before GEO extras.** Crawlability, indexability, canonicalization, internal linking, meaningful content and structured data must be correct first.
 3. **GEO means making content understandable and retrievable, not gaming AI systems.** We optimize semantic structure, provenance, entities and machine-friendly access while avoiding unsupported ranking claims.
-4. **Multilingual support is a core contract.** Language handling cannot be bolted on after templates, URLs, Schema or metadata are implemented.
-5. **Presentation and functional SEO logic stay separate.** The theme can change without losing metadata, Schema, crawler controls or language logic.
+4. **Plugin independence is a product requirement.** A clean WordPress installation plus the built theme must provide the baseline SEO/GEO experience with zero required plugins.
+5. **Multilingual support is a core contract.** ES/EN behavior must be designed into URLs, metadata, Schema and visible content rather than bolted on later.
 6. **Accessible by default.** Reusable patterns must work with keyboard navigation, focus indication, semantic landmarks and reduced motion.
-7. **Interoperable with the WordPress ecosystem.** Detect established SEO/multilingual/ecommerce plugins and avoid duplicate or conflicting output.
-8. **Minimal sufficient validation.** Validate the changed contract deeply; do not waste CI on unrelated work.
+7. **WordPress-native first.** Use WordPress core APIs for robots, sitemaps, block templates, responsive images and other solved problems before adding custom infrastructure.
+8. **Optional ecosystem compatibility never becomes a dependency.** Yoast, Rank Math, AIOSEO, WPML, Polylang, WooCommerce or builders may be supported later, but the core product cannot require them.
+9. **Minimal sufficient validation.** Validate the changed contract deeply; do not waste CI on unrelated work.
 
 ## Primary users
 
@@ -32,7 +33,7 @@ Home, services, about, case studies, blog and contact.
 Home, services, locations/service areas, local landing pages, FAQ and contact, with LocalBusiness/Organization configuration.
 
 ### Ecommerce
-WooCommerce-ready layouts, Product/Organization metadata coordination, category/product editorial support and multilingual commerce integration points.
+WooCommerce-compatible layouts, Product/Organization metadata coordination, category/product editorial support and optional commerce integration points.
 
 ### Publisher
 Article, author/ProfilePage, topic/category, archive and editorial provenance patterns.
@@ -41,18 +42,21 @@ Article, author/ProfilePage, topic/category, archive and editorial provenance pa
 
 - Replacing WordPress core features that already solve the problem well.
 - Shipping a mandatory visual page builder.
+- Requiring an SEO, Schema, caching, multilingual or GEO plugin for the baseline product to function.
 - Claiming that `llms.txt`, special AI markup or any proprietary file guarantees AI citations or rankings.
-- Duplicating Yoast, Rank Math, AIOSEO, WPML or Polylang when they are deliberately selected for a project.
 - Adding tracking, fonts, consent tools, analytics or third-party scripts by default.
+- Reimplementing an external plugin inside the theme merely to copy its UI or proprietary workflow.
 
 ## Success criteria
 
-A new project should be able to start from this repository and reach a production-ready baseline with:
+A new project should be able to install the built theme on clean WordPress and reach a production-ready baseline with:
 
-- a working block theme;
-- a functional SEO/GEO core plugin;
+- **one installable self-contained block theme**;
+- **zero required plugins** for baseline SEO/GEO behavior;
+- native canonical/meta/robots/indexability behavior;
 - correct ES/EN capability from day one;
 - measurable performance budgets;
 - structured SEO/GEO validation;
 - accessible core templates and patterns;
-- a documented path to enable a preset rather than rebuilding common structures.
+- a documented path to enable a preset rather than rebuilding common structures;
+- optional integrations that enhance the product without becoming prerequisites.
