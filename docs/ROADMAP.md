@@ -108,6 +108,8 @@ All exit criteria are satisfied:
 - compatibility documentation matches CI;
 - required PR and post-merge validation is green.
 
+Historical note: Phase 1 validated the original two-package bootstrap. The product direction was later tightened in Phase 3 so the distributable baseline becomes a single self-contained theme with zero required plugins.
+
 ## Phase 2 — Design system + performance baseline
 
 Status: **complete**
@@ -255,11 +257,11 @@ All exit criteria are satisfied:
 - Phase 2D PR and post-merge verification are green;
 - Phase 2 documentation reflects the final verified state.
 
-## Phase 3 — Native SEO foundation
+## Phase 3 — Native SEO foundation + self-contained packaging
 
 Status: **in progress**
 
-Phase 3 is split so native signal ownership is proven before external SEO-provider interoperability is claimed.
+Phase 3 now has one overriding product invariant: **a clean WordPress installation plus the built theme must provide the baseline SEO/GEO behavior with zero required plugins**.
 
 ### Microphase 3A — native SEO authority and core signals
 
@@ -273,7 +275,6 @@ Delivered on PR #10:
 - native meta-description resolution with conservative source rules and a documented product length ceiling;
 - page-level robots policy through WordPress's `wp_robots` filter rather than a second independent robots renderer;
 - removal/replacement of WordPress Core's `rel_canonical` callback only while native Core owns canonical output;
-- clean-runtime ownership fallback to supported external provider detection;
 - real WordPress smoke assertions for exactly one canonical, exactly one expected description and `noindex,follow` search behavior;
 - no frontend JavaScript;
 - public contract in `docs/NATIVE_SEO.md`;
@@ -293,63 +294,71 @@ Adoption findings were fixed in code rather than suppressed:
 - WPCS `MetaDescriptionResolver.php:70`, source `Universal.Operators.DisallowShortTernary.Found`, signature `738b94d70c77`;
 - PHPStan `CanonicalResolver.php:44`, identifier `function.alreadyNarrowedType`, signature `50c0653ad762`.
 
-### Microphase 3B — supported SEO-provider interoperability
+### Microphase 3B — self-contained native SEO/GEO runtime
+
+Status: **in progress**
+
+Scope:
+
+- extract context-neutral `SeoGeo\Core\Runtime` from the optional plugin wrapper;
+- boot the runtime directly from the theme;
+- build one installable theme package that embeds `packages/seo-geo-core/src` under `inc/seo-geo-core/src`;
+- prove the built theme works on WordPress 7.1 / PHP 8.2 with **zero active plugins**;
+- prove the runtime class is loaded from the theme bundle, not from `wp-content/plugins`;
+- preserve exactly one canonical and one expected meta description on an indexable fixture;
+- preserve one `noindex` robots output on a search fixture;
+- preserve clean PHP runtime diagnostics;
+- keep third-party plugin compatibility outside the critical path.
+
+PR #12 explored Yoast/Rank Math/AIOSEO interoperability but was intentionally closed unmerged after the product direction was clarified. That work is not part of the baseline dependency model.
+
+### Microphase 3C — native discovery metadata
 
 Status: **pending**
 
 Planned scope:
 
-- verify current supported integration APIs for Yoast SEO, Rank Math and AIOSEO;
-- provider-specific ownership/adapters only where needed;
-- real WordPress fixtures per supported provider;
-- duplicate canonical, robots and meta-description prevention tests;
-- confirm native Core output remains disabled for overlapping signals when a supported provider is authoritative;
-- document supported provider versions/behavior without claiming compatibility beyond tested fixtures.
-
-### Microphase 3C — remaining native discovery metadata
-
-Status: **pending**
-
-Planned scope:
-
-- Open Graph baseline under the same single-owner model;
+- native Open Graph baseline;
 - breadcrumb data contract reusable by visible UI and later Schema;
-- provider coexistence acceptance for new overlapping output;
-- no Schema graph ownership yet.
+- native title/social description policy;
+- no Schema graph ownership yet;
+- no third-party provider required for acceptance.
 
 ### Phase 3 exit criteria
 
-- one canonical/robots/meta-description owner per fixture;
-- no duplicate overlapping output with supported SEO integrations;
-- Open Graph baseline follows the same authority model;
+- built distribution is one installable theme;
+- zero active plugins are required in the baseline acceptance fixture;
+- canonical/robots/meta-description output remains single-owner and deterministic;
+- Open Graph baseline follows the native ownership model;
 - breadcrumb data has one reusable contract;
-- localized canonical behavior is tested before Phase 3 is declared complete.
+- performance/accessibility budgets remain green after embedding the runtime;
+- optional compatibility code is not required for the product to boot.
 
-## Phase 4 — Multilingual core
+## Phase 4 — Native multilingual core
 
 Deliverables:
 
 - LanguageManager contract;
-- native single-language adapter;
-- WPML adapter;
-- Polylang adapter;
+- native ES/EN language configuration;
 - hreflang resolver;
 - locale-aware metadata hooks;
 - localized breadcrumbs/internal URL helpers;
-- ES/EN integration fixtures.
+- ES/EN native integration fixtures;
+- optional WPML/Polylang adapters only after the native baseline is complete.
 
 Exit criteria:
 
-- reciprocal valid alternates;
+- reciprocal valid alternates in the native baseline;
 - current-language canonical;
 - correct HTML lang/OG locale/Schema language hooks;
-- no cross-language navigation regressions.
+- no cross-language navigation regressions;
+- no multilingual plugin required for baseline acceptance.
 
 ## Phase 5 — Schema graph + entities
 
 Deliverables:
 
-- graph builder;
+- native graph builder;
 - stable entity IDs;
 - WebSite/WebPage/Organization/Person/ProfilePage/Article/BreadcrumbList;
 - local business entity support;
@@ -360,8 +369,9 @@ Exit criteria:
 
 - valid parseable JSON-LD;
 - deterministic node IDs;
-- no duplicate overlapping graph with supported providers;
-- language tests pass.
+- exactly one native graph owner in the baseline fixture;
+- language tests pass;
+- no Schema plugin required.
 
 ## Phase 6 — GEO / agent-friendly layer
 
@@ -380,7 +390,8 @@ Exit criteria:
 - optional features can be disabled cleanly;
 - no SEO canonical/indexability conflicts;
 - multilingual alternates correct;
-- crawler rules are explicit and documented without ranking guarantees.
+- crawler rules are explicit and documented without ranking guarantees;
+- no GEO plugin required.
 
 ## Phase 7 — Presets
 
@@ -393,28 +404,31 @@ Implement in this order:
 
 Each preset closes independently before the next begins.
 
-## Phase 8 — Installer/onboarding
+## Phase 8 — Theme onboarding
 
 Deliverables:
 
-- setup wizard;
+- theme-owned setup wizard/admin screen;
 - preset choice;
 - primary/additional language configuration;
-- WPML/Polylang detection;
 - organization/entity basics;
-- SEO-provider choice/detection;
 - crawler/GEO opt-ins;
-- generated setup report.
+- generated setup report;
+- optional detection of external systems only for compatibility warnings or enhancements.
+
+The onboarding flow must not instruct users to install an SEO/GEO plugin to complete the baseline setup.
 
 ## Phase 9 — Distribution
 
 Deliverables:
 
-- reproducible theme/plugin ZIP builds;
+- reproducible **single-theme ZIP** build;
+- embedded SEO/GEO runtime integrity check;
 - versioning/changelog;
-- install/upgrade tests;
+- clean-install and upgrade tests with zero required plugins;
 - documentation for project cloning and per-client customization;
-- production verification checklist.
+- production verification checklist;
+- decision on deprecating/removing the transitional standalone Core plugin wrapper.
 
 ## Backlog rules
 
@@ -424,4 +438,5 @@ A feature only enters a phase when:
 - its authoritative owner/module is known;
 - multilingual impact is understood;
 - SEO/performance/accessibility impact is known;
-- acceptance can be tested.
+- acceptance can be tested;
+- it does not turn an optional third-party plugin into a baseline dependency.
