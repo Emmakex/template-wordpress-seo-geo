@@ -64,6 +64,7 @@ required_paths=(
   "packages/seo-geo-core/README.md"
   "packages/seo-geo-core/src/Runtime.php"
   "packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php"
+  "packages/seo-geo-core/src/Language/NativeLanguageRouter.php"
   "packages/seo-geo-core/src/Seo/OpenGraphResolver.php"
   "packages/seo-geo-core/src/Seo/BreadcrumbResolver.php"
   "scripts/build-theme-package.sh"
