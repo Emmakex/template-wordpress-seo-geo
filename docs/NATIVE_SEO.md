@@ -2,9 +2,9 @@
 
 ## Scope
 
-Phase 3A establishes the first public SEO-output layer in `seo-geo-core`. Its purpose is correctness and single ownership, not feature breadth.
+Phase 3A established the first public SEO-output layer in `seo-geo-core`. Its purpose is correctness and single ownership, not dependency on an external SEO plugin.
 
-The native layer owns overlapping SEO output only when the runtime SEO provider resolves to `native`. When a supported external SEO provider is detected, Core keeps its internal policy/resolver services available but does not register the overlapping native frontend presenter.
+The native layer owns overlapping SEO output while the runtime SEO provider resolves to `native`. The installable baseline is a self-contained theme: external SEO plugins are optional compatibility targets, never prerequisites for canonical, robots, descriptions or discovery metadata.
 
 Phase 3A covers:
 
@@ -15,7 +15,9 @@ Phase 3A covers:
 - page-level robots policy through WordPress APIs;
 - runtime acceptance proving non-duplicated output in a clean WordPress fixture.
 
-Phase 3A does **not** yet implement Open Graph, breadcrumbs, Schema, hreflang, localized canonical adapters or provider-specific Yoast/Rank Math/AIOSEO integration hooks. Those belong to later Phase 3/4 work.
+Phase 3C extends the same authority model with native Open Graph metadata and a reusable breadcrumb data contract. See `docs/DISCOVERY_METADATA.md` for that contract.
+
+Schema, hreflang, multilingual canonical behavior and crawler-specific GEO controls remain later phases.
 
 ## Authority model
 
@@ -25,7 +27,8 @@ Current signals:
 
 - `canonical`;
 - `meta_description`;
-- `robots`.
+- `robots`;
+- `open_graph`.
 
 Rules:
 
@@ -33,9 +36,9 @@ Rules:
 2. A clean install resolves to `native`.
 3. Native Core emits a supported overlapping signal only when the provider is `native`.
 4. Browser state, request parameters or content output cannot grant SEO ownership.
-5. Provider adapters must preserve this single-owner invariant when introduced.
+5. Optional provider adapters must preserve this single-owner invariant if they are introduced later.
 
-The authority contract intentionally precedes provider adapters so duplication prevention is architectural rather than a collection of provider-specific patches.
+The authority contract intentionally precedes optional provider adapters so duplication prevention is architectural rather than a collection of provider-specific patches.
 
 ## Indexability model
 
@@ -50,7 +53,7 @@ The authority contract intentionally precedes provider adapters so duplication p
 | `not-found` | WordPress resolved the request as 404. |
 | `410-gone` | Reserved for deliberate gone-content policy. |
 
-Native defaults in Phase 3A:
+Native defaults:
 
 - 404 → `not-found`;
 - site visibility disabled → `noindex-nofollow`;
@@ -61,13 +64,13 @@ Native defaults in Phase 3A:
 
 The `seo_geo_indexability_state` filter may override the native result only with one of the six supported states. Unsupported values do not become policy.
 
-The same resolver is intended to be reused later by sitemaps and agent-friendly alternate formats, preventing a URL from being `noindex` in metadata while accidentally remaining eligible elsewhere.
+The same resolver is reused by discovery metadata and is intended to be reused later by sitemaps and agent-friendly alternate formats, preventing a URL from being `noindex` in metadata while accidentally remaining eligible elsewhere.
 
 ## Canonical contract
 
 Native canonical output is emitted only for `indexable` requests.
 
-Resolution rules in Phase 3A:
+Resolution rules:
 
 - singular content uses WordPress `wp_get_canonical_url()`;
 - the front page uses `home_url( '/' )`;
@@ -76,9 +79,9 @@ Resolution rules in Phase 3A:
 
 The resolved value can be changed with `seo_geo_canonical_url`. An empty result suppresses native canonical output for that request.
 
-When native Core owns canonical output, it removes WordPress Core's `rel_canonical` callback and emits the resolved canonical once. This prevents Core + plugin duplication while retaining WordPress canonical semantics as the underlying singular resolver.
+When native Core owns canonical output, it removes WordPress Core's `rel_canonical` callback and emits the resolved canonical once. This prevents duplicate canonical output while retaining WordPress canonical semantics as the underlying singular resolver.
 
-Multilingual current-language canonical behavior is not claimed complete in Phase 3A; it closes with the language-provider work in Phase 4.
+Multilingual current-language canonical behavior is not claimed complete yet; it closes with the native language-provider work in Phase 4.
 
 ## Meta description contract
 
@@ -114,27 +117,44 @@ Native behavior:
 
 `robots.txt`, crawler-specific policy and page-level robots metadata remain separate concerns. OAI-SearchBot/GPTBot controls belong to the later GEO/crawler-policy phase.
 
+## Discovery metadata contract
+
+Phase 3C adds Open Graph as another explicitly owned signal rather than a second SEO stack.
+
+The native presenter:
+
+- reuses the canonical URL as `og:url`;
+- reuses the native description as `og:description`;
+- follows the WordPress document title for `og:title`;
+- emits `article` for single posts and `website` for the remaining baseline types;
+- emits site name and locale when available;
+- uses a featured image or configured site icon when one exists;
+- does not fabricate a social image when neither source exists;
+- suppresses the native Open Graph baseline on non-indexable requests.
+
+Breadcrumb hierarchy is resolved separately by `BreadcrumbResolver` and exposed through `Runtime::breadcrumbs()`. Phase 3C does not yet render BreadcrumbList JSON-LD; later Schema and any visible breadcrumb component must consume the same data contract.
+
+See `docs/DISCOVERY_METADATA.md` for exact fields and acceptance rules.
+
 ## WordPress integration
 
-`NativeSeoPresenter` registers only when Core is the active native SEO authority.
+`NativeSeoPresenter` registers only the signals that native Core owns.
 
 It:
 
-- removes WordPress Core's `rel_canonical` action to avoid a duplicate canonical;
-- renders the Core-resolved canonical and description in `wp_head`;
-- modifies robots directives with `wp_robots`;
+- removes WordPress Core's `rel_canonical` action only while native Core owns canonical output;
+- renders Core-resolved canonical, meta description and Open Graph metadata in `wp_head`;
+- modifies robots directives with `wp_robots` only while native Core owns robots;
 - escapes URL and attribute output at the final render boundary.
 
 No frontend JavaScript is required.
 
-## Phase 3A runtime acceptance
+## Runtime acceptance
 
-The disposable WordPress 7.1 / PHP 8.2 smoke fixture must prove all of the following:
+The disposable WordPress 7.1 / PHP 8.2 smoke fixture must preserve the Phase 3A contract:
 
 - runtime SEO provider is `native`;
 - output authority is `native`;
-- canonical is owned by native Core;
-- home exposes exactly one canonical;
 - a published singular fixture exposes exactly one canonical matching its public permalink;
 - that fixture exposes exactly one expected meta description;
 - a search fixture exposes no native canonical;
@@ -142,14 +162,16 @@ The disposable WordPress 7.1 / PHP 8.2 smoke fixture must prove all of the follo
 - search robots policy contains `noindex` and `follow` without `nofollow`;
 - no PHP fatal/warning/notice or uncaught runtime error is emitted.
 
+The self-contained theme gate additionally proves zero active plugins and, from Phase 3C onward, the discovery metadata and breadcrumb assertions documented in `docs/DISCOVERY_METADATA.md`.
+
 WPCS and PHPStan level 6 remain mandatory with no new suppression or analysis baseline.
 
-## Provider compatibility boundary
+## Optional provider compatibility boundary
 
-Phase 3A detects supported providers but does not yet claim full provider-specific compatibility. Phase 3B must add explicit adapters/acceptance for Yoast, Rank Math and AIOSEO and prove that overlapping canonical/robots/description output is not duplicated.
+The product baseline does not require Yoast, Rank Math, AIOSEO or another SEO plugin. Detection of an external provider is an ownership safety boundary so Core can avoid competing output.
 
-Until those provider fixtures pass, external-provider detection is an ownership safety boundary, not a completed integration claim.
+Full provider-specific interoperability may be implemented later as optional compatibility work, but it must not become a prerequisite for the theme to boot or for the native SEO/GEO baseline to function.
 
 ## Search and GEO claims
 
-Correct canonical, description and robots metadata improve technical consistency but do not guarantee ranking, indexing, AI citation or inclusion in any search feature. GEO functionality continues to build on ordinary crawlability, indexability, content quality and truthful visible information rather than special ranking markup.
+Correct canonical, description, robots and social metadata improve technical consistency but do not guarantee ranking, indexing, social-preview selection, AI citation or inclusion in any search feature. GEO functionality continues to build on ordinary crawlability, indexability, content quality and truthful visible information rather than special ranking markup.

@@ -12,10 +12,12 @@ namespace SeoGeo\Core;
 use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
 use SeoGeo\Core\Language\NativeWordPressAdapter;
+use SeoGeo\Core\Seo\BreadcrumbResolver;
 use SeoGeo\Core\Seo\CanonicalResolver;
 use SeoGeo\Core\Seo\IndexabilityResolver;
 use SeoGeo\Core\Seo\MetaDescriptionResolver;
 use SeoGeo\Core\Seo\NativeSeoPresenter;
+use SeoGeo\Core\Seo\OpenGraphResolver;
 use SeoGeo\Core\Seo\SeoOutputAuthority;
 
 /**
@@ -51,6 +53,13 @@ final class Runtime {
 	private static ?NativeSeoPresenter $native_seo = null;
 
 	/**
+	 * Reusable breadcrumb data resolver.
+	 *
+	 * @var BreadcrumbResolver|null
+	 */
+	private static ?BreadcrumbResolver $breadcrumbs = null;
+
+	/**
 	 * Initialize shared services once.
 	 */
 	public static function initialize(): void {
@@ -61,11 +70,19 @@ final class Runtime {
 		self::$integration_detector = new RuntimeIntegrationDetector();
 		self::$language_manager     = new LanguageManager( new NativeWordPressAdapter() );
 		self::$seo_authority        = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
-		self::$native_seo           = new NativeSeoPresenter(
+
+		$indexability = new IndexabilityResolver();
+		$canonical    = new CanonicalResolver();
+		$description  = new MetaDescriptionResolver();
+		$open_graph   = new OpenGraphResolver( $indexability, $canonical, $description );
+
+		self::$breadcrumbs = new BreadcrumbResolver();
+		self::$native_seo  = new NativeSeoPresenter(
 			self::$seo_authority,
-			new IndexabilityResolver(),
-			new CanonicalResolver(),
-			new MetaDescriptionResolver()
+			$indexability,
+			$canonical,
+			$description,
+			$open_graph
 		);
 		self::$native_seo->register();
 
@@ -98,5 +115,12 @@ final class Runtime {
 	 */
 	public static function seo_authority(): ?SeoOutputAuthority {
 		return self::$seo_authority;
+	}
+
+	/**
+	 * Get the reusable breadcrumb resolver when initialized.
+	 */
+	public static function breadcrumbs(): ?BreadcrumbResolver {
+		return self::$breadcrumbs;
 	}
 }
