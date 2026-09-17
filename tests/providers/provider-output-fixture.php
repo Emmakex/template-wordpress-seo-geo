@@ -3,8 +3,12 @@
  * SEO provider interoperability fixture.
  *
  * This file is copied into the disposable WordPress installation as a
- * must-use plugin. It uses only documented public provider filters to force
+ * must-use plugin. It uses documented public provider output filters to force
  * deterministic canonical and description values for the acceptance page.
+ *
+ * Rank Math's setup-complete option is test-only fixture state. Phase 3B
+ * validates interoperability after each supported provider has been configured;
+ * onboarding/incomplete-setup behavior belongs to the later setup phase.
  */
 
 $seo_geo_provider_fixture = get_option( 'seo_geo_provider_fixture', '' );
@@ -13,7 +17,11 @@ if ( ! is_string( $seo_geo_provider_fixture ) || '' === $seo_geo_provider_fixtur
 	return;
 }
 
-$seo_geo_provider_fixture_canonical   = home_url( '/provider-seo-canonical/' );
+if ( 'rank-math' === $seo_geo_provider_fixture && ! get_option( 'rank_math_is_configured' ) ) {
+	update_option( 'rank_math_is_configured', true, false );
+}
+
+$seo_geo_provider_fixture_canonical   = home_url( '/provider-seo-fixture/' );
 $seo_geo_provider_fixture_description = 'SEO GEO provider interoperability description.';
 
 switch ( $seo_geo_provider_fixture ) {
