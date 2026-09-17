@@ -47,6 +47,8 @@ interface LanguageProviderInterface {
 
 	/**
 	 * Resolve a configured locale for a language code.
+	 *
+	 * @param string $language_code Normalized language code to resolve.
 	 */
 	public function locale_for_language( string $language_code ): ?string;
 
