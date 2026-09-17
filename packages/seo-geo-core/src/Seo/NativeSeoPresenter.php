@@ -42,47 +42,67 @@ final class NativeSeoPresenter {
 	private MetaDescriptionResolver $description;
 
 	/**
+	 * Open Graph resolver.
+	 *
+	 * @var OpenGraphResolver
+	 */
+	private OpenGraphResolver $open_graph;
+
+	/**
 	 * Create the native presenter.
 	 *
 	 * @param SeoOutputAuthority      $authority    Output authority.
 	 * @param IndexabilityResolver    $indexability Indexability resolver.
 	 * @param CanonicalResolver       $canonical    Canonical resolver.
 	 * @param MetaDescriptionResolver $description  Description resolver.
+	 * @param OpenGraphResolver       $open_graph   Open Graph resolver.
 	 */
 	public function __construct(
 		SeoOutputAuthority $authority,
 		IndexabilityResolver $indexability,
 		CanonicalResolver $canonical,
-		MetaDescriptionResolver $description
+		MetaDescriptionResolver $description,
+		OpenGraphResolver $open_graph
 	) {
 		$this->authority    = $authority;
 		$this->indexability = $indexability;
 		$this->canonical    = $canonical;
 		$this->description  = $description;
+		$this->open_graph   = $open_graph;
 	}
 
 	/**
-	 * Register native frontend output only when Core is authoritative.
+	 * Register native frontend output only for signals owned by Core.
 	 */
 	public function register(): void {
-		if ( ! $this->authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL ) ) {
-			return;
+		$owns_head = $this->authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL )
+			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_META_DESCRIPTION )
+			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_OPEN_GRAPH );
+
+		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL ) ) {
+			remove_action( 'wp_head', 'rel_canonical' );
 		}
 
-		remove_action( 'wp_head', 'rel_canonical' );
-		add_action( 'wp_head', array( $this, 'render_head' ), 9 );
-		add_filter( 'wp_robots', array( $this, 'filter_robots' ), 99 );
+		if ( $owns_head ) {
+			add_action( 'wp_head', array( $this, 'render_head' ), 9 );
+		}
+
+		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_ROBOTS ) ) {
+			add_filter( 'wp_robots', array( $this, 'filter_robots' ), 99 );
+		}
 	}
 
 	/**
-	 * Render canonical and meta description output.
+	 * Render native metadata owned by Core.
 	 */
 	public function render_head(): void {
-		$state = $this->indexability->resolve();
-		$url   = $this->canonical->resolve( $state );
+		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL ) ) {
+			$state = $this->indexability->resolve();
+			$url   = $this->canonical->resolve( $state );
 
-		if ( null !== $url ) {
-			echo '<link rel="canonical" href="' . esc_url( $url ) . '" />' . "\n";
+			if ( null !== $url ) {
+				echo '<link rel="canonical" href="' . esc_url( $url ) . '" />' . "\n";
+			}
 		}
 
 		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_META_DESCRIPTION ) ) {
@@ -90,6 +110,12 @@ final class NativeSeoPresenter {
 
 			if ( null !== $description ) {
 				echo '<meta name="description" content="' . esc_attr( $description ) . '" />' . "\n";
+			}
+		}
+
+		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_OPEN_GRAPH ) ) {
+			foreach ( $this->open_graph->resolve() as $property => $content ) {
+				echo '<meta property="' . esc_attr( $property ) . '" content="' . esc_attr( $content ) . '" />' . "\n";
 			}
 		}
 	}
