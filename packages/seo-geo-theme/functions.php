@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once get_template_directory() . '/inc/seo-geo-core/bootstrap.php';
+
 /**
  * Load project-owned translations.
  */
