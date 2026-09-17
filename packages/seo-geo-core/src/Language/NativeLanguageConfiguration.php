@@ -133,6 +133,8 @@ final class NativeLanguageConfiguration {
 
 	/**
 	 * Resolve a WordPress locale for a configured language code.
+	 *
+	 * @param string $language_code Language code to resolve.
 	 */
 	public function locale_for( string $language_code ): ?string {
 		$normalized = self::normalize_language_code( $language_code );
@@ -145,6 +147,8 @@ final class NativeLanguageConfiguration {
 
 	/**
 	 * Resolve a configured language code for a WordPress locale.
+	 *
+	 * @param string $locale WordPress locale to resolve.
 	 */
 	public function language_for_locale( string $locale ): ?string {
 		$normalized = self::normalize_locale( $locale );
@@ -163,6 +167,8 @@ final class NativeLanguageConfiguration {
 
 	/**
 	 * Build a single-language fallback from the active WordPress locale.
+	 *
+	 * @param string $locale Active WordPress locale.
 	 */
 	private static function single_language( string $locale ): self {
 		$language_code = self::language_code_from_locale( $locale );
@@ -172,6 +178,8 @@ final class NativeLanguageConfiguration {
 
 	/**
 	 * Normalize a language code used by the native contract.
+	 *
+	 * @param string $language_code Raw language code.
 	 */
 	private static function normalize_language_code( string $language_code ): ?string {
 		$normalized = strtolower( trim( $language_code ) );
@@ -185,6 +193,8 @@ final class NativeLanguageConfiguration {
 
 	/**
 	 * Accept only locale names that WordPress itself considers safe.
+	 *
+	 * @param string $locale Raw WordPress locale.
 	 */
 	private static function normalize_locale( string $locale ): ?string {
 		$normalized = trim( $locale );
@@ -197,6 +207,8 @@ final class NativeLanguageConfiguration {
 
 	/**
 	 * Derive the base language code from a WordPress locale.
+	 *
+	 * @param string $locale WordPress locale.
 	 */
 	private static function language_code_from_locale( string $locale ): string {
 		$parts = preg_split( '/[_-]/', $locale );
