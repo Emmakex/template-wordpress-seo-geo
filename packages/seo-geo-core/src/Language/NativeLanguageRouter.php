@@ -62,6 +62,7 @@ final class NativeLanguageRouter {
 		add_filter( 'rewrite_rules_array', array( $this, 'filter_rewrite_rules' ), 20 );
 		add_action( 'parse_request', array( $this, 'activate_request_locale' ), 20 );
 		add_filter( 'redirect_canonical', array( $this, 'filter_canonical_redirect' ), 20, 2 );
+		add_filter( 'language_attributes', array( $this, 'filter_language_attributes' ), 20, 2 );
 	}
 
 	/**
@@ -179,6 +180,43 @@ final class NativeLanguageRouter {
 	 */
 	public function filter_active_locale( string $locale ): string {
 		return $this->active_locale ?? $locale;
+	}
+
+	/**
+	 * Keep the document language attribute aligned with the validated route.
+	 *
+	 * Existing direction and any other WordPress-provided attributes are
+	 * preserved; only lang/xml:lang are normalized from the active locale.
+	 *
+	 * @param string $output  Existing language attributes.
+	 * @param string $doctype Document type requested by WordPress.
+	 */
+	public function filter_language_attributes( string $output, string $doctype ): string {
+		if ( null === $this->active_locale ) {
+			return $output;
+		}
+
+		$language_tag = str_replace( '_', '-', $this->active_locale );
+		$escaped_tag  = esc_attr( $language_tag );
+		$replacement  = 'lang="' . $escaped_tag . '"';
+		$updated      = preg_replace( '/(?<!xml:)lang="[^"]*"/', $replacement, $output, 1 );
+		$output       = is_string( $updated ) ? $updated : $output;
+
+		if ( ! str_contains( $output, 'lang="' ) ) {
+			$output = trim( $output . ' ' . $replacement );
+		}
+
+		if ( 'xhtml' === $doctype ) {
+			$xml_replacement = 'xml:lang="' . $escaped_tag . '"';
+			$xml_updated     = preg_replace( '/xml:lang="[^"]*"/', $xml_replacement, $output, 1 );
+			$output          = is_string( $xml_updated ) ? $xml_updated : $output;
+
+			if ( ! str_contains( $output, 'xml:lang="' ) ) {
+				$output = trim( $output . ' ' . $xml_replacement );
+			}
+		}
+
+		return $output;
 	}
 
 	/**
