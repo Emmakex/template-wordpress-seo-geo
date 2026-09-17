@@ -154,7 +154,7 @@ final class NativeLanguageRouter {
 		}
 
 		$locale       = $this->configuration->locale_for( $requested );
-		$matched_rule = is_string( $wp->matched_rule ) ? $wp->matched_rule : '';
+		$matched_rule = $wp->matched_rule;
 
 		if ( null === $locale || ! $this->matched_language_prefix( $matched_rule, $requested ) ) {
 			unset( $wp->query_vars[ self::QUERY_VAR ] );
