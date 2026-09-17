@@ -1,0 +1,61 @@
+name: Self-contained Theme CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/self-contained-theme-smoke.sh'
+      - '.github/workflows/self-contained-theme.yml'
+      - 'docs/ARCHITECTURE.md'
+      - 'docs/PRODUCT_VISION.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/self-contained-theme-smoke.sh'
+      - '.github/workflows/self-contained-theme.yml'
+      - 'docs/ARCHITECTURE.md'
+      - 'docs/PRODUCT_VISION.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: self-contained-theme-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  self-contained-theme:
+    name: Zero-plugin WordPress smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          bash --version | head -n 1
+          python3 --version
+          docker version
+
+      - name: Validate build and smoke scripts
+        run: |
+          bash -n scripts/build-theme-package.sh
+          bash -n scripts/ci/self-contained-theme-smoke.sh
+          php -l packages/seo-geo-theme/inc/seo-geo-core/bootstrap.php
+          php -l packages/seo-geo-core/src/Runtime.php
+
+      - name: Build self-contained theme
+        run: bash scripts/build-theme-package.sh /tmp/seo-geo-theme-build
+
+      - name: WordPress zero-plugin SEO/GEO smoke
+        run: bash scripts/ci/self-contained-theme-smoke.sh
