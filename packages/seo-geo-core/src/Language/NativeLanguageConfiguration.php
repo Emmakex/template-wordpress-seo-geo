@@ -19,6 +19,16 @@ final class NativeLanguageConfiguration {
 	public const OPTION_NAME = 'seo_geo_native_languages';
 
 	/**
+	 * Keep native language routing disabled.
+	 */
+	public const ROUTING_DISABLED = 'disabled';
+
+	/**
+	 * Reserve configured language codes as URL prefixes.
+	 */
+	public const ROUTING_PREFIX = 'prefix';
+
+	/**
 	 * Default language code.
 	 *
 	 * @var string
@@ -33,14 +43,23 @@ final class NativeLanguageConfiguration {
 	private array $languages;
 
 	/**
+	 * Native routing mode.
+	 *
+	 * @var string
+	 */
+	private string $routing_mode;
+
+	/**
 	 * Create a validated configuration.
 	 *
 	 * @param string                $default_language_code Default language code.
 	 * @param array<string, string> $languages             Language-to-locale map.
+	 * @param string                $routing_mode          Validated routing mode.
 	 */
-	private function __construct( string $default_language_code, array $languages ) {
+	private function __construct( string $default_language_code, array $languages, string $routing_mode ) {
 		$this->default_language_code = $default_language_code;
 		$this->languages             = $languages;
+		$this->routing_mode          = $routing_mode;
 	}
 
 	/**
@@ -64,8 +83,14 @@ final class NativeLanguageConfiguration {
 
 		$raw_default   = $raw['default'] ?? null;
 		$raw_languages = $raw['languages'] ?? null;
+		$raw_routing   = $raw['routing'] ?? self::ROUTING_DISABLED;
 
-		if ( ! is_string( $raw_default ) || ! is_array( $raw_languages ) || array() === $raw_languages ) {
+		if ( ! is_string( $raw_default ) || ! is_array( $raw_languages ) || array() === $raw_languages || ! is_string( $raw_routing ) ) {
+			return $fallback;
+		}
+
+		$routing_mode = strtolower( trim( $raw_routing ) );
+		if ( ! in_array( $routing_mode, array( self::ROUTING_DISABLED, self::ROUTING_PREFIX ), true ) ) {
 			return $fallback;
 		}
 
@@ -98,7 +123,7 @@ final class NativeLanguageConfiguration {
 			return $fallback;
 		}
 
-		return new self( $default_language_code, $languages );
+		return new self( $default_language_code, $languages, $routing_mode );
 	}
 
 	/**
@@ -122,6 +147,20 @@ final class NativeLanguageConfiguration {
 	 */
 	public function languages(): array {
 		return $this->languages;
+	}
+
+	/**
+	 * Return the validated native routing mode.
+	 */
+	public function routing_mode(): string {
+		return $this->routing_mode;
+	}
+
+	/**
+	 * Report whether prefixed native routing is enabled.
+	 */
+	public function routing_enabled(): bool {
+		return self::ROUTING_PREFIX === $this->routing_mode && $this->is_multilingual();
 	}
 
 	/**
@@ -173,7 +212,7 @@ final class NativeLanguageConfiguration {
 	private static function single_language( string $locale ): self {
 		$language_code = self::language_code_from_locale( $locale );
 
-		return new self( $language_code, array( $language_code => $locale ) );
+		return new self( $language_code, array( $language_code => $locale ), self::ROUTING_DISABLED );
 	}
 
 	/**
