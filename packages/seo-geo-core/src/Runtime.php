@@ -78,10 +78,13 @@ final class Runtime {
 
 		self::$integration_detector = new RuntimeIntegrationDetector();
 
-		$language_configuration  = NativeLanguageConfiguration::from_wordpress();
-		self::$language_manager  = new LanguageManager( new NativeWordPressAdapter( $language_configuration ) );
-		self::$language_router   = new NativeLanguageRouter( $language_configuration );
-		self::$seo_authority     = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
+		$language_configuration = NativeLanguageConfiguration::from_wordpress();
+
+		self::$language_manager = new LanguageManager( new NativeWordPressAdapter( $language_configuration ) );
+
+		self::$language_router = new NativeLanguageRouter( $language_configuration );
+
+		self::$seo_authority = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
 
 		self::$language_router->register();
 		add_filter( 'seo_geo_indexability_state', array( self::class, 'protect_localized_route_indexability' ), 20 );
