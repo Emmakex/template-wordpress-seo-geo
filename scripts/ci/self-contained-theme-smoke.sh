@@ -127,6 +127,8 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Seo/BreadcrumbResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaNodeIds.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaIdentityResolver.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaLocalBusinessResolver.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaVisibleContentResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaArticleResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaGraphBuilder.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaPresenter.php"; do
@@ -443,11 +445,24 @@ PY
   fail_smoke "schema-organization-contract" "Explicit Organization graph contract is invalid" "home graph with WebSite + WebPage + Organization and publisher link" "${ORGANIZATION_SCHEMA_RESULT:-python assertion failed}" "parse Organization JSON-LD graph"
 fi
 
-printf '[self-contained] Checking explicit LocalBusiness identity.\n'
-wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "local_business" ), false ); update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_region" => "Catalunya", "postal_code" => "08001", "address_country" => "ES", "telephone" => "+34 930 000 000", "price_range" => "€€", "latitude" => "41.38740", "longitude" => "2.16860", "opening_hours" => array( array( "days" => array( "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ), "opens" => "09:00", "closes" => "18:00" ) ) ), false );' >/dev/null \
+printf '[self-contained] Checking visible LocalBusiness identity.\n'
+LOCAL_BUSINESS_PAGE_ID="$(wp_cli post create --post_type=page --post_status=publish --post_title='Local Business Home' --post_name='local-business-home' --post_content='Carrer de la Prova 10 08001 Barcelona Catalunya +34 930 000 000 €€ Monday to Friday 09:00-18:00' --porcelain 2>/dev/null | tr -d '\r\n')"
+[[ "$LOCAL_BUSINESS_PAGE_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "schema-local-business-page" "Could not create visible LocalBusiness front-page fixture" "numeric page ID" "$LOCAL_BUSINESS_PAGE_ID"
+wp_cli option update show_on_front page >/dev/null \
+  || fail_smoke "schema-local-business-front-mode" "Could not switch fixture to a static front page" "show_on_front=page" "failed"
+wp_cli option update page_on_front "$LOCAL_BUSINESS_PAGE_ID" >/dev/null \
+  || fail_smoke "schema-local-business-front-page" "Could not select LocalBusiness front page" "$LOCAL_BUSINESS_PAGE_ID" "failed"
+
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "local_business" ), false ); update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_region" => "Catalunya", "postal_code" => "08001", "address_country" => "ES", "telephone" => "+34 930 000 000", "price_range" => "€€", "latitude" => "41.38740", "longitude" => "2.16860", "opening_hours" => array( array( "days" => array( "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ), "opens" => "09:00", "closes" => "18:00", "visible_text" => "Monday to Friday 09:00-18:00" ) ) ), false );' >/dev/null \
   || fail_smoke "schema-local-business-option" "Could not configure explicit LocalBusiness identity" "option updates succeed" "failed"
 curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
   || fail_smoke "schema-local-business-home-request" "Could not request LocalBusiness home fixture" "HTTP 2xx" "curl failed"
+
+for visible_fact in 'Carrer de la Prova 10' '08001' 'Barcelona' 'Catalunya' '+34 930 000 000' '€€' 'Monday to Friday 09:00-18:00'; do
+  grep -Fq "$visible_fact" "$HOME_BODY" \
+    || fail_smoke "schema-local-business-visible-fact" "LocalBusiness Schema fixture fact is not visible in rendered HTML" "$visible_fact" "missing"
+done
 
 if ! LOCAL_BUSINESS_SCHEMA_RESULT="$(python3 - "$HOME_BODY" "$BASE_URL" <<'PY'
 import json
@@ -529,14 +544,107 @@ assert hours[0].get("closes") == "18:00:00"
 print(json.dumps({"business_id": business_id, "node_count": len(nodes)}))
 PY
 )"; then
-  fail_smoke "schema-local-business-contract" "Explicit LocalBusiness graph contract is invalid" "home graph with WebSite + WebPage + typed LocalBusiness and validated physical data" "${LOCAL_BUSINESS_SCHEMA_RESULT:-python assertion failed}" "parse LocalBusiness JSON-LD graph"
+  fail_smoke "schema-local-business-visible-contract" "Visible LocalBusiness graph contract is invalid" "visible front-page facts mapped to one typed LocalBusiness" "${LOCAL_BUSINESS_SCHEMA_RESULT:-python assertion failed}" "parse visible LocalBusiness JSON-LD graph"
 fi
 
-printf '[self-contained] Checking incomplete LocalBusiness suppression.\n'
-wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_country" => "ES" ), false );' >/dev/null \
-  || fail_smoke "schema-local-business-invalid-option" "Could not configure incomplete LocalBusiness fixture" "option update succeeds" "failed"
+printf '[self-contained] Checking LocalBusiness does not leak onto an article.\n'
+curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
+  || fail_smoke "schema-local-business-article-request" "Could not request article while LocalBusiness identity is active" "HTTP 2xx" "curl failed"
+if ! LOCAL_BUSINESS_ARTICLE_RESULT="$(python3 - "$PAGE_BODY" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list)
+assert all(node.get("@id", "").endswith("#localbusiness") is False for node in nodes if isinstance(node, dict))
+article = next(node for node in nodes if node.get("@type") == "BlogPosting")
+assert "publisher" not in article
+print("ok")
+PY
+)"; then
+  fail_smoke "schema-local-business-article-leak" "LocalBusiness data must not be emitted on an article where its physical facts are not visible" "no LocalBusiness node or publisher reference" "${LOCAL_BUSINESS_ARTICLE_RESULT:-python assertion failed}" "parse article JSON-LD graph"
+fi
+
+printf '[self-contained] Checking hidden optional LocalBusiness fields are omitted.\n'
+wp_cli post update "$LOCAL_BUSINESS_PAGE_ID" --post_content='Carrer de la Prova 10 08001 Barcelona Catalunya' >/dev/null \
+  || fail_smoke "schema-local-business-hidden-content" "Could not update visible LocalBusiness fixture content" "page update succeeds" "failed"
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "NotARealBusinessType", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_region" => "Catalunya", "postal_code" => "08001", "address_country" => "ES", "telephone" => "+34 930 111 111", "price_range" => "$$$", "latitude" => "91.00000", "longitude" => "2.16860", "opening_hours" => array( array( "days" => array( "Monday" ), "opens" => "09:00", "closes" => "18:00", "visible_text" => "Hidden Monday hours" ) ) ), false );' >/dev/null \
+  || fail_smoke "schema-local-business-hidden-option" "Could not configure hidden optional LocalBusiness fields" "option update succeeds" "failed"
 curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
-  || fail_smoke "schema-local-business-invalid-request" "Could not request incomplete LocalBusiness fixture" "HTTP 2xx" "curl failed"
+  || fail_smoke "schema-local-business-hidden-request" "Could not request hidden optional LocalBusiness fixture" "HTTP 2xx" "curl failed"
+
+if ! LOCAL_BUSINESS_OPTIONAL_RESULT="$(python3 - "$HOME_BODY" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 3, f"nodes={nodes!r}"
+business = next(node for node in nodes if node.get("@type") == "LocalBusiness")
+assert "telephone" not in business
+assert "priceRange" not in business
+assert "geo" not in business
+assert "openingHoursSpecification" not in business
+print("ok")
+PY
+)"; then
+  fail_smoke "schema-local-business-hidden-optional" "Hidden or invalid optional LocalBusiness fields must be omitted" "generic LocalBusiness with visible address only" "${LOCAL_BUSINESS_OPTIONAL_RESULT:-python assertion failed}" "parse hidden optional LocalBusiness JSON-LD graph"
+fi
+
+printf '[self-contained] Checking hidden required LocalBusiness address suppresses the entity.\n'
+wp_cli post update "$LOCAL_BUSINESS_PAGE_ID" --post_content='Carrer de la Prova 10 08001 Catalunya' >/dev/null \
+  || fail_smoke "schema-local-business-hidden-address-content" "Could not remove locality from visible fixture content" "page update succeeds" "failed"
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_region" => "Catalunya", "postal_code" => "08001", "address_country" => "ES" ), false );' >/dev/null \
+  || fail_smoke "schema-local-business-hidden-address-option" "Could not configure required LocalBusiness address fixture" "option update succeeds" "failed"
+curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
+  || fail_smoke "schema-local-business-hidden-address-request" "Could not request hidden address LocalBusiness fixture" "HTTP 2xx" "curl failed"
 
 if ! LOCAL_BUSINESS_NEGATIVE_RESULT="$(python3 - "$HOME_BODY" <<'PY'
 import json
@@ -565,7 +673,6 @@ class SchemaParser(HTMLParser):
 parser = SchemaParser()
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
     parser.feed(handle.read())
-
 payload = json.loads("".join(parser.parts))
 nodes = payload.get("@graph")
 assert isinstance(nodes, list) and len(nodes) == 2, f"nodes={nodes!r}"
@@ -573,13 +680,17 @@ website = next(node for node in nodes if node.get("@type") == "WebSite")
 webpage = next(node for node in nodes if node.get("@type") == "WebPage")
 assert "publisher" not in website
 assert "mainEntity" not in webpage
-assert all(node.get("@type") not in ("LocalBusiness", "Plumber") for node in nodes)
+assert all(node.get("@id", "").endswith("#localbusiness") is False for node in nodes if isinstance(node, dict))
 print("ok")
 PY
 )"; then
-  fail_smoke "schema-local-business-incomplete" "Incomplete LocalBusiness configuration must not emit an entity" "baseline WebSite + WebPage only" "${LOCAL_BUSINESS_NEGATIVE_RESULT:-python assertion failed}" "parse incomplete LocalBusiness JSON-LD graph"
+  fail_smoke "schema-local-business-hidden-required" "LocalBusiness with hidden required address data must not emit an entity" "baseline WebSite + WebPage only" "${LOCAL_BUSINESS_NEGATIVE_RESULT:-python assertion failed}" "parse hidden required LocalBusiness JSON-LD graph"
 fi
 
+wp_cli option update show_on_front posts >/dev/null \
+  || fail_smoke "schema-local-business-front-reset" "Could not restore posts front page" "show_on_front=posts" "failed"
+wp_cli option update page_on_front 0 >/dev/null \
+  || fail_smoke "schema-local-business-page-reset" "Could not clear static front-page selection" "page_on_front=0" "failed"
 wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "organization" ), false ); delete_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME );' >/dev/null \
   || fail_smoke "schema-local-business-reset" "Could not restore Organization fixture after LocalBusiness checks" "identity reset succeeds" "failed"
 
@@ -643,7 +754,7 @@ assert profile.get("mainEntity") == {"@id": person_id}
 assert person.get("@id") == person_id
 assert person.get("name") == "Schema Author"
 assert person.get("url") == profile_url
-assert person.get("description") == "Visible schema author biography."
+assert "description" not in person
 assert person.get("mainEntityOfPage") == {"@id": profile_id}
 assert "publisher" not in website
 print(json.dumps({"profile_id": profile_id, "person_id": person_id, "node_count": len(nodes)}))
@@ -721,7 +832,7 @@ assert "image" not in article
 assert person.get("@id") == person_id
 assert person.get("name") == "Schema Author"
 assert person.get("url") == profile_url
-assert person.get("description") == "Visible schema author biography."
+assert "description" not in person
 assert person.get("mainEntityOfPage") == {"@id": profile_id}
 
 assert organization.get("@id") == organization_id
