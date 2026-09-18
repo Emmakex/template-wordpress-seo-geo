@@ -30,6 +30,15 @@ final class SchemaNodeIds {
 	}
 
 	/**
+	 * Return the stable Article entity ID for one canonical URL.
+	 *
+	 * @param string $canonical_url Authoritative article canonical URL.
+	 */
+	public function article( string $canonical_url ): string {
+		return $this->with_fragment( $canonical_url, 'article' );
+	}
+
+	/**
 	 * Return the stable site Organization entity ID.
 	 */
 	public function organization(): string {
