@@ -158,21 +158,26 @@ This is an intentional migration state, not the final multilingual SEO architect
 
 Native translations are **distinct WordPress resources**. Merely reaching the same post under multiple language prefixes never creates a translation relationship.
 
-The native registry uses two server-side post-meta fields:
+The native registry uses three server-side post-meta fields:
 
 ```text
 _seo_geo_translation_group
 _seo_geo_language
+_seo_geo_translations
 ```
+
+The third field is the explicit language-to-resource-ID map for the relationship. Every valid member must publish the same normalized map. This avoids global meta searches and makes reciprocity directly verifiable by reading the resources named in the relationship.
 
 A valid relationship requires:
 
 - the current resource is published and belongs to a public, viewable post type;
-- at least two published resources share the same explicit translation-group identifier;
-- every published group member declares exactly one language that exists in the validated native language configuration;
-- no language appears more than once inside the same group;
-- attachments, drafts, private resources, malformed group identifiers and unconfigured languages do not become valid members;
-- resolving the relationship from any valid member yields the same language-to-resource map, making reciprocity a property of the group rather than a separately inferred link.
+- at least two distinct published resources are present in the explicit translation map;
+- every mapped resource declares the same translation-group identifier;
+- every mapped resource declares the language under which its ID appears;
+- every language exists in the validated native language configuration;
+- every mapped member stores the same normalized translation map;
+- one WordPress resource cannot represent two languages in the same relationship;
+- attachments, drafts, private resources, malformed group identifiers, unconfigured languages and non-reciprocal maps invalidate the relationship.
 
 `Runtime::translations()` exposes the registry. The returned `NativeTranslationRelationship` contains the group ID, the current resource language and the published translation IDs keyed by language.
 
@@ -227,9 +232,10 @@ Phase 4C1 additionally proves:
 
 1. a published ES/EN pair with the same explicit group resolves reciprocally from either member;
 2. a reachable post without explicit translation metadata resolves no relationship;
-3. a group with only one published member because its alternate is draft resolves no relationship;
-4. duplicate language membership invalidates the group;
-5. a published member assigned to an unconfigured language invalidates the group;
-6. the built theme still runs the contract with zero active plugins and clean PHP diagnostics.
+3. a relationship pointing to a draft alternate resolves no relationship;
+4. members that do not publish the same reciprocal map resolve no relationship;
+5. one WordPress resource cannot be reused for multiple languages;
+6. a mapped member assigned to an unconfigured language invalidates the relationship;
+7. the built theme still runs the contract with zero active plugins and clean PHP diagnostics.
 
 Accessibility, native SEO and performance regression gates remain required alongside the dedicated multilingual acceptance.
