@@ -65,9 +65,9 @@ final class NativeLanguageConfiguration {
 	 * @param string|null           $x_default_language_code Explicit x-default language.
 	 */
 	private function __construct( string $default_language_code, array $languages, string $routing_mode, ?string $x_default_language_code ) {
-		$this->default_language_code  = $default_language_code;
-		$this->languages              = $languages;
-		$this->routing_mode           = $routing_mode;
+		$this->default_language_code   = $default_language_code;
+		$this->languages               = $languages;
+		$this->routing_mode            = $routing_mode;
 		$this->x_default_language_code = $x_default_language_code;
 	}
 
