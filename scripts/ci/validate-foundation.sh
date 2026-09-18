@@ -73,6 +73,7 @@ required_paths=(
   "packages/seo-geo-core/src/Seo/LocalizedSeoResolver.php"
   "packages/seo-geo-core/src/Seo/BreadcrumbResolver.php"
   "packages/seo-geo-core/src/Schema/SchemaNodeIds.php"
+  "packages/seo-geo-core/src/Schema/SchemaIdentityResolver.php"
   "packages/seo-geo-core/src/Schema/SchemaGraphBuilder.php"
   "packages/seo-geo-core/src/Schema/SchemaPresenter.php"
   "scripts/build-theme-package.sh"
