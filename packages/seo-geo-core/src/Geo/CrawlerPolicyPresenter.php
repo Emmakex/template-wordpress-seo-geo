@@ -46,12 +46,12 @@ final class CrawlerPolicyPresenter {
 	 * allows are therefore never appended when blog_public is disabled.
 	 *
 	 * @param string $output Existing WordPress robots.txt output.
-	 * @param mixed  $public WordPress blog_public value.
+	 * @param mixed  $site_public WordPress blog_public value.
 	 */
-	public function filter( string $output, $public ): string {
+	public function filter( string $output, $site_public ): string {
 		$output = $this->without_owned_block( $output );
 
-		if ( 1 !== (int) $public ) {
+		if ( 1 !== (int) $site_public ) {
 			return $this->normalize_trailing_newline( $output );
 		}
 
