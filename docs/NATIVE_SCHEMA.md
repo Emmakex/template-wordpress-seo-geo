@@ -20,7 +20,7 @@ Phase 5B extends that same graph with conservative identity nodes:
 - `ProfilePage` for author archives whose primary subject is that Person;
 - explicit graph references rather than duplicated identity objects.
 
-Phase 5C extends the same graph with native `BlogPosting` data for built-in WordPress posts. Phase 5D adds `BreadcrumbList` from the existing breadcrumb data authority. Phase 5E adds one explicitly configured physical `LocalBusiness` identity to the same graph; it never creates a parallel JSON-LD script.
+Phase 5C extends the same graph with native `BlogPosting` data for built-in WordPress posts. Phase 5D adds `BreadcrumbList` from the existing breadcrumb data authority. Phase 5E adds one explicitly configured physical `LocalBusiness` identity to the same graph. Phase 5F closes the graph contract with a reusable visible-content authority and negative fixtures so hidden entity facts are omitted rather than published as Schema. All phases preserve one native JSON-LD graph owner.
 
 ## Ownership
 
