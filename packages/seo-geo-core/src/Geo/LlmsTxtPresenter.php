@@ -13,16 +13,32 @@ namespace SeoGeo\Core\Geo;
  * Serves the native llms.txt document without rewrite-rule dependencies.
  */
 final class LlmsTxtPresenter {
+	/**
+	 * llms.txt data authority.
+	 *
+	 * @var LlmsTxtResolver
+	 */
 	private LlmsTxtResolver $resolver;
 
+	/**
+	 * Create the presenter.
+	 *
+	 * @param LlmsTxtResolver $resolver llms.txt data authority.
+	 */
 	public function __construct( LlmsTxtResolver $resolver ) {
 		$this->resolver = $resolver;
 	}
 
+	/**
+	 * Register the virtual endpoint.
+	 */
 	public function register(): void {
 		add_action( 'template_redirect', array( $this, 'maybe_render' ), 0 );
 	}
 
+	/**
+	 * Render only the exact site-root llms.txt endpoint when enabled.
+	 */
 	public function maybe_render(): void {
 		if ( ! $this->resolver->enabled() || ! $this->is_llms_request() ) {
 			return;
@@ -52,6 +68,9 @@ final class LlmsTxtPresenter {
 		exit;
 	}
 
+	/**
+	 * Match the exact llms.txt path for root or subdirectory installations.
+	 */
 	private function is_llms_request(): bool {
 		if ( ! isset( $_SERVER['REQUEST_URI'] ) || ! is_string( $_SERVER['REQUEST_URI'] ) ) {
 			return false;
