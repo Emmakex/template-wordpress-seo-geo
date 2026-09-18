@@ -15,6 +15,7 @@ use SeoGeo\Core\Language\NativeLanguageConfiguration;
 use SeoGeo\Core\Language\NativeLanguageRouter;
 use SeoGeo\Core\Language\NativeTranslationRegistry;
 use SeoGeo\Core\Language\NativeWordPressAdapter;
+use SeoGeo\Core\Schema\SchemaArticleResolver;
 use SeoGeo\Core\Schema\SchemaGraphBuilder;
 use SeoGeo\Core\Schema\SchemaIdentityResolver;
 use SeoGeo\Core\Schema\SchemaNodeIds;
@@ -139,7 +140,15 @@ final class Runtime {
 
 		$schema_ids         = new SchemaNodeIds();
 		$schema_identity    = new SchemaIdentityResolver( $schema_ids );
-		self::$schema_graph = new SchemaGraphBuilder( $indexability, $canonical, self::$language_manager, $schema_ids, $schema_identity );
+		$schema_article     = new SchemaArticleResolver( $schema_identity );
+		self::$schema_graph = new SchemaGraphBuilder(
+			$indexability,
+			$canonical,
+			self::$language_manager,
+			$schema_ids,
+			$schema_identity,
+			$schema_article
+		);
 		$schema_presenter   = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
 		$schema_presenter->register();
 

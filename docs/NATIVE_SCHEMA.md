@@ -20,7 +20,7 @@ Phase 5B extends that same graph with conservative identity nodes:
 - `ProfilePage` for author archives whose primary subject is that Person;
 - explicit graph references rather than duplicated identity objects.
 
-Article, BreadcrumbList and LocalBusiness remain later Phase 5 microphases and must reuse this graph rather than create parallel JSON-LD scripts.
+Phase 5C extends the same graph with native `BlogPosting` data for built-in WordPress posts. `BreadcrumbList` and `LocalBusiness` remain later Phase 5 microphases and must reuse this graph rather than create parallel JSON-LD scripts.
 
 ## Ownership
 
@@ -60,6 +60,7 @@ IDs are derived only from authoritative public URLs:
 
 - `WebSite`: `{home_url}/#website`
 - `WebPage`: `{canonical_url}#webpage`
+- `BlogPosting`: `{canonical_url}#article`
 
 An existing URL fragment is replaced before the stable graph fragment is appended. IDs are not generated from database IDs, random values, request timestamps or translated labels.
 
@@ -128,7 +129,7 @@ For an indexable native author archive, the existing WebPage node is specialized
 - ProfilePage `mainEntity` references the Person;
 - Person `mainEntityOfPage` references the existing page node.
 
-No Person node is emitted on ordinary posts merely because they have an author. Article-to-author linkage is a separate Phase 5 microphase.
+Phase 5B itself did not emit Person nodes on ordinary posts. Phase 5C now adds a Person node on a built-in WordPress post only when that same real WordPress user is explicitly linked as the post author. The Person keeps the same stable `{author_url}#person` identity used on the author's ProfilePage.
 
 Google's current ProfilePage guidance requires the page's primary focus to be one affiliated Person or Organization. Native author archives meet that product intent; arbitrary pages are not promoted to ProfilePage automatically.
 
@@ -139,6 +140,37 @@ References:
 - https://schema.org/Person
 - https://schema.org/Organization
 - https://schema.org/ProfilePage
+
+## BlogPosting — Phase 5C
+
+Phase 5C marks only singular, published built-in WordPress `post` resources as `BlogPosting`. Native pages, archives and arbitrary custom post types are not inferred to be articles.
+
+For an eligible post the existing WebPage remains the page node and references one BlogPosting through `mainEntity`. The BlogPosting emits:
+
+- `@type = BlogPosting`;
+- stable `@id = {canonical_url}#article`;
+- authoritative canonical `url`;
+- `mainEntityOfPage` referencing the existing WebPage ID;
+- `headline` from the visible WordPress post title;
+- `datePublished` and `dateModified` from WordPress date-time APIs in ISO 8601 form with timezone;
+- `inLanguage` from the same active language authority used by WebPage;
+- `author` only when the real WordPress post author resolves to a public Person identity;
+- `publisher` only when the site explicitly opted into the Organization identity defined in Phase 5B.
+
+The author Person node reuses the same stable ID and public author URL used by the native ProfilePage graph. The article therefore references an existing identity rather than inventing a second author entity.
+
+An Organization is not inferred from the site title. If the site has not explicitly opted into Organization identity, the BlogPosting simply omits `publisher`.
+
+Phase 5C intentionally does not fabricate an `image`, logo, keywords, section, NewsArticle type or other optional properties. Image support belongs to later visible-content consistency work where the selected image can be proven representative and public.
+
+Google currently supports `Article`, `NewsArticle` and `BlogPosting` for article structured data and lists author, publication/modification dates, headline and representative images among recommended properties; it does not require properties that the site cannot truthfully supply. Valid markup also does not guarantee a rich result.
+
+References:
+
+- https://developers.google.com/search/docs/appearance/structured-data/article
+- https://schema.org/BlogPosting
+- https://schema.org/mainEntityOfPage
+- https://developer.wordpress.org/reference/functions/get_post_datetime/
 
 ## Indexability
 
@@ -192,8 +224,13 @@ The zero-plugin WordPress smoke must prove:
 - exactly one project-owned JSON-LD script exists on the representative indexable post;
 - the JSON parses;
 - `@context` is `https://schema.org`;
-- exactly one WebSite and one WebPage baseline node exist on an ordinary post;
-- WebSite and WebPage IDs are deterministic and URL-derived;
+- an ordinary built-in post emits WebSite + WebPage + BlogPosting + real author Person in one graph;
+- WebSite, WebPage and BlogPosting IDs are deterministic and URL-derived;
+- WebPage.mainEntity and BlogPosting.mainEntityOfPage reference each other through stable IDs;
+- BlogPosting headline/dates/language come from real WordPress content state;
+- BlogPosting author reuses the stable WordPress author Person identity;
+- BlogPosting publisher appears only after explicit Organization opt-in;
+- a post without Organization opt-in does not fabricate publisher or image;
 - an explicit organization opt-in adds one Organization on the home page and links WebSite.publisher to its stable ID;
 - the same organization data is not sprayed onto ordinary posts;
 - a public author archive emits WebSite + ProfilePage + Person;
