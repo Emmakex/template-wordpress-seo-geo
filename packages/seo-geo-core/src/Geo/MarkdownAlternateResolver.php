@@ -270,7 +270,7 @@ final class MarkdownAlternateResolver {
 			$language = get_bloginfo( 'language' );
 		}
 
-		if ( is_string( $language ) && '' !== trim( $language ) ) {
+		if ( '' !== trim( $language ) ) {
 			$lines[] = 'Language: ' . $this->escape_markdown( trim( $language ) );
 		}
 
