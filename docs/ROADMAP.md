@@ -661,25 +661,47 @@ The acceptance remains plugin-free and keeps one native JSON-LD graph owner. Fix
 
 ### Microphase 5E — native LocalBusiness identity
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #34:
 
 - explicit `local_business` site-identity selection, mutually exclusive with generic Organization;
 - one stable `{home_url}#localbusiness` node in the existing native graph;
-- required physical PostalAddress contract;
-- conservative supported subtype selection;
+- required physical PostalAddress contract before LocalBusiness output;
+- conservative supported subtype allowlist with safe fallback to generic `LocalBusiness`;
 - validated optional telephone, price range, GeoCoordinates and OpeningHoursSpecification;
-- front-page WebSite.publisher + WebPage.mainEntity linkage;
+- front-page `WebSite.publisher` + `WebPage.mainEntity` linkage to the same LocalBusiness node;
 - BlogPosting publisher reuse without duplicate Organization identity;
-- zero-plugin positive and incomplete-address negative acceptance;
-- no inferred reviews, ratings, images, service areas or additional locations.
+- zero-plugin positive acceptance for a typed physical business;
+- zero-plugin negative acceptance proving incomplete required address data suppresses the LocalBusiness node;
+- no inferred reviews, ratings, images, service areas or additional locations;
+- Foundation guardrail for the native LocalBusiness resolver;
+- public contract updates in `docs/NATIVE_SCHEMA.md` and `docs/PRESETS.md`.
 
-5E closes only after its PR and required post-merge `main` gates are green.
+PR #34 passed all ten PR workflows on final candidate `ff43b78a2eaaffd9a68b35baec8262ec0b7066f2` and was squash-merged as `6017c1e6c810478832a6413faa88d9853f4f3261`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Design System CI `35333717672`;
+- Pattern Contract CI `35333717636`;
+- Foundation CI `35333717628`;
+- Phase 1 Package CI `35333717718`;
+- Native Multilingual CI `35333717698`;
+- Performance Baseline CI `35333717629`;
+- Accessibility & Responsive CI `35333717703`;
+- WordPress Smoke CI `35333717689`;
+- PHP Quality CI `35333717675`;
+- Self-contained Theme CI `35333717649`.
+
+Adoption findings were corrected without weakening contracts:
+
+- WPCS alignment signature `3e90140896ff`;
+- PHPStan return-contract signature `82719cd07023`;
+- WP-CLI namespace-escaping recurrence signature `9505c31710a7`, recorded under `ERR-2026-006`.
 
 ### Remaining Phase 5 work
 
-After 5E, the final Phase 5 microphase must harden visible-content consistency and negative fixtures for optional entity fields before Phase 5 can close.
+The final Phase 5 microphase must harden visible-content consistency and negative fixtures for optional entity fields before Phase 5 can close.
 
 ### Phase 5 exit criteria
 

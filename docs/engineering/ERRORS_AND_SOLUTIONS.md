@@ -320,8 +320,8 @@ A skip link is not considered accepted merely because the anchor exists or chang
 **First seen:** 2026-09-17
 **Last seen:** 2026-09-18
 **Area:** ci / integration
-**Signatures:** original `423ffeca3a8d`; recurrence `6b757d95f440`
-**Reference:** PR #13 original; PR #28 recurrence; recurrence failing Self-contained Theme CI run `35310848537` / job `105492394718`; passing PR run `35310937921`; post-merge passing run `35311162371`
+**Signatures:** original `423ffeca3a8d`; recurrence `6b757d95f440`; LocalBusiness recurrence `9505c31710a7`
+**Reference:** PR #13 original; PR #28 recurrence; PR #34 LocalBusiness recurrence; recurrence failing Self-contained Theme CI run `35310848537` / job `105492394718`; LocalBusiness failing run `35333080832` / job `105561616365`; passing PR #34 run `35333402980`; post-merge PR #34 passing run `35333717649`
 
 ### Symptom / context
 
@@ -369,7 +369,11 @@ When PHP source is already contained in a single-quoted shell argument, escape f
 
 The same escaping class recurred in Phase 5B when a new Organization-identity fixture called `wp eval` with doubled namespace separators. The smoke failed immediately with a PHP parse error and structured signature `6b757d95f440`; the production graph code was not changed. The fixture was corrected to pass `\SeoGeo\Core\Schema\SchemaIdentityResolver` as valid PHP source.
 
-PR #28 then passed Self-contained Theme CI run `35310937921`, all eight PR gates, and post-merge Self-contained Theme CI run `35311162371`. New `wp eval` probes must reuse the established escaping rule rather than re-derive shell/PHP escaping ad hoc.
+PR #28 then passed Self-contained Theme CI run `35310937921`, all eight PR gates, and post-merge Self-contained Theme CI run `35311162371`.
+
+The same class recurred again in Phase 5E when the LocalBusiness fixture introduced three new `wp eval` expressions with doubled namespace separators. Self-contained Theme CI run `35333080832` failed with PHP parse error signature `9505c31710a7`. Only the test harness was changed; the LocalBusiness runtime remained untouched. The corrected fixture passed PR run `35333402980` and post-merge `main` run `35333717649`.
+
+New `wp eval` probes must reuse the established escaping rule rather than re-derive shell/PHP escaping ad hoc.
 
 ## ERR-2026-007 — `wp eval` breadcrumb fixture used a local query instead of WordPress's global query
 
