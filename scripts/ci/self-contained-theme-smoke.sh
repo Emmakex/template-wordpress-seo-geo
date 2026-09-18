@@ -229,6 +229,7 @@ POST_ID="$(wp_cli post create \
   --post_name='self-contained-seo-fixture' \
   --post_excerpt='Self-contained SEO GEO native description.' \
   --post_content='Theme-only SEO GEO fixture body.' \
+  --post_author=1 \
   --porcelain 2>/dev/null | tr -d '\r\n')"
 [[ "$POST_ID" =~ ^[0-9]+$ ]] \
   || fail_smoke "fixture-post" "Could not create fixture post" "numeric post ID" "$POST_ID"
