@@ -304,6 +304,10 @@ grep -Fq '<meta property="og:url" content="'"$ES_URL"'" />' "$ES_BODY" \
   || fail_smoke "es-og-url" "Spanish Open Graph URL is not the localized canonical" "$ES_URL" "expected og:url absent"
 grep -Fq '<meta property="og:locale" content="es_ES" />' "$ES_BODY" \
   || fail_smoke "es-og-locale" "Spanish Open Graph locale is incorrect" "es_ES" "expected og:locale absent"
+[[ "$(schema_count "$ES_BODY")" == "1" ]] \
+  || fail_smoke "es-schema-count" "Spanish localized page must emit exactly one Schema graph" "1" "$(schema_count "$ES_BODY")"
+grep -Fq '"inLanguage":"es-ES"' "$ES_BODY" \
+  || fail_smoke "es-schema-language" "Spanish Schema language is incorrect" "inLanguage=es-ES" "expected value absent"
 if grep -Eiq '<meta[^>]+name=["'"'"']robots["'"'"'][^>]+content=["'"'"'][^"'"'"']*noindex' "$ES_BODY"; then
   fail_smoke "es-indexability" "Valid Spanish translation remained noindex" "indexable localized route" "noindex present"
 fi
