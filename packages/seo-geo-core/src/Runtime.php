@@ -19,6 +19,7 @@ use SeoGeo\Core\Schema\SchemaArticleResolver;
 use SeoGeo\Core\Schema\SchemaBreadcrumbResolver;
 use SeoGeo\Core\Schema\SchemaGraphBuilder;
 use SeoGeo\Core\Schema\SchemaIdentityResolver;
+use SeoGeo\Core\Schema\SchemaLocalBusinessResolver;
 use SeoGeo\Core\Schema\SchemaNodeIds;
 use SeoGeo\Core\Schema\SchemaPresenter;
 use SeoGeo\Core\Seo\BreadcrumbResolver;
@@ -139,20 +140,22 @@ final class Runtime {
 		);
 		self::$native_seo->register();
 
-		$schema_ids         = new SchemaNodeIds();
-		$schema_breadcrumb  = new SchemaBreadcrumbResolver( self::$breadcrumbs, $schema_ids );
-		$schema_identity    = new SchemaIdentityResolver( $schema_ids );
-		$schema_article     = new SchemaArticleResolver( $schema_identity );
-		self::$schema_graph = new SchemaGraphBuilder(
+		$schema_ids            = new SchemaNodeIds();
+		$schema_breadcrumb     = new SchemaBreadcrumbResolver( self::$breadcrumbs, $schema_ids );
+		$schema_identity       = new SchemaIdentityResolver( $schema_ids );
+		$schema_local_business = new SchemaLocalBusinessResolver( $schema_ids, $schema_identity );
+		$schema_article        = new SchemaArticleResolver( $schema_identity );
+		self::$schema_graph    = new SchemaGraphBuilder(
 			$indexability,
 			$canonical,
 			self::$language_manager,
 			$schema_ids,
 			$schema_breadcrumb,
 			$schema_identity,
+			$schema_local_business,
 			$schema_article
 		);
-		$schema_presenter   = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
+		$schema_presenter      = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
 		$schema_presenter->register();
 
 		/**

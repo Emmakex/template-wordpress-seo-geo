@@ -26,6 +26,11 @@ final class SchemaIdentityResolver {
 	public const SITE_ENTITY_ORGANIZATION = 'organization';
 
 	/**
+	 * Supported site entity type for one physical LocalBusiness location.
+	 */
+	public const SITE_ENTITY_LOCAL_BUSINESS = 'local_business';
+
+	/**
 	 * Stable node-ID generator.
 	 *
 	 * @var SchemaNodeIds
@@ -51,9 +56,7 @@ final class SchemaIdentityResolver {
 	 * @return array{id:string,name:string,url:string}|null
 	 */
 	public function organization(): ?array {
-		$configuration = get_option( self::OPTION_NAME, null );
-
-		if ( ! is_array( $configuration ) || self::SITE_ENTITY_ORGANIZATION !== ( $configuration['site_entity_type'] ?? null ) ) {
+		if ( self::SITE_ENTITY_ORGANIZATION !== $this->site_entity_type() ) {
 			return null;
 		}
 
@@ -67,6 +70,28 @@ final class SchemaIdentityResolver {
 			'name' => $name,
 			'url'  => home_url( '/' ),
 		);
+	}
+
+	/**
+	 * Resolve the explicit site entity type.
+	 */
+	public function site_entity_type(): ?string {
+		$configuration = get_option( self::OPTION_NAME, null );
+
+		if ( ! is_array( $configuration ) ) {
+			return null;
+		}
+
+		$type = $configuration['site_entity_type'] ?? null;
+		if ( ! is_string( $type ) ) {
+			return null;
+		}
+
+		if ( ! in_array( $type, array( self::SITE_ENTITY_ORGANIZATION, self::SITE_ENTITY_LOCAL_BUSINESS ), true ) ) {
+			return null;
+		}
+
+		return $type;
 	}
 
 	/**

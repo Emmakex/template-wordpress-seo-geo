@@ -443,6 +443,146 @@ PY
   fail_smoke "schema-organization-contract" "Explicit Organization graph contract is invalid" "home graph with WebSite + WebPage + Organization and publisher link" "${ORGANIZATION_SCHEMA_RESULT:-python assertion failed}" "parse Organization JSON-LD graph"
 fi
 
+printf '[self-contained] Checking explicit LocalBusiness identity.\n'
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "local_business" ), false ); update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_region" => "Catalunya", "postal_code" => "08001", "address_country" => "ES", "telephone" => "+34 930 000 000", "price_range" => "€€", "latitude" => "41.38740", "longitude" => "2.16860", "opening_hours" => array( array( "days" => array( "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ), "opens" => "09:00", "closes" => "18:00" ) ) ), false );' >/dev/null \
+  || fail_smoke "schema-local-business-option" "Could not configure explicit LocalBusiness identity" "option updates succeed" "failed"
+curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
+  || fail_smoke "schema-local-business-home-request" "Could not request LocalBusiness home fixture" "HTTP 2xx" "curl failed"
+
+if ! LOCAL_BUSINESS_SCHEMA_RESULT="$(python3 - "$HOME_BODY" "$BASE_URL" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+
+base = sys.argv[2].rstrip("/") + "/"
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 3, f"nodes={nodes!r}"
+by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
+website = by_type.get("WebSite")
+webpage = by_type.get("WebPage")
+business = by_type.get("Plumber")
+assert isinstance(website, dict)
+assert isinstance(webpage, dict)
+assert isinstance(business, dict)
+business_id = base + "#localbusiness"
+assert business.get("@id") == business_id
+assert business.get("name") == "Self-contained SEO GEO"
+assert business.get("url") == base
+assert website.get("publisher") == {"@id": business_id}
+assert webpage.get("mainEntity") == {"@id": business_id}
+assert by_type.get("Organization") is None
+
+address = business.get("address")
+assert isinstance(address, dict)
+assert address.get("@type") == "PostalAddress"
+assert address.get("streetAddress") == "Carrer de la Prova 10"
+assert address.get("addressLocality") == "Barcelona"
+assert address.get("addressRegion") == "Catalunya"
+assert address.get("postalCode") == "08001"
+assert address.get("addressCountry") == "ES"
+
+assert business.get("telephone") == "+34 930 000 000"
+assert business.get("priceRange") == "€€"
+geo = business.get("geo")
+assert isinstance(geo, dict)
+assert geo.get("@type") == "GeoCoordinates"
+assert geo.get("latitude") == 41.3874
+assert geo.get("longitude") == 2.1686
+
+hours = business.get("openingHoursSpecification")
+assert isinstance(hours, list) and len(hours) == 1
+assert hours[0].get("@type") == "OpeningHoursSpecification"
+assert hours[0].get("dayOfWeek") == [
+    "https://schema.org/Monday",
+    "https://schema.org/Tuesday",
+    "https://schema.org/Wednesday",
+    "https://schema.org/Thursday",
+    "https://schema.org/Friday",
+]
+assert hours[0].get("opens") == "09:00:00"
+assert hours[0].get("closes") == "18:00:00"
+
+print(json.dumps({"business_id": business_id, "node_count": len(nodes)}))
+PY
+)"; then
+  fail_smoke "schema-local-business-contract" "Explicit LocalBusiness graph contract is invalid" "home graph with WebSite + WebPage + typed LocalBusiness and validated physical data" "${LOCAL_BUSINESS_SCHEMA_RESULT:-python assertion failed}" "parse LocalBusiness JSON-LD graph"
+fi
+
+printf '[self-contained] Checking incomplete LocalBusiness suppression.\n'
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_country" => "ES" ), false );' >/dev/null \
+  || fail_smoke "schema-local-business-invalid-option" "Could not configure incomplete LocalBusiness fixture" "option update succeeds" "failed"
+curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
+  || fail_smoke "schema-local-business-invalid-request" "Could not request incomplete LocalBusiness fixture" "HTTP 2xx" "curl failed"
+
+if ! LOCAL_BUSINESS_NEGATIVE_RESULT="$(python3 - "$HOME_BODY" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 2, f"nodes={nodes!r}"
+website = next(node for node in nodes if node.get("@type") == "WebSite")
+webpage = next(node for node in nodes if node.get("@type") == "WebPage")
+assert "publisher" not in website
+assert "mainEntity" not in webpage
+assert all(node.get("@type") not in ("LocalBusiness", "Plumber") for node in nodes)
+print("ok")
+PY
+)"; then
+  fail_smoke "schema-local-business-incomplete" "Incomplete LocalBusiness configuration must not emit an entity" "baseline WebSite + WebPage only" "${LOCAL_BUSINESS_NEGATIVE_RESULT:-python assertion failed}" "parse incomplete LocalBusiness JSON-LD graph"
+fi
+
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "organization" ), false ); delete_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME );' >/dev/null \
+  || fail_smoke "schema-local-business-reset" "Could not restore Organization fixture after LocalBusiness checks" "identity reset succeeds" "failed"
+
 printf '[self-contained] Checking native author ProfilePage + Person identity.\n'
 AUTHOR_ID="$(wp_cli user create schema-author schema-author@example.test --role=author --user_pass=schema-author-pass --display_name='Schema Author' --description='Visible schema author biography.' --porcelain 2>/dev/null | tr -d '\r\n')"
 [[ "$AUTHOR_ID" =~ ^[0-9]+$ ]] \
