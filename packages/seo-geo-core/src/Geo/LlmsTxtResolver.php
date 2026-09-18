@@ -40,7 +40,7 @@ final class LlmsTxtResolver {
 	 * Create the resolver.
 	 *
 	 * @param NativeTranslationRegistry $translations  Explicit translation relationships.
-	 * @param LocalizedSeoResolver       $localized_seo Localized public-URL authority.
+	 * @param LocalizedSeoResolver      $localized_seo Localized public-URL authority.
 	 */
 	public function __construct( NativeTranslationRegistry $translations, LocalizedSeoResolver $localized_seo ) {
 		$this->translations  = $translations;
