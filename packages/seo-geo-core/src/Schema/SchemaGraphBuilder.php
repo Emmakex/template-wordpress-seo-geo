@@ -115,9 +115,10 @@ final class SchemaGraphBuilder {
 			$website['name'] = $site_name;
 		}
 
-		$web_page = array(
+		$web_page_id = $this->ids->web_page( $canonical_url );
+		$web_page    = array(
 			'@type'      => 'WebPage',
-			'@id'        => $this->ids->web_page( $canonical_url ),
+			'@id'        => $web_page_id,
 			'url'        => $canonical_url,
 			'isPartOf'   => array( '@id' => $website_id ),
 			'inLanguage' => $this->bcp47( $this->language->current_locale() ),
@@ -144,7 +145,7 @@ final class SchemaGraphBuilder {
 			$web_page['mainEntity'] = array( '@id' => $author['id'] );
 
 			$graph[1] = $web_page;
-			$graph[]  = $this->person_node( $author, $web_page['@id'] );
+			$graph[]  = $this->person_node( $author, $web_page_id );
 		}
 
 		$article = $this->article->current();
@@ -154,7 +155,7 @@ final class SchemaGraphBuilder {
 				'@type'            => 'BlogPosting',
 				'@id'              => $article_id,
 				'url'              => $canonical_url,
-				'mainEntityOfPage' => array( '@id' => $web_page['@id'] ),
+				'mainEntityOfPage' => array( '@id' => $web_page_id ),
 				'headline'         => $article['headline'],
 				'datePublished'    => $article['date_published'],
 				'dateModified'     => $article['date_modified'],
