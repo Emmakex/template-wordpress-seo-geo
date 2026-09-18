@@ -1,0 +1,63 @@
+name: Schema Graph CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/src/Seo/**'
+      - 'packages/seo-geo-core/src/Language/**'
+      - 'packages/seo-geo-core/src/Runtime.php'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/schema-graph-smoke.sh'
+      - '.github/workflows/schema-graph.yml'
+      - 'docs/SCHEMA.md'
+      - 'docs/ROADMAP.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/src/Seo/**'
+      - 'packages/seo-geo-core/src/Language/**'
+      - 'packages/seo-geo-core/src/Runtime.php'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/schema-graph-smoke.sh'
+      - '.github/workflows/schema-graph.yml'
+      - 'docs/SCHEMA.md'
+      - 'docs/ROADMAP.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: schema-graph-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  schema-graph:
+    name: Zero-plugin Schema graph contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          bash --version | head -n 1
+          python3 --version
+          php --version
+          docker version
+
+      - name: Validate Schema acceptance sources
+        run: |
+          bash -n scripts/build-theme-package.sh
+          bash -n scripts/ci/schema-graph-smoke.sh
+          php -l packages/seo-geo-core/src/Seo/SchemaGraphBuilder.php
+          php -l packages/seo-geo-core/src/Seo/SeoOutputAuthority.php
+          php -l packages/seo-geo-core/src/Seo/NativeSeoPresenter.php
+          php -l packages/seo-geo-core/src/Runtime.php
+
+      - name: WordPress zero-plugin Schema graph acceptance
+        run: bash scripts/ci/schema-graph-smoke.sh
