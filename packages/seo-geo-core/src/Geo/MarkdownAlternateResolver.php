@@ -56,9 +56,9 @@ final class MarkdownAlternateResolver {
 	 * Create the resolver.
 	 *
 	 * @param NativeTranslationRegistry   $translations  Translation relationship authority.
-	 * @param LocalizedSeoResolver         $localized_seo Localized public-URL authority.
+	 * @param LocalizedSeoResolver        $localized_seo Localized public-URL authority.
 	 * @param NativeLanguageConfiguration $languages     Native language configuration.
-	 * @param IndexabilityResolver         $indexability  Current-request indexability authority.
+	 * @param IndexabilityResolver        $indexability  Current-request indexability authority.
 	 */
 	public function __construct(
 		NativeTranslationRegistry $translations,
@@ -200,12 +200,12 @@ final class MarkdownAlternateResolver {
 			}
 		}
 
-		$resource_path = '/' . implode( '/', $segments );
-		if ( '/' !== $resource_path ) {
-			$resource_path = trailingslashit( $resource_path );
+		$markdown_resource_path = '/' . implode( '/', $segments );
+		if ( '/' !== $markdown_resource_path ) {
+			$markdown_resource_path = trailingslashit( $markdown_resource_path );
 		}
 
-		$post_id = url_to_postid( home_url( $resource_path ) );
+		$post_id = url_to_postid( home_url( $markdown_resource_path ) );
 		if ( 0 >= $post_id ) {
 			return null;
 		}
@@ -253,16 +253,19 @@ final class MarkdownAlternateResolver {
 	/**
 	 * Build clean Markdown from one resolved public resource.
 	 *
-	 * @param array{post:WP_Post,html_url:string,markdown_url:string,language:string|null} $resource Resolved Markdown resource.
+	 * @param array{post:WP_Post,html_url:string,markdown_url:string,language:string|null} $markdown_resource Resolved Markdown resource.
 	 */
-	public function render_markdown( array $resource ): string {
-		$post  = $resource['post'];
+	public function render_markdown( array $markdown_resource ): string {
+		$post  = $markdown_resource['post'];
 		$title = $this->plain_text( get_the_title( $post ) );
 
-		$lines = array( '# ' . $this->escape_markdown( $title ), '' );
-		$lines[] = 'Source: [' . $this->escape_markdown( $resource['html_url'] ) . '](' . $resource['html_url'] . ')';
+		$lines = array(
+			'# ' . $this->escape_markdown( $title ),
+			'',
+			'Source: [' . $this->escape_markdown( $markdown_resource['html_url'] ) . '](' . $markdown_resource['html_url'] . ')',
+		);
 
-		$language = $resource['language'];
+		$language = $markdown_resource['language'];
 		if ( null === $language ) {
 			$language = get_bloginfo( 'language' );
 		}
