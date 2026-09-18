@@ -223,20 +223,23 @@ Safety rules remain conservative:
 - non-authoritative routes emit no native canonical, Open Graph or hreflang output;
 - breadcrumb links do not silently fall back to an unprefixed/cross-language post URL when an active localized request lacks a valid translated target.
 
-## What remains for the next multilingual microphase
+## Phase 4 completion
 
-The following require an explicit translated-resource relationship before localized URLs can become indexable:
+The native multilingual baseline is complete through Phase 4C2. The self-contained theme now owns:
 
-- mapping a source object to its real ES/EN translated objects;
-- localized canonical URLs;
-- reciprocal `hreflang` and optional `x-default`;
-- locale-aware breadcrumb/internal URLs;
-- locale-aware Open Graph alternates where appropriate;
-- language-aware Schema output;
-- translated slug relationships;
-- optional WPML/Polylang adapters.
+- validated native language configuration;
+- ES/EN prefixed routing and request locale;
+- explicit reciprocal translation relationships;
+- localized indexability promotion;
+- localized self-canonicals;
+- reciprocal hreflang and explicit optional `x-default`;
+- Open Graph URL/locale alignment;
+- safe translated-resource URL lookup;
+- locale-aware breadcrumb URLs.
 
-Phase 4C must promote only validated translation-linked routes from staged `noindex` to indexable localized URLs. Phase 4C1 first proves the relationship registry; subsequent 4C work owns promotion, localized canonicals and alternates. It must not infer translations merely because the same WordPress object is reachable under two prefixes.
+Translations are never inferred from matching slugs or from one WordPress object being reachable under multiple prefixes. Optional WPML/Polylang adapters remain future compatibility layers and are not required for the native baseline.
+
+Language-aware Schema output intentionally starts in Phase 5 and must consume `Runtime::localized_seo()` rather than reconstructing route/translation authority independently.
 
 ## Acceptance
 
