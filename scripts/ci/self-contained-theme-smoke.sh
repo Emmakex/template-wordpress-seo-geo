@@ -547,7 +547,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 base = sys.argv[2].rstrip("/") + "/"
 payload = json.loads("".join(parser.parts))
 nodes = payload.get("@graph")
-assert isinstance(nodes, list) and len(nodes) == 5, f"nodes={nodes!r}"
+assert isinstance(nodes, list) and len(nodes) == 6, f"nodes={nodes!r}"
 by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
 website = by_type.get("WebSite")
 webpage = by_type.get("WebPage")
@@ -596,7 +596,7 @@ print(json.dumps({
 }))
 PY
 )"; then
-  fail_smoke "schema-article-contract" "BlogPosting author/publisher graph contract is invalid" "WebSite + WebPage + BlogPosting + Person + Organization with stable references" "${ARTICLE_SCHEMA_RESULT:-python assertion failed}" "parse authored BlogPosting JSON-LD graph"
+  fail_smoke "schema-article-contract" "BlogPosting author/publisher graph contract is invalid" "WebSite + WebPage + BreadcrumbList + BlogPosting + Person + Organization with stable references" "${ARTICLE_SCHEMA_RESULT:-python assertion failed}" "parse authored BlogPosting JSON-LD graph"
 fi
 
 if ! BREADCRUMBS_JSON="$(wp_cli eval "global \$wp_query; \$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
