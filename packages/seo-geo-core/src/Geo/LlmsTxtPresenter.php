@@ -14,7 +14,7 @@ namespace SeoGeo\Core\Geo;
  */
 final class LlmsTxtPresenter {
 	/**
-	 * llms.txt data authority.
+	 * LLMS.txt data authority.
 	 *
 	 * @var LlmsTxtResolver
 	 */
