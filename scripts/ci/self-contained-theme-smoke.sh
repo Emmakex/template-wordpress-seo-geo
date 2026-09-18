@@ -916,6 +916,24 @@ PY
   fail_smoke "crawler-policy-distinct" "Search and training crawler directives are not independent" "OAI-SearchBot allow + GPTBot disallow" "${CRAWLER_POLICY_RESULT:-python assertion failed}" "parse virtual robots.txt"
 fi
 
+printf '[self-contained] Checking existing crawler-specific ownership is preserved.\n'
+if ! CRAWLER_POLICY_EXISTING="$(wp_cli eval '$policy = \SeoGeo\Core\Geo\CrawlerPolicy::from_wordpress(); $presenter = new \SeoGeo\Core\Geo\CrawlerPolicyPresenter( $policy ); echo $presenter->filter_robots_txt( "User-agent: OAI-SearchBot\\nDisallow: /private\\n", true );' 2>&1 | tr -d '\r')"; then
+  fail_smoke "crawler-policy-existing-eval" "Could not evaluate existing crawler-specific ownership fixture" "wp eval succeeds" "${CRAWLER_POLICY_EXISTING:-wp eval failed}" "wp eval CrawlerPolicyPresenter::filter_robots_txt"
+fi
+if ! CRAWLER_POLICY_EXISTING_RESULT="$(python3 - "$CRAWLER_POLICY_EXISTING" <<'PY'
+import sys
+
+text = sys.argv[1]
+assert text.count("User-agent: OAI-SearchBot") == 1, text
+assert "User-agent: OAI-SearchBot\nDisallow: /private" in text, text
+assert text.count("User-agent: GPTBot") == 1, text
+assert "User-agent: GPTBot\nDisallow: /" in text, text
+print("ok")
+PY
+)"; then
+  fail_smoke "crawler-policy-existing-owner" "Existing crawler-specific block must remain authoritative" "one preserved OAI-SearchBot block plus native GPTBot block" "${CRAWLER_POLICY_EXISTING_RESULT}; robots=${CRAWLER_POLICY_EXISTING}" "parse existing crawler ownership fixture"
+fi
+
 printf '[self-contained] Checking invalid crawler state normalization.\n'
 wp_cli eval 'update_option( \SeoGeo\Core\Geo\CrawlerPolicy::OPTION_NAME, array( "oai_searchbot" => "invalid", "gptbot" => "allow" ), false );' >/dev/null \
   || fail_smoke "crawler-policy-invalid-option" "Could not configure invalid crawler state fixture" "option update succeeds" "failed"
