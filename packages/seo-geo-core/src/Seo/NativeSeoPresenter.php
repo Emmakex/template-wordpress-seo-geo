@@ -56,6 +56,13 @@ final class NativeSeoPresenter {
 	private HreflangResolver $hreflang;
 
 	/**
+	 * Native Schema.org graph builder.
+	 *
+	 * @var SchemaGraphBuilder
+	 */
+	private SchemaGraphBuilder $schema;
+
+	/**
 	 * Create the native presenter.
 	 *
 	 * @param SeoOutputAuthority      $authority    Output authority.
@@ -64,6 +71,7 @@ final class NativeSeoPresenter {
 	 * @param MetaDescriptionResolver $description  Description resolver.
 	 * @param OpenGraphResolver       $open_graph   Open Graph resolver.
 	 * @param HreflangResolver        $hreflang     Hreflang resolver.
+	 * @param SchemaGraphBuilder      $schema       Native Schema.org graph builder.
 	 */
 	public function __construct(
 		SeoOutputAuthority $authority,
@@ -71,7 +79,8 @@ final class NativeSeoPresenter {
 		CanonicalResolver $canonical,
 		MetaDescriptionResolver $description,
 		OpenGraphResolver $open_graph,
-		HreflangResolver $hreflang
+		HreflangResolver $hreflang,
+		SchemaGraphBuilder $schema
 	) {
 		$this->authority    = $authority;
 		$this->indexability = $indexability;
@@ -79,6 +88,7 @@ final class NativeSeoPresenter {
 		$this->description  = $description;
 		$this->open_graph   = $open_graph;
 		$this->hreflang     = $hreflang;
+		$this->schema       = $schema;
 	}
 
 	/**
@@ -88,7 +98,8 @@ final class NativeSeoPresenter {
 		$owns_head = $this->authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL )
 			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_META_DESCRIPTION )
 			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_OPEN_GRAPH )
-			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_HREFLANG );
+			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_HREFLANG )
+			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_SCHEMA );
 
 		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL ) ) {
 			remove_action( 'wp_head', 'rel_canonical' );
@@ -133,6 +144,21 @@ final class NativeSeoPresenter {
 		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_HREFLANG ) ) {
 			foreach ( $this->hreflang->resolve() as $language_code => $url ) {
 				echo '<link rel="alternate" hreflang="' . esc_attr( $language_code ) . '" href="' . esc_url( $url ) . '" />' . "\n";
+			}
+		}
+
+		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_SCHEMA ) ) {
+			$graph = $this->schema->resolve();
+
+			if ( null !== $graph ) {
+				$json = wp_json_encode(
+					$graph,
+					JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+				);
+
+				if ( is_string( $json ) ) {
+					wp_print_inline_script_tag( $json, array( 'type' => 'application/ld+json' ) );
+				}
 			}
 		}
 	}
