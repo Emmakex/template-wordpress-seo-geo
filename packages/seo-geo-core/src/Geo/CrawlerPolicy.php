@@ -21,8 +21,8 @@ final class CrawlerPolicy {
 	/**
 	 * Supported policy states.
 	 */
-	public const INHERIT = 'inherit';
-	public const ALLOW = 'allow';
+	public const INHERIT  = 'inherit';
+	public const ALLOW    = 'allow';
 	public const DISALLOW = 'disallow';
 
 	/**
@@ -37,11 +37,15 @@ final class CrawlerPolicy {
 
 	/**
 	 * OAI-SearchBot policy state.
+	 *
+	 * @var string
 	 */
 	private string $oai_searchbot;
 
 	/**
 	 * GPTBot policy state.
+	 *
+	 * @var string
 	 */
 	private string $gptbot;
 
