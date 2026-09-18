@@ -30,6 +30,22 @@ final class SchemaNodeIds {
 	}
 
 	/**
+	 * Return the stable site Organization entity ID.
+	 */
+	public function organization(): string {
+		return $this->with_fragment( home_url( '/' ), 'organization' );
+	}
+
+	/**
+	 * Return the stable Person entity ID for one public profile URL.
+	 *
+	 * @param string $profile_url Authoritative public profile URL.
+	 */
+	public function person( string $profile_url ): string {
+		return $this->with_fragment( $profile_url, 'person' );
+	}
+
+	/**
 	 * Replace any existing fragment with the requested stable graph fragment.
 	 *
 	 * @param string $url      Absolute authoritative URL.
