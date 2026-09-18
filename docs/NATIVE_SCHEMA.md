@@ -20,7 +20,7 @@ Phase 5B extends that same graph with conservative identity nodes:
 - `ProfilePage` for author archives whose primary subject is that Person;
 - explicit graph references rather than duplicated identity objects.
 
-Phase 5C extends the same graph with native `BlogPosting` data for built-in WordPress posts. Phase 5D adds `BreadcrumbList` from the existing breadcrumb data authority. `LocalBusiness` remains a later Phase 5 microphase and must reuse this graph rather than create a parallel JSON-LD script.
+Phase 5C extends the same graph with native `BlogPosting` data for built-in WordPress posts. Phase 5D adds `BreadcrumbList` from the existing breadcrumb data authority. Phase 5E adds one explicitly configured physical `LocalBusiness` identity to the same graph; it never creates a parallel JSON-LD script.
 
 ## Ownership
 
@@ -62,6 +62,7 @@ IDs are derived only from authoritative public URLs:
 - `WebPage`: `{canonical_url}#webpage`
 - `BlogPosting`: `{canonical_url}#article`
 - `BreadcrumbList`: `{canonical_url}#breadcrumb`
+- `LocalBusiness`: `{home_url}/#localbusiness`
 
 An existing URL fragment is replaced before the stable graph fragment is appended. IDs are not generated from database IDs, random values, request timestamps or translated labels.
 
@@ -202,6 +203,54 @@ References:
 - https://schema.org/breadcrumb
 - https://schema.org/ListItem
 
+## LocalBusiness — Phase 5E
+
+Phase 5E supports one explicitly selected physical business identity without inferring local-business status from a site title, category, address-like text or theme preset.
+
+The site identity option must explicitly select:
+
+```php
+update_option(
+    'seo_geo_schema_identity',
+    array( 'site_entity_type' => 'local_business' )
+);
+```
+
+The business data then lives in the separate server-side option `seo_geo_schema_local_business`. The native baseline requires all of the following before it emits a LocalBusiness node:
+
+- non-empty visible WordPress site name;
+- `street_address`;
+- `address_locality`;
+- `postal_code`;
+- `address_country`.
+
+The public URL is always the authoritative WordPress home URL and the stable node ID is `{home_url}#localbusiness`.
+
+The optional `type` field is accepted only when it matches the native supported LocalBusiness subtype allowlist. An unsupported value falls back to generic `LocalBusiness` rather than being emitted as arbitrary Schema type data.
+
+Optional properties are conservative:
+
+- `address_region` is added only when non-empty;
+- `telephone` is added only when explicitly configured;
+- `price_range` is added only when non-empty and shorter than 100 characters;
+- `geo` is added only when latitude and longitude are both valid WGS84-range numbers supplied with at least five decimal places;
+- `openingHoursSpecification` is built only from valid day lists and 24-hour opening/closing times;
+- malformed optional values are omitted instead of invalidating otherwise truthful required business identity data;
+- reviews, aggregate ratings, images, logos, social profiles, tax identifiers and service areas are not inferred.
+
+`Organization` and `LocalBusiness` are mutually exclusive baseline site-identity selections. On the indexable front page, a valid LocalBusiness becomes `WebSite.publisher` and `WebPage.mainEntity`. On a BlogPosting it may be reused as `publisher`, because LocalBusiness is a subtype of Organization, without creating a second Organization identity.
+
+Google's current LocalBusiness documentation requires `name` and a physical `address` for LocalBusiness rich-result eligibility and recommends the most specific applicable subtype plus useful real-world fields such as telephone, geo coordinates, opening hours, price range and URL. Valid structured data does not guarantee a rich result.
+
+References:
+
+- https://developers.google.com/search/docs/appearance/structured-data/local-business
+- https://developers.google.com/search/docs/appearance/structured-data/organization
+- https://schema.org/LocalBusiness
+- https://schema.org/PostalAddress
+- https://schema.org/GeoCoordinates
+- https://schema.org/OpeningHoursSpecification
+
 ## Indexability
 
 The graph builder consumes the existing `IndexabilityResolver`.
@@ -265,6 +314,11 @@ The zero-plugin WordPress smoke must prove:
 - BlogPosting publisher appears only after explicit Organization opt-in;
 - a post without Organization opt-in does not fabricate publisher or image;
 - an explicit organization opt-in adds one Organization on the home page and links WebSite.publisher to its stable ID;
+- an explicit LocalBusiness opt-in with a complete physical address adds exactly one typed LocalBusiness node on the home page;
+- LocalBusiness uses the stable `{home_url}#localbusiness` ID and is linked from WebSite.publisher and WebPage.mainEntity;
+- LocalBusiness address, coordinates and opening-hours structures are validated before output;
+- incomplete required LocalBusiness address data suppresses the LocalBusiness node rather than fabricating missing fields;
+- Organization and LocalBusiness are never emitted together as competing primary site identities;
 - the same organization data is not sprayed onto ordinary posts;
 - a public author archive emits WebSite + ProfilePage + Person;
 - ProfilePage.mainEntity and Person.mainEntityOfPage reference each other through stable IDs;
