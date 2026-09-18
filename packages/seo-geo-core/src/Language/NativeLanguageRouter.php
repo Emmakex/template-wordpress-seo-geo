@@ -228,9 +228,42 @@ final class NativeLanguageRouter {
 	 * @return string|false
 	 */
 	public function filter_canonical_redirect( string|false $redirect_url, string $requested_url ): string|false {
-		unset( $requested_url );
+		if ( $this->is_localized_request() || $this->has_unconfigured_language_prefix( $requested_url ) ) {
+			return false;
+		}
 
-		return $this->is_localized_request() ? false : $redirect_url;
+		return $redirect_url;
+	}
+
+	/**
+	 * Report whether the request starts with a language-like prefix that is not
+	 * part of the validated native configuration.
+	 *
+	 * In prefix-routing mode, language-shaped first path segments are reserved
+	 * for the language namespace. Unknown prefixes must remain 404s instead of
+	 * being canonical-redirected to an unrelated unprefixed resource.
+	 *
+	 * @param string $requested_url Original requested URL.
+	 */
+	private function has_unconfigured_language_prefix( string $requested_url ): bool {
+		$path = wp_parse_url( $requested_url, PHP_URL_PATH );
+		if ( ! is_string( $path ) ) {
+			return false;
+		}
+
+		$trimmed = trim( $path, '/' );
+		if ( '' === $trimmed ) {
+			return false;
+		}
+
+		$segments = explode( '/', $trimmed );
+		$prefix   = strtolower( rawurldecode( $segments[0] ) );
+
+		if ( 1 !== preg_match( '/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $prefix ) ) {
+			return false;
+		}
+
+		return null === $this->configuration->locale_for( $prefix );
 	}
 
 	/**
