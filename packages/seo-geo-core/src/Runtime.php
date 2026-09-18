@@ -15,6 +15,9 @@ use SeoGeo\Core\Language\NativeLanguageConfiguration;
 use SeoGeo\Core\Language\NativeLanguageRouter;
 use SeoGeo\Core\Language\NativeTranslationRegistry;
 use SeoGeo\Core\Language\NativeWordPressAdapter;
+use SeoGeo\Core\Schema\SchemaGraphBuilder;
+use SeoGeo\Core\Schema\SchemaNodeIds;
+use SeoGeo\Core\Schema\SchemaPresenter;
 use SeoGeo\Core\Seo\BreadcrumbResolver;
 use SeoGeo\Core\Seo\CanonicalResolver;
 use SeoGeo\Core\Seo\HreflangResolver;
@@ -86,6 +89,13 @@ final class Runtime {
 	private static ?BreadcrumbResolver $breadcrumbs = null;
 
 	/**
+	 * Native Schema graph builder.
+	 *
+	 * @var SchemaGraphBuilder|null
+	 */
+	private static ?SchemaGraphBuilder $schema_graph = null;
+
+	/**
 	 * Initialize shared services once.
 	 */
 	public static function initialize(): void {
@@ -125,6 +135,11 @@ final class Runtime {
 			$hreflang
 		);
 		self::$native_seo->register();
+
+		$schema_ids         = new SchemaNodeIds();
+		self::$schema_graph = new SchemaGraphBuilder( $indexability, $canonical, self::$language_manager, $schema_ids );
+		$schema_presenter   = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
+		$schema_presenter->register();
 
 		/**
 		 * Fires after shared SEO/GEO services are ready.
@@ -187,5 +202,12 @@ final class Runtime {
 	 */
 	public static function breadcrumbs(): ?BreadcrumbResolver {
 		return self::$breadcrumbs;
+	}
+
+	/**
+	 * Get the native Schema graph builder when initialized.
+	 */
+	public static function schema_graph(): ?SchemaGraphBuilder {
+		return self::$schema_graph;
 	}
 }
