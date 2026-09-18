@@ -408,3 +408,103 @@ Critical data-contract assertions should include the observed serialized payload
 ### Regression coverage
 
 `scripts/ci/self-contained-theme-smoke.sh` now sets `global $wp_query`, creates the representative singular query, advances it, resolves `Runtime::breadcrumbs()`, and validates the returned JSON shape. `Self-contained Theme CI` runs this path on every relevant PR and `main` push.
+
+## ERR-2026-008 — Request locale switch did not automatically update the HTML language attribute
+
+**Status:** resolved
+**First seen:** 2026-09-17
+**Last seen:** 2026-09-18
+**Area:** language / seo / integration
+**Signature:** `39e19e2128be`
+**Reference:** PR #18; failing Native Multilingual CI run `35269785805` / job `105365895399`; passing PR run `35299698640`; post-merge passing run `35299884357`
+
+### Symptom / context
+
+The staged native router resolved `/es/` and activated the configured `es_ES` request locale, but the rendered document still failed the acceptance assertion for `<html lang="es-ES">`.
+
+Routing itself was valid and the Spanish WordPress language pack was installed.
+
+### Root cause
+
+Confirmed. Calling `switch_to_locale()` during the request lifecycle changes WordPress locale state for translation loading, but the document language attributes are produced through WordPress's language-attribute rendering path. The project had assumed that the locale switch alone was sufficient to guarantee the final HTML attribute.
+
+### Solution
+
+`NativeLanguageRouter` now filters `language_attributes` only after a language prefix has been validated by the router. The filter derives the language tag from the same active locale state and preserves other WordPress-provided attributes such as direction.
+
+The query string is still not allowed to activate that state by itself.
+
+### Validation
+
+The corrected PR candidate passed:
+
+- PHP Quality CI with WPCS + PHPStan level 6;
+- Native Multilingual CI run `35299698640`, including real HTTP checks for `/es/`, `/es/routing-fixture/` and `/en/routing-fixture/`;
+- all eight PR #18 gates.
+
+After squash merge as `ae799522e6ac27e2b77ae911d7160095e0ce2e7b`, post-merge Native Multilingual CI run `35299884357` passed again on `main`.
+
+### Prevention / guardrail
+
+Do not infer rendered document-language metadata solely from internal WordPress locale state. Any routing or locale change must be verified at the final HTML boundary.
+
+The authoritative locale and the `<html lang>` attribute must derive from the same validated route state.
+
+### Regression coverage
+
+`scripts/ci/native-routing-smoke.sh` performs real HTTP assertions for:
+
+- unprefixed `lang="en-US"`;
+- Spanish `lang="es-ES"`;
+- English prefixed `lang="en-US"`;
+- query-string selector isolation.
+
+## ERR-2026-009 — Unknown language-like prefix was canonical-redirected instead of remaining 404
+
+**Status:** resolved
+**First seen:** 2026-09-18
+**Last seen:** 2026-09-18
+**Area:** language / seo / routing
+**Signature:** `735ae6352062`
+**Reference:** PR #18; failing Native Multilingual CI run `35270128595` / job `105367216122`; passing PR run `35299698640`; post-merge passing run `35299884357`
+
+### Symptom / context
+
+The ES/EN prefixed routes, locale switching, staged noindex behavior and query-selector guard all passed. The remaining acceptance check requested `/fr/routing-fixture/`, where `fr` was not configured.
+
+Instead of remaining a 404, WordPress returned a 301 canonical redirect toward another URL.
+
+### Root cause
+
+Confirmed. WordPress canonical-redirection heuristics still ran for an unmatched language-like path. The router only disabled canonical redirects for already validated localized routes, so an unknown language-shaped first segment was outside that protection.
+
+For native prefix routing, that behavior is unsafe because an unconfigured language namespace must not silently collapse into an unrelated authoritative URL.
+
+### Solution
+
+When prefix routing is enabled, `NativeLanguageRouter` now treats a first path segment matching the supported language-code shape as part of the language namespace. If that code is not in the validated configuration, the router prevents `redirect_canonical()` from rewriting the request.
+
+Normal non-language paths retain WordPress's canonical behavior.
+
+### Validation
+
+Native Multilingual CI run `35299698640` passed the complete routing contract, including:
+
+- configured ES/EN prefixed routes resolve;
+- unknown `/fr/...` remains 404;
+- query-string language injection does not activate locale;
+- staged localized routes remain noindex and emit no native canonical/Open Graph;
+- runtime logs remain clean.
+
+PR #18 passed all eight candidate gates. Post-merge Native Multilingual CI run `35299884357` passed the same contract on `main`.
+
+### Prevention / guardrail
+
+A URL namespace introduced for language routing must define behavior for both configured and unconfigured namespace values. Do not rely on generic canonical-redirection heuristics to decide unknown language prefixes.
+
+Unknown language-like prefixes must fail closed as not found unless an explicit migration/redirect policy owns them.
+
+### Regression coverage
+
+`scripts/ci/native-routing-smoke.sh` requires HTTP 404 for `/fr/routing-fixture/` while ES/EN are the only configured native languages.
+
