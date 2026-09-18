@@ -801,10 +801,29 @@ Post-merge `main` passed all ten workflows again:
 
 The first candidate exposed only the reserved-keyword parameter-name WPCS finding `27da5fd524a3`; the parameter was renamed without behavioral changes and the full matrix then passed. The reusable lesson is recorded as `ERR-2026-013`.
 
+### Microphase 6B — optional llms.txt generator
+
+Status: **in progress**
+
+Scope:
+
+- disabled-by-default virtual site-root `/llms.txt` endpoint;
+- llms.txt v2-compatible H1, optional summary and curated H2 link sections;
+- explicit post-ID curation only — no automatic database enumeration;
+- published/public/viewable/non-password-protected resource validation;
+- same-host absolute URL validation and cross-section deduplication;
+- global WordPress privacy disables the endpoint;
+- translated resources reuse reciprocal relationship data and authoritative localized ES/EN URLs;
+- no staged/unprefixed translation URLs in the generated document;
+- no physical file, rewrite flush, ranking promise or crawler-permission side effect;
+- zero-plugin privacy/leakage and multilingual acceptance;
+- public contract in `docs/LLMS_TXT.md`.
+
+6B closes only after implementation, required PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 6 work
 
 - crawler policy admin UI/reporting over the 6A configuration contract;
-- optional `llms.txt` generator;
 - optional localized Markdown alternates;
 - provenance/author/source patterns;
 - private/draft content leakage tests;

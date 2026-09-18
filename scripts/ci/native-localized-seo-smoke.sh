@@ -258,6 +258,7 @@ UNPREFIXED_BODY="${TMP_DIR}/localized-unprefixed.html"
 WRONG_BODY="${TMP_DIR}/localized-wrong-prefix.html"
 UNRELATED_BODY="${TMP_DIR}/localized-unrelated.html"
 INVALID_BODY="${TMP_DIR}/localized-invalid.html"
+LLMS_BODY="${TMP_DIR}/localized-llms.txt"
 
 canonical_count() {
   grep -Eio 'rel=["'"'"']canonical["'"'"']' "$1" | wc -l | tr -d ' '
@@ -333,6 +334,31 @@ grep -Fq '"inLanguage":"en-US"' "$EN_BODY" \
   || fail_smoke "en-schema-language" "English Schema language is incorrect" "inLanguage=en-US" "expected value absent"
 if grep -Eiq '<meta[^>]+name=["'"'"']robots["'"'"'][^>]+content=["'"'"'][^"'"'"']*noindex' "$EN_BODY"; then
   fail_smoke "en-indexability" "Valid English translation remained noindex" "indexable localized route" "noindex present"
+fi
+
+printf '[localized-seo] Checking llms.txt uses authoritative localized resource URLs.\n'
+wp_cli eval "update_option( 'seo_geo_llms_txt', array( 'enabled' => true, 'summary' => 'Localized llms index.', 'sections' => array( array( 'title' => 'Guides', 'post_ids' => array( $ES_CHILD_ID, $EN_CHILD_ID ) ) ) ), false );" >/dev/null \
+  || fail_smoke "llms-localized-option" "Could not configure localized llms.txt fixture" "option update succeeds" "failed"
+LLMS_STATUS="$(curl -sS -o "$LLMS_BODY" -w '%{http_code}' "${BASE_URL}/llms.txt")"
+[[ "$LLMS_STATUS" == "200" ]] \
+  || fail_smoke "llms-localized-http" "Localized llms.txt did not resolve" "HTTP 200" "$LLMS_STATUS"
+if ! LLMS_RESULT="$(python3 - "$LLMS_BODY" "$ES_URL" "$EN_URL" "$ES_UNPREFIXED" <<'PY'
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    body = handle.read()
+
+es_url, en_url, unprefixed = sys.argv[2:5]
+assert body.startswith("# Native Localized SEO Contract\n")
+assert "> Localized llms index." in body
+assert "## Guides" in body
+assert f"- [SEO técnico]({es_url}): Language: es" in body
+assert f"- [Technical SEO]({en_url}): Language: en" in body
+assert unprefixed not in body
+print("ok")
+PY
+)"; then
+  fail_smoke "llms-localized-contract" "llms.txt did not preserve authoritative localized URLs" "ES/EN prefixed links with language notes" "${LLMS_RESULT:-python assertion failed}" "parse localized llms.txt"
 fi
 
 printf '[localized-seo] Checking unprefixed and wrong-prefix copies stay non-indexable.\n'

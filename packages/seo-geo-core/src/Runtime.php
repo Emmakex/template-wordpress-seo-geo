@@ -11,6 +11,8 @@ namespace SeoGeo\Core;
 
 use SeoGeo\Core\Geo\CrawlerPolicyPresenter;
 use SeoGeo\Core\Geo\CrawlerPolicyResolver;
+use SeoGeo\Core\Geo\LlmsTxtPresenter;
+use SeoGeo\Core\Geo\LlmsTxtResolver;
 use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
 use SeoGeo\Core\Language\NativeLanguageConfiguration;
@@ -110,6 +112,13 @@ final class Runtime {
 	private static ?CrawlerPolicyResolver $crawler_policy = null;
 
 	/**
+	 * Optional llms.txt authority.
+	 *
+	 * @var LlmsTxtResolver|null
+	 */
+	private static ?LlmsTxtResolver $llms_txt = null;
+
+	/**
 	 * Initialize shared services once.
 	 */
 	public static function initialize(): void {
@@ -172,6 +181,10 @@ final class Runtime {
 		self::$crawler_policy = new CrawlerPolicyResolver();
 		$crawler_presenter    = new CrawlerPolicyPresenter( self::$crawler_policy );
 		$crawler_presenter->register();
+
+		self::$llms_txt = new LlmsTxtResolver( self::$translation_registry, self::$localized_seo );
+		$llms_presenter = new LlmsTxtPresenter( self::$llms_txt );
+		$llms_presenter->register();
 
 		/**
 		 * Fires after shared SEO/GEO services are ready.
@@ -248,5 +261,12 @@ final class Runtime {
 	 */
 	public static function crawler_policy(): ?CrawlerPolicyResolver {
 		return self::$crawler_policy;
+	}
+
+	/**
+	 * Get the optional llms.txt resolver when initialized.
+	 */
+	public static function llms_txt(): ?LlmsTxtResolver {
+		return self::$llms_txt;
 	}
 }
