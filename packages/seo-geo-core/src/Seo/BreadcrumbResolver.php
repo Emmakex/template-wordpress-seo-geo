@@ -18,13 +18,29 @@ use WP_User;
  */
 final class BreadcrumbResolver {
 	/**
+	 * Localized SEO authority when native localized routing is available.
+	 *
+	 * @var LocalizedSeoResolver|null
+	 */
+	private ?LocalizedSeoResolver $localized;
+
+	/**
+	 * Create the breadcrumb resolver.
+	 *
+	 * @param LocalizedSeoResolver|null $localized Localized SEO authority.
+	 */
+	public function __construct( ?LocalizedSeoResolver $localized = null ) {
+		$this->localized = $localized;
+	}
+
+	/**
 	 * Resolve breadcrumb items for the current request.
 	 *
 	 * @return array<int, array{label: string, url: string|null, current: bool}>
 	 */
 	public function resolve(): array {
 		$home_label = $this->label( get_bloginfo( 'name' ) );
-		$home_url   = home_url( '/' );
+		$home_url   = $this->localized?->current_language_root_url() ?? home_url( '/' );
 
 		if ( is_front_page() ) {
 			return array( $this->item( $home_label, $home_url, true ) );
@@ -105,7 +121,7 @@ final class BreadcrumbResolver {
 					continue;
 				}
 
-				$url     = get_permalink( $ancestor );
+				$url     = $this->post_url( $ancestor );
 				$items[] = $this->item(
 					get_the_title( $ancestor ),
 					$url,
@@ -117,7 +133,7 @@ final class BreadcrumbResolver {
 			if ( 0 < $posts_page_id ) {
 				$posts_page = get_post( $posts_page_id );
 				if ( $posts_page instanceof WP_Post ) {
-					$url     = get_permalink( $posts_page );
+					$url     = $this->post_url( $posts_page );
 					$items[] = $this->item(
 						get_the_title( $posts_page ),
 						$url,
@@ -127,7 +143,7 @@ final class BreadcrumbResolver {
 			}
 		}
 
-		$url     = get_permalink( $post );
+		$url     = $this->post_url( $post );
 		$items[] = $this->item(
 			get_the_title( $post ),
 			$url,
@@ -176,6 +192,28 @@ final class BreadcrumbResolver {
 		);
 
 		return $items;
+	}
+
+	/**
+	 * Resolve one post breadcrumb URL without crossing language boundaries.
+	 *
+	 * On an authoritative localized request, a breadcrumb post is linkable only
+	 * when the explicit translation registry can resolve that resource into the
+	 * active language. Missing relationships become non-link breadcrumb labels.
+	 *
+	 * @param WP_Post $post Breadcrumb resource.
+	 */
+	private function post_url( WP_Post $post ): ?string {
+		if ( null !== $this->localized ) {
+			$language_code = $this->localized->current_language_code();
+			if ( null !== $language_code ) {
+				return $this->localized->url_for_translation( $post->ID, $language_code );
+			}
+		}
+
+		$url = get_permalink( $post );
+
+		return '' !== $url ? $url : null;
 	}
 
 	/**
