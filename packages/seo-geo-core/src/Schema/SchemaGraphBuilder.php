@@ -150,7 +150,7 @@ final class SchemaGraphBuilder {
 
 		$article = $this->article->current();
 		if ( null !== $article ) {
-			$article_id = $this->ids->article( $canonical_url );
+			$article_id   = $this->ids->article( $canonical_url );
 			$article_node = array(
 				'@type'            => 'BlogPosting',
 				'@id'              => $article_id,
