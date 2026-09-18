@@ -180,10 +180,10 @@ final class SchemaLocalBusinessResolver {
 	 * @return array<string, string>|null
 	 */
 	private function address( array $configuration ): ?array {
-		$street  = $this->text_value( $configuration['street_address'] ?? null );
-		$city    = $this->text_value( $configuration['address_locality'] ?? null );
+		$street   = $this->text_value( $configuration['street_address'] ?? null );
+		$city     = $this->text_value( $configuration['address_locality'] ?? null );
 		$postcode = $this->text_value( $configuration['postal_code'] ?? null );
-		$country = $this->text_value( $configuration['address_country'] ?? null );
+		$country  = $this->text_value( $configuration['address_country'] ?? null );
 
 		if ( null === $street || null === $city || null === $postcode || null === $country ) {
 			return null;
@@ -283,8 +283,8 @@ final class SchemaLocalBusinessResolver {
 					static fn( string $day ): string => 'https://schema.org/' . $day,
 					$days
 				),
-				'opens'      => $opens,
-				'closes'     => $closes,
+				'opens'     => $opens,
+				'closes'    => $closes,
 			);
 		}
 
