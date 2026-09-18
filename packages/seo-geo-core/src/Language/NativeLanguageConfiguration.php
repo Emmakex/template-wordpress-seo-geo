@@ -50,16 +50,25 @@ final class NativeLanguageConfiguration {
 	private string $routing_mode;
 
 	/**
+	 * Explicit language used for x-default when configured.
+	 *
+	 * @var string|null
+	 */
+	private ?string $x_default_language_code;
+
+	/**
 	 * Create a validated configuration.
 	 *
 	 * @param string                $default_language_code Default language code.
 	 * @param array<string, string> $languages             Language-to-locale map.
-	 * @param string                $routing_mode          Validated routing mode.
+	 * @param string                $routing_mode            Validated routing mode.
+	 * @param string|null           $x_default_language_code Explicit x-default language.
 	 */
-	private function __construct( string $default_language_code, array $languages, string $routing_mode ) {
-		$this->default_language_code = $default_language_code;
-		$this->languages             = $languages;
-		$this->routing_mode          = $routing_mode;
+	private function __construct( string $default_language_code, array $languages, string $routing_mode, ?string $x_default_language_code ) {
+		$this->default_language_code   = $default_language_code;
+		$this->languages               = $languages;
+		$this->routing_mode            = $routing_mode;
+		$this->x_default_language_code = $x_default_language_code;
 	}
 
 	/**
@@ -84,8 +93,15 @@ final class NativeLanguageConfiguration {
 		$raw_default   = $raw['default'] ?? null;
 		$raw_languages = $raw['languages'] ?? null;
 		$raw_routing   = $raw['routing'] ?? self::ROUTING_DISABLED;
+		$raw_x_default = $raw['x_default'] ?? null;
 
-		if ( ! is_string( $raw_default ) || ! is_array( $raw_languages ) || array() === $raw_languages || ! is_string( $raw_routing ) ) {
+		if (
+			! is_string( $raw_default )
+			|| ! is_array( $raw_languages )
+			|| array() === $raw_languages
+			|| ! is_string( $raw_routing )
+			|| ( null !== $raw_x_default && ! is_string( $raw_x_default ) )
+		) {
 			return $fallback;
 		}
 
@@ -123,7 +139,15 @@ final class NativeLanguageConfiguration {
 			return $fallback;
 		}
 
-		return new self( $default_language_code, $languages, $routing_mode );
+		$x_default_language_code = null;
+		if ( is_string( $raw_x_default ) ) {
+			$x_default_language_code = self::normalize_language_code( $raw_x_default );
+			if ( null === $x_default_language_code || ! isset( $languages[ $x_default_language_code ] ) ) {
+				return $fallback;
+			}
+		}
+
+		return new self( $default_language_code, $languages, $routing_mode, $x_default_language_code );
 	}
 
 	/**
@@ -154,6 +178,13 @@ final class NativeLanguageConfiguration {
 	 */
 	public function routing_mode(): string {
 		return $this->routing_mode;
+	}
+
+	/**
+	 * Return the explicitly configured x-default language code.
+	 */
+	public function x_default_language_code(): ?string {
+		return $this->x_default_language_code;
 	}
 
 	/**
@@ -212,7 +243,7 @@ final class NativeLanguageConfiguration {
 	private static function single_language( string $locale ): self {
 		$language_code = self::language_code_from_locale( $locale );
 
-		return new self( $language_code, array( $language_code => $locale ), self::ROUTING_DISABLED );
+		return new self( $language_code, array( $language_code => $locale ), self::ROUTING_DISABLED, null );
 	}
 
 	/**

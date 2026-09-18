@@ -49,6 +49,13 @@ final class NativeSeoPresenter {
 	private OpenGraphResolver $open_graph;
 
 	/**
+	 * Hreflang resolver.
+	 *
+	 * @var HreflangResolver
+	 */
+	private HreflangResolver $hreflang;
+
+	/**
 	 * Create the native presenter.
 	 *
 	 * @param SeoOutputAuthority      $authority    Output authority.
@@ -56,19 +63,22 @@ final class NativeSeoPresenter {
 	 * @param CanonicalResolver       $canonical    Canonical resolver.
 	 * @param MetaDescriptionResolver $description  Description resolver.
 	 * @param OpenGraphResolver       $open_graph   Open Graph resolver.
+	 * @param HreflangResolver        $hreflang     Hreflang resolver.
 	 */
 	public function __construct(
 		SeoOutputAuthority $authority,
 		IndexabilityResolver $indexability,
 		CanonicalResolver $canonical,
 		MetaDescriptionResolver $description,
-		OpenGraphResolver $open_graph
+		OpenGraphResolver $open_graph,
+		HreflangResolver $hreflang
 	) {
 		$this->authority    = $authority;
 		$this->indexability = $indexability;
 		$this->canonical    = $canonical;
 		$this->description  = $description;
 		$this->open_graph   = $open_graph;
+		$this->hreflang     = $hreflang;
 	}
 
 	/**
@@ -77,7 +87,8 @@ final class NativeSeoPresenter {
 	public function register(): void {
 		$owns_head = $this->authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL )
 			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_META_DESCRIPTION )
-			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_OPEN_GRAPH );
+			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_OPEN_GRAPH )
+			|| $this->authority->native_owns( SeoOutputAuthority::SIGNAL_HREFLANG );
 
 		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL ) ) {
 			remove_action( 'wp_head', 'rel_canonical' );
@@ -116,6 +127,12 @@ final class NativeSeoPresenter {
 		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_OPEN_GRAPH ) ) {
 			foreach ( $this->open_graph->resolve() as $property => $content ) {
 				echo '<meta property="' . esc_attr( $property ) . '" content="' . esc_attr( $content ) . '" />' . "\n";
+			}
+		}
+
+		if ( $this->authority->native_owns( SeoOutputAuthority::SIGNAL_HREFLANG ) ) {
+			foreach ( $this->hreflang->resolve() as $language_code => $url ) {
+				echo '<link rel="alternate" hreflang="' . esc_attr( $language_code ) . '" href="' . esc_url( $url ) . '" />' . "\n";
 			}
 		}
 	}

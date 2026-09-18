@@ -17,7 +17,9 @@ use SeoGeo\Core\Language\NativeTranslationRegistry;
 use SeoGeo\Core\Language\NativeWordPressAdapter;
 use SeoGeo\Core\Seo\BreadcrumbResolver;
 use SeoGeo\Core\Seo\CanonicalResolver;
+use SeoGeo\Core\Seo\HreflangResolver;
 use SeoGeo\Core\Seo\IndexabilityResolver;
+use SeoGeo\Core\Seo\LocalizedSeoResolver;
 use SeoGeo\Core\Seo\MetaDescriptionResolver;
 use SeoGeo\Core\Seo\NativeSeoPresenter;
 use SeoGeo\Core\Seo\OpenGraphResolver;
@@ -47,6 +49,13 @@ final class Runtime {
 	 * @var NativeTranslationRegistry|null
 	 */
 	private static ?NativeTranslationRegistry $translation_registry = null;
+
+	/**
+	 * Localized SEO authority resolver.
+	 *
+	 * @var LocalizedSeoResolver|null
+	 */
+	private static ?LocalizedSeoResolver $localized_seo = null;
 
 	/**
 	 * Runtime integration detector.
@@ -94,22 +103,26 @@ final class Runtime {
 		self::$translation_registry = new NativeTranslationRegistry( $language_configuration );
 
 		self::$seo_authority = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
+		self::$localized_seo = new LocalizedSeoResolver( self::$language_router, self::$translation_registry, $language_configuration );
 
 		self::$language_router->register();
-		add_filter( 'seo_geo_indexability_state', array( self::class, 'protect_localized_route_indexability' ), 20 );
+		add_filter( 'seo_geo_indexability_state', array( self::$localized_seo, 'resolve_indexability' ), 20 );
+		add_filter( 'seo_geo_canonical_url', array( self::$localized_seo, 'filter_canonical_url' ), 20, 2 );
 
 		$indexability = new IndexabilityResolver();
 		$canonical    = new CanonicalResolver();
 		$description  = new MetaDescriptionResolver();
 		$open_graph   = new OpenGraphResolver( $indexability, $canonical, $description );
+		$hreflang     = new HreflangResolver( $indexability, self::$localized_seo );
 
-		self::$breadcrumbs = new BreadcrumbResolver();
+		self::$breadcrumbs = new BreadcrumbResolver( self::$localized_seo );
 		self::$native_seo  = new NativeSeoPresenter(
 			self::$seo_authority,
 			$indexability,
 			$canonical,
 			$description,
-			$open_graph
+			$open_graph,
+			$hreflang
 		);
 		self::$native_seo->register();
 
@@ -123,23 +136,6 @@ final class Runtime {
 		do_action( 'seo_geo_core_ready', self::$language_manager, self::$integration_detector, self::$seo_authority );
 	}
 
-	/**
-	 * Keep newly routed localized URLs out of the index until translation
-	 * relationships, localized canonicals and hreflang are authoritative.
-	 *
-	 * @param string $state Native indexability state.
-	 */
-	public static function protect_localized_route_indexability( string $state ): string {
-		if (
-			IndexabilityResolver::INDEXABLE === $state
-			&& null !== self::$language_router
-			&& self::$language_router->is_localized_request()
-		) {
-			return IndexabilityResolver::NOINDEX_FOLLOW;
-		}
-
-		return $state;
-	}
 
 	/**
 	 * Get the normalized language service when initialized.
@@ -160,6 +156,16 @@ final class Runtime {
 	 */
 	public static function translations(): ?NativeTranslationRegistry {
 		return self::$translation_registry;
+	}
+
+	/**
+	 * Get the localized SEO authority when initialized.
+	 *
+	 * Later Schema/GEO layers must reuse this authority instead of reconstructing
+	 * language or translation state independently.
+	 */
+	public static function localized_seo(): ?LocalizedSeoResolver {
+		return self::$localized_seo;
 	}
 
 	/**
