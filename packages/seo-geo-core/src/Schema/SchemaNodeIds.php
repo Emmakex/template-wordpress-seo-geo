@@ -30,6 +30,15 @@ final class SchemaNodeIds {
 	}
 
 	/**
+	 * Return the stable BlogPosting entity ID for one canonical URL.
+	 *
+	 * @param string $canonical_url Authoritative post canonical URL.
+	 */
+	public function blog_posting( string $canonical_url ): string {
+		return $this->with_fragment( $canonical_url, 'blogposting' );
+	}
+
+	/**
 	 * Return the stable site Organization entity ID.
 	 */
 	public function organization(): string {
