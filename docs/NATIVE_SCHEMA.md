@@ -127,7 +127,7 @@ For an indexable native author archive, the existing WebPage node is specialized
 - Person `@id = {author_url}#person`;
 - Person `name` from the WordPress user's visible display name;
 - Person `url` from the public author archive;
-- Person `description` only when the user has a non-empty WordPress biography;
+- Person biography remains a source candidate but is not emitted as `description` until the active public template actually exposes that biography to readers;
 - ProfilePage `mainEntity` references the Person;
 - Person `mainEntityOfPage` references the existing page node.
 
@@ -228,17 +228,23 @@ The public URL is always the authoritative WordPress home URL and the stable nod
 
 The optional `type` field is accepted only when it matches the native supported LocalBusiness subtype allowlist. An unsupported value falls back to generic `LocalBusiness` rather than being emitted as arbitrary Schema type data.
 
-Optional properties are conservative:
+Phase 5F adds a visible-content authority before LocalBusiness data can enter the graph. The native baseline now requires a published static front-page document whose authored public text contains the configured street address, locality and postal code. A configured region must also be visible. The two-letter country code is treated as the machine-readable country representation and does not need to appear literally in the copy.
 
-- `address_region` is added only when non-empty;
-- `telephone` is added only when explicitly configured;
-- `price_range` is added only when non-empty and shorter than 100 characters;
-- `geo` is added only when latitude and longitude are both valid WGS84-range numbers supplied with at least five decimal places;
-- `openingHoursSpecification` is built only from valid day lists and 24-hour opening/closing times;
-- malformed optional values are omitted instead of invalidating otherwise truthful required business identity data;
+Optional properties are conservative and visibility-aware:
+
+- `address_region` is added only when non-empty and visibly present;
+- `telephone` is added only when explicitly configured and visibly present;
+- `price_range` is added only when non-empty, shorter than 100 characters and visibly present;
+- `geo` is added only when latitude and longitude are both valid WGS84-range numbers supplied with at least five decimal places, after the physical address itself has passed visible-content validation;
+- each `openingHoursSpecification` requires valid day/time values plus an explicit `visible_text` string that must occur in the public front-page copy;
+- malformed or hidden optional values are omitted instead of invalidating otherwise truthful required business identity data;
+- hidden required address values suppress the entire LocalBusiness node;
+- unsupported configured business subtypes fall back to generic `LocalBusiness`;
 - reviews, aggregate ratings, images, logos, social profiles, tax identifiers and service areas are not inferred.
 
-`Organization` and `LocalBusiness` are mutually exclusive baseline site-identity selections. On the indexable front page, a valid LocalBusiness becomes `WebSite.publisher` and `WebPage.mainEntity`. On a BlogPosting it may be reused as `publisher`, because LocalBusiness is a subtype of Organization, without creating a second Organization identity.
+The current visible-content resolver deliberately trusts only authored text from the current published WordPress document. Block-comment metadata and shortcode-generated output are not accepted as evidence. This is conservative by design; later presets may add richer visible presentation, but must preserve the same Schema/content consistency rule.
+
+`Organization` and `LocalBusiness` are mutually exclusive baseline site-identity selections. On the indexable front page, a visible valid LocalBusiness becomes `WebSite.publisher` and `WebPage.mainEntity`. The native baseline does not propagate the LocalBusiness node or publisher reference onto BlogPosting pages where the physical business facts are not visible.
 
 Google's current LocalBusiness documentation requires `name` and a physical `address` for LocalBusiness rich-result eligibility and recommends the most specific applicable subtype plus useful real-world fields such as telephone, geo coordinates, opening hours, price range and URL. Valid structured data does not guarantee a rich result.
 
@@ -316,8 +322,12 @@ The zero-plugin WordPress smoke must prove:
 - an explicit organization opt-in adds one Organization on the home page and links WebSite.publisher to its stable ID;
 - an explicit LocalBusiness opt-in with a complete physical address adds exactly one typed LocalBusiness node on the home page;
 - LocalBusiness uses the stable `{home_url}#localbusiness` ID and is linked from WebSite.publisher and WebPage.mainEntity;
-- LocalBusiness address, coordinates and opening-hours structures are validated before output;
-- incomplete required LocalBusiness address data suppresses the LocalBusiness node rather than fabricating missing fields;
+- LocalBusiness required address values must be present in the visible front-page document before output;
+- hidden telephone, price-range and opening-hours values are omitted;
+- coordinates are emitted only when structurally valid and the underlying physical address is visible;
+- incomplete or hidden required LocalBusiness address data suppresses the LocalBusiness node rather than fabricating missing fields;
+- LocalBusiness does not leak onto BlogPosting pages where its physical facts are not visible;
+- a stored author biography that the active author template does not display is not emitted as Person.description;
 - Organization and LocalBusiness are never emitted together as competing primary site identities;
 - the same organization data is not sprayed onto ordinary posts;
 - a public author archive emits WebSite + ProfilePage + Person;
