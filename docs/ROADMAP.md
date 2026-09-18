@@ -699,9 +699,23 @@ Adoption findings were corrected without weakening contracts:
 - PHPStan return-contract signature `82719cd07023`;
 - WP-CLI namespace-escaping recurrence signature `9505c31710a7`, recorded under `ERR-2026-006`.
 
-### Remaining Phase 5 work
+### Microphase 5F — visible-content consistency + negative entity fixtures
 
-The final Phase 5 microphase must harden visible-content consistency and negative fixtures for optional entity fields before Phase 5 can close.
+Status: **in progress**
+
+Scope:
+
+- add one reusable server-side visible-content authority for Schema decisions;
+- require LocalBusiness physical address facts to be present in the published front-page content before the entity is emitted;
+- emit telephone, price range and opening-hours data only when their configured visible counterparts are actually present;
+- keep valid GeoCoordinates conditional on a visible physical-address context;
+- suppress the full LocalBusiness node when required address facts are hidden or incomplete;
+- prevent LocalBusiness entity/publisher leakage onto BlogPosting pages without visible business facts;
+- omit stored author biography from Person Schema while the native author archive does not render it;
+- add negative fixtures for unsupported subtype, hidden optional values, invalid coordinates and hidden required address data;
+- preserve one native graph owner, stable IDs, zero-plugin operation, multilingual behavior, accessibility and performance budgets.
+
+5F closes only after implementation, public contract updates, required PR gates and post-merge `main` verification are green. Phase 5 closes with 5F.
 
 ### Phase 5 exit criteria
 
