@@ -26,6 +26,11 @@ final class NativeTranslationRegistry {
 	public const META_LANGUAGE = '_seo_geo_language';
 
 	/**
+	 * Post meta key containing the reciprocal language-to-resource map.
+	 */
+	public const META_TRANSLATIONS = '_seo_geo_translations';
+
+	/**
 	 * Native server-side language configuration.
 	 *
 	 * @var NativeLanguageConfiguration
@@ -44,10 +49,9 @@ final class NativeTranslationRegistry {
 	/**
 	 * Resolve one validated reciprocal translation relationship.
 	 *
-	 * A relationship exists only when the current published resource and at
-	 * least one other published public resource share an explicit group ID,
-	 * every member declares one configured language, and no language is
-	 * duplicated inside the group.
+	 * A relationship exists only when the current published resource explicitly
+	 * names its group, language and complete translation map, and every mapped
+	 * published resource declares the same group and reciprocal map.
 	 *
 	 * @param int $post_id Current WordPress resource ID.
 	 */
@@ -57,66 +61,42 @@ final class NativeTranslationRegistry {
 			return null;
 		}
 
-		$group_id = $this->group_id_for( $post_id );
-		$language = $this->language_for( $post_id );
-
-		if ( null === $group_id || null === $language ) {
-			return null;
-		}
-
-		$post_types = array_values( get_post_types( array( 'public' => true ), 'names' ) );
-		$post_types = array_values( array_diff( $post_types, array( 'attachment' ) ) );
-
-		$candidate_ids = get_posts(
-			array(
-				'post_type'              => $post_types,
-				'post_status'            => 'publish',
-				'posts_per_page'         => -1,
-				'fields'                 => 'ids',
-				'orderby'                => 'ID',
-				'order'                  => 'ASC',
-				'no_found_rows'          => true,
-				'update_post_meta_cache' => true,
-				'update_post_term_cache' => false,
-				'suppress_filters'       => true,
-				'meta_key'               => self::META_GROUP,
-				'meta_value'             => $group_id,
-			)
-		);
-
-		$translations = array();
-
-		foreach ( $candidate_ids as $candidate_id ) {
-			$candidate_id = (int) $candidate_id;
-			$candidate     = get_post( $candidate_id );
-
-			if ( ! $this->is_public_resource( $candidate ) ) {
-				continue;
-			}
-
-			$candidate_group    = $this->group_id_for( $candidate_id );
-			$candidate_language = $this->language_for( $candidate_id );
-
-			if ( $group_id !== $candidate_group || null === $candidate_language ) {
-				return null;
-			}
-
-			if ( isset( $translations[ $candidate_language ] ) ) {
-				return null;
-			}
-
-			$translations[ $candidate_language ] = $candidate_id;
-		}
+		$group_id     = $this->group_id_for( $post_id );
+		$language     = $this->language_for( $post_id );
+		$translations = $this->translations_for( $post_id );
 
 		if (
-			count( $translations ) < 2
+			null === $group_id
+			|| null === $language
+			|| null === $translations
+			|| count( $translations ) < 2
 			|| ! isset( $translations[ $language ] )
 			|| $translations[ $language ] !== $post_id
 		) {
 			return null;
 		}
 
-		ksort( $translations );
+		$seen_ids = array();
+
+		foreach ( $translations as $candidate_language => $candidate_id ) {
+			if ( isset( $seen_ids[ $candidate_id ] ) ) {
+				return null;
+			}
+			$seen_ids[ $candidate_id ] = true;
+
+			$candidate = get_post( $candidate_id );
+			if ( ! $this->is_public_resource( $candidate ) ) {
+				return null;
+			}
+
+			if (
+				$group_id !== $this->group_id_for( $candidate_id )
+				|| $candidate_language !== $this->language_for( $candidate_id )
+				|| $translations !== $this->translations_for( $candidate_id )
+			) {
+				return null;
+			}
+		}
 
 		return new NativeTranslationRelationship( $group_id, $language, $translations );
 	}
@@ -155,6 +135,50 @@ final class NativeTranslationRegistry {
 		$language = strtolower( trim( $value ) );
 
 		return null !== $this->configuration->locale_for( $language ) ? $language : null;
+	}
+
+	/**
+	 * Resolve and normalize an explicit reciprocal translation map.
+	 *
+	 * @param int $post_id WordPress resource ID.
+	 * @return array<string, int>|null
+	 */
+	private function translations_for( int $post_id ): ?array {
+		$value = get_post_meta( $post_id, self::META_TRANSLATIONS, true );
+		if ( ! is_array( $value ) || array() === $value ) {
+			return null;
+		}
+
+		$translations = array();
+
+		foreach ( $value as $raw_language => $raw_post_id ) {
+			if ( ! is_string( $raw_language ) ) {
+				return null;
+			}
+
+			$language = strtolower( trim( $raw_language ) );
+			if ( null === $this->configuration->locale_for( $language ) ) {
+				return null;
+			}
+
+			if ( is_int( $raw_post_id ) ) {
+				$candidate_id = $raw_post_id;
+			} elseif ( is_string( $raw_post_id ) && ctype_digit( $raw_post_id ) ) {
+				$candidate_id = (int) $raw_post_id;
+			} else {
+				return null;
+			}
+
+			if ( 0 >= $candidate_id || isset( $translations[ $language ] ) ) {
+				return null;
+			}
+
+			$translations[ $language ] = $candidate_id;
+		}
+
+		ksort( $translations );
+
+		return $translations;
 	}
 
 	/**
