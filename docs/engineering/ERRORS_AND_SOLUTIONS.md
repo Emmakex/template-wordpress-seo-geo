@@ -318,10 +318,10 @@ A skip link is not considered accepted merely because the anchor exists or chang
 
 **Status:** resolved
 **First seen:** 2026-09-17
-**Last seen:** 2026-09-17
+**Last seen:** 2026-09-18
 **Area:** ci / integration
-**Signature:** `423ffeca3a8d`
-**Reference:** PR #13; failing Self-contained Theme CI run `35256708093` / job `105322014375`; passing PR run `35257079331`; post-merge passing run `35257573577`
+**Signatures:** original `423ffeca3a8d`; recurrence `6b757d95f440`
+**Reference:** PR #13 original; PR #28 recurrence; recurrence failing Self-contained Theme CI run `35310848537` / job `105492394718`; passing PR run `35310937921`; post-merge passing run `35311162371`
 
 ### Symptom / context
 
@@ -364,6 +364,12 @@ When PHP source is already contained in a single-quoted shell argument, escape f
 ### Regression coverage
 
 `scripts/ci/self-contained-theme-smoke.sh` contains explicit exit-status/stderr handling for both the ReflectionClass runtime-origin probe and the native-authority probe. `Self-contained Theme CI` runs that smoke against the built theme on every relevant PR and `main` push.
+
+### Notes/history
+
+The same escaping class recurred in Phase 5B when a new Organization-identity fixture called `wp eval` with doubled namespace separators. The smoke failed immediately with a PHP parse error and structured signature `6b757d95f440`; the production graph code was not changed. The fixture was corrected to pass `\SeoGeo\Core\Schema\SchemaIdentityResolver` as valid PHP source.
+
+PR #28 then passed Self-contained Theme CI run `35310937921`, all eight PR gates, and post-merge Self-contained Theme CI run `35311162371`. New `wp eval` probes must reuse the established escaping rule rather than re-derive shell/PHP escaping ad hoc.
 
 ## ERR-2026-007 — `wp eval` breadcrumb fixture used a local query instead of WordPress's global query
 
