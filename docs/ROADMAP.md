@@ -374,9 +374,9 @@ All exit criteria are satisfied:
 
 ## Phase 4 — Native multilingual core
 
-Status: **in progress**
+Status: **complete**
 
-The native baseline remains intentionally staged: language configuration and URL routing are complete, but localized routes do not become indexable until an explicit translated-resource relationship can prove canonical and alternate ownership.
+Phase 4 establishes a native multilingual baseline with zero required multilingual plugins. Language configuration, prefixed routing, explicit reciprocal translation relationships and localized SEO promotion now share one server-authoritative contract.
 
 ### Microphase 4A — native language configuration contract
 
@@ -437,7 +437,7 @@ Functional adoption findings are recorded as `ERR-2026-008` and `ERR-2026-009`. 
 
 ### Microphase 4C — explicit translation relationships + indexable localized SEO
 
-Status: **in progress**
+Status: **complete**
 
 #### Microphase 4C1 — explicit reciprocal translation relationship contract
 
@@ -472,32 +472,50 @@ The first registry implementation triggered WPCS slow-meta-query signature `7073
 
 #### Microphase 4C2 — localized SEO promotion
 
-Status: **pending**
+Status: **complete**
 
-Next scope:
+Delivered on PR #23:
 
-- promote a prefixed route from staged `noindex` only when the current post belongs to a valid 4C1 relationship and the active route language matches that post;
-- localized self-referencing canonical URLs for validated translated resources;
-- reciprocal `hreflang` sets containing only published, resolvable relationship members;
-- optional `x-default` only when its semantic target is explicitly configured;
-- keep wrong-language prefixes, missing relationships and invalid relationships non-indexable;
-- align Open Graph URL/locale with the same localized canonical authority;
-- add locale-aware breadcrumb/internal URL helpers without inventing translated slugs;
-- expose normalized language context for later Phase 5 Schema graph work;
-- extend ES/EN real-HTTP acceptance for draft/private/non-reciprocal/wrong-prefix cases.
+- single `LocalizedSeoResolver` authority for route language, reciprocal relationship validation and localized URL resolution;
+- promotion from staged `noindex,follow` to indexable only when the current singular resource has a valid reciprocal relationship and the active prefix matches its explicit language;
+- localized self-referencing canonical URLs based on each translated resource's real WordPress permalink, preserving different slugs and hierarchies;
+- reciprocal `hreflang` alternates for valid published relationship members;
+- optional `x-default` only when an explicit configured language is supplied;
+- absolute HTTP(S) validation for filtered hreflang URLs before presentation;
+- Open Graph URL and locale aligned with the same localized canonical/request authority;
+- safe translated-URL lookup that refuses unrelated resources instead of inventing paths;
+- localized breadcrumb home, ancestor and current links without cross-language fallback;
+- `Runtime::localized_seo()` exposed for later Schema/GEO consumers;
+- non-authoritative routes — unprefixed translation members, wrong-language prefixes, missing/invalid relationships — remain `noindex,follow` and emit no native canonical, hreflang or Open Graph;
+- real HTTP WordPress 7.1 / PHP 8.2 / zero-plugin acceptance using distinct ES/EN slugs and hierarchies.
 
-Optional WPML/Polylang adapters remain outside the native baseline critical path and must not become required dependencies.
+PR #23 passed all eight required PR gates on final candidate `c77dd840b4b1bb6d5f2838eda2c630e42b4bd51e` and was squash-merged as `95a416e835e0d7490c70342d0acc053ed8276f81`. Post-merge `main` passed all eight gates again:
+
+- Foundation CI `35304371532`;
+- Phase 1 Package CI `35304371553`;
+- PHP Quality CI `35304371657`;
+- WordPress Smoke CI `35304371564`;
+- Self-contained Theme CI `35304371524`;
+- Native Multilingual CI `35304371584`;
+- Accessibility & Responsive CI `35304371592`;
+- Performance Baseline CI `35304371517`.
+
+The final review hardened the public hreflang-filter contract so relative/non-HTTP(S) values cannot be emitted as alternate URLs. The candidate was fully revalidated after that correction.
+
+Optional WPML/Polylang adapters remain outside the native baseline critical path and are not required dependencies.
 
 ### Phase 4 exit criteria
 
-Phase 4 remains open until:
+All exit criteria are satisfied:
 
 - reciprocal valid alternates exist in the native baseline;
-- every indexable localized page has the correct current-language canonical;
+- every indexable localized singular page has the correct current-language canonical;
 - HTML language and Open Graph language/URL signals agree with the active language authority;
-- locale-aware breadcrumbs/internal links do not cross languages accidentally;
+- locale-aware breadcrumbs/internal URL helpers do not cross languages accidentally;
 - invalid, missing, draft or private translations never appear as indexable alternates;
-- no multilingual plugin is required for baseline acceptance.
+- explicit `x-default` does not appear unless configured;
+- the complete ES/EN multilingual acceptance runs with zero active plugins;
+- PHP quality, accessibility and performance gates remain green after localized SEO promotion.
 
 ## Phase 5 — Schema graph + entities
 
