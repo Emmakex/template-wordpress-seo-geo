@@ -768,3 +768,78 @@ Do not suppress these documentation sniffs; they keep public/internal authority 
 
 PHP Quality CI keeps WPCS and PHPStan level 6 mandatory. Foundation CI also requires the LLMS resolver/presenter and public contract, while functional behavior remains separately covered by the self-contained and multilingual acceptance suites.
 
+## ERR-2026-015 — Markdown URL prefix caused a false HTML-link absence failure
+
+**Status:** resolved  
+**First seen:** 2026-09-18  
+**Last seen:** 2026-09-18  
+**Area:** ci / geo / multilingual / regression  
+**Signature:** `cdbc6628425d`  
+**Reference:** PR #43; failing Native Multilingual CI localized SEO acceptance; final passing Native Multilingual CI `35387083876`; post-merge passing Native Multilingual CI `35387364460`
+
+### Symptom / context
+
+Phase 6C changed curated `llms.txt` entries from authoritative localized HTML URLs to their Markdown alternates, for example:
+
+```text
+https://example.test/es/servicios/seo-tecnico/
+https://example.test/es/servicios/seo-tecnico/index.md
+```
+
+The runtime produced the expected Markdown URL, but the localized acceptance failed with:
+
+```text
+llms.txt did not prefer authoritative localized Markdown URLs
+```
+
+### Root cause
+
+Confirmed. The fixture used a broad negative assertion equivalent to:
+
+```text
+HTML_URL not in body
+```
+
+That assertion is invalid for directory-style Markdown alternates because the HTML URL is naturally a string prefix of the correct `index.md` URL.
+
+The product output was correct. The test compared substrings when the contract concerned complete Markdown list-item URLs.
+
+### Solution
+
+The fixture now checks the exact HTML list-item form rather than banning the HTML URL as an arbitrary substring.
+
+It asserts that:
+
+- the exact ES Markdown list item exists;
+- the exact EN Markdown list item exists;
+- the exact ES HTML list item does not exist;
+- the exact EN HTML list item does not exist;
+- the staged unprefixed URL does not appear.
+
+No runtime URL generation, multilingual authority or llms behavior changed.
+
+### Validation
+
+- final PR candidate `27a9248e41f1fc379e1913bd951cd895db03d5df` passed Native Multilingual CI `35387083876`;
+- the same candidate passed PHP Quality, Self-contained Theme, Accessibility and Performance;
+- PR #43 passed all ten workflows and was squash-merged as `173793586a3a75ee4f0819e17485460bf91e47d2`;
+- post-merge Native Multilingual CI `35387364460` passed the exact same ES/EN Markdown authority contract;
+- all ten post-merge workflows passed.
+
+### Prevention / guardrail
+
+When one valid URL is structurally derived by extending another URL, do not use raw substring absence as evidence that the shorter representation was not emitted.
+
+For generated documents, compare complete semantic units such as:
+
+- the exact Markdown list item;
+- the exact HTML attribute;
+- a parsed URL field;
+- a structured JSON property.
+
+Prefer parsing or exact-line assertions whenever one representation can legitimately contain another as a prefix.
+
+### Regression coverage
+
+`scripts/ci/native-localized-seo-smoke.sh` now validates exact localized Markdown and HTML list-item forms separately while also asserting that unprefixed staged URLs remain absent.
+
