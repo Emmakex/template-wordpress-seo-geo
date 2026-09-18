@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SeoGeo\Core;
 
+use SeoGeo\Core\Geo\CrawlerPolicyPresenter;
+use SeoGeo\Core\Geo\CrawlerPolicyResolver;
 use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
 use SeoGeo\Core\Language\NativeLanguageConfiguration;
@@ -101,6 +103,13 @@ final class Runtime {
 	private static ?SchemaGraphBuilder $schema_graph = null;
 
 	/**
+	 * GEO crawler-policy authority.
+	 *
+	 * @var CrawlerPolicyResolver|null
+	 */
+	private static ?CrawlerPolicyResolver $crawler_policy = null;
+
+	/**
 	 * Initialize shared services once.
 	 */
 	public static function initialize(): void {
@@ -159,6 +168,10 @@ final class Runtime {
 		);
 		$schema_presenter       = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
 		$schema_presenter->register();
+
+		self::$crawler_policy = new CrawlerPolicyResolver();
+		$crawler_presenter    = new CrawlerPolicyPresenter( self::$crawler_policy );
+		$crawler_presenter->register();
 
 		/**
 		 * Fires after shared SEO/GEO services are ready.
@@ -228,5 +241,12 @@ final class Runtime {
 	 */
 	public static function schema_graph(): ?SchemaGraphBuilder {
 		return self::$schema_graph;
+	}
+
+	/**
+	 * Get the GEO crawler-policy resolver when initialized.
+	 */
+	public static function crawler_policy(): ?CrawlerPolicyResolver {
+		return self::$crawler_policy;
 	}
 }
