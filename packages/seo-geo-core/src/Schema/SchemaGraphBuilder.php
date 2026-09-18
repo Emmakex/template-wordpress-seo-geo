@@ -55,11 +55,11 @@ final class SchemaGraphBuilder {
 	/**
 	 * Create the graph builder.
 	 *
-	 * @param IndexabilityResolver  $indexability Native indexability authority.
-	 * @param CanonicalResolver     $canonical    Canonical URL authority.
-	 * @param LanguageManager       $language     Active language facade.
-	 * @param SchemaNodeIds         $ids          Stable node-ID generator.
-	 * @param SchemaIdentityResolver $identity    Native identity authority.
+	 * @param IndexabilityResolver   $indexability Native indexability authority.
+	 * @param CanonicalResolver      $canonical    Canonical URL authority.
+	 * @param LanguageManager        $language     Active language facade.
+	 * @param SchemaNodeIds          $ids          Stable node-ID generator.
+	 * @param SchemaIdentityResolver $identity     Native identity authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
@@ -130,9 +130,9 @@ final class SchemaGraphBuilder {
 			);
 
 			$website['publisher'] = array( '@id' => $organization['id'] );
-			$graph[0] = $website;
 
-			$graph[] = $organization_node;
+			$graph[0] = $website;
+			$graph[]  = $organization_node;
 		}
 
 		$author = $this->identity->current_author();
