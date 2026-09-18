@@ -121,7 +121,10 @@ bash scripts/build-theme-package.sh "$BUILT_THEME" \
 for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Runtime.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Seo/OpenGraphResolver.php" \
-  "${BUILT_THEME}/inc/seo-geo-core/src/Seo/BreadcrumbResolver.php"; do
+  "${BUILT_THEME}/inc/seo-geo-core/src/Seo/BreadcrumbResolver.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaNodeIds.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaGraphBuilder.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaPresenter.php"; do
   [[ -f "$required_file" ]] \
     || fail_smoke "embedded-runtime-file" "Built theme is missing embedded SEO/GEO runtime source" "${required_file}" "missing"
 done
@@ -262,6 +265,71 @@ OG_IMAGE_COUNT="$(grep -Eio '<meta[^>]+property=["'\'']og:image["'\''][^>]*>' "$
 [[ "$OG_IMAGE_COUNT" == "0" ]] \
   || fail_smoke "open-graph-image" "Fixture without featured image or site icon must not fabricate og:image" "0" "$OG_IMAGE_COUNT"
 
+printf '[self-contained] Checking native Schema graph.\n'
+if ! SCHEMA_RESULT="$(python3 - "$PAGE_BODY" "$BASE_URL" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.count = 0
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            assert attributes.get("type") == "application/ld+json"
+            self.capture = True
+            self.count += 1
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+body_path = sys.argv[1]
+base = sys.argv[2].rstrip("/") + "/"
+parser = SchemaParser()
+with open(body_path, "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+
+assert parser.count == 1, f"schema_script_count={parser.count}"
+payload = json.loads("".join(parser.parts))
+assert payload.get("@context") == "https://schema.org"
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 2
+
+by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
+website = by_type.get("WebSite")
+webpage = by_type.get("WebPage")
+assert isinstance(website, dict)
+assert isinstance(webpage, dict)
+
+canonical = base + "self-contained-seo-fixture/"
+website_id = base + "#website"
+webpage_id = canonical + "#webpage"
+
+assert website.get("@id") == website_id
+assert website.get("url") == base
+assert website.get("name") == "Self-contained SEO GEO"
+assert webpage.get("@id") == webpage_id
+assert webpage.get("url") == canonical
+assert webpage.get("isPartOf") == {"@id": website_id}
+assert webpage.get("inLanguage") == "en-US"
+assert isinstance(webpage.get("name"), str) and webpage["name"]
+
+print(json.dumps({"website_id": website_id, "webpage_id": webpage_id, "inLanguage": webpage["inLanguage"]}))
+PY
+)"; then
+  fail_smoke "schema-graph-contract" "Native Schema graph contract is invalid" "one parseable WebSite + WebPage graph with stable IDs" "${SCHEMA_RESULT:-python assertion failed}" "parse native JSON-LD graph"
+fi
+
 if ! BREADCRUMBS_JSON="$(wp_cli eval "global \$wp_query; \$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$BREADCRUMB_EVAL_ERROR" | head -c 240)"
   fail_smoke "breadcrumb-eval" "Could not resolve breadcrumb data contract" "root and current post items" "${ERROR_TEXT:-wp eval failed}" "wp eval Runtime::breadcrumbs"
@@ -283,6 +351,10 @@ SEARCH_OG_COUNT="$(grep -Eio '<meta[^>]+property=["'\'']og:[a-z_:.-]+["'\''][^>]
 [[ "$SEARCH_OG_COUNT" == "0" ]] \
   || fail_smoke "search-open-graph" "Noindex search fixture must not expose native Open Graph metadata" "0" "$SEARCH_OG_COUNT"
 
+SEARCH_SCHEMA_COUNT="$(grep -Eio '<script[^>]+id=["'\'']seo-geo-schema-graph["'\''][^>]*>' "$SEARCH_BODY" | wc -l | tr -d ' ')"
+[[ "$SEARCH_SCHEMA_COUNT" == "0" ]] \
+  || fail_smoke "search-schema" "Noindex search fixture must not expose native Schema graph" "0" "$SEARCH_SCHEMA_COUNT"
+
 printf '[self-contained] Checking PHP runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
 docker exec "$WP_CONTAINER" sh -c 'test ! -f /var/www/html/wp-content/debug.log || cat /var/www/html/wp-content/debug.log' >"$DEBUG_LOG" 2>&1 || true
@@ -292,4 +364,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted diagnostics" "no fatal/warning/notice/uncaught error" "$MATCH"
 fi
 
-printf 'Self-contained theme OK: zero plugins; native SEO + Open Graph; breadcrumbs contract; no PHP diagnostics.\n'
+printf 'Self-contained theme OK: zero plugins; native SEO + Open Graph + Schema; breadcrumbs contract; no PHP diagnostics.\n'
