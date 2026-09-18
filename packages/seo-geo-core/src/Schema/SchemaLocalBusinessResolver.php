@@ -88,14 +88,27 @@ final class SchemaLocalBusinessResolver {
 	private SchemaIdentityResolver $identity;
 
 	/**
+	 * Visible-content authority.
+	 *
+	 * @var SchemaVisibleContentResolver
+	 */
+	private SchemaVisibleContentResolver $visible_content;
+
+	/**
 	 * Create the resolver.
 	 *
-	 * @param SchemaNodeIds          $ids      Stable Schema node-ID generator.
-	 * @param SchemaIdentityResolver $identity Site identity selection authority.
+	 * @param SchemaNodeIds                $ids             Stable Schema node-ID generator.
+	 * @param SchemaIdentityResolver       $identity        Site identity selection authority.
+	 * @param SchemaVisibleContentResolver $visible_content Visible-content authority.
 	 */
-	public function __construct( SchemaNodeIds $ids, SchemaIdentityResolver $identity ) {
-		$this->ids      = $ids;
-		$this->identity = $identity;
+	public function __construct(
+		SchemaNodeIds $ids,
+		SchemaIdentityResolver $identity,
+		SchemaVisibleContentResolver $visible_content
+	) {
+		$this->ids             = $ids;
+		$this->identity        = $identity;
+		$this->visible_content = $visible_content;
 	}
 
 	/**
@@ -108,7 +121,12 @@ final class SchemaLocalBusinessResolver {
 	 * @return array<string, mixed>|null
 	 */
 	public function resolve(): ?array {
-		if ( SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS !== $this->identity->site_entity_type() ) {
+		if ( ! is_front_page() || SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS !== $this->identity->site_entity_type() ) {
+			return null;
+		}
+
+		$document_text = $this->visible_content->current_document_text();
+		if ( '' === $document_text ) {
 			return null;
 		}
 
@@ -123,7 +141,7 @@ final class SchemaLocalBusinessResolver {
 		}
 
 		$address = $this->address( $configuration );
-		if ( null === $address ) {
+		if ( null === $address || ! $this->address_is_visible( $address, $document_text ) ) {
 			return null;
 		}
 
@@ -136,12 +154,16 @@ final class SchemaLocalBusinessResolver {
 		);
 
 		$telephone = $this->text_value( $configuration['telephone'] ?? null );
-		if ( null !== $telephone ) {
+		if ( null !== $telephone && $this->visible_content->contains( $document_text, $telephone ) ) {
 			$entity['telephone'] = $telephone;
 		}
 
 		$price_range = $this->text_value( $configuration['price_range'] ?? null );
-		if ( null !== $price_range && strlen( $price_range ) < 100 ) {
+		if (
+			null !== $price_range
+			&& strlen( $price_range ) < 100
+			&& $this->visible_content->contains( $document_text, $price_range )
+		) {
 			$entity['priceRange'] = $price_range;
 		}
 
@@ -150,7 +172,7 @@ final class SchemaLocalBusinessResolver {
 			$entity['geo'] = $geo;
 		}
 
-		$opening_hours = $this->opening_hours( $configuration['opening_hours'] ?? null );
+		$opening_hours = $this->opening_hours( $configuration['opening_hours'] ?? null, $document_text );
 		if ( array() !== $opening_hours ) {
 			$entity['openingHoursSpecification'] = $opening_hours;
 		}
@@ -206,6 +228,35 @@ final class SchemaLocalBusinessResolver {
 	}
 
 	/**
+	 * Require the user-visible document to expose the configured physical address.
+	 *
+	 * Country remains a machine-readable address component and is not required as
+	 * a literal two-letter code in visible copy. Region is required when supplied.
+	 *
+	 * @param array<string, string> $address       Resolved PostalAddress.
+	 * @param string                $document_text Normalized public document text.
+	 */
+	private function address_is_visible( array $address, string $document_text ): bool {
+		$required = array(
+			$address['streetAddress'],
+			$address['addressLocality'],
+			$address['postalCode'],
+		);
+
+		if ( isset( $address['addressRegion'] ) ) {
+			$required[] = $address['addressRegion'];
+		}
+
+		foreach ( $required as $value ) {
+			if ( ! $this->visible_content->contains( $document_text, $value ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Resolve optional coordinates only when both are precise and valid.
 	 *
 	 * @param array<string, mixed> $configuration LocalBusiness configuration.
@@ -254,10 +305,11 @@ final class SchemaLocalBusinessResolver {
 	/**
 	 * Resolve valid opening-hours specifications.
 	 *
-	 * @param mixed $value Configured opening-hours array.
+	 * @param mixed  $value         Configured opening-hours array.
+	 * @param string $document_text Normalized public document text.
 	 * @return array<int, array<string, mixed>>
 	 */
-	private function opening_hours( $value ): array {
+	private function opening_hours( $value, string $document_text ): array {
 		if ( ! is_array( $value ) ) {
 			return array();
 		}
@@ -269,11 +321,18 @@ final class SchemaLocalBusinessResolver {
 				continue;
 			}
 
-			$days   = $this->days( $specification['days'] ?? null );
-			$opens  = $this->time( $specification['opens'] ?? null );
-			$closes = $this->time( $specification['closes'] ?? null );
+			$days         = $this->days( $specification['days'] ?? null );
+			$opens        = $this->time( $specification['opens'] ?? null );
+			$closes       = $this->time( $specification['closes'] ?? null );
+			$visible_text = $this->text_value( $specification['visible_text'] ?? null );
 
-			if ( array() === $days || null === $opens || null === $closes ) {
+			if (
+				array() === $days
+				|| null === $opens
+				|| null === $closes
+				|| null === $visible_text
+				|| ! $this->visible_content->contains( $document_text, $visible_text )
+			) {
 				continue;
 			}
 

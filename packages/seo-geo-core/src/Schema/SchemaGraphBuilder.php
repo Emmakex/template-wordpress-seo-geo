@@ -263,10 +263,6 @@ final class SchemaGraphBuilder {
 			'mainEntityOfPage' => array( '@id' => $page_id ),
 		);
 
-		if ( '' !== $author['description'] ) {
-			$person['description'] = $author['description'];
-		}
-
 		return $person;
 	}
 
