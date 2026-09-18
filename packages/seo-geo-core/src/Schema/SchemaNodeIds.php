@@ -55,6 +55,13 @@ final class SchemaNodeIds {
 	}
 
 	/**
+	 * Return the stable site LocalBusiness entity ID.
+	 */
+	public function local_business(): string {
+		return $this->with_fragment( home_url( '/' ), 'localbusiness' );
+	}
+
+	/**
 	 * Return the stable Person entity ID for one public profile URL.
 	 *
 	 * @param string $profile_url Authoritative public profile URL.
