@@ -24,6 +24,8 @@ DB_ROOT_PASSWORD="root-theme-password"
 TMP_DIR="$(mktemp -d)"
 BUILT_THEME="${TMP_DIR}/seo-geo-theme"
 PAGE_BODY="${TMP_DIR}/page.html"
+HOME_BODY="${TMP_DIR}/home.html"
+AUTHOR_BODY="${TMP_DIR}/author.html"
 SEARCH_BODY="${TMP_DIR}/search.html"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
@@ -329,6 +331,132 @@ print(json.dumps({"website_id": website_id, "webpage_id": webpage_id, "inLanguag
 PY
 )"; then
   fail_smoke "schema-graph-contract" "Native Schema graph contract is invalid" "one parseable WebSite + WebPage graph with stable IDs" "${SCHEMA_RESULT:-python assertion failed}" "parse native JSON-LD graph"
+fi
+
+printf '[self-contained] Checking explicit Organization identity on the home page.\n'
+wp_cli eval 'update_option( \\SeoGeo\\Core\\Schema\\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "organization" ), false );' >/dev/null \
+  || fail_smoke "schema-organization-option" "Could not enable explicit Organization identity" "option update succeeds" "failed"
+curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
+  || fail_smoke "schema-organization-home-request" "Could not request Organization home fixture" "HTTP 2xx" "curl failed"
+
+if ! ORGANIZATION_SCHEMA_RESULT="$(python3 - "$HOME_BODY" "$BASE_URL" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+
+base = sys.argv[2].rstrip("/") + "/"
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 3, f"nodes={nodes!r}"
+by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
+website = by_type.get("WebSite")
+webpage = by_type.get("WebPage")
+organization = by_type.get("Organization")
+assert isinstance(website, dict)
+assert isinstance(webpage, dict)
+assert isinstance(organization, dict)
+organization_id = base + "#organization"
+assert organization.get("@id") == organization_id
+assert organization.get("name") == "Self-contained SEO GEO"
+assert organization.get("url") == base
+assert website.get("publisher") == {"@id": organization_id}
+assert webpage.get("@type") == "WebPage"
+print(json.dumps({"organization_id": organization_id, "node_count": len(nodes)}))
+PY
+)"; then
+  fail_smoke "schema-organization-contract" "Explicit Organization graph contract is invalid" "home graph with WebSite + WebPage + Organization and publisher link" "${ORGANIZATION_SCHEMA_RESULT:-python assertion failed}" "parse Organization JSON-LD graph"
+fi
+
+printf '[self-contained] Checking native author ProfilePage + Person identity.\n'
+AUTHOR_ID="$(wp_cli user create schema-author schema-author@example.test --role=author --user_pass=schema-author-pass --display_name='Schema Author' --description='Visible schema author biography.' --porcelain 2>/dev/null | tr -d '\r\n')"
+[[ "$AUTHOR_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "schema-author-user" "Could not create Schema author fixture" "numeric user ID" "$AUTHOR_ID"
+
+AUTHOR_POST_ID="$(wp_cli post create --post_type=post --post_status=publish --post_title='Schema Author Article' --post_name='schema-author-article' --post_content='Visible article content by the Schema author.' --post_author="$AUTHOR_ID" --porcelain 2>/dev/null | tr -d '\r\n')"
+[[ "$AUTHOR_POST_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "schema-author-post" "Could not create author-owned fixture post" "numeric post ID" "$AUTHOR_POST_ID"
+
+curl -fsS "${BASE_URL}/author/schema-author/" -o "$AUTHOR_BODY" \
+  || fail_smoke "schema-author-request" "Could not request author profile fixture" "HTTP 2xx" "curl failed"
+
+if ! AUTHOR_SCHEMA_RESULT="$(python3 - "$AUTHOR_BODY" "$BASE_URL" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+
+base = sys.argv[2].rstrip("/") + "/"
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 3, f"nodes={nodes!r}"
+by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
+website = by_type.get("WebSite")
+profile = by_type.get("ProfilePage")
+person = by_type.get("Person")
+assert isinstance(website, dict)
+assert isinstance(profile, dict)
+assert isinstance(person, dict)
+profile_url = base + "author/schema-author/"
+profile_id = profile_url + "#webpage"
+person_id = profile_url + "#person"
+assert profile.get("@id") == profile_id
+assert profile.get("url") == profile_url
+assert profile.get("mainEntity") == {"@id": person_id}
+assert person.get("@id") == person_id
+assert person.get("name") == "Schema Author"
+assert person.get("url") == profile_url
+assert person.get("description") == "Visible schema author biography."
+assert person.get("mainEntityOfPage") == {"@id": profile_id}
+assert "publisher" not in website
+print(json.dumps({"profile_id": profile_id, "person_id": person_id, "node_count": len(nodes)}))
+PY
+)"; then
+  fail_smoke "schema-profile-contract" "Author ProfilePage/Person graph contract is invalid" "WebSite + ProfilePage + Person with reciprocal mainEntity links" "${AUTHOR_SCHEMA_RESULT:-python assertion failed}" "parse author ProfilePage JSON-LD graph"
 fi
 
 if ! BREADCRUMBS_JSON="$(wp_cli eval "global \$wp_query; \$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
