@@ -58,7 +58,7 @@ final class HreflangResolver {
 		/**
 		 * Filters native hreflang alternates.
 		 *
-		 * x-default is added only from explicit native configuration. Consumers must preserve
+		 * X-default is added only from explicit native configuration. Consumers must preserve
 		 * language-code to absolute-URL values; invalid entries are discarded.
 		 *
 		 * @param array<string, string> $alternates Reciprocal localized URLs.
