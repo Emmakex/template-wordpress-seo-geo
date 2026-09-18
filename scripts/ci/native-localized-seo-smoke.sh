@@ -249,8 +249,12 @@ assign_translation_map "$EN_CHILD_ID" "$CHILD_MAP"
 
 ES_URL="${BASE_URL}/es/servicios/seo-tecnico/"
 EN_URL="${BASE_URL}/en/services/technical-seo/"
+ES_MD_URL="${BASE_URL}/es/servicios/seo-tecnico/index.md"
+EN_MD_URL="${BASE_URL}/en/services/technical-seo/index.md"
 ES_UNPREFIXED="${BASE_URL}/servicios/seo-tecnico/"
+ES_UNPREFIXED_MD="${BASE_URL}/servicios/seo-tecnico/index.md"
 WRONG_PREFIX_URL="${BASE_URL}/en/servicios/seo-tecnico/"
+WRONG_PREFIX_MD="${BASE_URL}/en/servicios/seo-tecnico/index.md"
 
 ES_BODY="${TMP_DIR}/localized-es.html"
 EN_BODY="${TMP_DIR}/localized-en.html"
@@ -259,6 +263,8 @@ WRONG_BODY="${TMP_DIR}/localized-wrong-prefix.html"
 UNRELATED_BODY="${TMP_DIR}/localized-unrelated.html"
 INVALID_BODY="${TMP_DIR}/localized-invalid.html"
 LLMS_BODY="${TMP_DIR}/localized-llms.txt"
+ES_MARKDOWN_BODY="${TMP_DIR}/localized-es.md"
+EN_MARKDOWN_BODY="${TMP_DIR}/localized-en.md"
 
 canonical_count() {
   grep -Eio 'rel=["'"'"']canonical["'"'"']' "$1" | wc -l | tr -d ' '
@@ -336,29 +342,73 @@ if grep -Eiq '<meta[^>]+name=["'"'"']robots["'"'"'][^>]+content=["'"'"'][^"'"'"'
   fail_smoke "en-indexability" "Valid English translation remained noindex" "indexable localized route" "noindex present"
 fi
 
-printf '[localized-seo] Checking llms.txt uses authoritative localized resource URLs.\n'
-wp_cli eval "update_option( 'seo_geo_llms_txt', array( 'enabled' => true, 'summary' => 'Localized llms index.', 'sections' => array( array( 'title' => 'Guides', 'post_ids' => array( $ES_CHILD_ID, $EN_CHILD_ID ) ) ) ), false );" >/dev/null \
+printf '[localized-seo] Checking Markdown alternates + llms.txt localized authority.\n'
+wp_cli eval "update_option( 'seo_geo_markdown_alternates', array( 'enabled' => true ), false ); update_option( 'seo_geo_llms_txt', array( 'enabled' => true, 'summary' => 'Localized llms index.', 'sections' => array( array( 'title' => 'Guides', 'post_ids' => array( $ES_CHILD_ID, $EN_CHILD_ID ) ) ) ), false );" >/dev/null \
   || fail_smoke "llms-localized-option" "Could not configure localized llms.txt fixture" "option update succeeds" "failed"
+assert_http_200 "$ES_URL" "$ES_BODY" "es-markdown-head-http"
+assert_http_200 "$EN_URL" "$EN_BODY" "en-markdown-head-http"
+grep -Fq '<link rel="alternate" type="text/markdown" href="'"$ES_MD_URL"'" />' "$ES_BODY" \
+  || fail_smoke "es-markdown-head" "Spanish authoritative HTML missed Markdown alternate" "$ES_MD_URL" "alternate absent"
+grep -Fq '<link rel="alternate" type="text/markdown" href="'"$EN_MD_URL"'" />' "$EN_BODY" \
+  || fail_smoke "en-markdown-head" "English authoritative HTML missed Markdown alternate" "$EN_MD_URL" "alternate absent"
+for body in "$ES_BODY" "$EN_BODY"; do
+  grep -Fq '<link rel="describedby" href="'"${BASE_URL}/llms.txt"'" />' "$body" \
+    || fail_smoke "markdown-describedby" "Localized authoritative HTML missed llms.txt describedby" "${BASE_URL}/llms.txt" "describedby absent"
+done
+
+ES_MD_STATUS="$(curl -sS -o "$ES_MARKDOWN_BODY" -w '%{http_code}' "$ES_MD_URL")"
+EN_MD_STATUS="$(curl -sS -o "$EN_MARKDOWN_BODY" -w '%{http_code}' "$EN_MD_URL")"
+[[ "$ES_MD_STATUS" == "200" && "$EN_MD_STATUS" == "200" ]] \
+  || fail_smoke "markdown-localized-http" "Localized Markdown alternates did not resolve" "ES=200 EN=200" "ES=$ES_MD_STATUS EN=$EN_MD_STATUS"
+if ! MARKDOWN_LOCALIZED_RESULT="$(python3 - "$ES_MARKDOWN_BODY" "$EN_MARKDOWN_BODY" "$ES_URL" "$EN_URL" <<'PY'
+import sys
+
+es_path, en_path, es_url, en_url = sys.argv[1:5]
+with open(es_path, "r", encoding="utf-8") as handle:
+    es = handle.read()
+with open(en_path, "r", encoding="utf-8") as handle:
+    en = handle.read()
+
+assert es.startswith("# SEO técnico\n")
+assert f"Source: [{es_url}]({es_url})" in es
+assert "Language: es" in es
+assert en.startswith("# Technical SEO\n")
+assert f"Source: [{en_url}]({en_url})" in en
+assert "Language: en" in en
+print("ok")
+PY
+)"; then
+  fail_smoke "markdown-localized-contract" "Localized Markdown content lost language/source authority" "matching ES/EN titles, sources and languages" "${MARKDOWN_LOCALIZED_RESULT:-python assertion failed}" "parse localized Markdown"
+fi
+
+for invalid_md in "$ES_UNPREFIXED_MD" "$WRONG_PREFIX_MD"; do
+  INVALID_MD_STATUS="$(curl -sS -o /dev/null -w '%{http_code}' "$invalid_md")"
+  [[ "$INVALID_MD_STATUS" == "404" ]] \
+    || fail_smoke "markdown-staged-leak" "Non-authoritative translation route exposed Markdown" "HTTP 404" "$INVALID_MD_STATUS" "curl $invalid_md"
+done
+
 LLMS_STATUS="$(curl -sS -o "$LLMS_BODY" -w '%{http_code}' "${BASE_URL}/llms.txt")"
 [[ "$LLMS_STATUS" == "200" ]] \
   || fail_smoke "llms-localized-http" "Localized llms.txt did not resolve" "HTTP 200" "$LLMS_STATUS"
-if ! LLMS_RESULT="$(python3 - "$LLMS_BODY" "$ES_URL" "$EN_URL" "$ES_UNPREFIXED" <<'PY'
+if ! LLMS_RESULT="$(python3 - "$LLMS_BODY" "$ES_MD_URL" "$EN_MD_URL" "$ES_URL" "$EN_URL" "$ES_UNPREFIXED" <<'PY'
 import sys
 
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
     body = handle.read()
 
-es_url, en_url, unprefixed = sys.argv[2:5]
+es_md, en_md, es_html, en_html, unprefixed = sys.argv[2:7]
 assert body.startswith("# Native Localized SEO Contract\n")
 assert "> Localized llms index." in body
 assert "## Guides" in body
-assert f"- [SEO técnico]({es_url}): Language: es" in body
-assert f"- [Technical SEO]({en_url}): Language: en" in body
+assert f"- [SEO técnico]({es_md}): Language: es" in body
+assert f"- [Technical SEO]({en_md}): Language: en" in body
+assert f"- [SEO técnico]({es_html}): Language: es" not in body
+assert f"- [Technical SEO]({en_html}): Language: en" not in body
 assert unprefixed not in body
 print("ok")
 PY
 )"; then
-  fail_smoke "llms-localized-contract" "llms.txt did not preserve authoritative localized URLs" "ES/EN prefixed links with language notes" "${LLMS_RESULT:-python assertion failed}" "parse localized llms.txt"
+  fail_smoke "llms-localized-contract" "llms.txt did not prefer authoritative localized Markdown URLs" "ES/EN Markdown links with language notes" "${LLMS_RESULT:-python assertion failed}" "parse localized llms.txt"
 fi
 
 printf '[localized-seo] Checking unprefixed and wrong-prefix copies stay non-indexable.\n'
@@ -375,6 +425,9 @@ for staged_body in "$UNPREFIXED_BODY" "$WRONG_BODY"; do
     || fail_smoke "staged-og" "Non-authoritative translation route emitted Open Graph" "0" "$(open_graph_count "$staged_body")"
   [[ "$(schema_count "$staged_body")" == "0" ]] \
     || fail_smoke "staged-schema" "Non-authoritative translation route emitted Schema" "0" "$(schema_count "$staged_body")"
+  if grep -Fq 'type="text/markdown"' "$staged_body"; then
+    fail_smoke "staged-markdown-head" "Non-authoritative translation route advertised Markdown" "no Markdown alternate" "alternate present"
+  fi
 done
 
 printf '[localized-seo] Checking missing and invalid relationships stay staged.\n'

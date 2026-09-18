@@ -839,10 +839,32 @@ Post-merge `main` passed all ten workflows again:
 
 The first candidates exposed only PHPDoc/WPCS issues in the new LLMS classes; no functional failure was found. The reusable lesson is recorded as `ERR-2026-014`.
 
+### Microphase 6C — localized Markdown alternates
+
+Status: **in progress**
+
+Scope:
+
+- disabled-by-default `seo_geo_markdown_alternates` contract;
+- authoritative page Markdown URL derived from the public HTML URL;
+- directory-style pages use `index.md`; non-directory URLs use appended `.md`;
+- `rel="alternate" type="text/markdown"` in authoritative HTML;
+- `rel="describedby"` to llms.txt when 6B is enabled;
+- equivalent HTTP Link discovery headers;
+- Markdown response links back to its authoritative HTML source;
+- no shortcode or dynamic-block execution during Markdown generation;
+- global WordPress privacy and public-resource validation;
+- reciprocal ES/EN relationship enforcement;
+- no Markdown for staged unprefixed or wrong-prefix translation routes;
+- llms.txt prefers Markdown URLs when valid alternates are enabled;
+- zero-plugin leakage/privacy and multilingual acceptance;
+- public contract in `docs/MARKDOWN_ALTERNATES.md`.
+
+6C closes only after implementation, required PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 6 work
 
 - crawler policy admin UI/reporting over the 6A configuration contract;
-- optional localized Markdown alternates;
 - provenance/author/source patterns;
 - private/draft content leakage tests;
 - cache/invalidation strategy.

@@ -13,6 +13,8 @@ use SeoGeo\Core\Geo\CrawlerPolicyPresenter;
 use SeoGeo\Core\Geo\CrawlerPolicyResolver;
 use SeoGeo\Core\Geo\LlmsTxtPresenter;
 use SeoGeo\Core\Geo\LlmsTxtResolver;
+use SeoGeo\Core\Geo\MarkdownAlternatePresenter;
+use SeoGeo\Core\Geo\MarkdownAlternateResolver;
 use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
 use SeoGeo\Core\Language\NativeLanguageConfiguration;
@@ -119,6 +121,13 @@ final class Runtime {
 	private static ?LlmsTxtResolver $llms_txt = null;
 
 	/**
+	 * Optional localized Markdown alternate authority.
+	 *
+	 * @var MarkdownAlternateResolver|null
+	 */
+	private static ?MarkdownAlternateResolver $markdown_alternates = null;
+
+	/**
 	 * Initialize shared services once.
 	 */
 	public static function initialize(): void {
@@ -182,9 +191,22 @@ final class Runtime {
 		$crawler_presenter    = new CrawlerPolicyPresenter( self::$crawler_policy );
 		$crawler_presenter->register();
 
-		self::$llms_txt = new LlmsTxtResolver( self::$translation_registry, self::$localized_seo );
-		$llms_presenter = new LlmsTxtPresenter( self::$llms_txt );
+		self::$markdown_alternates = new MarkdownAlternateResolver(
+			self::$translation_registry,
+			self::$localized_seo,
+			$language_configuration,
+			$indexability
+		);
+		self::$llms_txt            = new LlmsTxtResolver(
+			self::$translation_registry,
+			self::$localized_seo,
+			self::$markdown_alternates
+		);
+		$llms_presenter            = new LlmsTxtPresenter( self::$llms_txt );
 		$llms_presenter->register();
+
+		$markdown_presenter = new MarkdownAlternatePresenter( self::$markdown_alternates, self::$llms_txt );
+		$markdown_presenter->register();
 
 		/**
 		 * Fires after shared SEO/GEO services are ready.
@@ -268,5 +290,12 @@ final class Runtime {
 	 */
 	public static function llms_txt(): ?LlmsTxtResolver {
 		return self::$llms_txt;
+	}
+
+	/**
+	 * Get the optional localized Markdown alternate resolver when initialized.
+	 */
+	public static function markdown_alternates(): ?MarkdownAlternateResolver {
+		return self::$markdown_alternates;
 	}
 }
