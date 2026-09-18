@@ -46,6 +46,13 @@ final class SchemaGraphBuilder {
 	private SchemaNodeIds $ids;
 
 	/**
+	 * Native BreadcrumbList resolver.
+	 *
+	 * @var SchemaBreadcrumbResolver
+	 */
+	private SchemaBreadcrumbResolver $breadcrumb;
+
+	/**
 	 * Native identity resolver.
 	 *
 	 * @var SchemaIdentityResolver
@@ -65,15 +72,17 @@ final class SchemaGraphBuilder {
 	 * @param IndexabilityResolver   $indexability Native indexability authority.
 	 * @param CanonicalResolver      $canonical    Canonical URL authority.
 	 * @param LanguageManager        $language     Active language facade.
-	 * @param SchemaNodeIds          $ids          Stable node-ID generator.
-	 * @param SchemaIdentityResolver $identity     Native identity authority.
-	 * @param SchemaArticleResolver  $article      Native BlogPosting data authority.
+	 * @param SchemaNodeIds            $ids        Stable node-ID generator.
+	 * @param SchemaBreadcrumbResolver $breadcrumb Native BreadcrumbList authority.
+	 * @param SchemaIdentityResolver   $identity   Native identity authority.
+	 * @param SchemaArticleResolver    $article    Native BlogPosting data authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
 		CanonicalResolver $canonical,
 		LanguageManager $language,
 		SchemaNodeIds $ids,
+		SchemaBreadcrumbResolver $breadcrumb,
 		SchemaIdentityResolver $identity,
 		SchemaArticleResolver $article
 	) {
@@ -81,6 +90,7 @@ final class SchemaGraphBuilder {
 		$this->canonical    = $canonical;
 		$this->language     = $language;
 		$this->ids          = $ids;
+		$this->breadcrumb   = $breadcrumb;
 		$this->identity     = $identity;
 		$this->article      = $article;
 	}
@@ -129,7 +139,15 @@ final class SchemaGraphBuilder {
 			$web_page['name'] = $page_name;
 		}
 
-		$graph        = array( $website, $web_page );
+		$breadcrumb = $this->breadcrumb->current( $canonical_url );
+		if ( null !== $breadcrumb ) {
+			$web_page['breadcrumb'] = array( '@id' => $breadcrumb['@id'] );
+		}
+
+		$graph = array( $website, $web_page );
+		if ( null !== $breadcrumb ) {
+			$graph[] = $breadcrumb;
+		}
 		$organization = $this->identity->organization();
 
 		if ( is_front_page() && null !== $organization ) {
