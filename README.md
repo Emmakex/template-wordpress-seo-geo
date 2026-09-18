@@ -58,6 +58,7 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/ARCHITECTURE.md`
 - `docs/SEO_GEO_SPEC.md`
 - `docs/NATIVE_SEO.md`
+- `docs/NATIVE_SCHEMA.md`
 - `docs/DISCOVERY_METADATA.md`
 - `docs/MULTILINGUAL.md`
 - `docs/PERFORMANCE.md`

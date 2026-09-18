@@ -271,6 +271,10 @@ open_graph_count() {
   grep -Eio '<meta[^>]+property=["'"'"']og:[a-z_:.-]+["'"'"'][^>]*>' "$1" | wc -l | tr -d ' '
 }
 
+schema_count() {
+  grep -Eio '<script[^>]+id=["'"'"']seo-geo-schema-graph["'"'"'][^>]*>' "$1" | wc -l | tr -d ' '
+}
+
 assert_http_200() {
   local url="$1"
   local output="$2"
@@ -300,6 +304,10 @@ grep -Fq '<meta property="og:url" content="'"$ES_URL"'" />' "$ES_BODY" \
   || fail_smoke "es-og-url" "Spanish Open Graph URL is not the localized canonical" "$ES_URL" "expected og:url absent"
 grep -Fq '<meta property="og:locale" content="es_ES" />' "$ES_BODY" \
   || fail_smoke "es-og-locale" "Spanish Open Graph locale is incorrect" "es_ES" "expected og:locale absent"
+[[ "$(schema_count "$ES_BODY")" == "1" ]] \
+  || fail_smoke "es-schema-count" "Spanish localized page must emit exactly one Schema graph" "1" "$(schema_count "$ES_BODY")"
+grep -Fq '"inLanguage":"es-ES"' "$ES_BODY" \
+  || fail_smoke "es-schema-language" "Spanish Schema language is incorrect" "inLanguage=es-ES" "expected value absent"
 if grep -Eiq '<meta[^>]+name=["'"'"']robots["'"'"'][^>]+content=["'"'"'][^"'"'"']*noindex' "$ES_BODY"; then
   fail_smoke "es-indexability" "Valid Spanish translation remained noindex" "indexable localized route" "noindex present"
 fi
@@ -319,6 +327,10 @@ grep -Fq '<meta property="og:url" content="'"$EN_URL"'" />' "$EN_BODY" \
   || fail_smoke "en-og-url" "English Open Graph URL is not the localized canonical" "$EN_URL" "expected og:url absent"
 grep -Fq '<meta property="og:locale" content="en_US" />' "$EN_BODY" \
   || fail_smoke "en-og-locale" "English Open Graph locale is incorrect" "en_US" "expected og:locale absent"
+[[ "$(schema_count "$EN_BODY")" == "1" ]] \
+  || fail_smoke "en-schema-count" "English localized page must emit exactly one Schema graph" "1" "$(schema_count "$EN_BODY")"
+grep -Fq '"inLanguage":"en-US"' "$EN_BODY" \
+  || fail_smoke "en-schema-language" "English Schema language is incorrect" "inLanguage=en-US" "expected value absent"
 if grep -Eiq '<meta[^>]+name=["'"'"']robots["'"'"'][^>]+content=["'"'"'][^"'"'"']*noindex' "$EN_BODY"; then
   fail_smoke "en-indexability" "Valid English translation remained noindex" "indexable localized route" "noindex present"
 fi
@@ -335,6 +347,8 @@ for staged_body in "$UNPREFIXED_BODY" "$WRONG_BODY"; do
     || fail_smoke "staged-hreflang" "Non-authoritative translation route emitted hreflang" "0" "$(hreflang_count "$staged_body")"
   [[ "$(open_graph_count "$staged_body")" == "0" ]] \
     || fail_smoke "staged-og" "Non-authoritative translation route emitted Open Graph" "0" "$(open_graph_count "$staged_body")"
+  [[ "$(schema_count "$staged_body")" == "0" ]] \
+    || fail_smoke "staged-schema" "Non-authoritative translation route emitted Schema" "0" "$(schema_count "$staged_body")"
 done
 
 printf '[localized-seo] Checking missing and invalid relationships stay staged.\n'
