@@ -667,3 +667,53 @@ Structured error signatures should use sufficiently specific failure codes or pr
 ### Regression coverage
 
 `scripts/ci/self-contained-theme-smoke.sh` now covers the updated graph sizes and explicitly validates the representative BreadcrumbList contents plus the front-page negative case.
+
+## ERR-2026-013 — WordPress robots filter parameter reused the reserved keyword `public`
+
+**Status:** resolved  
+**First seen:** 2026-09-18  
+**Last seen:** 2026-09-18  
+**Area:** ci / geo / code quality  
+**Signature:** `27da5fd524a3`  
+**Reference:** PR #39; failing PHP Quality CI run `35350266853` / job `105616456784`; passing PR PHP Quality run `35350353447`; post-merge passing PHP Quality run `35350709657`
+
+### Symptom / context
+
+The first Phase 6A crawler-policy candidate compiled and its zero-plugin robots acceptance was functionally correct, but WPCS stopped PHP Quality before PHPStan because the `robots_txt` filter callback named its second parameter `$public`.
+
+The structured diagnostic was:
+
+```text
+It is recommended not to use reserved keyword "public" as function parameter name.
+```
+
+### Root cause
+
+Confirmed. WordPress documentation commonly describes the second `robots_txt` filter argument as the site's public visibility value. The implementation mirrored that vocabulary directly as `$public`, but the project's coding-standard rules reject reserved PHP keywords as parameter names.
+
+There was no crawler-policy logic failure.
+
+### Solution
+
+The callback parameter and its PHPDoc entry were renamed to `$site_public`.
+
+No behavior, option schema, robots directive or privacy rule changed.
+
+### Validation
+
+- WPCS passed on final PR candidate `47216b37bfcbd692a3f2733e56df43eb2d12a272`;
+- PHPStan level 6 passed in PR run `35350353447`;
+- Self-contained Theme CI run `35350353324` passed the full zero-plugin crawler-policy acceptance;
+- PR #39 passed all ten workflows and was squash-merged as `da1c98d89771c34d0c9ad86e869b86fa4dab7ebb`;
+- post-merge PHP Quality CI `35350709657` and Self-contained Theme CI `35350709442` passed again on `main`.
+
+### Prevention / guardrail
+
+When implementing WordPress hooks whose documented argument labels overlap PHP reserved words, use descriptive local names such as `$site_public`, `$visibility` or another domain-specific variant instead of copying the documentation's generic label verbatim.
+
+Do not suppress the naming sniff for this class of issue; a behavior-preserving rename is the correct fix.
+
+### Regression coverage
+
+PHP Quality CI keeps the reserved-keyword naming rule enabled. The zero-plugin self-contained smoke separately proves that the renamed callback still preserves WordPress privacy precedence and independent OAI-SearchBot/GPTBot behavior.
+

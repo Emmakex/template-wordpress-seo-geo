@@ -755,20 +755,51 @@ Status: **in progress**
 
 ### Microphase 6A — explicit OpenAI crawler policy
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #39:
 
 - server-side `seo_geo_crawler_policy` configuration contract;
 - independent `inherit|allow|disallow` states for OAI-SearchBot and GPTBot;
 - no crawler-specific directives by default;
 - WordPress virtual `robots.txt` integration without replacing existing output;
+- generated crawler block is idempotent and explicitly owned;
 - global `blog_public=0` privacy takes precedence over crawler-specific allows;
-- malformed/unknown crawler configuration falls back to inherit;
-- zero-plugin HTTP acceptance proving search/training controls are not coupled;
-- public documentation with current primary-source references and no ranking/inclusion guarantees.
+- malformed, inherited and unknown crawler configuration emits no native group;
+- `Runtime::crawler_policy()` exposes the crawler-policy authority for later UI/reporting;
+- zero-plugin HTTP acceptance proves search/training controls are not coupled;
+- distributable-theme acceptance requires both crawler-policy source files;
+- `docs/GEO_CRAWLERS.md` records the contract, primary references and no-ranking/no-inclusion guarantee.
 
-6A closes only after implementation, required PR gates and post-merge `main` verification are green.
+PR #39 passed all ten PR workflows on final candidate `47216b37bfcbd692a3f2733e56df43eb2d12a272` and was squash-merged as `da1c98d89771c34d0c9ad86e869b86fa4dab7ebb`.
+
+PR validation:
+
+- Foundation CI `35350353412`;
+- Pattern Contract CI `35350353435`;
+- PHP Quality CI `35350353447`;
+- WordPress Smoke CI `35350353333`;
+- Self-contained Theme CI `35350353324`;
+- Phase 1 Package CI `35350353330`;
+- Design System CI `35350353283`;
+- Accessibility & Responsive CI `35350353323`;
+- Native Multilingual CI `35350353276`;
+- Performance Baseline CI `35350353356`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Foundation CI `35350709389`;
+- Pattern Contract CI `35350709402`;
+- Phase 1 Package CI `35350709489`;
+- Design System CI `35350709433`;
+- WordPress Smoke CI `35350709495`;
+- PHP Quality CI `35350709657`;
+- Self-contained Theme CI `35350709442`;
+- Accessibility & Responsive CI `35350709369`;
+- Native Multilingual CI `35350709466`;
+- Performance Baseline CI `35350709371`.
+
+The first candidate exposed only the reserved-keyword parameter-name WPCS finding `27da5fd524a3`; the parameter was renamed without behavioral changes and the full matrix then passed. The reusable lesson is recorded as `ERR-2026-013`.
 
 ### Remaining Phase 6 work
 
