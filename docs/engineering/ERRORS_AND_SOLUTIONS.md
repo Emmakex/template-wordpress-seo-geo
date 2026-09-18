@@ -609,3 +609,57 @@ Production identity resolvers must continue to omit optional author/person relat
 ### Regression coverage
 
 `scripts/ci/self-contained-theme-smoke.sh` creates the representative BlogPosting with an explicit real author and asserts that the resulting Person uses the stable public author profile ID. A second authored fixture also verifies that BlogPosting author and explicit Organization publisher references coexist in the same native graph.
+
+## ERR-2026-012 — Exact Schema fixture node counts drifted after adding BreadcrumbList
+
+**Status:** resolved  
+**First seen:** 2026-09-18  
+**Last seen:** 2026-09-18  
+**Area:** ci / schema / regression  
+**Signatures:** generic graph-contract recurrence `0f1723aecd34`; authored-article contract `35d3d62a7606`  
+**Reference:** PR #32; failing Self-contained Theme CI runs `35329315417` / job `105549712658` and `35329476405` / job `105550233437`; passing PR run `35329672629`; post-merge passing run `35329965975`
+
+### Symptom / context
+
+Phase 5D correctly added one BreadcrumbList node to eligible Schema graphs, but two exact-count assertions in the self-contained acceptance remained on their pre-5D values.
+
+The production graph captured by CI was structurally correct: WebPage referenced the new stable BreadcrumbList node and the ListItems matched the existing breadcrumb data authority. The failures came from stale fixture expectations.
+
+The first failure also reused the generic signature `0f1723aecd34`, previously seen for a different Schema fixture issue, because the structured diagnostic used the same broad failure code and primary message.
+
+### Root cause
+
+Confirmed. While updating several graph fixtures, a broad text replacement changed one count incorrectly and missed another fixture-specific count. Exact node counts are intentional regression guards, but every graph shape must be updated independently when a new shared node is introduced.
+
+Production BreadcrumbList logic was not the cause.
+
+### Solution
+
+The acceptance was corrected per fixture:
+
+- ordinary authored post: five nodes, including BreadcrumbList;
+- front page: no one-item BreadcrumbList is fabricated;
+- author ProfilePage: four nodes, including BreadcrumbList;
+- authored post with explicit Organization: six nodes, including BreadcrumbList.
+
+The representative post also asserts the BreadcrumbList ID, WebPage reference, ordered positions, visible labels and public URLs. The generic representative failure code was narrowed to `schema-breadcrumb-graph-contract` so future failures are easier to distinguish.
+
+### Validation
+
+- final PR candidate `a6d410815b825386238b54573ac222c14fae953e` passed all eight required gates;
+- PR #32 Self-contained Theme CI run `35329672629` passed the complete zero-plugin Schema graph acceptance;
+- PR #32 was squash-merged as `51cfffb584d6fbf505ab08a7bf86eca95174e107`;
+- post-merge Self-contained Theme CI run `35329965975` passed the same contract on `main`;
+- post-merge PHP Quality, Native Multilingual, Accessibility and Performance gates also passed.
+
+### Prevention / guardrail
+
+When a shared Schema node is added, review every fixture that asserts an exact graph size. Do not use global search-and-replace for fixture-specific counts.
+
+Keep exact counts because they detect duplicate nodes, but pair them with type/reference assertions so a failure immediately shows which graph relationship changed.
+
+Structured error signatures should use sufficiently specific failure codes or primary messages; a generic graph-contract signature can collide across unrelated fixture failures.
+
+### Regression coverage
+
+`scripts/ci/self-contained-theme-smoke.sh` now covers the updated graph sizes and explicitly validates the representative BreadcrumbList contents plus the front-page negative case.
