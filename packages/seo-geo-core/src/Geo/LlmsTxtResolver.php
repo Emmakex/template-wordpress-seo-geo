@@ -17,22 +17,48 @@ use WP_Post;
  * Builds one conservative llms.txt document from explicitly selected resources.
  */
 final class LlmsTxtResolver {
+	/**
+	 * Server-side llms.txt configuration option.
+	 */
 	public const OPTION_NAME = 'seo_geo_llms_txt';
 
+	/**
+	 * Translation relationship authority.
+	 *
+	 * @var NativeTranslationRegistry
+	 */
 	private NativeTranslationRegistry $translations;
+
+	/**
+	 * Localized public-URL authority.
+	 *
+	 * @var LocalizedSeoResolver
+	 */
 	private LocalizedSeoResolver $localized_seo;
 
+	/**
+	 * Create the resolver.
+	 *
+	 * @param NativeTranslationRegistry $translations  Explicit translation relationships.
+	 * @param LocalizedSeoResolver       $localized_seo Localized public-URL authority.
+	 */
 	public function __construct( NativeTranslationRegistry $translations, LocalizedSeoResolver $localized_seo ) {
 		$this->translations  = $translations;
 		$this->localized_seo = $localized_seo;
 	}
 
+	/**
+	 * Return whether the optional endpoint is explicitly enabled and public.
+	 */
 	public function enabled(): bool {
 		$configuration = $this->configuration();
 
 		return true === ( $configuration['enabled'] ?? false ) && 1 === (int) get_option( 'blog_public', '1' );
 	}
 
+	/**
+	 * Build the current llms.txt document.
+	 */
 	public function resolve(): ?string {
 		if ( ! $this->enabled() ) {
 			return null;
@@ -71,6 +97,8 @@ final class LlmsTxtResolver {
 	}
 
 	/**
+	 * Resolve valid configured link sections.
+	 *
 	 * @param mixed $value Raw sections option.
 	 * @return array<int, array{title:string,links:array<int,array{title:string,url:string,note:string|null}>}>
 	 */
@@ -126,6 +154,9 @@ final class LlmsTxtResolver {
 	}
 
 	/**
+	 * Resolve one explicitly selected public WordPress resource.
+	 *
+	 * @param int $post_id WordPress resource ID.
 	 * @return array{title:string,url:string,note:string|null}|null
 	 */
 	private function resource_link( int $post_id ): ?array {
@@ -161,6 +192,11 @@ final class LlmsTxtResolver {
 		);
 	}
 
+	/**
+	 * Report whether one resource is safe for public llms.txt inclusion.
+	 *
+	 * @param WP_Post|null $post Candidate WordPress resource.
+	 */
 	private function is_public_resource( ?WP_Post $post ): bool {
 		if (
 			! $post instanceof WP_Post
@@ -176,6 +212,11 @@ final class LlmsTxtResolver {
 		return null !== $post_type && is_post_type_viewable( $post_type );
 	}
 
+	/**
+	 * Require a same-host absolute HTTP(S) URL.
+	 *
+	 * @param string $url Candidate public URL.
+	 */
 	private function is_safe_site_url( string $url ): bool {
 		$scheme    = wp_parse_url( $url, PHP_URL_SCHEME );
 		$host      = wp_parse_url( $url, PHP_URL_HOST );
@@ -189,6 +230,8 @@ final class LlmsTxtResolver {
 	}
 
 	/**
+	 * Normalize one configured post ID.
+	 *
 	 * @param mixed $value Candidate post ID.
 	 */
 	private function post_id( $value ): ?int {
@@ -204,6 +247,8 @@ final class LlmsTxtResolver {
 	}
 
 	/**
+	 * Read raw llms.txt configuration.
+	 *
 	 * @return array<string, mixed>
 	 */
 	private function configuration(): array {
@@ -213,6 +258,8 @@ final class LlmsTxtResolver {
 	}
 
 	/**
+	 * Normalize optional plain text.
+	 *
 	 * @param mixed $value Raw value.
 	 */
 	private function plain_text_value( $value ): ?string {
@@ -225,6 +272,11 @@ final class LlmsTxtResolver {
 		return '' !== $text ? $text : null;
 	}
 
+	/**
+	 * Normalize one-line public/configured text.
+	 *
+	 * @param string $value Raw text.
+	 */
 	private function plain_text( string $value ): string {
 		$value = wp_strip_all_tags( $value, true );
 		$value = preg_replace( '/\s+/u', ' ', $value );
@@ -232,6 +284,11 @@ final class LlmsTxtResolver {
 		return is_string( $value ) ? trim( $value ) : '';
 	}
 
+	/**
+	 * Escape Markdown control characters in generated labels.
+	 *
+	 * @param string $value Normalized text.
+	 */
 	private function markdown_text( string $value ): string {
 		return str_replace(
 			array( '\\', '[', ']', '*', '_' ),
@@ -240,6 +297,11 @@ final class LlmsTxtResolver {
 		);
 	}
 
+	/**
+	 * Protect validated URLs inside Markdown link parentheses.
+	 *
+	 * @param string $url Validated public URL.
+	 */
 	private function markdown_url( string $url ): string {
 		return str_replace( array( '(', ')' ), array( '%28', '%29' ), $url );
 	}
