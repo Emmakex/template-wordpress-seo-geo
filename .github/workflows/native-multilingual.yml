@@ -9,6 +9,7 @@ on:
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/native-language-smoke.sh'
       - 'scripts/ci/native-routing-smoke.sh'
+      - 'scripts/ci/native-translation-relations-smoke.sh'
       - '.github/workflows/native-multilingual.yml'
       - 'docs/MULTILINGUAL.md'
       - 'docs/NATIVE_MULTILINGUAL.md'
@@ -56,8 +57,11 @@ jobs:
           bash -n scripts/build-theme-package.sh
           bash -n scripts/ci/native-language-smoke.sh
           bash -n scripts/ci/native-routing-smoke.sh
+          bash -n scripts/ci/native-translation-relations-smoke.sh
           php -l packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php
           php -l packages/seo-geo-core/src/Language/NativeLanguageRouter.php
+          php -l packages/seo-geo-core/src/Language/NativeTranslationRelationship.php
+          php -l packages/seo-geo-core/src/Language/NativeTranslationRegistry.php
           php -l packages/seo-geo-core/src/Language/NativeWordPressAdapter.php
           php -l packages/seo-geo-core/src/Language/LanguageManager.php
           php -l packages/seo-geo-core/src/Runtime.php
@@ -67,3 +71,6 @@ jobs:
 
       - name: WordPress zero-plugin native routing acceptance
         run: bash scripts/ci/native-routing-smoke.sh
+
+      - name: WordPress zero-plugin translation relationship acceptance
+        run: bash scripts/ci/native-translation-relations-smoke.sh

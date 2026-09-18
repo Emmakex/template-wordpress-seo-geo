@@ -13,6 +13,7 @@ use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
 use SeoGeo\Core\Language\NativeLanguageConfiguration;
 use SeoGeo\Core\Language\NativeLanguageRouter;
+use SeoGeo\Core\Language\NativeTranslationRegistry;
 use SeoGeo\Core\Language\NativeWordPressAdapter;
 use SeoGeo\Core\Seo\BreadcrumbResolver;
 use SeoGeo\Core\Seo\CanonicalResolver;
@@ -39,6 +40,13 @@ final class Runtime {
 	 * @var NativeLanguageRouter|null
 	 */
 	private static ?NativeLanguageRouter $language_router = null;
+
+	/**
+	 * Native translation relationship registry.
+	 *
+	 * @var NativeTranslationRegistry|null
+	 */
+	private static ?NativeTranslationRegistry $translation_registry = null;
 
 	/**
 	 * Runtime integration detector.
@@ -82,7 +90,8 @@ final class Runtime {
 
 		self::$language_manager = new LanguageManager( new NativeWordPressAdapter( $language_configuration ) );
 
-		self::$language_router = new NativeLanguageRouter( $language_configuration );
+		self::$language_router      = new NativeLanguageRouter( $language_configuration );
+		self::$translation_registry = new NativeTranslationRegistry( $language_configuration );
 
 		self::$seo_authority = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
 
@@ -144,6 +153,13 @@ final class Runtime {
 	 */
 	public static function language_router(): ?NativeLanguageRouter {
 		return self::$language_router;
+	}
+
+	/**
+	 * Get the native translation relationship registry when initialized.
+	 */
+	public static function translations(): ?NativeTranslationRegistry {
+		return self::$translation_registry;
 	}
 
 	/**

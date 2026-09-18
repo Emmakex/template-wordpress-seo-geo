@@ -39,8 +39,8 @@ final class NativeWordPressAdapter implements LanguageProviderInterface {
 	/**
 	 * Return the current WordPress locale.
 	 *
-	 * Phase 4A does not change request routing or switch locales. It reports the
-	 * locale that WordPress already resolved for the current execution context.
+	 * Reports the locale WordPress resolved for the current execution context.
+	 * Native prefix routing may switch that locale after a validated route match.
 	 */
 	public function current_locale(): string {
 		return get_locale();
