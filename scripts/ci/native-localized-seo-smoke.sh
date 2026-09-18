@@ -327,6 +327,10 @@ grep -Fq '<meta property="og:url" content="'"$EN_URL"'" />' "$EN_BODY" \
   || fail_smoke "en-og-url" "English Open Graph URL is not the localized canonical" "$EN_URL" "expected og:url absent"
 grep -Fq '<meta property="og:locale" content="en_US" />' "$EN_BODY" \
   || fail_smoke "en-og-locale" "English Open Graph locale is incorrect" "en_US" "expected og:locale absent"
+[[ "$(schema_count "$EN_BODY")" == "1" ]] \
+  || fail_smoke "en-schema-count" "English localized page must emit exactly one Schema graph" "1" "$(schema_count "$EN_BODY")"
+grep -Fq '"inLanguage":"en-US"' "$EN_BODY" \
+  || fail_smoke "en-schema-language" "English Schema language is incorrect" "inLanguage=en-US" "expected value absent"
 if grep -Eiq '<meta[^>]+name=["'"'"']robots["'"'"'][^>]+content=["'"'"'][^"'"'"']*noindex' "$EN_BODY"; then
   fail_smoke "en-indexability" "Valid English translation remained noindex" "indexable localized route" "noindex present"
 fi
