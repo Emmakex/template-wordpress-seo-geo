@@ -271,6 +271,10 @@ open_graph_count() {
   grep -Eio '<meta[^>]+property=["'"'"']og:[a-z_:.-]+["'"'"'][^>]*>' "$1" | wc -l | tr -d ' '
 }
 
+schema_count() {
+  grep -Eio '<script[^>]+id=["'"'"']seo-geo-schema-graph["'"'"'][^>]*>' "$1" | wc -l | tr -d ' '
+}
+
 assert_http_200() {
   local url="$1"
   local output="$2"
