@@ -28,6 +28,7 @@ HOME_BODY="${TMP_DIR}/home.html"
 AUTHOR_BODY="${TMP_DIR}/author.html"
 AUTHOR_ARTICLE_BODY="${TMP_DIR}/author-article.html"
 SEARCH_BODY="${TMP_DIR}/search.html"
+ROBOTS_BODY="${TMP_DIR}/robots.txt"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
 RUNTIME_EVAL_ERROR="${TMP_DIR}/runtime-eval.stderr"
@@ -131,7 +132,9 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaVisibleContentResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaArticleResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaGraphBuilder.php" \
-  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaPresenter.php"; do
+  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaPresenter.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyResolver.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyPresenter.php"; do
   [[ -f "$required_file" ]] \
     || fail_smoke "embedded-runtime-file" "Built theme is missing embedded SEO/GEO runtime source" "${required_file}" "missing"
 done
@@ -223,6 +226,62 @@ if ! AUTHORITY="$(wp_cli eval 'echo \SeoGeo\Core\Runtime::seo_authority()?->prov
 fi
 [[ "$AUTHORITY" == "native" ]] \
   || fail_smoke "native-authority" "Theme-only runtime must own native SEO output" "native" "$AUTHORITY" "Runtime::seo_authority"
+
+printf '[self-contained] Checking independent OpenAI crawler policy.\n'
+curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
+  || fail_smoke "crawler-policy-baseline-request" "Could not request baseline robots.txt" "HTTP 2xx" "curl failed"
+
+if grep -Fq 'User-agent: OAI-SearchBot' "$ROBOTS_BODY" || grep -Fq 'User-agent: GPTBot' "$ROBOTS_BODY"; then
+  fail_smoke "crawler-policy-baseline" "Unset crawler policy must inherit existing WordPress robots behavior" "no OpenAI-specific groups" "crawler group emitted"
+fi
+
+wp_cli eval 'update_option( "seo_geo_crawler_policy", array( "oai_searchbot" => "allow", "gptbot" => "disallow" ), false );' >/dev/null \
+  || fail_smoke "crawler-policy-option" "Could not configure independent crawler policy" "option update succeeds" "failed"
+curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
+  || fail_smoke "crawler-policy-request" "Could not request configured robots.txt" "HTTP 2xx" "curl failed"
+
+if ! CRAWLER_POLICY_RESULT="$(python3 - "$ROBOTS_BODY" <<'PY'
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    body = handle.read().replace("\r\n", "\n")
+
+assert body.count("# BEGIN SEO GEO crawler policy") == 1
+assert body.count("# END SEO GEO crawler policy") == 1
+assert body.count("User-agent: OAI-SearchBot") == 1
+assert body.count("User-agent: GPTBot") == 1
+assert "User-agent: OAI-SearchBot\nAllow: /" in body
+assert "User-agent: GPTBot\nDisallow: /" in body
+assert "User-agent: OAI-SearchBot\nDisallow: /" not in body
+assert "User-agent: GPTBot\nAllow: /" not in body
+print("ok")
+PY
+)"; then
+  fail_smoke "crawler-policy-independent" "OAI-SearchBot and GPTBot directives are not independent" "OAI-SearchBot allow + GPTBot disallow" "${CRAWLER_POLICY_RESULT:-python assertion failed}" "parse robots.txt crawler groups"
+fi
+
+printf '[self-contained] Checking malformed crawler policy falls back to inherit.\n'
+wp_cli eval 'update_option( "seo_geo_crawler_policy", array( "oai_searchbot" => "allow-everything", "gptbot" => "inherit", "unknown_bot" => "disallow" ), false );' >/dev/null \
+  || fail_smoke "crawler-policy-invalid-option" "Could not configure malformed crawler policy fixture" "option update succeeds" "failed"
+curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
+  || fail_smoke "crawler-policy-invalid-request" "Could not request malformed-policy robots.txt" "HTTP 2xx" "curl failed"
+if grep -Fq 'User-agent: OAI-SearchBot' "$ROBOTS_BODY" || grep -Fq 'User-agent: GPTBot' "$ROBOTS_BODY" || grep -Fq 'unknown_bot' "$ROBOTS_BODY"; then
+  fail_smoke "crawler-policy-invalid" "Malformed or inherited crawler settings must not emit native groups" "no OpenAI-specific groups" "crawler group emitted"
+fi
+
+printf '[self-contained] Checking WordPress privacy overrides explicit crawler allows.\n'
+wp_cli eval 'update_option( "seo_geo_crawler_policy", array( "oai_searchbot" => "allow", "gptbot" => "allow" ), false ); update_option( "blog_public", "0" );' >/dev/null \
+  || fail_smoke "crawler-policy-private-option" "Could not configure private-site crawler fixture" "option updates succeed" "failed"
+curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
+  || fail_smoke "crawler-policy-private-request" "Could not request private-site robots.txt" "HTTP 2xx" "curl failed"
+grep -Fq 'Disallow: /' "$ROBOTS_BODY" \
+  || fail_smoke "crawler-policy-private-global" "Private WordPress site must preserve global crawl blocking" "Disallow: /" "global disallow absent"
+if grep -Fq 'User-agent: OAI-SearchBot' "$ROBOTS_BODY" || grep -Fq 'User-agent: GPTBot' "$ROBOTS_BODY"; then
+  fail_smoke "crawler-policy-private-override" "Explicit crawler allows must not override WordPress site privacy" "no OpenAI-specific allow groups" "crawler group emitted"
+fi
+
+wp_cli eval 'delete_option( "seo_geo_crawler_policy" ); update_option( "blog_public", "1" );' >/dev/null \
+  || fail_smoke "crawler-policy-reset" "Could not restore crawler-policy fixture state" "crawler option removed and blog_public=1" "failed"
 
 POST_ID="$(wp_cli post create \
   --post_type=post \
