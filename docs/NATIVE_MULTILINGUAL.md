@@ -28,12 +28,13 @@ array(
 )
 ```
 
-Prefix routing is opt-in:
+Prefix routing is opt-in. An explicit `x_default` language can also be declared when one translated member is intentionally the catch-all/default hreflang target:
 
 ```php
 array(
     'default'   => 'es',
     'routing'   => 'prefix',
+    'x_default' => 'es',
     'languages' => array(
         'es' => 'es_ES',
         'en' => 'en_US',
@@ -48,6 +49,7 @@ Rules:
 - each language maps to one safe WordPress locale;
 - duplicate locales are rejected;
 - supported routing modes are `disabled` and `prefix`;
+- `x_default` is optional and, when present, must name one configured language; it never defaults implicitly;
 - omitting `routing` is equivalent to `disabled`, preserving Phase 4A behavior and existing installs;
 - prefix routing only activates when more than one valid language is configured;
 - malformed configuration is rejected atomically rather than partially applied;
@@ -191,6 +193,36 @@ Phase 4C1 is deliberately data-only. A valid relationship **does not yet**:
 
 Those SEO effects are promoted only in the next 4C microphase after the relationship contract has passed real WordPress acceptance.
 
+## Phase 4C2 localized SEO promotion
+
+Phase 4C2 promotes only authoritative singular translation routes from the staged state into indexable localized URLs. Promotion requires all of the following at request time:
+
+1. native prefix routing is enabled;
+2. WordPress matched a configured language prefix;
+3. the queried singular resource belongs to a valid reciprocal Phase 4C1 relationship;
+4. the active route prefix exactly matches the language explicitly assigned to that resource.
+
+When those conditions hold, one shared localized SEO authority provides:
+
+- the localized self-referencing canonical derived from that resource's real WordPress permalink and the validated language prefix;
+- reciprocal `hreflang` links for every valid published relationship member, including self;
+- `x-default` only when the native language configuration explicitly names its target language;
+- Open Graph URL through the same canonical resolver and Open Graph locale through the same validated request locale;
+- a safe translated-URL helper that refuses unrelated resources rather than inventing prefixed URLs;
+- localized breadcrumb root/current/ancestor links when those resources have valid relationships in the active language;
+- normalized current language/locale access through `Runtime::localized_seo()` for later Schema/GEO consumers.
+
+The URL helper uses the **target translated object's own permalink**, so different translated slugs and page hierarchies are preserved. It never assumes that `/es/foo/` and `/en/foo/` are translations because their paths look similar.
+
+Safety rules remain conservative:
+
+- an unprefixed member of a valid translation relationship is `noindex,follow` while prefix routing is authoritative;
+- a wrong-language prefix resolving the resource remains `noindex,follow`;
+- a prefixed resource with no valid relationship remains `noindex,follow`;
+- a relationship containing draft/private/non-reciprocal members cannot promote any member;
+- non-authoritative routes emit no native canonical, Open Graph or hreflang output;
+- breadcrumb links do not silently fall back to an unprefixed/cross-language post URL when an active localized request lacks a valid translated target.
+
 ## What remains for the next multilingual microphase
 
 The following require an explicit translated-resource relationship before localized URLs can become indexable:
@@ -237,5 +269,17 @@ Phase 4C1 additionally proves:
 5. one WordPress resource cannot be reused for multiple languages;
 6. a mapped member assigned to an unconfigured language invalidates the relationship;
 7. the built theme still runs the contract with zero active plugins and clean PHP diagnostics.
+
+Phase 4C2 additionally proves:
+
+1. ES and EN members with distinct real slugs/hierarchies resolve under their own language prefixes;
+2. each authoritative localized route is indexable and emits exactly one localized self-canonical;
+3. reciprocal self + alternate hreflang links use the explicit relationship members;
+4. `x-default` is emitted only from the explicitly configured target;
+5. Open Graph URL and locale agree with canonical and active request locale;
+6. unprefixed, wrong-prefix, unrelated and invalid-relationship routes remain `noindex` and emit no native canonical/hreflang/Open Graph;
+7. safe translated-URL lookup returns null for unrelated content;
+8. breadcrumb home, ancestor and current links stay inside the active language when valid translations exist;
+9. the complete contract runs on WordPress 7.1 / PHP 8.2 with zero active plugins and clean PHP diagnostics.
 
 Accessibility, native SEO and performance regression gates remain required alongside the dedicated multilingual acceptance.
