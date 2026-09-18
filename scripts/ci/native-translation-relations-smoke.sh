@@ -130,6 +130,14 @@ assign_relation_meta() {
     || fail_smoke "meta-language" "Could not assign translation language" "meta update succeeds" "failed"
 }
 
+assign_translation_map() {
+  local post_id="$1"
+  local map_php="$2"
+
+  wp_cli eval "update_post_meta( ${post_id}, \\SeoGeo\\Core\\Language\\NativeTranslationRegistry::META_TRANSLATIONS, ${map_php} );" >/dev/null \
+    || fail_smoke "meta-translations" "Could not assign reciprocal translation map" "meta update succeeds" "failed"
+}
+
 relation_json() {
   local post_id="$1"
   wp_cli eval "\$registry = \\SeoGeo\\Core\\Runtime::translations(); \$relationship = \$registry?->for_post( ${post_id} ); echo wp_json_encode( null === \$relationship ? null : array( 'group' => \$relationship->group_id(), 'current' => \$relationship->current_language_code(), 'translations' => \$relationship->translations() ) );" 2>/dev/null | tr -d '\r\n'
@@ -214,6 +222,9 @@ ES_ID="$(create_post publish 'Servicios SEO' 'servicios-seo')"
 EN_ID="$(create_post publish 'SEO Services' 'seo-services')"
 assign_relation_meta "$ES_ID" "services-seo" "es"
 assign_relation_meta "$EN_ID" "services-seo" "en"
+VALID_MAP="array( 'es' => ${ES_ID}, 'en' => ${EN_ID} )"
+assign_translation_map "$ES_ID" "$VALID_MAP"
+assign_translation_map "$EN_ID" "$VALID_MAP"
 
 ES_RELATION="$(relation_json "$ES_ID")"
 EN_RELATION="$(relation_json "$EN_ID")"
@@ -237,26 +248,41 @@ DRAFT_ES_ID="$(create_post publish 'Draft Pair ES' 'draft-pair-es')"
 DRAFT_EN_ID="$(create_post draft 'Draft Pair EN' 'draft-pair-en')"
 assign_relation_meta "$DRAFT_ES_ID" "draft-pair" "es"
 assign_relation_meta "$DRAFT_EN_ID" "draft-pair" "en"
+DRAFT_MAP="array( 'es' => ${DRAFT_ES_ID}, 'en' => ${DRAFT_EN_ID} )"
+assign_translation_map "$DRAFT_ES_ID" "$DRAFT_MAP"
+assign_translation_map "$DRAFT_EN_ID" "$DRAFT_MAP"
 DRAFT_RELATION="$(relation_json "$DRAFT_ES_ID")"
 [[ "$DRAFT_RELATION" == "null" ]] \
   || fail_smoke "draft-alternate" "A group with only one published member became a translation relationship" "null relationship" "$DRAFT_RELATION"
 
-printf '[relations] Checking duplicate language rejection.\n'
-DUP_ES_ID="$(create_post publish 'Duplicate ES' 'duplicate-es')"
-DUP_EN_A_ID="$(create_post publish 'Duplicate EN A' 'duplicate-en-a')"
-DUP_EN_B_ID="$(create_post publish 'Duplicate EN B' 'duplicate-en-b')"
-assign_relation_meta "$DUP_ES_ID" "duplicate-language" "es"
-assign_relation_meta "$DUP_EN_A_ID" "duplicate-language" "en"
-assign_relation_meta "$DUP_EN_B_ID" "duplicate-language" "en"
-DUP_RELATION="$(relation_json "$DUP_ES_ID")"
-[[ "$DUP_RELATION" == "null" ]] \
-  || fail_smoke "duplicate-language" "Duplicate language members were accepted in one translation group" "null relationship" "$DUP_RELATION"
+printf '[relations] Checking non-reciprocal map rejection.\n'
+NONRECIP_ES_ID="$(create_post publish 'Nonreciprocal ES' 'nonreciprocal-es')"
+NONRECIP_EN_ID="$(create_post publish 'Nonreciprocal EN' 'nonreciprocal-en')"
+assign_relation_meta "$NONRECIP_ES_ID" "nonreciprocal" "es"
+assign_relation_meta "$NONRECIP_EN_ID" "nonreciprocal" "en"
+NONRECIP_MAP="array( 'es' => ${NONRECIP_ES_ID}, 'en' => ${NONRECIP_EN_ID} )"
+assign_translation_map "$NONRECIP_ES_ID" "$NONRECIP_MAP"
+assign_translation_map "$NONRECIP_EN_ID" "array( 'en' => ${NONRECIP_EN_ID} )"
+NONRECIP_RELATION="$(relation_json "$NONRECIP_ES_ID")"
+[[ "$NONRECIP_RELATION" == "null" ]] \
+  || fail_smoke "nonreciprocal-map" "Translation members with different maps were accepted as reciprocal" "null relationship" "$NONRECIP_RELATION"
+
+printf '[relations] Checking duplicate resource rejection.\n'
+REUSED_ID="$(create_post publish 'Reused Translation Resource' 'reused-translation-resource')"
+assign_relation_meta "$REUSED_ID" "reused-resource" "es"
+assign_translation_map "$REUSED_ID" "array( 'es' => ${REUSED_ID}, 'en' => ${REUSED_ID} )"
+REUSED_RELATION="$(relation_json "$REUSED_ID")"
+[[ "$REUSED_RELATION" == "null" ]] \
+  || fail_smoke "duplicate-resource" "One WordPress resource was accepted for multiple translation languages" "null relationship" "$REUSED_RELATION"
 
 printf '[relations] Checking unconfigured language rejection.\n'
 INVALID_ES_ID="$(create_post publish 'Invalid Language ES' 'invalid-language-es')"
 INVALID_FR_ID="$(create_post publish 'Invalid Language FR' 'invalid-language-fr')"
 assign_relation_meta "$INVALID_ES_ID" "invalid-language" "es"
 assign_relation_meta "$INVALID_FR_ID" "invalid-language" "fr"
+INVALID_MAP="array( 'es' => ${INVALID_ES_ID}, 'fr' => ${INVALID_FR_ID} )"
+assign_translation_map "$INVALID_ES_ID" "$INVALID_MAP"
+assign_translation_map "$INVALID_FR_ID" "$INVALID_MAP"
 INVALID_RELATION="$(relation_json "$INVALID_ES_ID")"
 [[ "$INVALID_RELATION" == "null" ]] \
   || fail_smoke "unconfigured-language" "Unconfigured language member was accepted in a translation group" "null relationship" "$INVALID_RELATION"
@@ -268,4 +294,4 @@ if printf '%s\n%s' "$RUNTIME_LOG" "$DEBUG_LOG" | grep -Eqi 'PHP (Fatal error|War
   fail_smoke "runtime-php" "PHP runtime emitted diagnostics" "no fatal/warning/notice/uncaught error" "$MATCH"
 fi
 
-printf 'Native translation relationships OK: zero plugins; explicit reciprocal ES/EN group; invalid groups rejected.\n'
+printf 'Native translation relationships OK: zero plugins; explicit reciprocal ES/EN map; invalid relationships rejected.\n'
