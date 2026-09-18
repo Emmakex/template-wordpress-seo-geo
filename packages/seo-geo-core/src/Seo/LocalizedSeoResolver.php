@@ -43,7 +43,7 @@ final class LocalizedSeoResolver {
 	 * Create the localized SEO resolver.
 	 *
 	 * @param NativeLanguageRouter        $router        Validated native router.
-	 * @param NativeTranslationRegistry  $translations  Explicit translation registry.
+	 * @param NativeTranslationRegistry   $translations  Explicit translation registry.
 	 * @param NativeLanguageConfiguration $configuration Validated language configuration.
 	 */
 	public function __construct(
@@ -95,7 +95,7 @@ final class LocalizedSeoResolver {
 			return null;
 		}
 
-		$post_id = get_queried_object_id();
+		$post_id       = get_queried_object_id();
 		$language_code = $this->router->active_language_code();
 
 		if ( 0 >= $post_id || null === $language_code ) {
