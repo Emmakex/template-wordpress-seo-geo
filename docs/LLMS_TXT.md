@@ -103,7 +103,7 @@ Example:
 
 Resources without a validated native translation relationship use their normal public WordPress permalink.
 
-Phase 6C may add Markdown alternates for individual localized pages; Phase 6B does not fabricate them.
+Phase 6C adds optional Markdown alternates for individual authoritative pages. When that feature is enabled and a valid alternate exists, the native llms.txt generator prefers the Markdown URL over the HTML URL while preserving the same curated resource list and language relationship.
 
 ## WordPress privacy precedence
 
