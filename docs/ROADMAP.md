@@ -751,6 +751,34 @@ All Phase 5 exit criteria are satisfied:
 
 ## Phase 6 — GEO / agent-friendly layer
 
+Status: **in progress**
+
+### Microphase 6A — explicit OpenAI crawler policy
+
+Status: **in progress**
+
+Scope:
+
+- server-side `seo_geo_crawler_policy` configuration contract;
+- independent `inherit|allow|disallow` states for OAI-SearchBot and GPTBot;
+- no crawler-specific directives by default;
+- WordPress virtual `robots.txt` integration without replacing existing output;
+- global `blog_public=0` privacy takes precedence over crawler-specific allows;
+- malformed/unknown crawler configuration falls back to inherit;
+- zero-plugin HTTP acceptance proving search/training controls are not coupled;
+- public documentation with current primary-source references and no ranking/inclusion guarantees.
+
+6A closes only after implementation, required PR gates and post-merge `main` verification are green.
+
+### Remaining Phase 6 work
+
+- crawler policy admin UI/reporting over the 6A configuration contract;
+- optional `llms.txt` generator;
+- optional localized Markdown alternates;
+- provenance/author/source patterns;
+- private/draft content leakage tests;
+- cache/invalidation strategy.
+
 Deliverables:
 
 - crawler policy UI/config;
