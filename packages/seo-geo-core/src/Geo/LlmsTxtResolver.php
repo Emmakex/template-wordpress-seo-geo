@@ -37,14 +37,27 @@ final class LlmsTxtResolver {
 	private LocalizedSeoResolver $localized_seo;
 
 	/**
+	 * Optional Markdown alternate authority.
+	 *
+	 * @var MarkdownAlternateResolver
+	 */
+	private MarkdownAlternateResolver $markdown_alternates;
+
+	/**
 	 * Create the resolver.
 	 *
-	 * @param NativeTranslationRegistry $translations  Explicit translation relationships.
-	 * @param LocalizedSeoResolver      $localized_seo Localized public-URL authority.
+	 * @param NativeTranslationRegistry $translations       Explicit translation relationships.
+	 * @param LocalizedSeoResolver       $localized_seo      Localized public-URL authority.
+	 * @param MarkdownAlternateResolver  $markdown_alternates Optional Markdown alternate authority.
 	 */
-	public function __construct( NativeTranslationRegistry $translations, LocalizedSeoResolver $localized_seo ) {
-		$this->translations  = $translations;
-		$this->localized_seo = $localized_seo;
+	public function __construct(
+		NativeTranslationRegistry $translations,
+		LocalizedSeoResolver $localized_seo,
+		MarkdownAlternateResolver $markdown_alternates
+	) {
+		$this->translations       = $translations;
+		$this->localized_seo      = $localized_seo;
+		$this->markdown_alternates = $markdown_alternates;
 	}
 
 	/**
@@ -183,6 +196,14 @@ final class LlmsTxtResolver {
 
 		if ( ! is_string( $url ) || ! $this->is_safe_site_url( $url ) ) {
 			return null;
+		}
+
+		if ( $this->markdown_alternates->enabled() ) {
+			$markdown_url = $this->markdown_alternates->url_for_post( $post_id, $language );
+
+			if ( null !== $markdown_url ) {
+				$url = $markdown_url;
+			}
 		}
 
 		return array(
