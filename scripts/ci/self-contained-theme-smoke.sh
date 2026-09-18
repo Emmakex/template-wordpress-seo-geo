@@ -230,7 +230,101 @@ fi
 printf '[self-contained] Checking neutral crawler policy.\n'
 curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
   || fail_smoke "crawler-policy-default-request" "Could not request default virtual robots.txt" "HTTP 2xx" "curl failed"
-if grep -Eq '^User-agent: (OAI-SearchBot|GPTBot)  --post_type=post \
+if grep -Eq '^User-agent: (OAI-SearchBot|GPTBot)$' "$ROBOTS_BODY"; then
+  fail_smoke "crawler-policy-default" "Neutral crawler policy must not add managed user-agent blocks" "no OAI-SearchBot/GPTBot blocks" "managed block present"
+fi
+
+printf '[self-contained] Checking independent search and training crawler policy.\n'
+wp_cli eval 'update_option( \SeoGeo\Core\Geo\CrawlerPolicy::OPTION_NAME, array( "oai_searchbot" => "allow", "gptbot" => "disallow" ), false );' >/dev/null \
+  || fail_smoke "crawler-policy-option" "Could not configure crawler policy fixture" "option update succeeds" "failed"
+curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
+  || fail_smoke "crawler-policy-request" "Could not request configured virtual robots.txt" "HTTP 2xx" "curl failed"
+
+if ! CRAWLER_POLICY_RESULT="$(python3 - "$ROBOTS_BODY" <<'PY'
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    text = handle.read().replace("\r\n", "\n")
+
+assert text.count("User-agent: OAI-SearchBot") == 1, text
+assert text.count("User-agent: GPTBot") == 1, text
+assert "User-agent: OAI-SearchBot\nAllow: /" in text, text
+assert "User-agent: GPTBot\nDisallow: /" in text, text
+print("ok")
+PY
+)"; then
+  fail_smoke "crawler-policy-distinct" "Search and training crawler directives are not independent" "OAI-SearchBot allow + GPTBot disallow" "${CRAWLER_POLICY_RESULT:-python assertion failed}" "parse virtual robots.txt"
+fi
+
+printf '[self-contained] Checking existing crawler-specific ownership is preserved.\n'
+if ! CRAWLER_POLICY_EXISTING="$(wp_cli eval '$policy = \SeoGeo\Core\Geo\CrawlerPolicy::from_wordpress(); $presenter = new \SeoGeo\Core\Geo\CrawlerPolicyPresenter( $policy ); echo $presenter->filter_robots_txt( "User-agent: OAI-SearchBot\nDisallow: /private\n", true );' 2>&1 | tr -d '\r')"; then
+  fail_smoke "crawler-policy-existing-eval" "Could not evaluate existing crawler-specific ownership fixture" "wp eval succeeds" "${CRAWLER_POLICY_EXISTING:-wp eval failed}" "wp eval CrawlerPolicyPresenter::filter_robots_txt"
+fi
+if ! CRAWLER_POLICY_EXISTING_RESULT="$(python3 - "$CRAWLER_POLICY_EXISTING" <<'PY'
+import sys
+
+text = sys.argv[1]
+assert text.count("User-agent: OAI-SearchBot") == 1, text
+assert "User-agent: OAI-SearchBot\nDisallow: /private" in text, text
+assert text.count("User-agent: GPTBot") == 1, text
+assert "User-agent: GPTBot\nDisallow: /" in text, text
+print("ok")
+PY
+)"; then
+  fail_smoke "crawler-policy-existing-owner" "Existing crawler-specific block must remain authoritative" "one preserved OAI-SearchBot block plus native GPTBot block" "${CRAWLER_POLICY_EXISTING_RESULT}; robots=${CRAWLER_POLICY_EXISTING}" "parse existing crawler ownership fixture"
+fi
+
+printf '[self-contained] Checking invalid crawler state normalization.\n'
+wp_cli eval 'update_option( \SeoGeo\Core\Geo\CrawlerPolicy::OPTION_NAME, array( "oai_searchbot" => "invalid", "gptbot" => "allow" ), false );' >/dev/null \
+  || fail_smoke "crawler-policy-invalid-option" "Could not configure invalid crawler state fixture" "option update succeeds" "failed"
+curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
+  || fail_smoke "crawler-policy-invalid-request" "Could not request normalized crawler policy fixture" "HTTP 2xx" "curl failed"
+
+if ! CRAWLER_POLICY_INVALID_RESULT="$(python3 - "$ROBOTS_BODY" <<'PY'
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    text = handle.read().replace("\r\n", "\n")
+
+assert "User-agent: OAI-SearchBot" not in text, text
+assert text.count("User-agent: GPTBot") == 1, text
+assert "User-agent: GPTBot\nAllow: /" in text, text
+print("ok")
+PY
+)"; then
+  fail_smoke "crawler-policy-invalid" "Invalid crawler state must normalize to inherit" "no OAI-SearchBot block + GPTBot allow" "${CRAWLER_POLICY_INVALID_RESULT:-python assertion failed}" "parse normalized virtual robots.txt"
+fi
+
+printf '[self-contained] Checking site-wide privacy cannot be overridden.\n'
+wp_cli option update blog_public 0 >/dev/null \
+  || fail_smoke "crawler-policy-private-site" "Could not mark fixture site non-public" "blog_public=0" "failed"
+wp_cli eval 'update_option( \SeoGeo\Core\Geo\CrawlerPolicy::OPTION_NAME, array( "oai_searchbot" => "allow", "gptbot" => "allow" ), false );' >/dev/null \
+  || fail_smoke "crawler-policy-private-option" "Could not configure private-site crawler fixture" "option update succeeds" "failed"
+curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
+  || fail_smoke "crawler-policy-private-request" "Could not request private-site virtual robots.txt" "HTTP 2xx" "curl failed"
+
+if ! CRAWLER_POLICY_PRIVATE_RESULT="$(python3 - "$ROBOTS_BODY" <<'PY'
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    text = handle.read().replace("\r\n", "\n")
+
+assert "User-agent: OAI-SearchBot" not in text, text
+assert "User-agent: GPTBot" not in text, text
+assert "Disallow: /" in text, text
+print("ok")
+PY
+)"; then
+  fail_smoke "crawler-policy-private-override" "Crawler policy must not override WordPress site-wide privacy" "no managed allow blocks and site-wide Disallow: /" "${CRAWLER_POLICY_PRIVATE_RESULT:-python assertion failed}" "parse private-site virtual robots.txt"
+fi
+
+wp_cli option update blog_public 1 >/dev/null \
+  || fail_smoke "crawler-policy-public-reset" "Could not restore public fixture state" "blog_public=1" "failed"
+wp_cli eval 'delete_option( \SeoGeo\Core\Geo\CrawlerPolicy::OPTION_NAME );' >/dev/null \
+  || fail_smoke "crawler-policy-option-reset" "Could not clear crawler policy fixture" "option deleted" "failed"
+
+POST_ID="$(wp_cli post create \
+  --post_type=post \
   --post_status=publish \
   --post_title='Self-contained SEO Fixture' \
   --post_name='self-contained-seo-fixture' \
