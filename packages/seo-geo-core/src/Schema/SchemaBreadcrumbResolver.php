@@ -48,7 +48,7 @@ final class SchemaBreadcrumbResolver {
 	 * documented BreadcrumbList contract for the containing page.
 	 *
 	 * @param string $canonical_url Authoritative current-page canonical URL.
-	 * @return array<string, mixed>|null
+	 * @return array{'@type': string, '@id': string, 'itemListElement': array<int, array<string, mixed>>}|null
 	 */
 	public function current( string $canonical_url ): ?array {
 		$items = $this->breadcrumbs->resolve();
