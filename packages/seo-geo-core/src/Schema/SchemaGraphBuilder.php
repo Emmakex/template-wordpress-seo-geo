@@ -60,6 +60,13 @@ final class SchemaGraphBuilder {
 	private SchemaIdentityResolver $identity;
 
 	/**
+	 * Native LocalBusiness resolver.
+	 *
+	 * @var SchemaLocalBusinessResolver
+	 */
+	private SchemaLocalBusinessResolver $local_business;
+
+	/**
 	 * Native BlogPosting resolver.
 	 *
 	 * @var SchemaArticleResolver
@@ -73,9 +80,10 @@ final class SchemaGraphBuilder {
 	 * @param CanonicalResolver        $canonical    Canonical URL authority.
 	 * @param LanguageManager          $language     Active language facade.
 	 * @param SchemaNodeIds            $ids        Stable node-ID generator.
-	 * @param SchemaBreadcrumbResolver $breadcrumb Native BreadcrumbList authority.
-	 * @param SchemaIdentityResolver   $identity   Native identity authority.
-	 * @param SchemaArticleResolver    $article    Native BlogPosting data authority.
+	 * @param SchemaBreadcrumbResolver    $breadcrumb      Native BreadcrumbList authority.
+	 * @param SchemaIdentityResolver      $identity        Native identity authority.
+	 * @param SchemaLocalBusinessResolver $local_business  Native LocalBusiness authority.
+	 * @param SchemaArticleResolver       $article         Native BlogPosting data authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
@@ -84,15 +92,17 @@ final class SchemaGraphBuilder {
 		SchemaNodeIds $ids,
 		SchemaBreadcrumbResolver $breadcrumb,
 		SchemaIdentityResolver $identity,
+		SchemaLocalBusinessResolver $local_business,
 		SchemaArticleResolver $article
 	) {
 		$this->indexability = $indexability;
 		$this->canonical    = $canonical;
 		$this->language     = $language;
 		$this->ids          = $ids;
-		$this->breadcrumb   = $breadcrumb;
-		$this->identity     = $identity;
-		$this->article      = $article;
+		$this->breadcrumb     = $breadcrumb;
+		$this->identity       = $identity;
+		$this->local_business = $local_business;
+		$this->article        = $article;
 	}
 
 	/**
@@ -148,9 +158,17 @@ final class SchemaGraphBuilder {
 		if ( null !== $breadcrumb ) {
 			$graph[] = $breadcrumb;
 		}
-		$organization = $this->identity->organization();
+		$organization   = $this->identity->organization();
+		$local_business = $this->local_business->resolve();
 
-		if ( is_front_page() && null !== $organization ) {
+		if ( is_front_page() && null !== $local_business ) {
+			$website['publisher']   = array( '@id' => $local_business['@id'] );
+			$web_page['mainEntity'] = array( '@id' => $local_business['@id'] );
+
+			$graph[0] = $website;
+			$graph[1] = $web_page;
+			$graph[]  = $local_business;
+		} elseif ( is_front_page() && null !== $organization ) {
 			$website['publisher'] = array( '@id' => $organization['id'] );
 
 			$graph[0] = $website;
@@ -188,7 +206,9 @@ final class SchemaGraphBuilder {
 				$article_node['author'] = array( '@id' => $article_author['id'] );
 			}
 
-			if ( null !== $organization ) {
+			if ( null !== $local_business ) {
+				$article_node['publisher'] = array( '@id' => $local_business['@id'] );
+			} elseif ( null !== $organization ) {
 				$article_node['publisher'] = array( '@id' => $organization['id'] );
 			}
 
@@ -199,7 +219,9 @@ final class SchemaGraphBuilder {
 				$graph[]         = $this->person_node( $article_author, $profile_page_id );
 			}
 
-			if ( null !== $organization ) {
+			if ( null !== $local_business ) {
+				$graph[] = $local_business;
+			} elseif ( null !== $organization ) {
 				$graph[] = $this->organization_node( $organization );
 			}
 		}
