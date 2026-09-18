@@ -31,6 +31,8 @@ SEARCH_BODY="${TMP_DIR}/search.html"
 ROBOTS_BODY="${TMP_DIR}/robots.txt"
 LLMS_BODY="${TMP_DIR}/llms.txt"
 LLMS_HEADERS="${TMP_DIR}/llms.headers"
+MARKDOWN_BODY="${TMP_DIR}/alternate.md"
+MARKDOWN_HEADERS="${TMP_DIR}/alternate.headers"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
 RUNTIME_EVAL_ERROR="${TMP_DIR}/runtime-eval.stderr"
@@ -138,7 +140,9 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyPresenter.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtResolver.php" \
-  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtPresenter.php"; do
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtPresenter.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternateResolver.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternatePresenter.php"; do
   [[ -f "$required_file" ]] \
     || fail_smoke "embedded-runtime-file" "Built theme is missing embedded SEO/GEO runtime source" "${required_file}" "missing"
 done
@@ -351,14 +355,80 @@ LLMS_HEAD_STATUS="$(curl -sS -I -o /dev/null -w '%{http_code}' "${BASE_URL}/llms
 [[ "$LLMS_HEAD_STATUS" == "200" ]] \
   || fail_smoke "llms-head" "HEAD llms.txt request did not resolve" "HTTP 200" "$LLMS_HEAD_STATUS"
 
+printf '[self-contained] Checking optional Markdown alternate discovery and output.\n'
+MARKDOWN_URL="${BASE_URL}/self-contained-seo-fixture/index.md"
+MARKDOWN_DISABLED_STATUS="$(curl -sS -o "$MARKDOWN_BODY" -w '%{http_code}' "$MARKDOWN_URL")"
+[[ "$MARKDOWN_DISABLED_STATUS" == "404" ]] \
+  || fail_smoke "markdown-disabled" "Markdown alternate must be absent until explicitly enabled" "HTTP 404" "$MARKDOWN_DISABLED_STATUS"
+
+wp_cli eval 'update_option( "seo_geo_markdown_alternates", array( "enabled" => true ), false );' >/dev/null \
+  || fail_smoke "markdown-option" "Could not enable Markdown alternates" "option update succeeds" "failed"
+
+curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
+  || fail_smoke "markdown-html-request" "Could not request HTML source after enabling Markdown" "HTTP 2xx" "curl failed"
+grep -Fq '<link rel="alternate" type="text/markdown" href="'"$MARKDOWN_URL"'" />' "$PAGE_BODY" \
+  || fail_smoke "markdown-head-alternate" "HTML source did not advertise its Markdown alternate" "$MARKDOWN_URL" "alternate absent"
+grep -Fq '<link rel="describedby" href="'"${BASE_URL}/llms.txt"'" />' "$PAGE_BODY" \
+  || fail_smoke "markdown-head-describedby" "HTML source did not advertise llms.txt" "${BASE_URL}/llms.txt" "describedby absent"
+
+MARKDOWN_STATUS="$(curl -sS -D "$MARKDOWN_HEADERS" -o "$MARKDOWN_BODY" -w '%{http_code}' "$MARKDOWN_URL")"
+[[ "$MARKDOWN_STATUS" == "200" ]] \
+  || fail_smoke "markdown-status" "Enabled Markdown alternate did not resolve" "HTTP 200" "$MARKDOWN_STATUS"
+grep -Eiq '^content-type: text/markdown; charset=' "$MARKDOWN_HEADERS" \
+  || fail_smoke "markdown-content-type" "Markdown alternate must use text/markdown" "text/markdown charset header" "header absent"
+grep -Fq 'rel="alternate"; type="text/html"' "$MARKDOWN_HEADERS" \
+  || fail_smoke "markdown-link-header" "Markdown response did not link back to HTML" "alternate text/html Link header" "header absent"
+grep -Fq 'rel="describedby"' "$MARKDOWN_HEADERS" \
+  || fail_smoke "markdown-describedby-header" "Markdown response did not link to llms.txt" "describedby Link header" "header absent"
+
+if ! MARKDOWN_RESULT="$(python3 - "$MARKDOWN_BODY" "${BASE_URL}/self-contained-seo-fixture/" <<'PY'
+import sys
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    body = handle.read()
+source = sys.argv[2]
+assert body.startswith("# Self-contained SEO Fixture\n")
+assert f"Source: [{source}]({source})" in body
+assert "Theme-only SEO GEO fixture body." in body
+assert "<script" not in body.lower()
+print("ok")
+PY
+)"; then
+  fail_smoke "markdown-contract" "Generated Markdown alternate is invalid" "title + HTML source + authored body" "${MARKDOWN_RESULT:-python assertion failed}" "parse Markdown alternate"
+fi
+
+for blocked_md in \
+  "${BASE_URL}/draft-llms-secret/index.md" \
+  "${BASE_URL}/private-llms-secret/index.md" \
+  "${BASE_URL}/protected-llms-secret/index.md"; do
+  BLOCKED_STATUS="$(curl -sS -o "$MARKDOWN_BODY" -w '%{http_code}' "$blocked_md")"
+  [[ "$BLOCKED_STATUS" == "404" ]] \
+    || fail_smoke "markdown-private-leak" "Non-public resource exposed a Markdown alternate" "HTTP 404" "$BLOCKED_STATUS" "curl $blocked_md"
+done
+
+curl -fsS "${BASE_URL}/llms.txt" -o "$LLMS_BODY" \
+  || fail_smoke "llms-markdown-request" "Could not request llms.txt after enabling Markdown" "HTTP 2xx" "curl failed"
+grep -Fq '[Self-contained SEO Fixture]('"$MARKDOWN_URL"')' "$LLMS_BODY" \
+  || fail_smoke "llms-markdown-link" "llms.txt did not prefer enabled Markdown alternate" "$MARKDOWN_URL" "Markdown link absent"
+if grep -Fq '[Self-contained SEO Fixture]('"${BASE_URL}/self-contained-seo-fixture/"')' "$LLMS_BODY"; then
+  fail_smoke "llms-html-fallback" "llms.txt kept HTML link after Markdown alternate was enabled" "Markdown URL only" "HTML URL still present"
+fi
+
+MARKDOWN_HEAD_STATUS="$(curl -sS -I -o /dev/null -w '%{http_code}' "$MARKDOWN_URL")"
+[[ "$MARKDOWN_HEAD_STATUS" == "200" ]] \
+  || fail_smoke "markdown-head" "HEAD Markdown request did not resolve" "HTTP 200" "$MARKDOWN_HEAD_STATUS"
+
 wp_cli option update blog_public 0 >/dev/null \
   || fail_smoke "llms-private-site-option" "Could not make WordPress fixture private" "blog_public=0" "failed"
 LLMS_PRIVATE_STATUS="$(curl -sS -o "$LLMS_BODY" -w '%{http_code}' "${BASE_URL}/llms.txt")"
 [[ "$LLMS_PRIVATE_STATUS" == "404" ]] \
   || fail_smoke "llms-private-site" "Private WordPress site exposed llms.txt" "HTTP 404" "$LLMS_PRIVATE_STATUS"
 
-wp_cli eval 'delete_option( "seo_geo_llms_txt" ); update_option( "blog_public", "1" );' >/dev/null \
-  || fail_smoke "llms-reset" "Could not reset llms.txt fixture" "option removed and blog_public=1" "failed"
+MARKDOWN_PRIVATE_STATUS="$(curl -sS -o "$MARKDOWN_BODY" -w '%{http_code}' "$MARKDOWN_URL")"
+[[ "$MARKDOWN_PRIVATE_STATUS" == "404" ]] \
+  || fail_smoke "markdown-private-site" "Private WordPress site exposed Markdown alternate" "HTTP 404" "$MARKDOWN_PRIVATE_STATUS"
+
+wp_cli eval 'delete_option( "seo_geo_llms_txt" ); delete_option( "seo_geo_markdown_alternates" ); update_option( "blog_public", "1" );' >/dev/null \
+  || fail_smoke "llms-reset" "Could not reset GEO document fixtures" "options removed and blog_public=1" "failed"
 
 curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "fixture-request" "Could not request fixture post" "HTTP 2xx" "curl failed"
