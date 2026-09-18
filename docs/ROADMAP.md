@@ -437,19 +437,54 @@ Functional adoption findings are recorded as `ERR-2026-008` and `ERR-2026-009`. 
 
 ### Microphase 4C — explicit translation relationships + indexable localized SEO
 
+Status: **in progress**
+
+#### Microphase 4C1 — explicit reciprocal translation relationship contract
+
+Status: **complete**
+
+Delivered on PR #21:
+
+- immutable `NativeTranslationRelationship` data contract;
+- `NativeTranslationRegistry` exposed through `Runtime::translations()`;
+- three explicit server-side post-meta fields for group, current language and reciprocal language-to-resource map;
+- distinct WordPress resources required for distinct translations;
+- every mapped member must be published, public/viewable, language-configured and assigned to the same group;
+- every member must publish the same normalized translation map, making reciprocity directly verifiable;
+- one resource cannot represent two languages in one relationship;
+- drafts, private resources, malformed groups, unconfigured languages and non-reciprocal maps are rejected;
+- no global `meta_key/meta_value` discovery query; validation reads only the explicitly mapped IDs;
+- dedicated zero-plugin WordPress relationship acceptance added after the existing 4A/4B regressions;
+- no indexability, canonical, Open Graph or `hreflang` promotion in 4C1.
+
+PR #21 passed all eight required PR gates on final candidate `91fad9109456b72e622408ad6a3a44e8db436975` and was squash-merged as `bd5729ba6d785dff09d6176f0e92b2c45a5e0dba`. Post-merge `main` passed all eight gates again:
+
+- Foundation CI `35301930887`;
+- Phase 1 Package CI `35301930901`;
+- PHP Quality CI `35301930866`;
+- WordPress Smoke CI `35301930911`;
+- Self-contained Theme CI `35301930854`;
+- Native Multilingual CI `35301930897`;
+- Accessibility & Responsive CI `35301930860`;
+- Performance Baseline CI `35301930882`.
+
+The first registry implementation triggered WPCS slow-meta-query signature `70735d839b0c`. It was redesigned rather than suppressed; the reusable performance lesson is recorded as `ERR-2026-010`.
+
+#### Microphase 4C2 — localized SEO promotion
+
 Status: **pending**
 
 Next scope:
 
-- explicit source-to-translation relationship contract; never infer a translation merely because one WordPress object is reachable under multiple prefixes;
-- localized self-referencing canonical URLs only for validated translated resources;
-- reciprocal `hreflang` sets containing only published, resolvable translations;
+- promote a prefixed route from staged `noindex` only when the current post belongs to a valid 4C1 relationship and the active route language matches that post;
+- localized self-referencing canonical URLs for validated translated resources;
+- reciprocal `hreflang` sets containing only published, resolvable relationship members;
 - optional `x-default` only when its semantic target is explicitly configured;
-- promotion from staged `noindex` to indexable state only after the relationship is valid;
-- locale-aware breadcrumb and internal URL helpers;
-- Open Graph locale/URL alignment through the same language authority;
-- normalized language context for the later Phase 5 Schema graph;
-- ES/EN acceptance for missing, draft, private and non-reciprocal translations.
+- keep wrong-language prefixes, missing relationships and invalid relationships non-indexable;
+- align Open Graph URL/locale with the same localized canonical authority;
+- add locale-aware breadcrumb/internal URL helpers without inventing translated slugs;
+- expose normalized language context for later Phase 5 Schema graph work;
+- extend ES/EN real-HTTP acceptance for draft/private/non-reciprocal/wrong-prefix cases.
 
 Optional WPML/Polylang adapters remain outside the native baseline critical path and must not become required dependencies.
 
