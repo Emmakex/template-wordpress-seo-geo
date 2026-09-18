@@ -309,7 +309,7 @@ assert parser.count == 1, f"schema_script_count={parser.count}"
 payload = json.loads("".join(parser.parts))
 assert payload.get("@context") == "https://schema.org"
 nodes = payload.get("@graph")
-assert isinstance(nodes, list) and len(nodes) == 6, f"nodes={nodes!r}"
+assert isinstance(nodes, list) and len(nodes) == 5, f"nodes={nodes!r}"
 
 by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
 website = by_type.get("WebSite")
@@ -381,7 +381,7 @@ print(json.dumps({
 }))
 PY
 )"; then
-  fail_smoke "schema-graph-contract" "Native Schema graph contract is invalid" "one parseable WebSite + WebPage + BlogPosting + Person graph with stable IDs" "${SCHEMA_RESULT:-python assertion failed}" "parse native JSON-LD graph"
+  fail_smoke "schema-breadcrumb-graph-contract" "Native Schema graph contract is invalid" "one parseable WebSite + WebPage + BreadcrumbList + BlogPosting + Person graph with stable IDs" "${SCHEMA_RESULT:-python assertion failed}" "parse native JSON-LD graph"
 fi
 
 printf '[self-contained] Checking explicit Organization identity on the home page.\n'
