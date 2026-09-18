@@ -499,3 +499,63 @@ A multilingual prefix system must test both configured and unconfigured language
 
 `scripts/ci/native-routing-smoke.sh` requests `/fr/routing-fixture/` while only `es` and `en` are configured and requires HTTP 404.
 
+## ERR-2026-010 — Translation discovery via global post-meta query violated the performance contract
+
+**Status:** resolved  
+**First seen:** 2026-09-18  
+**Last seen:** 2026-09-18  
+**Area:** language / performance / architecture  
+**Signature:** `70735d839b0c`  
+**Reference:** PR #21; failing PHP Quality CI run `35301569970` / job `105465100728`; passing PR PHP Quality run `35301709156`; passing PR Native Multilingual run `35301709161`; post-merge Native Multilingual run `35301930897`
+
+### Symptom / context
+
+The first Phase 4C1 registry implementation discovered translation-group members with a WordPress query filtered by `meta_key` and `meta_value`. WPCS blocked the implementation before PHPStan ran:
+
+```text
+Detected usage of meta_key, possible slow query.
+WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+```
+
+The same query also used `meta_value`, which generated the corresponding slow-query warning.
+
+### Root cause
+
+Confirmed. The proposed relationship model made group membership implicit in a global post-meta search. Even though the relationship itself was explicit, resolving one request could require searching the posts table/meta table for all objects sharing a group identifier.
+
+That design was unnecessary for the product contract and created an avoidable scaling risk on large WordPress installations.
+
+### Solution
+
+The relationship contract was redesigned instead of suppressing WPCS.
+
+Each translated resource now stores:
+
+- its explicit translation group;
+- its own configured language;
+- the complete explicit language-to-resource-ID map for that relationship.
+
+`NativeTranslationRegistry` validates only the IDs named in that map. Every mapped member must be published/public, declare the expected language and group, and expose the exact same normalized map. This makes reciprocity directly verifiable without a global meta discovery query.
+
+The registry also rejects reused IDs, drafts/private resources, non-reciprocal maps and unconfigured languages.
+
+### Validation
+
+- final PR candidate `91fad9109456b72e622408ad6a3a44e8db436975` passed WPCS and PHPStan level 6 in run `35301709156`;
+- Native Multilingual CI run `35301709161` passed 4A, 4B and the new zero-plugin 4C1 relationship acceptance;
+- PR #21 passed all eight required gates;
+- PR #21 was squash-merged as `bd5729ba6d785dff09d6176f0e92b2c45a5e0dba`;
+- post-merge `main` passed all eight gates, including Native Multilingual CI `35301930897` and Performance Baseline CI `35301930882`.
+
+### Prevention / guardrail
+
+Do not discover native translation membership by scanning WordPress post meta at request time. The authoritative relationship must name its members directly and be validated by direct ID reads.
+
+Performance-related WPCS warnings are treated as architecture feedback. They must not be silenced merely to pass CI when the data model can remove the slow-query class entirely.
+
+### Regression coverage
+
+`scripts/ci/native-translation-relations-smoke.sh` validates reciprocal ES/EN maps, draft rejection, non-reciprocal rejection, reused-resource rejection and unconfigured-language rejection on real WordPress with zero plugins.
+
+PHP Quality CI retains `WordPress.DB.SlowDBQuery` checks, so reintroducing request-time translation discovery through `meta_key/meta_value` queries will fail the quality gate.
+
