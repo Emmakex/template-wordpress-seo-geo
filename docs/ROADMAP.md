@@ -841,26 +841,62 @@ The first candidates exposed only PHPDoc/WPCS issues in the new LLMS classes; no
 
 ### Microphase 6C — localized Markdown alternates
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #43:
 
 - disabled-by-default `seo_geo_markdown_alternates` contract;
-- authoritative page Markdown URL derived from the public HTML URL;
-- directory-style pages use `index.md`; non-directory URLs use appended `.md`;
-- `rel="alternate" type="text/markdown"` in authoritative HTML;
-- `rel="describedby"` to llms.txt when 6B is enabled;
+- authoritative Markdown URLs derived from the public HTML URL;
+- directory-style resources use `index.md`; non-directory URLs append `.md`;
+- authoritative HTML advertises `rel="alternate" type="text/markdown"`;
+- HTML and Markdown advertise `rel="describedby"` to llms.txt when Phase 6B is enabled;
 - equivalent HTTP Link discovery headers;
-- Markdown response links back to its authoritative HTML source;
-- no shortcode or dynamic-block execution during Markdown generation;
-- global WordPress privacy and public-resource validation;
+- Markdown responses link back to the authoritative HTML source;
+- conservative block-to-Markdown conversion without shortcode or dynamic-block execution;
+- public-resource, password and global WordPress privacy guards;
 - reciprocal ES/EN relationship enforcement;
-- no Markdown for staged unprefixed or wrong-prefix translation routes;
-- llms.txt prefers Markdown URLs when valid alternates are enabled;
-- zero-plugin leakage/privacy and multilingual acceptance;
-- public contract in `docs/MARKDOWN_ALTERNATES.md`.
+- staged unprefixed and wrong-prefix translation routes expose no Markdown;
+- llms.txt prefers valid localized Markdown URLs when Phase 6C is enabled;
+- GET/HEAD support with `text/markdown` and no physical files or rewrite flush;
+- `Runtime::markdown_alternates()` exposes the resolver for later administration/reporting;
+- zero-plugin and multilingual acceptance cover discovery, source authority, leakage prevention and llms integration;
+- Foundation requires both Markdown source files plus `docs/MARKDOWN_ALTERNATES.md`.
 
-6C closes only after implementation, required PR gates and post-merge `main` verification are green.
+PR #43 passed all ten workflows on final candidate `27a9248e41f1fc379e1913bd951cd895db03d5df` and was squash-merged as `173793586a3a75ee4f0819e17485460bf91e47d2`.
+
+PR validation:
+
+- Phase 1 Package CI `35387083960`;
+- Foundation CI `35387083879`;
+- Pattern Contract CI `35387084021`;
+- Design System CI `35387084062`;
+- PHP Quality CI `35387084002`;
+- WordPress Smoke CI `35387084019`;
+- Self-contained Theme CI `35387083969`;
+- Accessibility & Responsive CI `35387083992`;
+- Performance Baseline CI `35387083885`;
+- Native Multilingual CI `35387083876`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Foundation CI `35387364465`;
+- Phase 1 Package CI `35387364447`;
+- Design System CI `35387364488`;
+- PHP Quality CI `35387364422`;
+- Pattern Contract CI `35387364439`;
+- WordPress Smoke CI `35387364420`;
+- Self-contained Theme CI `35387364552`;
+- Accessibility & Responsive CI `35387364505`;
+- Performance Baseline CI `35387364474`;
+- Native Multilingual CI `35387364460`.
+
+Adoption findings were corrected without weakening the contract:
+
+- WPCS alignment/reserved-name findings in the first candidates;
+- PHPStan redundant string guard signature `062948f679ee`;
+- localized llms fixture false-negative signature `cdbc6628425d`, where the HTML URL was incorrectly tested as an arbitrary substring of its own `index.md` URL.
+
+The reusable fixture lesson is recorded as `ERR-2026-015`.
 
 ### Remaining Phase 6 work
 
