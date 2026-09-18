@@ -25,6 +25,8 @@ TMP_DIR="$(mktemp -d)"
 BUILT_THEME="${TMP_DIR}/seo-geo-theme"
 PAGE_BODY="${TMP_DIR}/page.html"
 HOME_BODY="${TMP_DIR}/home.html"
+ARTICLE_ORG_BODY="${TMP_DIR}/article-org.html"
+PLAIN_PAGE_BODY="${TMP_DIR}/plain-page.html"
 AUTHOR_BODY="${TMP_DIR}/author.html"
 SEARCH_BODY="${TMP_DIR}/search.html"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
@@ -268,10 +270,11 @@ OG_IMAGE_COUNT="$(grep -Eio '<meta[^>]+property=["'\'']og:image["'\''][^>]*>' "$
 [[ "$OG_IMAGE_COUNT" == "0" ]] \
   || fail_smoke "open-graph-image" "Fixture without featured image or site icon must not fabricate og:image" "0" "$OG_IMAGE_COUNT"
 
-printf '[self-contained] Checking native Schema graph.\n'
+printf '[self-contained] Checking native BlogPosting Schema graph.\n'
 if ! SCHEMA_RESULT="$(python3 - "$PAGE_BODY" "$BASE_URL" <<'PY'
 import json
 import sys
+from datetime import datetime
 from html.parser import HTMLParser
 
 class SchemaParser(HTMLParser):
@@ -306,31 +309,63 @@ assert parser.count == 1, f"schema_script_count={parser.count}"
 payload = json.loads("".join(parser.parts))
 assert payload.get("@context") == "https://schema.org"
 nodes = payload.get("@graph")
-assert isinstance(nodes, list) and len(nodes) == 2
+assert isinstance(nodes, list) and len(nodes) == 4, f"nodes={nodes!r}"
 
 by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
 website = by_type.get("WebSite")
 webpage = by_type.get("WebPage")
+person = by_type.get("Person")
+article = by_type.get("BlogPosting")
 assert isinstance(website, dict)
 assert isinstance(webpage, dict)
+assert isinstance(person, dict)
+assert isinstance(article, dict)
 
 canonical = base + "self-contained-seo-fixture/"
 website_id = base + "#website"
 webpage_id = canonical + "#webpage"
+article_id = canonical + "#blogposting"
 
 assert website.get("@id") == website_id
 assert website.get("url") == base
 assert website.get("name") == "Self-contained SEO GEO"
+assert "publisher" not in website
 assert webpage.get("@id") == webpage_id
 assert webpage.get("url") == canonical
 assert webpage.get("isPartOf") == {"@id": website_id}
 assert webpage.get("inLanguage") == "en-US"
 assert isinstance(webpage.get("name"), str) and webpage["name"]
 
-print(json.dumps({"website_id": website_id, "webpage_id": webpage_id, "inLanguage": webpage["inLanguage"]}))
+assert isinstance(person.get("@id"), str) and person["@id"].endswith("/#person")
+assert isinstance(person.get("name"), str) and person["name"]
+assert isinstance(person.get("url"), str) and "/author/" in person["url"]
+assert "mainEntityOfPage" not in person
+
+assert article.get("@id") == article_id
+assert article.get("url") == canonical
+assert article.get("headline") == "Self-contained SEO Fixture"
+assert article.get("mainEntityOfPage") == {"@id": webpage_id}
+assert article.get("author") == {"@id": person["@id"]}
+assert article.get("inLanguage") == "en-US"
+assert "publisher" not in article
+assert "image" not in article
+
+for field in ("datePublished", "dateModified"):
+    value = article.get(field)
+    assert isinstance(value, str) and value
+    parsed = datetime.fromisoformat(value)
+    assert parsed.tzinfo is not None
+
+print(json.dumps({
+    "website_id": website_id,
+    "webpage_id": webpage_id,
+    "article_id": article_id,
+    "person_id": person["@id"],
+    "inLanguage": article["inLanguage"],
+}))
 PY
 )"; then
-  fail_smoke "schema-graph-contract" "Native Schema graph contract is invalid" "one parseable WebSite + WebPage graph with stable IDs" "${SCHEMA_RESULT:-python assertion failed}" "parse native JSON-LD graph"
+  fail_smoke "schema-blogposting-contract" "Native BlogPosting graph contract is invalid" "one WebSite + WebPage + Person + BlogPosting graph with stable linked IDs" "${SCHEMA_RESULT:-python assertion failed}" "parse native BlogPosting JSON-LD graph"
 fi
 
 printf '[self-contained] Checking explicit Organization identity on the home page.\n'
@@ -388,6 +423,107 @@ print(json.dumps({"organization_id": organization_id, "node_count": len(nodes)})
 PY
 )"; then
   fail_smoke "schema-organization-contract" "Explicit Organization graph contract is invalid" "home graph with WebSite + WebPage + Organization and publisher link" "${ORGANIZATION_SCHEMA_RESULT:-python assertion failed}" "parse Organization JSON-LD graph"
+fi
+
+printf '[self-contained] Checking BlogPosting publisher reuse after Organization opt-in.\n'
+curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$ARTICLE_ORG_BODY" \
+  || fail_smoke "schema-article-publisher-request" "Could not request article after Organization opt-in" "HTTP 2xx" "curl failed"
+
+if ! ARTICLE_PUBLISHER_RESULT="$(python3 - "$ARTICLE_ORG_BODY" "$BASE_URL" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+
+base = sys.argv[2].rstrip("/") + "/"
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 5, f"nodes={nodes!r}"
+by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
+website = by_type.get("WebSite")
+organization = by_type.get("Organization")
+article = by_type.get("BlogPosting")
+assert isinstance(website, dict)
+assert isinstance(organization, dict)
+assert isinstance(article, dict)
+organization_id = base + "#organization"
+assert organization.get("@id") == organization_id
+assert organization.get("name") == "Self-contained SEO GEO"
+assert article.get("publisher") == {"@id": organization_id}
+assert website.get("publisher") == {"@id": organization_id}
+print(json.dumps({"organization_id": organization_id, "article_id": article.get("@id")}))
+PY
+)"; then
+  fail_smoke "schema-article-publisher-contract" "BlogPosting publisher did not reuse explicit Organization identity" "five-node graph with shared Organization publisher" "${ARTICLE_PUBLISHER_RESULT:-python assertion failed}" "parse BlogPosting publisher JSON-LD graph"
+fi
+
+printf '[self-contained] Checking ordinary Page does not become BlogPosting.\n'
+PLAIN_PAGE_ID="$(wp_cli post create --post_type=page --post_status=publish --post_title='Schema Plain Page' --post_name='schema-plain-page' --post_content='Visible ordinary page content.' --porcelain 2>/dev/null | tr -d '\r\n')"
+[[ "$PLAIN_PAGE_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "schema-plain-page" "Could not create ordinary Page fixture" "numeric page ID" "$PLAIN_PAGE_ID"
+
+curl -fsS "${BASE_URL}/schema-plain-page/" -o "$PLAIN_PAGE_BODY" \
+  || fail_smoke "schema-plain-page-request" "Could not request ordinary Page fixture" "HTTP 2xx" "curl failed"
+
+if ! PLAIN_PAGE_SCHEMA_RESULT="$(python3 - "$PLAIN_PAGE_BODY" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 2, f"nodes={nodes!r}"
+types = {node.get("@type") for node in nodes if isinstance(node, dict)}
+assert types == {"WebSite", "WebPage"}, f"types={types!r}"
+print(json.dumps({"types": sorted(types)}))
+PY
+)"; then
+  fail_smoke "schema-plain-page-contract" "Ordinary Page received unsupported article/entity nodes" "WebSite + WebPage only" "${PLAIN_PAGE_SCHEMA_RESULT:-python assertion failed}" "parse ordinary Page JSON-LD graph"
 fi
 
 printf '[self-contained] Checking native author ProfilePage + Person identity.\n'
