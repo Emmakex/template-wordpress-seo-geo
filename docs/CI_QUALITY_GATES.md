@@ -245,9 +245,12 @@ It must prove on a disposable real WordPress fixture that:
 - `SeoGeo\Core\Runtime` resolves from `wp-content/themes/seo-geo-theme/inc/seo-geo-core/src/Runtime.php`;
 - native SEO authority is active;
 - an indexable fixture exposes exactly one canonical and one expected meta description;
-- a search fixture exposes exactly one robots meta containing `noindex`;
+- the same fixture exposes exactly one parseable native Schema JSON-LD graph with deterministic WebSite/WebPage IDs and canonical/language alignment;
+- a search fixture exposes exactly one robots meta containing `noindex` and no native Schema graph;
 - runtime/debug logs contain no PHP fatal errors, warnings, notices or uncaught exceptions.
 
 A green source-level test is not a substitute for this gate. The acceptance must exercise the **built distribution** so repository fallback paths cannot hide a missing embedded runtime.
 
 Phase 3B PR #13 passed this gate before merge (`35257079331`) and again post-merge on `main` (`35257573577`).
+
+Phase 5A extended this gate with native Schema graph acceptance. PR #25 passed the self-contained gate before merge and post-merge run `35309620077` passed again on `main`. Native Multilingual CI run `35309620064` additionally proves localized ES/EN Schema language alignment.
