@@ -347,6 +347,8 @@ for staged_body in "$UNPREFIXED_BODY" "$WRONG_BODY"; do
     || fail_smoke "staged-hreflang" "Non-authoritative translation route emitted hreflang" "0" "$(hreflang_count "$staged_body")"
   [[ "$(open_graph_count "$staged_body")" == "0" ]] \
     || fail_smoke "staged-og" "Non-authoritative translation route emitted Open Graph" "0" "$(open_graph_count "$staged_body")"
+  [[ "$(schema_count "$staged_body")" == "0" ]] \
+    || fail_smoke "staged-schema" "Non-authoritative translation route emitted Schema" "0" "$(schema_count "$staged_body")"
 done
 
 printf '[localized-seo] Checking missing and invalid relationships stay staged.\n'
