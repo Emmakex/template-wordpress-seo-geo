@@ -12,6 +12,7 @@ namespace SeoGeo\Core\Schema;
 use SeoGeo\Core\Language\LanguageManager;
 use SeoGeo\Core\Seo\CanonicalResolver;
 use SeoGeo\Core\Seo\IndexabilityResolver;
+use WP_Post;
 
 /**
  * Builds the baseline native WebSite + WebPage JSON-LD graph.
@@ -122,12 +123,7 @@ final class SchemaGraphBuilder {
 
 		$organization = $this->identity->organization();
 		if ( is_front_page() && null !== $organization ) {
-			$organization_node = array(
-				'@type' => 'Organization',
-				'@id'   => $organization['id'],
-				'name'  => $organization['name'],
-				'url'   => $organization['url'],
-			);
+			$organization_node = $this->organization_node( $organization );
 
 			$website['publisher'] = array( '@id' => $organization['id'] );
 
@@ -140,26 +136,98 @@ final class SchemaGraphBuilder {
 			$web_page['@type']      = 'ProfilePage';
 			$web_page['mainEntity'] = array( '@id' => $author['id'] );
 
-			$person = array(
-				'@type'            => 'Person',
-				'@id'              => $author['id'],
-				'name'             => $author['name'],
-				'url'              => $author['url'],
-				'mainEntityOfPage' => array( '@id' => $web_page['@id'] ),
-			);
-
-			if ( '' !== $author['description'] ) {
-				$person['description'] = $author['description'];
-			}
+			$person = $this->person_node( $author, $web_page['@id'] );
 
 			$graph[1] = $web_page;
 			$graph[]  = $person;
+		}
+
+		if ( is_singular( 'post' ) ) {
+			$post = get_queried_object();
+
+			if ( $post instanceof WP_Post ) {
+				$post_author = $this->identity->person_for_user_id( (int) $post->post_author );
+				$published   = get_post_datetime( $post );
+				$modified    = get_post_datetime( $post, 'modified' );
+				$headline    = $this->text( get_the_title( $post ) );
+
+				if ( null !== $post_author && false !== $published && false !== $modified && '' !== $headline ) {
+					$blog_posting = array(
+						'@type'            => 'BlogPosting',
+						'@id'              => $this->ids->blog_posting( $canonical_url ),
+						'url'              => $canonical_url,
+						'headline'         => $headline,
+						'datePublished'    => $published->format( DATE_W3C ),
+						'dateModified'     => $modified->format( DATE_W3C ),
+						'inLanguage'       => $this->bcp47( $this->language->current_locale() ),
+						'mainEntityOfPage' => array( '@id' => $web_page['@id'] ),
+						'author'           => array( '@id' => $post_author['id'] ),
+					);
+
+					$image_url = get_the_post_thumbnail_url( $post, 'full' );
+					if ( is_string( $image_url ) && '' !== $image_url ) {
+						$blog_posting['image'] = $image_url;
+					}
+
+					$graph[] = $this->person_node( $post_author );
+
+					if ( null !== $organization ) {
+						$blog_posting['publisher'] = array( '@id' => $organization['id'] );
+						$website['publisher']       = array( '@id' => $organization['id'] );
+
+						$graph[0] = $website;
+						$graph[]  = $this->organization_node( $organization );
+					}
+
+					$graph[] = $blog_posting;
+				}
 		}
 
 		return array(
 			'@context' => 'https://schema.org',
 			'@graph'   => $graph,
 		);
+	}
+
+	/**
+	 * Build one shared Organization node.
+	 *
+	 * @param array{id:string,name:string,url:string} $organization Resolved Organization identity.
+	 * @return array<string, string>
+	 */
+	private function organization_node( array $organization ): array {
+		return array(
+			'@type' => 'Organization',
+			'@id'   => $organization['id'],
+			'name'  => $organization['name'],
+			'url'   => $organization['url'],
+		);
+	}
+
+	/**
+	 * Build one shared Person node.
+	 *
+	 * @param array{id:string,name:string,url:string,description:string} $person              Resolved Person identity.
+	 * @param string|null                                               $main_entity_page_id Optional ProfilePage node ID.
+	 * @return array<string, mixed>
+	 */
+	private function person_node( array $person, ?string $main_entity_page_id = null ): array {
+		$node = array(
+			'@type' => 'Person',
+			'@id'   => $person['id'],
+			'name'  => $person['name'],
+			'url'   => $person['url'],
+		);
+
+		if ( '' !== $person['description'] ) {
+			$node['description'] = $person['description'];
+		}
+
+		if ( null !== $main_entity_page_id ) {
+			$node['mainEntityOfPage'] = array( '@id' => $main_entity_page_id );
+		}
+
+		return $node;
 	}
 
 	/**
