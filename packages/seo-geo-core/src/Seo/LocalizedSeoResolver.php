@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Core\Seo;
 
+use SeoGeo\Core\Language\NativeLanguageConfiguration;
 use SeoGeo\Core\Language\NativeLanguageRouter;
 use SeoGeo\Core\Language\NativeTranslationRegistry;
 use SeoGeo\Core\Language\NativeTranslationRelationship;
@@ -32,14 +33,27 @@ final class LocalizedSeoResolver {
 	private NativeTranslationRegistry $translations;
 
 	/**
+	 * Native language configuration.
+	 *
+	 * @var NativeLanguageConfiguration
+	 */
+	private NativeLanguageConfiguration $configuration;
+
+	/**
 	 * Create the localized SEO resolver.
 	 *
-	 * @param NativeLanguageRouter       $router       Validated native router.
-	 * @param NativeTranslationRegistry $translations Explicit translation registry.
+	 * @param NativeLanguageRouter        $router        Validated native router.
+	 * @param NativeTranslationRegistry  $translations  Explicit translation registry.
+	 * @param NativeLanguageConfiguration $configuration Validated language configuration.
 	 */
-	public function __construct( NativeLanguageRouter $router, NativeTranslationRegistry $translations ) {
-		$this->router       = $router;
-		$this->translations = $translations;
+	public function __construct(
+		NativeLanguageRouter $router,
+		NativeTranslationRegistry $translations,
+		NativeLanguageConfiguration $configuration
+	) {
+		$this->router        = $router;
+		$this->translations  = $translations;
+		$this->configuration = $configuration;
 	}
 
 	/**
@@ -88,7 +102,7 @@ final class LocalizedSeoResolver {
 			return null;
 		}
 
-		return $this->url_for_post( $post_id, $language_code );
+		return $this->build_localized_url( $post_id, $language_code );
 	}
 
 	/**
@@ -122,7 +136,7 @@ final class LocalizedSeoResolver {
 		$alternates = array();
 
 		foreach ( $relationship->translations() as $language_code => $post_id ) {
-			$url = $this->url_for_post( $post_id, $language_code );
+			$url = $this->build_localized_url( $post_id, $language_code );
 			if ( null === $url ) {
 				return array();
 			}
@@ -134,22 +148,104 @@ final class LocalizedSeoResolver {
 	}
 
 	/**
-	 * Resolve one localized absolute URL from a WordPress permalink.
+	 * Resolve a safe translated URL only through a validated relationship.
+	 *
+	 * The supplied resource may belong to any member of the relationship. The
+	 * requested language is resolved to the explicitly mapped translated object;
+	 * no prefix is invented for unrelated content.
+	 *
+	 * @param int    $post_id       Source resource ID.
+	 * @param string $language_code Requested configured language code.
+	 */
+	public function url_for_translation( int $post_id, string $language_code ): ?string {
+		$relationship = $this->translations->for_post( $post_id );
+		if ( null === $relationship ) {
+			return null;
+		}
+
+		$target_id = $relationship->post_id_for( $language_code );
+		if ( null === $target_id ) {
+			return null;
+		}
+
+		return $this->build_localized_url( $target_id, $language_code );
+	}
+
+	/**
+	 * Return the authoritative current localized language code.
+	 */
+	public function current_language_code(): ?string {
+		$relationship = $this->current_relationship();
+		if ( ! $this->localized_request_matches( $relationship ) ) {
+			return null;
+		}
+
+		return $relationship?->current_language_code();
+	}
+
+	/**
+	 * Return the authoritative current localized WordPress locale.
+	 */
+	public function current_locale(): ?string {
+		$language_code = $this->current_language_code();
+
+		return null !== $language_code ? $this->configuration->locale_for( $language_code ) : null;
+	}
+
+	/**
+	 * Return the localized language root for the authoritative request.
+	 */
+	public function current_language_root_url(): ?string {
+		$language_code = $this->current_language_code();
+
+		return null !== $language_code
+			? home_url( '/' . rawurlencode( $language_code ) . '/' )
+			: null;
+	}
+
+	/**
+	 * Return an explicit x-default URL for the current relationship when set.
+	 */
+	public function x_default_url(): ?string {
+		$language_code = $this->configuration->x_default_language_code();
+		$post_id       = get_queried_object_id();
+
+		if ( null === $language_code || 0 >= $post_id || null === $this->current_language_code() ) {
+			return null;
+		}
+
+		return $this->url_for_translation( $post_id, $language_code );
+	}
+
+	/**
+	 * Build one localized absolute URL after relationship validation.
 	 *
 	 * @param int    $post_id       Published translated resource ID.
 	 * @param string $language_code Configured relationship language.
 	 */
-	public function url_for_post( int $post_id, string $language_code ): ?string {
+	private function build_localized_url( int $post_id, string $language_code ): ?string {
+		if ( null === $this->configuration->locale_for( $language_code ) ) {
+			return null;
+		}
+
 		$permalink = get_permalink( $post_id );
 		if ( '' === $permalink ) {
 			return null;
 		}
 
 		$home_url       = home_url( '/' );
+		$home_host      = wp_parse_url( $home_url, PHP_URL_HOST );
+		$permalink_host = wp_parse_url( $permalink, PHP_URL_HOST );
 		$home_path      = wp_parse_url( $home_url, PHP_URL_PATH );
 		$permalink_path = wp_parse_url( $permalink, PHP_URL_PATH );
 
-		if ( ! is_string( $home_path ) || ! is_string( $permalink_path ) ) {
+		if (
+			! is_string( $home_host )
+			|| ! is_string( $permalink_host )
+			|| 0 !== strcasecmp( $home_host, $permalink_host )
+			|| ! is_string( $home_path )
+			|| ! is_string( $permalink_path )
+		) {
 			return null;
 		}
 
@@ -162,7 +258,7 @@ final class LocalizedSeoResolver {
 			return null;
 		}
 
-		$relative_path = ltrim( substr( $permalink_path, strlen( $normalized_home_path ) ), '/' );
+		$relative_path  = ltrim( substr( $permalink_path, strlen( $normalized_home_path ) ), '/' );
 		$localized_path = '/' . rawurlencode( strtolower( trim( $language_code ) ) ) . '/';
 
 		if ( '' !== $relative_path ) {
