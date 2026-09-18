@@ -659,12 +659,27 @@ PR #32 passed all eight required PR gates on final candidate `a6d410815b82538623
 
 The acceptance remains plugin-free and keeps one native JSON-LD graph owner. Fixture node-count drift found during adoption is recorded as `ERR-2026-012`; production BreadcrumbList output did not require a workaround.
 
+### Microphase 5E — native LocalBusiness identity
+
+Status: **in progress**
+
+Scope:
+
+- explicit `local_business` site-identity selection, mutually exclusive with generic Organization;
+- one stable `{home_url}#localbusiness` node in the existing native graph;
+- required physical PostalAddress contract;
+- conservative supported subtype selection;
+- validated optional telephone, price range, GeoCoordinates and OpeningHoursSpecification;
+- front-page WebSite.publisher + WebPage.mainEntity linkage;
+- BlogPosting publisher reuse without duplicate Organization identity;
+- zero-plugin positive and incomplete-address negative acceptance;
+- no inferred reviews, ratings, images, service areas or additional locations.
+
+5E closes only after its PR and required post-merge `main` gates are green.
+
 ### Remaining Phase 5 work
 
-Pending microphases must extend the same graph rather than emit independent JSON-LD islands:
-
-- LocalBusiness support for the local-business preset;
-- visible-content consistency and negative fixtures for optional entity fields.
+After 5E, the final Phase 5 microphase must harden visible-content consistency and negative fixtures for optional entity fields before Phase 5 can close.
 
 ### Phase 5 exit criteria
 
