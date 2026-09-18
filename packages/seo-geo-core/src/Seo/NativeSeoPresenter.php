@@ -63,7 +63,7 @@ final class NativeSeoPresenter {
 	 * @param CanonicalResolver       $canonical    Canonical resolver.
 	 * @param MetaDescriptionResolver $description  Description resolver.
 	 * @param OpenGraphResolver       $open_graph   Open Graph resolver.
-	 * @param HreflangResolver         $hreflang     Hreflang resolver.
+	 * @param HreflangResolver        $hreflang     Hreflang resolver.
 	 */
 	public function __construct(
 		SeoOutputAuthority $authority,
