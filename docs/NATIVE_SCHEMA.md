@@ -20,7 +20,7 @@ Phase 5B extends that same graph with conservative identity nodes:
 - `ProfilePage` for author archives whose primary subject is that Person;
 - explicit graph references rather than duplicated identity objects.
 
-Phase 5C extends the same graph with native `BlogPosting` data for built-in WordPress posts. `BreadcrumbList` and `LocalBusiness` remain later Phase 5 microphases and must reuse this graph rather than create parallel JSON-LD scripts.
+Phase 5C extends the same graph with native `BlogPosting` data for built-in WordPress posts. Phase 5D adds `BreadcrumbList` from the existing breadcrumb data authority. `LocalBusiness` remains a later Phase 5 microphase and must reuse this graph rather than create a parallel JSON-LD script.
 
 ## Ownership
 
@@ -61,6 +61,7 @@ IDs are derived only from authoritative public URLs:
 - `WebSite`: `{home_url}/#website`
 - `WebPage`: `{canonical_url}#webpage`
 - `BlogPosting`: `{canonical_url}#article`
+- `BreadcrumbList`: `{canonical_url}#breadcrumb`
 
 An existing URL fragment is replaced before the stable graph fragment is appended. IDs are not generated from database IDs, random values, request timestamps or translated labels.
 
@@ -172,6 +173,35 @@ References:
 - https://schema.org/mainEntityOfPage
 - https://developer.wordpress.org/reference/functions/get_post_datetime/
 
+## BreadcrumbList — Phase 5D
+
+Phase 5D converts the existing reusable `BreadcrumbResolver` output into one `BreadcrumbList` node inside the same native `@graph`.
+
+The Schema layer does not rediscover hierarchy, infer translated slugs or build a second breadcrumb model. It consumes the same breadcrumb labels and URLs used by the runtime data contract.
+
+For an eligible page:
+
+- `WebPage.breadcrumb` references `{canonical_url}#breadcrumb`;
+- the BreadcrumbList uses the stable `{canonical_url}#breadcrumb` ID;
+- `itemListElement` contains ordered `ListItem` nodes;
+- positions start at 1 and increase sequentially;
+- labels come from the existing breadcrumb authority;
+- non-final breadcrumb items require absolute HTTP(S) URLs;
+- the final item may omit `item` when the breadcrumb authority has no current-page URL;
+- fewer than two breadcrumb items produce no BreadcrumbList;
+- an invalid or missing intermediate URL suppresses the whole BreadcrumbList instead of emitting a misleading partial hierarchy.
+
+The front page normally has only one breadcrumb item in the native data contract, so it does not emit BreadcrumbList markup.
+
+Google's breadcrumb structured-data documentation requires at least two ListItems and requires `position` and `name`; `item` is optional only for the final item. Schema.org defines `WebPage.breadcrumb` as accepting a `BreadcrumbList`.
+
+References:
+
+- https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
+- https://schema.org/BreadcrumbList
+- https://schema.org/breadcrumb
+- https://schema.org/ListItem
+
 ## Indexability
 
 The graph builder consumes the existing `IndexabilityResolver`.
@@ -224,9 +254,12 @@ The zero-plugin WordPress smoke must prove:
 - exactly one project-owned JSON-LD script exists on the representative indexable post;
 - the JSON parses;
 - `@context` is `https://schema.org`;
-- an ordinary built-in post emits WebSite + WebPage + BlogPosting + real author Person in one graph;
+- an ordinary built-in post emits WebSite + WebPage + BreadcrumbList + BlogPosting + real author Person in one graph;
 - WebSite, WebPage and BlogPosting IDs are deterministic and URL-derived;
 - WebPage.mainEntity and BlogPosting.mainEntityOfPage reference each other through stable IDs;
+- WebPage.breadcrumb references the stable BreadcrumbList node;
+- BreadcrumbList contains at least two sequential ListItems derived from the reusable breadcrumb authority;
+- breadcrumb labels and URLs match the runtime breadcrumb data contract and do not invent missing intermediate links;
 - BlogPosting headline/dates/language come from real WordPress content state;
 - BlogPosting author reuses the stable WordPress author Person identity;
 - BlogPosting publisher appears only after explicit Organization opt-in;
