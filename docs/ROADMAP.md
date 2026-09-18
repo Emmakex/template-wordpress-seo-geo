@@ -558,11 +558,44 @@ PR #25 passed all eight required gates on final candidate `6e6c3a7915a4799f98efe
 
 No third-party Schema plugin is required.
 
+### Microphase 5B — shared Organization / Person identity + ProfilePage
+
+Status: **complete**
+
+Delivered on PR #28:
+
+- `SchemaIdentityResolver` as the server-side identity data authority for Schema graph construction;
+- explicit opt-in Organization identity through `seo_geo_schema_identity.site_entity_type=organization`;
+- Organization name and URL sourced only from the visible WordPress site name and authoritative home URL;
+- stable Organization ID `{home_url}#organization`;
+- front-page `WebSite.publisher` reference to the Organization;
+- no inferred legal name, address, telephone, logo, social profile, tax identifier or other unsupported Organization properties;
+- native WordPress author archives specialized from `WebPage` to `ProfilePage`;
+- stable Person ID `{author_url}#person`;
+- Person name, URL and optional biography sourced from the real WordPress author identity;
+- reciprocal `ProfilePage.mainEntity` and `Person.mainEntityOfPage` references;
+- ordinary posts retain the Phase 5A two-node baseline and do not receive Person nodes merely because they have an author;
+- one JSON-LD script and one native graph owner preserved;
+- Foundation contract expanded for the identity resolver;
+- self-contained zero-plugin acceptance for baseline posts, Organization home identity and Person/ProfilePage author identity.
+
+PR #28 passed all eight required PR gates on final candidate `471774b3d3992dee4155e5a6e0b40127d0611256` and was squash-merged as `2c8bf02b27d97768006f60a5258dc8ab1bc56266`. Post-merge `main` passed all eight gates again:
+
+- Phase 1 Package CI `35311162368`;
+- Foundation CI `35311162374`;
+- PHP Quality CI `35311162405`;
+- WordPress Smoke CI `35311162366`;
+- Self-contained Theme CI `35311162371`;
+- Native Multilingual CI `35311162393`;
+- Accessibility & Responsive CI `35311162421`;
+- Performance Baseline CI `35311162398`.
+
+The acceptance remains plugin-free and preserves multilingual, accessibility and performance contracts. A recurrence of the known WP-CLI namespace-escaping fixture class was fixed in the test harness and recorded under `ERR-2026-006`; production Schema code did not require a workaround.
+
 ### Remaining Phase 5 work
 
 Pending microphases must extend the same graph rather than emit independent JSON-LD islands:
 
-- shared Organization / Person identity nodes and ProfilePage relationships;
 - Article/BlogPosting nodes and author/publisher linkage where truthful;
 - BreadcrumbList generated from the existing breadcrumb data authority;
 - LocalBusiness support for the local-business preset;
