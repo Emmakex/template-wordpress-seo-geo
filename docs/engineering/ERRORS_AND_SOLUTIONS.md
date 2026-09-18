@@ -717,3 +717,54 @@ Do not suppress the naming sniff for this class of issue; a behavior-preserving 
 
 PHP Quality CI keeps the reserved-keyword naming rule enabled. The zero-plugin self-contained smoke separately proves that the renamed callback still preserves WordPress privacy precedence and independent OAI-SearchBot/GPTBot behavior.
 
+## ERR-2026-014 — New GEO classes failed WPCS because PHPDoc contracts were incomplete
+
+**Status:** resolved  
+**First seen:** 2026-09-18  
+**Last seen:** 2026-09-18  
+**Area:** ci / geo / code quality  
+**Signatures:** `7427c299bab5`, `929d5def865f`  
+**Reference:** PR #41; failing PHP Quality CI runs `35352905073` / job `105625085830` and `35353029100` / job `105625556642`; passing PHP Quality run `35353137444`; post-merge passing PHP Quality run `35353585197`
+
+### Symptom / context
+
+The first Phase 6B `llms.txt` implementation was functionally accepted by WordPress-oriented smoke work, but PHP Quality stopped at WPCS before PHPStan.
+
+The first candidate lacked the full member/method PHPDoc required by the repository standard. After completing those comments, a second candidate exposed two narrower formatting rules: a short description beginning with lowercase `llms.txt` and one misaligned `@param` type column.
+
+### Root cause
+
+Confirmed. The new classes were created with concise implementation comments rather than the repository's stricter WordPress PHPDoc contract. The product logic was not the cause.
+
+### Solution
+
+Both LLMS classes were brought to the same documentation standard as the rest of Core:
+
+- member properties document their authority role and type;
+- constructors and public/private methods have short descriptions;
+- parameters and return shapes are documented where required;
+- the presenter short description begins with an uppercase token (`LLMS.txt`);
+- parameter columns follow WPCS alignment.
+
+No endpoint behavior, privacy rule, URL policy or generated Markdown changed.
+
+### Validation
+
+- final candidate `55cd18815e5514709c263dd73ae3bc554e5764d3` passed WPCS and PHPStan level 6 in PHP Quality CI `35353137444`;
+- Self-contained Theme CI `35353137404` passed the full zero-plugin `llms.txt` privacy/leakage contract;
+- Native Multilingual CI `35353137344` passed localized `llms.txt` URL acceptance;
+- PR #41 passed all ten workflows and was squash-merged as `27e4b5a1fb657cbe6ea1dbfb71edd6aa448c56bf`;
+- post-merge PHP Quality CI `35353585197`, Self-contained Theme CI `35353585261` and Native Multilingual CI `35353585306` passed again on `main`.
+
+### Prevention / guardrail
+
+New Core classes should start with the repository's full WordPress PHPDoc shape rather than treating comments as a cleanup step after implementation.
+
+For acronyms or protocol/file names that normally begin lowercase, use a capitalized prose token in short descriptions when WPCS requires the first word to begin with a capital letter.
+
+Do not suppress these documentation sniffs; they keep public/internal authority boundaries explicit and make later maintenance safer.
+
+### Regression coverage
+
+PHP Quality CI keeps WPCS and PHPStan level 6 mandatory. Foundation CI also requires the LLMS resolver/presenter and public contract, while functional behavior remains separately covered by the self-contained and multilingual acceptance suites.
+
