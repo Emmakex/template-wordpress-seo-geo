@@ -155,7 +155,7 @@ final class Runtime {
 			$schema_local_business,
 			$schema_article
 		);
-		$schema_presenter   = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
+		$schema_presenter      = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
 		$schema_presenter->register();
 
 		/**
