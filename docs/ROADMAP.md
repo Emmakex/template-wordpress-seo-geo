@@ -519,22 +519,67 @@ All exit criteria are satisfied:
 
 ## Phase 5 — Schema graph + entities
 
-Deliverables:
+Status: **in progress**
 
-- native graph builder;
-- stable entity IDs;
-- WebSite/WebPage/Organization/Person/ProfilePage/Article/BreadcrumbList;
-- local business entity support;
-- locale-aware graph fields;
-- visible-content consistency invariants.
+Phase 5 extends the same plugin-free, single-owner runtime with one coherent Schema.org JSON-LD graph. Nodes must reuse existing canonical, indexability, language and relationship authorities instead of reconstructing SEO state independently.
 
-Exit criteria:
+### Microphase 5A — native graph core + stable WebSite/WebPage IDs
 
-- valid parseable JSON-LD;
-- deterministic node IDs;
-- exactly one native graph owner in the baseline fixture;
-- language tests pass;
-- no Schema plugin required.
+Status: **complete**
+
+Delivered on PR #25:
+
+- explicit `schema` signal in `SeoOutputAuthority`;
+- deterministic `SchemaNodeIds` based on authoritative public URLs;
+- native `SchemaGraphBuilder` with one `@context=https://schema.org` + `@graph` payload;
+- baseline `WebSite` and `WebPage` nodes;
+- `WebPage.url` sourced from the existing canonical resolver;
+- `WebPage.isPartOf` linked to the stable WebSite node;
+- `inLanguage` sourced from the active WordPress locale through `LanguageManager` and normalized to BCP 47 form;
+- graph omission for non-indexable requests through the existing indexability authority;
+- one `SchemaPresenter` registered only when native Core owns Schema output;
+- `Runtime::schema_graph()` for later entity-node reuse;
+- zero frontend JavaScript;
+- public contract in `docs/NATIVE_SCHEMA.md`;
+- Foundation guardrails for the Schema sources and contract;
+- self-contained zero-plugin acceptance for parseable JSON-LD, exact node count/types, deterministic IDs, canonical alignment and noindex suppression;
+- localized ES/EN acceptance proving `inLanguage=es-ES` / `en-US` and no Schema on non-authoritative staged translation routes.
+
+PR #25 passed all eight required gates on final candidate `6e6c3a7915a4799f98efe2cd762260176f0a3ee9` and was squash-merged as `281fbf7b6edbecc30832018431b78d667cf553d2`. Post-merge `main` passed all eight gates again:
+
+- Foundation CI `35309620096`;
+- Phase 1 Package CI `35309620132`;
+- PHP Quality CI `35309620086`;
+- WordPress Smoke CI `35309620184`;
+- Self-contained Theme CI `35309620077`;
+- Native Multilingual CI `35309620064`;
+- Accessibility & Responsive CI `35309620296`;
+- Performance Baseline CI `35309620030`.
+
+No third-party Schema plugin is required.
+
+### Remaining Phase 5 work
+
+Pending microphases must extend the same graph rather than emit independent JSON-LD islands:
+
+- shared Organization / Person identity nodes and ProfilePage relationships;
+- Article/BlogPosting nodes and author/publisher linkage where truthful;
+- BreadcrumbList generated from the existing breadcrumb data authority;
+- LocalBusiness support for the local-business preset;
+- visible-content consistency and negative fixtures for optional entity fields.
+
+### Phase 5 exit criteria
+
+Phase 5 closes only when:
+
+- JSON-LD remains parseable across supported page/entity types;
+- deterministic node IDs are reused instead of duplicated;
+- exactly one native graph owner exists in the baseline fixture;
+- WebSite/WebPage plus planned entity/page nodes are complete;
+- language tests pass for locale-aware graph fields;
+- visible-content consistency invariants pass;
+- LocalBusiness support is complete for its preset;
+- no Schema plugin is required.
 
 ## Phase 6 — GEO / agent-friendly layer
 
