@@ -26,6 +26,7 @@ BUILT_THEME="${TMP_DIR}/seo-geo-theme"
 PAGE_BODY="${TMP_DIR}/page.html"
 HOME_BODY="${TMP_DIR}/home.html"
 AUTHOR_BODY="${TMP_DIR}/author.html"
+AUTHOR_ARTICLE_BODY="${TMP_DIR}/author-article.html"
 SEARCH_BODY="${TMP_DIR}/search.html"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
@@ -126,6 +127,7 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Seo/BreadcrumbResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaNodeIds.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaIdentityResolver.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaArticleResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaGraphBuilder.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaPresenter.php"; do
   [[ -f "$required_file" ]] \
@@ -306,17 +308,25 @@ assert parser.count == 1, f"schema_script_count={parser.count}"
 payload = json.loads("".join(parser.parts))
 assert payload.get("@context") == "https://schema.org"
 nodes = payload.get("@graph")
-assert isinstance(nodes, list) and len(nodes) == 2
+assert isinstance(nodes, list) and len(nodes) == 4, f"nodes={nodes!r}"
 
 by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
 website = by_type.get("WebSite")
 webpage = by_type.get("WebPage")
+article = by_type.get("BlogPosting")
+person = by_type.get("Person")
 assert isinstance(website, dict)
 assert isinstance(webpage, dict)
+assert isinstance(article, dict)
+assert isinstance(person, dict)
 
 canonical = base + "self-contained-seo-fixture/"
 website_id = base + "#website"
 webpage_id = canonical + "#webpage"
+article_id = canonical + "#article"
+profile_url = base + "author/admin/"
+profile_page_id = profile_url + "#webpage"
+person_id = profile_url + "#person"
 
 assert website.get("@id") == website_id
 assert website.get("url") == base
@@ -325,12 +335,35 @@ assert webpage.get("@id") == webpage_id
 assert webpage.get("url") == canonical
 assert webpage.get("isPartOf") == {"@id": website_id}
 assert webpage.get("inLanguage") == "en-US"
+assert webpage.get("mainEntity") == {"@id": article_id}
 assert isinstance(webpage.get("name"), str) and webpage["name"]
 
-print(json.dumps({"website_id": website_id, "webpage_id": webpage_id, "inLanguage": webpage["inLanguage"]}))
+assert article.get("@id") == article_id
+assert article.get("url") == canonical
+assert article.get("mainEntityOfPage") == {"@id": webpage_id}
+assert article.get("headline") == "Self-contained SEO Fixture"
+assert article.get("inLanguage") == "en-US"
+assert article.get("author") == {"@id": person_id}
+assert "publisher" not in article
+assert "image" not in article
+assert isinstance(article.get("datePublished"), str) and article["datePublished"]
+assert isinstance(article.get("dateModified"), str) and article["dateModified"]
+
+assert person.get("@id") == person_id
+assert person.get("name") == "admin"
+assert person.get("url") == profile_url
+assert person.get("mainEntityOfPage") == {"@id": profile_page_id}
+
+print(json.dumps({
+    "website_id": website_id,
+    "webpage_id": webpage_id,
+    "article_id": article_id,
+    "person_id": person_id,
+    "inLanguage": article["inLanguage"],
+}))
 PY
 )"; then
-  fail_smoke "schema-graph-contract" "Native Schema graph contract is invalid" "one parseable WebSite + WebPage graph with stable IDs" "${SCHEMA_RESULT:-python assertion failed}" "parse native JSON-LD graph"
+  fail_smoke "schema-graph-contract" "Native Schema graph contract is invalid" "one parseable WebSite + WebPage + BlogPosting + Person graph with stable IDs" "${SCHEMA_RESULT:-python assertion failed}" "parse native JSON-LD graph"
 fi
 
 printf '[self-contained] Checking explicit Organization identity on the home page.\n'
@@ -459,6 +492,93 @@ PY
   fail_smoke "schema-profile-contract" "Author ProfilePage/Person graph contract is invalid" "WebSite + ProfilePage + Person with reciprocal mainEntity links" "${AUTHOR_SCHEMA_RESULT:-python assertion failed}" "parse author ProfilePage JSON-LD graph"
 fi
 
+printf '[self-contained] Checking BlogPosting author + publisher identity linkage.\n'
+curl -fsS "${BASE_URL}/schema-author-article/" -o "$AUTHOR_ARTICLE_BODY" \
+  || fail_smoke "schema-article-request" "Could not request authored BlogPosting fixture" "HTTP 2xx" "curl failed"
+
+if ! ARTICLE_SCHEMA_RESULT="$(python3 - "$AUTHOR_ARTICLE_BODY" "$BASE_URL" <<'PY'
+import json
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+parser = SchemaParser()
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    parser.feed(handle.read())
+
+base = sys.argv[2].rstrip("/") + "/"
+payload = json.loads("".join(parser.parts))
+nodes = payload.get("@graph")
+assert isinstance(nodes, list) and len(nodes) == 5, f"nodes={nodes!r}"
+by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
+website = by_type.get("WebSite")
+webpage = by_type.get("WebPage")
+article = by_type.get("BlogPosting")
+person = by_type.get("Person")
+organization = by_type.get("Organization")
+assert isinstance(website, dict)
+assert isinstance(webpage, dict)
+assert isinstance(article, dict)
+assert isinstance(person, dict)
+assert isinstance(organization, dict)
+
+canonical = base + "schema-author-article/"
+webpage_id = canonical + "#webpage"
+article_id = canonical + "#article"
+profile_url = base + "author/schema-author/"
+profile_id = profile_url + "#webpage"
+person_id = profile_url + "#person"
+organization_id = base + "#organization"
+
+assert webpage.get("mainEntity") == {"@id": article_id}
+assert article.get("@id") == article_id
+assert article.get("url") == canonical
+assert article.get("headline") == "Schema Author Article"
+assert article.get("mainEntityOfPage") == {"@id": webpage_id}
+assert article.get("author") == {"@id": person_id}
+assert article.get("publisher") == {"@id": organization_id}
+assert article.get("inLanguage") == "en-US"
+assert "image" not in article
+
+assert person.get("@id") == person_id
+assert person.get("name") == "Schema Author"
+assert person.get("url") == profile_url
+assert person.get("description") == "Visible schema author biography."
+assert person.get("mainEntityOfPage") == {"@id": profile_id}
+
+assert organization.get("@id") == organization_id
+assert organization.get("name") == "Self-contained SEO GEO"
+assert organization.get("url") == base
+
+print(json.dumps({
+    "article_id": article_id,
+    "person_id": person_id,
+    "organization_id": organization_id,
+    "node_count": len(nodes),
+}))
+PY
+)"; then
+  fail_smoke "schema-article-contract" "BlogPosting author/publisher graph contract is invalid" "WebSite + WebPage + BlogPosting + Person + Organization with stable references" "${ARTICLE_SCHEMA_RESULT:-python assertion failed}" "parse authored BlogPosting JSON-LD graph"
+fi
+
 if ! BREADCRUMBS_JSON="$(wp_cli eval "global \$wp_query; \$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$BREADCRUMB_EVAL_ERROR" | head -c 240)"
   fail_smoke "breadcrumb-eval" "Could not resolve breadcrumb data contract" "root and current post items" "${ERROR_TEXT:-wp eval failed}" "wp eval Runtime::breadcrumbs"
@@ -493,4 +613,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted diagnostics" "no fatal/warning/notice/uncaught error" "$MATCH"
 fi
 
-printf 'Self-contained theme OK: zero plugins; native SEO + Open Graph + Schema; breadcrumbs contract; no PHP diagnostics.\n'
+printf 'Self-contained theme OK: zero plugins; native SEO + Open Graph + Schema BlogPosting identities; breadcrumbs contract; no PHP diagnostics.\n'
