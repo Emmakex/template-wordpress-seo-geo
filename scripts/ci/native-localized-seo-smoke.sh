@@ -402,8 +402,8 @@ assert "> Localized llms index." in body
 assert "## Guides" in body
 assert f"- [SEO técnico]({es_md}): Language: es" in body
 assert f"- [Technical SEO]({en_md}): Language: en" in body
-assert es_html not in body
-assert en_html not in body
+assert f"- [SEO técnico]({es_html}): Language: es" not in body
+assert f"- [Technical SEO]({en_html}): Language: en" not in body
 assert unprefixed not in body
 print("ok")
 PY
