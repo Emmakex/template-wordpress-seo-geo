@@ -92,6 +92,22 @@ final class LocalizedSeoResolver {
 	}
 
 	/**
+	 * Replace the native canonical only for an authoritative localized route.
+	 *
+	 * @param string|null $url          Existing native canonical candidate.
+	 * @param string      $indexability Resolved indexability state.
+	 */
+	public function filter_canonical_url( ?string $url, string $indexability ): ?string {
+		if ( IndexabilityResolver::INDEXABLE !== $indexability ) {
+			return $url;
+		}
+
+		$localized = $this->current_canonical_url();
+
+		return null !== $localized ? $localized : $url;
+	}
+
+	/**
 	 * Resolve reciprocal localized alternate URLs for the authoritative route.
 	 *
 	 * @return array<string, string>
