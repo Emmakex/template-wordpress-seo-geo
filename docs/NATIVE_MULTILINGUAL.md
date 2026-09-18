@@ -2,9 +2,11 @@
 
 ## Purpose
 
-The built SEO GEO theme must be able to declare its language set without requiring WPML, Polylang or another multilingual plugin. Phase 4A establishes the server-side configuration contract only. It deliberately does **not** add localized routes, switch request locales, emit `hreflang`, or change canonical/Open Graph URLs yet.
+The built SEO GEO theme must be able to declare and route its language set without requiring WPML, Polylang or another multilingual plugin.
 
-This separation prevents a partially configured multilingual site from publishing contradictory SEO signals.
+Phase 4A established the server-side language configuration contract. Phase 4B adds explicit native URL-prefix routing and request-locale switching while deliberately keeping newly localized routes out of the search index until translation relationships, localized canonicals and reciprocal `hreflang` are authoritative.
+
+This staged separation prevents a partially configured multilingual site from publishing contradictory SEO signals or presenting duplicated content as if it were a verified translation.
 
 ## WordPress option
 
@@ -14,11 +16,24 @@ The native provider reads one server-side WordPress option:
 seo_geo_native_languages
 ```
 
-Expected shape:
+Language configuration without routing:
 
 ```php
 array(
     'default'   => 'es',
+    'languages' => array(
+        'es' => 'es_ES',
+        'en' => 'en_US',
+    ),
+)
+```
+
+Prefix routing is opt-in:
+
+```php
+array(
+    'default'   => 'es',
+    'routing'   => 'prefix',
     'languages' => array(
         'es' => 'es_ES',
         'en' => 'en_US',
@@ -32,6 +47,9 @@ Rules:
 - language codes are normalized to lowercase BCP47-like identifiers such as `es`, `en` or `pt-br`;
 - each language maps to one safe WordPress locale;
 - duplicate locales are rejected;
+- supported routing modes are `disabled` and `prefix`;
+- omitting `routing` is equivalent to `disabled`, preserving Phase 4A behavior and existing installs;
+- prefix routing only activates when more than one valid language is configured;
 - malformed configuration is rejected atomically rather than partially applied;
 - no browser, URL parameter or client-side value can grant or mutate the configured language set.
 
@@ -42,9 +60,10 @@ When the option is absent or invalid, native mode remains a normal single-langua
 - provider: `native`;
 - available languages: one entry derived from the active WordPress locale;
 - default language: that same entry;
-- `is_multilingual()`: `false`.
+- `is_multilingual()`: `false`;
+- native language routing: disabled.
 
-Existing installations therefore do not become multilingual merely by updating the theme.
+Existing installations therefore do not become multilingual or acquire new public routes merely by updating the theme.
 
 ## Normalized runtime API
 
@@ -59,29 +78,117 @@ Existing installations therefore do not become multilingual merely by updating t
 - multilingual state;
 - provider identifier.
 
-Other Core modules consume this facade rather than reading the WordPress option directly.
+`Runtime::language_router()` exposes the native routing state without making the router itself the source of language configuration.
 
-## Phase 4A boundary
+Other Core modules consume these server-side services rather than reading the WordPress option or trusting request parameters directly.
 
-Configuration is not routing. In Phase 4A, `NativeWordPressAdapter::current_locale()` continues to report the locale WordPress already resolved for the current execution context. Declaring Spanish as the configured default while WordPress is currently running in `en_US` does not silently switch that request.
+## Phase 4B prefix routing
 
-The following remain outside 4A and must be implemented with their own acceptance gates:
+When `routing` is `prefix`, each configured language code becomes a reserved leading path segment for WordPress public-content routes. With the example configuration:
 
-- `/es/` and `/en/` route ownership;
-- locale switching for localized requests;
-- translated-resource relationships;
-- reciprocal `hreflang` and optional `x-default`;
+```text
+/es/
+/en/
+/es/routing-fixture/
+/en/routing-fixture/
+```
+
+The router duplicates WordPress's existing public rewrite rules under literal language prefixes. The prefix is added outside the original regular expression so existing `$matches[n]` capture numbering remains unchanged.
+
+Global infrastructure endpoints such as REST, robots, favicons, sitemaps, top-level feeds and trackbacks are not intentionally localized by this layer.
+
+### Request authority
+
+The internal query variable is:
+
+```text
+seo_geo_lang
+```
+
+It is routing metadata, not user authority. The router activates a locale only when:
+
+1. the requested language is present in the validated server-side configuration; and
+2. WordPress reports a matched rewrite rule that starts with that literal configured language prefix.
+
+A request such as:
+
+```text
+/routing-fixture/?seo_geo_lang=es
+```
+
+therefore cannot switch locale by query string alone.
+
+After a valid prefixed rewrite match, the runtime uses WordPress locale switching and keeps `locale` / `determine_locale` helpers aligned with the validated route locale. The matching WordPress language pack should be installed so project and WordPress UI strings can actually load their translations.
+
+### Rewrite lifecycle
+
+Changing routing mode or configured language prefixes changes the rewrite contract. Rewrite rules must be regenerated after such configuration changes. The Phase 4B acceptance uses:
+
+```text
+wp rewrite flush --hard
+```
+
+A later onboarding/admin layer may own that lifecycle automatically; Phase 4B does not add an admin settings UI.
+
+## Staged SEO safety in Phase 4B
+
+Native prefixed routes are intentionally **not indexable yet**.
+
+For a valid prefixed request whose normal state would otherwise be indexable, the runtime temporarily resolves:
+
+```text
+noindex,follow
+```
+
+Consequences in the native SEO layer:
+
+- localized prefixed route resolves and renders with the requested locale;
+- localized prefixed route emits `noindex`;
+- native canonical output is suppressed because the request is not indexable;
+- native Open Graph output is suppressed by the same indexability contract;
+- unprefixed URLs keep their existing SEO authority and indexability;
+- no `hreflang` is emitted in Phase 4B;
+- no claim is made that two routes are translations of one another.
+
+WordPress canonical redirection is suppressed only for a validated active prefixed route so WordPress does not immediately redirect `/es/...` back to its unprefixed permalink. Other requests retain normal WordPress canonical-redirect behavior.
+
+This is an intentional migration state, not the final multilingual SEO architecture.
+
+## What remains for the next multilingual microphase
+
+The following require an explicit translated-resource relationship before localized URLs can become indexable:
+
+- mapping a source object to its real ES/EN translated objects;
 - localized canonical URLs;
+- reciprocal `hreflang` and optional `x-default`;
 - locale-aware breadcrumb/internal URLs;
+- locale-aware Open Graph alternates where appropriate;
 - language-aware Schema output;
-- WPML/Polylang adapters.
+- translated slug relationships;
+- optional WPML/Polylang adapters.
+
+Phase 4C must promote only validated translation-linked routes from staged `noindex` to indexable localized URLs. It must not infer translations merely because the same WordPress object is reachable under two prefixes.
 
 ## Acceptance
 
-The self-contained WordPress fixture must prove three states with zero active plugins:
+The self-contained WordPress fixtures run with zero active plugins.
+
+Phase 4A continues to prove:
 
 1. no native language option -> single-language fallback;
-2. valid ES/EN option -> multilingual language map with Spanish default and English locale lookup, while the current WordPress request locale remains unchanged until routing is implemented;
-3. malformed duplicate-locale option -> the entire configuration is rejected and the runtime returns to the single-language fallback instead of partially applying it.
+2. valid ES/EN option without `routing` -> multilingual language map with routing disabled;
+3. malformed duplicate-locale option -> entire configuration rejected and safe single-language fallback.
 
-The acceptance fixture must continue to pass native SEO, accessibility and performance regression gates.
+Phase 4B additionally proves:
+
+1. `routing=prefix` enables the native router only for valid multilingual configuration;
+2. the Spanish WordPress language pack can be loaded for the fixture;
+3. unprefixed representative content remains authoritative and indexable;
+4. `/es/` resolves and switches the HTML language to Spanish;
+5. `/es/routing-fixture/` and `/en/routing-fixture/` resolve without being redirected to the unprefixed permalink;
+6. prefixed routes emit `noindex` and no native canonical/Open Graph output during the staged state;
+7. a query-string language selector cannot activate locale without a matching prefixed rewrite rule;
+8. an unconfigured prefix such as `/fr/` remains unresolved;
+9. runtime/debug logs contain no PHP fatal, warning, notice or uncaught error.
+
+Accessibility, native SEO and performance regression gates remain required alongside the dedicated multilingual acceptance.
