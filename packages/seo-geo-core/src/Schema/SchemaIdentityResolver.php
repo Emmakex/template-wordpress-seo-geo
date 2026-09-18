@@ -84,6 +84,21 @@ final class SchemaIdentityResolver {
 			return null;
 		}
 
+		return $this->author( $author->ID );
+	}
+
+	/**
+	 * Resolve one real WordPress user as a public author identity.
+	 *
+	 * @param int $author_id WordPress user ID.
+	 * @return array{id:string,name:string,url:string,description:string}|null
+	 */
+	public function author( int $author_id ): ?array {
+		$author = get_userdata( $author_id );
+		if ( ! $author instanceof WP_User ) {
+			return null;
+		}
+
 		$name = $this->text( $author->display_name );
 		if ( '' === $name ) {
 			return null;
