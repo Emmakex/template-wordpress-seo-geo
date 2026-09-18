@@ -6,7 +6,7 @@ The built SEO GEO theme must be able to declare and route its language set witho
 
 Phase 4A established the server-side language configuration contract. Phase 4B adds explicit native URL-prefix routing and request-locale switching while deliberately keeping newly localized routes out of the search index until translation relationships, localized canonicals and reciprocal `hreflang` are authoritative.
 
-This staged separation prevents a partially configured multilingual site from publishing contradictory SEO signals or presenting duplicated content as if it were a verified translation.
+This staged separation prevents a partially configured multilingual site from publishing contradictory SEO signals or presenting duplicated content as if it were a verified translation. Phase 4C begins by adding an explicit translation-relationship registry; SEO promotion remains a separate step.
 
 ## WordPress option
 
@@ -154,6 +154,38 @@ WordPress canonical redirection is suppressed for a validated active prefixed ro
 
 This is an intentional migration state, not the final multilingual SEO architecture.
 
+## Phase 4C1 explicit translation relationships
+
+Native translations are **distinct WordPress resources**. Merely reaching the same post under multiple language prefixes never creates a translation relationship.
+
+The native registry uses two server-side post-meta fields:
+
+```text
+_seo_geo_translation_group
+_seo_geo_language
+```
+
+A valid relationship requires:
+
+- the current resource is published and belongs to a public, viewable post type;
+- at least two published resources share the same explicit translation-group identifier;
+- every published group member declares exactly one language that exists in the validated native language configuration;
+- no language appears more than once inside the same group;
+- attachments, drafts, private resources, malformed group identifiers and unconfigured languages do not become valid members;
+- resolving the relationship from any valid member yields the same language-to-resource map, making reciprocity a property of the group rather than a separately inferred link.
+
+`Runtime::translations()` exposes the registry. The returned `NativeTranslationRelationship` contains the group ID, the current resource language and the published translation IDs keyed by language.
+
+Phase 4C1 is deliberately data-only. A valid relationship **does not yet**:
+
+- remove the staged `noindex`;
+- emit a localized canonical;
+- emit `hreflang` or `x-default`;
+- rewrite breadcrumb/internal URLs;
+- change Open Graph output.
+
+Those SEO effects are promoted only in the next 4C microphase after the relationship contract has passed real WordPress acceptance.
+
 ## What remains for the next multilingual microphase
 
 The following require an explicit translated-resource relationship before localized URLs can become indexable:
@@ -167,7 +199,7 @@ The following require an explicit translated-resource relationship before locali
 - translated slug relationships;
 - optional WPML/Polylang adapters.
 
-Phase 4C must promote only validated translation-linked routes from staged `noindex` to indexable localized URLs. It must not infer translations merely because the same WordPress object is reachable under two prefixes.
+Phase 4C must promote only validated translation-linked routes from staged `noindex` to indexable localized URLs. Phase 4C1 first proves the relationship registry; subsequent 4C work owns promotion, localized canonicals and alternates. It must not infer translations merely because the same WordPress object is reachable under two prefixes.
 
 ## Acceptance
 
@@ -190,5 +222,14 @@ Phase 4B additionally proves:
 7. a query-string language selector cannot activate locale without a matching prefixed rewrite rule;
 8. an unconfigured language-shaped prefix such as `/fr/` remains HTTP 404 and is not canonical-redirected to unrelated unprefixed content;
 9. runtime/debug logs contain no PHP fatal, warning, notice or uncaught error.
+
+Phase 4C1 additionally proves:
+
+1. a published ES/EN pair with the same explicit group resolves reciprocally from either member;
+2. a reachable post without explicit translation metadata resolves no relationship;
+3. a group with only one published member because its alternate is draft resolves no relationship;
+4. duplicate language membership invalidates the group;
+5. a published member assigned to an unconfigured language invalidates the group;
+6. the built theme still runs the contract with zero active plugins and clean PHP diagnostics.
 
 Accessibility, native SEO and performance regression gates remain required alongside the dedicated multilingual acceptance.
