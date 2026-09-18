@@ -150,7 +150,7 @@ Consequences in the native SEO layer:
 - no `hreflang` is emitted in Phase 4B;
 - no claim is made that two routes are translations of one another.
 
-WordPress canonical redirection is suppressed only for a validated active prefixed route so WordPress does not immediately redirect `/es/...` back to its unprefixed permalink. Other requests retain normal WordPress canonical-redirect behavior.
+WordPress canonical redirection is suppressed for a validated active prefixed route so WordPress does not immediately redirect `/es/...` back to its unprefixed permalink. In prefix-routing mode, a language-shaped first path segment that is not configured (for example `/fr/...` when only `es` and `en` exist) is also treated as part of the reserved language namespace: canonical guessing is suppressed so the unmatched request remains a 404. Non-language-shaped requests retain normal WordPress canonical-redirect behavior.
 
 This is an intentional migration state, not the final multilingual SEO architecture.
 
@@ -188,7 +188,7 @@ Phase 4B additionally proves:
 5. `/es/routing-fixture/` and `/en/routing-fixture/` resolve without being redirected to the unprefixed permalink;
 6. prefixed routes emit `noindex` and no native canonical/Open Graph output during the staged state;
 7. a query-string language selector cannot activate locale without a matching prefixed rewrite rule;
-8. an unconfigured prefix such as `/fr/` remains unresolved;
+8. an unconfigured language-shaped prefix such as `/fr/` remains HTTP 404 and is not canonical-redirected to unrelated unprefixed content;
 9. runtime/debug logs contain no PHP fatal, warning, notice or uncaught error.
 
 Accessibility, native SEO and performance regression gates remain required alongside the dedicated multilingual acceptance.
