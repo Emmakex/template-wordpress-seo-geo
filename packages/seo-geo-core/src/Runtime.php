@@ -23,6 +23,7 @@ use SeoGeo\Core\Seo\LocalizedSeoResolver;
 use SeoGeo\Core\Seo\MetaDescriptionResolver;
 use SeoGeo\Core\Seo\NativeSeoPresenter;
 use SeoGeo\Core\Seo\OpenGraphResolver;
+use SeoGeo\Core\Seo\SchemaGraphBuilder;
 use SeoGeo\Core\Seo\SeoOutputAuthority;
 
 /**
@@ -86,6 +87,13 @@ final class Runtime {
 	private static ?BreadcrumbResolver $breadcrumbs = null;
 
 	/**
+	 * Native Schema.org graph builder.
+	 *
+	 * @var SchemaGraphBuilder|null
+	 */
+	private static ?SchemaGraphBuilder $schema_graph = null;
+
+	/**
 	 * Initialize shared services once.
 	 */
 	public static function initialize(): void {
@@ -115,14 +123,16 @@ final class Runtime {
 		$open_graph   = new OpenGraphResolver( $indexability, $canonical, $description );
 		$hreflang     = new HreflangResolver( $indexability, self::$localized_seo );
 
-		self::$breadcrumbs = new BreadcrumbResolver( self::$localized_seo );
-		self::$native_seo  = new NativeSeoPresenter(
+		self::$breadcrumbs  = new BreadcrumbResolver( self::$localized_seo );
+		self::$schema_graph = new SchemaGraphBuilder( $indexability, $canonical, self::$breadcrumbs, self::$localized_seo );
+		self::$native_seo   = new NativeSeoPresenter(
 			self::$seo_authority,
 			$indexability,
 			$canonical,
 			$description,
 			$open_graph,
-			$hreflang
+			$hreflang,
+			self::$schema_graph
 		);
 		self::$native_seo->register();
 
@@ -187,5 +197,12 @@ final class Runtime {
 	 */
 	public static function breadcrumbs(): ?BreadcrumbResolver {
 		return self::$breadcrumbs;
+	}
+
+	/**
+	 * Get the native Schema.org graph builder when initialized.
+	 */
+	public static function schema_graph(): ?SchemaGraphBuilder {
+		return self::$schema_graph;
 	}
 }
