@@ -46,23 +46,33 @@ final class SchemaGraphBuilder {
 	private SchemaNodeIds $ids;
 
 	/**
+	 * Native identity resolver.
+	 *
+	 * @var SchemaIdentityResolver
+	 */
+	private SchemaIdentityResolver $identity;
+
+	/**
 	 * Create the graph builder.
 	 *
 	 * @param IndexabilityResolver $indexability Native indexability authority.
 	 * @param CanonicalResolver    $canonical    Canonical URL authority.
 	 * @param LanguageManager      $language     Active language facade.
-	 * @param SchemaNodeIds        $ids          Stable node-ID generator.
+	 * @param SchemaNodeIds          $ids          Stable node-ID generator.
+	 * @param SchemaIdentityResolver $identity     Native identity authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
 		CanonicalResolver $canonical,
 		LanguageManager $language,
-		SchemaNodeIds $ids
+		SchemaNodeIds $ids,
+		SchemaIdentityResolver $identity
 	) {
 		$this->indexability = $indexability;
 		$this->canonical    = $canonical;
 		$this->language     = $language;
 		$this->ids          = $ids;
+		$this->identity     = $identity;
 	}
 
 	/**
@@ -108,9 +118,46 @@ final class SchemaGraphBuilder {
 			$web_page['name'] = $page_name;
 		}
 
+		$graph = array( $website, $web_page );
+
+		$organization = $this->identity->organization();
+		if ( is_front_page() && null !== $organization ) {
+			$organization_node = array(
+				'@type' => 'Organization',
+				'@id'   => $organization['id'],
+				'name'  => $organization['name'],
+				'url'   => $organization['url'],
+			);
+
+			$website['publisher'] = array( '@id' => $organization['id'] );
+			$graph[0]              = $website;
+			$graph[]               = $organization_node;
+		}
+
+		$author = $this->identity->current_author();
+		if ( null !== $author ) {
+			$web_page['@type']      = 'ProfilePage';
+			$web_page['mainEntity'] = array( '@id' => $author['id'] );
+
+			$person = array(
+				'@type'            => 'Person',
+				'@id'              => $author['id'],
+				'name'             => $author['name'],
+				'url'              => $author['url'],
+				'mainEntityOfPage' => array( '@id' => $web_page['@id'] ),
+			);
+
+			if ( '' !== $author['description'] ) {
+				$person['description'] = $author['description'];
+			}
+
+			$graph[1] = $web_page;
+			$graph[]  = $person;
+		}
+
 		return array(
 			'@context' => 'https://schema.org',
-			'@graph'   => array( $website, $web_page ),
+			'@graph'   => $graph,
 		);
 	}
 
