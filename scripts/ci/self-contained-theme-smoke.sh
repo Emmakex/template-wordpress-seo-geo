@@ -29,6 +29,8 @@ AUTHOR_BODY="${TMP_DIR}/author.html"
 AUTHOR_ARTICLE_BODY="${TMP_DIR}/author-article.html"
 SEARCH_BODY="${TMP_DIR}/search.html"
 ROBOTS_BODY="${TMP_DIR}/robots.txt"
+LLMS_BODY="${TMP_DIR}/llms.txt"
+LLMS_HEADERS="${TMP_DIR}/llms.headers"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
 RUNTIME_EVAL_ERROR="${TMP_DIR}/runtime-eval.stderr"
@@ -134,7 +136,9 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaGraphBuilder.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaPresenter.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyResolver.php" \
-  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyPresenter.php"; do
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyPresenter.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtResolver.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtPresenter.php"; do
   [[ -f "$required_file" ]] \
     || fail_smoke "embedded-runtime-file" "Built theme is missing embedded SEO/GEO runtime source" "${required_file}" "missing"
 done
@@ -294,6 +298,67 @@ POST_ID="$(wp_cli post create \
   --porcelain 2>/dev/null | tr -d '\r\n')"
 [[ "$POST_ID" =~ ^[0-9]+$ ]] \
   || fail_smoke "fixture-post" "Could not create fixture post" "numeric post ID" "$POST_ID"
+
+printf '[self-contained] Checking optional llms.txt endpoint.\n'
+LLMS_DISABLED_STATUS="$(curl -sS -o "$LLMS_BODY" -w '%{http_code}' "${BASE_URL}/llms.txt")"
+[[ "$LLMS_DISABLED_STATUS" == "404" ]] \
+  || fail_smoke "llms-disabled" "llms.txt must be absent until explicitly enabled" "HTTP 404" "$LLMS_DISABLED_STATUS"
+
+LLMS_PUBLIC_ID="$(wp_cli post create --post_type=page --post_status=publish --post_title='Public llms resource' --post_name='public-llms-resource' --post_content='Public llms body.' --porcelain 2>/dev/null | tr -d '\r\n')"
+LLMS_DRAFT_ID="$(wp_cli post create --post_type=page --post_status=draft --post_title='Draft llms secret' --post_name='draft-llms-secret' --post_content='Draft secret.' --porcelain 2>/dev/null | tr -d '\r\n')"
+LLMS_PRIVATE_ID="$(wp_cli post create --post_type=page --post_status=private --post_title='Private llms secret' --post_name='private-llms-secret' --post_content='Private secret.' --porcelain 2>/dev/null | tr -d '\r\n')"
+LLMS_PASSWORD_ID="$(wp_cli post create --post_type=page --post_status=publish --post_title='Protected llms secret' --post_name='protected-llms-secret' --post_password='secret-pass' --post_content='Protected secret.' --porcelain 2>/dev/null | tr -d '\r\n')"
+
+for llms_id in "$LLMS_PUBLIC_ID" "$LLMS_DRAFT_ID" "$LLMS_PRIVATE_ID" "$LLMS_PASSWORD_ID"; do
+  [[ "$llms_id" =~ ^[0-9]+$ ]] \
+    || fail_smoke "llms-fixture-id" "Could not create llms.txt resource fixture" "numeric post ID" "$llms_id"
+done
+
+wp_cli eval "update_option( 'seo_geo_llms_txt', array( 'enabled' => true, 'summary' => 'Curated agent index.', 'sections' => array( array( 'title' => 'Primary resources', 'post_ids' => array( $POST_ID, $LLMS_PUBLIC_ID, $LLMS_DRAFT_ID, $LLMS_PRIVATE_ID, $LLMS_PASSWORD_ID, $POST_ID, 0, -1 ) ), array( 'title' => '', 'post_ids' => array( $LLMS_PUBLIC_ID ) ), array( 'title' => 'Malformed', 'post_ids' => 'not-an-array' ) ) ), false );" >/dev/null \
+  || fail_smoke "llms-option" "Could not configure llms.txt fixture" "option update succeeds" "failed"
+
+LLMS_STATUS="$(curl -sS -D "$LLMS_HEADERS" -o "$LLMS_BODY" -w '%{http_code}' "${BASE_URL}/llms.txt")"
+[[ "$LLMS_STATUS" == "200" ]] \
+  || fail_smoke "llms-enabled-status" "Enabled llms.txt did not resolve" "HTTP 200" "$LLMS_STATUS"
+grep -Eiq '^content-type: text/plain; charset=' "$LLMS_HEADERS" \
+  || fail_smoke "llms-content-type" "llms.txt must use a plain-text content type" "text/plain charset header" "header absent"
+
+if ! LLMS_RESULT="$(python3 - "$LLMS_BODY" "$BASE_URL" <<'PY'
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    body = handle.read()
+
+base = sys.argv[2].rstrip("/") + "/"
+assert body.startswith("# Self-contained SEO GEO\n")
+assert "> Curated agent index." in body
+assert "## Primary resources" in body
+post_line = f"- [Self-contained SEO Fixture]({base}self-contained-seo-fixture/)"
+page_line = f"- [Public llms resource]({base}public-llms-resource/)"
+assert body.count(post_line) == 1
+assert body.count(page_line) == 1
+assert "Draft llms secret" not in body
+assert "Private llms secret" not in body
+assert "Protected llms secret" not in body
+assert "## Malformed" not in body
+print("ok")
+PY
+)"; then
+  fail_smoke "llms-contract" "Generated llms.txt contract is invalid" "curated public Markdown resources only" "${LLMS_RESULT:-python assertion failed}" "parse llms.txt"
+fi
+
+LLMS_HEAD_STATUS="$(curl -sS -I -o /dev/null -w '%{http_code}' "${BASE_URL}/llms.txt")"
+[[ "$LLMS_HEAD_STATUS" == "200" ]] \
+  || fail_smoke "llms-head" "HEAD llms.txt request did not resolve" "HTTP 200" "$LLMS_HEAD_STATUS"
+
+wp_cli option update blog_public 0 >/dev/null \
+  || fail_smoke "llms-private-site-option" "Could not make WordPress fixture private" "blog_public=0" "failed"
+LLMS_PRIVATE_STATUS="$(curl -sS -o "$LLMS_BODY" -w '%{http_code}' "${BASE_URL}/llms.txt")"
+[[ "$LLMS_PRIVATE_STATUS" == "404" ]] \
+  || fail_smoke "llms-private-site" "Private WordPress site exposed llms.txt" "HTTP 404" "$LLMS_PRIVATE_STATUS"
+
+wp_cli eval 'delete_option( "seo_geo_llms_txt" ); update_option( "blog_public", "1" );' >/dev/null \
+  || fail_smoke "llms-reset" "Could not reset llms.txt fixture" "option removed and blog_public=1" "failed"
 
 curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "fixture-request" "Could not request fixture post" "HTTP 2xx" "curl failed"
