@@ -47,16 +47,16 @@ final class LlmsTxtResolver {
 	 * Create the resolver.
 	 *
 	 * @param NativeTranslationRegistry $translations       Explicit translation relationships.
-	 * @param LocalizedSeoResolver       $localized_seo      Localized public-URL authority.
-	 * @param MarkdownAlternateResolver  $markdown_alternates Optional Markdown alternate authority.
+	 * @param LocalizedSeoResolver      $localized_seo      Localized public-URL authority.
+	 * @param MarkdownAlternateResolver $markdown_alternates Optional Markdown alternate authority.
 	 */
 	public function __construct(
 		NativeTranslationRegistry $translations,
 		LocalizedSeoResolver $localized_seo,
 		MarkdownAlternateResolver $markdown_alternates
 	) {
-		$this->translations       = $translations;
-		$this->localized_seo      = $localized_seo;
+		$this->translations        = $translations;
+		$this->localized_seo       = $localized_seo;
 		$this->markdown_alternates = $markdown_alternates;
 	}
 
