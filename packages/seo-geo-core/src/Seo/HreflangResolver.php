@@ -49,7 +49,7 @@ final class HreflangResolver {
 		}
 
 		$alternates = $this->localized->alternate_urls();
-		$x_default = $this->localized->x_default_url();
+		$x_default  = $this->localized->x_default_url();
 
 		if ( null !== $x_default ) {
 			$alternates['x-default'] = $x_default;
@@ -58,7 +58,7 @@ final class HreflangResolver {
 		/**
 		 * Filters native hreflang alternates.
 		 *
-		 * Phase 4C2 does not synthesize x-default. Consumers must preserve
+		 * x-default is added only from explicit native configuration. Consumers must preserve
 		 * language-code to absolute-URL values; invalid entries are discarded.
 		 *
 		 * @param array<string, string> $alternates Reciprocal localized URLs.
