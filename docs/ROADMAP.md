@@ -519,7 +519,7 @@ All exit criteria are satisfied:
 
 ## Phase 5 — Schema graph + entities
 
-Status: **in progress**
+Status: **complete**
 
 Phase 5 extends the same plugin-free, single-owner runtime with one coherent Schema.org JSON-LD graph. Nodes must reuse existing canonical, indexability, language and relationship authorities instead of reconstructing SEO state independently.
 
@@ -701,34 +701,53 @@ Adoption findings were corrected without weakening contracts:
 
 ### Microphase 5F — visible-content consistency + negative entity fixtures
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #36:
 
-- add one reusable server-side visible-content authority for Schema decisions;
-- require LocalBusiness physical address facts to be present in the published front-page content before the entity is emitted;
-- emit telephone, price range and opening-hours data only when their configured visible counterparts are actually present;
-- keep valid GeoCoordinates conditional on a visible physical-address context;
-- suppress the full LocalBusiness node when required address facts are hidden or incomplete;
-- prevent LocalBusiness entity/publisher leakage onto BlogPosting pages without visible business facts;
-- omit stored author biography from Person Schema while the native author archive does not render it;
-- add negative fixtures for unsupported subtype, hidden optional values, invalid coordinates and hidden required address data;
-- preserve one native graph owner, stable IDs, zero-plugin operation, multilingual behavior, accessibility and performance budgets.
+- reusable server-side `SchemaVisibleContentResolver` for conservative visible-content decisions;
+- LocalBusiness requires a published static front page whose authored text visibly contains street, locality and postal code, plus region when configured;
+- telephone and price range emit only when their configured values are visibly present;
+- opening-hours entries require an explicit `visible_text` counterpart that occurs in public page copy;
+- GeoCoordinates remain conditional on structurally valid coordinates after the physical-address visibility contract passes;
+- hidden required address facts suppress the complete LocalBusiness node;
+- unsupported business subtype falls back safely to generic `LocalBusiness`;
+- LocalBusiness entity/publisher data no longer propagates onto BlogPosting pages where physical business facts are not visible;
+- stored author biography is omitted from Person Schema while the native author archive does not expose that biography;
+- zero-plugin negative fixtures cover hidden optional values, invalid coordinates, unsupported subtype, hidden required locality and cross-page entity leakage;
+- built-theme acceptance now explicitly requires both LocalBusiness and visible-content resolver sources;
+- public Schema/preset contracts document the visibility invariant.
 
-5F closes only after implementation, public contract updates, required PR gates and post-merge `main` verification are green. Phase 5 closes with 5F.
+PR #36 passed all ten PR workflows on final candidate `15a912454ca8c2479a048b92ba864dd2b1bd9bae` and was squash-merged as `53934f6f1aa61cb9df23865173c7e647a3e7b651`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Phase 1 Package CI `35336316909`;
+- Pattern Contract CI `35336316889`;
+- Foundation CI `35336316975`;
+- Design System CI `35336316899`;
+- PHP Quality CI `35336316893`;
+- WordPress Smoke CI `35336316956`;
+- Accessibility & Responsive CI `35336316881`;
+- Self-contained Theme CI `35336316835`;
+- Performance Baseline CI `35336316892`;
+- Native Multilingual CI `35336316966`.
+
+The first candidate exposed only a WPCS assignment-alignment issue, signature `f17836464731`; it was corrected without changing behavior. PHPStan level 6 and the full zero-plugin runtime acceptance then passed.
 
 ### Phase 5 exit criteria
 
-Phase 5 closes only when:
+All Phase 5 exit criteria are satisfied:
 
 - JSON-LD remains parseable across supported page/entity types;
 - deterministic node IDs are reused instead of duplicated;
 - exactly one native graph owner exists in the baseline fixture;
-- WebSite/WebPage plus planned entity/page nodes are complete;
+- WebSite/WebPage plus the planned identity/article/breadcrumb/local-business nodes are complete;
 - language tests pass for locale-aware graph fields;
-- visible-content consistency invariants pass;
-- LocalBusiness support is complete for its preset;
-- no Schema plugin is required.
+- visible-content consistency invariants pass with positive and negative zero-plugin fixtures;
+- LocalBusiness support is complete for the native baseline needed by its later preset;
+- no Schema plugin is required;
+- required PR and post-merge validation is green on `main`.
 
 ## Phase 6 — GEO / agent-friendly layer
 
