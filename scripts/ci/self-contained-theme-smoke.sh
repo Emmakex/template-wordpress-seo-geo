@@ -123,6 +123,7 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Seo/OpenGraphResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Seo/BreadcrumbResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaNodeIds.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaIdentityResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaGraphBuilder.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaPresenter.php"; do
   [[ -f "$required_file" ]] \
