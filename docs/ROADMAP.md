@@ -803,9 +803,9 @@ The first candidate exposed only the reserved-keyword parameter-name WPCS findin
 
 ### Microphase 6B — optional llms.txt generator
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #41:
 
 - disabled-by-default virtual site-root `/llms.txt` endpoint;
 - llms.txt v2-compatible H1, optional summary and curated H2 link sections;
@@ -814,12 +814,30 @@ Scope:
 - same-host absolute URL validation and cross-section deduplication;
 - global WordPress privacy disables the endpoint;
 - translated resources reuse reciprocal relationship data and authoritative localized ES/EN URLs;
-- no staged/unprefixed translation URLs in the generated document;
-- no physical file, rewrite flush, ranking promise or crawler-permission side effect;
-- zero-plugin privacy/leakage and multilingual acceptance;
-- public contract in `docs/LLMS_TXT.md`.
+- staged/unprefixed translation URLs are excluded from generated output;
+- GET/HEAD support with plain-text response and no physical file or rewrite flush;
+- `Runtime::llms_txt()` exposes the resolver for later admin/UI work;
+- zero-plugin acceptance covers disabled 404, public curation, duplicate suppression, private/draft/password leakage prevention and site-privacy precedence;
+- multilingual acceptance proves authoritative ES/EN prefixed URLs;
+- Foundation requires both LLMS source files plus `docs/LLMS_TXT.md`;
+- documentation positions llms.txt as an optional interoperability convention, not a crawler permission, ranking signal or inclusion guarantee.
 
-6B closes only after implementation, required PR gates and post-merge `main` verification are green.
+PR #41 passed all ten workflows on final candidate `55cd18815e5514709c263dd73ae3bc554e5764d3` and was squash-merged as `27e4b5a1fb657cbe6ea1dbfb71edd6aa448c56bf`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Foundation CI `35353585312`;
+- Phase 1 Package CI `35353585151`;
+- Design System CI `35353585177`;
+- Pattern Contract CI `35353585144`;
+- PHP Quality CI `35353585197`;
+- Self-contained Theme CI `35353585261`;
+- WordPress Smoke CI `35353585174`;
+- Accessibility & Responsive CI `35353585149`;
+- Native Multilingual CI `35353585306`;
+- Performance Baseline CI `35353585365`.
+
+The first candidates exposed only PHPDoc/WPCS issues in the new LLMS classes; no functional failure was found. The reusable lesson is recorded as `ERR-2026-014`.
 
 ### Remaining Phase 6 work
 
