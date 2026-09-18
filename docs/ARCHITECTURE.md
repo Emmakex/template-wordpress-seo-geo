@@ -121,6 +121,8 @@ Provides a normalized language contract for the native ES/EN baseline. Optional 
 ### Crawlers
 Produces explicit policies for public search/discovery crawlers and keeps those controls separate from unrelated training-policy claims.
 
+Phase 6A introduces a server-authoritative `CrawlerPolicy` plus WordPress virtual-`robots.txt` presenter. `OAI-SearchBot` and `GPTBot` are configured independently with neutral `inherit` defaults. The runtime never overrides WordPress's site-wide non-public state and does not duplicate an exact crawler-specific block already emitted by another owner. Physical web-server `robots.txt` files remain outside the WordPress runtime boundary.
+
 ### Sitemaps
 Uses WordPress core sitemaps by default and extends only where the product contract requires it. No parallel sitemap stack without a documented reason.
 
