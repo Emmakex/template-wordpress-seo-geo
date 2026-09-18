@@ -202,7 +202,7 @@ final class Runtime {
 			self::$localized_seo,
 			self::$markdown_alternates
 		);
-		$llms_presenter     = new LlmsTxtPresenter( self::$llms_txt );
+		$llms_presenter            = new LlmsTxtPresenter( self::$llms_txt );
 		$llms_presenter->register();
 
 		$markdown_presenter = new MarkdownAlternatePresenter( self::$markdown_alternates, self::$llms_txt );
