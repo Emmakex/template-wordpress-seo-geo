@@ -4,7 +4,7 @@
 
 Phase 5A establishes the native JSON-LD graph foundation for the self-contained theme. The baseline remains plugin-free: a clean WordPress installation plus the built theme is sufficient to emit the graph when native SEO authority is active.
 
-This microphase intentionally limits output to:
+Phase 5A established the baseline:
 
 - `WebSite`;
 - `WebPage`;
@@ -13,7 +13,14 @@ This microphase intentionally limits output to:
 - locale-aware `inLanguage`;
 - one JSON-LD graph owner.
 
-Organization, Person, ProfilePage, Article, BreadcrumbList and LocalBusiness nodes are later Phase 5 microphases and must reuse this graph rather than create parallel JSON-LD scripts.
+Phase 5B extends that same graph with conservative identity nodes:
+
+- opt-in site `Organization` identity on the front page;
+- WordPress author `Person` identity on native author archives;
+- `ProfilePage` for author archives whose primary subject is that Person;
+- explicit graph references rather than duplicated identity objects.
+
+Article, BreadcrumbList and LocalBusiness remain later Phase 5 microphases and must reuse this graph rather than create parallel JSON-LD scripts.
 
 ## Ownership
 
@@ -82,6 +89,57 @@ Phase 5A emits:
 
 The canonical resolver remains the source of truth. Localized pages therefore inherit the already-validated localized canonical contract rather than rebuilding language URLs inside Schema.
 
+## Identity nodes — Phase 5B
+
+### Organization
+
+A site title is not enough to infer that a website represents an organization.
+
+The native Organization node is therefore opt-in through the server-side option:
+
+```php
+update_option(
+    'seo_geo_schema_identity',
+    array( 'site_entity_type' => 'organization' )
+);
+```
+
+When that explicit choice is present and the front page is indexable, the graph adds one stable Organization node:
+
+- `@type = Organization`;
+- `@id = {home_url}/#organization`;
+- `name` from the visible WordPress site name;
+- `url` from the authoritative site home URL.
+
+The front-page WebSite node references that Organization through `publisher`.
+
+Phase 5B intentionally does not infer or fabricate legal names, addresses, telephone numbers, social profiles, tax identifiers or logos. Richer Organization data belongs to later onboarding/preset work when an authoritative value and visible-content policy exist.
+
+### Person + ProfilePage
+
+A public WordPress author archive represents an existing editorial identity rather than a guessed site owner.
+
+For an indexable native author archive, the existing WebPage node is specialized to `ProfilePage` and the graph adds one Person node:
+
+- Person `@id = {author_url}#person`;
+- Person `name` from the WordPress user's visible display name;
+- Person `url` from the public author archive;
+- Person `description` only when the user has a non-empty WordPress biography;
+- ProfilePage `mainEntity` references the Person;
+- Person `mainEntityOfPage` references the existing page node.
+
+No Person node is emitted on ordinary posts merely because they have an author. Article-to-author linkage is a separate Phase 5 microphase.
+
+Google's current ProfilePage guidance requires the page's primary focus to be one affiliated Person or Organization. Native author archives meet that product intent; arbitrary pages are not promoted to ProfilePage automatically.
+
+References:
+
+- https://developers.google.com/search/docs/appearance/structured-data/profile-page
+- https://developers.google.com/search/docs/appearance/structured-data/organization
+- https://schema.org/Person
+- https://schema.org/Organization
+- https://schema.org/ProfilePage
+
 ## Indexability
 
 The graph builder consumes the existing `IndexabilityResolver`.
@@ -134,8 +192,13 @@ The zero-plugin WordPress smoke must prove:
 - exactly one project-owned JSON-LD script exists on the representative indexable post;
 - the JSON parses;
 - `@context` is `https://schema.org`;
-- exactly one WebSite and one WebPage baseline node exist;
+- exactly one WebSite and one WebPage baseline node exist on an ordinary post;
 - WebSite and WebPage IDs are deterministic and URL-derived;
+- an explicit organization opt-in adds one Organization on the home page and links WebSite.publisher to its stable ID;
+- the same organization data is not sprayed onto ordinary posts;
+- a public author archive emits WebSite + ProfilePage + Person;
+- ProfilePage.mainEntity and Person.mainEntityOfPage reference each other through stable IDs;
+- Person name/description come from the real WordPress author identity;
 - WebPage URL equals the canonical URL;
 - WebPage references the WebSite node through `isPartOf`;
 - `inLanguage` matches the active locale;
