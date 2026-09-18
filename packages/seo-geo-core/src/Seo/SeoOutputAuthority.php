@@ -18,6 +18,7 @@ final class SeoOutputAuthority {
 	public const SIGNAL_ROBOTS           = 'robots';
 	public const SIGNAL_OPEN_GRAPH       = 'open_graph';
 	public const SIGNAL_HREFLANG         = 'hreflang';
+	public const SIGNAL_SCHEMA           = 'schema';
 
 	/**
 	 * Active provider identifier.
@@ -37,6 +38,7 @@ final class SeoOutputAuthority {
 		self::SIGNAL_ROBOTS,
 		self::SIGNAL_OPEN_GRAPH,
 		self::SIGNAL_HREFLANG,
+		self::SIGNAL_SCHEMA,
 	);
 
 	/**
