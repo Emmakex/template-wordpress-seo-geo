@@ -209,7 +209,7 @@ final class SchemaLocalBusinessResolver {
 	 * Resolve optional coordinates only when both are precise and valid.
 	 *
 	 * @param array<string, mixed> $configuration LocalBusiness configuration.
-	 * @return array<string, float>|null
+	 * @return array<string, float|string>|null
 	 */
 	private function geo( array $configuration ): ?array {
 		$latitude  = $this->coordinate( $configuration['latitude'] ?? null, -90.0, 90.0 );
