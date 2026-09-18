@@ -15,6 +15,8 @@ namespace SeoGeo\Core\Geo;
 final class CrawlerPolicyPresenter {
 	/**
 	 * Validated crawler policy.
+	 *
+	 * @var CrawlerPolicy
 	 */
 	private CrawlerPolicy $policy;
 
@@ -41,10 +43,10 @@ final class CrawlerPolicyPresenter {
 	 * owned so the native runtime never creates competing duplicate directives.
 	 *
 	 * @param string $output Existing WordPress robots.txt content.
-	 * @param bool   $public Whether WordPress marks the site as public.
+	 * @param bool   $is_public Whether WordPress marks the site as public.
 	 */
-	public function filter_robots_txt( string $output, bool $public ): string {
-		if ( ! $public ) {
+	public function filter_robots_txt( string $output, bool $is_public ): string {
+		if ( ! $is_public ) {
 			return $output;
 		}
 
