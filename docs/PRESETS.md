@@ -72,6 +72,15 @@ Presets must work in ES and EN and remain translatable to additional locales.
 - BreadcrumbList
 - WebPage
 
+### Native LocalBusiness entity contract
+- Site identity must be explicitly selected as `local_business`; the theme never guesses it from content.
+- Business name and URL reuse visible/authoritative WordPress site state.
+- Physical address is mandatory before LocalBusiness Schema is emitted.
+- The subtype is selected from the supported LocalBusiness allowlist and falls back safely to generic `LocalBusiness`.
+- Telephone, price range, coordinates and opening hours are optional and validated before output.
+- Reviews, ratings, images and service areas are not fabricated from unrelated content.
+- One physical location is the Phase 5 baseline; multi-location modeling belongs to the Local Business preset implementation in Phase 7.
+
 ### Rules
 - Never generate thin city pages automatically.
 - NAP/contact data comes from one authoritative entity configuration.
