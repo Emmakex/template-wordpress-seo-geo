@@ -72,12 +72,31 @@ final class HreflangResolver {
 
 			if (
 				( 'x-default' === $language_code || 1 === preg_match( '/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $language_code ) )
-				&& '' !== $url
+				&& $this->is_absolute_http_url( $url )
 			) {
 				$output[ $language_code ] = $url;
 			}
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Accept only absolute HTTP(S) URLs for alternate-language output.
+	 *
+	 * @param string $url Candidate alternate URL.
+	 */
+	private function is_absolute_http_url( string $url ): bool {
+		if ( '' === $url ) {
+			return false;
+		}
+
+		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+		$host   = wp_parse_url( $url, PHP_URL_HOST );
+
+		return is_string( $scheme )
+			&& is_string( $host )
+			&& '' !== $host
+			&& in_array( strtolower( $scheme ), array( 'http', 'https' ), true );
 	}
 }
