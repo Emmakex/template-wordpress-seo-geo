@@ -76,10 +76,10 @@ final class SchemaGraphBuilder {
 	/**
 	 * Create the graph builder.
 	 *
-	 * @param IndexabilityResolver     $indexability Native indexability authority.
-	 * @param CanonicalResolver        $canonical    Canonical URL authority.
-	 * @param LanguageManager          $language     Active language facade.
-	 * @param SchemaNodeIds            $ids        Stable node-ID generator.
+	 * @param IndexabilityResolver        $indexability Native indexability authority.
+	 * @param CanonicalResolver           $canonical    Canonical URL authority.
+	 * @param LanguageManager             $language     Active language facade.
+	 * @param SchemaNodeIds               $ids          Stable node-ID generator.
 	 * @param SchemaBreadcrumbResolver    $breadcrumb      Native BreadcrumbList authority.
 	 * @param SchemaIdentityResolver      $identity        Native identity authority.
 	 * @param SchemaLocalBusinessResolver $local_business  Native LocalBusiness authority.
@@ -95,10 +95,10 @@ final class SchemaGraphBuilder {
 		SchemaLocalBusinessResolver $local_business,
 		SchemaArticleResolver $article
 	) {
-		$this->indexability = $indexability;
-		$this->canonical    = $canonical;
-		$this->language     = $language;
-		$this->ids          = $ids;
+		$this->indexability   = $indexability;
+		$this->canonical      = $canonical;
+		$this->language       = $language;
+		$this->ids            = $ids;
 		$this->breadcrumb     = $breadcrumb;
 		$this->identity       = $identity;
 		$this->local_business = $local_business;
