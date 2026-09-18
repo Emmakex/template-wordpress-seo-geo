@@ -49,6 +49,11 @@ final class HreflangResolver {
 		}
 
 		$alternates = $this->localized->alternate_urls();
+		$x_default = $this->localized->x_default_url();
+
+		if ( null !== $x_default ) {
+			$alternates['x-default'] = $x_default;
+		}
 
 		/**
 		 * Filters native hreflang alternates.
@@ -66,7 +71,7 @@ final class HreflangResolver {
 			$url           = trim( $url );
 
 			if (
-				1 === preg_match( '/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $language_code )
+				( 'x-default' === $language_code || 1 === preg_match( '/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $language_code ) )
 				&& '' !== $url
 			) {
 				$output[ $language_code ] = $url;
