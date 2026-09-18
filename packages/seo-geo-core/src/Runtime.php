@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SeoGeo\Core;
 
+use SeoGeo\Core\Geo\CrawlerPolicy;
+use SeoGeo\Core\Geo\CrawlerPolicyPresenter;
 use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\LanguageManager;
 use SeoGeo\Core\Language\NativeLanguageConfiguration;
@@ -37,6 +39,13 @@ use SeoGeo\Core\Seo\SeoOutputAuthority;
  * Boots SEO/GEO services independently from plugin or theme packaging.
  */
 final class Runtime {
+	/**
+	 * Native crawler policy.
+	 *
+	 * @var CrawlerPolicy|null
+	 */
+	private static ?CrawlerPolicy $crawler_policy = null;
+
 	/**
 	 * Normalized language service.
 	 *
@@ -109,6 +118,9 @@ final class Runtime {
 		}
 
 		self::$integration_detector = new RuntimeIntegrationDetector();
+		self::$crawler_policy       = CrawlerPolicy::from_wordpress();
+		$crawler_presenter          = new CrawlerPolicyPresenter( self::$crawler_policy );
+		$crawler_presenter->register();
 
 		$language_configuration = NativeLanguageConfiguration::from_wordpress();
 
@@ -170,6 +182,13 @@ final class Runtime {
 		do_action( 'seo_geo_core_ready', self::$language_manager, self::$integration_detector, self::$seo_authority );
 	}
 
+
+	/**
+	 * Get the native crawler policy when initialized.
+	 */
+	public static function crawler_policy(): ?CrawlerPolicy {
+		return self::$crawler_policy;
+	}
 
 	/**
 	 * Get the normalized language service when initialized.
