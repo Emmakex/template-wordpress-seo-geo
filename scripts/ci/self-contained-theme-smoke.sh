@@ -444,7 +444,7 @@ PY
 fi
 
 printf '[self-contained] Checking explicit LocalBusiness identity.\n'
-wp_cli eval 'update_option( \\SeoGeo\\Core\\Schema\\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "local_business" ), false ); update_option( \\SeoGeo\\Core\\Schema\\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_region" => "Catalunya", "postal_code" => "08001", "address_country" => "ES", "telephone" => "+34 930 000 000", "price_range" => "€€", "latitude" => "41.38740", "longitude" => "2.16860", "opening_hours" => array( array( "days" => array( "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ), "opens" => "09:00", "closes" => "18:00" ) ) ), false );' >/dev/null \
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "local_business" ), false ); update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_region" => "Catalunya", "postal_code" => "08001", "address_country" => "ES", "telephone" => "+34 930 000 000", "price_range" => "€€", "latitude" => "41.38740", "longitude" => "2.16860", "opening_hours" => array( array( "days" => array( "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ), "opens" => "09:00", "closes" => "18:00" ) ) ), false );' >/dev/null \
   || fail_smoke "schema-local-business-option" "Could not configure explicit LocalBusiness identity" "option updates succeed" "failed"
 curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
   || fail_smoke "schema-local-business-home-request" "Could not request LocalBusiness home fixture" "HTTP 2xx" "curl failed"
@@ -533,7 +533,7 @@ PY
 fi
 
 printf '[self-contained] Checking incomplete LocalBusiness suppression.\n'
-wp_cli eval 'update_option( \\SeoGeo\\Core\\Schema\\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_country" => "ES" ), false );' >/dev/null \
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME, array( "type" => "Plumber", "street_address" => "Carrer de la Prova 10", "address_locality" => "Barcelona", "address_country" => "ES" ), false );' >/dev/null \
   || fail_smoke "schema-local-business-invalid-option" "Could not configure incomplete LocalBusiness fixture" "option update succeeds" "failed"
 curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
   || fail_smoke "schema-local-business-invalid-request" "Could not request incomplete LocalBusiness fixture" "HTTP 2xx" "curl failed"
@@ -580,7 +580,7 @@ PY
   fail_smoke "schema-local-business-incomplete" "Incomplete LocalBusiness configuration must not emit an entity" "baseline WebSite + WebPage only" "${LOCAL_BUSINESS_NEGATIVE_RESULT:-python assertion failed}" "parse incomplete LocalBusiness JSON-LD graph"
 fi
 
-wp_cli eval 'update_option( \\SeoGeo\\Core\\Schema\\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "organization" ), false ); delete_option( \\SeoGeo\\Core\\Schema\\SchemaLocalBusinessResolver::OPTION_NAME );' >/dev/null \
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "organization" ), false ); delete_option( \SeoGeo\Core\Schema\SchemaLocalBusinessResolver::OPTION_NAME );' >/dev/null \
   || fail_smoke "schema-local-business-reset" "Could not restore Organization fixture after LocalBusiness checks" "identity reset succeeds" "failed"
 
 printf '[self-contained] Checking native author ProfilePage + Person identity.\n'
