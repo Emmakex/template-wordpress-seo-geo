@@ -626,11 +626,43 @@ PR #30 passed all eight required PR gates on final candidate `e14c4a98045d37f020
 
 The acceptance remains plugin-free. The first BlogPosting fixture omitted an explicit post author under WP-CLI and therefore correctly produced no Person/author relationship instead of fabricating one. The fixture was fixed by assigning a real WordPress author, and the reusable lesson is recorded as `ERR-2026-011`.
 
+### Microphase 5D — native BreadcrumbList from shared breadcrumb authority
+
+Status: **complete**
+
+Delivered on PR #32:
+
+- `SchemaBreadcrumbResolver` as a Schema-only adapter over the existing reusable `BreadcrumbResolver`;
+- no duplicate hierarchy, translated-slug or navigation discovery inside the Schema layer;
+- stable BreadcrumbList ID `{canonical_url}#breadcrumb`;
+- `WebPage.breadcrumb` reference to that stable node inside the same native `@graph`;
+- ordered `ListItem` entries with sequential positions, existing breadcrumb labels and existing public URLs;
+- at least two breadcrumb items required before markup is emitted;
+- absolute HTTP(S) URL validation for breadcrumb items;
+- non-final items require a valid URL; the final item may omit `item` only when the breadcrumb authority has no current-page URL;
+- incomplete intermediate hierarchy suppresses the whole BreadcrumbList rather than fabricating a partial path;
+- front-page one-item breadcrumb data does not produce BreadcrumbList markup;
+- Foundation contract expanded for the new Schema resolver;
+- self-contained zero-plugin acceptance expanded for WebPage/BreadcrumbList linkage, stable IDs, item order and the front-page negative fixture;
+- public contract expanded in `docs/NATIVE_SCHEMA.md`.
+
+PR #32 passed all eight required PR gates on final candidate `a6d410815b825386238b54573ac222c14fae953e` and was squash-merged as `51cfffb584d6fbf505ab08a7bf86eca95174e107`. Post-merge `main` passed all eight gates again:
+
+- Phase 1 Package CI `35329966170`;
+- Foundation CI `35329965927`;
+- PHP Quality CI `35329965996`;
+- WordPress Smoke CI `35329965932`;
+- Self-contained Theme CI `35329965975`;
+- Native Multilingual CI `35329965943`;
+- Accessibility & Responsive CI `35329965938`;
+- Performance Baseline CI `35329965901`.
+
+The acceptance remains plugin-free and keeps one native JSON-LD graph owner. Fixture node-count drift found during adoption is recorded as `ERR-2026-012`; production BreadcrumbList output did not require a workaround.
+
 ### Remaining Phase 5 work
 
 Pending microphases must extend the same graph rather than emit independent JSON-LD islands:
 
-- BreadcrumbList generated from the existing breadcrumb data authority;
 - LocalBusiness support for the local-business preset;
 - visible-content consistency and negative fixtures for optional entity fields.
 
