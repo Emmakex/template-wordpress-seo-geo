@@ -21,7 +21,7 @@ final class MarkdownAlternatePresenter {
 	private MarkdownAlternateResolver $resolver;
 
 	/**
-	 * llms.txt authority used for describedby discovery.
+	 * LLMS.txt authority used for describedby discovery.
 	 *
 	 * @var LlmsTxtResolver
 	 */
@@ -31,7 +31,7 @@ final class MarkdownAlternatePresenter {
 	 * Create the presenter.
 	 *
 	 * @param MarkdownAlternateResolver $resolver Markdown alternate authority.
-	 * @param LlmsTxtResolver            $llms_txt llms.txt authority.
+	 * @param LlmsTxtResolver           $llms_txt LLMS.txt authority.
 	 */
 	public function __construct( MarkdownAlternateResolver $resolver, LlmsTxtResolver $llms_txt ) {
 		$this->resolver = $resolver;
