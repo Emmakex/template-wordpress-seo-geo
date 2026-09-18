@@ -69,9 +69,9 @@ final class SchemaGraphBuilder {
 	/**
 	 * Create the graph builder.
 	 *
-	 * @param IndexabilityResolver   $indexability Native indexability authority.
-	 * @param CanonicalResolver      $canonical    Canonical URL authority.
-	 * @param LanguageManager        $language     Active language facade.
+	 * @param IndexabilityResolver     $indexability Native indexability authority.
+	 * @param CanonicalResolver        $canonical    Canonical URL authority.
+	 * @param LanguageManager          $language     Active language facade.
 	 * @param SchemaNodeIds            $ids        Stable node-ID generator.
 	 * @param SchemaBreadcrumbResolver $breadcrumb Native BreadcrumbList authority.
 	 * @param SchemaIdentityResolver   $identity   Native identity authority.
