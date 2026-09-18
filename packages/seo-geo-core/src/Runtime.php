@@ -103,7 +103,7 @@ final class Runtime {
 		self::$translation_registry = new NativeTranslationRegistry( $language_configuration );
 
 		self::$seo_authority = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
-		self::$localized_seo = new LocalizedSeoResolver( self::$language_router, self::$translation_registry );
+		self::$localized_seo = new LocalizedSeoResolver( self::$language_router, self::$translation_registry, $language_configuration );
 
 		self::$language_router->register();
 		add_filter( 'seo_geo_indexability_state', array( self::$localized_seo, 'resolve_indexability' ), 20 );
@@ -115,7 +115,7 @@ final class Runtime {
 		$open_graph   = new OpenGraphResolver( $indexability, $canonical, $description );
 		$hreflang     = new HreflangResolver( $indexability, self::$localized_seo );
 
-		self::$breadcrumbs = new BreadcrumbResolver();
+		self::$breadcrumbs = new BreadcrumbResolver( self::$localized_seo );
 		self::$native_seo  = new NativeSeoPresenter(
 			self::$seo_authority,
 			$indexability,
@@ -156,6 +156,16 @@ final class Runtime {
 	 */
 	public static function translations(): ?NativeTranslationRegistry {
 		return self::$translation_registry;
+	}
+
+	/**
+	 * Get the localized SEO authority when initialized.
+	 *
+	 * Later Schema/GEO layers must reuse this authority instead of reconstructing
+	 * language or translation state independently.
+	 */
+	public static function localized_seo(): ?LocalizedSeoResolver {
+		return self::$localized_seo;
 	}
 
 	/**
