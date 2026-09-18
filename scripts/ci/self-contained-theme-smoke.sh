@@ -309,17 +309,19 @@ assert parser.count == 1, f"schema_script_count={parser.count}"
 payload = json.loads("".join(parser.parts))
 assert payload.get("@context") == "https://schema.org"
 nodes = payload.get("@graph")
-assert isinstance(nodes, list) and len(nodes) == 4, f"nodes={nodes!r}"
+assert isinstance(nodes, list) and len(nodes) == 6, f"nodes={nodes!r}"
 
 by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
 website = by_type.get("WebSite")
 webpage = by_type.get("WebPage")
 article = by_type.get("BlogPosting")
 person = by_type.get("Person")
+breadcrumb = by_type.get("BreadcrumbList")
 assert isinstance(website, dict)
 assert isinstance(webpage, dict)
 assert isinstance(article, dict)
 assert isinstance(person, dict)
+assert isinstance(breadcrumb, dict)
 
 canonical = base + "self-contained-seo-fixture/"
 website_id = base + "#website"
@@ -328,6 +330,7 @@ article_id = canonical + "#article"
 profile_url = base + "author/admin/"
 profile_page_id = profile_url + "#webpage"
 person_id = profile_url + "#person"
+breadcrumb_id = canonical + "#breadcrumb"
 
 assert website.get("@id") == website_id
 assert website.get("url") == base
@@ -337,7 +340,20 @@ assert webpage.get("url") == canonical
 assert webpage.get("isPartOf") == {"@id": website_id}
 assert webpage.get("inLanguage") == "en-US"
 assert webpage.get("mainEntity") == {"@id": article_id}
+assert webpage.get("breadcrumb") == {"@id": breadcrumb_id}
 assert isinstance(webpage.get("name"), str) and webpage["name"]
+
+assert breadcrumb.get("@id") == breadcrumb_id
+items = breadcrumb.get("itemListElement")
+assert isinstance(items, list) and len(items) == 2, f"breadcrumb_items={items!r}"
+assert items[0].get("@type") == "ListItem"
+assert items[0].get("position") == 1
+assert items[0].get("name") == "Self-contained SEO GEO"
+assert items[0].get("item") == base
+assert items[1].get("@type") == "ListItem"
+assert items[1].get("position") == 2
+assert items[1].get("name") == "Self-contained SEO Fixture"
+assert items[1].get("item") == canonical
 
 assert article.get("@id") == article_id
 assert article.get("url") == canonical
@@ -360,6 +376,7 @@ print(json.dumps({
     "webpage_id": webpage_id,
     "article_id": article_id,
     "person_id": person_id,
+    "breadcrumb_id": breadcrumb_id,
     "inLanguage": article["inLanguage"],
 }))
 PY
@@ -418,6 +435,8 @@ assert organization.get("name") == "Self-contained SEO GEO"
 assert organization.get("url") == base
 assert website.get("publisher") == {"@id": organization_id}
 assert webpage.get("@type") == "WebPage"
+assert by_type.get("BreadcrumbList") is None
+assert "breadcrumb" not in webpage
 print(json.dumps({"organization_id": organization_id, "node_count": len(nodes)}))
 PY
 )"; then
@@ -467,7 +486,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 base = sys.argv[2].rstrip("/") + "/"
 payload = json.loads("".join(parser.parts))
 nodes = payload.get("@graph")
-assert isinstance(nodes, list) and len(nodes) == 3, f"nodes={nodes!r}"
+assert isinstance(nodes, list) and len(nodes) == 4, f"nodes={nodes!r}"
 by_type = {node.get("@type"): node for node in nodes if isinstance(node, dict)}
 website = by_type.get("WebSite")
 profile = by_type.get("ProfilePage")
