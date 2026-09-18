@@ -592,11 +592,44 @@ PR #28 passed all eight required PR gates on final candidate `471774b3d3992dee41
 
 The acceptance remains plugin-free and preserves multilingual, accessibility and performance contracts. A recurrence of the known WP-CLI namespace-escaping fixture class was fixed in the test harness and recorded under `ERR-2026-006`; production Schema code did not require a workaround.
 
+### Microphase 5C — native BlogPosting + author/publisher linkage
+
+Status: **complete**
+
+Delivered on PR #30:
+
+- `SchemaArticleResolver` for singular, published built-in WordPress posts only;
+- no automatic Article inference for pages, archives or arbitrary custom post types;
+- stable BlogPosting ID `{canonical_url}#article`;
+- reciprocal `WebPage.mainEntity` and `BlogPosting.mainEntityOfPage` references;
+- `headline` from the visible WordPress post title;
+- `datePublished` and `dateModified` from WordPress date-time APIs in ISO 8601 form;
+- `inLanguage` reused from the existing language authority;
+- article `author` linked only to a real WordPress user identity and reusing the stable Person ID from Phase 5B;
+- article `publisher` emitted only when the site explicitly opted into the existing Organization identity;
+- no fabricated image, publisher, keywords, section or NewsArticle classification;
+- the same single native `@graph` and Schema owner preserved;
+- Foundation contract expanded for `SchemaArticleResolver`;
+- self-contained zero-plugin acceptance expanded for BlogPosting, Person and Organization references;
+- public contract expanded in `docs/NATIVE_SCHEMA.md`.
+
+PR #30 passed all eight required PR gates on final candidate `e14c4a98045d37f020348a509a13cd52486f5c9b` and was squash-merged as `744be92a3d69bad1a4711291c6be162273cd416f`. Post-merge `main` passed all eight gates again:
+
+- Phase 1 Package CI `35315585281`;
+- Foundation CI `35315585359`;
+- PHP Quality CI `35315585319`;
+- WordPress Smoke CI `35315585367`;
+- Self-contained Theme CI `35315585378`;
+- Native Multilingual CI `35315585405`;
+- Accessibility & Responsive CI `35315585338`;
+- Performance Baseline CI `35315585374`.
+
+The acceptance remains plugin-free. The first BlogPosting fixture omitted an explicit post author under WP-CLI and therefore correctly produced no Person/author relationship instead of fabricating one. The fixture was fixed by assigning a real WordPress author, and the reusable lesson is recorded as `ERR-2026-011`.
+
 ### Remaining Phase 5 work
 
 Pending microphases must extend the same graph rather than emit independent JSON-LD islands:
 
-- Article/BlogPosting nodes and author/publisher linkage where truthful;
 - BreadcrumbList generated from the existing breadcrumb data authority;
 - LocalBusiness support for the local-business preset;
 - visible-content consistency and negative fixtures for optional entity fields.

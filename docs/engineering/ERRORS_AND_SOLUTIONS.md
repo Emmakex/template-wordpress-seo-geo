@@ -565,3 +565,47 @@ Performance-related WPCS warnings are treated as architecture feedback. They mus
 
 PHP Quality CI retains `WordPress.DB.SlowDBQuery` checks, so reintroducing request-time translation discovery through `meta_key/meta_value` queries will fail the quality gate.
 
+## ERR-2026-011 — WP-CLI fixture post had no real author identity
+
+**Status:** resolved  
+**First seen:** 2026-09-18  
+**Last seen:** 2026-09-18  
+**Area:** ci / schema / integration  
+**Signature:** `0f1723aecd34`  
+**Reference:** PR #30; failing Self-contained Theme CI run `35315248701` / job `105505385494`; passing PR run `35315353803`; post-merge passing run `35315585378`
+
+### Symptom / context
+
+The first Phase 5C self-contained Schema fixture expected a built-in WordPress post to emit WebSite + WebPage + BlogPosting + Person. The real graph correctly emitted WebSite + WebPage + BlogPosting, but omitted the article author and Person node.
+
+The captured graph showed valid BlogPosting headline, dates, canonical linkage and language. Only the author identity was absent.
+
+### Root cause
+
+Confirmed. The fixture created its representative post with `wp post create` but did not set `--post_author`. In that WP-CLI fixture context the post was stored with `post_author=0`.
+
+The production resolver intentionally requires a real WordPress user before emitting an author relationship. Resolving user ID 0 therefore returned no identity, and the graph correctly omitted both `BlogPosting.author` and the Person node instead of fabricating an author.
+
+### Solution
+
+The fixture now assigns the already existing WordPress administrator explicitly with `--post_author=1`.
+
+No production Schema code was changed for this failure. The safe omission behavior remains part of the product contract.
+
+### Validation
+
+- PR #30 Self-contained Theme CI run `35315353803` passed the full zero-plugin BlogPosting graph after the fixture correction;
+- PR #30 passed all eight required gates;
+- PR #30 was squash-merged as `744be92a3d69bad1a4711291c6be162273cd416f`;
+- post-merge Self-contained Theme CI run `35315585378` passed the same BlogPosting author/publisher contract on `main`;
+- post-merge PHP Quality, Native Multilingual, Accessibility and Performance gates also passed.
+
+### Prevention / guardrail
+
+Acceptance fixtures that verify author identity must assign a real WordPress user explicitly. Do not assume WP-CLI content creation implicitly assigns the site administrator or another valid author.
+
+Production identity resolvers must continue to omit optional author/person relationships when the source identity is absent or invalid rather than inventing an entity to satisfy a test.
+
+### Regression coverage
+
+`scripts/ci/self-contained-theme-smoke.sh` creates the representative BlogPosting with an explicit real author and asserts that the resulting Person uses the stable public author profile ID. A second authored fixture also verifies that BlogPosting author and explicit Organization publisher references coexist in the same native graph.
