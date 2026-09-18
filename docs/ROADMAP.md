@@ -374,23 +374,95 @@ All exit criteria are satisfied:
 
 ## Phase 4 — Native multilingual core
 
-Deliverables:
+Status: **in progress**
 
-- LanguageManager contract;
-- native ES/EN language configuration;
-- hreflang resolver;
-- locale-aware metadata hooks;
-- localized breadcrumbs/internal URL helpers;
-- ES/EN native integration fixtures;
-- optional WPML/Polylang adapters only after the native baseline is complete.
+The native baseline remains intentionally staged: language configuration and URL routing are complete, but localized routes do not become indexable until an explicit translated-resource relationship can prove canonical and alternate ownership.
 
-Exit criteria:
+### Microphase 4A — native language configuration contract
 
-- reciprocal valid alternates in the native baseline;
-- current-language canonical;
-- correct HTML lang/OG locale/Schema language hooks;
-- no cross-language navigation regressions;
-- no multilingual plugin required for baseline acceptance.
+Status: **complete**
+
+Delivered on PR #17:
+
+- server-authoritative `NativeLanguageConfiguration` backed by `seo_geo_native_languages`;
+- safe monolingual fallback to the active WordPress locale;
+- atomic rejection of malformed or duplicate-locale configurations;
+- normalized current/default language codes, language map and locale lookup through `LanguageManager`;
+- zero-plugin ES/EN fixture on WordPress 7.1 / PHP 8.2;
+- dedicated `Native Multilingual CI`;
+- no route, canonical or `hreflang` changes in this configuration-only microphase.
+
+PR #17 was squash-merged as `b313b6d2b6f7f111c45725c71919c1f48fea3e90`. Post-merge `main` passed all eight triggered gates:
+
+- Foundation CI `35267813403`;
+- Phase 1 Package CI `35267813439`;
+- PHP Quality CI `35267813460`;
+- WordPress Smoke CI `35267813453`;
+- Self-contained Theme CI `35267813454`;
+- Native Multilingual CI `35267813409`;
+- Accessibility & Responsive CI `35267813412`;
+- Performance Baseline CI `35267813446`.
+
+### Microphase 4B — staged native prefix routing and request locale
+
+Status: **complete**
+
+Delivered on PR #18:
+
+- opt-in `routing=prefix` mode with disabled-by-default backward compatibility;
+- native ES/EN prefixed WordPress rewrites without changing existing `$matches[n]` capture numbering;
+- validated route authority: query-string language values cannot activate locale by themselves;
+- request-locale switching for matched configured prefixes;
+- HTML `lang` alignment with the validated route locale;
+- protection against WordPress canonical redirects stripping valid prefixes;
+- reserved language-shaped namespace so unconfigured prefixes such as `/fr/` remain 404 instead of being guessed into unrelated canonical redirects;
+- staged `noindex,follow` for localized prefixed routes until translation relationships exist;
+- suppression of native canonical and Open Graph output for those staged routes through the existing indexability contract;
+- unprefixed routes remain authoritative and indexable;
+- dedicated real-HTTP zero-plugin routing smoke covering `/es/`, `/en/`, query-selector abuse and unknown prefixes;
+- no `hreflang`, translated slug inference or fabricated translation relationship.
+
+PR #18 passed all eight PR gates on final candidate `f6d4044018ced5e57b1d464815085dc6566ff6be` and was squash-merged as `ae799522e6ac27e2b77ae911d7160095e0ce2e7b`. Post-merge `main` passed all eight gates again:
+
+- Foundation CI `35299884158`;
+- Phase 1 Package CI `35299884173`;
+- PHP Quality CI `35299884122`;
+- WordPress Smoke CI `35299884170`;
+- Self-contained Theme CI `35299884212`;
+- Native Multilingual CI `35299884357`;
+- Accessibility & Responsive CI `35299884124`;
+- Performance Baseline CI `35299884131`.
+
+Functional adoption findings are recorded as `ERR-2026-008` and `ERR-2026-009`. WPCS alignment and the PHPStan redundant type guard were fixed in code without suppressions.
+
+### Microphase 4C — explicit translation relationships + indexable localized SEO
+
+Status: **pending**
+
+Next scope:
+
+- explicit source-to-translation relationship contract; never infer a translation merely because one WordPress object is reachable under multiple prefixes;
+- localized self-referencing canonical URLs only for validated translated resources;
+- reciprocal `hreflang` sets containing only published, resolvable translations;
+- optional `x-default` only when its semantic target is explicitly configured;
+- promotion from staged `noindex` to indexable state only after the relationship is valid;
+- locale-aware breadcrumb and internal URL helpers;
+- Open Graph locale/URL alignment through the same language authority;
+- normalized language context for the later Phase 5 Schema graph;
+- ES/EN acceptance for missing, draft, private and non-reciprocal translations.
+
+Optional WPML/Polylang adapters remain outside the native baseline critical path and must not become required dependencies.
+
+### Phase 4 exit criteria
+
+Phase 4 remains open until:
+
+- reciprocal valid alternates exist in the native baseline;
+- every indexable localized page has the correct current-language canonical;
+- HTML language and Open Graph language/URL signals agree with the active language authority;
+- locale-aware breadcrumbs/internal links do not cross languages accidentally;
+- invalid, missing, draft or private translations never appear as indexable alternates;
+- no multilingual plugin is required for baseline acceptance.
 
 ## Phase 5 — Schema graph + entities
 
