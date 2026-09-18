@@ -334,7 +334,7 @@ PY
 fi
 
 printf '[self-contained] Checking explicit Organization identity on the home page.\n'
-wp_cli eval 'update_option( \\SeoGeo\\Core\\Schema\\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "organization" ), false );' >/dev/null \
+wp_cli eval 'update_option( \SeoGeo\Core\Schema\SchemaIdentityResolver::OPTION_NAME, array( "site_entity_type" => "organization" ), false );' >/dev/null \
   || fail_smoke "schema-organization-option" "Could not enable explicit Organization identity" "option update succeeds" "failed"
 curl -fsS "${BASE_URL}/" -o "$HOME_BODY" \
   || fail_smoke "schema-organization-home-request" "Could not request Organization home fixture" "HTTP 2xx" "curl failed"
