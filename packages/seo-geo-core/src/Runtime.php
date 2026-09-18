@@ -140,12 +140,12 @@ final class Runtime {
 		);
 		self::$native_seo->register();
 
-		$schema_ids         = new SchemaNodeIds();
-		$schema_breadcrumb  = new SchemaBreadcrumbResolver( self::$breadcrumbs, $schema_ids );
+		$schema_ids            = new SchemaNodeIds();
+		$schema_breadcrumb     = new SchemaBreadcrumbResolver( self::$breadcrumbs, $schema_ids );
 		$schema_identity       = new SchemaIdentityResolver( $schema_ids );
 		$schema_local_business = new SchemaLocalBusinessResolver( $schema_ids, $schema_identity );
 		$schema_article        = new SchemaArticleResolver( $schema_identity );
-		self::$schema_graph = new SchemaGraphBuilder(
+		self::$schema_graph    = new SchemaGraphBuilder(
 			$indexability,
 			$canonical,
 			self::$language_manager,
