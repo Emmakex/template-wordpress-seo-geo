@@ -32,9 +32,26 @@ cache_etag() {
 assert_revalidation_headers() {
   local headers_file="$1"
   local surface="$2"
+  local cache_control
+  local normalized
 
-  grep -Eiq '^cache-control:[[:space:]]*public, no-cache, must-revalidate, max-age=0\r?$' "$headers_file" \
-    || fail_smoke "discovery-cache-${surface}-cache-control" "Discovery response missed the conservative public revalidation policy" "public, no-cache, must-revalidate, max-age=0" "header absent or different"
+  cache_control="$(awk 'BEGIN { IGNORECASE=1 } /^cache-control:/ { sub(/\r$/, ""); sub(/^[^:]+:[[:space:]]*/, ""); if ( value != "" ) { value = value ", " } value = value $0 } END { print value }' "$headers_file")"
+  normalized="$(printf '%s' "$cache_control" | tr '[:upper:]' '[:lower:]')"
+
+  [[ -n "$normalized" ]] \
+    || fail_smoke "discovery-cache-${surface}-cache-control" "Discovery response missed Cache-Control" "public + no-cache + must-revalidate + max-age=0" "header absent"
+
+  for directive in public no-cache must-revalidate max-age=0; do
+    if ! printf '%s\n' "$normalized" | grep -Eq "(^|,[[:space:]]*)${directive}([[:space:]]*,|$)"; then
+      fail_smoke "discovery-cache-${surface}-cache-control" "Discovery response missed a required public revalidation directive" "public + no-cache + must-revalidate + max-age=0" "$cache_control"
+    fi
+  done
+
+  for forbidden in private no-store; do
+    if printf '%s\n' "$normalized" | grep -Eq "(^|,[[:space:]]*)${forbidden}([[:space:]]*,|$)"; then
+      fail_smoke "discovery-cache-${surface}-cache-control" "Discovery response included a directive that prevents the intended shared revalidation contract" "no private/no-store directives" "$cache_control"
+    fi
+  done
 
   local etag
   etag="$(cache_etag "$headers_file")"
