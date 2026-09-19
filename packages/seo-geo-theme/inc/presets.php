@@ -37,6 +37,8 @@ function seo_geo_theme_preset_root(): string {
 /**
  * Load one trusted preset JSON document.
  *
+ * @param string $preset_id Allowlisted preset identifier.
+ * @param string $filename  Supported preset document filename.
  * @return array<string, mixed>|null
  */
 function seo_geo_theme_preset_document( string $preset_id, string $filename ): ?array {
@@ -87,15 +89,16 @@ function seo_geo_theme_preset_locale(): string {
 /**
  * Return one localized preset value with English fallback.
  *
- * @param mixed $localized Localized map.
+ * @param mixed  $localized Localized map.
+ * @param string $key       Localized field key.
  */
 function seo_geo_theme_preset_localized_value( $localized, string $key ): ?string {
 	if ( ! is_array( $localized ) ) {
 		return null;
 	}
 
-	$locale = seo_geo_theme_preset_locale();
-	$current = $localized[ $locale ] ?? null;
+	$locale   = seo_geo_theme_preset_locale();
+	$current  = $localized[ $locale ] ?? null;
 	$fallback = $localized['en_US'] ?? null;
 
 	if ( is_array( $current ) && isset( $current[ $key ] ) && is_string( $current[ $key ] ) ) {
@@ -130,8 +133,8 @@ function seo_geo_theme_register_active_preset_patterns(): void {
 		if ( null === $category_label ) {
 			$labels = $category['labels'] ?? array();
 			if ( is_array( $labels ) ) {
-				$locale = seo_geo_theme_preset_locale();
-				$candidate = $labels[ $locale ] ?? $labels['en_US'] ?? null;
+				$locale         = seo_geo_theme_preset_locale();
+				$candidate      = $labels[ $locale ] ?? $labels['en_US'] ?? null;
 				$category_label = is_string( $candidate ) ? $candidate : null;
 			}
 		}
