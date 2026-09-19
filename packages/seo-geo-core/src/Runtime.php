@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Core;
 
+use SeoGeo\Core\Geo\CrawlerPolicyAdmin;
 use SeoGeo\Core\Geo\CrawlerPolicyPresenter;
 use SeoGeo\Core\Geo\ContentProvenancePresenter;
 use SeoGeo\Core\Geo\ContentProvenanceResolver;
@@ -201,6 +202,9 @@ final class Runtime {
 		self::$crawler_policy = new CrawlerPolicyResolver();
 		$crawler_presenter    = new CrawlerPolicyPresenter( self::$crawler_policy );
 		$crawler_presenter->register();
+
+		$crawler_admin = new CrawlerPolicyAdmin( self::$crawler_policy );
+		$crawler_admin->register();
 
 		self::$markdown_alternates = new MarkdownAlternateResolver(
 			self::$translation_registry,
