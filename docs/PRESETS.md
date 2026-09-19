@@ -51,6 +51,37 @@ Presets must work in ES and EN and remain translatable to additional locales.
 - CTA
 - Contact block
 
+### Phase 7A implementation contract
+
+The Corporate preset is bundled under `presets/corporate/` and remains inactive until the server-side option `seo_geo_active_preset` resolves to the allowlisted value `corporate`.
+
+The preset ships three declarative documents:
+
+- `preset.json`: site type, template dependencies, base/preset patterns, Schema expectations, navigation defaults, multilingual baseline, SEO acceptance and explicit non-features;
+- `content-map.json`: matching EN/ES information architecture for Home, Services, Work, About, Insights, Contact and legal pages, plus repeatable service-detail/case-study guidance;
+- `patterns.json`: Corporate-only case-study, metrics and testimonial patterns in EN/ES.
+
+The neutral theme patterns remain untouched. Corporate adds only the missing archetype-specific compositions:
+
+- case-study teaser;
+- verified metrics;
+- testimonial placeholders.
+
+Preset patterns are editor scaffolding, not factual claims. They explicitly require authors to replace prompts with real, verifiable information before publication. The preset never generates client names, endorsements, performance figures, certifications or other proof.
+
+Corporate recommends `Organization` as the site identity, but `requires_confirmation=true` is mandatory. Activating the visual/information-architecture preset does not automatically enable Organization Schema. Phase 8 onboarding may offer the choice, but the existing server-side Schema identity authority remains responsible for the final configuration.
+
+The distributable theme bundles preset data under `/presets`. `inc/presets.php` is the runtime registry used by later onboarding:
+
+- preset IDs are allowlisted server-side;
+- unsupported IDs resolve to no active preset;
+- the default installation has no active preset;
+- Corporate patterns register only when Corporate is active;
+- preset-owned copy selects ES or EN from the active WordPress locale, with English fallback;
+- no preset can fork or replace the SEO/GEO Core runtime.
+
+Phase 7A does not create pages automatically. It establishes the validated content map and runtime registry that Phase 8 onboarding will use to create/configure site content with explicit administrator intent.
+
 ## Local Business
 
 ### Core pages
