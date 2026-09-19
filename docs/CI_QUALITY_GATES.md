@@ -148,6 +148,15 @@ Phase 7C closure evidence:
 - PR #58 was squash-merged as `6ef503ff03db934ef33170ad48d07bcc94ec45ac`;
 - all ten post-merge workflows passed again on `main`, including Self-contained Theme CI `35454988460`, Native Multilingual CI `35454988462`, Accessibility & Responsive CI `35454988437` and Performance Baseline CI `35454988446`.
 
+For Phase 7D Ecommerce:
+
+- Foundation executes `scripts/ci/validate-ecommerce-preset.php` alongside the first three preset validators;
+- the static contract proves provider-owned Product/Offer/review Schema, explicit Organization confirmation, zero-plugin safety, EN/ES parity, provider-owned shop/category/product surfaces, anti-facet/indexing defaults and core-block-only Ecommerce patterns;
+- Self-contained Theme CI sources `scripts/ci/ecommerce-preset-acceptance.sh` inside the existing zero-plugin WordPress/MariaDB fixture;
+- runtime acceptance explicitly proves WooCommerce is absent, Ecommerce still activates all four patterns, earlier preset patterns stay isolated, ES/EN copy resolves, and Schema identity configuration is not mutated;
+- declaring WooCommerce as the preferred provider does not mark it supported; no live-commerce compatibility claim is allowed before a dedicated adapter/acceptance phase;
+- no Ecommerce-specific workflow, second Docker fixture or new dependency is added.
+
 ### Multilingual
 
 When URL/content metadata changes:
