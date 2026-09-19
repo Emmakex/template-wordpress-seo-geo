@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "preset": "corporate",
+  "category": {
+    "slug": "seo-geo-corporate",
+    "labels": {
+      "en_US": "Corporate",
+      "es_ES": "Corporativo"
+    }
+  },
+  "patterns": [
+    {
+      "slug": "seo-geo-theme/corporate-case-study",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Corporate case study teaser",
+          "description": "A factual case-study teaser that prompts for a real challenge, approach and result.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|2xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|2xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Selected work</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Present a real project with verifiable context. Replace every prompt before publishing.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Challenge</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Describe the client or project situation without disclosing confidential information.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Approach</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Explain the work performed, the scope and the decisions that can be substantiated.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Result</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add only outcomes you can verify and attribute to an appropriate source.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Avance de caso de éxito corporativo",
+          "description": "Un avance factual de caso de éxito que pide un reto, enfoque y resultado reales.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|2xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|2xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Proyectos seleccionados</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Presenta un proyecto real con contexto verificable. Sustituye cada indicación antes de publicar.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Reto</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Describe la situación del cliente o proyecto sin revelar información confidencial.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Enfoque</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Explica el trabajo realizado, el alcance y las decisiones que se puedan respaldar.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Resultado</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade únicamente resultados que puedas verificar y atribuir a una fuente adecuada.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/corporate-stats",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Corporate verified metrics",
+          "description": "A three-column metrics section that requires evidence-backed values.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Key facts</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Use only current figures that you can verify. Add context or a source in the surrounding copy.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Metric label</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a verified value and explain what it measures.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Metric label</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a verified value and the period or population it refers to.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Metric label</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a verified value and enough context to avoid a misleading claim.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Métricas corporativas verificadas",
+          "description": "Una sección de tres columnas para métricas que exige valores respaldados por evidencia.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Datos clave</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Usa solo cifras actuales que puedas verificar. Añade contexto o una fuente en el texto cercano.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Nombre de la métrica</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade un valor verificado y explica qué mide.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Nombre de la métrica</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade un valor verificado y el periodo o población a la que se refiere.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Nombre de la métrica</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade un valor verificado y contexto suficiente para evitar una afirmación engañosa.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/corporate-testimonials",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Corporate testimonial placeholders",
+          "description": "A testimonial section that requires real attributed quotes and permission.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|2xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|2xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">What clients say</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Replace these prompts with real quotes you are allowed to publish. Do not invent names, companies or endorsements.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:quote --><blockquote class=\"wp-block-quote\"><p>Add a verified client quote.</p><cite>Real name and role, with permission</cite></blockquote><!-- /wp:quote --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:quote --><blockquote class=\"wp-block-quote\"><p>Add another verified client quote.</p><cite>Real name and role, with permission</cite></blockquote><!-- /wp:quote --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Marcadores de testimonios corporativos",
+          "description": "Una sección de testimonios que exige citas reales, atribuidas y con permiso.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|2xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|2xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Lo que dicen nuestros clientes</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Sustituye estas indicaciones por citas reales que tengas permiso para publicar. No inventes nombres, empresas ni recomendaciones.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:quote --><blockquote class=\"wp-block-quote\"><p>Añade una cita de cliente verificada.</p><cite>Nombre y cargo reales, con permiso</cite></blockquote><!-- /wp:quote --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:quote --><blockquote class=\"wp-block-quote\"><p>Añade otra cita de cliente verificada.</p><cite>Nombre y cargo reales, con permiso</cite></blockquote><!-- /wp:quote --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    }
+  ]
+}
