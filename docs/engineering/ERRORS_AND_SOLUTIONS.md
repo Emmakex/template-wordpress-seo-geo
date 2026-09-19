@@ -318,10 +318,10 @@ A skip link is not considered accepted merely because the anchor exists or chang
 
 **Status:** resolved
 **First seen:** 2026-09-17
-**Last seen:** 2026-09-18
+**Last seen:** 2026-09-19
 **Area:** ci / integration
-**Signatures:** original `423ffeca3a8d`; recurrence `6b757d95f440`; LocalBusiness recurrence `9505c31710a7`
-**Reference:** PR #13 original; PR #28 recurrence; PR #34 LocalBusiness recurrence; recurrence failing Self-contained Theme CI run `35310848537` / job `105492394718`; LocalBusiness failing run `35333080832` / job `105561616365`; passing PR #34 run `35333402980`; post-merge PR #34 passing run `35333717649`
+**Signatures:** original `423ffeca3a8d`; recurrence `6b757d95f440`; LocalBusiness recurrence `9505c31710a7`; crawler-admin recurrence `f9a2c20341e9`
+**Reference:** PR #13 original; PR #28 recurrence; PR #34 LocalBusiness recurrence; PR #47 crawler-admin recurrence; recurrence failing Self-contained Theme CI run `35310848537` / job `105492394718`; LocalBusiness failing run `35333080832` / job `105561616365`; crawler-admin failing run `35435237575` / job `105876662693`; passing PR #34 run `35333402980`; post-merge PR #34 passing run `35333717649`; corrected PR #47 run `35435342878` / job `105876960276`
 
 ### Symptom / context
 
@@ -374,6 +374,8 @@ PR #28 then passed Self-contained Theme CI run `35310937921`, all eight PR gates
 The same class recurred again in Phase 5E when the LocalBusiness fixture introduced three new `wp eval` expressions with doubled namespace separators. Self-contained Theme CI run `35333080832` failed with PHP parse error signature `9505c31710a7`. Only the test harness was changed; the LocalBusiness runtime remained untouched. The corrected fixture passed PR run `35333402980` and post-merge `main` run `35333717649`.
 
 New `wp eval` probes must reuse the established escaping rule rather than re-derive shell/PHP escaping ad hoc.
+
+Phase 6E reproduced the same root cause in two new single-quoted crawler-admin `wp eval` probes. Doubled namespace separators caused a PHP parse error and structured signature `f9a2c20341e9`; the product resolver/admin code was not changed. The probes were corrected to pass valid single-backslash PHP namespaces, and Self-contained Theme CI run `35435342878` / job `105876960276` passed the complete zero-plugin smoke.
 
 ## ERR-2026-007 — `wp eval` breadcrumb fixture used a local query instead of WordPress's global query
 

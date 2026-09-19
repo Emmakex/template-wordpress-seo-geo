@@ -88,6 +88,7 @@ required_paths=(
   "packages/seo-geo-core/src/Geo/ContentProvenancePresenter.php"
   "packages/seo-geo-core/src/Geo/CrawlerPolicyResolver.php"
   "packages/seo-geo-core/src/Geo/CrawlerPolicyPresenter.php"
+  "packages/seo-geo-core/src/Geo/CrawlerPolicyAdmin.php"
   "packages/seo-geo-core/src/Geo/LlmsTxtResolver.php"
   "packages/seo-geo-core/src/Geo/LlmsTxtPresenter.php"
   "packages/seo-geo-core/src/Geo/MarkdownAlternateResolver.php"

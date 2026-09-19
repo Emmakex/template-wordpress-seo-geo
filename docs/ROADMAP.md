@@ -947,9 +947,27 @@ Post-merge `main` passed all ten workflows again:
 
 The first candidate exposed only WPCS alignment signature `3357a651e6fe`; no functional provenance failure was found. The reusable alignment lesson is recorded as `ERR-2026-016`.
 
+### Microphase 6E — crawler policy administration and reporting
+
+Status: **in progress**
+
+Scope:
+
+- WordPress-native administration under Appearance;
+- server-authoritative `manage_options` access;
+- Settings API persistence with nonce protection;
+- one sanitizer shared with the Phase 6A crawler-policy resolver;
+- independent OAI-SearchBot and GPTBot controls;
+- effective-policy reporting that surfaces WordPress global privacy precedence;
+- direct `robots.txt` verification link;
+- English + Spanish project-owned administration strings;
+- no custom admin JavaScript/CSS and no new runtime dependency;
+- zero-plugin acceptance for sanitization, rendered controls/reporting, bundled translation and built-theme integrity.
+
+6E closes only after implementation, required PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 6 work
 
-- crawler policy admin UI/reporting over the 6A configuration contract;
 - private/draft content leakage tests;
 - cache/invalidation strategy.
 
