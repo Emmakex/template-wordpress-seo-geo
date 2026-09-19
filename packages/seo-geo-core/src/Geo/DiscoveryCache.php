@@ -19,6 +19,11 @@ final class DiscoveryCache {
 	public const GROUP = 'seo_geo_discovery';
 
 	/**
+	 * Bound unreachable old-generation entries in persistent cache backends.
+	 */
+	private const TTL = 3600;
+
+	/**
 	 * Build one versioned cache key.
 	 *
 	 * The last-changed token makes previous entries unreachable after
@@ -52,15 +57,15 @@ final class DiscoveryCache {
 	/**
 	 * Store a derived text value.
 	 *
-	 * Expiration remains zero because invalidation is generation-based and the
-	 * default WordPress object cache is request-local unless a persistent cache
-	 * implementation is installed.
+	 * Generation-based invalidation makes old entries unreachable immediately.
+	 * A bounded TTL additionally prevents old generations from accumulating
+	 * indefinitely in persistent cache backends.
 	 *
 	 * @param string $key   Versioned cache key.
 	 * @param string $value Derived public text.
 	 */
 	public function set_text( string $key, string $value ): void {
-		wp_cache_set( $key, $value, self::GROUP, 0 );
+		wp_cache_set( $key, $value, self::GROUP, self::TTL );
 	}
 
 	/**
