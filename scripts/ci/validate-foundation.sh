@@ -99,6 +99,15 @@ required_paths=(
   "packages/seo-geo-core/src/Geo/LlmsTxtPresenter.php"
   "packages/seo-geo-core/src/Geo/MarkdownAlternateResolver.php"
   "packages/seo-geo-core/src/Geo/MarkdownAlternatePresenter.php"
+  "packages/seo-geo-migration-bridge/README.md"
+  "packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php"
+  "packages/seo-geo-migration-bridge/src/Plugin.php"
+  "packages/seo-geo-migration-bridge/src/SiteAnalyzer.php"
+  "packages/seo-geo-migration-bridge/src/Builders/BuilderDetectorInterface.php"
+  "packages/seo-geo-migration-bridge/src/Builders/NativeBlocksDetector.php"
+  "packages/seo-geo-migration-bridge/src/Builders/ElementorDetector.php"
+  "packages/seo-geo-migration-bridge/src/Builders/DiviDetector.php"
+  "docs/MIGRATION_BRIDGE.md"
   "scripts/build-theme-package.sh"
   "scripts/ci/self-contained-theme-smoke.sh"
   "scripts/ci/discovery-privacy-acceptance.sh"
@@ -113,6 +122,8 @@ required_paths=(
   "scripts/ci/validate-ecommerce-preset.php"
   "scripts/ci/saas-digital-product-preset-acceptance.sh"
   "scripts/ci/validate-saas-digital-product-preset.php"
+  "scripts/ci/validate-migration-bridge.php"
+  "scripts/ci/migration-bridge-site-analyzer-acceptance.sh"
   "scripts/ci/native-language-smoke.sh"
   "scripts/ci/native-routing-smoke.sh"
   "scripts/ci/native-translation-relations-smoke.sh"
@@ -146,6 +157,7 @@ php scripts/ci/validate-local-business-preset.php
 php scripts/ci/validate-publisher-preset.php
 php scripts/ci/validate-ecommerce-preset.php
 php scripts/ci/validate-saas-digital-product-preset.php
+php scripts/ci/validate-migration-bridge.php
 bash scripts/ci/validate-ci-path-scope.sh
 
-printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
+printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts, the Phase 8A Migration Bridge safety contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
