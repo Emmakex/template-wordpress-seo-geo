@@ -49,7 +49,6 @@ required_paths=(
   "docs/NATIVE_SCHEMA.md"
   "docs/GEO_CRAWLERS.md"
   "docs/DISCOVERY_PRIVACY.md"
-  "docs/DISCOVERY_CACHE.md"
   "docs/CACHE_INVALIDATION.md"
   "docs/LLMS_TXT.md"
   "docs/MARKDOWN_ALTERNATES.md"
