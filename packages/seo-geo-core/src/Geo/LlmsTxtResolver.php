@@ -88,6 +88,7 @@ final class LlmsTxtResolver {
 		}
 
 		$cache_key = $this->cache->key( 'llms_txt', 'document' );
+		$found     = false;
 		$cached    = $this->cache->get_text( $cache_key, $found );
 
 		if ( $found && null !== $cached ) {
