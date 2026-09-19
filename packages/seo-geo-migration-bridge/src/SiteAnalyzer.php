@@ -355,7 +355,7 @@ final class SiteAnalyzer {
 		$names = is_array( $shortcode_tags ) ? array_map( 'strval', array_keys( $shortcode_tags ) ) : array();
 		sort( $names );
 
-		return array_values( $names );
+		return $names;
 	}
 
 	/**
@@ -373,7 +373,7 @@ final class SiteAnalyzer {
 		$classes = array_map( 'strval', array_keys( $wp_widget_factory->widgets ) );
 		sort( $classes );
 
-		return array_values( $classes );
+		return $classes;
 	}
 
 	/**
@@ -383,13 +383,8 @@ final class SiteAnalyzer {
 	 */
 	private function menus(): array {
 		$results = array();
-		$menus   = wp_get_nav_menus();
 
-		if ( is_wp_error( $menus ) ) {
-			return $results;
-		}
-
-		foreach ( $menus as $menu ) {
+		foreach ( wp_get_nav_menus() as $menu ) {
 			$results[] = array(
 				'term_id' => (int) $menu->term_id,
 				'name'    => (string) $menu->name,
@@ -488,6 +483,6 @@ final class SiteAnalyzer {
 		$results = array_map( 'basename', $files );
 		sort( $results );
 
-		return array_values( $results );
+		return $results;
 	}
 }
