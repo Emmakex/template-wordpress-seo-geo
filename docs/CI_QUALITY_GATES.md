@@ -89,6 +89,8 @@ When public metadata/discovery behavior changes:
 
 Phase 6F adds a cross-surface privacy matrix, sourced inside the existing Self-contained Theme fixture, that checks synthetic draft/private markers against HTML, native sitemaps, feeds, search, author archives, unauthenticated REST, Schema/provenance, llms.txt and Markdown. The matrix includes a positive published control so privacy cannot pass because discovery is globally broken.
 
+Phase 6G adds versioned WordPress object-cache acceptance for generated llms.txt and Markdown only. The test proves that relevant post/meta/user/option changes advance the project cache generation and that the next derived document is fresh, without flushing unrelated WordPress cache groups.
+
 The baseline contract is **native and self-contained**. An external SEO/GEO plugin is never required for these acceptance checks.
 
 ### Multilingual
