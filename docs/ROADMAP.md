@@ -1002,18 +1002,16 @@ Status: **complete**
 
 Delivered on PR #49:
 
-- one dedicated acceptance module reused inside the existing disposable zero-plugin WordPress fixture;
-- public control plus draft/private post fixtures with unique title/content leak markers;
-- unauthenticated draft/private HTML routes remain non-public and emit no native Schema, article provenance or Markdown discovery;
-- native WordPress sitemap, feed, search and author archive exclude draft/private title/content markers;
-- unauthenticated REST responses reject draft/private resources without disclosing their markers;
+- dedicated `scripts/ci/discovery-privacy-acceptance.sh` sourced inside the existing disposable zero-plugin WordPress fixture;
+- public control plus draft/private fixtures with unique title/content leak markers distinct from their slugs;
+- direct unauthenticated draft/private HTML routes remain 404 and emit no native Schema, article provenance or Markdown discovery;
+- native WordPress sitemap, feed, search and author archive expose the public control where applicable while excluding draft/private markers;
+- unauthenticated REST requests reject draft/private resources without disclosing their title/content;
 - llms.txt ignores explicitly configured draft/private IDs while retaining the published control;
 - Markdown alternates resolve for the published control and remain 404 for draft/private resources;
-- provenance and Markdown resolvers return null for draft/private IDs;
-- no second Docker/WordPress environment is started, preserving runner efficiency;
-- the public privacy contract is documented in `docs/DISCOVERY_PRIVACY.md`.
-
-The first Phase 6F candidate passed every HTTP discovery surface and failed only in the final resolver-level harness because Bash expanded PHP local variables under `set -u`. The quoting bug was corrected without product changes and is recorded as `ERR-2026-017`.
+- provenance and Markdown resolver-level guards return null for draft/private IDs;
+- the matrix reuses the same WordPress/MariaDB/Docker fixture, avoiding a second runner environment;
+- public privacy contract documented in `docs/DISCOVERY_PRIVACY.md`.
 
 PR #49 passed all ten workflows on final candidate `99c01be435b0098482ff50ea771957eb7a8bee41` and was squash-merged as `feb3f50542e5e56da27d915b1a4e6efe3d73c115`.
 
@@ -1042,6 +1040,8 @@ Post-merge `main` passed all ten workflows again:
 - Accessibility & Responsive CI `35436653775`;
 - Native Multilingual CI `35436653770`;
 - Performance Baseline CI `35436653788`.
+
+The first acceptance candidate completed every HTTP/discovery surface before the final direct resolver check failed because Bash expanded PHP variables under `set -u`. The harness-only failure signature `bd06327f2ae5` is recorded as `ERR-2026-017`; no product leak was observed.
 
 ### Remaining Phase 6 work
 
