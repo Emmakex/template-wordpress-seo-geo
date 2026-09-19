@@ -318,7 +318,7 @@ It will ship a machine-readable manifest, matching EN/ES content map and preset-
 
 The preset will compose existing native SEO/GEO, multilingual, Schema and provenance authorities. It will not introduce a second product-Schema owner or infer product facts from marketing copy.
 
-Phase 7E remains planned until implementation and acceptance are complete.
+Phase 7E implementation is in progress. It closes only after the declarative contract, zero-plugin runtime activation, PR validation, merge and post-merge verification are green.
 
 ## Phase 7 preset layer status
 
@@ -328,7 +328,7 @@ Phase 7A–7D are complete and verified. Before Phase 8 implementation began, th
 2. Local Business — complete;
 3. Publisher — complete;
 4. Ecommerce — complete;
-5. SaaS / Digital Product — Phase 7E planned.
+5. SaaS / Digital Product — Phase 7E implementation in progress.
 
 The four completed presets use the same server-authoritative registry and remain disabled by default. Phase 7 remains open until the fifth preset passes the same implementation and acceptance discipline. They compose the shared theme/Core contracts rather than introducing independent SEO/GEO implementations.
 
