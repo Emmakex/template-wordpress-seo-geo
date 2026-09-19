@@ -44,7 +44,7 @@ fi
 [[ "$CORPORATE_TITLE_EN" == "Corporate verified metrics" ]] \
   || fail_smoke "corporate-preset-en" "Corporate preset English copy is not active in the default locale" "Corporate verified metrics" "$CORPORATE_TITLE_EN"
 
-if ! CORPORATE_TITLE_ES="$(wp_cli --locale=es_ES eval '$pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' 2>"${TMP_DIR}/corporate-preset-title-es.stderr" | tr -d '\r\n')"; then
+if ! CORPORATE_TITLE_ES="$(wp_cli eval 'switch_to_locale( "es_ES" ); foreach ( array( "seo-geo-theme/corporate-case-study", "seo-geo-theme/corporate-stats", "seo-geo-theme/corporate-testimonials" ) as $slug ) { unregister_block_pattern( $slug ); } seo_geo_theme_register_active_preset_patterns(); $pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' 2>"${TMP_DIR}/corporate-preset-title-es.stderr" | tr -d '\r\n')"; then
   CORPORATE_TITLE_ES_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-title-es.stderr" | head -c 240)"
   fail_smoke "corporate-preset-es-eval" "Could not resolve Corporate Spanish pattern title" "Métricas corporativas verificadas" "${CORPORATE_TITLE_ES_ERROR:-wp eval failed}"
 fi
