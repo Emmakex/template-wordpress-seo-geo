@@ -69,7 +69,7 @@ The neutral theme patterns remain untouched. Corporate adds only the missing arc
 
 Preset patterns are editor scaffolding, not factual claims. They explicitly require authors to replace prompts with real, verifiable information before publication. The preset never generates client names, endorsements, performance figures, certifications or other proof.
 
-Corporate recommends `Organization` as the site identity, but `requires_confirmation=true` is mandatory. Activating the visual/information-architecture preset does not automatically enable Organization Schema. Phase 8 onboarding may offer the choice, but the existing server-side Schema identity authority remains responsible for the final configuration.
+Corporate recommends `Organization` as the site identity, but `requires_confirmation=true` is mandatory. Activating the visual/information-architecture preset does not automatically enable Organization Schema. Phase 9 onboarding may offer the choice, but the existing server-side Schema identity authority remains responsible for the final configuration.
 
 The distributable theme bundles preset data under `/presets`. `inc/presets.php` is the runtime registry used by later onboarding:
 
@@ -80,7 +80,7 @@ The distributable theme bundles preset data under `/presets`. `inc/presets.php` 
 - preset-owned copy selects ES or EN from the active WordPress locale, with English fallback;
 - no preset can fork or replace the SEO/GEO Core runtime.
 
-Phase 7A does not create pages automatically. It establishes the validated content map and runtime registry that Phase 8 onboarding will use to create/configure site content with explicit administrator intent.
+Phase 7A does not create pages automatically. It establishes the validated content map and runtime registry that Phase 9 onboarding will use to create/configure site content with explicit administrator intent.
 
 ## Local Business
 
@@ -152,7 +152,7 @@ The multi-location/content rules are mandatory:
 
 The preset registry is shared with Corporate. Pattern categories are declarative per preset, activation is mutually isolated, and an unsupported preset ID registers neither Corporate nor Local Business patterns.
 
-Phase 7B does not create pages automatically. Phase 8 onboarding may consume this validated map only after explicit administrator intent.
+Phase 7B does not create pages automatically. Phase 9 onboarding may consume this validated map only after explicit administrator intent.
 
 ## Ecommerce
 
@@ -207,7 +207,7 @@ The dynamic commerce surfaces are declarative only until a supported adapter exi
 
 The optional brand/editorial page is a normal WordPress page and is created only when it adds original value. It must not be mass-generated for every brand and must not copy manufacturer claims without verification.
 
-Phase 7D does not create products, prices, stock, reviews, offers, categories, facets or commerce routes. Phase 8 onboarding may activate the preset and create only theme-owned editorial/policy scaffolding; commerce surfaces remain integration-gated.
+Phase 7D does not create products, prices, stock, reviews, offers, categories, facets or commerce routes. Phase 9 onboarding may activate the preset and create only theme-owned editorial/policy scaffolding; commerce surfaces remain integration-gated.
 
 ## Publisher
 
@@ -276,7 +276,7 @@ Publisher editorial safeguards are mandatory:
 
 The EN/ES content map distinguishes **singleton pages** from **native dynamic surfaces**. Article, topic/category archive and author profile are not automatically created as duplicate pages during onboarding.
 
-Phase 7C does not create editorial content, authors, categories or sources automatically. Phase 8 onboarding may activate the preset and create only the declared singleton scaffolding after explicit administrator intent.
+Phase 7C does not create editorial content, authors, categories or sources automatically. Phase 9 onboarding may activate the preset and create only the declared singleton scaffolding after explicit administrator intent.
 
 ## SaaS / Digital Product
 
@@ -342,4 +342,4 @@ Cross-preset guarantees:
 
 ## Future presets
 
-Potential presets such as travel, SaaS, professional services or events should only be added when they express a repeatable information architecture and acceptance contract. They should compose primitives from the existing theme/Core rather than introduce parallel SEO stacks.
+Potential presets such as travel, professional services, education, events or NGO/fundraising should only be added when they express a repeatable information architecture and acceptance contract. They should compose primitives from the existing theme/Core rather than introduce parallel SEO stacks.
