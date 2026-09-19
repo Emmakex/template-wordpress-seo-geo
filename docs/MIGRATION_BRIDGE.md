@@ -19,6 +19,8 @@ The bridge is **not** part of the final zero-plugin theme baseline.
 
 ## Phase 8A — Site Analyzer
 
+Status: **complete**
+
 Phase 8A introduces a read-only analyzer available through:
 
 ```php
@@ -99,3 +101,14 @@ A provider becomes supported only after its specific ownership/adapter contract 
 - **8D+**: sandbox migration, transformation, parity and cutover.
 
 The analyzer therefore does not crawl public URLs, store snapshots or propose destructive actions in 8A.
+
+
+## Phase 8A acceptance evidence
+
+Phase 8A closed through PR #67.
+
+Final PR candidate `494139b10d3c2cc57eafb4cf499017d49c7e5fdb` passed Foundation, Package, PHP Quality, WordPress Smoke and Self-contained Theme. The implementation was squash-merged as `337cd161560b5fce9f0e250d59197546d0eee462`, and all five gates passed again on `main`.
+
+The key runtime proof is WordPress Smoke: the analyzer inspected a synthetic legacy installation containing active/inactive plugins, Elementor, Divi, WooCommerce, Yoast, a child theme, CPT/taxonomy/shortcode, menu and custom CSS, while the protected-state fingerprint remained unchanged.
+
+The next Migration Bridge capability is Phase 8B: capture and persist a public SEO/GEO baseline snapshot without turning legacy output into the new authority.
