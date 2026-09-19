@@ -26,6 +26,8 @@ final class SiteAnalyzer {
 	private array $builder_detectors;
 
 	/**
+	 * Construct the analyzer.
+	 *
 	 * @param list<BuilderDetectorInterface>|null $builder_detectors Optional detector override.
 	 */
 	public function __construct( ?array $builder_detectors = null ) {
@@ -58,24 +60,26 @@ final class SiteAnalyzer {
 			'builders'       => $this->builders( $plugins, $themes ),
 			'providers'      => $this->providers( $plugins ),
 			'content_model'  => array(
-				'post_types'  => $this->post_types(),
-				'taxonomies'  => $this->taxonomies(),
-				'shortcodes'  => $this->shortcodes(),
-				'widgets'     => $this->widgets(),
-				'menus'       => $this->menus(),
-				'templates'   => $this->templates(),
+				'post_types' => $this->post_types(),
+				'taxonomies' => $this->taxonomies(),
+				'shortcodes' => $this->shortcodes(),
+				'widgets'    => $this->widgets(),
+				'menus'      => $this->menus(),
+				'templates'  => $this->templates(),
 			),
 			'customization'  => $this->customization_signals(),
 			'safety'         => array(
-				'mutations_performed'   => false,
+				'mutations_performed'    => false,
 				'content_scan_performed' => false,
-				'credentials_collected' => false,
+				'credentials_collected'  => false,
 				'option_values_exported' => false,
 			),
 		);
 	}
 
 	/**
+	 * Return basic runtime/site metadata.
+	 *
 	 * @return array<string, mixed>
 	 */
 	private function site(): array {
@@ -92,6 +96,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return installed theme inventory.
+	 *
 	 * @return list<array<string, mixed>>
 	 */
 	private function themes(): array {
@@ -119,6 +125,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return installed plugin inventory.
+	 *
 	 * @return list<array<string, mixed>>
 	 */
 	private function plugins(): array {
@@ -130,12 +138,12 @@ final class SiteAnalyzer {
 
 		foreach ( get_plugins() as $basename => $data ) {
 			$plugins[] = array(
-				'basename'      => (string) $basename,
-				'name'          => isset( $data['Name'] ) ? (string) $data['Name'] : '',
-				'version'       => isset( $data['Version'] ) ? (string) $data['Version'] : '',
-				'active'        => is_plugin_active( (string) $basename ),
+				'basename'       => (string) $basename,
+				'name'           => isset( $data['Name'] ) ? (string) $data['Name'] : '',
+				'version'        => isset( $data['Version'] ) ? (string) $data['Version'] : '',
+				'active'         => is_plugin_active( (string) $basename ),
 				'network_active' => is_multisite() && is_plugin_active_for_network( (string) $basename ),
-				'must_use'      => false,
+				'must_use'       => false,
 			);
 		}
 
@@ -159,6 +167,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Run all configured builder detectors.
+	 *
 	 * @param list<array<string, mixed>> $plugins Plugin inventory.
 	 * @param list<array<string, mixed>> $themes  Theme inventory.
 	 * @return list<array<string, mixed>>
@@ -210,7 +220,7 @@ final class SiteAnalyzer {
 				'redirection' => array( 'redirection/' ),
 			),
 			'analytics'        => array(
-				'site-kit'       => array( 'google-site-kit/' ),
+				'site-kit'        => array( 'google-site-kit/' ),
 				'monsterinsights' => array( 'google-analytics-for-wordpress/' ),
 			),
 			'forms'            => array(
@@ -219,9 +229,9 @@ final class SiteAnalyzer {
 				'wpforms'        => array( 'wpforms/', 'wpforms-lite/' ),
 			),
 			'cache'            => array(
-				'wp-rocket'        => array( 'wp-rocket/' ),
-				'w3-total-cache'   => array( 'w3-total-cache/' ),
-				'litespeed-cache'  => array( 'litespeed-cache/' ),
+				'wp-rocket'       => array( 'wp-rocket/' ),
+				'w3-total-cache'  => array( 'w3-total-cache/' ),
+				'litespeed-cache' => array( 'litespeed-cache/' ),
 			),
 			'security'         => array(
 				'wordfence' => array( 'wordfence/' ),
@@ -266,7 +276,10 @@ final class SiteAnalyzer {
 	}
 
 	/**
-	 * @param list<string> $prefixes Prefix list.
+	 * Check whether a plugin basename matches a provider prefix.
+	 *
+	 * @param string       $basename Plugin basename.
+	 * @param list<string> $prefixes Provider plugin prefixes.
 	 */
 	private function matches_any_prefix( string $basename, array $prefixes ): bool {
 		foreach ( $prefixes as $prefix ) {
@@ -279,6 +292,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return registered post types.
+	 *
 	 * @return list<array<string, mixed>>
 	 */
 	private function post_types(): array {
@@ -303,6 +318,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return registered taxonomies.
+	 *
 	 * @return list<array<string, mixed>>
 	 */
 	private function taxonomies(): array {
@@ -328,6 +345,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return registered shortcode identifiers.
+	 *
 	 * @return list<string>
 	 */
 	private function shortcodes(): array {
@@ -340,6 +359,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return registered widget class identifiers.
+	 *
 	 * @return list<string>
 	 */
 	private function widgets(): array {
@@ -356,6 +377,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return navigation menu inventory.
+	 *
 	 * @return list<array<string, mixed>>
 	 */
 	private function menus(): array {
@@ -384,6 +407,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return active-theme template file signals.
+	 *
 	 * @return array<string, mixed>
 	 */
 	private function templates(): array {
@@ -399,6 +424,8 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return non-content customization signals.
+	 *
 	 * @return array<string, mixed>
 	 */
 	private function customization_signals(): array {
@@ -417,6 +444,9 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return presence, size and hash for a readable file.
+	 *
+	 * @param string $path File path.
 	 * @return array<string, mixed>
 	 */
 	private function file_signal( string $path ): array {
@@ -439,6 +469,10 @@ final class SiteAnalyzer {
 	}
 
 	/**
+	 * Return sorted basenames matching one directory glob.
+	 *
+	 * @param string $directory Directory path.
+	 * @param string $pattern   Glob pattern.
 	 * @return list<string>
 	 */
 	private function relative_files( string $directory, string $pattern ): array {
