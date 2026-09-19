@@ -1194,7 +1194,7 @@ No 7B CI/product incident met the error-register criteria; the first implementat
 
 ### Microphase 7C — Publisher preset
 
-Status: **in progress**
+Status: **complete**
 
 Scope:
 
@@ -1211,7 +1211,17 @@ Scope:
 - ship visible copy in EN/ES together;
 - reuse Foundation and the existing Self-contained Theme fixture with no new workflow, Docker stack or runtime dependency.
 
-7C closes only after implementation PR gates and post-merge `main` verification are green.
+7C is closed.
+
+Evidence:
+
+- implementation PR #58 passed all ten required workflows on final candidate `6a9407a288f253544e9c43d47c727d3771b12116`;
+- Foundation CI `35454815270` proved the Publisher declarative editorial contract;
+- Self-contained Theme CI `35454815324` proved built-package activation, preset isolation, EN/ES copy and no Schema identity mutation;
+- PR #58 was squash-merged as `6ef503ff03db934ef33170ad48d07bcc94ec45ac`;
+- post-merge `main` passed all ten workflows, including Self-contained Theme CI `35454988460`, Native Multilingual CI `35454988462`, Accessibility & Responsive CI `35454988437` and Performance Baseline CI `35454988446`.
+
+No 7C CI/product incident met the error-register criteria; the first implementation candidate and post-merge candidate both passed without a corrective commit.
 
 ### Remaining Phase 7 work
 
