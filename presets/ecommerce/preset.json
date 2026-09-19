@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "id": "ecommerce",
+  "version": "1.0.0",
+  "site_type": "ecommerce",
+  "intended_for": [
+    "online-store",
+    "catalog-commerce",
+    "direct-to-consumer",
+    "retail-ecommerce"
+  ],
+  "required_templates": [
+    "page",
+    "single",
+    "archive",
+    "index",
+    "404"
+  ],
+  "recommended_base_patterns": [
+    "seo-geo-theme/hero",
+    "seo-geo-theme/trust-proof",
+    "seo-geo-theme/faq",
+    "seo-geo-theme/cta",
+    "seo-geo-theme/contact"
+  ],
+  "preset_patterns": [
+    "seo-geo-theme/ecommerce-category-guide",
+    "seo-geo-theme/ecommerce-buying-guide",
+    "seo-geo-theme/ecommerce-policy-navigation",
+    "seo-geo-theme/ecommerce-brand-editorial"
+  ],
+  "schema": {
+    "expected_theme_entities": [
+      "Organization",
+      "WebSite",
+      "WebPage",
+      "BreadcrumbList"
+    ],
+    "provider_owned_commerce_entities": [
+      "Product",
+      "Offer",
+      "AggregateRating",
+      "Review"
+    ],
+    "site_identity": "organization",
+    "requires_confirmation": true,
+    "product_schema_owner": "commerce-provider",
+    "theme_emits_product_schema": false,
+    "notes": "Ecommerce never duplicates Product/Offer/review Schema. Commerce facts and structured data belong to the supported commerce/SEO provider once an adapter is implemented."
+  },
+  "commerce_model": {
+    "preferred_provider": "woocommerce",
+    "integration_status": "preferred-provider-contract-only",
+    "requires_supported_adapter_for_live_commerce": true,
+    "zero_plugin_preset_safe": true,
+    "provider_owns_product_facts": true,
+    "provider_owns_price_availability": true,
+    "provider_owns_reviews_ratings": true,
+    "provider_owns_multilingual_routing": true,
+    "faceted_urls_require_explicit_indexability_policy": true,
+    "auto_index_facets": false,
+    "auto_generate_category_copy": false,
+    "auto_generate_product_claims": false,
+    "checkout_cart_account_are_provider_surfaces": true
+  },
+  "navigation": {
+    "primary": [
+      "home",
+      "shop",
+      "buying-guides",
+      "support",
+      "about",
+      "contact"
+    ],
+    "footer": [
+      "shipping-delivery",
+      "returns-refunds",
+      "terms-conditions",
+      "privacy-policy",
+      "legal-notice",
+      "contact"
+    ]
+  },
+  "multilingual": {
+    "baseline_locales": [
+      "en_US",
+      "es_ES"
+    ],
+    "fallback_locale": "en_US",
+    "localized_slugs": true,
+    "commerce_routes_provider_owned": true
+  },
+  "seo_acceptance": [
+    "one canonical per indexable editorial page",
+    "localized canonical and hreflang agree on theme-owned editorial pages",
+    "one H1 owned by the page/template composition",
+    "Product and Offer Schema remain provider-owned and reflect visible commerce facts",
+    "price and availability are never inferred by the preset",
+    "faceted URLs are not indexable by default without an explicit provider/SEO policy",
+    "category and brand editorial pages contain original useful content",
+    "private and draft editorial resources excluded from discovery surfaces"
+  ],
+  "optional_integrations": [
+    "woocommerce"
+  ],
+  "explicitly_disabled": [
+    "WooCommerce supported-combination claim without an accepted adapter",
+    "Product or Offer Schema emitted by the theme",
+    "price or availability inference",
+    "review or rating fabrication",
+    "automatic faceted URL indexing",
+    "custom duplicate product routing",
+    "custom duplicate multilingual commerce routing",
+    "automatic product, category or brand claims",
+    "checkout, cart or account SEO landing assumptions"
+  ]
+}

@@ -49,7 +49,7 @@ The theme currently provides:
   - author/profile;
   - contact;
 - embedded native SEO runtime for canonical, meta description and robots/indexability;
-- bundled declarative preset packages plus an allowlisted preset registry; Corporate, Local Business and Publisher are complete Phase 7 presets, with all presets disabled by default;
+- bundled declarative preset packages plus an allowlisted preset registry; Corporate, Local Business and Publisher are complete and Ecommerce is the final Phase 7 preset in progress, with all presets disabled by default;
 - zero-plugin acceptance through `Self-contained Theme CI`.
 
 Patterns use theme presets instead of creating a second visual system. They do not emit duplicate Schema, own page-level H1s, embed remote assets or require third-party blocks.
