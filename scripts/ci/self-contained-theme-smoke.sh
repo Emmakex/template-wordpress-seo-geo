@@ -27,6 +27,7 @@ PAGE_BODY="${TMP_DIR}/page.html"
 HOME_BODY="${TMP_DIR}/home.html"
 AUTHOR_BODY="${TMP_DIR}/author.html"
 AUTHOR_ARTICLE_BODY="${TMP_DIR}/author-article.html"
+PROVENANCE_MARKDOWN_BODY="${TMP_DIR}/provenance-article.md"
 SEARCH_BODY="${TMP_DIR}/search.html"
 ROBOTS_BODY="${TMP_DIR}/robots.txt"
 LLMS_BODY="${TMP_DIR}/llms.txt"
@@ -957,6 +958,10 @@ PY
   fail_smoke "schema-profile-contract" "Author ProfilePage/Person graph contract is invalid" "WebSite + ProfilePage + Person with reciprocal mainEntity links" "${AUTHOR_SCHEMA_RESULT:-python assertion failed}" "parse author ProfilePage JSON-LD graph"
 fi
 
+if grep -Fq '<meta name="author"' "$AUTHOR_BODY" || grep -Fq 'property="article:author"' "$AUTHOR_BODY"; then
+  fail_smoke "provenance-author-archive" "Author archive incorrectly emitted article provenance metadata" "no article author metadata" "article provenance present"
+fi
+
 printf '[self-contained] Checking BlogPosting author + publisher identity linkage.\n'
 curl -fsS "${BASE_URL}/schema-author-article/" -o "$AUTHOR_ARTICLE_BODY" \
   || fail_smoke "schema-article-request" "Could not request authored BlogPosting fixture" "HTTP 2xx" "curl failed"
@@ -1043,6 +1048,90 @@ PY
 )"; then
   fail_smoke "schema-article-contract" "BlogPosting author/publisher graph contract is invalid" "WebSite + WebPage + BreadcrumbList + BlogPosting + Person + Organization with stable references" "${ARTICLE_SCHEMA_RESULT:-python assertion failed}" "parse authored BlogPosting JSON-LD graph"
 fi
+
+AUTHOR_PROFILE_URL="${BASE_URL}/author/schema-author/"
+grep -Fq '<meta name="author" content="Schema Author" />' "$AUTHOR_ARTICLE_BODY" \
+  || fail_smoke "provenance-meta-author" "Article missed standard HTML author metadata" "Schema Author" "meta author absent"
+grep -Fq '<link rel="author" href="'"$AUTHOR_PROFILE_URL"'" />' "$AUTHOR_ARTICLE_BODY" \
+  || fail_smoke "provenance-rel-author" "Article missed rel=author profile link" "$AUTHOR_PROFILE_URL" "rel author absent"
+grep -Fq 'href="'"$AUTHOR_PROFILE_URL"'"' "$AUTHOR_ARTICLE_BODY" \
+  || fail_smoke "provenance-visible-author-link" "Visible post byline did not link to the public author archive" "$AUTHOR_PROFILE_URL" "author link absent"
+
+if ! PROVENANCE_RESULT="$(python3 - "$AUTHOR_ARTICLE_BODY" "$AUTHOR_PROFILE_URL" <<'PY'
+import json
+import re
+import sys
+from html.parser import HTMLParser
+
+class SchemaParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.capture = False
+        self.parts = []
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "script" and attributes.get("id") == "seo-geo-schema-graph":
+            self.capture = True
+    def handle_data(self, data):
+        if self.capture:
+            self.parts.append(data)
+    def handle_endtag(self, tag):
+        if tag == "script" and self.capture:
+            self.capture = False
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    html = handle.read()
+
+parser = SchemaParser()
+parser.feed(html)
+payload = json.loads("".join(parser.parts))
+article = next(node for node in payload["@graph"] if node.get("@type") == "BlogPosting")
+
+def og(name):
+    match = re.search(r'<meta property="' + re.escape(name) + r'" content="([^"]+)"\s*/?>', html)
+    assert match, name
+    return match.group(1)
+
+assert og("article:published_time") == article["datePublished"]
+assert og("article:modified_time") == article["dateModified"]
+assert og("article:author") == sys.argv[2]
+print(json.dumps({
+    "published": article["datePublished"],
+    "modified": article["dateModified"],
+    "author": sys.argv[2],
+}))
+PY
+)"; then
+  fail_smoke "provenance-cross-surface" "HTML/Open Graph/Schema provenance diverged" "same author + publication/modification dates" "${PROVENANCE_RESULT:-python assertion failed}" "parse article provenance"
+fi
+
+wp_cli eval 'update_option( "seo_geo_markdown_alternates", array( "enabled" => true ), false );' >/dev/null \
+  || fail_smoke "provenance-markdown-option" "Could not enable Markdown for provenance fixture" "option update succeeds" "failed"
+PROVENANCE_MD_URL="${BASE_URL}/schema-author-article/index.md"
+PROVENANCE_MD_STATUS="$(curl -sS -o "$PROVENANCE_MARKDOWN_BODY" -w '%{http_code}' "$PROVENANCE_MD_URL")"
+[[ "$PROVENANCE_MD_STATUS" == "200" ]] \
+  || fail_smoke "provenance-markdown-http" "Authored article Markdown did not resolve" "HTTP 200" "$PROVENANCE_MD_STATUS"
+
+if ! PROVENANCE_MD_RESULT="$(python3 - "$PROVENANCE_MARKDOWN_BODY" "$AUTHOR_PROFILE_URL" "${BASE_URL}/schema-author-article/" "$PROVENANCE_RESULT" <<'PY'
+import json
+import sys
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    body = handle.read()
+profile, source = sys.argv[2:4]
+provenance = json.loads(sys.argv[4])
+assert body.startswith("# Schema Author Article\n")
+assert f"Source: [{source}]({source})" in body
+assert f"Author: [Schema Author]({profile})" in body
+assert "Publisher: [Self-contained SEO GEO](" in body
+assert f"Published: {provenance['published']}" in body
+assert f"Updated: {provenance['modified']}" in body
+print("ok")
+PY
+)"; then
+  fail_smoke "provenance-markdown-contract" "Markdown provenance diverged from HTML/Schema" "same author/source/dates/publisher" "${PROVENANCE_MD_RESULT:-python assertion failed}" "parse provenance Markdown"
+fi
+
+wp_cli delete option seo_geo_markdown_alternates >/dev/null 2>&1 || true
 
 if ! BREADCRUMBS_JSON="$(wp_cli eval "global \$wp_query; \$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$BREADCRUMB_EVAL_ERROR" | head -c 240)"

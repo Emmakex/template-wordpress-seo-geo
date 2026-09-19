@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace SeoGeo\Core;
 
 use SeoGeo\Core\Geo\CrawlerPolicyPresenter;
+use SeoGeo\Core\Geo\ContentProvenancePresenter;
+use SeoGeo\Core\Geo\ContentProvenanceResolver;
 use SeoGeo\Core\Geo\CrawlerPolicyResolver;
 use SeoGeo\Core\Geo\LlmsTxtPresenter;
 use SeoGeo\Core\Geo\LlmsTxtResolver;
@@ -128,6 +130,13 @@ final class Runtime {
 	private static ?MarkdownAlternateResolver $markdown_alternates = null;
 
 	/**
+	 * Native content provenance authority.
+	 *
+	 * @var ContentProvenanceResolver|null
+	 */
+	private static ?ContentProvenanceResolver $content_provenance = null;
+
+	/**
 	 * Initialize shared services once.
 	 */
 	public static function initialize(): void {
@@ -187,6 +196,8 @@ final class Runtime {
 		$schema_presenter       = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
 		$schema_presenter->register();
 
+		self::$content_provenance = new ContentProvenanceResolver( $indexability, $canonical, $schema_identity );
+
 		self::$crawler_policy = new CrawlerPolicyResolver();
 		$crawler_presenter    = new CrawlerPolicyPresenter( self::$crawler_policy );
 		$crawler_presenter->register();
@@ -195,7 +206,8 @@ final class Runtime {
 			self::$translation_registry,
 			self::$localized_seo,
 			$language_configuration,
-			$indexability
+			$indexability,
+			self::$content_provenance
 		);
 		self::$llms_txt            = new LlmsTxtResolver(
 			self::$translation_registry,
@@ -207,6 +219,9 @@ final class Runtime {
 
 		$markdown_presenter = new MarkdownAlternatePresenter( self::$markdown_alternates, self::$llms_txt );
 		$markdown_presenter->register();
+
+		$provenance_presenter = new ContentProvenancePresenter( self::$seo_authority, self::$content_provenance );
+		$provenance_presenter->register();
 
 		/**
 		 * Fires after shared SEO/GEO services are ready.
@@ -297,5 +312,12 @@ final class Runtime {
 	 */
 	public static function markdown_alternates(): ?MarkdownAlternateResolver {
 		return self::$markdown_alternates;
+	}
+
+	/**
+	 * Get the native content provenance resolver when initialized.
+	 */
+	public static function content_provenance(): ?ContentProvenanceResolver {
+		return self::$content_provenance;
 	}
 }

@@ -898,10 +898,30 @@ Adoption findings were corrected without weakening the contract:
 
 The reusable fixture lesson is recorded as `ERR-2026-015`.
 
+### Microphase 6D — content provenance / author / source patterns
+
+Status: **in progress**
+
+Scope:
+
+- one reusable provenance resolver for authoritative public built-in posts;
+- reuse the existing WordPress author identity and public author archive;
+- visible single-post author name links to the same profile URL used by machine metadata;
+- standard HTML `meta name="author"` + `rel="author"`;
+- Open Graph `article:published_time`, `article:modified_time` and `article:author`;
+- publication/modification values reuse real WordPress ISO-8601 date authorities;
+- optional Markdown alternates reuse the same Author/Publisher/Published/Updated provenance;
+- publisher remains limited to the existing explicit Organization identity;
+- no article provenance on author archives, pages, staged/noindex routes or non-public posts;
+- no second Schema graph or duplicate Person identity;
+- zero-plugin cross-surface consistency acceptance;
+- public contract in `docs/CONTENT_PROVENANCE.md`.
+
+6D closes only after implementation, required PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 6 work
 
 - crawler policy admin UI/reporting over the 6A configuration contract;
-- provenance/author/source patterns;
 - private/draft content leakage tests;
 - cache/invalidation strategy.
 

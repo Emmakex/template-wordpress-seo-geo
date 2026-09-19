@@ -53,23 +53,33 @@ final class MarkdownAlternateResolver {
 	private IndexabilityResolver $indexability;
 
 	/**
+	 * Content provenance authority.
+	 *
+	 * @var ContentProvenanceResolver
+	 */
+	private ContentProvenanceResolver $provenance;
+
+	/**
 	 * Create the resolver.
 	 *
 	 * @param NativeTranslationRegistry   $translations  Translation relationship authority.
 	 * @param LocalizedSeoResolver        $localized_seo Localized public-URL authority.
 	 * @param NativeLanguageConfiguration $languages     Native language configuration.
-	 * @param IndexabilityResolver        $indexability  Current-request indexability authority.
+	 * @param IndexabilityResolver        $indexability Current-request indexability authority.
+	 * @param ContentProvenanceResolver   $provenance   Content provenance authority.
 	 */
 	public function __construct(
 		NativeTranslationRegistry $translations,
 		LocalizedSeoResolver $localized_seo,
 		NativeLanguageConfiguration $languages,
-		IndexabilityResolver $indexability
+		IndexabilityResolver $indexability,
+		ContentProvenanceResolver $provenance
 	) {
 		$this->translations  = $translations;
 		$this->localized_seo = $localized_seo;
 		$this->languages     = $languages;
 		$this->indexability  = $indexability;
+		$this->provenance    = $provenance;
 	}
 
 	/**
@@ -272,6 +282,22 @@ final class MarkdownAlternateResolver {
 
 		if ( '' !== trim( $language ) ) {
 			$lines[] = 'Language: ' . $this->escape_markdown( trim( $language ) );
+		}
+
+		$provenance = $this->provenance->for_post( (int) $post->ID );
+		if ( null !== $provenance ) {
+			if ( null !== $provenance['author'] ) {
+				$author  = $provenance['author'];
+				$lines[] = 'Author: [' . $this->escape_markdown( $author['name'] ) . '](' . $author['url'] . ')';
+			}
+
+			if ( null !== $provenance['publisher'] ) {
+				$publisher = $provenance['publisher'];
+				$lines[]   = 'Publisher: [' . $this->escape_markdown( $publisher['name'] ) . '](' . $publisher['url'] . ')';
+			}
+
+			$lines[] = 'Published: ' . $provenance['date_published'];
+			$lines[] = 'Updated: ' . $provenance['date_modified'];
 		}
 
 		$excerpt = $this->plain_text( (string) $post->post_excerpt );
