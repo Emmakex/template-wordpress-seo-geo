@@ -173,6 +173,14 @@ Phase 7 preset-layer closure:
 - Self-contained Theme CI exercises all four preset activation contracts inside one zero-plugin WordPress fixture;
 - preset growth added no extra workflow, second Docker stack or required runtime dependency.
 
+For Phase 8A onboarding foundation:
+
+- Foundation executes `scripts/ci/validate-onboarding.php`;
+- the static contract proves the theme loads onboarding, save/render paths require `manage_options`, POST uses a nonce/admin-post action, preset selection uses the shared allowlist, EN/ES copy ships together, and no plugin-install/AJAX/shadow-option path is introduced;
+- Self-contained Theme CI sources `scripts/ci/onboarding-preset-acceptance.sh` in the existing zero-plugin fixture;
+- runtime acceptance proves the module is bundled, all four presets validate, unsupported input is rejected, Appearance registration exists, clean install stays preset-neutral, EN/ES copy resolves and the secure preset form/status render from the real option;
+- no onboarding-specific workflow, second Docker fixture or runtime dependency is added.
+
 ### Multilingual
 
 When URL/content metadata changes:
