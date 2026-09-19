@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return list<string>
  */
 function seo_geo_theme_preset_ids(): array {
-	return array( 'corporate' );
+	return array( 'corporate', 'local-business' );
 }
 
 /**
@@ -126,28 +126,24 @@ function seo_geo_theme_register_active_preset_patterns(): void {
 		return;
 	}
 
-	$category = $document['category'] ?? null;
+	$category      = $document['category'] ?? null;
+	$category_slug = null;
+
 	if ( is_array( $category ) && isset( $category['slug'] ) && is_string( $category['slug'] ) ) {
-		$category_label = seo_geo_theme_preset_localized_value( $category['labels'] ?? null, 'label' );
+		$category_slug = sanitize_key( $category['slug'] );
+		$labels        = $category['labels'] ?? array();
+		$locale        = seo_geo_theme_preset_locale();
+		$candidate     = is_array( $labels ) ? ( $labels[ $locale ] ?? $labels['en_US'] ?? null ) : null;
 
-		if ( null === $category_label ) {
-			$labels = $category['labels'] ?? array();
-			if ( is_array( $labels ) ) {
-				$locale         = seo_geo_theme_preset_locale();
-				$candidate      = $labels[ $locale ] ?? $labels['en_US'] ?? null;
-				$category_label = is_string( $candidate ) ? $candidate : null;
-			}
-		}
-
-		if ( null !== $category_label && function_exists( 'register_block_pattern_category' ) ) {
+		if ( '' !== $category_slug && is_string( $candidate ) && function_exists( 'register_block_pattern_category' ) ) {
 			register_block_pattern_category(
-				sanitize_key( $category['slug'] ),
-				array( 'label' => $category_label )
+				$category_slug,
+				array( 'label' => $candidate )
 			);
 		}
 	}
 
-	if ( ! function_exists( 'register_block_pattern' ) ) {
+	if ( ! function_exists( 'register_block_pattern' ) || null === $category_slug || '' === $category_slug ) {
 		return;
 	}
 
@@ -167,7 +163,7 @@ function seo_geo_theme_register_active_preset_patterns(): void {
 		$args = array(
 			'title'       => $title,
 			'description' => $description,
-			'categories'  => array( 'seo-geo-corporate' ),
+			'categories'  => array( $category_slug ),
 			'content'     => $content,
 		);
 
