@@ -293,7 +293,7 @@ final class MarkdownAlternateResolver {
 
 			if ( null !== $provenance['publisher'] ) {
 				$publisher = $provenance['publisher'];
-				$lines[]    = 'Publisher: [' . $this->escape_markdown( $publisher['name'] ) . '](' . $publisher['url'] . ')';
+				$lines[]   = 'Publisher: [' . $this->escape_markdown( $publisher['name'] ) . '](' . $publisher['url'] . ')';
 			}
 
 			$lines[] = 'Published: ' . $provenance['date_published'];
