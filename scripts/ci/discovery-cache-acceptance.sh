@@ -22,7 +22,7 @@ CACHE_POST_ID="$(wp_cli post create \
   || fail_smoke "discovery-cache-fixture" "Could not create Phase 6G cache fixture" "numeric post ID" "$CACHE_POST_ID"
 
 cache_revision() {
-  wp_cli eval 'echo SeoGeoCoreRuntime::discovery_cache_revision()?->current() ?? "missing";' 2>/dev/null | tr -d '\r\n'
+  wp_cli eval 'echo \\SeoGeo\\Core\\Runtime::discovery_cache_revision()?->current() ?? "missing";' 2>/dev/null | tr -d '\r\n'
 }
 
 cache_etag() {
