@@ -150,18 +150,22 @@ HOST_PORT="$(docker port "$WP_CONTAINER" 80/tcp | awk -F: 'NR == 1 {print $NF}')
 [[ -n "$HOST_PORT" ]] || fail_smoke "wordpress-port" "Could not resolve published WordPress port" "non-empty host port" "empty" "docker port"
 BASE_URL="http://127.0.0.1:${HOST_PORT}"
 
-printf '[smoke] Installing repository theme and plugin into the WordPress fixture.\n'
+printf '[smoke] Installing repository theme and migration/source plugins into the WordPress fixture.\n'
 docker exec "$WP_CONTAINER" mkdir -p \
   /var/www/html/wp-content/plugins/seo-geo-core \
+  /var/www/html/wp-content/plugins/seo-geo-migration-bridge \
   /var/www/html/wp-content/themes/seo-geo-theme \
   || fail_smoke "package-dirs" "Could not create package directories" "plugin/theme directories created" "mkdir failed" "docker exec mkdir"
 
 docker cp packages/seo-geo-core/. "$WP_CONTAINER":/var/www/html/wp-content/plugins/seo-geo-core/ \
   || fail_smoke "plugin-copy" "Could not copy SEO GEO Core into WordPress" "plugin copied" "docker cp failed" "docker cp plugin"
+docker cp packages/seo-geo-migration-bridge/. "$WP_CONTAINER":/var/www/html/wp-content/plugins/seo-geo-migration-bridge/ \
+  || fail_smoke "migration-bridge-copy" "Could not copy SEO/GEO Migration Bridge into WordPress" "migration bridge copied" "docker cp failed" "docker cp migration bridge"
 docker cp packages/seo-geo-theme/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
   || fail_smoke "theme-copy" "Could not copy SEO GEO Starter into WordPress" "theme copied" "docker cp failed" "docker cp theme"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-core \
+  /var/www/html/wp-content/plugins/seo-geo-migration-bridge \
   /var/www/html/wp-content/themes/seo-geo-theme \
   || fail_smoke "package-permissions" "Could not set WordPress package permissions" "www-data owns test packages" "chown failed" "docker exec chown"
 
@@ -175,13 +179,15 @@ wp_cli core install \
   --skip-email >/dev/null \
   || fail_smoke "core-install" "WP-CLI could not install WordPress" "core install succeeds" "wp core install failed" "wp core install"
 
-wp_cli plugin activate seo-geo-core >/dev/null \
-  || fail_smoke "plugin-activate" "SEO GEO Core could not be activated" "plugin active" "activation failed" "wp plugin activate seo-geo-core"
+wp_cli plugin activate seo-geo-core seo-geo-migration-bridge >/dev/null \
+  || fail_smoke "plugin-activate" "SEO GEO Core/Migration Bridge could not be activated" "plugins active" "activation failed" "wp plugin activate seo-geo-core seo-geo-migration-bridge"
 wp_cli theme activate seo-geo-theme >/dev/null \
   || fail_smoke "theme-activate" "SEO GEO Starter could not be activated" "theme active" "activation failed" "wp theme activate seo-geo-theme"
 
 wp_cli plugin is-active seo-geo-core >/dev/null \
   || fail_smoke "plugin-state" "SEO GEO Core is not active after activation" "active" "inactive" "wp plugin is-active seo-geo-core"
+wp_cli plugin is-active seo-geo-migration-bridge >/dev/null \
+  || fail_smoke "migration-bridge-state" "SEO/GEO Migration Bridge is not active after activation" "active" "inactive" "wp plugin is-active seo-geo-migration-bridge"
 wp_cli theme is-active seo-geo-theme >/dev/null \
   || fail_smoke "theme-state" "SEO GEO Starter is not active after activation" "active" "inactive" "wp theme is-active seo-geo-theme"
 
@@ -292,6 +298,8 @@ SEARCH_ROBOTS_LINE="$(grep -i "name='robots'" "$SEARCH_BODY" | head -n 1 | tr -d
 [[ "$SEARCH_ROBOTS_LINE" == *"noindex"* && "$SEARCH_ROBOTS_LINE" == *"follow"* && "$SEARCH_ROBOTS_LINE" != *"nofollow"* ]] \
   || fail_smoke "search-robots-policy" "Search fixture must resolve to noindex,follow" "robots contains noindex and follow without nofollow" "$SEARCH_ROBOTS_LINE" "inspect search robots policy"
 
+source scripts/ci/migration-bridge-site-analyzer-acceptance.sh
+
 printf '[smoke] Checking runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
 docker exec "$WP_CONTAINER" sh -c 'test ! -f /var/www/html/wp-content/debug.log || cat /var/www/html/wp-content/debug.log' >"$DEBUG_LOG" 2>&1 || true
@@ -301,4 +309,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted a fatal, warning, notice or uncaught error" "no PHP runtime diagnostics" "$MATCH" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; plugin/theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"
+printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"
