@@ -83,7 +83,7 @@ function seo_geo_theme_active_preset_id(): ?string {
 function seo_geo_theme_preset_locale(): string {
 	$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
 
-	return is_string( $locale ) && str_starts_with( strtolower( $locale ), 'es' ) ? 'es_ES' : 'en_US';
+	return str_starts_with( strtolower( $locale ), 'es' ) ? 'es_ES' : 'en_US';
 }
 
 /**
