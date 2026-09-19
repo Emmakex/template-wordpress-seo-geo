@@ -4,7 +4,7 @@ Each directory under `presets/` will contain configuration/content scaffolding f
 
 Implementation order:
 
-1. `corporate` — Phase 7A implementation in progress;
+1. `corporate` — Phase 7A complete;
 2. `local-business`;
 3. `publisher`;
 4. `ecommerce`.
