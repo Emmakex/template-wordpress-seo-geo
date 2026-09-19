@@ -13,8 +13,6 @@ use SeoGeo\MigrationBridge\Builders\BuilderDetectorInterface;
 use SeoGeo\MigrationBridge\Builders\DiviDetector;
 use SeoGeo\MigrationBridge\Builders\ElementorDetector;
 use SeoGeo\MigrationBridge\Builders\NativeBlocksDetector;
-use WP_Taxonomy;
-use WP_Theme;
 
 /**
  * Builds a machine-readable migration inventory without mutating WordPress.
@@ -87,7 +85,7 @@ final class SiteAnalyzer {
 			'home_url'          => home_url( '/' ),
 			'site_url'          => site_url( '/' ),
 			'locale'            => get_locale(),
-			'wordpress_version' => is_string( $wp_version ) ? $wp_version : '',
+			'wordpress_version' => (string) $wp_version,
 			'php_version'       => PHP_VERSION,
 			'multisite'         => is_multisite(),
 		);
@@ -101,10 +99,6 @@ final class SiteAnalyzer {
 		$themes            = array();
 
 		foreach ( wp_get_themes() as $stylesheet => $theme ) {
-			if ( ! $theme instanceof WP_Theme ) {
-				continue;
-			}
-
 			$template = (string) $theme->get( 'Template' );
 			$themes[] = array(
 				'stylesheet'     => (string) $stylesheet,
@@ -118,7 +112,7 @@ final class SiteAnalyzer {
 
 		usort(
 			$themes,
-			static fn ( array $left, array $right ): int => strcmp( (string) $left['stylesheet'], (string) $right['stylesheet'] )
+			static fn( array $left, array $right ): int => strcmp( (string) $left['stylesheet'], (string) $right['stylesheet'] )
 		);
 
 		return $themes;
@@ -140,7 +134,7 @@ final class SiteAnalyzer {
 				'name'          => isset( $data['Name'] ) ? (string) $data['Name'] : '',
 				'version'       => isset( $data['Version'] ) ? (string) $data['Version'] : '',
 				'active'        => is_plugin_active( (string) $basename ),
-				'network_active'=> is_multisite() && is_plugin_active_for_network( (string) $basename ),
+				'network_active' => is_multisite() && is_plugin_active_for_network( (string) $basename ),
 				'must_use'      => false,
 			);
 		}
@@ -158,7 +152,7 @@ final class SiteAnalyzer {
 
 		usort(
 			$plugins,
-			static fn ( array $left, array $right ): int => strcmp( (string) $left['basename'], (string) $right['basename'] )
+			static fn( array $left, array $right ): int => strcmp( (string) $left['basename'], (string) $right['basename'] )
 		);
 
 		return $plugins;
@@ -178,7 +172,7 @@ final class SiteAnalyzer {
 
 		usort(
 			$results,
-			static fn ( array $left, array $right ): int => strcmp( (string) $left['id'], (string) $right['id'] )
+			static fn( array $left, array $right ): int => strcmp( (string) $left['id'], (string) $right['id'] )
 		);
 
 		return $results;
@@ -302,7 +296,7 @@ final class SiteAnalyzer {
 
 		usort(
 			$results,
-			static fn ( array $left, array $right ): int => strcmp( (string) $left['name'], (string) $right['name'] )
+			static fn( array $left, array $right ): int => strcmp( (string) $left['name'], (string) $right['name'] )
 		);
 
 		return $results;
@@ -315,10 +309,6 @@ final class SiteAnalyzer {
 		$results = array();
 
 		foreach ( get_taxonomies( array(), 'objects' ) as $taxonomy ) {
-			if ( ! $taxonomy instanceof WP_Taxonomy ) {
-				continue;
-			}
-
 			$results[] = array(
 				'name'        => (string) $taxonomy->name,
 				'label'       => (string) $taxonomy->label,
@@ -331,7 +321,7 @@ final class SiteAnalyzer {
 
 		usort(
 			$results,
-			static fn ( array $left, array $right ): int => strcmp( (string) $left['name'], (string) $right['name'] )
+			static fn( array $left, array $right ): int => strcmp( (string) $left['name'], (string) $right['name'] )
 		);
 
 		return $results;
@@ -370,8 +360,13 @@ final class SiteAnalyzer {
 	 */
 	private function menus(): array {
 		$results = array();
+		$menus   = wp_get_nav_menus();
 
-		foreach ( wp_get_nav_menus() as $menu ) {
+		if ( is_wp_error( $menus ) ) {
+			return $results;
+		}
+
+		foreach ( $menus as $menu ) {
 			$results[] = array(
 				'term_id' => (int) $menu->term_id,
 				'name'    => (string) $menu->name,
@@ -382,7 +377,7 @@ final class SiteAnalyzer {
 
 		usort(
 			$results,
-			static fn ( array $left, array $right ): int => (int) $left['term_id'] <=> (int) $right['term_id']
+			static fn( array $left, array $right ): int => (int) $left['term_id'] <=> (int) $right['term_id']
 		);
 
 		return $results;
