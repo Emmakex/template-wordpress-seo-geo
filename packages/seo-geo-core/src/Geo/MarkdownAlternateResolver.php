@@ -60,6 +60,13 @@ final class MarkdownAlternateResolver {
 	private ContentProvenanceResolver $provenance;
 
 	/**
+	 * Versioned discovery cache.
+	 *
+	 * @var DiscoveryCache
+	 */
+	private DiscoveryCache $cache;
+
+	/**
 	 * Create the resolver.
 	 *
 	 * @param NativeTranslationRegistry   $translations  Translation relationship authority.
@@ -67,19 +74,22 @@ final class MarkdownAlternateResolver {
 	 * @param NativeLanguageConfiguration $languages     Native language configuration.
 	 * @param IndexabilityResolver        $indexability Current-request indexability authority.
 	 * @param ContentProvenanceResolver   $provenance   Content provenance authority.
+	 * @param DiscoveryCache              $cache        Versioned discovery cache.
 	 */
 	public function __construct(
 		NativeTranslationRegistry $translations,
 		LocalizedSeoResolver $localized_seo,
 		NativeLanguageConfiguration $languages,
 		IndexabilityResolver $indexability,
-		ContentProvenanceResolver $provenance
+		ContentProvenanceResolver $provenance,
+		DiscoveryCache $cache
 	) {
 		$this->translations  = $translations;
 		$this->localized_seo = $localized_seo;
 		$this->languages     = $languages;
 		$this->indexability  = $indexability;
 		$this->provenance    = $provenance;
+		$this->cache         = $cache;
 	}
 
 	/**
@@ -266,7 +276,16 @@ final class MarkdownAlternateResolver {
 	 * @param array{post:WP_Post,html_url:string,markdown_url:string,language:string|null} $markdown_resource Resolved Markdown resource.
 	 */
 	public function render_markdown( array $markdown_resource ): string {
-		$post  = $markdown_resource['post'];
+		$post = $markdown_resource['post'];
+
+		$identity  = (string) $post->ID . '|' . $markdown_resource['html_url'] . '|' . ( $markdown_resource['language'] ?? '' );
+		$cache_key = $this->cache->key( 'markdown', $identity );
+		$cached    = $this->cache->get_text( $cache_key, $found );
+
+		if ( $found && null !== $cached ) {
+			return $cached;
+		}
+
 		$title = $this->plain_text( get_the_title( $post ) );
 
 		$lines = array(
@@ -312,7 +331,10 @@ final class MarkdownAlternateResolver {
 			$lines[] = $body;
 		}
 
-		return rtrim( implode( "\n", $lines ) ) . "\n";
+		$document = rtrim( implode( "\n", $lines ) ) . "\n";
+		$this->cache->set_text( $cache_key, $document );
+
+		return $document;
 	}
 
 	/**
