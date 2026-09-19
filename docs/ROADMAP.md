@@ -1124,7 +1124,7 @@ None. Phase 7 may begin only from this closed, verified baseline.
 
 ## Phase 7 — Presets
 
-Status: **complete**
+Status: **in progress — extended before Phase 8 implementation**
 
 Implement in this order:
 
@@ -1257,16 +1257,13 @@ Evidence:
 
 No 7D CI/product incident met the error-register criteria; the first implementation candidate and post-merge candidate both passed without a corrective commit.
 
-### Phase 7 closure
+### Phase 7A–7D verified baseline and roadmap extension
 
-Phase 7 is closed with all four presets independently implemented, merged and post-merge verified:
+Corporate, Local Business, Publisher and Ecommerce were independently implemented, merged and post-merge verified before this roadmap extension.
 
-1. Corporate;
-2. Local Business;
-3. Publisher;
-4. Ecommerce.
+Their completed status remains unchanged. The product decision taken before Phase 8 implementation extends the preset layer with one additional modern-site archetype rather than modifying or reopening the accepted work inside 7A–7D.
 
-Shared closure guarantees:
+Shared verified guarantees from 7A–7D remain:
 
 - one allowlisted server-side preset registry;
 - preset-neutral default installation;
@@ -1275,27 +1272,220 @@ Shared closure guarantees:
 - preset-owned patterns isolated from other presets;
 - native SEO/GEO/Core authorities composed rather than forked;
 - no fabricated proof, local facts, editorial sources or commerce facts;
-- Foundation validates every declarative preset contract;
-- Self-contained Theme CI validates every preset in the same disposable zero-plugin WordPress fixture;
+- Foundation validates every completed declarative preset contract;
+- Self-contained Theme CI validates completed preset activation in the same disposable zero-plugin WordPress fixture;
 - no extra preset-specific workflow or Docker stack.
 
-The next roadmap step is Phase 8 — Onboarding and operator experience.
+### Microphase 7E — SaaS / Digital Product preset
 
-## Phase 8 — Theme onboarding
+Status: **planned**
+
+Purpose:
+
+- cover modern SaaS, software, AI-product, platform and digital-service sites that do not fit cleanly into Corporate or Ecommerce;
+- remain a composition of the neutral theme/Core rather than a separate product stack;
+- stay zero-plugin safe and independent from any SaaS backend, billing provider or CRM.
+
+Required information architecture:
+
+- Home;
+- Product;
+- Features;
+- Solutions / use cases;
+- Integrations;
+- Pricing or plans when real public pricing exists;
+- Comparisons only when editorially justified;
+- Resources / blog;
+- About;
+- Contact / demo;
+- Documentation link/surface when applicable;
+- legal pages.
+
+Preset-owned patterns may include:
+
+- product hero + primary CTA;
+- feature grid;
+- product workflow/demo explanation;
+- use-case cards;
+- integrations directory teaser;
+- pricing/plans presentation;
+- comparison framework;
+- proof/testimonial placeholders;
+- FAQ;
+- lead-generation / book-a-demo CTA;
+- final conversion CTA.
+
+SEO/Schema boundaries:
+
+- Organization, WebSite, WebPage, BreadcrumbList, BlogPosting and Person continue to use existing native authorities;
+- SoftwareApplication may be recommended only when the visible product genuinely satisfies that entity contract and the required facts are explicitly configured/visible;
+- pricing, ratings, reviews, customer counts, awards, integrations and performance claims are never fabricated or inferred;
+- comparison pages must contain original, useful comparison content and must not be mass-generated doorway pages;
+- preset activation never creates external-service credentials or grants integration authority.
+
+Acceptance:
+
+- EN/ES content map and customer-facing copy ship together;
+- activation is isolated from Corporate, Local Business, Publisher and Ecommerce;
+- default installation remains preset-neutral;
+- zero-plugin WordPress acceptance proves activation without a SaaS backend or third-party service;
+- required Foundation and Self-contained Theme gates pass before Phase 7 may close again.
+
+Phase 7 closes only after 7E implementation, PR validation, merge and post-merge verification are green.
+
+## Phase 8 — Existing-site adoption and safe migration
+
+Status: **planned**
+
+Goal:
+
+Support real client WordPress sites that already have a theme, page builder, plugins, content and accumulated SEO value. Migration must modernize the site without treating production as a disposable environment.
+
+A temporary **SEO/GEO Migration Bridge** is permitted as a separate plugin/tool because it must inspect the existing installation before the destination theme is active. It is not a baseline dependency of the final theme and must be removable after migration.
+
+### Microphase 8A — Site Analyzer
+
+Deliverables:
+
+- read-only-by-default inventory of active/inactive theme and child theme;
+- page-builder detection, initially including native blocks, Elementor and Divi, with an extensible adapter contract;
+- active/inactive plugin inventory;
+- custom post types, taxonomies, shortcodes, widgets, menus and template dependencies;
+- WooCommerce and other business-system detection without claiming compatibility before dedicated acceptance;
+- multilingual, SEO, Schema, redirects, analytics, forms, cache and security-provider detection;
+- custom CSS/functions and other project-owned customization signals where safely detectable;
+- machine-readable analysis report;
+- no content/theme/plugin mutation during analysis.
+
+### Microphase 8B — SEO/GEO baseline snapshot
+
+Deliverables:
+
+- crawl/inventory of relevant public URLs;
+- HTTP status, indexability, title, meta description, canonical, robots, hreflang, Open Graph and Schema snapshot;
+- H1/headings, breadcrumbs, internal links and primary-content fingerprints where practical;
+- sitemap and redirect inventory;
+- language and content-type classification;
+- persisted migration baseline used only as an acceptance reference, never as an authority to reproduce invalid/duplicate legacy output.
+
+Primary rule: an existing valuable public URL remains stable unless an explicit migration decision requires a change.
+
+### Microphase 8C — Builder and plugin dependency graph
+
+Deliverables:
+
+- classify detected dependencies as KEEP, REPLACE, MIGRATE, OPTIONAL, REMOVE-CANDIDATE or UNKNOWN;
+- identify pages/resources coupled to Elementor, Divi or other detected builders;
+- identify public SEO signals currently owned by each SEO/Schema/multilingual provider;
+- detect dependencies that cannot be removed safely;
+- generate a migration plan before destructive actions exist.
+
+No production plugin/theme is automatically removed because another component appears to cover similar behavior.
+
+### Microphase 8D — Sandbox Migration Lab
+
+Deliverables:
+
+- documented isolated clone/staging workflow;
+- sandbox is non-indexable and cannot become a competing public canonical source;
+- destination SEO/GEO theme installed only in sandbox first;
+- baseline snapshot imported for comparison;
+- migration-state report showing migrated, blocked, manual-review and unchanged resources;
+- no production cutover before sandbox acceptance.
+
+The repository should prefer provider-neutral sandbox contracts. Vendor-specific staging integrations remain optional adapters.
+
+### Microphase 8E — Migration Engine
+
+Deliverables:
+
+- controlled migration from supported builder/content structures toward native blocks/patterns/templates where accepted;
+- preset selection as the destination information architecture, without forcing content into an incompatible preset;
+- preserve business systems that remain authoritative;
+- preserve media/content IDs and URLs where safe;
+- explicit adapter boundaries for builder-specific transformations;
+- unsupported modules/components stay visible as blockers/manual-review items rather than being silently dropped;
+- every mutating operation is capability/nonce protected and explicitly initiated by an administrator.
+
+### Microphase 8F — SEO parity and regression engine
+
+Deliverables:
+
+- old-vs-new comparison for every tracked public URL;
+- URL/status/indexability parity;
+- canonical/robots/hreflang ownership checks;
+- title/meta preservation or explicit approved change;
+- Schema-owner conflict detection;
+- redirect-map validation;
+- internal-link and broken-link checks;
+- sitemap consistency;
+- performance/accessibility checks on representative migrated pages;
+- explicit allowlist for intentional differences so acceptance distinguishes planned improvements from regressions.
+
+A migration cannot be accepted merely because pages look correct.
+
+### Microphase 8G — Safe cutover and rollback
+
+Deliverables:
+
+- mandatory pre-cutover snapshot of database, uploads, themes/plugins/options relevant to recovery, redirect map and SEO baseline;
+- controlled production activation/deactivation plan;
+- cache purge and rewrite/sitemap refresh only where required;
+- immediate health checks after cutover;
+- SEO parity spot-check against the accepted migration report;
+- deterministic rollback procedure;
+- rollback remains available until the migration is explicitly accepted.
+
+Destructive “reset everything first” behavior is forbidden.
+
+### Microphase 8H — Migration report
+
+Deliverables:
+
+- before/after dependency count;
+- kept/replaced/removed components;
+- URL and redirect parity;
+- SEO/GEO signal parity and intentional improvements;
+- representative performance/accessibility comparison;
+- unresolved manual-review items;
+- cutover/rollback evidence;
+- final Migration Bridge disposition: remove, retain in audit-only mode or retain only when a documented operational feature requires it.
+
+### Phase 8 exit criteria
+
+Phase 8 closes only when:
+
+- analysis is non-destructive by default;
+- at least one representative legacy WordPress fixture is migrated through sandbox rather than production-first;
+- builder/plugin dependencies are explicitly classified;
+- no tracked SEO-critical URL or signal disappears without an approved migration decision;
+- cutover and rollback are tested;
+- Migration Bridge is proven non-required for the final self-contained theme baseline;
+- EN/ES admin/operator UI ships together;
+- required security, PHP quality, WordPress runtime, accessibility and performance gates are green.
+
+## Phase 9 — Theme onboarding and operator experience
+
+Status: **planned**
+
+The onboarding layer serves both clean installations and sites that arrived through Phase 8 migration.
 
 Deliverables:
 
 - theme-owned setup wizard/admin screen;
-- preset choice;
+- preset choice, including the completed five-preset catalog;
 - primary/additional language configuration;
 - organization/entity basics;
 - crawler/GEO opt-ins;
 - generated setup report;
+- migrated-site mode that can consume an accepted Migration Bridge report without making the bridge a runtime dependency;
 - optional detection of external systems only for compatibility warnings or enhancements.
 
 The onboarding flow must not instruct users to install an SEO/GEO plugin to complete the baseline setup.
 
-## Phase 9 — Distribution
+## Phase 10 — Distribution and production release
+
+Status: **planned**
 
 Deliverables:
 
@@ -1303,9 +1493,12 @@ Deliverables:
 - embedded SEO/GEO runtime integrity check;
 - versioning/changelog;
 - clean-install and upgrade tests with zero required plugins;
+- migration/install documentation for real client sites;
 - documentation for project cloning and per-client customization;
 - production verification checklist;
-- decision on deprecating/removing the transitional standalone Core plugin wrapper.
+- documented rollback/recovery checklist;
+- decision on deprecating/removing the transitional standalone Core plugin wrapper;
+- real-site production acceptance after sandbox validation before declaring the first stable release.
 
 ## Backlog rules
 
