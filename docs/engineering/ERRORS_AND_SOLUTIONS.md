@@ -1216,7 +1216,7 @@ For locale-sensitive WordPress acceptance:
 
 ## ERR-2026-022 — Global roadmap/governance docs over-triggered every specialized CI gate
 
-**Status:** resolved in implementation; validation pending merge  
+**Status:** resolved  
 **First seen:** 2026-09-19  
 **Last seen:** 2026-09-19  
 **Area:** ci / workflow scope / runner efficiency  
@@ -1257,7 +1257,10 @@ A documentation change that genuinely changes executable behavior must ship with
 
 ### Validation
 
-The workflow-scope fix intentionally requires one final broad validation because the workflow definitions themselves are changing. After merge, the regression proof is a subsequent docs-only change that launches Foundation without browser, performance, multilingual, package or runtime-smoke jobs.
+- fix PR #62 changed the specialized workflow definitions and therefore correctly ran the complete matrix; all ten PR workflows passed;
+- PR #62 was squash-merged as `6e8d711ce32e2fba7d582c5b4196c48a24adbcc7`;
+- all ten post-merge workflows passed again on that merge, including Foundation `35457685757`, Self-contained Theme `35457685761`, Native Multilingual `35457685751`, Accessibility & Responsive `35457685785` and Performance Baseline `35457685763`;
+- regression proof PR #63 changed only `docs/engineering/ERRORS_AND_SOLUTIONS.md`; GitHub created exactly one workflow, Foundation CI `35457917213`, and no specialized browser, performance, multilingual, package, PHP-quality or runtime-smoke workflow.
 
 ### Prevention / guardrail
 
