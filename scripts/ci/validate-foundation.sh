@@ -111,6 +111,8 @@ required_paths=(
   "scripts/ci/validate-publisher-preset.php"
   "scripts/ci/ecommerce-preset-acceptance.sh"
   "scripts/ci/validate-ecommerce-preset.php"
+  "scripts/ci/onboarding-preset-acceptance.sh"
+  "scripts/ci/validate-onboarding.php"
   "scripts/ci/native-language-smoke.sh"
   "scripts/ci/native-routing-smoke.sh"
   "scripts/ci/native-translation-relations-smoke.sh"
@@ -130,6 +132,8 @@ required_paths=(
   "presets/ecommerce/preset.json"
   "presets/ecommerce/content-map.json"
   "presets/ecommerce/patterns.json"
+  "packages/seo-geo-theme/inc/onboarding.php"
+  "docs/ONBOARDING.md"
 )
 
 for path in "${required_paths[@]}"; do
@@ -140,5 +144,6 @@ php scripts/ci/validate-corporate-preset.php
 php scripts/ci/validate-local-business-preset.php
 php scripts/ci/validate-publisher-preset.php
 php scripts/ci/validate-ecommerce-preset.php
+php scripts/ci/validate-onboarding.php
 
-printf 'Foundation contract OK: %d required paths present plus all four Phase 7 preset contracts.\n' "${#required_paths[@]}"
+printf 'Foundation contract OK: %d required paths present plus Phase 7 presets and Phase 8A onboarding contract.\n' "${#required_paths[@]}"
