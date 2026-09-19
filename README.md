@@ -46,7 +46,7 @@ Implemented presets: `corporate`, `local-business`, `publisher`, `ecommerce` and
 
 ## Existing-site adoption
 
-The roadmap now includes a temporary **SEO/GEO Migration Bridge** for real client WordPress installations that already depend on themes, builders and plugins. The bridge is read-only by default, works through an isolated sandbox, captures SEO/GEO parity before cutover and requires a recoverable rollback path. It never becomes a required runtime dependency of the final self-contained theme.
+Phase 8 is now implementing a temporary **SEO/GEO Migration Bridge** for real client WordPress installations that already depend on themes, builders and plugins. Phase 8A starts with a machine-readable, non-persistent Site Analyzer for themes, plugins, native blocks/Elementor/Divi, provider families, content-model registrations and customization signals. The bridge remains outside the final self-contained theme and is read-only before later sandbox/migration phases.
 
 ## Engineering workflow
 
@@ -77,6 +77,7 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/PATTERNS.md`
 - `docs/PRESETS.md`
 - `docs/COMPATIBILITY.md`
+- `docs/MIGRATION_BRIDGE.md`
 - `docs/CI_QUALITY_GATES.md`
 - `docs/ROADMAP.md`
 - `docs/engineering/GLOBAL_ENGINEERING_RULES.md`
