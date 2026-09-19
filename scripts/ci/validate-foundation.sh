@@ -95,6 +95,7 @@ required_paths=(
   "packages/seo-geo-core/src/Geo/MarkdownAlternatePresenter.php"
   "scripts/build-theme-package.sh"
   "scripts/ci/self-contained-theme-smoke.sh"
+  "scripts/ci/discovery-privacy-acceptance.sh"
   "scripts/ci/native-language-smoke.sh"
   "scripts/ci/native-routing-smoke.sh"
   "scripts/ci/native-translation-relations-smoke.sh"
