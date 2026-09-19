@@ -8,7 +8,6 @@ on:
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
-      - 'docs/ROADMAP.md'
   push:
     branches:
       - main
@@ -18,7 +17,6 @@ on:
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read

@@ -52,12 +52,21 @@ A feature is not complete because it works on one desktop viewport. Relevant cha
 
 Run the gates required by the changed contract, not unrelated work. Validation must be deep enough to prove the affected behavior and small enough to stay actionable.
 
+Path scope is part of the engineering contract:
+
+- repository-wide governance/status documents such as `docs/ROADMAP.md`, `docs/CI_QUALITY_GATES.md`, `docs/engineering/GLOBAL_ENGINEERING_RULES.md` and `docs/engineering/ERRORS_AND_SOLUTIONS.md` trigger **Foundation only**;
+- specialized workflows may watch their own authoritative technical documentation when that document is part of the specific acceptance contract;
+- a docs-only status/evidence/closure change must not trigger browser, Lighthouse, multilingual, packaging or runtime smoke suites;
+- when documentation changes a real executable contract, the same change must include the code/test/workflow update that causes the relevant specialized gates to run. Documentation alone is not a substitute for implementation acceptance;
+- Foundation enforces this scope through `scripts/ci/validate-ci-path-scope.sh`.
+
 Examples:
 
 - metadata change -> SEO output tests, not unrelated ecommerce E2E;
 - language resolver change -> ES/EN canonical/hreflang/navigation tests;
 - pattern styling change -> responsive/accessibility/performance checks for that pattern;
-- build change -> package/install/build gates.
+- build change -> package/install/build gates;
+- roadmap/phase-status/evidence-only change -> Foundation only.
 
 ## 10. Finish before advancing
 

@@ -6,7 +6,6 @@ on:
       - 'packages/**'
       - 'scripts/ci/validate-phase1.sh'
       - '.github/workflows/phase-1.yml'
-      - 'docs/ROADMAP.md'
   push:
     branches:
       - main
@@ -14,7 +13,6 @@ on:
       - 'packages/**'
       - 'scripts/ci/validate-phase1.sh'
       - '.github/workflows/phase-1.yml'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read

@@ -1212,3 +1212,61 @@ For locale-sensitive WordPress acceptance:
 
 `scripts/ci/corporate-preset-acceptance.sh` retains the explicit EN/ES block-pattern registry checks inside Self-contained Theme CI. Future presets can reuse the same WordPress-native locale strategy instead of rediscovering WP-CLI-specific behavior.
 
+
+
+## ERR-2026-022 — Global roadmap/governance docs over-triggered every specialized CI gate
+
+**Status:** resolved in implementation; validation pending merge  
+**First seen:** 2026-09-19  
+**Last seen:** 2026-09-19  
+**Area:** ci / workflow scope / runner efficiency  
+**Signature:** `f18d0ada89a6`  
+**Reference:** Phase 7 closure PR #61, docs-only head `c8a70af6af25222a8458eac8e5aae5bfe36ebb57`; unnecessary Accessibility run `35456600148`, Native Multilingual run `35456600052`, Self-contained Theme run `35456600053`, Performance Baseline run `35456600037`
+
+### Symptom / context
+
+PR #61 changed only documentation to close Phase 7, but GitHub Actions launched the complete ten-workflow matrix, including browser accessibility, Lighthouse performance, native multilingual runtime acceptance, package/smoke and the full self-contained WordPress fixture.
+
+All jobs passed, but the execution contradicted the repository's **minimum sufficient validation** rule and consumed runner time for contracts that had not changed.
+
+### Root cause
+
+Confirmed. `docs/ROADMAP.md` was listed in the `paths:` trigger of almost every specialized workflow. `docs/CI_QUALITY_GATES.md` also directly triggered PHP Quality.
+
+Because Phase closure/evidence commits necessarily update the roadmap and CI evidence documentation, routine docs-only closure work was treated as if theme/runtime/browser/performance code had changed.
+
+The engineering rule described path-aware validation, but workflow configuration did not enforce the distinction between:
+
+- global governance/status/evidence documents; and
+- specialized technical contract documents owned by one gate.
+
+### Solution
+
+Make global governance/status documents **Foundation-only triggers**.
+
+The fix:
+
+- removes `docs/ROADMAP.md` from Accessibility, Design System, Native Multilingual, Pattern, Performance, Phase 1 Package, PHP Quality, Self-contained Theme and WordPress Smoke workflow path filters;
+- removes `docs/CI_QUALITY_GATES.md` from PHP Quality path filters;
+- retains specialized documentation triggers such as accessibility/performance/multilingual docs on the gates that actually own those contracts;
+- keeps Foundation unconditional for pull requests and pushes to `main`;
+- adds `scripts/ci/validate-ci-path-scope.sh` and executes it from Foundation;
+- protects `ROADMAP.md`, `CI_QUALITY_GATES.md`, `GLOBAL_ENGINEERING_RULES.md` and `ERRORS_AND_SOLUTIONS.md` from being reintroduced into specialized workflow triggers.
+
+A documentation change that genuinely changes executable behavior must ship with the matching code/test/workflow change; that executable change is what activates the relevant specialized gates.
+
+### Validation
+
+The workflow-scope fix intentionally requires one final broad validation because the workflow definitions themselves are changing. After merge, the regression proof is a subsequent docs-only change that launches Foundation without browser, performance, multilingual, package or runtime-smoke jobs.
+
+### Prevention / guardrail
+
+- Global roadmap/governance/status/evidence documents are Foundation-only.
+- Specialized workflows watch executable paths plus only their own authoritative technical documentation.
+- Do not add a global phase/status document to a heavyweight workflow as a convenient way to make phase closures "re-run everything".
+- `scripts/ci/validate-ci-path-scope.sh` fails Foundation if protected global docs appear in a specialized workflow trigger.
+- Runner cost and queue pressure are part of CI correctness, not merely an operational concern.
+
+### Regression coverage
+
+Foundation executes `scripts/ci/validate-ci-path-scope.sh` on every pull request and push to `main`. The validator checks every specialized workflow and rejects protected global-doc triggers while also ensuring Foundation remains unconditional.

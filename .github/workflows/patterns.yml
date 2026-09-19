@@ -9,7 +9,6 @@ on:
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/patterns.yml'
       - 'docs/PATTERNS.md'
-      - 'docs/ROADMAP.md'
   push:
     branches:
       - main
@@ -20,7 +19,6 @@ on:
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/patterns.yml'
       - 'docs/PATTERNS.md'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read

@@ -14,7 +14,6 @@ on:
       - '.github/workflows/native-multilingual.yml'
       - 'docs/MULTILINGUAL.md'
       - 'docs/NATIVE_MULTILINGUAL.md'
-      - 'docs/ROADMAP.md'
   push:
     branches:
       - main
@@ -30,7 +29,6 @@ on:
       - '.github/workflows/native-multilingual.yml'
       - 'docs/MULTILINGUAL.md'
       - 'docs/NATIVE_MULTILINGUAL.md'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read

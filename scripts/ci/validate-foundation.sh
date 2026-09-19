@@ -140,5 +140,6 @@ php scripts/ci/validate-corporate-preset.php
 php scripts/ci/validate-local-business-preset.php
 php scripts/ci/validate-publisher-preset.php
 php scripts/ci/validate-ecommerce-preset.php
+bash scripts/ci/validate-ci-path-scope.sh
 
-printf 'Foundation contract OK: %d required paths present plus all four Phase 7 preset contracts.\n' "${#required_paths[@]}"
+printf 'Foundation contract OK: %d required paths present plus all four Phase 7 preset contracts and minimum-sufficient CI scope.\n' "${#required_paths[@]}"

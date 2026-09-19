@@ -203,17 +203,30 @@ The final product boundary is one installable theme. The transitional standalone
 
 ## Minimum sufficient validation
 
-CI workflows should use path/module awareness so a docs-only change does not run full browser suites, while a language resolver change runs every test contract affected by language resolution.
+CI workflows use path/module awareness so a docs-only status/evidence change does not run full browser suites, while a language resolver change still runs every test contract affected by language resolution.
 
-The changed contract—not file extension alone—determines sufficient validation.
+The changed executable contract—not file extension alone—determines sufficient validation.
+
+Global governance/status documents are **Foundation-only triggers**:
+
+- `docs/ROADMAP.md`;
+- `docs/CI_QUALITY_GATES.md`;
+- `docs/engineering/GLOBAL_ENGINEERING_RULES.md`;
+- `docs/engineering/ERRORS_AND_SOLUTIONS.md`.
+
+Specialized workflows may watch their own authoritative technical documentation, for example accessibility docs for Accessibility CI or performance docs for Performance Baseline CI. They must not watch global roadmap/governance files merely to receive phase-status updates.
+
+`scripts/ci/validate-ci-path-scope.sh`, executed by Foundation, fails if a protected global document is reintroduced into a specialized workflow trigger. Foundation itself remains unconditional.
 
 Examples:
 
-- quality-config-only change -> Foundation + PHP Quality;
+- roadmap/phase-status/evidence-only change -> Foundation only;
+- quality-config/code change -> Foundation + PHP Quality;
 - project PHP API change -> Foundation + Package + PHP Quality + relevant WordPress runtime smoke;
 - self-contained runtime/bootstrap/build change -> Foundation + PHP Quality + WordPress Smoke + Self-contained Theme + affected browser/performance gates;
 - runtime-smoke script change -> Foundation + the matching runtime smoke;
-- documentation that changes a declared quality/phase contract -> the workflows whose contract the document changes.
+- specialized technical-contract documentation change -> Foundation + only the specialized gate that owns that documentation;
+- documentation that changes a real executable contract must ship with the matching code/test/workflow change, which then activates the required specialized gates.
 
 ## Failure diagnostics
 

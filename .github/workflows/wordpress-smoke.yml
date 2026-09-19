@@ -7,7 +7,6 @@ on:
       - 'scripts/ci/wordpress-smoke.sh'
       - '.github/workflows/wordpress-smoke.yml'
       - 'docs/COMPATIBILITY.md'
-      - 'docs/ROADMAP.md'
   push:
     branches:
       - main
@@ -16,7 +15,6 @@ on:
       - 'scripts/ci/wordpress-smoke.sh'
       - '.github/workflows/wordpress-smoke.yml'
       - 'docs/COMPATIBILITY.md'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read
