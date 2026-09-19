@@ -241,7 +241,7 @@ fi
   || fail_smoke "native-authority" "Theme-only runtime must own native SEO output" "native" "$AUTHORITY" "Runtime::seo_authority"
 
 printf '[self-contained] Checking crawler policy administration contract.\n'
-if ! CRAWLER_SANITIZED="$(wp_cli eval '$resolver = \\SeoGeo\\Core\\Runtime::crawler_policy(); if ( ! $resolver ) { exit( 1 ); } echo wp_json_encode( $resolver->sanitize_configuration( array( "oai_searchbot" => "allow", "gptbot" => "inherit", "unknown_bot" => "disallow" ) ) );' 2>"$CRAWLER_ADMIN_EVAL_ERROR" | tr -d '\r\n')"; then
+if ! CRAWLER_SANITIZED="$(wp_cli eval '$resolver = \SeoGeo\Core\\Runtime::crawler_policy(); if ( ! $resolver ) { exit( 1 ); } echo wp_json_encode( $resolver->sanitize_configuration( array( "oai_searchbot" => "allow", "gptbot" => "inherit", "unknown_bot" => "disallow" ) ) );' 2>"$CRAWLER_ADMIN_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$CRAWLER_ADMIN_EVAL_ERROR" | head -c 240)"
   fail_smoke "crawler-admin-sanitize-eval" "Could not evaluate crawler policy sanitizer" "normalized supported policy" "${ERROR_TEXT:-wp eval failed}" "wp eval CrawlerPolicyResolver::sanitize_configuration"
 fi
@@ -251,7 +251,7 @@ fi
 wp_cli eval 'update_option( "seo_geo_crawler_policy", array( "oai_searchbot" => "allow", "gptbot" => "disallow" ), false ); update_option( "blog_public", "0" );' >/dev/null \
   || fail_smoke "crawler-admin-fixture" "Could not configure crawler admin reporting fixture" "option updates succeed" "failed"
 
-if ! CRAWLER_ADMIN_HTML="$(wp_cli eval 'wp_set_current_user( 1 ); if ( ! function_exists( "submit_button" ) ) { require_once ABSPATH . "wp-admin/includes/admin.php"; } $resolver = \\SeoGeo\\Core\\Runtime::crawler_policy(); if ( ! $resolver ) { exit( 1 ); } $admin = new \\SeoGeo\\Core\\Geo\\CrawlerPolicyAdmin( $resolver ); ob_start(); $admin->render_page(); echo ob_get_clean();' 2>"$CRAWLER_ADMIN_EVAL_ERROR")"; then
+if ! CRAWLER_ADMIN_HTML="$(wp_cli eval 'wp_set_current_user( 1 ); if ( ! function_exists( "submit_button" ) ) { require_once ABSPATH . "wp-admin/includes/admin.php"; } $resolver = \SeoGeo\Core\\Runtime::crawler_policy(); if ( ! $resolver ) { exit( 1 ); } $admin = new \SeoGeo\Core\\Geo\\CrawlerPolicyAdmin( $resolver ); ob_start(); $admin->render_page(); echo ob_get_clean();' 2>"$CRAWLER_ADMIN_EVAL_ERROR")"; then
   ERROR_TEXT="$(tr -d '\r' <"$CRAWLER_ADMIN_EVAL_ERROR" | head -c 240)"
   fail_smoke "crawler-admin-render-eval" "Could not render crawler policy administration screen" "render succeeds for manage_options user" "${ERROR_TEXT:-wp eval failed}" "wp eval CrawlerPolicyAdmin::render_page"
 fi
@@ -1172,7 +1172,7 @@ fi
 
 wp_cli delete option seo_geo_markdown_alternates >/dev/null 2>&1 || true
 
-if ! BREADCRUMBS_JSON="$(wp_cli eval "global \$wp_query; \$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \\SeoGeo\\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
+if ! BREADCRUMBS_JSON="$(wp_cli eval "global \$wp_query; \$wp_query = new WP_Query( array( 'p' => ${POST_ID} ) ); if ( \$wp_query->have_posts() ) { \$wp_query->the_post(); } echo wp_json_encode( \SeoGeo\Core\\Runtime::breadcrumbs()?->resolve() ?? array() );" 2>"$BREADCRUMB_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$BREADCRUMB_EVAL_ERROR" | head -c 240)"
   fail_smoke "breadcrumb-eval" "Could not resolve breadcrumb data contract" "root and current post items" "${ERROR_TEXT:-wp eval failed}" "wp eval Runtime::breadcrumbs"
 fi
