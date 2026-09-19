@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "preset": "publisher",
+  "category": {
+    "slug": "seo-geo-publisher",
+    "labels": {
+      "en_US": "Publisher",
+      "es_ES": "Editorial"
+    }
+  },
+  "patterns": [
+    {
+      "slug": "seo-geo-theme/publisher-article-summary",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Publisher article summary",
+          "description": "A concise editorial summary scaffold that must reflect the actual article.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Article summary</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Summarize only what the published article actually establishes. Replace every prompt before publication.</p><!-- /wp:paragraph -->\n<!-- wp:list --><ul class=\"wp-block-list\"><li>State the central development, finding or question.</li><li>Explain why it matters to the intended reader.</li><li>Add the most important limitation or context needed to interpret it correctly.</li></ul><!-- /wp:list -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Resumen editorial del artículo",
+          "description": "Una estructura de resumen conciso que debe reflejar únicamente el contenido real del artículo.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Resumen del artículo</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Resume solo lo que el artículo publicado realmente establece. Sustituye cada indicación antes de publicar.</p><!-- /wp:paragraph -->\n<!-- wp:list --><ul class=\"wp-block-list\"><li>Indica el desarrollo, hallazgo o pregunta central.</li><li>Explica por qué es relevante para el lector previsto.</li><li>Añade la limitación o el contexto más importante para interpretarlo correctamente.</li></ul><!-- /wp:list -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/publisher-key-facts",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Publisher verified key facts",
+          "description": "A key-facts section for current, evidence-backed statements only.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Key facts</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Use only facts you can support from the article, a primary source or another appropriate reference.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Verified fact</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add one precise statement and the context needed to understand it.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Verified fact</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a second supported statement, including date, scope or population when relevant.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Verified fact</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a third supported statement without overstating certainty or causation.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Datos clave editoriales verificados",
+          "description": "Una sección de datos clave reservada a afirmaciones actuales y respaldadas por evidencia.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Datos clave</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Usa solo datos que puedas respaldar con el artículo, una fuente primaria u otra referencia adecuada.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Dato verificado</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade una afirmación precisa y el contexto necesario para entenderla.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Dato verificado</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade una segunda afirmación respaldada, incluyendo fecha, alcance o población cuando sea relevante.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Dato verificado</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade una tercera afirmación respaldada sin exagerar la certeza ni la causalidad.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/publisher-sources",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Publisher source and reference list",
+          "description": "A reference scaffold that requires real checked sources and direct links added by editors.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Sources and references</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Replace these prompts with sources the editorial team actually used and checked. Prefer direct links to primary material where appropriate.</p><!-- /wp:paragraph -->\n<!-- wp:list --><ul class=\"wp-block-list\"><li>Add the real source title, publisher or institution, and a direct link.</li><li>Add the real report, dataset, filing, interview or documentation used.</li><li>Remove unused prompts rather than inventing a citation to fill the section.</li></ul><!-- /wp:list -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Lista editorial de fuentes y referencias",
+          "description": "Una estructura de referencias que exige fuentes reales comprobadas y enlaces directos añadidos por el equipo editorial.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Fuentes y referencias</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Sustituye estas indicaciones por fuentes que el equipo editorial haya utilizado y comprobado realmente. Prioriza enlaces directos a material primario cuando corresponda.</p><!-- /wp:paragraph -->\n<!-- wp:list --><ul class=\"wp-block-list\"><li>Añade el título real de la fuente, medio o institución y un enlace directo.</li><li>Añade el informe, conjunto de datos, registro, entrevista o documentación real utilizada.</li><li>Elimina las indicaciones que no uses en lugar de inventar una cita para completar la sección.</li></ul><!-- /wp:list -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/publisher-related-content",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Publisher related content",
+          "description": "An internal-related-content scaffold that requires genuinely relevant published links.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Related reading</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Link only to published content that materially helps the reader continue the topic. Do not add unrelated links merely for internal-link volume.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Relevant article</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a real internal article and explain the connection in useful anchor text.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Relevant explainer</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a real guide, analysis or background piece that provides additional context.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Relevant update</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a real follow-up only when it is directly useful to the current topic.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Contenido editorial relacionado",
+          "description": "Una estructura de contenido relacionado que exige enlaces internos publicados y realmente pertinentes.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Lecturas relacionadas</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Enlaza solo contenido publicado que ayude de forma material al lector a continuar el tema. No añadas enlaces no relacionados únicamente para aumentar el enlazado interno.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Artículo relevante</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade un artículo interno real y explica la relación mediante un texto de enlace útil.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Guía relevante</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade una guía, análisis o pieza de contexto real que aporte información adicional.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Actualización relevante</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade un seguimiento real solo cuando sea directamente útil para el tema actual.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    }
+  ]
+}
