@@ -14,14 +14,18 @@ namespace SeoGeo\MigrationBridge\Builders;
  */
 final class ElementorDetector implements BuilderDetectorInterface {
 	/**
-	 * {@inheritDoc}
+	 * Return the stable builder identifier.
 	 */
 	public function id(): string {
 		return 'elementor';
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Detect Elementor from plugin inventory.
+	 *
+	 * @param list<array<string, mixed>> $plugins Plugin inventory.
+	 * @param list<array<string, mixed>> $themes  Theme inventory.
+	 * @return array<string, mixed>
 	 */
 	public function detect( array $plugins, array $themes ): array {
 		unset( $themes );
