@@ -10,7 +10,6 @@ on:
       - '.github/workflows/self-contained-theme.yml'
       - 'docs/ARCHITECTURE.md'
       - 'docs/PRODUCT_VISION.md'
-      - 'docs/ROADMAP.md'
   push:
     branches:
       - main
@@ -22,7 +21,6 @@ on:
       - '.github/workflows/self-contained-theme.yml'
       - 'docs/ARCHITECTURE.md'
       - 'docs/PRODUCT_VISION.md'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read
