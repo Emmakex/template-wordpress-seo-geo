@@ -10,8 +10,6 @@ on:
       - 'packages/**/*.php'
       - 'scripts/ci/php-quality.sh'
       - '.github/workflows/php-quality.yml'
-      - 'docs/CI_QUALITY_GATES.md'
-      - 'docs/ROADMAP.md'
   push:
     branches:
       - main
@@ -23,8 +21,6 @@ on:
       - 'packages/**/*.php'
       - 'scripts/ci/php-quality.sh'
       - '.github/workflows/php-quality.yml'
-      - 'docs/CI_QUALITY_GATES.md'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read
