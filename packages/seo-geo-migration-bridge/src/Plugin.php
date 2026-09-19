@@ -15,6 +15,8 @@ namespace SeoGeo\MigrationBridge;
 final class Plugin {
 	/**
 	 * Analyzer singleton.
+	 *
+	 * @var SiteAnalyzer|null
 	 */
 	private static ?SiteAnalyzer $analyzer = null;
 
