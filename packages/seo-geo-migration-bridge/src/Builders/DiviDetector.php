@@ -14,14 +14,18 @@ namespace SeoGeo\MigrationBridge\Builders;
  */
 final class DiviDetector implements BuilderDetectorInterface {
 	/**
-	 * {@inheritDoc}
+	 * Return the stable builder identifier.
 	 */
 	public function id(): string {
 		return 'divi';
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Detect Divi from plugin and theme inventory.
+	 *
+	 * @param list<array<string, mixed>> $plugins Plugin inventory.
+	 * @param list<array<string, mixed>> $themes  Theme inventory.
+	 * @return array<string, mixed>
 	 */
 	public function detect( array $plugins, array $themes ): array {
 		$evidence = array();
