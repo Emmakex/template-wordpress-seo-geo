@@ -13,7 +13,7 @@ const LOCAL_BUSINESS_THEME_DIR  = 'packages/seo-geo-theme';
  *
  * @param mixed $received Actual value.
  */
-function fail_local_business_preset( string $code, string $message, string $file_line, string $expected, mixed $received ): never {
+function fail_local_business_preset( string $code, string $message, string $file_line, mixed $expected, mixed $received ): never {
 	$signature = substr( hash( 'sha256', $code . ':' . $file_line . ':' . $message ), 0, 12 );
 
 	echo json_encode(
