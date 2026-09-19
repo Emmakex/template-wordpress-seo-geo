@@ -900,24 +900,52 @@ The reusable fixture lesson is recorded as `ERR-2026-015`.
 
 ### Microphase 6D — content provenance / author / source patterns
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #45:
 
-- one reusable provenance resolver for authoritative public built-in posts;
-- reuse the existing WordPress author identity and public author archive;
+- one reusable `ContentProvenanceResolver` for authoritative public built-in posts;
+- reuse of the existing WordPress author identity and public author archive;
 - visible single-post author name links to the same profile URL used by machine metadata;
 - standard HTML `meta name="author"` + `rel="author"`;
 - Open Graph `article:published_time`, `article:modified_time` and `article:author`;
-- publication/modification values reuse real WordPress ISO-8601 date authorities;
+- publication/modification values reuse real WordPress ISO-8601 date authorities already used by BlogPosting Schema;
 - optional Markdown alternates reuse the same Author/Publisher/Published/Updated provenance;
 - publisher remains limited to the existing explicit Organization identity;
-- no article provenance on author archives, pages, staged/noindex routes or non-public posts;
+- author archives and non-article contexts do not receive article provenance metadata;
 - no second Schema graph or duplicate Person identity;
-- zero-plugin cross-surface consistency acceptance;
-- public contract in `docs/CONTENT_PROVENANCE.md`.
+- zero-plugin acceptance proves exact author/date consistency across visible HTML, HTML metadata, Open Graph, Schema and Markdown;
+- Foundation requires both provenance source files plus `docs/CONTENT_PROVENANCE.md`.
 
-6D closes only after implementation, required PR gates and post-merge `main` verification are green.
+PR #45 passed all ten workflows on final candidate `660a7bb67019d6eb5ef05c4e28430e9d7fc46ba5` and was squash-merged as `4ee0c956ff1b0946ffad944c69779434e5cd7df1`.
+
+PR validation:
+
+- Foundation CI `35422241278`;
+- Phase 1 Package CI `35422241324`;
+- Pattern Contract CI `35422241174`;
+- Design System CI `35422241210`;
+- PHP Quality CI `35422241379`;
+- WordPress Smoke CI `35422241172`;
+- Self-contained Theme CI `35422241338`;
+- Native Multilingual CI `35422241266`;
+- Accessibility & Responsive CI `35422241232`;
+- Performance Baseline CI `35422241277`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Foundation CI `35422365734`;
+- Phase 1 Package CI `35422365771`;
+- Pattern Contract CI `35422365740`;
+- Design System CI `35422365809`;
+- PHP Quality CI `35422365806`;
+- WordPress Smoke CI `35422365752`;
+- Self-contained Theme CI `35422365830`;
+- Native Multilingual CI `35422365725`;
+- Accessibility & Responsive CI `35422365742`;
+- Performance Baseline CI `35422365713`.
+
+The first candidate exposed only WPCS alignment signature `3357a651e6fe`; no functional provenance failure was found. The reusable alignment lesson is recorded as `ERR-2026-016`.
 
 ### Remaining Phase 6 work
 
