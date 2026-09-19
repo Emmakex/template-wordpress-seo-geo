@@ -998,21 +998,50 @@ The first crawler-admin smoke candidate reproduced the existing WP-CLI namespace
 
 ### Microphase 6F — private/draft discovery leakage regression
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #49:
 
 - one dedicated acceptance module reused inside the existing disposable zero-plugin WordPress fixture;
 - public control plus draft/private post fixtures with unique title/content leak markers;
-- unauthenticated HTML routes must remain non-public and emit no native Schema, article provenance or Markdown discovery;
-- native WordPress sitemap, feed, search and author archive must not expose draft/private markers;
-- unauthenticated REST responses must not disclose draft/private title/content;
-- llms.txt must ignore explicitly configured draft/private IDs;
-- Markdown alternates must resolve for the public control and remain 404 for draft/private resources;
-- provenance and Markdown resolvers must return null for draft/private IDs;
-- no second Docker/WordPress environment is started, preserving runner efficiency.
+- unauthenticated draft/private HTML routes remain non-public and emit no native Schema, article provenance or Markdown discovery;
+- native WordPress sitemap, feed, search and author archive exclude draft/private title/content markers;
+- unauthenticated REST responses reject draft/private resources without disclosing their markers;
+- llms.txt ignores explicitly configured draft/private IDs while retaining the published control;
+- Markdown alternates resolve for the published control and remain 404 for draft/private resources;
+- provenance and Markdown resolvers return null for draft/private IDs;
+- no second Docker/WordPress environment is started, preserving runner efficiency;
+- the public privacy contract is documented in `docs/DISCOVERY_PRIVACY.md`.
 
-6F closes only after implementation, required PR gates and post-merge `main` verification are green.
+The first Phase 6F candidate passed every HTTP discovery surface and failed only in the final resolver-level harness because Bash expanded PHP local variables under `set -u`. The quoting bug was corrected without product changes and is recorded as `ERR-2026-017`.
+
+PR #49 passed all ten workflows on final candidate `99c01be435b0098482ff50ea771957eb7a8bee41` and was squash-merged as `feb3f50542e5e56da27d915b1a4e6efe3d73c115`.
+
+PR validation:
+
+- Foundation CI `35436517456`;
+- Phase 1 Package CI `35436517524`;
+- Pattern Contract CI `35436517476`;
+- Design System CI `35436517489`;
+- PHP Quality CI `35436517457`;
+- WordPress Smoke CI `35436517473`;
+- Self-contained Theme CI `35436517496`;
+- Accessibility & Responsive CI `35436517529`;
+- Native Multilingual CI `35436517466`;
+- Performance Baseline CI `35436517459`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Foundation CI `35436653734`;
+- Phase 1 Package CI `35436653748`;
+- Pattern Contract CI `35436653756`;
+- Design System CI `35436653754`;
+- PHP Quality CI `35436653749`;
+- WordPress Smoke CI `35436653740`;
+- Self-contained Theme CI `35436653739`;
+- Accessibility & Responsive CI `35436653775`;
+- Native Multilingual CI `35436653770`;
+- Performance Baseline CI `35436653788`.
 
 ### Remaining Phase 6 work
 
