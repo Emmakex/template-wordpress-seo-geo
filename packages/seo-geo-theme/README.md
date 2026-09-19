@@ -49,10 +49,11 @@ The theme currently provides:
   - author/profile;
   - contact;
 - embedded native SEO runtime for canonical, meta description and robots/indexability;
+- bundled declarative preset packages plus an allowlisted preset registry; Corporate is the first Phase 7 preset and remains disabled by default;
 - zero-plugin acceptance through `Self-contained Theme CI`.
 
 Patterns use theme presets instead of creating a second visual system. They do not emit duplicate Schema, own page-level H1s, embed remote assets or require third-party blocks.
 
 Optional integrations may be added later for compatibility with projects that deliberately install external systems, but they are not prerequisites for the baseline.
 
-See `docs/ARCHITECTURE.md`, `docs/NATIVE_SEO.md`, `docs/DESIGN_SYSTEM.md` and `docs/PATTERNS.md` for the contracts enforced by CI.
+See `docs/ARCHITECTURE.md`, `docs/NATIVE_SEO.md`, `docs/DESIGN_SYSTEM.md`, `docs/PATTERNS.md` and `docs/PRESETS.md` for the contracts enforced by CI.
