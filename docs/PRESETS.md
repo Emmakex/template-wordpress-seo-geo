@@ -318,25 +318,25 @@ It will ship a machine-readable manifest, matching EN/ES content map and preset-
 
 The preset will compose existing native SEO/GEO, multilingual, Schema and provenance authorities. It will not introduce a second product-Schema owner or infer product facts from marketing copy.
 
-Phase 7E implementation is in progress. It closes only after the declarative contract, zero-plugin runtime activation, PR validation, merge and post-merge verification are green.
+Phase 7E is complete. The bundled preset passed its declarative contract, zero-plugin runtime activation, EN/ES acceptance, cross-preset isolation, PR validation and post-merge verification.
 
 ## Phase 7 preset layer status
 
-Phase 7A–7D are complete and verified. Before Phase 8 implementation began, the roadmap was intentionally extended with a fifth preset:
+Phase 7 is complete with five shipped presets:
 
-1. Corporate — complete;
-2. Local Business — complete;
-3. Publisher — complete;
-4. Ecommerce — complete;
-5. SaaS / Digital Product — Phase 7E implementation in progress.
+1. Corporate;
+2. Local Business;
+3. Publisher;
+4. Ecommerce;
+5. SaaS / Digital Product.
 
-The four completed presets use the same server-authoritative registry and remain disabled by default. Phase 7 remains open until the fifth preset passes the same implementation and acceptance discipline. They compose the shared theme/Core contracts rather than introducing independent SEO/GEO implementations.
+All five use the same server-authoritative registry and remain disabled by default. They compose the shared theme/Core contracts rather than introducing independent SEO/GEO implementations.
 
 Cross-preset guarantees:
 
 - EN/ES customer-facing copy ships together;
 - preset patterns are mutually isolated;
-- activation never invents or silently enables identity/business/editorial/commerce facts;
+- activation never invents or silently enables identity/business/editorial/commerce/product facts;
 - onboarding may later consume the declarative maps, but automatic page creation is outside Phase 7;
 - Ecommerce remains zero-plugin safe and WooCommerce remains a preferred future provider rather than a supported combination until its adapter is implemented and accepted.
 
