@@ -89,6 +89,8 @@ When public metadata/discovery behavior changes:
 
 Phase 6F adds a cross-surface privacy matrix, sourced inside the existing Self-contained Theme fixture, that checks synthetic draft/private markers against HTML, native sitemaps, feeds, search, author archives, unauthenticated REST, Schema/provenance, llms.txt and Markdown. The matrix includes a positive published control so privacy cannot pass because discovery is globally broken.
 
+Phase 6G adds discovery-document cache/revalidation acceptance in that same disposable fixture. It requires stable ETags for unchanged llms.txt/Markdown responses, HTTP 304 for matching conditional requests, changed ETags and refreshed bodies after relevant mutations, no invalidation for unrelated options, and revision changes for post, author/profile and translation metadata mutations.
+
 The baseline contract is **native and self-contained**. An external SEO/GEO plugin is never required for these acceptance checks.
 
 ### Multilingual
