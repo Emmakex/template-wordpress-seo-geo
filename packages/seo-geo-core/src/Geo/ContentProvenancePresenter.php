@@ -32,8 +32,8 @@ final class ContentProvenancePresenter {
 	/**
 	 * Create the presenter.
 	 *
-	 * @param SeoOutputAuthority         $authority Output authority.
-	 * @param ContentProvenanceResolver  $resolver  Provenance authority.
+	 * @param SeoOutputAuthority        $authority Output authority.
+	 * @param ContentProvenanceResolver $resolver  Provenance authority.
 	 */
 	public function __construct( SeoOutputAuthority $authority, ContentProvenanceResolver $resolver ) {
 		$this->authority = $authority;
