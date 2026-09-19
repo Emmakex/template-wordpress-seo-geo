@@ -964,3 +964,63 @@ This is related to earlier WP-CLI harness quoting lessons but has a distinct fai
 ### Regression coverage
 
 `scripts/ci/discovery-privacy-acceptance.sh` retains the resolver-level provenance/Markdown guard under `set -u`, and Self-contained Theme CI executes it inside the real built-theme WordPress fixture.
+
+## ERR-2026-017 — Bash expanded PHP resolver variables in the Phase 6F WP-CLI harness
+
+**Status:** resolved  
+**First seen:** 2026-09-19  
+**Last seen:** 2026-09-19  
+**Area:** ci / geo / discovery privacy / test harness  
+**Signature:** `bd06327f2ae5`  
+**Reference:** PR #49; failing Self-contained Theme CI `35436437082` / job `105879779536`; passing final Self-contained Theme CI `35436517496`; post-merge passing Self-contained Theme CI `35436653739`
+
+### Symptom / context
+
+The first Phase 6F acceptance candidate successfully reached and passed the direct HTML, sitemap, feed, search, author archive, unauthenticated REST, llms.txt and Markdown checks.
+
+It then failed before executing the final resolver-level assertion with:
+
+```text
+scripts/ci/discovery-privacy-acceptance.sh: line 167: provenance: unbound variable
+```
+
+The structured failure reported `primary_error="Could not evaluate discovery privacy resolvers"` with signature `bd06327f2ae5`.
+
+### Root cause
+
+Confirmed. The WP-CLI PHP expression was embedded in a Bash double-quoted string while the parent smoke runs with `set -u`.
+
+PHP local variables such as `$provenance` and `$markdown` were not escaped for the shell. Bash therefore tried to expand them before `wp eval` received the expression and stopped on the unset shell variable.
+
+This was a test-harness quoting defect, not a product privacy failure.
+
+### Solution
+
+Escape PHP variable sigils inside the Bash double-quoted `wp eval` expression while leaving the numeric WordPress fixture IDs intentionally available for shell interpolation.
+
+No runtime resolver, HTTP output, sitemap behavior, llms.txt behavior, Markdown behavior or privacy rule changed.
+
+### Validation
+
+- final PR candidate `99c01be435b0098482ff50ea771957eb7a8bee41` passed Self-contained Theme CI `35436517496`;
+- the Phase 6F matrix completed through the resolver-level guard and reported no private/draft leak;
+- all ten PR workflows passed;
+- PR #49 was squash-merged as `feb3f50542e5e56da27d915b1a4e6efe3d73c115`;
+- post-merge Self-contained Theme CI `35436653739` passed the same matrix;
+- all ten post-merge workflows passed.
+
+### Prevention / guardrail
+
+When PHP code is embedded in a Bash double-quoted argument, distinguish deliberately between:
+
+- PHP variables, whose `$` must be escaped from Bash; and
+- shell fixture values that are intentionally interpolated before WP-CLI execution.
+
+Under `set -u`, an unescaped PHP variable name can fail the harness before PHP executes. Prefer single-quoted PHP snippets when no shell interpolation is required; otherwise escape PHP sigils explicitly and keep the expression small.
+
+Do not interpret a harness execution failure as a product leak without confirming which surface/assertion actually ran.
+
+### Regression coverage
+
+`scripts/ci/discovery-privacy-acceptance.sh` now completes its direct resolver assertion after the HTTP/discovery matrix. Self-contained Theme CI protects the same quoting path on every affected change.
+
