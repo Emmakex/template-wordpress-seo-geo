@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 6F turns the global engineering rule **private content never leaks into discovery surfaces** into a concrete zero-plugin regression contract.
+Phase 6F is **complete** and turns the global engineering rule **private content never leaks into discovery surfaces** into a concrete zero-plugin regression contract.
 
 The acceptance is intentionally executed inside the existing disposable self-contained WordPress fixture. It does not start a second Docker stack, database or WordPress instance.
 
@@ -135,3 +135,12 @@ It does not claim to audit:
 - authenticated editorial/admin responses.
 
 Those systems must preserve the same privacy invariant when integrated later.
+
+
+## Verified evidence
+
+PR #49 final candidate `99c01be435b0098482ff50ea771957eb7a8bee41` passed the complete ten-workflow matrix and was squash-merged as `feb3f50542e5e56da27d915b1a4e6efe3d73c115`.
+
+Self-contained Theme CI passed the discovery privacy matrix before merge in run `35436517496` and again after merge on `main` in run `35436653739`.
+
+The full post-merge ten-workflow matrix was green. No draft/private title or content leak was detected across the surfaces in this contract.
