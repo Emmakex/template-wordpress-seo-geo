@@ -1163,7 +1163,7 @@ Evidence:
 
 ### Microphase 7B — Local Business preset
 
-Status: **in progress**
+Status: **complete**
 
 Scope:
 
@@ -1181,7 +1181,16 @@ Scope:
 - ship visible copy in EN/ES together;
 - reuse Foundation and the existing Self-contained Theme fixture with no new workflow, Docker stack or runtime dependency.
 
-7B closes only after implementation PR gates and post-merge `main` verification are green.
+7B is closed.
+
+Evidence:
+
+- implementation PR #56 passed all ten required workflows on final candidate `74a55c0efc2fbcc4163575f30afa61c3f83ce983`;
+- Self-contained Theme CI `35448138086` proved built-package activation, declarative category ownership, Corporate/Local Business isolation, EN/ES copy and no automatic LocalBusiness Schema identity activation;
+- PR #56 was squash-merged as `ef359337172e6a7fe54ff6e12e4b17ec0e44d14e`;
+- post-merge `main` passed all ten workflows, including Self-contained Theme CI `35448283956`, Native Multilingual CI `35448283976`, Accessibility & Responsive CI `35448283930` and Performance Baseline CI `35448283928`.
+
+No 7B CI/product incident met the error-register criteria; the first implementation candidate and post-merge candidate both passed without a corrective commit.
 
 ### Remaining Phase 7 work
 
