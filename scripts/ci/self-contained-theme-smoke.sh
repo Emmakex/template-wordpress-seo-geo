@@ -496,6 +496,9 @@ source scripts/ci/publisher-preset-acceptance.sh
 # Reuse the same fixture for Phase 7D Ecommerce preset activation acceptance.
 source scripts/ci/ecommerce-preset-acceptance.sh
 
+# Reuse the same fixture for Phase 8A onboarding preset acceptance.
+source scripts/ci/onboarding-preset-acceptance.sh
+
 curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "fixture-request" "Could not request fixture post" "HTTP 2xx" "curl failed"
 
