@@ -65,7 +65,6 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/MARKDOWN_ALTERNATES.md`
 - `docs/CONTENT_PROVENANCE.md`
 - `docs/DISCOVERY_PRIVACY.md`
-- `docs/DISCOVERY_CACHE.md`
 - `docs/CACHE_INVALIDATION.md`
 - `docs/MULTILINGUAL.md`
 - `docs/PERFORMANCE.md`
