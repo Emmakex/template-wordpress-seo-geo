@@ -58,9 +58,7 @@ final class CrawlerPolicyResolver {
 
 		$normalized = array();
 
-		foreach ( self::USER_AGENTS as $crawler => $user_agent ) {
-			unset( $user_agent );
-
+		foreach ( array_keys( self::USER_AGENTS ) as $crawler ) {
 			$state = $this->normalize_state( $configuration[ $crawler ] ?? self::STATE_INHERIT );
 			if ( self::STATE_INHERIT !== $state ) {
 				$normalized[ $crawler ] = $state;
