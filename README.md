@@ -60,6 +60,11 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/NATIVE_SEO.md`
 - `docs/NATIVE_SCHEMA.md`
 - `docs/DISCOVERY_METADATA.md`
+- `docs/GEO_CRAWLERS.md`
+- `docs/LLMS_TXT.md`
+- `docs/MARKDOWN_ALTERNATES.md`
+- `docs/CONTENT_PROVENANCE.md`
+- `docs/DISCOVERY_PRIVACY.md`
 - `docs/MULTILINGUAL.md`
 - `docs/PERFORMANCE.md`
 - `docs/ACCESSIBILITY.md`

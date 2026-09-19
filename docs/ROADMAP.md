@@ -996,9 +996,26 @@ Post-merge `main` passed all ten workflows again:
 
 The first crawler-admin smoke candidate reproduced the existing WP-CLI namespace-escaping incident with signature `f9a2c20341e9`. Only the acceptance harness was corrected; the product implementation remained unchanged. The recurrence and passing evidence are recorded under `ERR-2026-006`.
 
+### Microphase 6F — private/draft discovery leakage regression
+
+Status: **in progress**
+
+Scope:
+
+- one dedicated acceptance module reused inside the existing disposable zero-plugin WordPress fixture;
+- public control plus draft/private post fixtures with unique title/content leak markers;
+- unauthenticated HTML routes must remain non-public and emit no native Schema, article provenance or Markdown discovery;
+- native WordPress sitemap, feed, search and author archive must not expose draft/private markers;
+- unauthenticated REST responses must not disclose draft/private title/content;
+- llms.txt must ignore explicitly configured draft/private IDs;
+- Markdown alternates must resolve for the public control and remain 404 for draft/private resources;
+- provenance and Markdown resolvers must return null for draft/private IDs;
+- no second Docker/WordPress environment is started, preserving runner efficiency.
+
+6F closes only after implementation, required PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 6 work
 
-- private/draft content leakage tests;
 - cache/invalidation strategy.
 
 Deliverables:

@@ -470,6 +470,10 @@ MARKDOWN_PRIVATE_STATUS="$(curl -sS -o "$MARKDOWN_BODY" -w '%{http_code}' "$MARK
 wp_cli eval 'delete_option( "seo_geo_llms_txt" ); delete_option( "seo_geo_markdown_alternates" ); update_option( "blog_public", "1" );' >/dev/null \
   || fail_smoke "llms-reset" "Could not reset GEO document fixtures" "options removed and blog_public=1" "failed"
 
+# Reuse this same disposable WordPress fixture for the Phase 6F cross-surface
+# non-public discovery regression matrix. Sourcing keeps one runner/Docker setup.
+source scripts/ci/discovery-privacy-acceptance.sh
+
 curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "fixture-request" "Could not request fixture post" "HTTP 2xx" "curl failed"
 
