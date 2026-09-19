@@ -14,6 +14,8 @@ use SeoGeo\Core\Geo\CrawlerPolicyPresenter;
 use SeoGeo\Core\Geo\ContentProvenancePresenter;
 use SeoGeo\Core\Geo\ContentProvenanceResolver;
 use SeoGeo\Core\Geo\CrawlerPolicyResolver;
+use SeoGeo\Core\Geo\DiscoveryCache;
+use SeoGeo\Core\Geo\DiscoveryCacheInvalidator;
 use SeoGeo\Core\Geo\LlmsTxtPresenter;
 use SeoGeo\Core\Geo\LlmsTxtResolver;
 use SeoGeo\Core\Geo\MarkdownAlternatePresenter;
@@ -117,6 +119,13 @@ final class Runtime {
 	private static ?CrawlerPolicyResolver $crawler_policy = null;
 
 	/**
+	 * Versioned cache for derived discovery documents.
+	 *
+	 * @var DiscoveryCache|null
+	 */
+	private static ?DiscoveryCache $discovery_cache = null;
+
+	/**
 	 * Optional llms.txt authority.
 	 *
 	 * @var LlmsTxtResolver|null
@@ -206,17 +215,23 @@ final class Runtime {
 		$crawler_admin = new CrawlerPolicyAdmin( self::$crawler_policy );
 		$crawler_admin->register();
 
+		self::$discovery_cache = new DiscoveryCache();
+		$cache_invalidator     = new DiscoveryCacheInvalidator( self::$discovery_cache );
+		$cache_invalidator->register();
+
 		self::$markdown_alternates = new MarkdownAlternateResolver(
 			self::$translation_registry,
 			self::$localized_seo,
 			$language_configuration,
 			$indexability,
-			self::$content_provenance
+			self::$content_provenance,
+			self::$discovery_cache
 		);
 		self::$llms_txt            = new LlmsTxtResolver(
 			self::$translation_registry,
 			self::$localized_seo,
-			self::$markdown_alternates
+			self::$markdown_alternates,
+			self::$discovery_cache
 		);
 		$llms_presenter            = new LlmsTxtPresenter( self::$llms_txt );
 		$llms_presenter->register();
@@ -302,6 +317,13 @@ final class Runtime {
 	 */
 	public static function crawler_policy(): ?CrawlerPolicyResolver {
 		return self::$crawler_policy;
+	}
+
+	/**
+	 * Get the versioned discovery cache when initialized.
+	 */
+	public static function discovery_cache(): ?DiscoveryCache {
+		return self::$discovery_cache;
 	}
 
 	/**
