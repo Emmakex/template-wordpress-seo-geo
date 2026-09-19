@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "preset": "corporate",
+  "locales": {
+    "en_US": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Home",
+          "slug": "home",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/corporate-case-study",
+            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/corporate-testimonials",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "services",
+          "title": "Services",
+          "slug": "services",
+          "role": "services-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "work",
+          "title": "Case studies",
+          "slug": "work",
+          "role": "case-studies-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/corporate-case-study",
+            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "About",
+          "slug": "about",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/author-profile",
+            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "insights",
+          "title": "Insights",
+          "slug": "insights",
+          "role": "posts-page",
+          "template": "archive",
+          "patterns": []
+        },
+        {
+          "key": "contact",
+          "title": "Contact",
+          "slug": "contact",
+          "role": "contact",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/contact",
+            "seo-geo-theme/faq"
+          ]
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Privacy policy",
+          "slug": "privacy-policy",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Legal notice",
+          "slug": "legal-notice",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "repeatable": [
+        {
+          "key": "service-detail",
+          "title_pattern": "Service name",
+          "parent": "services",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "case-study",
+          "title_pattern": "Project or client name",
+          "parent": "work",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/cta"
+          ]
+        }
+      ]
+    },
+    "es_ES": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Inicio",
+          "slug": "inicio",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/corporate-case-study",
+            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/corporate-testimonials",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "services",
+          "title": "Servicios",
+          "slug": "servicios",
+          "role": "services-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "work",
+          "title": "Casos de éxito",
+          "slug": "casos-de-exito",
+          "role": "case-studies-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/corporate-case-study",
+            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "Nosotros",
+          "slug": "nosotros",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/author-profile",
+            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "insights",
+          "title": "Actualidad",
+          "slug": "actualidad",
+          "role": "posts-page",
+          "template": "archive",
+          "patterns": []
+        },
+        {
+          "key": "contact",
+          "title": "Contacto",
+          "slug": "contacto",
+          "role": "contact",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/contact",
+            "seo-geo-theme/faq"
+          ]
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Política de privacidad",
+          "slug": "politica-de-privacidad",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Aviso legal",
+          "slug": "aviso-legal",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "repeatable": [
+        {
+          "key": "service-detail",
+          "title_pattern": "Nombre del servicio",
+          "parent": "services",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "case-study",
+          "title_pattern": "Proyecto o cliente",
+          "parent": "work",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/cta"
+          ]
+        }
+      ]
+    }
+  }
+}
