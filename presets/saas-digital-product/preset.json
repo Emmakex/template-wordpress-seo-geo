@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "id": "saas-digital-product",
+  "version": "1.0.0",
+  "site_type": "saas-digital-product",
+  "intended_for": [
+    "saas",
+    "software-product",
+    "ai-product",
+    "digital-platform",
+    "subscription-service"
+  ],
+  "required_templates": [
+    "page",
+    "single",
+    "archive",
+    "index",
+    "404"
+  ],
+  "recommended_base_patterns": [
+    "seo-geo-theme/hero",
+    "seo-geo-theme/trust-proof",
+    "seo-geo-theme/faq",
+    "seo-geo-theme/cta",
+    "seo-geo-theme/contact",
+    "seo-geo-theme/services-features"
+  ],
+  "preset_patterns": [
+    "seo-geo-theme/saas-product-overview",
+    "seo-geo-theme/saas-use-cases",
+    "seo-geo-theme/saas-integrations",
+    "seo-geo-theme/saas-pricing-plans",
+    "seo-geo-theme/saas-comparison-framework"
+  ],
+  "schema": {
+    "expected_theme_entities": [
+      "Organization",
+      "WebSite",
+      "WebPage",
+      "BreadcrumbList",
+      "BlogPosting",
+      "Person"
+    ],
+    "site_identity": "organization",
+    "requires_confirmation": true,
+    "optional_product_entity": "SoftwareApplication",
+    "software_application_status": "recommendation-only",
+    "theme_emits_software_application": false,
+    "requires_explicit_supported_contract": true,
+    "notes": "The preset never infers SoftwareApplication facts from marketing copy. Existing native graph owners remain authoritative until a dedicated visible-fact contract is implemented and accepted."
+  },
+  "product_model": {
+    "zero_plugin_preset_safe": true,
+    "product_backend_external": true,
+    "billing_provider_external": true,
+    "crm_provider_external": true,
+    "telemetry_provider_external": true,
+    "credentials_never_created_by_preset": true,
+    "integrations_require_explicit_configuration": true,
+    "auto_generate_customer_proof": false,
+    "auto_generate_performance_claims": false,
+    "auto_generate_comparison_pages": false,
+    "auto_generate_pricing": false
+  },
+  "navigation": {
+    "primary": [
+      "home",
+      "product",
+      "features",
+      "solutions",
+      "integrations",
+      "pricing",
+      "resources",
+      "contact-demo"
+    ],
+    "footer": [
+      "about",
+      "documentation",
+      "privacy-policy",
+      "terms-conditions",
+      "legal-notice",
+      "contact-demo"
+    ]
+  },
+  "multilingual": {
+    "baseline_locales": [
+      "en_US",
+      "es_ES"
+    ],
+    "fallback_locale": "en_US",
+    "localized_slugs": true
+  },
+  "seo_acceptance": [
+    "one canonical per indexable page",
+    "localized canonical and hreflang agree",
+    "one H1 owned by the page/template composition",
+    "comparison pages require original useful editorial value",
+    "pricing and customer proof are never invented",
+    "SoftwareApplication markup is not emitted without a separately accepted visible-fact contract",
+    "private and draft resources excluded from discovery surfaces"
+  ],
+  "optional_integrations": [
+    "billing-provider",
+    "crm",
+    "analytics",
+    "support",
+    "product-backend"
+  ],
+  "explicitly_disabled": [
+    "automatic customer logo or testimonial fabrication",
+    "automatic rating or review fabrication",
+    "automatic pricing inference",
+    "automatic performance or adoption claims",
+    "automatic competitor comparison generation",
+    "SoftwareApplication Schema emitted from unverified marketing copy",
+    "external service credentials created by preset activation",
+    "required SaaS backend dependency for theme activation"
+  ]
+}
