@@ -56,3 +56,5 @@ A new WordPress/PHP/database combination is not considered supported because it 
 ## External integrations
 
 Yoast, Rank Math, AIOSEO, WPML, Polylang and WooCommerce are not yet declared supported combinations merely because Phase 1 can detect some of them. Each integration is promoted to supported only in the phase that implements and tests its adapter/ownership contract.
+
+Phase 7D may declare WooCommerce as the Ecommerce preset's **preferred future provider**. That declaration is a product/preset contract only and does not promote WooCommerce to a supported combination. The baseline remains zero-plugin safe; live WooCommerce support still requires a dedicated adapter plus runtime, ownership, multilingual and Schema acceptance.
