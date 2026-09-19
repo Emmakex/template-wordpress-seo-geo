@@ -14,14 +14,18 @@ namespace SeoGeo\MigrationBridge\Builders;
  */
 final class NativeBlocksDetector implements BuilderDetectorInterface {
 	/**
-	 * {@inheritDoc}
+	 * Return the stable builder identifier.
 	 */
 	public function id(): string {
 		return 'native-blocks';
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Detect native block availability.
+	 *
+	 * @param list<array<string, mixed>> $plugins Plugin inventory.
+	 * @param list<array<string, mixed>> $themes  Theme inventory.
+	 * @return array<string, mixed>
 	 */
 	public function detect( array $plugins, array $themes ): array {
 		unset( $plugins, $themes );
