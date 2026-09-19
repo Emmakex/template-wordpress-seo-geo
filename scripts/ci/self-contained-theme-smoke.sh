@@ -490,6 +490,9 @@ source scripts/ci/corporate-preset-acceptance.sh
 # Reuse the same fixture for Phase 7B Local Business preset activation acceptance.
 source scripts/ci/local-business-preset-acceptance.sh
 
+# Reuse the same fixture for Phase 7C Publisher preset activation acceptance.
+source scripts/ci/publisher-preset-acceptance.sh
+
 curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "fixture-request" "Could not request fixture post" "HTTP 2xx" "curl failed"
 
