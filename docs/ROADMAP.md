@@ -949,22 +949,52 @@ The first candidate exposed only WPCS alignment signature `3357a651e6fe`; no fun
 
 ### Microphase 6E — crawler policy administration and reporting
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #47:
 
-- WordPress-native administration under Appearance;
+- WordPress-native administration under **Appearance → SEO/GEO Crawlers**;
 - server-authoritative `manage_options` access;
-- Settings API persistence with nonce protection;
-- one sanitizer shared with the Phase 6A crawler-policy resolver;
+- WordPress Settings API persistence with nonce protection;
+- shared `CrawlerPolicyResolver::sanitize_configuration()` authority for stored crawler states;
+- unsupported crawler keys discarded and inherited/invalid states kept non-emitting;
 - independent OAI-SearchBot and GPTBot controls;
-- effective-policy reporting that surfaces WordPress global privacy precedence;
-- direct `robots.txt` verification link;
-- English + Spanish project-owned administration strings;
+- effective-policy reporting that surfaces WordPress `blog_public=0` precedence;
+- direct public `robots.txt` verification link;
 - no custom admin JavaScript/CSS and no new runtime dependency;
-- zero-plugin acceptance for sanitization, rendered controls/reporting, bundled translation and built-theme integrity.
+- English source strings plus bundled `es_ES` gettext catalog;
+- zero-plugin built-theme acceptance for sanitization, admin rendering, privacy reporting and Spanish translation;
+- Foundation requires the crawler admin source and the self-contained build requires the translation artifacts.
 
-6E closes only after implementation, required PR gates and post-merge `main` verification are green.
+PR #47 passed all ten workflows on final candidate `111a58510e692ed2472923d8da08994bdd0c0596` and was squash-merged as `c78a442d0d1cdf72329bd7c6b658776ca0611456`.
+
+PR validation:
+
+- Foundation CI `35435508424`;
+- Phase 1 Package CI `35435508369`;
+- Pattern Contract CI `35435508400`;
+- Design System CI `35435508422`;
+- PHP Quality CI `35435508392`;
+- WordPress Smoke CI `35435508415`;
+- Self-contained Theme CI `35435508397`;
+- Accessibility & Responsive CI `35435508434`;
+- Native Multilingual CI `35435508413`;
+- Performance Baseline CI `35435508375`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Foundation CI `35435642085`;
+- Phase 1 Package CI `35435642066`;
+- Pattern Contract CI `35435642078`;
+- Design System CI `35435642071`;
+- PHP Quality CI `35435642075`;
+- WordPress Smoke CI `35435642082`;
+- Self-contained Theme CI `35435642077`;
+- Accessibility & Responsive CI `35435642124`;
+- Native Multilingual CI `35435642094`;
+- Performance Baseline CI `35435642090`.
+
+The first crawler-admin smoke candidate reproduced the existing WP-CLI namespace-escaping incident with signature `f9a2c20341e9`. Only the acceptance harness was corrected; the product implementation remained unchanged. The recurrence and passing evidence are recorded under `ERR-2026-006`.
 
 ### Remaining Phase 6 work
 
