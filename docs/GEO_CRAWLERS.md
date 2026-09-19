@@ -88,6 +88,27 @@ Existing WordPress robots output is preserved. The presenter removes its own pre
 
 Phase 6A does not attempt to rewrite or silently override crawler-specific directives injected by third-party plugins, reverse proxies, CDNs or physical `robots.txt` files. Compatibility detection/warnings belong to the later onboarding/compatibility layer.
 
+## Administration and reporting
+
+Phase 6E adds a minimal WordPress-native administration screen under **Appearance → SEO/GEO Crawlers**.
+
+The screen deliberately reuses the Phase 6A resolver instead of creating a second policy model:
+
+- access requires the server-side `manage_options` capability;
+- persistence uses the WordPress Settings API and its nonce-protected `options.php` flow;
+- submitted values are normalized by `CrawlerPolicyResolver::sanitize_configuration()`;
+- unsupported crawler keys are discarded;
+- invalid values and `inherit` resolve to the native default/no-extra-rule behavior;
+- OAI-SearchBot and GPTBot remain independently configurable;
+- the report shows both configured policy and effective behavior;
+- `blog_public=0` is surfaced as the effective global authority instead of pretending an explicit crawler allow can override it;
+- a direct link to the site's public `robots.txt` is provided for verification;
+- no custom frontend/admin JavaScript or CSS is required.
+
+Project-owned administration strings ship in English source form plus a bundled `es_ES` gettext catalog in the self-contained theme.
+
+The administration screen does not attempt to detect physical `robots.txt` files, CDN/WAF bot policy, reverse-proxy overrides or third-party crawler directives. Those compatibility warnings remain part of the later onboarding/compatibility layer.
+
 ## Security and infrastructure
 
 A `robots.txt` user-agent string is not an authentication mechanism. Infrastructure that needs to distinguish legitimate crawler traffic from spoofed user agents should additionally use provider-published IP/range verification or a trusted verified-bot facility at the CDN/WAF layer.
@@ -109,7 +130,7 @@ The zero-plugin WordPress acceptance must prove:
 
 ## References
 
-Primary references checked 2026-09-18:
+Primary references checked 2026-09-19:
 
 - OpenAI Publishers and Developers FAQ: https://help.openai.com/en/articles/12627856
 - OpenAI ChatGPT Search guidance: https://help.openai.com/en/articles/9237897
