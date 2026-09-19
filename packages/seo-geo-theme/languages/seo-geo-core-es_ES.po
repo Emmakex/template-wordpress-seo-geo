@@ -1,0 +1,62 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: SEO GEO Core\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "SEO/GEO crawler policy"
+msgstr "Política de rastreadores SEO/GEO"
+
+msgid "SEO/GEO Crawlers"
+msgstr "Rastreadores SEO/GEO"
+
+msgid "You do not have permission to manage crawler policy."
+msgstr "No tienes permisos para gestionar la política de rastreadores."
+
+msgid "Control how supported OpenAI crawlers may access this public site. Search discovery and potential model training are separate controls."
+msgstr "Controla cómo los rastreadores compatibles de OpenAI pueden acceder a este sitio público. El descubrimiento en búsquedas y el posible entrenamiento de modelos son controles independientes."
+
+msgid "WordPress site visibility is currently set to discourage search engines. This global setting takes precedence, so crawler-specific allow rules are not emitted."
+msgstr "La visibilidad del sitio en WordPress está configurada actualmente para disuadir a los motores de búsqueda. Esta configuración global tiene prioridad, por lo que no se emiten reglas de permiso específicas para rastreadores."
+
+msgid "Current report"
+msgstr "Informe actual"
+
+msgid "Crawler"
+msgstr "Rastreador"
+
+msgid "Configured policy"
+msgstr "Política configurada"
+
+msgid "Effective robots behavior"
+msgstr "Comportamiento efectivo de robots"
+
+msgid "View robots.txt"
+msgstr "Ver robots.txt"
+
+msgid "These controls do not guarantee ranking, inclusion, citation, traffic, or model behavior."
+msgstr "Estos controles no garantizan posicionamiento, inclusión, citación, tráfico ni el comportamiento de los modelos."
+
+msgid "Inherit existing robots policy"
+msgstr "Heredar la política robots existente"
+
+msgid "Allow"
+msgstr "Permitir"
+
+msgid "Disallow"
+msgstr "Bloquear"
+
+msgid "OAI-SearchBot controls access for ChatGPT search discovery and snippets."
+msgstr "OAI-SearchBot controla el acceso para el descubrimiento y los fragmentos de búsqueda de ChatGPT."
+
+msgid "GPTBot controls access for potential model training."
+msgstr "GPTBot controla el acceso para un posible entrenamiento de modelos."
+
+msgid "Controlled by WordPress site visibility"
+msgstr "Controlado por la visibilidad del sitio de WordPress"
+
+msgid "No native crawler-specific rule"
+msgstr "Sin regla nativa específica para el rastreador"
