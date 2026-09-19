@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return list<string>
  */
 function seo_geo_theme_preset_ids(): array {
-	return array( 'corporate', 'local-business', 'publisher', 'ecommerce' );
+	return array( 'corporate', 'local-business', 'publisher', 'ecommerce', 'saas-digital-product' );
 }
 
 /**

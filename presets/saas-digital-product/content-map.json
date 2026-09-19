@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "preset": "saas-digital-product",
+  "locales": {
+    "en_US": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Home",
+          "slug": "home",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/saas-product-overview",
+            "seo-geo-theme/saas-use-cases",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "product",
+          "title": "Product",
+          "slug": "product",
+          "role": "product-overview",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-product-overview",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "features",
+          "title": "Features",
+          "slug": "features",
+          "role": "features",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/saas-product-overview",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "solutions",
+          "title": "Solutions",
+          "slug": "solutions",
+          "role": "use-cases",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-use-cases",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "integrations",
+          "title": "Integrations",
+          "slug": "integrations",
+          "role": "integrations",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-integrations",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "pricing",
+          "title": "Pricing",
+          "slug": "pricing",
+          "role": "pricing",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-pricing-plans",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "resources",
+          "title": "Resources",
+          "slug": "resources",
+          "role": "posts-page",
+          "template": "archive",
+          "patterns": [
+            "seo-geo-theme/author-profile",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "About",
+          "slug": "about",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "contact-demo",
+          "title": "Contact / Demo",
+          "slug": "contact-demo",
+          "role": "conversion",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/contact",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "documentation",
+          "title": "Documentation",
+          "slug": "documentation",
+          "role": "documentation-link",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-integrations"
+          ]
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Privacy policy",
+          "slug": "privacy-policy",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "terms-conditions",
+          "title": "Terms & conditions",
+          "slug": "terms-conditions",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Legal notice",
+          "slug": "legal-notice",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "optional_editorial": [
+        {
+          "key": "comparison",
+          "source": "wordpress-page",
+          "template": "page",
+          "create_only_when_useful": true,
+          "recommended_patterns": [
+            "seo-geo-theme/saas-comparison-framework",
+            "seo-geo-theme/cta"
+          ],
+          "content_requirements": [
+            "compare only products or approaches that users genuinely evaluate together",
+            "use current verifiable capabilities and public facts",
+            "state scope and limitations instead of declaring an unsupported winner",
+            "link to authoritative product documentation where available",
+            "do not mass-generate competitor pages"
+          ]
+        }
+      ]
+    },
+    "es_ES": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Inicio",
+          "slug": "inicio",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/saas-product-overview",
+            "seo-geo-theme/saas-use-cases",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "product",
+          "title": "Producto",
+          "slug": "producto",
+          "role": "product-overview",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-product-overview",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "features",
+          "title": "Funcionalidades",
+          "slug": "funcionalidades",
+          "role": "features",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/saas-product-overview",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "solutions",
+          "title": "Soluciones",
+          "slug": "soluciones",
+          "role": "use-cases",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-use-cases",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "integrations",
+          "title": "Integraciones",
+          "slug": "integraciones",
+          "role": "integrations",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-integrations",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "pricing",
+          "title": "Precios",
+          "slug": "precios",
+          "role": "pricing",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-pricing-plans",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "resources",
+          "title": "Recursos",
+          "slug": "recursos",
+          "role": "posts-page",
+          "template": "archive",
+          "patterns": [
+            "seo-geo-theme/author-profile",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "Nosotros",
+          "slug": "nosotros",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "contact-demo",
+          "title": "Contacto / Demo",
+          "slug": "contacto-demo",
+          "role": "conversion",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/contact",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "documentation",
+          "title": "Documentación",
+          "slug": "documentacion",
+          "role": "documentation-link",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/saas-integrations"
+          ]
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Política de privacidad",
+          "slug": "politica-de-privacidad",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "terms-conditions",
+          "title": "Términos y condiciones",
+          "slug": "terminos-y-condiciones",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Aviso legal",
+          "slug": "aviso-legal",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "optional_editorial": [
+        {
+          "key": "comparison",
+          "source": "wordpress-page",
+          "template": "page",
+          "create_only_when_useful": true,
+          "recommended_patterns": [
+            "seo-geo-theme/saas-comparison-framework",
+            "seo-geo-theme/cta"
+          ],
+          "content_requirements": [
+            "comparar solo productos o enfoques que los usuarios evalúen realmente entre sí",
+            "usar capacidades actuales verificables y hechos públicos",
+            "explicar alcance y limitaciones sin declarar un ganador sin fundamento",
+            "enlazar documentación oficial del producto cuando esté disponible",
+            "no generar páginas de competidores de forma masiva"
+          ]
+        }
+      ]
+    }
+  }
+}
