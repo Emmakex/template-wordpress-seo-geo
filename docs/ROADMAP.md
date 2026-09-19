@@ -751,7 +751,7 @@ All Phase 5 exit criteria are satisfied:
 
 ## Phase 6 — GEO / agent-friendly layer
 
-Status: **in progress**
+Status: **complete**
 
 ### Microphase 6A — explicit OpenAI crawler policy
 
@@ -1045,44 +1045,82 @@ The first acceptance candidate completed every HTTP/discovery surface before the
 
 ### Microphase 6G — discovery cache and invalidation strategy
 
-Status: **in progress**
+Status: **complete**
 
-Scope:
+Delivered on PR #52:
 
-- keep HTML SEO/Schema output request-derived with no theme-owned full-page cache;
-- add one lightweight mutation revision without storing generated discovery payloads;
-- issue strong ETags for optional llms.txt and localized Markdown responses;
-- use `Cache-Control: public, no-cache, must-revalidate, max-age=0` so stored representations must revalidate before reuse;
-- support conditional GET/HEAD with `If-None-Match` and HTTP 304;
-- advance the revision on relevant post, translation-meta, author/profile and SEO/GEO/site-option mutations;
-- unrelated options must not invalidate the revision;
-- expose `seo_geo_discovery_cache_invalidated` for CDN/page-cache integrations without claiming ownership of third-party caches;
-- reuse the existing disposable self-contained WordPress fixture for cache/revalidation acceptance;
-- no transient/object payload cache, cron, background worker or new runtime dependency.
+- HTML SEO/Schema remains request-derived with no theme-owned full-page cache;
+- no persistent rendered-payload cache was introduced for llms.txt or Markdown;
+- one lightweight `DiscoveryCacheRevision` mutation authority backs public discovery validators;
+- llms.txt and localized Markdown emit strong resource/surface-scoped ETags;
+- discovery documents use `Cache-Control: public, no-cache, must-revalidate, max-age=0`;
+- GET/HEAD `If-None-Match` supports conditional revalidation and HTTP 304;
+- relevant post, native translation-meta, author/profile and SEO/GEO/site-option mutations advance the revision;
+- unrelated option changes leave the revision stable;
+- `seo_geo_discovery_cache_invalidated` exposes one vendor-neutral purge signal for optional CDN/page-cache integrations;
+- no global object-cache flush, transient payload cache, cron, background worker, cache-plugin dependency or vendor credential was added;
+- `docs/CACHE_INVALIDATION.md` is the single cache/invalidation authority;
+- zero-plugin acceptance reuses the existing disposable WordPress/MariaDB fixture and proves stale validators stop matching after relevant mutations.
 
-6G closes only after implementation, required PR gates and post-merge `main` verification are green.
+PR #52 passed all ten workflows on final candidate `42c85544ca535d617b052b9f1dc94bf9309a8c6e` and was squash-merged as `d7d79dd3f6fdd235ee891167fcc2a2814dba3705`.
+
+PR validation:
+
+- Foundation CI `35437874323`;
+- Phase 1 Package CI `35437874376`;
+- Pattern Contract CI `35437874352`;
+- Design System CI `35437874387`;
+- PHP Quality CI `35437874378`;
+- WordPress Smoke CI `35437874421`;
+- Self-contained Theme CI `35437874331`;
+- Accessibility & Responsive CI `35437874353`;
+- Native Multilingual CI `35437874319`;
+- Performance Baseline CI `35437874330`.
+
+Post-merge `main` passed all ten workflows again:
+
+- Foundation CI `35438013349`;
+- Phase 1 Package CI `35438013370`;
+- Pattern Contract CI `35438013324`;
+- Design System CI `35438013383`;
+- PHP Quality CI `35438013287`;
+- WordPress Smoke CI `35438013343`;
+- Self-contained Theme CI `35438013353`;
+- Accessibility & Responsive CI `35438013378`;
+- Native Multilingual CI `35438013285`;
+- Performance Baseline CI `35438013361`.
+
+Phase 6G also closed three CI lessons without weakening product behavior:
+
+- WP-CLI namespace escaping recurred in the discovery-cache helper with signature `2eb2e705da21`; it is recorded under the existing `ERR-2026-006`;
+- raw `If-None-Match` input triggered WPCS signature `1834ed38c614`; the header is now sanitized before parsing and the lesson is recorded as `ERR-2026-018`;
+- Cache-Control acceptance initially required one exact directive order and failed with signature `2c351b882155`; the smoke now validates HTTP semantics and records the lesson as `ERR-2026-019`.
+
+Alternative PR #51 proposed persisting rendered discovery payloads in the WordPress Object Cache. It was closed as superseded after #52 because Phase 6G deliberately selected request-derived documents plus HTTP revalidation, avoiding a second competing cache/invalidation authority.
+
+### Phase 6 completion
+
+All Phase 6 deliverables are complete:
+
+- explicit crawler policy UI/config with OAI-SearchBot and GPTBot controls kept distinct;
+- optional native llms.txt generator;
+- optional localized Markdown alternates;
+- native provenance/author/source patterns;
+- cross-surface private/draft leakage regression coverage;
+- documented cache/revalidation/invalidation strategy.
+
+Exit criteria are satisfied:
+
+- optional GEO features disable cleanly;
+- no competing canonical/indexability ownership was introduced;
+- multilingual alternates remain authoritative and regression-covered;
+- crawler rules are explicit and documented without ranking/inclusion guarantees;
+- no GEO plugin is required for the baseline;
+- zero-plugin self-contained acceptance and all ten post-merge workflows are green.
 
 ### Remaining Phase 6 work
 
-- complete and close Microphase 6G.
-
-Deliverables:
-
-- crawler policy UI/config;
-- OAI-SearchBot vs GPTBot controls kept distinct;
-- optional `llms.txt` generator;
-- optional localized Markdown alternates;
-- provenance/author/source patterns;
-- private/draft content leakage tests;
-- cache/invalidation strategy.
-
-Exit criteria:
-
-- optional features can be disabled cleanly;
-- no SEO canonical/indexability conflicts;
-- multilingual alternates correct;
-- crawler rules are explicit and documented without ranking guarantees;
-- no GEO plugin required.
+None. Phase 7 may begin only from this closed, verified baseline.
 
 ## Phase 7 — Presets
 
