@@ -48,7 +48,7 @@ WPCS runs the official `WordPress` standard against project-owned PHP in `packag
 - `WordPress.Files.FileName.InvalidClassFileName`;
 - `WordPress.Files.FileName.NotHyphenatedLowercase`.
 
-The exception exists because Core deliberately uses namespaced PSR-style class paths for its small autoloader. It does **not** suppress API naming, documentation, security, escaping, database, internationalization or interoperability rules. Project-owned methods follow WordPress snake_case conventions even inside namespaced classes.
+The exception exists because the Core and Migration Bridge deliberately use namespaced PSR-style class paths for their small autoloaders. It does **not** suppress API naming, documentation, security, escaping, database, internationalization or interoperability rules. Project-owned methods follow WordPress snake_case conventions even inside namespaced classes.
 
 PHPStan starts at **level 6** with `phpstan-wordpress`. There is no generated baseline and no ignored-error list. A new exclusion must be narrow, documented and justified by the affected contract rather than added to make CI green.
 
@@ -166,11 +166,27 @@ Phase 7D closure evidence:
 - PR #60 was squash-merged as `0b9ca331c5cad05734d2e8dd8e92a165e8dc58d5`;
 - all ten post-merge workflows passed again on `main`, including Self-contained Theme CI `35456378271`, Native Multilingual CI `35456378290`, Accessibility & Responsive CI `35456378267` and Performance Baseline CI `35456378291`.
 
+For Phase 7E SaaS / Digital Product:
+
+- Foundation executes `scripts/ci/validate-saas-digital-product-preset.php` alongside the first four preset validators;
+- the static contract proves zero-plugin safety, EN/ES parity, product/provider ownership boundaries, evidence-based comparison rules and no automatic pricing/customer-proof/performance-claim generation;
+- Self-contained Theme CI sources `scripts/ci/saas-digital-product-preset-acceptance.sh` inside the same disposable zero-plugin WordPress fixture;
+- runtime acceptance proves default-off behavior, five SaaS patterns, isolation from all four earlier presets, bilingual copy, no Schema-identity mutation and no required SaaS backend;
+- no SaaS-specific workflow, second Docker fixture or runtime dependency is added.
+
+Phase 7E closure evidence:
+
+- final PR candidate `8d0a0696fcc0bafb69bc47c855747aa1d941bf40` passed all eight required workflows;
+- Foundation CI `35460879952` passed the fifth declarative preset contract;
+- Self-contained Theme CI `35460879957` passed the SaaS activation/isolation/no-mutation contract;
+- PR #65 was squash-merged as `dc3d15bd323c2894ae029b9fffb2667eb5df16af`;
+- all eight post-merge workflows passed again on `main`, including Self-contained Theme CI `35461043470`, Native Multilingual CI `35461043444`, Accessibility & Responsive CI `35461043424` and Performance Baseline CI `35461043439`.
+
 Phase 7 preset-layer closure:
 
-- Corporate, Local Business, Publisher and Ecommerce each passed independent implementation and post-merge acceptance;
-- Foundation now validates all four declarative contracts;
-- Self-contained Theme CI exercises all four preset activation contracts inside one zero-plugin WordPress fixture;
+- Corporate, Local Business, Publisher, Ecommerce and SaaS / Digital Product each passed independent implementation and post-merge acceptance;
+- Foundation validates all five declarative contracts;
+- Self-contained Theme CI exercises all five preset activation contracts inside one zero-plugin WordPress fixture;
 - preset growth added no extra workflow, second Docker stack or required runtime dependency.
 
 ### Existing-site migration
