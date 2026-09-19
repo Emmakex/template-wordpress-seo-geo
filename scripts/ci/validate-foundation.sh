@@ -68,6 +68,7 @@ required_paths=(
   "docs/engineering/ERRORS_AND_SOLUTIONS.md"
   "packages/seo-geo-theme/README.md"
   "packages/seo-geo-theme/inc/seo-geo-core/bootstrap.php"
+  "packages/seo-geo-theme/inc/presets.php"
   "packages/seo-geo-core/README.md"
   "packages/seo-geo-core/src/Runtime.php"
   "packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php"
@@ -102,6 +103,8 @@ required_paths=(
   "scripts/ci/self-contained-theme-smoke.sh"
   "scripts/ci/discovery-privacy-acceptance.sh"
   "scripts/ci/discovery-cache-acceptance.sh"
+  "scripts/ci/corporate-preset-acceptance.sh"
+  "scripts/ci/validate-corporate-preset.php"
   "scripts/ci/native-language-smoke.sh"
   "scripts/ci/native-routing-smoke.sh"
   "scripts/ci/native-translation-relations-smoke.sh"
@@ -109,10 +112,15 @@ required_paths=(
   ".github/workflows/self-contained-theme.yml"
   ".github/workflows/native-multilingual.yml"
   "presets/README.md"
+  "presets/corporate/preset.json"
+  "presets/corporate/content-map.json"
+  "presets/corporate/patterns.json"
 )
 
 for path in "${required_paths[@]}"; do
   [[ -e "$path" ]] || fail_missing "$path"
 done
 
-printf 'Foundation contract OK: %d required paths present.\n' "${#required_paths[@]}"
+php scripts/ci/validate-corporate-preset.php
+
+printf 'Foundation contract OK: %d required paths present plus Corporate preset contract.\n' "${#required_paths[@]}"
