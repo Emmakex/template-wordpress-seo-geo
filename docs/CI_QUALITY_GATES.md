@@ -206,6 +206,13 @@ For the Site Analyzer:
 
 Phase 8A deliberately does not add content crawling, persisted SEO snapshots, dependency classification or migration mutations. Those belong to later Phase 8 microphases.
 
+Phase 8A closure evidence:
+
+- final PR candidate `494139b10d3c2cc57eafb4cf499017d49c7e5fdb` passed Foundation `35462121902`, Phase 1 Package `35462121811`, PHP Quality `35462121829`, WordPress Smoke `35462121813` and Self-contained Theme `35462121856`;
+- PR #67 was squash-merged as `337cd161560b5fce9f0e250d59197546d0eee462`;
+- post-merge `main` passed Foundation `35462308729`, Phase 1 Package `35462308676`, PHP Quality `35462308719`, WordPress Smoke `35462308695` and Self-contained Theme `35462308647`;
+- no accessibility, performance or multilingual workflows were required because the executable contract changed no frontend rendering or language routing. This is the expected minimum-sufficient CI scope.
+
 ### Multilingual
 
 When URL/content metadata changes:

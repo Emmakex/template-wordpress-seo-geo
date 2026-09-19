@@ -1383,7 +1383,7 @@ A temporary **SEO/GEO Migration Bridge** is permitted as a separate plugin/tool 
 
 ### Microphase 8A — Site Analyzer
 
-Status: **in progress**
+Status: **complete**
 
 Implementation boundary:
 
@@ -1405,6 +1405,23 @@ Deliverables:
 - custom CSS/functions and other project-owned customization signals where safely detectable;
 - machine-readable analysis report;
 - no content/theme/plugin mutation during analysis.
+
+8A is closed.
+
+Evidence:
+
+- implementation PR #67 passed all five required workflows on final candidate `494139b10d3c2cc57eafb4cf499017d49c7e5fdb`;
+- Foundation CI `35462121902` validated the Migration Bridge package, read-only safety contract and semantic mutation guards;
+- Phase 1 Package CI `35462121811` validated package headers, runtime baseline and PHP syntax;
+- PHP Quality CI `35462121829` passed WPCS and PHPStan level 6 with no new suppressions/baseline;
+- WordPress Smoke CI `35462121813` proved themes/plugins/builders/providers/content-model/customization inventory and identical protected-state fingerprints before/after analysis;
+- Self-contained Theme CI `35462121856` proved the final built theme remains zero-plugin and independent from the Migration Bridge;
+- PR #67 was squash-merged as `337cd161560b5fce9f0e250d59197546d0eee462`;
+- post-merge `main` passed the same five gates: Foundation `35462308729`, Phase 1 Package `35462308676`, PHP Quality `35462308719`, WordPress Smoke `35462308695` and Self-contained Theme `35462308647`.
+
+Adoption findings were fixed at root cause without suppressions: WordPress documentation/alignment findings, one formatting-sensitive safety assertion and PHPStan redundant list/type checks. No Phase 8A incident required a product rollback or error-register entry.
+
+The next microphase is 8B — SEO/GEO baseline snapshot.
 
 ### Microphase 8B — SEO/GEO baseline snapshot
 

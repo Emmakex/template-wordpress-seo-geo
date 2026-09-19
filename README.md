@@ -46,7 +46,7 @@ Implemented presets: `corporate`, `local-business`, `publisher`, `ecommerce` and
 
 ## Existing-site adoption
 
-Phase 8 is now implementing a temporary **SEO/GEO Migration Bridge** for real client WordPress installations that already depend on themes, builders and plugins. Phase 8A starts with a machine-readable, non-persistent Site Analyzer for themes, plugins, native blocks/Elementor/Divi, provider families, content-model registrations and customization signals. The bridge remains outside the final self-contained theme and is read-only before later sandbox/migration phases.
+Phase 8 is implementing a temporary **SEO/GEO Migration Bridge** for real client WordPress installations that already depend on themes, builders and plugins. **Phase 8A is complete**: the machine-readable, non-persistent Site Analyzer inventories themes, plugins, native blocks/Elementor/Divi, provider families, content-model registrations and customization signals without changing protected WordPress state. The next step is **8B — SEO/GEO baseline snapshot**. The bridge remains outside the final self-contained theme.
 
 ## Engineering workflow
 
