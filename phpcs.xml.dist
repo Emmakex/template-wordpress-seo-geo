@@ -9,6 +9,7 @@
 
   <file>packages/seo-geo-theme</file>
   <file>packages/seo-geo-core</file>
+  <file>packages/seo-geo-migration-bridge</file>
 
   <exclude-pattern>*/vendor/*</exclude-pattern>
 

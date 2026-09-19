@@ -32,7 +32,7 @@ template-wordpress-seo-geo/
 │   │   │   ├── Seo/
 │   │   │   └── Runtime.php
 │   │   └── seo-geo-core.php   # optional compatibility wrapper, not required
-│   └── seo-geo-migration-bridge/   # planned temporary existing-site adoption tool
+│   └── seo-geo-migration-bridge/   # temporary existing-site adoption tool
 ├── presets/
 ├── scripts/
 │   └── build-theme-package.sh
@@ -88,9 +88,14 @@ This package is a **library source boundary**, not a mandatory WordPress plugin 
 
 ## Migration Bridge ownership
 
-The planned `seo-geo-migration-bridge` boundary owns existing-site adoption only:
+The `seo-geo-migration-bridge` boundary owns existing-site adoption only.
+
+Phase 8A implements its first read-only `SiteAnalyzer` plus an extensible builder detector interface. The analyzer reports environment/dependency signals without persisting a snapshot or scanning/converting page content. Builder-content coupling is intentionally deferred to Phase 8C.
+
+The bridge owns:
 
 - read-only site/theme/plugin/builder inventory by default;
+- machine-readable provider/content-model/customization signals that avoid credentials and arbitrary option/content export;
 - SEO/GEO baseline snapshots;
 - dependency classification and migration-plan data;
 - sandbox migration orchestration primitives;

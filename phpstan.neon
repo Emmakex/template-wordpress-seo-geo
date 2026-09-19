@@ -6,5 +6,6 @@ parameters:
   paths:
     - packages/seo-geo-theme
     - packages/seo-geo-core
+    - packages/seo-geo-migration-bridge
   tmpDir: .phpstan-cache
   reportUnmatchedIgnoredErrors: true
