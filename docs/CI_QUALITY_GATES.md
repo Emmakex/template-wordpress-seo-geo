@@ -43,7 +43,7 @@ The initial PHP quality contract is reproducible and deliberately strict:
 
 All development packages are pinned to exact versions in `composer.json`. The dependency-resolution gate also emits the resolved `composer.lock` as a short-lived CI artifact so dependency changes are inspectable during quality-tool upgrades.
 
-WPCS runs the official `WordPress` standard against project-owned PHP in `packages/seo-geo-theme` and `packages/seo-geo-core`. Two and only two filename-convention sniffs are excluded:
+WPCS runs the official `WordPress` standard against project-owned PHP in `packages/seo-geo-theme`, `packages/seo-geo-core` and `packages/seo-geo-migration-bridge`. Two and only two filename-convention sniffs are excluded:
 
 - `WordPress.Files.FileName.InvalidClassFileName`;
 - `WordPress.Files.FileName.NotHyphenatedLowercase`.
@@ -172,6 +172,23 @@ Phase 7 preset-layer closure:
 - Foundation now validates all four declarative contracts;
 - Self-contained Theme CI exercises all four preset activation contracts inside one zero-plugin WordPress fixture;
 - preset growth added no extra workflow, second Docker stack or required runtime dependency.
+
+### Existing-site migration
+
+Phase 8A reuses the established gates rather than introducing another workflow or Docker stack.
+
+For the Site Analyzer:
+
+- Foundation executes `scripts/ci/validate-migration-bridge.php`;
+- the static contract requires the bridge package and rejects common WordPress mutation APIs/direct database mutation primitives from Phase 8A source;
+- Phase 1 Package CI lints and validates the Migration Bridge package headers/runtime baseline;
+- PHP Quality applies WPCS and PHPStan level 6 to the bridge;
+- WordPress Smoke copies and activates the temporary bridge in the existing disposable fixture;
+- `scripts/ci/migration-bridge-site-analyzer-acceptance.sh` creates synthetic legacy signals for active/inactive plugins, Elementor, Divi, WooCommerce, Yoast, an inactive child theme, custom post type/taxonomy/shortcode, menu and custom CSS;
+- the runtime acceptance validates the machine-readable report and fingerprints protected site state before/after the analyzer call;
+- Self-contained Theme CI remains authoritative for the final product and still proves the theme needs zero plugins. The Migration Bridge is not bundled into that distribution.
+
+Phase 8A deliberately does not add content crawling, persisted SEO snapshots, dependency classification or migration mutations. Those belong to later Phase 8 microphases.
 
 ### Multilingual
 
