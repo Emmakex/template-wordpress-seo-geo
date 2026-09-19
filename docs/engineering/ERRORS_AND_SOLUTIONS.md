@@ -907,3 +907,60 @@ Do not weaken or suppress the alignment checks; they continue to catch drift con
 
 PHP Quality CI keeps WPCS and PHPStan level 6 mandatory. The provenance behavior itself is independently protected by the zero-plugin cross-surface acceptance so formatting-only fixes cannot hide a functional regression.
 
+
+
+## ERR-2026-017 — Bash expanded embedded PHP variables under set -u
+
+**Status:** resolved  
+**First seen:** 2026-09-19  
+**Last seen:** 2026-09-19  
+**Area:** ci / shell / WordPress smoke  
+**Signature:** `bd06327f2ae5`  
+**Reference:** PR #49; failing Self-contained Theme CI `35436437082` / job `105879779536`; passing final Self-contained Theme CI `35436517496`; post-merge passing Self-contained Theme CI `35436653739`
+
+### Symptom / context
+
+The first Phase 6F candidate completed the HTTP privacy matrix successfully for direct HTML, native sitemap, feed, search, author archive, unauthenticated REST, llms.txt and Markdown. It failed only when entering the final direct resolver check.
+
+The shell reported:
+
+```text
+scripts/ci/discovery-privacy-acceptance.sh: line 167: provenance: unbound variable
+```
+
+Because the smoke runs with `set -u`, the shell interpreted PHP variables such as `$provenance` and `$markdown` inside a double-quoted `wp eval` program as shell variables before WP-CLI received the PHP code.
+
+### Root cause
+
+Confirmed. This was a test-harness quoting defect, not a product privacy failure.
+
+The embedded PHP program required shell interpolation only for the numeric fixture IDs. The PHP local variables were not escaped, so Bash attempted to expand them first.
+
+### Solution
+
+Escape PHP-local dollar signs inside the double-quoted `wp eval` argument while leaving the intended shell fixture-ID substitutions active.
+
+No resolver, indexability, Schema, llms.txt, Markdown, provenance or WordPress query behavior changed.
+
+### Validation
+
+- final PR candidate `99c01be435b0098482ff50ea771957eb7a8bee41` passed Self-contained Theme CI `35436517496`;
+- all ten PR #49 workflows passed;
+- PR #49 was squash-merged as `feb3f50542e5e56da27d915b1a4e6efe3d73c115`;
+- post-merge Self-contained Theme CI `35436653739` passed the same complete privacy matrix;
+- all ten post-merge workflows passed.
+
+### Prevention / guardrail
+
+For PHP snippets embedded in shell:
+
+- prefer single-quoted shell strings when no shell interpolation is required;
+- when fixture values must be interpolated, escape every PHP-local `$` explicitly;
+- keep `set -u` enabled so accidental shell expansion fails immediately;
+- preserve the first failing structured diagnostic instead of weakening the assertion.
+
+This is related to earlier WP-CLI harness quoting lessons but has a distinct failure mechanism: shell variable expansion rather than PHP namespace escaping.
+
+### Regression coverage
+
+`scripts/ci/discovery-privacy-acceptance.sh` retains the resolver-level provenance/Markdown guard under `set -u`, and Self-contained Theme CI executes it inside the real built-theme WordPress fixture.
