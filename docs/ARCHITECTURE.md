@@ -61,7 +61,8 @@ The installable theme owns the complete baseline product:
 - bootstrap of the embedded SEO/GEO runtime;
 - native technical SEO output;
 - future Schema/GEO/crawler/sitemap extensions that form part of the baseline product;
-- preset presentation and configuration.
+- preset presentation and configuration;
+- theme-owned onboarding/admin orchestration over existing authoritative Core/theme options.
 
 The theme must remain lightweight and WordPress-native. A feature is not allowed to introduce a third-party runtime dependency merely for convenience.
 
@@ -163,6 +164,14 @@ The most important packaging invariant is testable:
 > A fresh WordPress installation with only the built `seo-geo-theme` active and zero active plugins must still provide the documented baseline SEO/GEO output.
 
 `scripts/build-theme-package.sh` assembles that artifact. `Self-contained Theme CI` verifies the invariant on real WordPress rather than assuming that repository source layout equals installable product behavior.
+
+## Onboarding authority
+
+Theme onboarding is an orchestration layer, not a second configuration store.
+
+It may present and mutate existing server-authoritative options only after capability/nonce validation. Preset, language, Schema identity and crawler/GEO settings keep their existing owners. Wizard progress or UI state must not become a shadow copy of those settings.
+
+The onboarding screen remains theme-owned because it configures the installable product as a whole; reusable resolution and output behavior remains in `seo-geo-core/src`.
 
 ## Extensibility
 
