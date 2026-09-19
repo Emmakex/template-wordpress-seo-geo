@@ -1283,6 +1283,8 @@ The next roadmap step is Phase 8 — Onboarding and operator experience.
 
 ## Phase 8 — Theme onboarding
 
+Status: **in progress**
+
 Deliverables:
 
 - theme-owned setup wizard/admin screen;
@@ -1294,6 +1296,34 @@ Deliverables:
 - optional detection of external systems only for compatibility warnings or enhancements.
 
 The onboarding flow must not instruct users to install an SEO/GEO plugin to complete the baseline setup.
+
+### Microphase 8A — onboarding foundation + preset choice
+
+Status: **in progress**
+
+Scope:
+
+- add one theme-owned Appearance -> SEO/GEO Setup screen;
+- authorize render/save paths server-side with `manage_options`;
+- use an admin-post action plus nonce, without AJAX or custom JavaScript;
+- write directly to the existing `seo_geo_active_preset` authority;
+- keep a clean installation preset-neutral;
+- validate preset values through the shared four-preset allowlist;
+- reuse preset-owned EN/ES labels instead of duplicating preset names;
+- ship project-owned onboarding UI copy in EN/ES based on the admin-user locale;
+- render a live basic status report from effective state rather than storing a report snapshot;
+- introduce no plugin installation flow, runtime dependency, workflow or additional Docker fixture;
+- validate the built distribution in the existing Self-contained Theme fixture.
+
+8A closes only after implementation PR gates and post-merge `main` verification are green.
+
+Planned remaining Phase 8 sequence:
+
+- 8B — native primary/additional language configuration;
+- 8C — organization/entity basics;
+- 8D — crawler/GEO opt-ins;
+- 8E — effective setup report + optional compatibility warnings/detection;
+- 8F — onboarding acceptance/closure and operator documentation.
 
 ## Phase 9 — Distribution
 
