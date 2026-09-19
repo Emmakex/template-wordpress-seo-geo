@@ -1135,7 +1135,7 @@ Each preset closes independently before the next begins.
 
 ### Microphase 7A — Corporate preset
 
-Status: **in progress**
+Status: **complete**
 
 Scope:
 
@@ -1153,7 +1153,13 @@ Scope:
 - zero-plugin WordPress acceptance proves default-off, activation, EN/ES copy and allowlist behavior;
 - Foundation validates the declarative Corporate contract without adding another CI workflow.
 
-7A closes only after implementation, required PR gates and post-merge `main` verification are green.
+7A is closed.
+
+Evidence:
+
+- implementation PR #54 passed all ten required workflows on final candidate `68a6c2161baffa8784d20a5a1663520a12ee379a`;
+- PR #54 was squash-merged as `7f3499073d82fd362f88c6f3abd6949c52223057`;
+- post-merge `main` passed all ten workflows, including Self-contained Theme CI `35446033925`, Native Multilingual CI `35446033952` and Performance Baseline CI `35446033965`.
 
 ### Remaining Phase 7 work
 

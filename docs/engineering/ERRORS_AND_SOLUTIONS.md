@@ -1097,3 +1097,118 @@ Acceptance should:
 ### Regression coverage
 
 `scripts/ci/discovery-cache-acceptance.sh` performs semantic Cache-Control checks for both llms.txt and Markdown, together with ETag and conditional-request acceptance inside the real built-theme WordPress fixture.
+
+## ERR-2026-020 — Preset registry first candidate missed WPCS and PHPStan contract details
+
+**Status:** resolved  
+**First seen:** 2026-09-19  
+**Last seen:** 2026-09-19  
+**Area:** ci / presets / PHP quality  
+**Signatures:** `76036c2fa168`, `2bebd3dc2f85`  
+**Reference:** PR #54; failing PHP Quality CI `35439483616` / job `105887709773`; failing PHP Quality CI `35439526503` / job `105887820722`; passing final PHP Quality CI `35440066742`; post-merge passing PHP Quality CI `35446033930`
+
+### Symptom / context
+
+The first Corporate preset registry candidate was functionally complete enough for Foundation and packaging checks, but PHP Quality stopped on two successive code-quality defects in `packages/seo-geo-theme/inc/presets.php`.
+
+WPCS first reported missing parameter documentation plus assignment-alignment warnings. After those were corrected, PHPStan level 6 reported that an `is_string()` check around the WordPress locale result was always true according to the WordPress stubs.
+
+### Root cause
+
+Confirmed. The implementation logic was not the cause.
+
+The first issue came from adding new public helper functions without completing the repository's strict PHPDoc/alignment conventions before the first CI candidate. The second came from defensive runtime code that contradicted the authoritative WordPress stub type: `get_locale()` / the locale resolver already returns a string in the supported contract.
+
+### Solution
+
+- add complete `@param` documentation for the preset document/localized-value helpers;
+- align assignment groups according to WPCS rather than suppressing the sniff;
+- remove the redundant string-type guard and rely on the supported WordPress type contract;
+- keep both WPCS and PHPStan unchanged at their existing strictness.
+
+No preset activation, content-map, Schema, multilingual or pattern behavior was weakened.
+
+### Validation
+
+- final PR candidate `68a6c2161baffa8784d20a5a1663520a12ee379a` passed PHP Quality CI `35440066742`, including WPCS and PHPStan level 6;
+- PR #54 passed all ten workflows and was squash-merged as `7f3499073d82fd362f88c6f3abd6949c52223057`;
+- post-merge PHP Quality CI `35446033930` passed again on `main`;
+- all ten post-merge workflows passed.
+
+### Prevention / guardrail
+
+For new theme-owned PHP registry/helpers:
+
+- write complete WordPress-style PHPDoc before the first candidate;
+- keep adjacent assignment alignment valid when introducing longer variable names;
+- consult the pinned WordPress stubs before adding defensive type checks around core APIs;
+- do not lower PHPStan certainty or add ignored errors to accommodate redundant checks.
+
+### Regression coverage
+
+`PHP Quality CI` remains mandatory for preset-runtime PHP changes and continues to run WPCS before PHPStan level 6.
+
+## ERR-2026-021 — Corporate locale acceptance assumed unsupported WP-CLI locale behavior
+
+**Status:** resolved  
+**First seen:** 2026-09-19  
+**Last seen:** 2026-09-19  
+**Area:** ci / presets / multilingual / WP-CLI  
+**Signatures:** `1790b2c0f575`, `0272e01cd26f`  
+**Reference:** PR #54; failing Self-contained Theme CI `35439578232`, `35439683917`, `35439784948`, `35439874380`; passing final Self-contained Theme CI `35440066944`; post-merge passing Self-contained Theme CI `35446033925`
+
+### Symptom / context
+
+Corporate EN registration passed immediately, but the first Spanish acceptance continued to receive the English title:
+
+`Corporate verified metrics`
+
+instead of:
+
+`Métricas corporativas verificadas`.
+
+The initial probe changed `WPLANG` after WordPress had already bootstrapped. A later attempt used a `--locale=es_ES` WP-CLI argument, but the pinned `wordpress:cli-2.12.0-php8.2` runtime reported:
+
+`unknown --locale parameter`.
+
+### Root cause
+
+Confirmed. This was an acceptance-harness assumption, not missing Spanish preset content.
+
+Preset patterns are registered during WordPress bootstrap. Changing the site-language option after bootstrap does not retroactively re-register them. In addition, the pinned WP-CLI container used by the project does not expose the assumed global `--locale` flag.
+
+A plain `switch_to_locale()` was also insufficient for this specific fixture because the site-locale resolution used by the preset registry needed to be forced consistently before re-registration.
+
+### Solution
+
+Keep the runtime authority on WordPress's site locale and test the alternate locale using WordPress APIs inside the same process:
+
+- add a high-priority temporary `locale` filter returning `es_ES`;
+- call `switch_to_locale( 'es_ES' )`;
+- unregister the three Corporate patterns already registered during bootstrap;
+- call the theme's preset registration function again;
+- assert the Spanish title from the real WordPress block-pattern registry.
+
+The test no longer depends on unsupported WP-CLI flags or post-bootstrap `WPLANG` mutation.
+
+### Validation
+
+- final PR candidate `68a6c2161baffa8784d20a5a1663520a12ee379a` passed Self-contained Theme CI `35440066944`;
+- that run proved default-off behavior, Corporate activation, English copy, Spanish copy and unsupported preset fallback inside the built zero-plugin theme;
+- PR #54 passed all ten workflows and was squash-merged as `7f3499073d82fd362f88c6f3abd6949c52223057`;
+- post-merge Self-contained Theme CI `35446033925` passed the same contract on `main`;
+- post-merge Native Multilingual CI `35446033952` also passed.
+
+### Prevention / guardrail
+
+For locale-sensitive WordPress acceptance:
+
+- distinguish site locale, user/admin locale and process bootstrap timing;
+- do not assume a WP-CLI global flag exists without verifying it against the pinned CLI runtime;
+- when behavior is registered during bootstrap, change locale and re-register the specific behavior inside the same process rather than mutating an option after registration;
+- prefer WordPress locale APIs over CLI-specific behavior for product-contract tests.
+
+### Regression coverage
+
+`scripts/ci/corporate-preset-acceptance.sh` retains the explicit EN/ES block-pattern registry checks inside Self-contained Theme CI. Future presets can reuse the same WordPress-native locale strategy instead of rediscovering WP-CLI-specific behavior.
+
