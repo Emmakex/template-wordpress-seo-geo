@@ -154,7 +154,10 @@ for required_file in \
   "${BUILT_THEME}/inc/presets.php" \
   "${BUILT_THEME}/presets/corporate/preset.json" \
   "${BUILT_THEME}/presets/corporate/content-map.json" \
-  "${BUILT_THEME}/presets/corporate/patterns.json"; do
+  "${BUILT_THEME}/presets/corporate/patterns.json" \
+  "${BUILT_THEME}/presets/saas-digital-product/preset.json" \
+  "${BUILT_THEME}/presets/saas-digital-product/content-map.json" \
+  "${BUILT_THEME}/presets/saas-digital-product/patterns.json"; do
   [[ -f "$required_file" ]] \
     || fail_smoke "embedded-runtime-file" "Built theme is missing embedded SEO/GEO runtime source" "${required_file}" "missing"
 done
@@ -495,6 +498,9 @@ source scripts/ci/publisher-preset-acceptance.sh
 
 # Reuse the same fixture for Phase 7D Ecommerce preset activation acceptance.
 source scripts/ci/ecommerce-preset-acceptance.sh
+
+# Reuse the same fixture for Phase 7E SaaS / Digital Product activation acceptance.
+source scripts/ci/saas-digital-product-preset-acceptance.sh
 
 curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "fixture-request" "Could not request fixture post" "HTTP 2xx" "curl failed"
