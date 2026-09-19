@@ -1223,9 +1223,31 @@ Evidence:
 
 No 7C CI/product incident met the error-register criteria; the first implementation candidate and post-merge candidate both passed without a corrective commit.
 
+### Microphase 7D — Ecommerce preset
+
+Status: **in progress**
+
+Scope:
+
+- keep the self-contained theme zero-plugin safe while declaring WooCommerce only as the preferred future commerce provider;
+- bundle a machine-readable Ecommerce manifest, EN/ES content map and Ecommerce-only pattern definitions;
+- separate theme-owned editorial/policy pages from provider-owned shop, product-category and product surfaces;
+- keep Product, Offer, AggregateRating and Review Schema provider-owned;
+- never infer price, stock/availability, offers, reviews or ratings;
+- keep product/category/shop routing and multilingual commerce routing provider-owned;
+- require an explicit indexability policy before faceted/filter URLs can be indexed;
+- add Ecommerce patterns for category guidance, buying guidance, authoritative policy navigation and optional original brand/editorial pages;
+- forbid mass-generated brand/category copy and manufacturer-copy duplication without verification;
+- do not claim WooCommerce support until a dedicated adapter/compatibility phase passes;
+- keep Corporate, Local Business, Publisher and Ecommerce activation isolated;
+- ship visible copy in EN/ES together;
+- reuse Foundation and the existing Self-contained Theme fixture with no new workflow, Docker stack or runtime dependency.
+
+7D closes only after implementation PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 7 work
 
-4. Ecommerce
+None after 7D. Phase 7 closes only after the Ecommerce preset is independently closed.
 
 ## Phase 8 — Theme onboarding
 

@@ -175,6 +175,40 @@ Phase 7B does not create pages automatically. Phase 8 onboarding may consume thi
 - Category content remains useful and crawlable.
 - Faceted/filter URLs require explicit indexability policy.
 
+### Phase 7D implementation contract
+
+The Ecommerce preset is bundled under `presets/ecommerce/` and activates only when `seo_geo_active_preset=ecommerce`.
+
+The preset is deliberately **zero-plugin safe**. WooCommerce is the preferred future commerce provider, but Phase 7D does not declare WooCommerce a supported compatibility combination. Live commerce requires a separately implemented and accepted adapter/ownership contract.
+
+Commerce ownership is explicit:
+
+- the theme may own Organization/WebSite/WebPage/BreadcrumbList where already supported;
+- Product, Offer, AggregateRating and Review remain commerce/provider-owned;
+- price, stock/availability, reviews, ratings and offers are never inferred by the preset;
+- product/category/shop routing remains provider-owned;
+- multilingual commerce routing remains provider/integration-owned;
+- faceted/filter URLs remain non-assumed and require an explicit provider/SEO indexability policy;
+- checkout, cart and account are provider surfaces, not SEO landing pages created by the preset.
+
+The preset ships:
+
+- `preset.json`: provider boundaries, Product Schema ownership, anti-inference rules, navigation, multilingual contract and optional WooCommerce preference;
+- `content-map.json`: matching EN/ES editorial/policy pages plus provider-owned shop, product-category and product surfaces;
+- `patterns.json`: category guide, buying guide, policy navigation and optional brand/editorial landing scaffolding.
+
+All Ecommerce preset patterns use native WordPress core blocks. They intentionally contain no WooCommerce block dependency so the theme remains installable and usable with zero plugins.
+
+The dynamic commerce surfaces are declarative only until a supported adapter exists:
+
+- **Shop** → provider-owned;
+- **Product category** → provider-owned;
+- **Product** → provider-owned.
+
+The optional brand/editorial page is a normal WordPress page and is created only when it adds original value. It must not be mass-generated for every brand and must not copy manufacturer claims without verification.
+
+Phase 7D does not create products, prices, stock, reviews, offers, categories, facets or commerce routes. Phase 8 onboarding may activate the preset and create only theme-owned editorial/policy scaffolding; commerce surfaces remain integration-gated.
+
 ## Publisher
 
 ### Core pages

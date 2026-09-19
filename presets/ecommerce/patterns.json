@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "preset": "ecommerce",
+  "category": {
+    "slug": "seo-geo-ecommerce",
+    "labels": {
+      "en_US": "Ecommerce",
+      "es_ES": "Ecommerce"
+    }
+  },
+  "patterns": [
+    {
+      "slug": "seo-geo-theme/ecommerce-category-guide",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Ecommerce category guide",
+          "description": "Original category context that helps shoppers choose without inventing product facts.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">How to choose in this category</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Add original guidance that is genuinely useful for this category. Do not duplicate manufacturer copy or invent product attributes.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Best fit</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Explain the real use cases, compatibility or sizing factors shoppers should consider.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">What to compare</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Describe meaningful product attributes only when they are represented by real catalog data.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Before buying</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Highlight practical care, installation, delivery or support considerations that the store can substantiate.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Guía editorial de categoría Ecommerce",
+          "description": "Contexto original de categoría que ayuda a elegir sin inventar datos de producto.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Cómo elegir en esta categoría</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Añade orientación original y realmente útil para esta categoría. No dupliques textos del fabricante ni inventes atributos de producto.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Mejor encaje</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Explica los usos reales, compatibilidad o factores de tamaño que el comprador debe valorar.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Qué comparar</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Describe atributos relevantes solo cuando estén representados por datos reales del catálogo.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Antes de comprar</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Destaca consideraciones prácticas de cuidado, instalación, entrega o soporte que la tienda pueda respaldar.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/ecommerce-buying-guide",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Ecommerce buying guide",
+          "description": "A decision framework for real products without manual price, stock or rating duplication.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Buying guide</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Build the guide around stable selection criteria. Product price, stock, reviews and offers must remain sourced from the commerce provider.</p><!-- /wp:paragraph -->\n<!-- wp:list --><ul class=\"wp-block-list\"><li>Define the real need or problem the buyer is solving.</li><li>Explain the product characteristics that materially affect the decision.</li><li>Link to real products or categories only after confirming they exist in the live catalog.</li><li>State limitations or tradeoffs instead of promising a universal best choice.</li></ul><!-- /wp:list -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Guía de compra Ecommerce",
+          "description": "Un marco de decisión para productos reales sin duplicar manualmente precios, stock o valoraciones.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Guía de compra</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Construye la guía sobre criterios de selección estables. Precio, stock, reseñas y ofertas deben seguir procediendo del proveedor comercial.</p><!-- /wp:paragraph -->\n<!-- wp:list --><ul class=\"wp-block-list\"><li>Define la necesidad o problema real que el comprador quiere resolver.</li><li>Explica las características que afectan de forma material a la decisión.</li><li>Enlaza productos o categorías reales solo después de confirmar que existen en el catálogo activo.</li><li>Expón limitaciones o compromisos en lugar de prometer una opción universalmente mejor.</li></ul><!-- /wp:list -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/ecommerce-policy-navigation",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Ecommerce policy navigation",
+          "description": "A policy-navigation scaffold that points shoppers to authoritative store policies instead of duplicating terms.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Shopping help</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Link to the store's current authoritative policy pages. Do not copy time-sensitive terms into this reusable section.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Shipping & delivery</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a real internal link to the maintained shipping and delivery policy.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Returns & refunds</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add a real internal link to the maintained returns and refund policy.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Support</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add the current help or contact route used by the store.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Navegación de políticas Ecommerce",
+          "description": "Una estructura de navegación que dirige a políticas autoritativas de la tienda en lugar de duplicar condiciones.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Ayuda para tu compra</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Enlaza las páginas de políticas actuales y autoritativas de la tienda. No copies condiciones sensibles al tiempo dentro de esta sección reutilizable.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Envíos y entrega</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade un enlace interno real a la política de envíos y entrega que se mantenga actualizada.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Devoluciones y reembolsos</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade un enlace interno real a la política de devoluciones y reembolsos mantenida.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Soporte</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade la vía actual de ayuda o contacto utilizada por la tienda.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/ecommerce-brand-editorial",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Ecommerce brand editorial",
+          "description": "An original brand/editorial landing scaffold that avoids copied manufacturer claims and mass landing generation.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">About this brand or collection</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Create this page only when it adds original value beyond the catalog or manufacturer description. Verify every brand claim before publication.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Who it suits</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Explain the real shopper needs or use cases this selection addresses.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">What distinguishes it</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add only characteristics that can be verified from reliable brand or catalog information.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Explore the catalog</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Link to real live products or categories rather than creating placeholder commerce destinations.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Editorial Ecommerce de marca",
+          "description": "Una estructura editorial original de marca que evita copiar afirmaciones del fabricante y generar landings en masa.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Sobre esta marca o colección</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Crea esta página solo cuando aporte valor original más allá del catálogo o la descripción del fabricante. Verifica cada afirmación sobre la marca antes de publicar.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Para quién encaja</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Explica las necesidades o usos reales a los que responde esta selección.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Qué la diferencia</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade solo características que puedan verificarse con información fiable de marca o catálogo.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Explora el catálogo</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Enlaza productos o categorías reales y activas en lugar de crear destinos comerciales de relleno.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    }
+  ]
+}

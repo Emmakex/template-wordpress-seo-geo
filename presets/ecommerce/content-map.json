@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "preset": "ecommerce",
+  "locales": {
+    "en_US": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Home",
+          "slug": "home",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/ecommerce-policy-navigation",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "buying-guides",
+          "title": "Buying guides",
+          "slug": "buying-guides",
+          "role": "posts-page",
+          "template": "archive",
+          "patterns": [
+            "seo-geo-theme/ecommerce-buying-guide",
+            "seo-geo-theme/ecommerce-category-guide"
+          ]
+        },
+        {
+          "key": "support",
+          "title": "Help & support",
+          "slug": "support",
+          "role": "support",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/faq",
+            "seo-geo-theme/ecommerce-policy-navigation",
+            "seo-geo-theme/contact"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "About",
+          "slug": "about",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "contact",
+          "title": "Contact",
+          "slug": "contact",
+          "role": "contact",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/contact"
+          ]
+        },
+        {
+          "key": "shipping-delivery",
+          "title": "Shipping & delivery",
+          "slug": "shipping-delivery",
+          "role": "commerce-policy",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "returns-refunds",
+          "title": "Returns & refunds",
+          "slug": "returns-refunds",
+          "role": "commerce-policy",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "terms-conditions",
+          "title": "Terms & conditions",
+          "slug": "terms-conditions",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Privacy policy",
+          "slug": "privacy-policy",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Legal notice",
+          "slug": "legal-notice",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "dynamic": [
+        {
+          "key": "shop",
+          "provider": "woocommerce",
+          "source": "woocommerce-shop",
+          "template_owner": "provider",
+          "theme_fallback": "archive",
+          "requires_integration": true,
+          "content_requirements": [
+            "real published products supplied by the commerce provider",
+            "provider-owned canonical and pagination behavior",
+            "no theme-generated price or availability claims",
+            "facets and filters follow an explicit indexability policy"
+          ]
+        },
+        {
+          "key": "product-category",
+          "provider": "woocommerce",
+          "source": "woocommerce-product-category",
+          "template_owner": "provider",
+          "theme_fallback": "archive",
+          "requires_integration": true,
+          "content_requirements": [
+            "real provider-owned product taxonomy",
+            "useful original category context when maintained",
+            "visible product facts remain provider-owned",
+            "no automatically generated thin category copy"
+          ]
+        },
+        {
+          "key": "product",
+          "provider": "woocommerce",
+          "source": "woocommerce-product",
+          "template_owner": "provider",
+          "theme_fallback": "single",
+          "requires_integration": true,
+          "content_requirements": [
+            "real provider-owned product record",
+            "visible price and availability from the commerce system",
+            "Product/Offer/review structured data remains provider-owned",
+            "multilingual product routing remains integration-owned"
+          ]
+        }
+      ],
+      "optional_editorial": [
+        {
+          "key": "brand-editorial",
+          "source": "wordpress-page",
+          "template": "page",
+          "create_only_when_useful": true,
+          "recommended_patterns": [
+            "seo-geo-theme/ecommerce-brand-editorial",
+            "seo-geo-theme/ecommerce-category-guide",
+            "seo-geo-theme/ecommerce-buying-guide"
+          ],
+          "content_requirements": [
+            "original editorial value beyond manufacturer copy",
+            "real products or categories linked only when available",
+            "brand claims verified before publication",
+            "no automatic landing-page generation for every brand"
+          ]
+        }
+      ]
+    },
+    "es_ES": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Inicio",
+          "slug": "inicio",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/ecommerce-policy-navigation",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "buying-guides",
+          "title": "Guías de compra",
+          "slug": "guias-de-compra",
+          "role": "posts-page",
+          "template": "archive",
+          "patterns": [
+            "seo-geo-theme/ecommerce-buying-guide",
+            "seo-geo-theme/ecommerce-category-guide"
+          ]
+        },
+        {
+          "key": "support",
+          "title": "Ayuda y soporte",
+          "slug": "ayuda",
+          "role": "support",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/faq",
+            "seo-geo-theme/ecommerce-policy-navigation",
+            "seo-geo-theme/contact"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "Sobre nosotros",
+          "slug": "sobre-nosotros",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "contact",
+          "title": "Contacto",
+          "slug": "contacto",
+          "role": "contact",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/contact"
+          ]
+        },
+        {
+          "key": "shipping-delivery",
+          "title": "Envíos y entrega",
+          "slug": "envios-y-entrega",
+          "role": "commerce-policy",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "returns-refunds",
+          "title": "Devoluciones y reembolsos",
+          "slug": "devoluciones-y-reembolsos",
+          "role": "commerce-policy",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "terms-conditions",
+          "title": "Términos y condiciones",
+          "slug": "terminos-y-condiciones",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Política de privacidad",
+          "slug": "politica-de-privacidad",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Aviso legal",
+          "slug": "aviso-legal",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "dynamic": [
+        {
+          "key": "shop",
+          "provider": "woocommerce",
+          "source": "woocommerce-shop",
+          "template_owner": "provider",
+          "theme_fallback": "archive",
+          "requires_integration": true,
+          "content_requirements": [
+            "productos publicados reales suministrados por el proveedor de comercio",
+            "canonical y paginación propiedad del proveedor",
+            "sin afirmaciones de precio o disponibilidad generadas por el theme",
+            "facetas y filtros sujetos a una política explícita de indexabilidad"
+          ]
+        },
+        {
+          "key": "product-category",
+          "provider": "woocommerce",
+          "source": "woocommerce-product-category",
+          "template_owner": "provider",
+          "theme_fallback": "archive",
+          "requires_integration": true,
+          "content_requirements": [
+            "taxonomía de productos real propiedad del proveedor",
+            "contexto original y útil de categoría cuando se mantenga",
+            "los datos visibles de producto siguen siendo propiedad del proveedor",
+            "sin contenido de categoría escaso generado automáticamente"
+          ]
+        },
+        {
+          "key": "product",
+          "provider": "woocommerce",
+          "source": "woocommerce-product",
+          "template_owner": "provider",
+          "theme_fallback": "single",
+          "requires_integration": true,
+          "content_requirements": [
+            "registro de producto real propiedad del proveedor",
+            "precio y disponibilidad visibles procedentes del sistema de comercio",
+            "datos estructurados Product, Offer y reviews propiedad del proveedor",
+            "routing multilingüe de producto propiedad de la integración"
+          ]
+        }
+      ],
+      "optional_editorial": [
+        {
+          "key": "brand-editorial",
+          "source": "wordpress-page",
+          "template": "page",
+          "create_only_when_useful": true,
+          "recommended_patterns": [
+            "seo-geo-theme/ecommerce-brand-editorial",
+            "seo-geo-theme/ecommerce-category-guide",
+            "seo-geo-theme/ecommerce-buying-guide"
+          ],
+          "content_requirements": [
+            "valor editorial original más allá del texto del fabricante",
+            "productos o categorías reales enlazados solo cuando estén disponibles",
+            "afirmaciones sobre la marca verificadas antes de publicar",
+            "sin generación automática de landing pages para cada marca"
+          ]
+        }
+      ]
+    }
+  }
+}
