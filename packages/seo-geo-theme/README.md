@@ -50,10 +50,11 @@ The theme currently provides:
   - contact;
 - embedded native SEO runtime for canonical, meta description and robots/indexability;
 - bundled declarative preset packages plus an allowlisted preset registry; Corporate, Local Business, Publisher and Ecommerce are all complete, with every preset disabled by default;
+- Phase 8A theme-owned SEO/GEO onboarding under Appearance, beginning with secure preset selection and a live effective-state summary;
 - zero-plugin acceptance through `Self-contained Theme CI`.
 
 Patterns use theme presets instead of creating a second visual system. They do not emit duplicate Schema, own page-level H1s, embed remote assets or require third-party blocks.
 
 Optional integrations may be added later for compatibility with projects that deliberately install external systems, but they are not prerequisites for the baseline.
 
-See `docs/ARCHITECTURE.md`, `docs/NATIVE_SEO.md`, `docs/DESIGN_SYSTEM.md`, `docs/PATTERNS.md` and `docs/PRESETS.md` for the contracts enforced by CI.
+See `docs/ARCHITECTURE.md`, `docs/NATIVE_SEO.md`, `docs/DESIGN_SYSTEM.md`, `docs/PATTERNS.md`, `docs/PRESETS.md` and `docs/ONBOARDING.md` for the contracts enforced by CI.
