@@ -183,7 +183,6 @@ final class Runtime {
 		$schema_visible_content = new SchemaVisibleContentResolver();
 		$schema_local_business  = new SchemaLocalBusinessResolver( $schema_ids, $schema_identity, $schema_visible_content );
 		$schema_article         = new SchemaArticleResolver( $schema_identity );
-		self::$content_provenance = new ContentProvenanceResolver( $indexability, $canonical, $schema_identity );
 		self::$schema_graph     = new SchemaGraphBuilder(
 			$indexability,
 			$canonical,
@@ -196,6 +195,8 @@ final class Runtime {
 		);
 		$schema_presenter       = new SchemaPresenter( self::$seo_authority, self::$schema_graph );
 		$schema_presenter->register();
+
+		self::$content_provenance = new ContentProvenanceResolver( $indexability, $canonical, $schema_identity );
 
 		self::$crawler_policy = new CrawlerPolicyResolver();
 		$crawler_presenter    = new CrawlerPolicyPresenter( self::$crawler_policy );
