@@ -1124,6 +1124,8 @@ None. Phase 7 may begin only from this closed, verified baseline.
 
 ## Phase 7 — Presets
 
+Status: **complete**
+
 Implement in this order:
 
 1. Corporate
@@ -1225,7 +1227,7 @@ No 7C CI/product incident met the error-register criteria; the first implementat
 
 ### Microphase 7D — Ecommerce preset
 
-Status: **in progress**
+Status: **complete**
 
 Scope:
 
@@ -1245,9 +1247,39 @@ Scope:
 
 7D closes only after implementation PR gates and post-merge `main` verification are green.
 
-### Remaining Phase 7 work
+Evidence:
 
-None after 7D. Phase 7 closes only after the Ecommerce preset is independently closed.
+- implementation PR #60 passed all ten required workflows on final candidate `57c42ca676dce8edad6a71c96fac1d3522b7daad`;
+- Foundation CI `35455812984` proved provider-owned commerce, zero-plugin safety, faceted-indexing defaults and EN/ES parity;
+- Self-contained Theme CI `35455813064` proved Ecommerce activation with WooCommerce absent, preset isolation, bilingual copy and no Schema identity mutation;
+- PR #60 was squash-merged as `0b9ca331c5cad05734d2e8dd8e92a165e8dc58d5`;
+- post-merge `main` passed all ten workflows, including Self-contained Theme CI `35456378271`, Native Multilingual CI `35456378290`, Accessibility & Responsive CI `35456378267` and Performance Baseline CI `35456378291`.
+
+No 7D CI/product incident met the error-register criteria; the first implementation candidate and post-merge candidate both passed without a corrective commit.
+
+### Phase 7 closure
+
+Phase 7 is closed with all four presets independently implemented, merged and post-merge verified:
+
+1. Corporate;
+2. Local Business;
+3. Publisher;
+4. Ecommerce.
+
+Shared closure guarantees:
+
+- one allowlisted server-side preset registry;
+- preset-neutral default installation;
+- EN/ES visible copy shipped together;
+- zero required plugin baseline;
+- preset-owned patterns isolated from other presets;
+- native SEO/GEO/Core authorities composed rather than forked;
+- no fabricated proof, local facts, editorial sources or commerce facts;
+- Foundation validates every declarative preset contract;
+- Self-contained Theme CI validates every preset in the same disposable zero-plugin WordPress fixture;
+- no extra preset-specific workflow or Docker stack.
+
+The next roadmap step is Phase 8 — Onboarding and operator experience.
 
 ## Phase 8 — Theme onboarding
 
