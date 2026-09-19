@@ -1043,9 +1043,28 @@ Post-merge `main` passed all ten workflows again:
 
 The first acceptance candidate completed every HTTP/discovery surface before the final direct resolver check failed because Bash expanded PHP variables under `set -u`. The harness-only failure signature `bd06327f2ae5` is recorded as `ERR-2026-017`; no product leak was observed.
 
+### Microphase 6G — discovery cache and invalidation
+
+Status: **in progress**
+
+Scope:
+
+- one dedicated `seo_geo_discovery` WordPress object-cache group;
+- versioned keys based on WordPress `last_changed` generation;
+- no global cache flush and no required persistent-cache plugin;
+- one-hour TTL bounds unreachable old generations;
+- cache only generated llms.txt and rendered Markdown bodies;
+- request-sensitive canonical/robots/indexability/hreflang/Schema/HTML remain uncached;
+- invalidate on post lifecycle, post metadata, author identity and relevant WordPress/project options;
+- privacy guards execute before cached discovery output can be served;
+- zero-plugin acceptance proves generation behavior and fresh llms/Markdown output after mutations;
+- public contract in `docs/DISCOVERY_CACHE.md`.
+
+6G closes only after implementation, required PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 6 work
 
-- cache/invalidation strategy.
+- none after 6G; Phase 6 closes when 6G acceptance and documentation are complete.
 
 Deliverables:
 
