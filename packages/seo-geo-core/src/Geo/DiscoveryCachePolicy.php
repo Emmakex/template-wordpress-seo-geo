@@ -75,7 +75,7 @@ final class DiscoveryCachePolicy {
 			return false;
 		}
 
-		$header = wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] );
+		$header = sanitize_text_field( wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ) );
 		if ( 2048 < strlen( $header ) ) {
 			return false;
 		}
