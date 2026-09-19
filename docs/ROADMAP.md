@@ -1245,7 +1245,7 @@ Scope:
 - ship visible copy in EN/ES together;
 - reuse Foundation and the existing Self-contained Theme fixture with no new workflow, Docker stack or runtime dependency.
 
-7D closes only after implementation PR gates and post-merge `main` verification are green.
+7D is closed.
 
 Evidence:
 
