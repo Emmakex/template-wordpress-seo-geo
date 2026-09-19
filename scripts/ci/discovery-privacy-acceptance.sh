@@ -164,7 +164,7 @@ for fixture in \
 done
 
 printf '[self-contained] Phase 6F: resolver-level provenance guard.\n'
-if ! DISCOVERY_RESOLVER_RESULT="$(wp_cli eval "$provenance = \\SeoGeo\\Core\\Runtime::content_provenance(); $markdown = \\SeoGeo\\Core\\Runtime::markdown_alternates(); if ( ! $provenance || ! $markdown ) { exit( 2 ); } echo wp_json_encode( array( 'draft_provenance' => $provenance->for_post( $DISCOVERY_DRAFT_ID ), 'private_provenance' => $provenance->for_post( $DISCOVERY_PRIVATE_ID ), 'draft_markdown' => $markdown->url_for_post( $DISCOVERY_DRAFT_ID, null ), 'private_markdown' => $markdown->url_for_post( $DISCOVERY_PRIVATE_ID, null ) ) );" 2>"${TMP_DIR}/discovery-privacy-eval.stderr" | tr -d '\r\n')"; then
+if ! DISCOVERY_RESOLVER_RESULT="$(wp_cli eval "\$provenance = \\SeoGeo\\Core\\Runtime::content_provenance(); \$markdown = \\SeoGeo\\Core\\Runtime::markdown_alternates(); if ( ! \$provenance || ! \$markdown ) { exit( 2 ); } echo wp_json_encode( array( 'draft_provenance' => \$provenance->for_post( $DISCOVERY_DRAFT_ID ), 'private_provenance' => \$provenance->for_post( $DISCOVERY_PRIVATE_ID ), 'draft_markdown' => \$markdown->url_for_post( $DISCOVERY_DRAFT_ID, null ), 'private_markdown' => \$markdown->url_for_post( $DISCOVERY_PRIVATE_ID, null ) ) );" 2>"${TMP_DIR}/discovery-privacy-eval.stderr" | tr -d '\r\n')"; then
   DISCOVERY_EVAL_ERROR="$(tr -d '\r' <"${TMP_DIR}/discovery-privacy-eval.stderr" | head -c 240)"
   fail_smoke "discovery-privacy-resolver-eval" "Could not evaluate discovery privacy resolvers" "resolver evaluation succeeds" "${DISCOVERY_EVAL_ERROR:-wp eval failed}" "wp eval discovery privacy resolvers"
 fi
