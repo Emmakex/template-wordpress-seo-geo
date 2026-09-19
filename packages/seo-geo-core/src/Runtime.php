@@ -14,6 +14,9 @@ use SeoGeo\Core\Geo\CrawlerPolicyPresenter;
 use SeoGeo\Core\Geo\ContentProvenancePresenter;
 use SeoGeo\Core\Geo\ContentProvenanceResolver;
 use SeoGeo\Core\Geo\CrawlerPolicyResolver;
+use SeoGeo\Core\Geo\DiscoveryCacheInvalidator;
+use SeoGeo\Core\Geo\DiscoveryCachePolicy;
+use SeoGeo\Core\Geo\DiscoveryCacheRevision;
 use SeoGeo\Core\Geo\LlmsTxtPresenter;
 use SeoGeo\Core\Geo\LlmsTxtResolver;
 use SeoGeo\Core\Geo\MarkdownAlternatePresenter;
@@ -138,6 +141,13 @@ final class Runtime {
 	private static ?ContentProvenanceResolver $content_provenance = null;
 
 	/**
+	 * GEO discovery cache revision authority.
+	 *
+	 * @var DiscoveryCacheRevision|null
+	 */
+	private static ?DiscoveryCacheRevision $discovery_cache_revision = null;
+
+	/**
 	 * Initialize shared services once.
 	 */
 	public static function initialize(): void {
@@ -199,6 +209,11 @@ final class Runtime {
 
 		self::$content_provenance = new ContentProvenanceResolver( $indexability, $canonical, $schema_identity );
 
+		self::$discovery_cache_revision = new DiscoveryCacheRevision();
+		$cache_invalidator              = new DiscoveryCacheInvalidator( self::$discovery_cache_revision );
+		$cache_invalidator->register();
+		$cache_policy = new DiscoveryCachePolicy( self::$discovery_cache_revision );
+
 		self::$crawler_policy = new CrawlerPolicyResolver();
 		$crawler_presenter    = new CrawlerPolicyPresenter( self::$crawler_policy );
 		$crawler_presenter->register();
@@ -218,10 +233,10 @@ final class Runtime {
 			self::$localized_seo,
 			self::$markdown_alternates
 		);
-		$llms_presenter            = new LlmsTxtPresenter( self::$llms_txt );
+		$llms_presenter            = new LlmsTxtPresenter( self::$llms_txt, $cache_policy );
 		$llms_presenter->register();
 
-		$markdown_presenter = new MarkdownAlternatePresenter( self::$markdown_alternates, self::$llms_txt );
+		$markdown_presenter = new MarkdownAlternatePresenter( self::$markdown_alternates, self::$llms_txt, $cache_policy );
 		$markdown_presenter->register();
 
 		$provenance_presenter = new ContentProvenancePresenter( self::$seo_authority, self::$content_provenance );
@@ -323,5 +338,12 @@ final class Runtime {
 	 */
 	public static function content_provenance(): ?ContentProvenanceResolver {
 		return self::$content_provenance;
+	}
+
+	/**
+	 * Get the GEO discovery cache revision authority when initialized.
+	 */
+	public static function discovery_cache_revision(): ?DiscoveryCacheRevision {
+		return self::$discovery_cache_revision;
 	}
 }
