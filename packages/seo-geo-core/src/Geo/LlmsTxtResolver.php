@@ -44,20 +44,30 @@ final class LlmsTxtResolver {
 	private MarkdownAlternateResolver $markdown_alternates;
 
 	/**
+	 * Versioned discovery cache.
+	 *
+	 * @var DiscoveryCache
+	 */
+	private DiscoveryCache $cache;
+
+	/**
 	 * Create the resolver.
 	 *
 	 * @param NativeTranslationRegistry $translations       Explicit translation relationships.
 	 * @param LocalizedSeoResolver      $localized_seo      Localized public-URL authority.
 	 * @param MarkdownAlternateResolver $markdown_alternates Optional Markdown alternate authority.
+	 * @param DiscoveryCache            $cache               Versioned discovery cache.
 	 */
 	public function __construct(
 		NativeTranslationRegistry $translations,
 		LocalizedSeoResolver $localized_seo,
-		MarkdownAlternateResolver $markdown_alternates
+		MarkdownAlternateResolver $markdown_alternates,
+		DiscoveryCache $cache
 	) {
 		$this->translations        = $translations;
 		$this->localized_seo       = $localized_seo;
 		$this->markdown_alternates = $markdown_alternates;
+		$this->cache               = $cache;
 	}
 
 	/**
@@ -75,6 +85,13 @@ final class LlmsTxtResolver {
 	public function resolve(): ?string {
 		if ( ! $this->enabled() ) {
 			return null;
+		}
+
+		$cache_key = $this->cache->key( 'llms_txt', 'document' );
+		$cached    = $this->cache->get_text( $cache_key, $found );
+
+		if ( $found && null !== $cached ) {
+			return $cached;
 		}
 
 		$title = $this->plain_text( get_bloginfo( 'name' ) );
@@ -106,7 +123,10 @@ final class LlmsTxtResolver {
 			}
 		}
 
-		return implode( "\n", $lines ) . "\n";
+		$document = implode( "\n", $lines ) . "\n";
+		$this->cache->set_text( $cache_key, $document );
+
+		return $document;
 	}
 
 	/**
