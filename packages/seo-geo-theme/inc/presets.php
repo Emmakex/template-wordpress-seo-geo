@@ -81,7 +81,7 @@ function seo_geo_theme_active_preset_id(): ?string {
  * Resolve the bundled locale key used by preset-owned copy.
  */
 function seo_geo_theme_preset_locale(): string {
-	$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+	$locale = get_locale();
 
 	return str_starts_with( strtolower( $locale ), 'es' ) ? 'es_ES' : 'en_US';
 }
