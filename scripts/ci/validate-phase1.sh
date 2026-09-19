@@ -111,68 +111,23 @@ if ! grep -q '^ \* Requires at least: 7\.1$' packages/seo-geo-core/seo-geo-core.
   fail_contract "plugin-wordpress-baseline" "Plugin WordPress baseline does not match the tested contract" "Requires at least: 7.1" "missing or changed" "packages/seo-geo-core/seo-geo-core.php"
 fi
 
-if ! grep -q '^ \* Requires PHP: 8\.2
-
-for template in packages/seo-geo-theme/templates/*.html; do
-  if ! grep -q '"tagName":"main"' "$template"; then
-    fail_contract "semantic-main" "Block template has no semantic main landmark: ${template}" "tagName=main" "missing" "$template"
-  fi
-done
-
-printf 'Phase 1 package contract OK: %d required files; PHP syntax, theme.json, runtime baselines and package headers validated.\n' "${#required_paths[@]}"
- packages/seo-geo-core/seo-geo-core.php; then
+if ! grep -q '^ \* Requires PHP: 8\.2$' packages/seo-geo-core/seo-geo-core.php; then
   fail_contract "plugin-php-baseline" "Plugin PHP baseline does not match the tested contract" "Requires PHP: 8.2" "missing or changed" "packages/seo-geo-core/seo-geo-core.php"
 fi
 
-if ! grep -q '^ \* Plugin Name: SEO/GEO Migration Bridge
-
-for template in packages/seo-geo-theme/templates/*.html; do
-  if ! grep -q '"tagName":"main"' "$template"; then
-    fail_contract "semantic-main" "Block template has no semantic main landmark: ${template}" "tagName=main" "missing" "$template"
-  fi
-done
-
-printf 'Phase 1 package contract OK: %d required files; PHP syntax, theme.json, runtime baselines and package headers validated.\n' "${#required_paths[@]}"
- packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php; then
+if ! grep -q '^ \* Plugin Name: SEO/GEO Migration Bridge$' packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php; then
   fail_contract "migration-plugin-header" "Migration Bridge header is missing the expected Plugin Name" "SEO/GEO Migration Bridge plugin header" "missing or changed" "packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php"
 fi
 
-if ! grep -q '^ \* Text Domain: seo-geo-migration-bridge
-
-for template in packages/seo-geo-theme/templates/*.html; do
-  if ! grep -q '"tagName":"main"' "$template"; then
-    fail_contract "semantic-main" "Block template has no semantic main landmark: ${template}" "tagName=main" "missing" "$template"
-  fi
-done
-
-printf 'Phase 1 package contract OK: %d required files; PHP syntax, theme.json, runtime baselines and package headers validated.\n' "${#required_paths[@]}"
- packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php; then
+if ! grep -q '^ \* Text Domain: seo-geo-migration-bridge$' packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php; then
   fail_contract "migration-plugin-text-domain" "Migration Bridge text domain does not match the project contract" "seo-geo-migration-bridge" "missing or changed" "packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php"
 fi
 
-if ! grep -q '^ \* Requires at least: 7\.1
-
-for template in packages/seo-geo-theme/templates/*.html; do
-  if ! grep -q '"tagName":"main"' "$template"; then
-    fail_contract "semantic-main" "Block template has no semantic main landmark: ${template}" "tagName=main" "missing" "$template"
-  fi
-done
-
-printf 'Phase 1 package contract OK: %d required files; PHP syntax, theme.json, runtime baselines and package headers validated.\n' "${#required_paths[@]}"
- packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php; then
+if ! grep -q '^ \* Requires at least: 7\.1$' packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php; then
   fail_contract "migration-plugin-wordpress-baseline" "Migration Bridge WordPress baseline does not match the tested contract" "Requires at least: 7.1" "missing or changed" "packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php"
 fi
 
-if ! grep -q '^ \* Requires PHP: 8\.2
-
-for template in packages/seo-geo-theme/templates/*.html; do
-  if ! grep -q '"tagName":"main"' "$template"; then
-    fail_contract "semantic-main" "Block template has no semantic main landmark: ${template}" "tagName=main" "missing" "$template"
-  fi
-done
-
-printf 'Phase 1 package contract OK: %d required files; PHP syntax, theme.json, runtime baselines and package headers validated.\n' "${#required_paths[@]}"
- packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php; then
+if ! grep -q '^ \* Requires PHP: 8\.2$' packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php; then
   fail_contract "migration-plugin-php-baseline" "Migration Bridge PHP baseline does not match the tested contract" "Requires PHP: 8.2" "missing or changed" "packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php"
 fi
 
