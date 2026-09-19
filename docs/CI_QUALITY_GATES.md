@@ -93,6 +93,17 @@ Phase 6G adds discovery-document cache/revalidation acceptance in that same disp
 
 The baseline contract is **native and self-contained**. An external SEO/GEO plugin is never required for these acceptance checks.
 
+### Presets
+
+Preset changes reuse existing gates rather than creating a runner per archetype.
+
+For Phase 7A Corporate:
+
+- Foundation executes `scripts/ci/validate-corporate-preset.php` to prove the manifest, required templates, Organization confirmation rule, EN/ES content-map parity, allowed pattern references and token-safe Corporate patterns;
+- Self-contained Theme CI bundles the preset and sources `scripts/ci/corporate-preset-acceptance.sh` inside the existing WordPress/MariaDB fixture;
+- the WordPress acceptance proves Corporate is off by default, registers all three Corporate patterns only after allowlisted activation, resolves EN/ES preset copy, and rejects unsupported preset IDs;
+- no additional Docker environment or standalone Corporate workflow is created.
+
 ### Multilingual
 
 When URL/content metadata changes:
