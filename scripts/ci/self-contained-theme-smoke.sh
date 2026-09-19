@@ -38,6 +38,7 @@ RUNTIME_LOG="${TMP_DIR}/runtime.log"
 DEBUG_LOG="${TMP_DIR}/debug.log"
 RUNTIME_EVAL_ERROR="${TMP_DIR}/runtime-eval.stderr"
 AUTHORITY_EVAL_ERROR="${TMP_DIR}/authority-eval.stderr"
+CRAWLER_ADMIN_EVAL_ERROR="${TMP_DIR}/crawler-admin-eval.stderr"
 BREADCRUMB_EVAL_ERROR="${TMP_DIR}/breadcrumb-eval.stderr"
 
 signature() {
@@ -140,6 +141,9 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Schema/SchemaPresenter.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyPresenter.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyAdmin.php" \
+  "${BUILT_THEME}/languages/seo-geo-core-es_ES.po" \
+  "${BUILT_THEME}/languages/seo-geo-core-es_ES.mo" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtPresenter.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternateResolver.php" \
@@ -235,6 +239,41 @@ if ! AUTHORITY="$(wp_cli eval 'echo \SeoGeo\Core\Runtime::seo_authority()?->prov
 fi
 [[ "$AUTHORITY" == "native" ]] \
   || fail_smoke "native-authority" "Theme-only runtime must own native SEO output" "native" "$AUTHORITY" "Runtime::seo_authority"
+
+printf '[self-contained] Checking crawler policy administration contract.\n'
+if ! CRAWLER_SANITIZED="$(wp_cli eval '$resolver = \\SeoGeo\\Core\\Runtime::crawler_policy(); if ( ! $resolver ) { exit( 1 ); } echo wp_json_encode( $resolver->sanitize_configuration( array( "oai_searchbot" => "allow", "gptbot" => "inherit", "unknown_bot" => "disallow" ) ) );' 2>"$CRAWLER_ADMIN_EVAL_ERROR" | tr -d '\r\n')"; then
+  ERROR_TEXT="$(tr -d '\r' <"$CRAWLER_ADMIN_EVAL_ERROR" | head -c 240)"
+  fail_smoke "crawler-admin-sanitize-eval" "Could not evaluate crawler policy sanitizer" "normalized supported policy" "${ERROR_TEXT:-wp eval failed}" "wp eval CrawlerPolicyResolver::sanitize_configuration"
+fi
+[[ "$CRAWLER_SANITIZED" == '{"oai_searchbot":"allow"}' ]] \
+  || fail_smoke "crawler-admin-sanitize" "Crawler policy sanitizer kept inherited, malformed, or unknown entries" '{"oai_searchbot":"allow"}' "$CRAWLER_SANITIZED" "CrawlerPolicyResolver::sanitize_configuration"
+
+wp_cli eval 'update_option( "seo_geo_crawler_policy", array( "oai_searchbot" => "allow", "gptbot" => "disallow" ), false ); update_option( "blog_public", "0" );' >/dev/null \
+  || fail_smoke "crawler-admin-fixture" "Could not configure crawler admin reporting fixture" "option updates succeed" "failed"
+
+if ! CRAWLER_ADMIN_HTML="$(wp_cli eval 'wp_set_current_user( 1 ); $resolver = \\SeoGeo\\Core\\Runtime::crawler_policy(); if ( ! $resolver ) { exit( 1 ); } $admin = new \\SeoGeo\\Core\\Geo\\CrawlerPolicyAdmin( $resolver ); ob_start(); $admin->render_page(); echo ob_get_clean();' 2>"$CRAWLER_ADMIN_EVAL_ERROR")"; then
+  ERROR_TEXT="$(tr -d '\r' <"$CRAWLER_ADMIN_EVAL_ERROR" | head -c 240)"
+  fail_smoke "crawler-admin-render-eval" "Could not render crawler policy administration screen" "render succeeds for manage_options user" "${ERROR_TEXT:-wp eval failed}" "wp eval CrawlerPolicyAdmin::render_page"
+fi
+
+for expected_admin_fragment in \
+  'name="seo_geo_crawler_policy[oai_searchbot]"' \
+  'name="seo_geo_crawler_policy[gptbot]"' \
+  'Current report' \
+  'Controlled by WordPress site visibility'; do
+  [[ "$CRAWLER_ADMIN_HTML" == *"$expected_admin_fragment"* ]] \
+    || fail_smoke "crawler-admin-markup" "Crawler policy administration screen is missing required reporting markup" "$expected_admin_fragment" "fragment absent" "CrawlerPolicyAdmin::render_page"
+done
+
+if ! CRAWLER_ADMIN_ES="$(wp_cli eval 'switch_to_locale( "es_ES" ); load_theme_textdomain( "seo-geo-core", get_template_directory() . "/languages" ); echo __( "SEO/GEO crawler policy", "seo-geo-core" );' 2>"$CRAWLER_ADMIN_EVAL_ERROR" | tr -d '\r\n')"; then
+  ERROR_TEXT="$(tr -d '\r' <"$CRAWLER_ADMIN_EVAL_ERROR" | head -c 240)"
+  fail_smoke "crawler-admin-es-eval" "Could not resolve bundled Spanish crawler-policy translation" "Política de rastreadores SEO/GEO" "${ERROR_TEXT:-wp eval failed}" "switch_to_locale es_ES"
+fi
+[[ "$CRAWLER_ADMIN_ES" == 'Política de rastreadores SEO/GEO' ]] \
+  || fail_smoke "crawler-admin-es" "Crawler policy administration did not ship its Spanish translation" "Política de rastreadores SEO/GEO" "$CRAWLER_ADMIN_ES" "gettext seo-geo-core es_ES"
+
+wp_cli eval 'delete_option( "seo_geo_crawler_policy" ); update_option( "blog_public", "1" );' >/dev/null \
+  || fail_smoke "crawler-admin-reset" "Could not restore crawler admin fixture state" "crawler option removed and blog_public=1" "failed"
 
 printf '[self-contained] Checking independent OpenAI crawler policy.\n'
 curl -fsS "${BASE_URL}/robots.txt" -o "$ROBOTS_BODY" \
