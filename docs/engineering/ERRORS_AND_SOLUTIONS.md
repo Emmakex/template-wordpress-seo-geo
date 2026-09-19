@@ -967,62 +967,133 @@ This is related to earlier WP-CLI harness quoting lessons but has a distinct fai
 
 `scripts/ci/discovery-privacy-acceptance.sh` retains the resolver-level provenance/Markdown guard under `set -u`, and Self-contained Theme CI executes it inside the real built-theme WordPress fixture.
 
-## ERR-2026-017 — Bash expanded PHP resolver variables in the Phase 6F WP-CLI harness
+## ERR-2026-018 — Conditional ETag header input was not sanitized for WPCS
 
 **Status:** resolved  
 **First seen:** 2026-09-19  
 **Last seen:** 2026-09-19  
-**Area:** ci / geo / discovery privacy / test harness  
-**Signature:** `bd06327f2ae5`  
-**Reference:** PR #49; failing Self-contained Theme CI `35436437082` / job `105879779536`; passing final Self-contained Theme CI `35436517496`; post-merge passing Self-contained Theme CI `35436653739`
+**Area:** ci / geo / cache / security  
+**Signature:** `1834ed38c614`  
+**Reference:** PR #52; failing PHP Quality CI `35437487947` / job `105882519913`; passing final PHP Quality CI `35437874378`; post-merge passing PHP Quality CI `35438013287`
 
 ### Symptom / context
 
-The first Phase 6F acceptance candidate successfully reached and passed the direct HTML, sitemap, feed, search, author archive, unauthenticated REST, llms.txt and Markdown checks.
+The first Phase 6G cache-revalidation candidate reached PHP Quality but WPCS stopped before PHPStan on `DiscoveryCachePolicy.php`.
 
-It then failed before executing the final resolver-level assertion with:
+The only reported finding was direct use of:
 
-```text
-scripts/ci/discovery-privacy-acceptance.sh: line 167: provenance: unbound variable
+```php
+$_SERVER['HTTP_IF_NONE_MATCH']
 ```
 
-The structured failure reported `primary_error="Could not evaluate discovery privacy resolvers"` with signature `bd06327f2ae5`.
+with `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized`.
 
 ### Root cause
 
-Confirmed. The WP-CLI PHP expression was embedded in a Bash double-quoted string while the parent smoke runs with `set -u`.
+Confirmed. The conditional-request parser validated type and bounded header length, but the raw server value was only passed through `wp_unslash()`. That was insufficient for the repository's WordPress security standard.
 
-PHP local variables such as `$provenance` and `$markdown` were not escaped for the shell. Bash therefore tried to expand them before `wp eval` received the expression and stopped on the unset shell variable.
-
-This was a test-harness quoting defect, not a product privacy failure.
+The cache design, ETag generation and invalidation model were not the cause.
 
 ### Solution
 
-Escape PHP variable sigils inside the Bash double-quoted `wp eval` expression while leaving the numeric WordPress fixture IDs intentionally available for shell interpolation.
+Normalize the request header through:
 
-No runtime resolver, HTTP output, sitemap behavior, llms.txt behavior, Markdown behavior or privacy rule changed.
+```php
+sanitize_text_field( wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ) )
+```
+
+before length checks and token parsing.
+
+No WPCS suppression was added, and no ETag matching semantics were weakened.
 
 ### Validation
 
-- final PR candidate `99c01be435b0098482ff50ea771957eb7a8bee41` passed Self-contained Theme CI `35436517496`;
-- the Phase 6F matrix completed through the resolver-level guard and reported no private/draft leak;
-- all ten PR workflows passed;
-- PR #49 was squash-merged as `feb3f50542e5e56da27d915b1a4e6efe3d73c115`;
-- post-merge Self-contained Theme CI `35436653739` passed the same matrix;
-- all ten post-merge workflows passed.
+- final PR candidate `42c85544ca535d617b052b9f1dc94bf9309a8c6e` passed PHP Quality CI `35437874378`, including WPCS and PHPStan level 6;
+- Self-contained Theme CI `35437874331` passed the GET/HEAD ETag/304 and invalidation acceptance;
+- PR #52 passed all ten workflows and was squash-merged as `d7d79dd3f6fdd235ee891167fcc2a2814dba3705`;
+- post-merge PHP Quality CI `35438013287` passed again.
 
 ### Prevention / guardrail
 
-When PHP code is embedded in a Bash double-quoted argument, distinguish deliberately between:
+Treat HTTP headers read from `$_SERVER` as request input even when the expected grammar is narrow.
 
-- PHP variables, whose `$` must be escaped from Bash; and
-- shell fixture values that are intentionally interpolated before WP-CLI execution.
+The required sequence is:
 
-Under `set -u`, an unescaped PHP variable name can fail the harness before PHP executes. Prefer single-quoted PHP snippets when no shell interpolation is required; otherwise escape PHP sigils explicitly and keep the expression small.
+- confirm the value exists and is a string;
+- `wp_unslash()`;
+- sanitize for the intended text grammar;
+- enforce a reasonable length bound;
+- parse tokens conservatively.
 
-Do not interpret a harness execution failure as a product leak without confirming which surface/assertion actually ran.
+Do not suppress WordPress security sniffs for conditional-request headers.
 
 ### Regression coverage
 
-`scripts/ci/discovery-privacy-acceptance.sh` now completes its direct resolver assertion after the HTTP/discovery matrix. Self-contained Theme CI protects the same quoting path on every affected change.
+PHP Quality CI keeps WPCS mandatory, while Self-contained Theme CI exercises `If-None-Match` against the built theme and requires correct 304 behavior.
 
+## ERR-2026-019 — Cache-Control acceptance incorrectly required one textual directive order
+
+**Status:** resolved  
+**First seen:** 2026-09-19  
+**Last seen:** 2026-09-19  
+**Area:** ci / geo / cache / HTTP semantics  
+**Signature:** `2c351b882155`  
+**Reference:** PR #52; failing Self-contained Theme CI `35437764396` / job `105883264970`; passing final Self-contained Theme CI `35437874331`; post-merge passing Self-contained Theme CI `35438013353`
+
+### Symptom / context
+
+After the runtime namespace and WPCS issues were corrected, Phase 6G reached the real llms.txt revalidation check but the smoke reported:
+
+```text
+Discovery response missed the conservative public revalidation policy
+```
+
+The first assertion required the complete `Cache-Control` line to equal one exact text sequence:
+
+```text
+public, no-cache, must-revalidate, max-age=0
+```
+
+### Root cause
+
+Confirmed. The acceptance encoded header serialization order as part of the contract even though HTTP cache directives are semantic tokens and their order is not authoritative.
+
+This made the test more brittle than the product contract and produced a failure without identifying the actual received header value.
+
+### Solution
+
+Parse all returned `Cache-Control` header values and validate the semantic policy instead of one exact serialization.
+
+The acceptance now requires all of:
+
+- `public`;
+- `no-cache`;
+- `must-revalidate`;
+- `max-age=0`.
+
+It also rejects `private` and `no-store`, because either would contradict the intended shared-cache revalidation model.
+
+Failure diagnostics now include the actual received Cache-Control value.
+
+### Validation
+
+- final PR candidate `42c85544ca535d617b052b9f1dc94bf9309a8c6e` passed Self-contained Theme CI `35437874331`;
+- the same run proved llms.txt and Markdown 200/304 revalidation, stale-validator rejection after mutations, author/provenance refresh and translation-meta invalidation;
+- all ten PR workflows passed;
+- PR #52 was squash-merged as `d7d79dd3f6fdd235ee891167fcc2a2814dba3705`;
+- post-merge Self-contained Theme CI `35438013353` passed the same semantic cache contract.
+
+### Prevention / guardrail
+
+For structured HTTP headers, test protocol semantics rather than incidental serialization when the specification does not define ordering.
+
+Acceptance should:
+
+- require mandatory directives/tokens;
+- reject explicitly incompatible directives;
+- expose the received value in diagnostics;
+- avoid weakening the contract merely to accept arbitrary server behavior.
+
+### Regression coverage
+
+`scripts/ci/discovery-cache-acceptance.sh` performs semantic Cache-Control checks for both llms.txt and Markdown, together with ETag and conditional-request acceptance inside the real built-theme WordPress fixture.
