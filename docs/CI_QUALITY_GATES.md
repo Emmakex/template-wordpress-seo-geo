@@ -112,6 +112,15 @@ Phase 7A closure evidence:
 - PR #54 was squash-merged as `7f3499073d82fd362f88c6f3abd6949c52223057`;
 - all ten post-merge workflows passed on `main`, including Self-contained Theme CI `35446033925`, Native Multilingual CI `35446033952`, Accessibility & Responsive CI `35446033944` and Performance Baseline CI `35446033965`.
 
+For Phase 7B Local Business:
+
+- Foundation executes `scripts/ci/validate-local-business-preset.php` alongside the Corporate validator;
+- the static contract proves explicit LocalBusiness identity confirmation, visible-fact gates, physical-address requirement, EN/ES page parity, real multi-location/service-area modeling, anti-doorway rules, allowed pattern references and token-safe Local Business patterns;
+- Self-contained Theme CI sources `scripts/ci/local-business-preset-acceptance.sh` inside the existing WordPress/MariaDB fixture;
+- the runtime acceptance proves default-off behavior, exactly three Local Business patterns, declarative category ownership, Corporate/Local Business isolation, EN/ES copy and that preset activation does **not** auto-enable LocalBusiness Schema identity;
+- Corporate's unsupported-preset probe uses a permanent sentinel rather than a planned future preset ID;
+- no Local Business-specific workflow, second Docker fixture or new dependency is added.
+
 ### Multilingual
 
 When URL/content metadata changes:
