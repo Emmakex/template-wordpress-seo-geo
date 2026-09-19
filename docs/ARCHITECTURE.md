@@ -2,7 +2,9 @@
 
 ## Product boundary
 
-The installable product is a **single self-contained WordPress block theme**. Baseline SEO/GEO behavior must work on a clean WordPress installation with **zero required plugins**.
+The installable baseline product is a **single self-contained WordPress block theme**. Baseline SEO/GEO behavior must work on a clean WordPress installation with **zero required plugins**.
+
+For adoption of an existing client site, the product may additionally provide a temporary **SEO/GEO Migration Bridge** plugin/tool. That bridge exists because it must inspect the legacy site before the destination theme is active. It is not a baseline runtime dependency, must be removable after migration, and may remain only in an explicitly accepted audit-only/operational mode.
 
 The repository may keep source packages separated for maintainability, but distribution must not expose that separation as an installation requirement.
 
@@ -21,15 +23,16 @@ template-wordpress-seo-geo/
 │   │   ├── functions.php
 │   │   ├── style.css
 │   │   └── theme.json
-│   └── seo-geo-core/
-│       ├── src/
-│       │   ├── Geo/
-│       │   ├── Integrations/
-│       │   ├── Language/
-│       │   ├── Schema/
-│       │   ├── Seo/
-│       │   └── Runtime.php
-│       └── seo-geo-core.php   # optional compatibility wrapper, not required
+│   ├── seo-geo-core/
+│   │   ├── src/
+│   │   │   ├── Geo/
+│   │   │   ├── Integrations/
+│   │   │   ├── Language/
+│   │   │   ├── Schema/
+│   │   │   ├── Seo/
+│   │   │   └── Runtime.php
+│   │   └── seo-geo-core.php   # optional compatibility wrapper, not required
+│   └── seo-geo-migration-bridge/   # planned temporary existing-site adoption tool
 ├── presets/
 ├── scripts/
 │   └── build-theme-package.sh
@@ -83,6 +86,24 @@ The reusable source library owns behavior that should remain modular even though
 
 This package is a **library source boundary**, not a mandatory WordPress plugin boundary.
 
+## Migration Bridge ownership
+
+The planned `seo-geo-migration-bridge` boundary owns existing-site adoption only:
+
+- read-only site/theme/plugin/builder inventory by default;
+- SEO/GEO baseline snapshots;
+- dependency classification and migration-plan data;
+- sandbox migration orchestration primitives;
+- supported builder/content adapters;
+- old-vs-new parity reports;
+- explicit cutover/rollback assistance.
+
+It must not become a second SEO/GEO output owner. It does not emit a competing canonical, robots policy, hreflang set or Schema graph merely because it is installed.
+
+Production mutation is never inferred from analysis. Destructive actions require explicit administrator intent, WordPress capability checks, nonce/auth validation, a recoverable snapshot and a tested rollback path.
+
+The bridge is temporary by product design. A completed migrated site must continue to satisfy the single-theme/zero-required-plugin baseline after the bridge is removed.
+
 ## Optional plugin wrapper
 
 `packages/seo-geo-core/seo-geo-core.php` may remain temporarily as a compatibility/development wrapper while the architecture migrates. It is not part of the required installation path and must not be needed by acceptance tests for the distributable theme.
@@ -102,7 +123,7 @@ Use WordPress core before custom infrastructure when core already provides the r
 - semantic HTML APIs;
 - native rewrite and canonical primitives where appropriate.
 
-Elementor may be compatible later but is never a dependency.
+Elementor, Divi and other builders may be detected and migrated through optional adoption adapters, but no builder is a baseline dependency. Unsupported builder modules are reported as blockers/manual-review items rather than silently discarded.
 
 ## Runtime service boundaries
 
@@ -163,6 +184,8 @@ The most important packaging invariant is testable:
 > A fresh WordPress installation with only the built `seo-geo-theme` active and zero active plugins must still provide the documented baseline SEO/GEO output.
 
 `scripts/build-theme-package.sh` assembles that artifact. `Self-contained Theme CI` verifies the invariant on real WordPress rather than assuming that repository source layout equals installable product behavior.
+
+For existing-site adoption, a second invariant applies: production remains on the accepted legacy stack until a sandbox candidate has passed dependency, SEO-parity, runtime and rollback acceptance. Migration tooling may assist the transition but may not weaken the final single-theme baseline.
 
 ## Extensibility
 

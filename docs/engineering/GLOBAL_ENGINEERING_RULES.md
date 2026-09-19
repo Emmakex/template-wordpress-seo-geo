@@ -162,3 +162,28 @@ Validate early, sanitize stored input according to its data type, and escape on 
 ## 20. Regression first for confirmed bugs
 
 When practical, reproduce a confirmed bug with a focused failing test before or alongside the fix. The final validation must prove the original signature no longer occurs and guard the contract that failed.
+
+
+## 21. Existing-site migration is non-destructive by default
+
+Inspection comes before mutation. An analyzer/migration tool may read configuration and public/site-owned content to build a migration plan, but it must not reset, delete, deactivate, rewrite or replace production components merely because an alternative exists.
+
+Every mutating migration action must be explicit, authorized server-side and attributable to an accepted migration step.
+
+## 22. Sandbox before production cutover
+
+Legacy-site modernization is proven in an isolated non-indexable sandbox/staging environment before production is changed. Production remains authoritative until the migration candidate passes its required acceptance.
+
+Do not use the live client site as the first integration fixture for theme replacement, builder conversion or bulk plugin removal.
+
+## 23. SEO parity is a release gate for migrations
+
+A visually correct migration is not sufficient. Existing public URLs and their material search/discovery signals must be inventoried before migration and compared against the candidate.
+
+Intentional URL, metadata, indexability, hreflang, redirect or Schema changes require an explicit migration decision. Unexplained loss is a blocker.
+
+## 24. Snapshot and rollback are mandatory for destructive cutovers
+
+Before a production migration can deactivate/remove legacy components or replace the active theme, create a recoverable snapshot and a deterministic rollback plan.
+
+A cutover is incomplete until health checks and migration acceptance pass. “Reset first, repair later” is prohibited.

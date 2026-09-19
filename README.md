@@ -22,7 +22,7 @@ El objetivo de distribución es **un único theme instalable**:
 - `packages/seo-geo-core/src`: fuente reutilizable de la lógica SEO/GEO que se **empaqueta dentro del theme** durante el build; no es un plugin obligatorio.
 - `scripts/build-theme-package.sh`: construye el paquete autosuficiente y embebe el runtime en `inc/seo-geo-core/src`.
 
-Presets previstos: `corporate`, `local-business`, `ecommerce`, `publisher`.
+Presets: `corporate`, `local-business`, `ecommerce` y `publisher` están implementados; `saas-digital-product` es la siguiente ampliación planificada antes de la fase de migración de sitios existentes.
 
 ## EN
 
@@ -42,7 +42,11 @@ The distribution target is **one installable theme**:
 - `packages/seo-geo-core/src`: reusable SEO/GEO source that is **bundled into the theme** during the build; it is not a required plugin.
 - `scripts/build-theme-package.sh`: assembles the self-contained theme and embeds the runtime under `inc/seo-geo-core/src`.
 
-Planned presets: `corporate`, `local-business`, `ecommerce`, `publisher`.
+Presets: `corporate`, `local-business`, `ecommerce` and `publisher` are implemented; `saas-digital-product` is the next planned extension before the existing-site migration phase.
+
+## Existing-site adoption
+
+The roadmap now includes a temporary **SEO/GEO Migration Bridge** for real client WordPress installations that already depend on themes, builders and plugins. The bridge is read-only by default, works through an isolated sandbox, captures SEO/GEO parity before cutover and requires a recoverable rollback path. It never becomes a required runtime dependency of the final self-contained theme.
 
 ## Engineering workflow
 
