@@ -14,7 +14,6 @@ on:
       - '.github/workflows/accessibility-responsive.yml'
       - 'docs/ACCESSIBILITY.md'
       - 'docs/ACCESSIBILITY_ACCEPTANCE.md'
-      - 'docs/ROADMAP.md'
   push:
     branches:
       - main
@@ -30,7 +29,6 @@ on:
       - '.github/workflows/accessibility-responsive.yml'
       - 'docs/ACCESSIBILITY.md'
       - 'docs/ACCESSIBILITY_ACCEPTANCE.md'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read
