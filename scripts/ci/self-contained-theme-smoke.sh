@@ -251,7 +251,7 @@ fi
 wp_cli eval 'update_option( "seo_geo_crawler_policy", array( "oai_searchbot" => "allow", "gptbot" => "disallow" ), false ); update_option( "blog_public", "0" );' >/dev/null \
   || fail_smoke "crawler-admin-fixture" "Could not configure crawler admin reporting fixture" "option updates succeed" "failed"
 
-if ! CRAWLER_ADMIN_HTML="$(wp_cli eval 'wp_set_current_user( 1 ); $resolver = \\SeoGeo\\Core\\Runtime::crawler_policy(); if ( ! $resolver ) { exit( 1 ); } $admin = new \\SeoGeo\\Core\\Geo\\CrawlerPolicyAdmin( $resolver ); ob_start(); $admin->render_page(); echo ob_get_clean();' 2>"$CRAWLER_ADMIN_EVAL_ERROR")"; then
+if ! CRAWLER_ADMIN_HTML="$(wp_cli eval 'wp_set_current_user( 1 ); if ( ! function_exists( "submit_button" ) ) { require_once ABSPATH . "wp-admin/includes/admin.php"; } $resolver = \\SeoGeo\\Core\\Runtime::crawler_policy(); if ( ! $resolver ) { exit( 1 ); } $admin = new \\SeoGeo\\Core\\Geo\\CrawlerPolicyAdmin( $resolver ); ob_start(); $admin->render_page(); echo ob_get_clean();' 2>"$CRAWLER_ADMIN_EVAL_ERROR")"; then
   ERROR_TEXT="$(tr -d '\r' <"$CRAWLER_ADMIN_EVAL_ERROR" | head -c 240)"
   fail_smoke "crawler-admin-render-eval" "Could not render crawler policy administration screen" "render succeeds for manage_options user" "${ERROR_TEXT:-wp eval failed}" "wp eval CrawlerPolicyAdmin::render_page"
 fi
@@ -265,7 +265,7 @@ for expected_admin_fragment in \
     || fail_smoke "crawler-admin-markup" "Crawler policy administration screen is missing required reporting markup" "$expected_admin_fragment" "fragment absent" "CrawlerPolicyAdmin::render_page"
 done
 
-if ! CRAWLER_ADMIN_ES="$(wp_cli eval 'switch_to_locale( "es_ES" ); load_theme_textdomain( "seo-geo-core", get_template_directory() . "/languages" ); echo __( "SEO/GEO crawler policy", "seo-geo-core" );' 2>"$CRAWLER_ADMIN_EVAL_ERROR" | tr -d '\r\n')"; then
+if ! CRAWLER_ADMIN_ES="$(wp_cli eval 'switch_to_locale( "es_ES" ); unload_textdomain( "seo-geo-core", true ); load_textdomain( "seo-geo-core", get_template_directory() . "/languages/seo-geo-core-es_ES.mo" ); echo __( "SEO/GEO crawler policy", "seo-geo-core" );' 2>"$CRAWLER_ADMIN_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$CRAWLER_ADMIN_EVAL_ERROR" | head -c 240)"
   fail_smoke "crawler-admin-es-eval" "Could not resolve bundled Spanish crawler-policy translation" "Política de rastreadores SEO/GEO" "${ERROR_TEXT:-wp eval failed}" "switch_to_locale es_ES"
 fi
