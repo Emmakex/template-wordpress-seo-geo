@@ -1373,7 +1373,7 @@ The next roadmap step is Phase 8 — Existing-site adoption and safe migration.
 
 ## Phase 8 — Existing-site adoption and safe migration
 
-Status: **planned**
+Status: **in progress**
 
 Goal:
 
@@ -1382,6 +1382,17 @@ Support real client WordPress sites that already have a theme, page builder, plu
 A temporary **SEO/GEO Migration Bridge** is permitted as a separate plugin/tool because it must inspect the existing installation before the destination theme is active. It is not a baseline dependency of the final theme and must be removable after migration.
 
 ### Microphase 8A — Site Analyzer
+
+Status: **in progress**
+
+Implementation boundary:
+
+- temporary `packages/seo-geo-migration-bridge` plugin, never a final theme dependency;
+- `SiteAnalyzer` returns a non-persistent machine-readable report;
+- builder detection is adapter-based and initially covers native blocks, Elementor and Divi;
+- Phase 8A detection is environment/registration based; builder-content scanning is deferred to 8C;
+- no arbitrary option values, credentials or private/page-builder content are exported;
+- static mutation guards plus runtime protected-state fingerprints enforce the read-only contract.
 
 Deliverables:
 
