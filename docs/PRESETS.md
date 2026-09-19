@@ -278,16 +278,59 @@ The EN/ES content map distinguishes **singleton pages** from **native dynamic su
 
 Phase 7C does not create editorial content, authors, categories or sources automatically. Phase 8 onboarding may activate the preset and create only the declared singleton scaffolding after explicit administrator intent.
 
+## SaaS / Digital Product
+
+### Core pages
+- Home
+- Product
+- Features
+- Solutions / use cases
+- Integrations
+- Pricing/plans when publicly real
+- Comparisons when editorially justified
+- Resources / blog
+- About
+- Contact / demo
+- Documentation link/surface when applicable
+- Legal pages
+
+### Typical Schema
+- Organization
+- WebSite
+- WebPage
+- BreadcrumbList
+- BlogPosting
+- Person
+- SoftwareApplication only when the visible product genuinely satisfies the contract and required facts are explicitly configured
+
+### Rules
+- Never fabricate customers, testimonials, ratings, review counts, awards, integrations, pricing or performance claims.
+- Comparison pages must contain original useful value and must not be mass-generated doorway pages.
+- Preset activation never creates SaaS-provider credentials or grants external integration authority.
+- SaaS backend, billing, CRM and product telemetry remain external/provider-owned systems.
+- The preset remains useful with zero plugins and zero external SaaS integrations.
+
+### Phase 7E implementation contract
+
+Phase 7E will bundle the preset under `presets/saas-digital-product/` and extend the same allowlisted preset registry used by the four completed presets.
+
+It will ship a machine-readable manifest, matching EN/ES content map and preset-owned patterns for product explanation, features, use cases, integrations, pricing/plans, comparison structure and lead/demo conversion.
+
+The preset will compose existing native SEO/GEO, multilingual, Schema and provenance authorities. It will not introduce a second product-Schema owner or infer product facts from marketing copy.
+
+Phase 7E remains planned until implementation and acceptance are complete.
+
 ## Phase 7 preset layer status
 
-Phase 7 is complete. The shipped preset set is:
+Phase 7A–7D are complete and verified. Before Phase 8 implementation began, the roadmap was intentionally extended with a fifth preset:
 
-1. Corporate;
-2. Local Business;
-3. Publisher;
-4. Ecommerce.
+1. Corporate — complete;
+2. Local Business — complete;
+3. Publisher — complete;
+4. Ecommerce — complete;
+5. SaaS / Digital Product — Phase 7E planned.
 
-All four use the same server-authoritative registry and remain disabled by default. They compose the shared theme/Core contracts rather than introducing independent SEO/GEO implementations.
+The four completed presets use the same server-authoritative registry and remain disabled by default. Phase 7 remains open until the fifth preset passes the same implementation and acceptance discipline. They compose the shared theme/Core contracts rather than introducing independent SEO/GEO implementations.
 
 Cross-preset guarantees:
 
