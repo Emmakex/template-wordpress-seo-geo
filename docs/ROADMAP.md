@@ -1132,6 +1132,7 @@ Implement in this order:
 2. Local Business
 3. Publisher
 4. Ecommerce
+5. SaaS / Digital Product
 
 Each preset closes independently before the next begins.
 
