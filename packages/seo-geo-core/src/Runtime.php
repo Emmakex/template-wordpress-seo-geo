@@ -216,7 +216,8 @@ final class Runtime {
 		$crawler_admin->register();
 
 		self::$discovery_cache = new DiscoveryCache();
-		$cache_invalidator     = new DiscoveryCacheInvalidator( self::$discovery_cache );
+
+		$cache_invalidator = new DiscoveryCacheInvalidator( self::$discovery_cache );
 		$cache_invalidator->register();
 
 		self::$markdown_alternates = new MarkdownAlternateResolver(
