@@ -157,6 +157,22 @@ For Phase 7D Ecommerce:
 - declaring WooCommerce as the preferred provider does not mark it supported; no live-commerce compatibility claim is allowed before a dedicated adapter/acceptance phase;
 - no Ecommerce-specific workflow, second Docker fixture or new dependency is added.
 
+Phase 7D closure evidence:
+
+- final PR candidate `57c42ca676dce8edad6a71c96fac1d3522b7daad` passed all ten workflows on its first CI candidate;
+- Foundation CI `35455812984` passed the provider-ownership/zero-plugin Ecommerce contract;
+- Self-contained Theme CI `35455813064` passed Ecommerce activation with WooCommerce absent and no Schema identity mutation;
+- Native Multilingual CI `35455812963`, Accessibility & Responsive CI `35455813021` and Performance Baseline CI `35455812956` all passed;
+- PR #60 was squash-merged as `0b9ca331c5cad05734d2e8dd8e92a165e8dc58d5`;
+- all ten post-merge workflows passed again on `main`, including Self-contained Theme CI `35456378271`, Native Multilingual CI `35456378290`, Accessibility & Responsive CI `35456378267` and Performance Baseline CI `35456378291`.
+
+Phase 7 preset-layer closure:
+
+- Corporate, Local Business, Publisher and Ecommerce each passed independent implementation and post-merge acceptance;
+- Foundation now validates all four declarative contracts;
+- Self-contained Theme CI exercises all four preset activation contracts inside one zero-plugin WordPress fixture;
+- preset growth added no extra workflow, second Docker stack or required runtime dependency.
+
 ### Multilingual
 
 When URL/content metadata changes:

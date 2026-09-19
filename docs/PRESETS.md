@@ -278,6 +278,25 @@ The EN/ES content map distinguishes **singleton pages** from **native dynamic su
 
 Phase 7C does not create editorial content, authors, categories or sources automatically. Phase 8 onboarding may activate the preset and create only the declared singleton scaffolding after explicit administrator intent.
 
+## Phase 7 preset layer status
+
+Phase 7 is complete. The shipped preset set is:
+
+1. Corporate;
+2. Local Business;
+3. Publisher;
+4. Ecommerce.
+
+All four use the same server-authoritative registry and remain disabled by default. They compose the shared theme/Core contracts rather than introducing independent SEO/GEO implementations.
+
+Cross-preset guarantees:
+
+- EN/ES customer-facing copy ships together;
+- preset patterns are mutually isolated;
+- activation never invents or silently enables identity/business/editorial/commerce facts;
+- onboarding may later consume the declarative maps, but automatic page creation is outside Phase 7;
+- Ecommerce remains zero-plugin safe and WooCommerce remains a preferred future provider rather than a supported combination until its adapter is implemented and accepted.
+
 ## Future presets
 
 Potential presets such as travel, SaaS, professional services or events should only be added when they express a repeatable information architecture and acceptance contract. They should compose primitives from the existing theme/Core rather than introduce parallel SEO stacks.
