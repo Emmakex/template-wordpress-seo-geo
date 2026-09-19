@@ -1133,6 +1133,34 @@ Implement in this order:
 
 Each preset closes independently before the next begins.
 
+### Microphase 7A — Corporate preset
+
+Status: **in progress**
+
+Scope:
+
+- keep the neutral theme/Core architecture intact; Corporate composes rather than forks;
+- bundle a machine-readable Corporate manifest, EN/ES content map and Corporate-only pattern definitions;
+- reuse the existing page/single/archive/index/404 templates and neutral patterns;
+- add only the missing Corporate patterns: case-study teaser, verified metrics and testimonial placeholders;
+- never fabricate clients, endorsements, metrics or other proof;
+- recommend Organization identity but require explicit confirmation before Schema activation;
+- add one allowlisted server-side preset registry through `seo_geo_active_preset`;
+- default installation remains preset-neutral;
+- unsupported preset IDs must resolve to no active preset;
+- Corporate visible copy ships in EN/ES together;
+- build bundles preset data inside the self-contained theme;
+- zero-plugin WordPress acceptance proves default-off, activation, EN/ES copy and allowlist behavior;
+- Foundation validates the declarative Corporate contract without adding another CI workflow.
+
+7A closes only after implementation, required PR gates and post-merge `main` verification are green.
+
+### Remaining Phase 7 work
+
+2. Local Business
+3. Publisher
+4. Ecommerce
+
 ## Phase 8 — Theme onboarding
 
 Deliverables:
