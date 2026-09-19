@@ -150,7 +150,11 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtPresenter.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternateResolver.php" \
-  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternatePresenter.php"; do
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternatePresenter.php" \
+  "${BUILT_THEME}/inc/presets.php" \
+  "${BUILT_THEME}/presets/corporate/preset.json" \
+  "${BUILT_THEME}/presets/corporate/content-map.json" \
+  "${BUILT_THEME}/presets/corporate/patterns.json"; do
   [[ -f "$required_file" ]] \
     || fail_smoke "embedded-runtime-file" "Built theme is missing embedded SEO/GEO runtime source" "${required_file}" "missing"
 done
@@ -479,6 +483,9 @@ source scripts/ci/discovery-privacy-acceptance.sh
 
 # Reuse the same fixture for Phase 6G cache/revalidation acceptance.
 source scripts/ci/discovery-cache-acceptance.sh
+
+# Reuse the same fixture for Phase 7A Corporate preset activation acceptance.
+source scripts/ci/corporate-preset-acceptance.sh
 
 curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "fixture-request" "Could not request fixture post" "HTTP 2xx" "curl failed"
