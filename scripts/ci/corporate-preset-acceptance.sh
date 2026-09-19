@@ -44,10 +44,7 @@ fi
 [[ "$CORPORATE_TITLE_EN" == "Corporate verified metrics" ]] \
   || fail_smoke "corporate-preset-en" "Corporate preset English copy is not active in the default locale" "Corporate verified metrics" "$CORPORATE_TITLE_EN"
 
-wp_cli eval 'update_option( "WPLANG", "es_ES", false );' >/dev/null \
-  || fail_smoke "corporate-preset-es-locale" "Could not switch Corporate fixture to es_ES" "WPLANG=es_ES" "failed"
-
-if ! CORPORATE_TITLE_ES="$(wp_cli eval '$pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' 2>"${TMP_DIR}/corporate-preset-title-es.stderr" | tr -d '\r\n')"; then
+if ! CORPORATE_TITLE_ES="$(wp_cli eval '$pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' --locale=es_ES 2>"${TMP_DIR}/corporate-preset-title-es.stderr" | tr -d '\r\n')"; then
   CORPORATE_TITLE_ES_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-title-es.stderr" | head -c 240)"
   fail_smoke "corporate-preset-es-eval" "Could not resolve Corporate Spanish pattern title" "Métricas corporativas verificadas" "${CORPORATE_TITLE_ES_ERROR:-wp eval failed}"
 fi
@@ -68,7 +65,7 @@ fi
 [[ "$CORPORATE_UNSUPPORTED" == "null" ]] \
   || fail_smoke "corporate-preset-allowlist-id" "Theme accepted an unsupported preset ID" "null" "$CORPORATE_UNSUPPORTED"
 
-wp_cli eval 'delete_option( "seo_geo_active_preset" ); delete_option( "WPLANG" );' >/dev/null \
-  || fail_smoke "corporate-preset-reset" "Could not reset Corporate preset fixture" "preset and WPLANG removed" "failed"
+wp_cli eval 'delete_option( "seo_geo_active_preset" );' >/dev/null \
+  || fail_smoke "corporate-preset-reset" "Could not reset Corporate preset fixture" "preset option removed" "failed"
 
 printf '[self-contained] Corporate preset activation OK.\n'
