@@ -182,7 +182,7 @@ function seo_geo_theme_onboarding_save_preset(): void {
 	check_admin_referer( 'seo_geo_onboarding_preset', 'seo_geo_onboarding_nonce' );
 
 	$submitted = isset( $_POST['seo_geo_active_preset'] )
-		? wp_unslash( $_POST['seo_geo_active_preset'] )
+		? sanitize_text_field( wp_unslash( $_POST['seo_geo_active_preset'] ) )
 		: null;
 	$preset_id = seo_geo_theme_onboarding_validate_preset( $submitted );
 
@@ -206,9 +206,8 @@ add_action( 'admin_post_seo_geo_save_preset', 'seo_geo_theme_onboarding_save_pre
  * Render one result notice from the redirect status.
  */
 function seo_geo_theme_onboarding_render_notice(): void {
-	$status = isset( $_GET['seo_geo_setup_status'] )
-		? sanitize_key( wp_unslash( $_GET['seo_geo_setup_status'] ) )
-		: '';
+	$raw_status = filter_input( INPUT_GET, 'seo_geo_setup_status', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+	$status     = is_string( $raw_status ) ? sanitize_key( $raw_status ) : '';
 
 	if ( 'saved' === $status ) {
 		printf(
