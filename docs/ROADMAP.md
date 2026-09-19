@@ -1161,9 +1161,30 @@ Evidence:
 - PR #54 was squash-merged as `7f3499073d82fd362f88c6f3abd6949c52223057`;
 - post-merge `main` passed all ten workflows, including Self-contained Theme CI `35446033925`, Native Multilingual CI `35446033952` and Performance Baseline CI `35446033965`.
 
+### Microphase 7B — Local Business preset
+
+Status: **in progress**
+
+Scope:
+
+- compose the existing native LocalBusiness Schema authority rather than fork it;
+- bundle a machine-readable Local Business manifest, EN/ES content map and Local Business-only pattern definitions;
+- support both single-location and multi-location **content architecture** while preserving the native one-physical-entity Schema boundary;
+- add Local Business patterns for visible NAP/contact/hours, genuine service areas and location-specific operational details;
+- require explicit administrator confirmation before LocalBusiness Schema identity can activate;
+- never guess addresses, coordinates, telephone numbers, opening hours, reviews, ratings or service areas;
+- forbid automatic city-page generation and doorway-page token swapping;
+- require unique location-specific value on physical-location pages;
+- require genuine area-specific value on service-area pages;
+- generalize the preset registry so pattern categories come from each preset manifest/document rather than Corporate hardcoding;
+- keep Corporate and Local Business activation isolated;
+- ship visible copy in EN/ES together;
+- reuse Foundation and the existing Self-contained Theme fixture with no new workflow, Docker stack or runtime dependency.
+
+7B closes only after implementation PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 7 work
 
-2. Local Business
 3. Publisher
 4. Ecommerce
 
