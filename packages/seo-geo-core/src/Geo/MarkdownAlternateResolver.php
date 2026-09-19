@@ -280,6 +280,7 @@ final class MarkdownAlternateResolver {
 
 		$identity  = (string) $post->ID . '|' . $markdown_resource['html_url'] . '|' . ( $markdown_resource['language'] ?? '' );
 		$cache_key = $this->cache->key( 'markdown', $identity );
+		$found     = false;
 		$cached    = $this->cache->get_text( $cache_key, $found );
 
 		if ( $found && null !== $cached ) {
