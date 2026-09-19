@@ -42,9 +42,9 @@ final class ContentProvenanceResolver {
 	/**
 	 * Create the resolver.
 	 *
-	 * @param IndexabilityResolver    $indexability Indexability authority.
-	 * @param CanonicalResolver       $canonical    Canonical URL authority.
-	 * @param SchemaIdentityResolver  $identity     Identity authority.
+	 * @param IndexabilityResolver   $indexability Indexability authority.
+	 * @param CanonicalResolver      $canonical    Canonical URL authority.
+	 * @param SchemaIdentityResolver $identity     Identity authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
