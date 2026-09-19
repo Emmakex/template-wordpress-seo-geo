@@ -51,7 +51,7 @@ fi
 [[ "$CORPORATE_TITLE_ES" == "Métricas corporativas verificadas" ]] \
   || fail_smoke "corporate-preset-es" "Corporate preset did not ship Spanish copy with English" "Métricas corporativas verificadas" "$CORPORATE_TITLE_ES"
 
-wp_cli option update seo_geo_active_preset publisher >/dev/null \
+wp_cli option update seo_geo_active_preset unsupported-preset >/dev/null \
   || fail_smoke "corporate-preset-invalid-option" "Could not set unsupported preset probe" "option update succeeds" "failed"
 
 CORPORATE_STATE_UNSUPPORTED="$(corporate_pattern_state)"

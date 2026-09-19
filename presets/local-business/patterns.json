@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "preset": "local-business",
+  "category": {
+    "slug": "seo-geo-local-business",
+    "labels": {
+      "en_US": "Local Business",
+      "es_ES": "Negocio local"
+    }
+  },
+  "patterns": [
+    {
+      "slug": "seo-geo-theme/local-business-nap",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Local Business visible NAP details",
+          "description": "A visible name/address/contact/hours scaffold that must be replaced with real public business facts.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|2xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|2xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Visit or contact us</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Replace every prompt with current public business information. Keep visible contact facts aligned with the authoritative site configuration.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Address</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add the real customer-facing street address only when the business publicly serves this location.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Contact</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add the real public telephone or other contact route used for this location.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Hours</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add only current opening or service hours that are also maintained in the authoritative business configuration.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Datos NAP visibles del negocio local",
+          "description": "Una estructura visible de nombre, dirección, contacto y horario que debe sustituirse con datos públicos reales.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|2xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|2xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Visítanos o contacta</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Sustituye cada indicación por información pública y actual del negocio. Mantén los datos visibles alineados con la configuración autoritativa del sitio.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Dirección</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade la dirección real de atención al cliente solo cuando el negocio atienda públicamente en esta ubicación.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Contacto</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade el teléfono público real u otra vía de contacto utilizada para esta ubicación.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Horario</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade solo horarios actuales de apertura o servicio que también se mantengan en la configuración autoritativa del negocio.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/local-business-service-area",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Local Business real service area",
+          "description": "A service-area section designed for real geographic coverage without doorway-page automation.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Where we provide this service</h2><!-- /wp:heading -->\n<!-- wp:paragraph --><p>Describe the real geographic area covered and explain any meaningful differences in availability, travel, response time or delivery.</p><!-- /wp:paragraph -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Do not create separate location pages by swapping place names. A dedicated area page should exist only when it contains genuine area-specific value.</p><!-- /wp:paragraph -->\n<!-- wp:list --><ul class=\"wp-block-list\"><li>Add a real served area.</li><li>Add an operational detail that is specific to that area.</li><li>Add any relevant limitation or customer expectation.</li></ul><!-- /wp:list -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Zona de servicio real del negocio local",
+          "description": "Una sección de zona de servicio pensada para cobertura geográfica real sin automatizar doorway pages.",
+          "content": "<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Dónde prestamos este servicio</h2><!-- /wp:heading -->\n<!-- wp:paragraph --><p>Describe la cobertura geográfica real y explica diferencias relevantes de disponibilidad, desplazamiento, tiempo de respuesta o prestación.</p><!-- /wp:paragraph -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">No crees páginas separadas cambiando únicamente el nombre del lugar. Una página de zona debe existir solo cuando aporta valor específico real.</p><!-- /wp:paragraph -->\n<!-- wp:list --><ul class=\"wp-block-list\"><li>Añade una zona atendida real.</li><li>Añade un detalle operativo específico de esa zona.</li><li>Añade cualquier limitación o expectativa relevante para el cliente.</li></ul><!-- /wp:list -->\n</div><!-- /wp:group -->"
+        }
+      }
+    },
+    {
+      "slug": "seo-geo-theme/local-business-location",
+      "viewport_width": 1200,
+      "locales": {
+        "en_US": {
+          "title": "Local Business location details",
+          "description": "A location-specific section for distinct physical locations and useful operational facts.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|2xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|2xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Location details</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Use this section only for a real location. Replace all prompts with information that distinguishes this location from the rest of the business.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Services here</h3><!-- /wp:heading --><!-- wp:paragraph --><p>List the services genuinely available at this location and any relevant local differences.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Getting here</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add useful access, public transport, parking, accessibility or arrival information when it is accurate.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Local contact</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Add location-specific contact or booking information only when it is genuinely different and publicly maintained.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        },
+        "es_ES": {
+          "title": "Detalles de ubicación del negocio local",
+          "description": "Una sección específica para ubicaciones físicas distintas y datos operativos útiles.",
+          "content": "<!-- wp:group {\"backgroundColor\":\"surface\",\"style\":{\"spacing\":{\"padding\":{\"top\":\"var:preset|spacing|2xl\",\"right\":\"var:preset|spacing|xl\",\"bottom\":\"var:preset|spacing|2xl\",\"left\":\"var:preset|spacing|xl\"}}},\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-surface-background-color has-background\">\n<!-- wp:heading {\"level\":2} --><h2 class=\"wp-block-heading\">Detalles de la ubicación</h2><!-- /wp:heading -->\n<!-- wp:paragraph {\"textColor\":\"muted\"} --><p class=\"has-muted-color has-text-color\">Usa esta sección solo para una ubicación real. Sustituye todas las indicaciones por información que diferencie esta ubicación del resto del negocio.</p><!-- /wp:paragraph -->\n<!-- wp:columns -->\n<div class=\"wp-block-columns\">\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Servicios aquí</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Indica los servicios realmente disponibles en esta ubicación y cualquier diferencia local relevante.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Cómo llegar</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade información útil y veraz sobre acceso, transporte público, aparcamiento, accesibilidad o llegada.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n<!-- wp:column --><div class=\"wp-block-column\"><!-- wp:heading {\"level\":3} --><h3 class=\"wp-block-heading\">Contacto local</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Añade contacto o reserva específicos de la ubicación solo cuando sean realmente distintos y se mantengan públicamente.</p><!-- /wp:paragraph --></div><!-- /wp:column -->\n</div><!-- /wp:columns -->\n</div><!-- /wp:group -->"
+        }
+      }
+    }
+  ]
+}

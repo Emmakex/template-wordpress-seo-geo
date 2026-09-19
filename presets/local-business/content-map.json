@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "preset": "local-business",
+  "locales": {
+    "en_US": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Home",
+          "slug": "home",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/local-business-nap",
+            "seo-geo-theme/local-business-service-area",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "services",
+          "title": "Services",
+          "slug": "services",
+          "role": "services-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "locations",
+          "title": "Locations & service areas",
+          "slug": "locations",
+          "role": "locations-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/local-business-location",
+            "seo-geo-theme/local-business-service-area",
+            "seo-geo-theme/contact"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "About",
+          "slug": "about",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/local-business-nap",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "faq",
+          "title": "Frequently asked questions",
+          "slug": "faq",
+          "role": "faq",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "contact",
+          "title": "Contact",
+          "slug": "contact",
+          "role": "contact",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/local-business-nap",
+            "seo-geo-theme/contact",
+            "seo-geo-theme/faq"
+          ]
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Privacy policy",
+          "slug": "privacy-policy",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Legal notice",
+          "slug": "legal-notice",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "repeatable": [
+        {
+          "key": "service-detail",
+          "title_pattern": "Service name",
+          "parent": "services",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ],
+          "content_requirements": [
+            "real service scope",
+            "who the service is for",
+            "real delivery/process details",
+            "clear contact or conversion path"
+          ]
+        },
+        {
+          "key": "location-detail",
+          "title_pattern": "Business location name",
+          "parent": "locations",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/local-business-location",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/contact"
+          ],
+          "content_requirements": [
+            "unique location name",
+            "real visible address when publicly served",
+            "location-specific contact details when applicable",
+            "location-specific services or operational details",
+            "access/parking/arrival information when useful"
+          ]
+        },
+        {
+          "key": "service-area-detail",
+          "title_pattern": "Real service area name",
+          "parent": "locations",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/local-business-service-area",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/contact"
+          ],
+          "content_requirements": [
+            "genuine service-area-specific value",
+            "real service availability",
+            "area-specific logistics or constraints",
+            "no templated city-name substitution"
+          ]
+        }
+      ]
+    },
+    "es_ES": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Inicio",
+          "slug": "inicio",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/local-business-nap",
+            "seo-geo-theme/local-business-service-area",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "services",
+          "title": "Servicios",
+          "slug": "servicios",
+          "role": "services-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "locations",
+          "title": "Ubicaciones y zonas de servicio",
+          "slug": "ubicaciones",
+          "role": "locations-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/local-business-location",
+            "seo-geo-theme/local-business-service-area",
+            "seo-geo-theme/contact"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "Nosotros",
+          "slug": "nosotros",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/local-business-nap",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "faq",
+          "title": "Preguntas frecuentes",
+          "slug": "preguntas-frecuentes",
+          "role": "faq",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "contact",
+          "title": "Contacto",
+          "slug": "contacto",
+          "role": "contact",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/local-business-nap",
+            "seo-geo-theme/contact",
+            "seo-geo-theme/faq"
+          ]
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Política de privacidad",
+          "slug": "politica-de-privacidad",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Aviso legal",
+          "slug": "aviso-legal",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "repeatable": [
+        {
+          "key": "service-detail",
+          "title_pattern": "Nombre del servicio",
+          "parent": "services",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/cta"
+          ],
+          "content_requirements": [
+            "alcance real del servicio",
+            "a quién va dirigido",
+            "detalles reales de prestación o proceso",
+            "vía clara de contacto o conversión"
+          ]
+        },
+        {
+          "key": "location-detail",
+          "title_pattern": "Nombre de la ubicación del negocio",
+          "parent": "locations",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/local-business-location",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/contact"
+          ],
+          "content_requirements": [
+            "nombre único de la ubicación",
+            "dirección real visible cuando atienda al público",
+            "contacto específico de la ubicación cuando aplique",
+            "servicios o detalles operativos propios de la ubicación",
+            "acceso, aparcamiento o llegada cuando sea útil"
+          ]
+        },
+        {
+          "key": "service-area-detail",
+          "title_pattern": "Nombre real de la zona de servicio",
+          "parent": "locations",
+          "template": "page",
+          "recommended_patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/local-business-service-area",
+            "seo-geo-theme/services-features",
+            "seo-geo-theme/faq",
+            "seo-geo-theme/contact"
+          ],
+          "content_requirements": [
+            "valor real específico de la zona",
+            "disponibilidad real del servicio",
+            "logística o limitaciones específicas del área",
+            "sin sustitución automática del nombre de ciudad"
+          ]
+        }
+      ]
+    }
+  }
+}

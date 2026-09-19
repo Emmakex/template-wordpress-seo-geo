@@ -119,6 +119,41 @@ Phase 7A does not create pages automatically. It establishes the validated conte
 - Location pages must contain real location-specific value.
 - `areaServed` is not a license to create doorway pages.
 
+### Phase 7B implementation contract
+
+The Local Business preset is bundled under `presets/local-business/` and activates only when `seo_geo_active_preset=local-business`.
+
+It composes the existing native LocalBusiness Schema authority instead of creating a second local-SEO stack. Activating the preset **does not** set `seo_geo_schema_identity`; the administrator must still explicitly confirm `local_business` and provide visible authoritative business facts before Schema can emit.
+
+The preset ships:
+
+- `preset.json`: site type, Schema expectations, anti-doorway rules, navigation, multilingual baseline and an explicit single/multi-location content model;
+- `content-map.json`: matching EN/ES singleton pages plus repeatable service, physical-location and genuine service-area page guidance;
+- `patterns.json`: visible NAP/contact/hours scaffolding, real service-area guidance and location-specific operational details.
+
+The location model supports more than one real location at the **content architecture** level without fabricating extra Schema entities. The native Phase 5 resolver remains authoritative for one explicitly configured physical LocalBusiness entity until a separate multi-location Schema authority is deliberately designed and accepted.
+
+Local Business adds three preset-owned patterns:
+
+- visible NAP/contact/hours details;
+- real service-area coverage;
+- physical-location details.
+
+All three are prompts, not business facts. They must be replaced with real public information. The preset never guesses addresses, coordinates, telephone numbers, opening hours, ratings, reviews or service areas.
+
+The multi-location/content rules are mandatory:
+
+- no automatic city-page generation;
+- no city-name token swapping;
+- one locations index may link to real distinct locations or service areas;
+- every physical-location page must contain unique operational value;
+- every service-area page must contain genuine area-specific availability/logistics/constraints;
+- Schema visible-fact gates continue to apply independently of the preset.
+
+The preset registry is shared with Corporate. Pattern categories are declarative per preset, activation is mutually isolated, and an unsupported preset ID registers neither Corporate nor Local Business patterns.
+
+Phase 7B does not create pages automatically. Phase 8 onboarding may consume this validated map only after explicit administrator intent.
+
 ## Ecommerce
 
 ### Core pages
