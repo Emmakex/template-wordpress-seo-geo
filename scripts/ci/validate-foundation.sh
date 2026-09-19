@@ -48,6 +48,7 @@ required_paths=(
   "docs/NATIVE_SEO.md"
   "docs/NATIVE_SCHEMA.md"
   "docs/GEO_CRAWLERS.md"
+  "docs/DISCOVERY_PRIVACY.md"
   "docs/LLMS_TXT.md"
   "docs/MARKDOWN_ALTERNATES.md"
   "docs/CONTENT_PROVENANCE.md"
