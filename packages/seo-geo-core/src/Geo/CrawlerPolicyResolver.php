@@ -33,6 +33,44 @@ final class CrawlerPolicyResolver {
 	);
 
 	/**
+	 * Return the supported crawler registry.
+	 *
+	 * @return array<string, string>
+	 */
+	public function supported_crawlers(): array {
+		return self::USER_AGENTS;
+	}
+
+	/**
+	 * Normalize a submitted configuration.
+	 *
+	 * Unknown crawler keys are discarded. Invalid states resolve to inherit,
+	 * and inherited entries are omitted so an all-inherit submission remains
+	 * equivalent to the native disabled/default state.
+	 *
+	 * @param mixed $configuration Submitted crawler configuration.
+	 * @return array<string, string>
+	 */
+	public function sanitize_configuration( $configuration ): array {
+		if ( ! is_array( $configuration ) ) {
+			return array();
+		}
+
+		$normalized = array();
+
+		foreach ( self::USER_AGENTS as $crawler => $user_agent ) {
+			unset( $user_agent );
+
+			$state = $this->normalize_state( $configuration[ $crawler ] ?? self::STATE_INHERIT );
+			if ( self::STATE_INHERIT !== $state ) {
+				$normalized[ $crawler ] = $state;
+			}
+		}
+
+		return $normalized;
+	}
+
+	/**
 	 * Return normalized state for one supported crawler.
 	 *
 	 * Invalid or missing configuration always falls back to inherit so Core
@@ -45,23 +83,9 @@ final class CrawlerPolicyResolver {
 			return self::STATE_INHERIT;
 		}
 
-		$configuration = get_option( self::OPTION_NAME, null );
-		if ( ! is_array( $configuration ) ) {
-			return self::STATE_INHERIT;
-		}
+		$configuration = $this->sanitize_configuration( get_option( self::OPTION_NAME, null ) );
 
-		$state = $configuration[ $crawler ] ?? self::STATE_INHERIT;
-		if ( ! is_string( $state ) ) {
-			return self::STATE_INHERIT;
-		}
-
-		$state = strtolower( trim( $state ) );
-
-		if ( ! in_array( $state, array( self::STATE_INHERIT, self::STATE_ALLOW, self::STATE_DISALLOW ), true ) ) {
-			return self::STATE_INHERIT;
-		}
-
-		return $state;
+		return $configuration[ $crawler ] ?? self::STATE_INHERIT;
 	}
 
 	/**
@@ -90,5 +114,24 @@ final class CrawlerPolicyResolver {
 		}
 
 		return $directives;
+	}
+
+	/**
+	 * Normalize one state value.
+	 *
+	 * @param mixed $state Candidate state.
+	 */
+	private function normalize_state( $state ): string {
+		if ( ! is_string( $state ) ) {
+			return self::STATE_INHERIT;
+		}
+
+		$state = strtolower( trim( $state ) );
+
+		if ( ! in_array( $state, array( self::STATE_INHERIT, self::STATE_ALLOW, self::STATE_DISALLOW ), true ) ) {
+			return self::STATE_INHERIT;
+		}
+
+		return $state;
 	}
 }
