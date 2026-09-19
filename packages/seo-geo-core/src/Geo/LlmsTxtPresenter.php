@@ -21,12 +21,21 @@ final class LlmsTxtPresenter {
 	private LlmsTxtResolver $resolver;
 
 	/**
+	 * Discovery cache policy.
+	 *
+	 * @var DiscoveryCachePolicy
+	 */
+	private DiscoveryCachePolicy $cache_policy;
+
+	/**
 	 * Create the presenter.
 	 *
-	 * @param LlmsTxtResolver $resolver llms.txt data authority.
+	 * @param LlmsTxtResolver      $resolver     llms.txt data authority.
+	 * @param DiscoveryCachePolicy $cache_policy Discovery cache policy.
 	 */
-	public function __construct( LlmsTxtResolver $resolver ) {
-		$this->resolver = $resolver;
+	public function __construct( LlmsTxtResolver $resolver, DiscoveryCachePolicy $cache_policy ) {
+		$this->resolver     = $resolver;
+		$this->cache_policy = $cache_policy;
 	}
 
 	/**
@@ -49,8 +58,11 @@ final class LlmsTxtPresenter {
 			return;
 		}
 
+		if ( $this->cache_policy->send_revalidation_headers( 'llms-txt' ) ) {
+			exit;
+		}
+
 		status_header( 200 );
-		nocache_headers();
 
 		$charset = get_bloginfo( 'charset' );
 		header( 'Content-Type: text/plain; charset=' . ( '' !== $charset ? $charset : 'UTF-8' ) );

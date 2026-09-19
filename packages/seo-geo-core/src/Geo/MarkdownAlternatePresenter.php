@@ -28,14 +28,27 @@ final class MarkdownAlternatePresenter {
 	private LlmsTxtResolver $llms_txt;
 
 	/**
+	 * Discovery cache policy.
+	 *
+	 * @var DiscoveryCachePolicy
+	 */
+	private DiscoveryCachePolicy $cache_policy;
+
+	/**
 	 * Create the presenter.
 	 *
-	 * @param MarkdownAlternateResolver $resolver Markdown alternate authority.
-	 * @param LlmsTxtResolver           $llms_txt LLMS.txt authority.
+	 * @param MarkdownAlternateResolver $resolver     Markdown alternate authority.
+	 * @param LlmsTxtResolver           $llms_txt     LLMS.txt authority.
+	 * @param DiscoveryCachePolicy      $cache_policy Discovery cache policy.
 	 */
-	public function __construct( MarkdownAlternateResolver $resolver, LlmsTxtResolver $llms_txt ) {
-		$this->resolver = $resolver;
-		$this->llms_txt = $llms_txt;
+	public function __construct(
+		MarkdownAlternateResolver $resolver,
+		LlmsTxtResolver $llms_txt,
+		DiscoveryCachePolicy $cache_policy
+	) {
+		$this->resolver     = $resolver;
+		$this->llms_txt     = $llms_txt;
+		$this->cache_policy = $cache_policy;
 	}
 
 	/**
@@ -56,10 +69,15 @@ final class MarkdownAlternatePresenter {
 			return;
 		}
 
+		$post_id = (int) $resource['post']->ID;
+
+		if ( $this->cache_policy->send_revalidation_headers( 'markdown', $post_id ) ) {
+			exit;
+		}
+
 		$content = $this->resolver->render_markdown( $resource );
 
 		status_header( 200 );
-		nocache_headers();
 
 		$charset = get_bloginfo( 'charset' );
 		header( 'Content-Type: text/markdown; charset=' . ( '' !== $charset ? $charset : 'UTF-8' ) );

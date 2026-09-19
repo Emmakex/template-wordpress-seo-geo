@@ -142,6 +142,9 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyPresenter.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/CrawlerPolicyAdmin.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/DiscoveryCacheRevision.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/DiscoveryCachePolicy.php" \
+  "${BUILT_THEME}/inc/seo-geo-core/src/Geo/DiscoveryCacheInvalidator.php" \
   "${BUILT_THEME}/languages/seo-geo-core-es_ES.po" \
   "${BUILT_THEME}/languages/seo-geo-core-es_ES.mo" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/LlmsTxtResolver.php" \
@@ -473,6 +476,9 @@ wp_cli eval 'delete_option( "seo_geo_llms_txt" ); delete_option( "seo_geo_markdo
 # Reuse this same disposable WordPress fixture for the Phase 6F cross-surface
 # non-public discovery regression matrix. Sourcing keeps one runner/Docker setup.
 source scripts/ci/discovery-privacy-acceptance.sh
+
+# Reuse the same fixture for Phase 6G cache/revalidation acceptance.
+source scripts/ci/discovery-cache-acceptance.sh
 
 curl -fsS "${BASE_URL}/self-contained-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "fixture-request" "Could not request fixture post" "HTTP 2xx" "curl failed"
