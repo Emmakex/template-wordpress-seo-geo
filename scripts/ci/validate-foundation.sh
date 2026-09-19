@@ -107,6 +107,8 @@ required_paths=(
   "scripts/ci/validate-corporate-preset.php"
   "scripts/ci/local-business-preset-acceptance.sh"
   "scripts/ci/validate-local-business-preset.php"
+  "scripts/ci/publisher-preset-acceptance.sh"
+  "scripts/ci/validate-publisher-preset.php"
   "scripts/ci/native-language-smoke.sh"
   "scripts/ci/native-routing-smoke.sh"
   "scripts/ci/native-translation-relations-smoke.sh"
@@ -120,6 +122,9 @@ required_paths=(
   "presets/local-business/preset.json"
   "presets/local-business/content-map.json"
   "presets/local-business/patterns.json"
+  "presets/publisher/preset.json"
+  "presets/publisher/content-map.json"
+  "presets/publisher/patterns.json"
 )
 
 for path in "${required_paths[@]}"; do
@@ -128,5 +133,6 @@ done
 
 php scripts/ci/validate-corporate-preset.php
 php scripts/ci/validate-local-business-preset.php
+php scripts/ci/validate-publisher-preset.php
 
-printf 'Foundation contract OK: %d required paths present plus Corporate and Local Business preset contracts.\n' "${#required_paths[@]}"
+printf 'Foundation contract OK: %d required paths present plus Corporate, Local Business and Publisher preset contracts.\n' "${#required_paths[@]}"

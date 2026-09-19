@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "preset": "publisher",
+  "locales": {
+    "en_US": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Home",
+          "slug": "home",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/publisher-related-content",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "articles",
+          "title": "Articles",
+          "slug": "articles",
+          "role": "posts-page",
+          "template": "archive",
+          "patterns": []
+        },
+        {
+          "key": "topics",
+          "title": "Topics",
+          "slug": "topics",
+          "role": "topics-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/publisher-related-content"
+          ]
+        },
+        {
+          "key": "authors",
+          "title": "Authors",
+          "slug": "authors",
+          "role": "authors-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/author-profile"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "About",
+          "slug": "about",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "editorial-policy",
+          "title": "Editorial policy",
+          "slug": "editorial-policy",
+          "role": "editorial-policy",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/publisher-sources"
+          ]
+        },
+        {
+          "key": "corrections-policy",
+          "title": "Corrections policy",
+          "slug": "corrections-policy",
+          "role": "corrections-policy",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "contact",
+          "title": "Contact",
+          "slug": "contact",
+          "role": "contact",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/contact"
+          ]
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Privacy policy",
+          "slug": "privacy-policy",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Legal notice",
+          "slug": "legal-notice",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "dynamic": [
+        {
+          "key": "article",
+          "source": "wordpress-post",
+          "template": "single",
+          "recommended_patterns": [
+            "seo-geo-theme/publisher-article-summary",
+            "seo-geo-theme/publisher-key-facts",
+            "seo-geo-theme/publisher-sources",
+            "seo-geo-theme/author-profile",
+            "seo-geo-theme/publisher-related-content"
+          ],
+          "content_requirements": [
+            "real headline and article body",
+            "real public WordPress author identity",
+            "claims supported by the article content and appropriate evidence",
+            "only real source references that editors have checked",
+            "publication and modification dates remain WordPress-owned"
+          ]
+        },
+        {
+          "key": "topic-archive",
+          "source": "wordpress-category",
+          "template": "archive",
+          "recommended_patterns": [],
+          "content_requirements": [
+            "real editorial topic used by published content",
+            "useful topic description when editorially maintained",
+            "enough relevant public articles to justify the archive",
+            "no automatically generated or empty topic archives"
+          ]
+        },
+        {
+          "key": "author-profile",
+          "source": "wordpress-author",
+          "template": "archive",
+          "recommended_patterns": [
+            "seo-geo-theme/author-profile"
+          ],
+          "content_requirements": [
+            "real WordPress user with public authored content",
+            "accurate public display name",
+            "biography and expertise only when supported by real information",
+            "public author archive remains the canonical profile authority"
+          ]
+        }
+      ]
+    },
+    "es_ES": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Inicio",
+          "slug": "inicio",
+          "role": "front-page",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/hero",
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/publisher-related-content",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "articles",
+          "title": "Artículos",
+          "slug": "articulos",
+          "role": "posts-page",
+          "template": "archive",
+          "patterns": []
+        },
+        {
+          "key": "topics",
+          "title": "Temas",
+          "slug": "temas",
+          "role": "topics-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/publisher-related-content"
+          ]
+        },
+        {
+          "key": "authors",
+          "title": "Autores",
+          "slug": "autores",
+          "role": "authors-index",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/author-profile"
+          ]
+        },
+        {
+          "key": "about",
+          "title": "Sobre nosotros",
+          "slug": "sobre-nosotros",
+          "role": "about",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/cta"
+          ]
+        },
+        {
+          "key": "editorial-policy",
+          "title": "Política editorial",
+          "slug": "politica-editorial",
+          "role": "editorial-policy",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/publisher-sources"
+          ]
+        },
+        {
+          "key": "corrections-policy",
+          "title": "Política de correcciones",
+          "slug": "politica-de-correcciones",
+          "role": "corrections-policy",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "contact",
+          "title": "Contacto",
+          "slug": "contacto",
+          "role": "contact",
+          "template": "page",
+          "patterns": [
+            "seo-geo-theme/contact"
+          ]
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Política de privacidad",
+          "slug": "politica-de-privacidad",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Aviso legal",
+          "slug": "aviso-legal",
+          "role": "legal",
+          "template": "page",
+          "patterns": []
+        }
+      ],
+      "dynamic": [
+        {
+          "key": "article",
+          "source": "wordpress-post",
+          "template": "single",
+          "recommended_patterns": [
+            "seo-geo-theme/publisher-article-summary",
+            "seo-geo-theme/publisher-key-facts",
+            "seo-geo-theme/publisher-sources",
+            "seo-geo-theme/author-profile",
+            "seo-geo-theme/publisher-related-content"
+          ],
+          "content_requirements": [
+            "titular y cuerpo del artículo reales",
+            "identidad pública real de un autor de WordPress",
+            "afirmaciones respaldadas por el contenido y la evidencia adecuada",
+            "solo referencias reales que el equipo editorial haya comprobado",
+            "las fechas de publicación y modificación siguen siendo propiedad de WordPress"
+          ]
+        },
+        {
+          "key": "topic-archive",
+          "source": "wordpress-category",
+          "template": "archive",
+          "recommended_patterns": [],
+          "content_requirements": [
+            "tema editorial real utilizado por contenido publicado",
+            "descripción útil del tema cuando se mantenga editorialmente",
+            "suficientes artículos públicos relevantes para justificar el archivo",
+            "sin archivos de temas vacíos o generados automáticamente"
+          ]
+        },
+        {
+          "key": "author-profile",
+          "source": "wordpress-author",
+          "template": "archive",
+          "recommended_patterns": [
+            "seo-geo-theme/author-profile"
+          ],
+          "content_requirements": [
+            "usuario real de WordPress con contenido público de autoría",
+            "nombre público exacto",
+            "biografía y experiencia solo cuando estén respaldadas por información real",
+            "el archivo público del autor sigue siendo la autoridad canónica del perfil"
+          ]
+        }
+      ]
+    }
+  }
+}

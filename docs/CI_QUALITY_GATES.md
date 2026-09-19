@@ -130,6 +130,15 @@ Phase 7B closure evidence:
 - PR #56 was squash-merged as `ef359337172e6a7fe54ff6e12e4b17ec0e44d14e`;
 - all ten post-merge workflows passed again on `main`, including Self-contained Theme CI `35448283956`, Native Multilingual CI `35448283976`, Accessibility & Responsive CI `35448283930` and Performance Baseline CI `35448283928`.
 
+For Phase 7C Publisher:
+
+- Foundation executes `scripts/ci/validate-publisher-preset.php` alongside the Corporate and Local Business validators;
+- the static contract proves WordPress post/user/date authority, explicit Organization confirmation, EN/ES page parity, native article/topic/author surfaces, anti-inference rules, allowed pattern references and token-safe Publisher patterns;
+- Self-contained Theme CI sources `scripts/ci/publisher-preset-acceptance.sh` inside the existing WordPress/MariaDB fixture;
+- runtime acceptance proves default-off behavior, exactly four Publisher patterns, declarative category ownership, isolation from Corporate/Local Business, EN/ES copy and that preset activation leaves the Schema identity option unchanged;
+- Publisher deliberately reuses the neutral author-profile pattern and native content provenance rather than duplicating author/date metadata;
+- no Publisher-specific workflow, second Docker fixture or new dependency is added.
+
 ### Multilingual
 
 When URL/content metadata changes:

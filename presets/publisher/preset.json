@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "id": "publisher",
+  "version": "1.0.0",
+  "site_type": "publisher",
+  "intended_for": [
+    "publisher",
+    "magazine",
+    "newsroom",
+    "editorial-blog",
+    "knowledge-publication"
+  ],
+  "required_templates": [
+    "page",
+    "single",
+    "archive",
+    "index",
+    "404"
+  ],
+  "recommended_base_patterns": [
+    "seo-geo-theme/hero",
+    "seo-geo-theme/trust-proof",
+    "seo-geo-theme/author-profile",
+    "seo-geo-theme/cta",
+    "seo-geo-theme/contact"
+  ],
+  "preset_patterns": [
+    "seo-geo-theme/publisher-article-summary",
+    "seo-geo-theme/publisher-key-facts",
+    "seo-geo-theme/publisher-sources",
+    "seo-geo-theme/publisher-related-content"
+  ],
+  "schema": {
+    "expected_entities": [
+      "Organization",
+      "WebSite",
+      "WebPage",
+      "BreadcrumbList",
+      "BlogPosting",
+      "Person",
+      "ProfilePage"
+    ],
+    "site_identity": "organization",
+    "requires_confirmation": true,
+    "article_source": "wordpress-post",
+    "author_source": "wordpress-user",
+    "dates_source": "wordpress-post-dates",
+    "notes": "Publisher reuses the native BlogPosting, Person, ProfilePage and provenance authorities. Preset activation never enables Organization identity automatically."
+  },
+  "editorial_model": {
+    "built_in_post_is_article": true,
+    "author_profiles_native": true,
+    "publication_dates_native": true,
+    "source_links_require_real_references": true,
+    "editorial_policy_required": true,
+    "corrections_policy_recommended": true,
+    "auto_generate_topics": false,
+    "infer_reviewed_by": false,
+    "infer_author_expertise": false,
+    "infer_sources": false,
+    "article_schema_on_pages": false
+  },
+  "navigation": {
+    "primary": [
+      "home",
+      "articles",
+      "topics",
+      "authors",
+      "about",
+      "editorial-policy",
+      "contact"
+    ],
+    "footer": [
+      "corrections-policy",
+      "privacy-policy",
+      "legal-notice",
+      "contact"
+    ]
+  },
+  "multilingual": {
+    "baseline_locales": [
+      "en_US",
+      "es_ES"
+    ],
+    "fallback_locale": "en_US",
+    "localized_slugs": true,
+    "translation_relationships_required": true
+  },
+  "seo_acceptance": [
+    "one canonical per indexable page",
+    "localized canonical and hreflang agree",
+    "one H1 owned by the page/template composition",
+    "BlogPosting only for eligible published WordPress posts",
+    "author identity comes from a real public WordPress user/profile",
+    "published and modified dates come from WordPress post timestamps",
+    "source/reference lists contain only real references added by editors",
+    "private and draft resources excluded from discovery surfaces"
+  ],
+  "optional_integrations": [],
+  "explicitly_disabled": [
+    "automatic topic generation",
+    "fabricated citations or source URLs",
+    "invented author expertise or credentials",
+    "automatic reviewed-by identity",
+    "Article or BlogPosting Schema on WordPress pages",
+    "publication or modification date guessing",
+    "duplicate publisher/provenance metadata"
+  ]
+}

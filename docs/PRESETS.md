@@ -201,6 +201,49 @@ Phase 7B does not create pages automatically. Phase 8 onboarding may consume thi
 - Related content
 - Updated/reviewed metadata
 
+### Phase 7C implementation contract
+
+The Publisher preset is bundled under `presets/publisher/` and activates only when `seo_geo_active_preset=publisher`.
+
+Publisher composes the existing editorial authorities instead of creating a parallel publishing stack:
+
+- built-in WordPress `post` remains the article authority;
+- the real WordPress `post_author` relationship and public author archive remain the author authority;
+- native BlogPosting/Person/ProfilePage Schema remains owned by SEO/GEO Core;
+- publication and modification dates remain the WordPress post timestamps already reused by provenance;
+- Organization publisher identity remains an explicit opt-in and is never enabled by preset activation.
+
+The preset ships:
+
+- `preset.json`: editorial authority boundaries, Schema expectations, navigation, multilingual baseline and explicit anti-inference rules;
+- `content-map.json`: matching EN/ES singleton pages plus native dynamic article, category/topic and author-profile surfaces;
+- `patterns.json`: article summary, verified key facts, checked source/reference list and genuinely related internal content.
+
+The patterns listed in the generic Publisher concept map to implementation as follows:
+
+- **Article summary** → Publisher preset pattern;
+- **Key facts** → Publisher preset pattern;
+- **Source/reference list** → Publisher preset pattern;
+- **Author card** → reuse neutral `seo-geo-theme/author-profile`;
+- **Related content** → Publisher preset pattern;
+- **Updated/reviewed metadata** → reuse native provenance for published/modified dates; no visual pattern invents editorial dates or a reviewer.
+
+Publisher editorial safeguards are mandatory:
+
+- no fabricated citations, source URLs or primary-source claims;
+- no inferred author expertise, credentials or biography;
+- no automatic `reviewed by` identity;
+- no guessed publication/update dates;
+- no Article/BlogPosting Schema on normal WordPress pages;
+- no automatic topic/category generation;
+- source lists contain only references that editors actually used and checked;
+- related-content blocks link only to genuinely relevant published material;
+- author profile pages resolve from real WordPress users with public authored content.
+
+The EN/ES content map distinguishes **singleton pages** from **native dynamic surfaces**. Article, topic/category archive and author profile are not automatically created as duplicate pages during onboarding.
+
+Phase 7C does not create editorial content, authors, categories or sources automatically. Phase 8 onboarding may activate the preset and create only the declared singleton scaffolding after explicit administrator intent.
+
 ## Future presets
 
 Potential presets such as travel, SaaS, professional services or events should only be added when they express a repeatable information architecture and acceptance contract. They should compose primitives from the existing theme/Core rather than introduce parallel SEO stacks.
