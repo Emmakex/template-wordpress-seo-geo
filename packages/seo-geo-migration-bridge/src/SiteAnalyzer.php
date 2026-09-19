@@ -278,7 +278,7 @@ final class SiteAnalyzer {
 	/**
 	 * Check whether a plugin basename matches a provider prefix.
 	 *
-	 * @param string       $basename Plugin basename.
+	 * @param string             $basename Plugin basename.
 	 * @param array<int, string> $prefixes Provider plugin prefixes.
 	 */
 	private function matches_any_prefix( string $basename, array $prefixes ): bool {
