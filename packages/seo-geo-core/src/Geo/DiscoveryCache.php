@@ -45,7 +45,9 @@ final class DiscoveryCache {
 	 * @param bool   $found Whether the key existed.
 	 */
 	public function get_text( string $key, bool &$found ): ?string {
-		$value = wp_cache_get( $key, self::GROUP, false, $found );
+		$cache_found = null;
+		$value       = wp_cache_get( $key, self::GROUP, false, $cache_found );
+		$found       = true === $cache_found;
 
 		if ( ! $found || ! is_string( $value ) ) {
 			return null;
