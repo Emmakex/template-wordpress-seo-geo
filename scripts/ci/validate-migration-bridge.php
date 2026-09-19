@@ -114,16 +114,16 @@ foreach ( $php_files as $path ) {
 }
 
 $site_analyzer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php' );
-foreach (
-	array(
-		"'mode'           => 'read-only'",
-		"'mutations_performed'   => false",
-		"'content_scan_performed' => false",
-		"'credentials_collected' => false",
-		"'option_values_exported' => false",
-	) as $guard
-) {
-	if ( ! str_contains( $site_analyzer, $guard ) ) {
+$safety_guards = array(
+	"/'mode'\\s*=>\\s*'read-only'/",
+	"/'mutations_performed'\\s*=>\\s*false/",
+	"/'content_scan_performed'\\s*=>\\s*false/",
+	"/'credentials_collected'\\s*=>\\s*false/",
+	"/'option_values_exported'\\s*=>\\s*false/",
+);
+
+foreach ( $safety_guards as $guard ) {
+	if ( 1 !== preg_match( $guard, $site_analyzer ) ) {
 		fail_migration_bridge( 'safety-report', 'Migration report is missing a required read-only safety flag.', MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php', $guard, 'missing' );
 	}
 }
