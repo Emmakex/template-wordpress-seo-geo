@@ -843,3 +843,65 @@ Prefer parsing or exact-line assertions whenever one representation can legitima
 
 `scripts/ci/native-localized-seo-smoke.sh` now validates exact localized Markdown and HTML list-item forms separately while also asserting that unprefixed staged URLs remain absent.
 
+## ERR-2026-016 — Provenance additions disturbed WPCS alignment without changing behavior
+
+**Status:** resolved  
+**First seen:** 2026-09-19  
+**Last seen:** 2026-09-19  
+**Area:** ci / geo / code quality  
+**Signature:** `3357a651e6fe`  
+**Reference:** PR #45; failing PHP Quality CI `35422186475` / job `105841778598`; passing final PHP Quality CI `35422241379`; post-merge passing PHP Quality CI `35422365806`
+
+### Symptom / context
+
+The first Phase 6D candidate passed the zero-plugin provenance behavior but PHP Quality stopped at WPCS before PHPStan.
+
+The reported findings were limited to:
+
+- PHPDoc type/variable column alignment in `ContentProvenanceResolver`;
+- PHPDoc alignment in `ContentProvenancePresenter`;
+- one assignment alignment in Markdown provenance output;
+- existing contiguous assignment alignment in `Runtime.php` after inserting the longer `content_provenance` property assignment.
+
+The structured failure signature was `3357a651e6fe`.
+
+### Root cause
+
+Confirmed. The provenance feature introduced longer names into regions governed by strict WordPress Coding Standards alignment.
+
+In particular, adding the long runtime assignment into an existing visually aligned assignment group forced WPCS to expect different spacing on unrelated neighboring assignments.
+
+The product behavior was not the cause: the first candidate's Self-contained Theme smoke completed successfully.
+
+### Solution
+
+The fix was formatting-only:
+
+- align PHPDoc parameter columns exactly;
+- align the Markdown publisher assignment with its neighboring assignment;
+- move the provenance runtime assignment into its own logical paragraph instead of widening an established assignment group.
+
+No author identity, date, canonical source, Open Graph, Schema, Markdown or publisher behavior changed.
+
+### Validation
+
+- final PR candidate `660a7bb67019d6eb5ef05c4e28430e9d7fc46ba5` passed WPCS and PHPStan level 6 in PHP Quality CI `35422241379`;
+- Self-contained Theme CI `35422241338` passed the cross-surface author/date/source consistency contract;
+- all ten PR workflows passed and PR #45 was squash-merged as `4ee0c956ff1b0946ffad944c69779434e5cd7df1`;
+- post-merge PHP Quality CI `35422365806`, Self-contained Theme CI `35422365830`, Native Multilingual CI `35422365725` and the remaining gates all passed on `main`.
+
+### Prevention / guardrail
+
+When adding a substantially longer variable/property name to a WPCS-aligned assignment block, prefer one of two approaches:
+
+- deliberately realign the complete logical group in the same change; or
+- isolate the new assignment with a blank line when it represents a separate authority/lifecycle step.
+
+New PHPDoc blocks should be aligned before the first CI candidate rather than treated as cleanup.
+
+Do not weaken or suppress the alignment checks; they continue to catch drift consistently across Core.
+
+### Regression coverage
+
+PHP Quality CI keeps WPCS and PHPStan level 6 mandatory. The provenance behavior itself is independently protected by the zero-plugin cross-surface acceptance so formatting-only fixes cannot hide a functional regression.
+
