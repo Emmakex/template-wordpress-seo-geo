@@ -1192,9 +1192,29 @@ Evidence:
 
 No 7B CI/product incident met the error-register criteria; the first implementation candidate and post-merge candidate both passed without a corrective commit.
 
+### Microphase 7C — Publisher preset
+
+Status: **in progress**
+
+Scope:
+
+- compose native WordPress post, author, provenance and BlogPosting/Person/ProfilePage authorities rather than fork them;
+- bundle a machine-readable Publisher manifest, EN/ES content map and Publisher-only pattern definitions;
+- distinguish singleton editorial pages from native dynamic article, category/topic and author-profile surfaces;
+- add Publisher patterns for article summary, verified key facts, checked sources/references and genuinely related content;
+- reuse the neutral author-profile pattern instead of creating a second author card;
+- reuse native publication/modification provenance instead of inventing editorial date or reviewer metadata;
+- recommend Organization publisher identity but require explicit confirmation and never mutate Schema identity on preset activation;
+- forbid fabricated citations, inferred author expertise, automatic reviewed-by identity, guessed editorial dates and Article/BlogPosting Schema on normal pages;
+- forbid automatic topic/category generation;
+- keep Corporate, Local Business and Publisher activation isolated;
+- ship visible copy in EN/ES together;
+- reuse Foundation and the existing Self-contained Theme fixture with no new workflow, Docker stack or runtime dependency.
+
+7C closes only after implementation PR gates and post-merge `main` verification are green.
+
 ### Remaining Phase 7 work
 
-3. Publisher
 4. Ecommerce
 
 ## Phase 8 — Theme onboarding
