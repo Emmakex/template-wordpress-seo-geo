@@ -1641,7 +1641,7 @@ The next microphase is 8G — Safe cutover and rollback.
 
 ### Microphase 8G — Safe cutover and rollback
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1669,7 +1669,21 @@ Deliverables:
 
 Destructive “reset everything first” behavior is forbidden.
 
+8G is closed.
+
+Evidence:
+
+- final candidate `bffb8b1f8a4fec960d681e4e6effdad283aa37e5` passed Foundation `35875100904`, Package `35875100776`, PHP Quality `35875100797`, WordPress Smoke `35875100885`, Accessibility/Responsive `35875100967` and Performance `35875101125`;
+- PR #79 was squash-merged as `4693f99b430b83f9039a0943575f13f45f7a82bf`;
+- post-merge `main` passed the same six gates again: Foundation `35875813384`, Package `35875813344`, PHP Quality `35875813456`, WordPress Smoke `35875813345`, Accessibility/Responsive `35875813328` and Performance `35875813333`;
+- WordPress Smoke proved backup + Accessibility/Performance evidence requirements, KEEP/MIGRATE protection, automatic rollback on failed parity, manual rollback and explicit acceptance;
+- WPCS and PHPStan level 6 remained green without suppressions or reduced quality thresholds.
+
+The next microphase is 8H — Migration report.
+
 ### Microphase 8H — Migration report
+
+Status: **active**
 
 Deliverables:
 
