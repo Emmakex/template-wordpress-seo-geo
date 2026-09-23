@@ -6,7 +6,7 @@ const reportsDir = process.argv[2] ?? 'performance-results';
 const budgetsPath = process.argv[3] ?? 'tests/performance/budgets.json';
 const budgets = JSON.parse(fs.readFileSync(budgetsPath, 'utf8'));
 
-const pageKeys = ['en', 'es'];
+const pageKeys = ['en', 'es', 'migration'];
 const reportCount = 3;
 
 const median = (values) => {
