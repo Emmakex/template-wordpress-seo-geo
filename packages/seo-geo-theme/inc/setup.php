@@ -17,6 +17,9 @@ require_once __DIR__ . '/Setup/SetupCompatibilityDetector.php';
 require_once __DIR__ . '/Setup/SetupPlanner.php';
 require_once __DIR__ . '/Setup/PresetLanguageValidator.php';
 require_once __DIR__ . '/Setup/EntityGeoValidator.php';
+require_once __DIR__ . '/Wizard/SetupWizardCopy.php';
+require_once __DIR__ . '/Wizard/SetupWizardPreview.php';
+require_once __DIR__ . '/Wizard/AdminSetupWizard.php';
 
 use SeoGeo\Theme\Setup\SetupPlanner;
 
@@ -47,4 +50,21 @@ function seo_geo_theme_validate_preset_language_setup( array $input ): array {
  */
 function seo_geo_theme_validate_entity_geo_setup( array $input ): array {
 	return ( new \SeoGeo\Theme\Setup\EntityGeoValidator() )->validate( $input );
+}
+
+/**
+ * Return the theme-owned setup wizard singleton.
+ */
+function seo_geo_theme_setup_wizard(): \SeoGeo\Theme\Wizard\AdminSetupWizard {
+	static $wizard = null;
+
+	if ( ! $wizard instanceof \SeoGeo\Theme\Wizard\AdminSetupWizard ) {
+		$wizard = new \SeoGeo\Theme\Wizard\AdminSetupWizard();
+	}
+
+	return $wizard;
+}
+
+if ( is_admin() ) {
+	seo_geo_theme_setup_wizard()->register();
 }
