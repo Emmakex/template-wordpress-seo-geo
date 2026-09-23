@@ -102,12 +102,12 @@ final class PresetLanguageValidator {
 		$valid = array() === $errors && null !== $language_configuration && is_array( $preset_document );
 
 		return array(
-			'schema_version'      => 1,
-			'mode'                => 'preset-language-validation',
-			'valid'               => $valid,
-			'errors'              => $errors,
-			'warnings'            => $warnings,
-			'normalized'          => $valid
+			'schema_version'     => 1,
+			'mode'               => 'preset-language-validation',
+			'valid'              => $valid,
+			'errors'             => $errors,
+			'warnings'           => $warnings,
+			'normalized'         => $valid
 				? array(
 					'preset'      => $preset,
 					'languages'   => $language_configuration->to_array(),
