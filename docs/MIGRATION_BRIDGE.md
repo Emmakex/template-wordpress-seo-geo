@@ -183,7 +183,7 @@ The Phase 8B snapshot declares:
 
 ## Phase 8C — Builder and plugin dependency graph
 
-Status: **implementation candidate**
+Status: **complete**
 
 Phase 8C converts the Phase 8A inventory and Phase 8B baseline into a read-only migration plan.
 
@@ -235,7 +235,7 @@ Phase 8C declares and tests:
 
 ## Phase 8D — Sandbox Migration Lab
 
-Status: **implementation candidate**
+Status: **complete**
 
 Phase 8D defines a provider-neutral acceptance contract for an isolated clone/staging environment. The repository does not assume that Hostinger, WP Engine, a VPS script or any other vendor owns the cloning workflow.
 
@@ -300,6 +300,106 @@ The report always declares:
 - `baseline_is_reference_only=true`.
 
 Phase 8E may only introduce explicitly authorized transformations after this sandbox contract is accepted.
+
+## Phase 8E — Migration Engine
+
+Status: **implementation candidate**
+
+Phase 8E is the first phase allowed to transform client content. The authorization boundary is intentionally narrow: project CI permits WordPress post/meta mutation APIs only inside `src/Migration/MigrationEngine.php`.
+
+### Plan before mutation
+
+```php
+$engine = \SeoGeo\MigrationBridge\Plugin::migration_engine();
+$plan = $engine?->plan( $post_id, 'elementor', 'corporate' );
+```
+
+The plan contains no raw post body or builder payload. It reports adapter support, blockers, warnings, preserved resource identity/media, selected preset, authoritative business systems and the authorization requirements.
+
+A plan cannot become ready when:
+
+- Phase 8D sandbox readiness is false;
+- the resource does not exist;
+- the adapter is unsupported;
+- the destination preset is unsupported/conflicts with the active preset;
+- the adapter reports an unsupported module/widget;
+- a migration backup already exists for that resource.
+
+### Administrator authorization
+
+Execution requires:
+
+- `manage_options`;
+- `edit_post` for the exact resource;
+- a nonce scoped to `resource ID + adapter ID`;
+- explicit `confirmed=true`;
+- a ready migration plan.
+
+The authenticated `admin_post_seo_geo_migration_execute` endpoint repeats capability, nonce and explicit `confirm=migrate` checks. Calling the engine directly does not bypass those engine-level guards.
+
+### Builder adapters
+
+The adapter interface is:
+
+```php
+SeoGeo\MigrationBridge\Migration\BuilderMigrationAdapterInterface
+```
+
+Phase 8E initially supports conservative, content-preserving subsets:
+
+**Elementor**
+- heading;
+- text editor;
+- image;
+- button;
+- divider;
+- spacer.
+
+**Divi**
+- text;
+- button;
+- image;
+- divider;
+- spacer;
+- section/row/column wrappers are flattened into native content order.
+
+Anything outside those allowlists becomes an explicit blocker such as `unsupported-elementor-widget:form` or `unsupported-divi-module:...`. Unsupported content is never silently dropped.
+
+The target is native WordPress core blocks. Builder-specific styling/layout controls are not presented as exact visual parity and remain subject to sandbox/manual review.
+
+### Backup and preservation
+
+Immediately before a content write the engine creates `_seo_geo_migration_backup_v1`, containing the private pre-migration post content and only the metadata keys that the adapter may modify.
+
+After transformation it verifies:
+
+- same object ID;
+- same slug;
+- same permalink path.
+
+On a failed post-mutation invariant, the engine restores the original content/meta and removes the incomplete migration markers.
+
+Successful execution stores a hash/status marker in `_seo_geo_migration_state_v1`.
+
+The engine does not activate/deactivate plugins, switch themes, modify terms or rewrite business-system configuration. Phase 8C `KEEP` business systems are surfaced in the plan/result and remain outside the mutation scope.
+
+### Preset selection
+
+The migration preset resolver accepts only:
+
+- `corporate`;
+- `local-business`;
+- `publisher`;
+- `ecommerce`;
+- `saas-digital-product`.
+
+The engine may reuse the active theme preset or accept an explicit compatible preset. It never silently changes `seo_geo_active_preset`.
+
+### Phase boundary
+
+8E transforms only explicitly supported resources in the non-indexable sandbox. It does not deactivate/remove legacy builders or SEO plugins and does not perform production cutover.
+
+8F remains responsible for candidate-vs-baseline SEO/GEO parity.
 
 ## Phase 8A acceptance evidence
 
