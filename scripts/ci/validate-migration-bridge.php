@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 8A/8B/8C/8D/8E/8F/8G/8H Migration Bridge safety contract.
+ * Validate the Phase 8A/8B/8C/8D/8E/8F/8G/8H/8I Migration Bridge safety contract.
  */
 
 declare(strict_types=1);
@@ -76,6 +76,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php',
+	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorStatus.php',
+	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -92,7 +95,7 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
-		'Version: 0.8.0',
+		'Version: 0.8.1',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -113,7 +116,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Migration/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Parity/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Cutover/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Report/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Report/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -181,6 +185,8 @@ $read_only_files = array_merge(
 		MIGRATION_BRIDGE_DIR . '/src/ProviderAuthorityResolver.php',
 		MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php',
 	),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array()
+);
 	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array()
 );
@@ -586,6 +592,76 @@ foreach (
 			'Phase 8H report persistence must remain explicit, final-only and non-autoloaded.',
 			MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportStore.php',
 			$report_store_guard,
+			'missing'
+		);
+	}
+}
+
+$operator_status = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorStatus.php' );
+foreach (
+	array(
+		"/'mode'\\s*=>\\s*'operator-status-read-only'/",
+		"/'mutations_performed'\\s*=>\\s*false/",
+		"/'private_content_exported'\\s*=>\\s*false/",
+		"/'builder_payload_exported'\\s*=>\\s*false/",
+		"/'credentials_exported'\\s*=>\\s*false/",
+		"/'raw_recovery_exported'\\s*=>\\s*false/",
+		"/'page_render_executes_actions'\\s*=>\\s*false/",
+	) as $operator_status_guard
+) {
+	if ( 1 !== preg_match( $operator_status_guard, $operator_status ) ) {
+		fail_migration_bridge(
+			'operator-status-safety',
+			'Phase 8I operator status is missing a required read-only/privacy declaration.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorStatus.php',
+			$operator_status_guard,
+			'missing'
+		);
+	}
+}
+
+$operator_screen = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php' );
+foreach (
+	array(
+		'add_management_page(',
+		"current_user_can( 'manage_options' )",
+		"public const PAGE_SLUG = 'seo-geo-migration-bridge';",
+	) as $operator_screen_guard
+) {
+	if ( ! str_contains( $operator_screen, $operator_screen_guard ) ) {
+		fail_migration_bridge(
+			'operator-screen-contract',
+			'Phase 8I operator screen is missing its Tools registration or capability guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+			$operator_screen_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array() as $operator_path ) {
+	$operator_source = (string) file_get_contents( $operator_path );
+	foreach ( array( '$_POST', 'admin_post_', 'wp_nonce_field(', '<form' ) as $forbidden_operator_primitive ) {
+		if ( str_contains( $operator_source, $forbidden_operator_primitive ) ) {
+			fail_migration_bridge(
+				'operator-screen-mutation-entrypoint',
+				'Phase 8I operator UI must remain status-only and must not expose mutation submission primitives.',
+				$operator_path,
+				'no POST/admin_post/nonce form primitives',
+				$forbidden_operator_primitive
+			);
+		}
+	}
+}
+
+$operator_copy = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' );
+foreach ( array( "'en' => array(", "'es' => array(", "'next_remove_bridge'", "'privacy_text'" ) as $operator_copy_guard ) {
+	if ( ! str_contains( $operator_copy, $operator_copy_guard ) ) {
+		fail_migration_bridge(
+			'operator-copy-contract',
+			'Phase 8I must ship built-in English and Spanish operator copy together.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php',
+			$operator_copy_guard,
 			'missing'
 		);
 	}
