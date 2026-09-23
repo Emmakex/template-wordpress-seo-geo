@@ -46,7 +46,9 @@ Implemented presets: `corporate`, `local-business`, `publisher`, `ecommerce` and
 
 ## Existing-site adoption
 
-Phase 8 is implementing a temporary **SEO/GEO Migration Bridge** for real client WordPress installations that already depend on themes, builders and plugins. **Phases 8A through 8F are complete**: the bridge can inventory the legacy environment, preserve a public SEO/GEO baseline, map dependencies, enforce an isolated sandbox, perform explicitly authorized Elementor/Divi migrations to native blocks and prove old-vs-new SEO/GEO parity with strict regression, accessibility and performance gates. **Phase 8G — Safe Cutover & Rollback is complete.** The active step is **8H — Migration report**. The bridge remains outside the final self-contained theme.
+**Phase 8 — Existing-site adoption and safe migration is complete.** The temporary Migration Bridge now covers read-only analysis, public SEO/GEO baseline capture, dependency classification, isolated sandbox migration, controlled Elementor/Divi conversion, strict parity, reversible production cutover and a final privacy-bounded handoff report. The final theme remains self-contained and does not require the bridge at runtime.
+
+The active roadmap block is **Phase 9 — Theme onboarding and operator experience**, beginning with **9A — Setup foundation and migration handoff**.
 
 ## Engineering workflow
 
