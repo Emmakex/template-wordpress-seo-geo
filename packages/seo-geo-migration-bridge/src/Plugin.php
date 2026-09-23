@@ -78,7 +78,7 @@ final class Plugin {
 		self::$sandbox_lab          ??= new SandboxMigrationLab();
 		self::$migration_engine     ??= new MigrationEngine();
 		self::$migration_controller ??= new AdminMigrationController( self::$migration_engine );
-		self::$parity_engine         ??= new SeoParityEngine();
+		self::$parity_engine        ??= new SeoParityEngine();
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
