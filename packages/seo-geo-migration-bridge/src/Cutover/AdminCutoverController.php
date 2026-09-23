@@ -72,6 +72,7 @@ final class AdminCutoverController {
 			$this->decode_array_field( 'backup_evidence' ),
 			$this->decode_string_list_field( 'plugins' ),
 			$this->decode_list_field( 'allowlist' ),
+			$this->decode_array_field( 'quality_evidence' ),
 			$this->decode_array_field( 'maintenance' ),
 			$this->nonce(),
 			true
