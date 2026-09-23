@@ -162,6 +162,12 @@ final class CutoverEngine {
 		);
 
 		$plugins = $this->normalize_plugins( $plugins_to_deactivate );
+		foreach ( $plugins_to_deactivate as $requested_plugin ) {
+			if ( ! is_string( $requested_plugin ) || array() === $this->normalize_plugins( array( $requested_plugin ) ) ) {
+				$blockers[] = 'plugin-basename-invalid';
+			}
+		}
+
 		foreach ( $plugins as $plugin ) {
 			if ( self::BRIDGE_PLUGIN === $plugin ) {
 				$blockers[] = 'plugin-deactivation-forbidden:migration-bridge';
