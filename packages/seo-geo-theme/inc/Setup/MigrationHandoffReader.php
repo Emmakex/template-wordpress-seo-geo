@@ -52,16 +52,16 @@ final class MigrationHandoffReader {
 			return $this->invalid( 'runtime-dependency-contract-invalid' );
 		}
 
-		$report_sha256 = is_string( $report['report_sha256'] ?? null ) ? strtolower( $report['report_sha256'] ) : '';
+		$report_sha256   = is_string( $report['report_sha256'] ?? null ) ? strtolower( $report['report_sha256'] ) : '';
 		$envelope_sha256 = is_string( $envelope['sha256'] ?? null ) ? strtolower( $envelope['sha256'] ) : '';
 
 		if ( ! $this->sha256( $report_sha256 ) || ! $this->sha256( $envelope_sha256 ) ) {
 			return $this->invalid( 'handoff-fingerprint-invalid' );
 		}
 
-		$manual = is_array( $report['manual_review'] ?? null ) ? $report['manual_review'] : array();
-		$blocking = is_array( $manual['blocking'] ?? null ) ? $manual['blocking'] : array();
-		$advisory = is_array( $manual['advisory'] ?? null ) ? $manual['advisory'] : array();
+		$manual      = is_array( $report['manual_review'] ?? null ) ? $report['manual_review'] : array();
+		$blocking    = is_array( $manual['blocking'] ?? null ) ? $manual['blocking'] : array();
+		$advisory    = is_array( $manual['advisory'] ?? null ) ? $manual['advisory'] : array();
 		$disposition = is_array( $report['bridge_disposition'] ?? null ) ? $report['bridge_disposition'] : array();
 
 		return array(
