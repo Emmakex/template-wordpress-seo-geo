@@ -125,7 +125,7 @@ final class CutoverEngine {
 	 *
 	 * @param array<string,mixed> $backup_evidence       External recovery evidence.
 	 * @param array               $plugins_to_deactivate Explicit plugin basenames.
-	 * @phpstan-param list<string> $plugins_to_deactivate
+	 * @phpstan-param list<mixed> $plugins_to_deactivate
 	 * @param array<int,mixed>    $allowlist_rules       Phase 8F exact-difference approvals.
 	 * @param array<string,mixed> $quality_evidence      Accessibility/performance evidence.
 	 * @param array<string,mixed> $maintenance           Optional maintenance flags.
@@ -873,7 +873,7 @@ final class CutoverEngine {
 	 * Normalize explicit plugin basenames.
 	 *
 	 * @param array $plugins Candidate basenames.
-	 * @phpstan-param list<string> $plugins
+	 * @phpstan-param list<mixed> $plugins
 	 * @return list<string>
 	 */
 	private function normalize_plugins( array $plugins ): array {
