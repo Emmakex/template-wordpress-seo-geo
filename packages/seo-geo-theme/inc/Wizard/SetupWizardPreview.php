@@ -55,7 +55,7 @@ final class SetupWizardPreview {
 		$preset_language = $this->preset_language->validate( $input );
 		$entity_geo      = $this->entity_geo->validate( $input );
 
-		$errors = array_merge(
+		$errors   = array_merge(
 			is_array( $preset_language['errors'] ?? null ) ? $preset_language['errors'] : array(),
 			is_array( $entity_geo['errors'] ?? null ) ? $entity_geo['errors'] : array()
 		);
