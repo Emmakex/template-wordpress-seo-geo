@@ -460,6 +460,46 @@ The parity report exposes fingerprints and decision metadata rather than raw com
 
 Accessibility/Responsive and Performance Baseline now include a representative post-migration native-block fixture and are triggered by Migration Bridge/parity changes. Passing the parity comparator alone is therefore not sufficient to close 8F.
 
+## Phase 8G — Safe cutover and rollback
+
+Status: **implementation candidate**
+
+8G introduces the first production-runtime mutations, but only after the migration has already passed sandbox transformation and 8F parity.
+
+### Mandatory external recovery evidence
+
+Before any theme switch or plugin deactivation, the cutover engine requires recent evidence for a complete database backup and the uploads tree. Each record contains a recovery reference, SHA-256, creation time, scope and positive byte size; evidence older than 24 hours is rejected.
+
+A production cutover also requires recent, passed evidence for both the representative migrated-page Accessibility/Responsive gate and the Performance/Lighthouse gate. Quality evidence carries a reference, SHA-256, creation time and pass state; stale or failed evidence blocks the plan.
+
+The bridge deliberately does not claim to create provider-independent database/uploads disaster-recovery artifacts itself. Hosting or CLI backup systems create those artifacts; the bridge validates and records their evidence before mutation.
+
+### Internal recovery snapshot
+
+Immediately before cutover the bridge appends a non-autoloaded record under `seo_geo_cutover_history_v1` containing the original active theme/plugins, installed package versions, protected options, persisted baseline/redirect fingerprints, migrated-resource backup fingerprints, external recovery evidence and the exact planned actions.
+
+Raw 8E rollback bodies are not copied into cutover history.
+
+### Cutover blockers and mutation boundary
+
+A plan is blocked while the sandbox marker is enabled, search visibility is disabled, multisite is detected, the target theme or baseline is missing, fresh 8F parity is not accepted, backups are missing/stale, another cutover is active, or an unsafe plugin deactivation is requested.
+
+Only explicit `REPLACE`, `REMOVE-CANDIDATE` and `OPTIONAL` plugin dependencies may be deactivated. `KEEP`, `UNKNOWN` and still-`MIGRATE` dependencies remain blocking. The Migration Bridge itself cannot be deactivated before final acceptance.
+
+8G never deletes plugins/themes, clears uploads or resets the database.
+
+### Execution, post-check and rollback
+
+The engine may switch to `seo-geo-theme`, deactivate only approved explicit plugins, and run rewrite/object-cache/sitemap refresh only when runtime changes require it.
+
+Immediately after cutover it verifies the expected theme/plugin state, continued bridge activity, unchanged protected options and fresh 8F parity. Failure triggers automatic runtime rollback.
+
+Manual rollback is available while status remains `cutover-active`. It first refuses unrelated runtime drift, then restores the recorded theme/plugins and verifies fresh parity. If runtime restoration succeeds but parity does not, the record becomes `rolled-back-review-required` so external database/uploads recovery can be used without hiding the unresolved state.
+
+### Final acceptance
+
+Explicit acceptance requires fresh runtime health and fresh 8F parity. It changes the record to `accepted`, closes runtime rollback and retains recovery evidence for the Phase 8H audit/report.
+
 ## Phase 8A acceptance evidence
 
 Phase 8A closed through PR #67.

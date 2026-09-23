@@ -1641,6 +1641,22 @@ The next microphase is 8G — Safe cutover and rollback.
 
 ### Microphase 8G — Safe cutover and rollback
 
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- recent SHA-256-bound external evidence is mandatory for both a full database backup and the uploads tree before any cutover mutation;
+- recent passed Accessibility/Responsive and Performance evidence for the representative migrated page is mandatory alongside fresh 8F parity;
+- append-only non-autoloaded cutover history records recovery metadata, pre-cutover theme/plugin state, protected options, baseline/redirect fingerprints and migration-backup fingerprints;
+- production cutover is blocked while sandbox mode/search invisibility remains, parity is unaccepted, backup evidence is invalid, the target theme is missing or another cutover is active;
+- requested plugin deactivations are explicit and dependency-aware: `REPLACE`, `REMOVE-CANDIDATE` and `OPTIONAL` are eligible, while `KEEP`, `UNKNOWN` and `MIGRATE` remain blocking;
+- Migration Bridge self-deactivation, plugin/theme deletion, database reset and uploads reset are forbidden;
+- required rewrite/object-cache/sitemap maintenance is bounded to actual runtime changes;
+- post-cutover runtime health plus fresh SEO/GEO parity are mandatory and failure triggers automatic rollback;
+- manual rollback refuses unrelated runtime drift and verifies parity after restoration;
+- explicit final acceptance is the only state that closes runtime rollback, while recovery evidence remains retained;
+- acceptance covers blocked backup/KEEP/MIGRATE/bridge cases, nonce/confirmation rejection, automatic rollback, manual rollback and final acceptance.
+
 Deliverables:
 
 - mandatory pre-cutover snapshot of database, uploads, themes/plugins/options relevant to recovery, redirect map and SEO baseline;
