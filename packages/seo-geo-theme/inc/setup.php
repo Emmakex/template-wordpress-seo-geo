@@ -65,6 +65,4 @@ function seo_geo_theme_setup_wizard(): \SeoGeo\Theme\Wizard\AdminSetupWizard {
 	return $wizard;
 }
 
-if ( is_admin() ) {
-	seo_geo_theme_setup_wizard()->register();
-}
+seo_geo_theme_setup_wizard()->register();
