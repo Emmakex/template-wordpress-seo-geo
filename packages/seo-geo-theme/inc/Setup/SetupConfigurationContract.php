@@ -33,28 +33,28 @@ final class SetupConfigurationContract {
 			'schema_version' => self::SCHEMA_VERSION,
 			'option_name'    => self::OPTION_NAME,
 			'fields'         => array(
-				'preset'       => array(
+				'preset' => array(
 					'type'     => 'preset-id',
 					'required' => true,
 				),
-				'languages'    => array(
+				'languages' => array(
 					'type'     => 'native-language-map',
 					'required' => true,
 				),
-				'site_entity'  => array(
+				'site_entity' => array(
 					'type'     => 'explicit-entity-choice',
 					'required' => false,
 				),
-				'geo'          => array(
+				'geo' => array(
 					'type'     => 'explicit-opt-ins',
 					'required' => false,
 				),
-				'migration'    => array(
+				'migration' => array(
 					'type'     => 'handoff-reference',
 					'required' => false,
 				),
 			),
-			'ownership'      => array(
+			'ownership' => array(
 				'theme_owned'                 => true,
 				'seo_geo_plugin_required'     => false,
 				'migration_bridge_required'   => false,
