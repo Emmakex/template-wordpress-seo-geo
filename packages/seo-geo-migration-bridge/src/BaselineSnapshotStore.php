@@ -15,6 +15,9 @@ use RuntimeException;
  * Stores one explicit migration baseline outside the public output surface.
  */
 final class BaselineSnapshotStore {
+	/**
+	 * Dedicated non-autoloaded migration baseline option.
+	 */
 	public const OPTION_NAME = 'seo_geo_migration_baseline_v1';
 
 	/**
