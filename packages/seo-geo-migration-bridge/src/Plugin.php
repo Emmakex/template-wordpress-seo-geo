@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge;
 
+use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
+use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
 use SeoGeo\MigrationBridge\Migration\MigrationEngine;
 use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
@@ -69,6 +71,20 @@ final class Plugin {
 	private static ?SeoParityEngine $parity_engine = null;
 
 	/**
+	 * Reversible production cutover engine singleton.
+	 *
+	 * @var CutoverEngine|null
+	 */
+	private static ?CutoverEngine $cutover_engine = null;
+
+	/**
+	 * Administrator cutover controller singleton.
+	 *
+	 * @var AdminCutoverController|null
+	 */
+	private static ?AdminCutoverController $cutover_controller = null;
+
+	/**
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
@@ -79,9 +95,12 @@ final class Plugin {
 		self::$migration_engine     ??= new MigrationEngine();
 		self::$migration_controller ??= new AdminMigrationController( self::$migration_engine );
 		self::$parity_engine        ??= new SeoParityEngine();
+		self::$cutover_engine       ??= new CutoverEngine();
+		self::$cutover_controller   ??= new AdminCutoverController( self::$cutover_engine );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
+		self::$cutover_controller->boot();
 	}
 
 	/**
@@ -124,5 +143,12 @@ final class Plugin {
 	 */
 	public static function parity_engine(): ?SeoParityEngine {
 		return self::$parity_engine;
+	}
+
+	/**
+	 * Return the reversible production cutover engine.
+	 */
+	public static function cutover_engine(): ?CutoverEngine {
+		return self::$cutover_engine;
 	}
 }
