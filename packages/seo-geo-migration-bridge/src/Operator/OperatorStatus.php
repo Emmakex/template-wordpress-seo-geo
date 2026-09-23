@@ -222,13 +222,13 @@ final class OperatorStatus {
 		if ( ! $baseline_available ) {
 			return 'capture-baseline';
 		}
-		if ( ! true === ( $cutover['available'] ?? false ) ) {
+		if ( true !== ( $cutover['available'] ?? false ) ) {
 			return 'continue-migration';
 		}
-		if ( ! true === ( $cutover['accepted'] ?? false ) ) {
+		if ( true !== ( $cutover['accepted'] ?? false ) ) {
 			return 'complete-cutover';
 		}
-		if ( ! true === ( $report['available'] ?? false ) ) {
+		if ( true !== ( $report['available'] ?? false ) ) {
 			return 'generate-report';
 		}
 		if ( 0 < (int) ( $report['blocking_review_count'] ?? 0 ) ) {
