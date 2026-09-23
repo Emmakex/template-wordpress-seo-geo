@@ -1780,7 +1780,7 @@ The onboarding layer serves both clean installations and sites that arrived thro
 
 ### Microphase 9A — Setup foundation and migration handoff
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1804,9 +1804,18 @@ Deliverables:
 - compatibility warnings from detected external systems without making them required;
 - explicit 9A safety flags: no page creation, plugin installation, plugin activation/deactivation, external credentials or setup mutations.
 
+9A is closed.
+
+Evidence:
+
+- final candidate `f89514cc7051da8917fece779d26a8331cd41a72` passed Foundation `35883921399`, Package `35883921389`, PHP Quality `35883921378`, WordPress Smoke `35883921384`, Accessibility/Responsive `35883921391`, Performance `35883921405`, Self-contained Theme `35883921418` and Native Multilingual `35883921401`;
+- PR #86 was squash-merged as `17d4cc185addce336a3f2f86079b03dbf00a3468`;
+- post-merge `main` repeated all eight gates successfully: Foundation `35884423588`, Package `35884423936`, PHP Quality `35884423746`, WordPress Smoke `35884423606`, Accessibility/Responsive `35884423721`, Performance `35884423669`, Self-contained Theme `35884423758` and Native Multilingual `35884423933`;
+- zero-plugin acceptance proved clean/migrated planning and direct Phase 8 handoff consumption without Migration Bridge runtime.
+
 ### Microphase 9B — Preset and language configuration
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 
