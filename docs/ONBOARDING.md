@@ -269,6 +269,52 @@ Post-merge `main` repeated all eight gates successfully: Foundation `35897366497
 
 ## Phase 9E — Setup execution and generated report
 
-Status: **active**
+Status: **implementation candidate**
 
-9E is the first onboarding microphase allowed to persist configuration. Persistence must remain atomic, validator-backed, idempotent and limited to the existing theme/Core option authorities.
+9E is the first onboarding microphase allowed to persist configuration. Persistence is validator-backed, atomic at the application layer, idempotent and limited to the existing theme/Core option authorities.
+
+### Execution boundary
+
+`seo_geo_theme_apply_setup( $candidate, $confirmed )` revalidates the complete candidate through the same preset/language and entity/GEO validators used by Preview. A missing explicit apply confirmation fails before any write.
+
+The desired state writes only these authorities:
+
+- `seo_geo_active_preset`;
+- `seo_geo_native_languages`;
+- `seo_geo_schema_identity`;
+- `seo_geo_schema_local_business`;
+- `seo_geo_crawler_policy`;
+- `seo_geo_llms_txt`;
+- `seo_geo_markdown_alternates`;
+- `seo_geo_theme_setup_v1`.
+
+All option writes are isolated behind `SetupOptionWriterInterface`. The default `WordPressSetupOptionWriter` verifies read-back after each write. Before mutation, `SetupExecutor` snapshots every affected option plus the setup report. Any failed write restores changed options in reverse order.
+
+No pages, posts, users, plugins, themes, cron jobs or external credentials are created or mutated.
+
+### Idempotency
+
+The executor fingerprints the normalized authority target plus bounded Phase 8 handoff metadata. If all target options already match and the current report has the same configuration fingerprint, execution returns `idempotent=true` without rewriting options or regenerating timestamps.
+
+### Generated setup report
+
+The stable report option is `seo_geo_theme_setup_report_v1`, stored non-autoloaded. It contains:
+
+- configuration/report SHA-256 fingerprints;
+- clean vs migrated site mode;
+- selected preset;
+- language codes/routing/x-default;
+- entity type and whether LocalBusiness configuration exists;
+- hashes/booleans for GEO/discovery choices;
+- bounded migration handoff ID/report hash/disposition/review counts;
+- native/external provider IDs and advisory warning codes;
+- changed option names;
+- explicit safety declarations.
+
+The report never stores LocalBusiness street address, telephone, coordinates, private content, credentials or raw Migration Bridge artifacts.
+
+### Wizard application
+
+Appearance → SEO/GEO Setup now exposes **Preview** and **Apply setup** as distinct actions. Both are nonce/capability-gated. Apply always revalidates server-side and requires a dedicated confirmation checkbox; it does not trust a previous preview.
+
+Self-contained acceptance proves a migrated LocalBusiness setup, stable idempotent rerun, non-autoloaded setup/report options, no page/plugin creation, Migration Bridge class absence and full rollback after an injected mid-write failure.
