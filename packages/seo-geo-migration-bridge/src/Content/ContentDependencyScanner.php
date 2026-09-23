@@ -95,8 +95,8 @@ final class ContentDependencyScanner {
 					continue;
 				}
 
-				$id         = $detector->id();
-				$builders[] = array(
+				$id                    = $detector->id();
+				$builders[]            = array(
 					'id'       => $id,
 					'evidence' => array_values( array_map( 'strval', $result['evidence'] ) ),
 				);
