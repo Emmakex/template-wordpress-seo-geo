@@ -109,6 +109,7 @@ final class HtmlSnapshotExtractor {
 		$result['breadcrumbs']      = $this->breadcrumbs( $xpath, $url );
 		$result['internal_links']   = $this->internal_links( $xpath, $url );
 		$result['primary_content']  = $this->primary_content( $xpath );
+		$result['ownership']        = $this->ownership( $xpath );
 
 		return $result;
 	}
@@ -143,6 +144,7 @@ final class HtmlSnapshotExtractor {
 		$result['indexability']    = $this->indexability( $status, (string) ( $result['robots'] ?? '' ), $headers['x_robots_tag'] );
 		$text                      = $this->normalize_text( wp_strip_all_tags( $html ) );
 		$result['primary_content'] = $this->fingerprint_text( $text );
+		$result['ownership']       = $this->fallback_ownership( $html );
 
 		return $result;
 	}
@@ -180,6 +182,89 @@ final class HtmlSnapshotExtractor {
 
 		$value = trim( html_entity_decode( $node->getAttribute( $attribute ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 		return '' !== $value ? $value : null;
+	}
+
+	/**
+	 * Count single-owner SEO signals and duplicate hreflang language keys.
+	 *
+	 * @param DOMXPath $xpath DOM XPath context.
+	 * @return array{title_count:int,meta_description_count:int,canonical_count:int,robots_count:int,hreflang_duplicates:list<string>}
+	 */
+	private function ownership( DOMXPath $xpath ): array {
+		$title_nodes       = $xpath->query( '//title' );
+		$description_nodes = $xpath->query( '//meta[translate(@name,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz")="description"]' );
+		$canonical_nodes   = $xpath->query( '//link[contains(concat(" ", normalize-space(translate(@rel,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz")), " "), " canonical ")]' );
+		$robots_nodes      = $xpath->query( '//meta[translate(@name,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz")="robots"]' );
+		$hreflang_nodes    = $xpath->query( '//link[contains(concat(" ", normalize-space(translate(@rel,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz")), " "), " alternate ")][@hreflang][@href]' );
+		$lang_counts       = array();
+
+		if ( false !== $hreflang_nodes ) {
+			foreach ( $hreflang_nodes as $node ) {
+				if ( ! $node instanceof DOMElement ) {
+					continue;
+				}
+
+				$lang = strtolower( trim( $node->getAttribute( 'hreflang' ) ) );
+				if ( '' !== $lang ) {
+					$lang_counts[ $lang ] = ( $lang_counts[ $lang ] ?? 0 ) + 1;
+				}
+			}
+		}
+
+		$duplicates = array_keys(
+			array_filter(
+				$lang_counts,
+				static fn( int $count ): bool => 1 < $count
+			)
+		);
+		sort( $duplicates );
+
+		return array(
+			'title_count'            => false !== $title_nodes ? $title_nodes->length : 0,
+			'meta_description_count' => false !== $description_nodes ? $description_nodes->length : 0,
+			'canonical_count'        => false !== $canonical_nodes ? $canonical_nodes->length : 0,
+			'robots_count'           => false !== $robots_nodes ? $robots_nodes->length : 0,
+			'hreflang_duplicates'    => $duplicates,
+		);
+	}
+
+	/**
+	 * Count ownership signals when DOM parsing is unavailable.
+	 *
+	 * @param string $html Public response body.
+	 * @return array{title_count:int,meta_description_count:int,canonical_count:int,robots_count:int,hreflang_duplicates:list<string>}
+	 */
+	private function fallback_ownership( string $html ): array {
+		$title_count       = preg_match_all( '/<title\b[^>]*>/i', $html );
+		$description_count = preg_match_all( '/<meta\b[^>]*name=["\']description["\'][^>]*>/i', $html );
+		$canonical_count   = preg_match_all( '/<link\b[^>]*rel=["\'][^"\']*canonical[^"\']*["\'][^>]*>/i', $html );
+		$robots_count      = preg_match_all( '/<meta\b[^>]*name=["\']robots["\'][^>]*>/i', $html );
+		$lang_counts       = array();
+
+		if ( false !== preg_match_all( '/<link\b[^>]*hreflang=["\']([^"\']+)["\'][^>]*>/i', $html, $matches ) ) {
+			foreach ( $matches[1] as $lang ) {
+				$lang = strtolower( trim( (string) $lang ) );
+				if ( '' !== $lang ) {
+					$lang_counts[ $lang ] = ( $lang_counts[ $lang ] ?? 0 ) + 1;
+				}
+			}
+		}
+
+		$duplicates = array_keys(
+			array_filter(
+				$lang_counts,
+				static fn( int $count ): bool => 1 < $count
+			)
+		);
+		sort( $duplicates );
+
+		return array(
+			'title_count'            => false === $title_count ? 0 : $title_count,
+			'meta_description_count' => false === $description_count ? 0 : $description_count,
+			'canonical_count'        => false === $canonical_count ? 0 : $canonical_count,
+			'robots_count'           => false === $robots_count ? 0 : $robots_count,
+			'hreflang_duplicates'    => $duplicates,
+		);
 	}
 
 	/**
