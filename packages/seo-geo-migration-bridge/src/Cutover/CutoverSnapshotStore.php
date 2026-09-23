@@ -25,9 +25,9 @@ final class CutoverSnapshotStore {
 	 * @return array{saved:bool,id:string|null,reason:string|null}
 	 */
 	public function create( array $snapshot ): array {
-		$history         = $this->history();
-		$latest          = $this->latest();
-		$history_exists  = false !== get_option( self::OPTION_NAME, false );
+		$history        = $this->history();
+		$latest         = $this->latest();
+		$history_exists = false !== get_option( self::OPTION_NAME, false );
 
 		if ( is_array( $latest ) && in_array( $latest['status'] ?? null, array( 'prepared', 'cutover-active' ), true ) ) {
 			return array(
@@ -75,7 +75,8 @@ final class CutoverSnapshotStore {
 	 * Transition one record without replacing its recovery snapshot.
 	 *
 	 * @param string              $id              Cutover record ID.
-	 * @param list<string>        $expected_status Allowed current statuses.
+	 * @param array               $expected_status Allowed current statuses.
+	 * @phpstan-param list<string> $expected_status
 	 * @param string              $next_status     New status.
 	 * @param array<string,mixed> $details         Bounded transition details.
 	 */
@@ -92,14 +93,14 @@ final class CutoverSnapshotStore {
 				return false;
 			}
 
-			$record['status'] = $next_status;
-			$record['events'] = isset( $record['events'] ) && is_array( $record['events'] ) ? $record['events'] : array();
+			$record['status']   = $next_status;
+			$record['events']   = isset( $record['events'] ) && is_array( $record['events'] ) ? $record['events'] : array();
 			$record['events'][] = array(
 				'status'  => $next_status,
 				'at'      => gmdate( DATE_ATOM ),
 				'details' => $details,
 			);
-			$updated = true;
+			$updated            = true;
 			break;
 		}
 		unset( $record );
