@@ -46,6 +46,11 @@ final class BaselineSnapshotter {
 
 	/**
 	 * Construct the snapshot service.
+	 *
+	 * @param PublicUrlInventory|null      $url_inventory Optional URL inventory service.
+	 * @param HtmlSnapshotExtractor|null   $extractor     Optional HTML signal extractor.
+	 * @param BaselineSnapshotStore|null   $store         Optional persistence service.
+	 * @param HttpClientInterface|null     $http          Optional anonymous HTTP transport.
 	 */
 	public function __construct(
 		?PublicUrlInventory $url_inventory = null,
@@ -62,7 +67,8 @@ final class BaselineSnapshotter {
 	/**
 	 * Capture the current public SEO/GEO baseline.
 	 *
-	 * @param list<string> $seed_urls Optional explicit same-origin public URLs.
+	 * @param array<int, string> $seed_urls Optional explicit same-origin public URLs.
+	 * @param int                $limit     Maximum number of URLs to capture.
 	 * @return array<string,mixed>
 	 */
 	public function capture( array $seed_urls = array(), int $limit = 500 ): array {
@@ -89,7 +95,7 @@ final class BaselineSnapshotter {
 				$response['headers']
 			);
 
-			$status_key = (string) $response['status'];
+			$status_key                    = (string) $response['status'];
 			$status_counts[ $status_key ] = ( $status_counts[ $status_key ] ?? 0 ) + 1;
 
 			$indexability = $signals['indexability'] ?? null;
@@ -174,6 +180,7 @@ final class BaselineSnapshotter {
 	 * Persist an already captured baseline.
 	 *
 	 * @param array<string,mixed> $snapshot Baseline snapshot.
+	 * @param bool                $replace  Whether an existing baseline may be replaced.
 	 * @return array{saved:bool,id:string|null,saved_at:string|null,sha256:string|null,replaced:bool,reason:string|null}
 	 */
 	public function persist( array $snapshot, bool $replace = false ): array {
@@ -204,7 +211,12 @@ final class BaselineSnapshotter {
 		$robots_sitemaps = array();
 
 		if ( 200 === $robots_response['status'] ) {
-			foreach ( preg_split( '/\r?\n/', $robots_response['body'] ) ?: array() as $line ) {
+			$robots_lines = preg_split( '/\r?\n/', $robots_response['body'] );
+			if ( ! is_array( $robots_lines ) ) {
+				$robots_lines = array();
+			}
+
+			foreach ( $robots_lines as $line ) {
 				if ( 1 !== preg_match( '/^\s*Sitemap\s*:\s*(\S+)\s*$/i', $line, $match ) ) {
 					continue;
 				}
@@ -233,11 +245,12 @@ final class BaselineSnapshotter {
 			}
 		}
 
-		$sitemaps = array();
-		$page_urls = array();
-		$visited = array();
+		$sitemaps      = array();
+		$page_urls     = array();
+		$visited       = array();
+		$visited_count = 0;
 
-		while ( array() !== $queue && count( $visited ) < 50 ) {
+		while ( array() !== $queue && $visited_count < 50 ) {
 			$url   = (string) array_key_first( $queue );
 			$depth = (int) $queue[ $url ];
 			unset( $queue[ $url ] );
@@ -246,6 +259,7 @@ final class BaselineSnapshotter {
 				continue;
 			}
 			$visited[ $url ] = true;
+			++$visited_count;
 
 			$response  = $this->http->get( $url );
 			$locations = 200 === $response['status'] ? $this->extract_xml_locations( $response['body'] ) : array();
@@ -291,14 +305,15 @@ final class BaselineSnapshotter {
 				'sha256'       => '' !== $robots_response['body'] ? hash( 'sha256', $robots_response['body'] ) : null,
 				'sitemap_urls' => $robots_sitemaps,
 			),
-			'sitemaps'    => $sitemaps,
-			'page_urls'   => $page_urls,
+			'sitemaps'  => $sitemaps,
+			'page_urls' => $page_urls,
 		);
 	}
 
 	/**
 	 * Extract XML <loc> values without requiring a sitemap provider adapter.
 	 *
+	 * @param string $xml Sitemap XML body.
 	 * @return list<string>
 	 */
 	private function extract_xml_locations( string $xml ): array {
@@ -327,6 +342,8 @@ final class BaselineSnapshotter {
 
 	/**
 	 * Heuristic used only to follow sitemap indexes, never to classify content.
+	 *
+	 * @param string $url Candidate sitemap URL.
 	 */
 	private function looks_like_sitemap( string $url ): bool {
 		$path = strtolower( (string) ( wp_parse_url( $url, PHP_URL_PATH ) ?? '' ) );
@@ -335,6 +352,8 @@ final class BaselineSnapshotter {
 
 	/**
 	 * Normalize and enforce the configured WordPress home origin.
+	 *
+	 * @param string $url Candidate URL.
 	 */
 	private function normalize_same_origin_url( string $url ): ?string {
 		$url       = html_entity_decode( trim( $url ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
