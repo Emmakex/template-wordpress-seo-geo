@@ -140,7 +140,7 @@ final class AdminCutoverController {
 	 * @return array<string,mixed>
 	 */
 	private function decode_array_field( string $field ): array {
-		$value = isset( $_POST[ $field ] ) ? wp_unslash( $_POST[ $field ] ) : '';
+		$value = isset( $_POST[ $field ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ $field ] ) ) : '';
 		if ( ! is_string( $value ) || '' === trim( $value ) ) {
 			return array();
 		}
@@ -156,7 +156,7 @@ final class AdminCutoverController {
 	 * @return array<int,mixed>
 	 */
 	private function decode_list_field( string $field ): array {
-		$value = isset( $_POST[ $field ] ) ? wp_unslash( $_POST[ $field ] ) : '';
+		$value = isset( $_POST[ $field ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ $field ] ) ) : '';
 		if ( ! is_string( $value ) || '' === trim( $value ) ) {
 			return array();
 		}
