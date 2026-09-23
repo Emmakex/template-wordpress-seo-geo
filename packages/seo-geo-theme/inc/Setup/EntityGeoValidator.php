@@ -76,6 +76,10 @@ final class EntityGeoValidator {
 			$errors[] = 'identity-confirmation-required';
 		}
 
+		if ( null !== $entity_type && '' === trim( wp_strip_all_tags( get_bloginfo( 'name' ), true ) ) ) {
+			$errors[] = 'site-title-required-for-entity';
+		}
+
 		$preset = isset( $input['preset'] ) && is_string( $input['preset'] )
 			? sanitize_key( $input['preset'] )
 			: '';
@@ -221,7 +225,7 @@ final class EntityGeoValidator {
 		}
 
 		$type = isset( $value['type'] ) && is_string( $value['type'] )
-			? sanitize_text_field( wp_unslash( $value['type'] ) )
+			? sanitize_text_field( $value['type'] )
 			: 'LocalBusiness';
 
 		if ( ! in_array( $type, SchemaLocalBusinessResolver::supported_types(), true ) ) {
@@ -233,8 +237,8 @@ final class EntityGeoValidator {
 			$errors[] = 'local-business-physical-address-required';
 		}
 
-		$has_latitude  = array_key_exists( 'latitude', $value ) && '' !== trim( (string) $value['latitude'] );
-		$has_longitude = array_key_exists( 'longitude', $value ) && '' !== trim( (string) $value['longitude'] );
+		$has_latitude  = $this->has_coordinate_input( $value, 'latitude' );
+		$has_longitude = $this->has_coordinate_input( $value, 'longitude' );
 		$geo           = $this->local_business->normalize_geo_candidate( $value );
 
 		if ( $has_latitude !== $has_longitude || ( $has_latitude && null === $geo ) ) {
@@ -336,8 +340,27 @@ final class EntityGeoValidator {
 			return null;
 		}
 
-		$value = trim( wp_strip_all_tags( wp_unslash( $value ), true ) );
+		$value = trim( wp_strip_all_tags( $value, true ) );
 
 		return '' !== $value ? $value : null;
+	}
+
+	/**
+	 * Report whether one coordinate field contains a scalar candidate value.
+	 *
+	 * @param array<string,mixed> $value Candidate LocalBusiness map.
+	 * @param string              $key   Coordinate key.
+	 */
+	private function has_coordinate_input( array $value, string $key ): bool {
+		if ( ! array_key_exists( $key, $value ) ) {
+			return false;
+		}
+
+		$candidate = $value[ $key ];
+		if ( ! is_string( $candidate ) && ! is_int( $candidate ) && ! is_float( $candidate ) ) {
+			return false;
+		}
+
+		return '' !== trim( (string) $candidate );
 	}
 }
