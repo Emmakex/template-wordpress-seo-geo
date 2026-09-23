@@ -1060,10 +1060,6 @@ fi
 
 printf '%s' "$PHASE9E_JSON" >"$TMP_DIR/phase9e-execution.json"
 
-if grep -Fq '123 Main Street' "$TMP_DIR/phase9e-execution.json"; then
-  :
-fi
-
 if ! PHASE9E_ASSERTION="$(python3 - "$TMP_DIR/phase9e-execution.json" <<'PY'
 import json, sys
 with open(sys.argv[1], encoding="utf-8") as f:
@@ -1161,6 +1157,26 @@ PY
 fi
 
 printf '[self-contained] Phase 9E setup execution OK: validated options applied atomically; rerun idempotent; injected mid-write failure rolled back; migrated handoff/report remained bridge-independent and privacy-bounded.\n'
+
+wp_cli eval '
+foreach (
+	array(
+		"seo_geo_theme_setup_report_v1",
+		"seo_geo_theme_setup_v1",
+		"seo_geo_active_preset",
+		"seo_geo_native_languages",
+		"seo_geo_schema_identity",
+		"seo_geo_schema_local_business",
+		"seo_geo_crawler_policy",
+		"seo_geo_llms_txt",
+		"seo_geo_markdown_alternates",
+		"seo_geo_migration_report_v1"
+	) as $option_name
+) {
+	delete_option( $option_name );
+}
+' >/dev/null \
+  || fail_smoke "phase9e-fixture-reset" "Could not restore clean setup state after Phase 9E acceptance" "Phase 9E options removed" "cleanup failed"
 
 if ! RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $r->getFileName();' 2>"$RUNTIME_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$RUNTIME_EVAL_ERROR" | head -c 240)"
