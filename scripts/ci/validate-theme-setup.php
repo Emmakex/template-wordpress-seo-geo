@@ -23,6 +23,7 @@ $required = array(
 	$setup_dir . '/WordPressSetupOptionWriter.php',
 	$setup_dir . '/SetupReportStore.php',
 	$setup_dir . '/SetupRewriteMaintenance.php',
+	$setup_dir . '/SetupWriteFailure.php',
 	$setup_dir . '/SetupExecutor.php',
 	$wizard_dir . '/SetupWizardCopy.php',
 	$wizard_dir . '/SetupWizardPreview.php',
