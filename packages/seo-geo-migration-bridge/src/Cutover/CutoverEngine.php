@@ -124,7 +124,8 @@ final class CutoverEngine {
 	 * Build a non-mutating cutover plan.
 	 *
 	 * @param array<string,mixed> $backup_evidence       External recovery evidence.
-	 * @param list<string>        $plugins_to_deactivate Explicit plugin basenames.
+	 * @param array        $plugins_to_deactivate Explicit plugin basenames.
+	 * @phpstan-param list<string> $plugins_to_deactivate
 	 * @param array<int,mixed>    $allowlist_rules       Phase 8F exact-difference approvals.
 	 * @param array<string,mixed> $quality_evidence      Accessibility/performance evidence.
 	 * @param array<string,mixed> $maintenance           Optional maintenance flags.
@@ -273,12 +274,12 @@ final class CutoverEngine {
 				'requires_confirmation'   => true,
 			),
 			'safety'         => array(
-				'plugin_deletion_allowed'      => false,
-				'theme_deletion_allowed'       => false,
-				'database_reset_allowed'       => false,
-				'uploads_reset_allowed'        => false,
-				'bridge_deactivation_allowed'  => false,
-				'rollback_required_until_acceptance' => true,
+				'plugin_deletion_allowed'             => false,
+				'theme_deletion_allowed'              => false,
+				'database_reset_allowed'              => false,
+				'uploads_reset_allowed'               => false,
+				'bridge_deactivation_allowed'         => false,
+				'rollback_required_until_acceptance'  => true,
 			),
 		);
 
@@ -290,7 +291,8 @@ final class CutoverEngine {
 	 * Execute an explicitly confirmed production cutover.
 	 *
 	 * @param array<string,mixed> $backup_evidence       External recovery evidence.
-	 * @param list<string>        $plugins_to_deactivate Explicit plugin basenames.
+	 * @param array        $plugins_to_deactivate Explicit plugin basenames.
+	 * @phpstan-param list<string> $plugins_to_deactivate
 	 * @param array<int,mixed>    $allowlist_rules       Exact parity approvals.
 	 * @param array<string,mixed> $quality_evidence      Accessibility/performance evidence.
 	 * @param array<string,mixed> $maintenance           Maintenance flags.
@@ -402,15 +404,15 @@ final class CutoverEngine {
 		}
 
 		return array(
-			'schema_version'    => 1,
-			'mode'              => 'production-cutover',
-			'status'            => 'cutover-active',
-			'record_id'         => $record_id,
-			'target_theme'      => self::TARGET_THEME,
+			'schema_version'      => 1,
+			'mode'                => 'production-cutover',
+			'status'              => 'cutover-active',
+			'record_id'           => $record_id,
+			'target_theme'        => self::TARGET_THEME,
 			'plugins_deactivated' => $plan['plugins']['deactivate'],
-			'rollback_available' => true,
-			'accepted'          => false,
-			'safety'            => array(
+			'rollback_available'  => true,
+			'accepted'            => false,
+			'safety'              => array(
 				'backup_verified_before_mutation' => true,
 				'post_cutover_health_passed'      => true,
 				'post_cutover_parity_passed'      => true,
@@ -439,13 +441,13 @@ final class CutoverEngine {
 			return new WP_Error( 'seo_geo_cutover_rollback_unavailable', 'No active unaccepted cutover is available for rollback.' );
 		}
 
-		$before = $record['runtime_before'] ?? null;
+		$before  = $record['runtime_before'] ?? null;
 		$actions = $record['actions'] ?? null;
 		if ( ! is_array( $before ) || ! is_array( $actions ) ) {
 			return new WP_Error( 'seo_geo_cutover_snapshot_invalid', 'Cutover recovery snapshot is incomplete.' );
 		}
 
-		$plugins = isset( $actions['plugins_deactivated'] ) && is_array( $actions['plugins_deactivated'] )
+		$plugins     = isset( $actions['plugins_deactivated'] ) && is_array( $actions['plugins_deactivated'] )
 			? array_values( array_filter( $actions['plugins_deactivated'], 'is_string' ) )
 			: array();
 		$maintenance = isset( $actions['maintenance'] ) && is_array( $actions['maintenance'] ) ? $actions['maintenance'] : array();
@@ -459,7 +461,7 @@ final class CutoverEngine {
 			return new WP_Error( 'seo_geo_cutover_rollback_failed', 'Runtime rollback did not restore the recorded theme/plugin state.' );
 		}
 
-		$baseline = $this->baseline_store->latest();
+		$baseline  = $this->baseline_store->latest();
 		$parity_ok = false;
 		if ( is_array( $baseline ) && isset( $baseline['snapshot'] ) && is_array( $baseline['snapshot'] ) ) {
 			try {
@@ -469,7 +471,7 @@ final class CutoverEngine {
 			}
 		}
 
-		$id = is_string( $record['id'] ?? null ) ? $record['id'] : '';
+		$id          = is_string( $record['id'] ?? null ) ? $record['id'] : '';
 		$next_status = $parity_ok ? 'rolled-back' : 'rolled-back-review-required';
 		$this->store->transition(
 			$id,
@@ -561,11 +563,11 @@ final class CutoverEngine {
 		}
 
 		return array(
-			'schema_version'     => 1,
-			'mode'               => 'production-cutover-acceptance',
-			'status'             => 'accepted',
-			'record_id'          => $id,
-			'rollback_available' => false,
+			'schema_version'             => 1,
+			'mode'                       => 'production-cutover-acceptance',
+			'status'                     => 'accepted',
+			'record_id'                  => $id,
+			'rollback_available'         => false,
 			'recovery_evidence_retained' => true,
 		);
 	}
@@ -594,7 +596,8 @@ final class CutoverEngine {
 	/**
 	 * Apply controlled theme/plugin changes.
 	 *
-	 * @param list<string>        $plugins     Plugins to deactivate.
+	 * @param array        $plugins     Plugins to deactivate.
+	 * @phpstan-param list<string> $plugins
 	 * @param array<string,mixed> $maintenance Maintenance flags.
 	 */
 	private function apply_cutover( array $plugins, array $maintenance ): void {
@@ -615,7 +618,8 @@ final class CutoverEngine {
 	 * Restore the exact runtime state controlled by this cutover.
 	 *
 	 * @param array<string,mixed> $before      Pre-cutover runtime state.
-	 * @param list<string>        $plugins     Plugins deactivated by cutover.
+	 * @param array        $plugins     Plugins deactivated by cutover.
+	 * @phpstan-param list<string> $plugins
 	 * @param array<string,mixed> $maintenance Maintenance flags.
 	 */
 	private function restore_runtime( array $before, array $plugins, array $maintenance ): bool {
@@ -666,7 +670,8 @@ final class CutoverEngine {
 	 * Validate cutover state immediately after mutations.
 	 *
 	 * @param array<string,mixed> $before  Pre-cutover runtime state.
-	 * @param list<string>        $plugins Plugins intentionally deactivated.
+	 * @param array        $plugins Plugins intentionally deactivated.
+	 * @phpstan-param list<string> $plugins
 	 * @return array{healthy:bool,checks:array<string,bool>}
 	 */
 	private function cutover_health( array $before, array $plugins ): array {
@@ -675,9 +680,9 @@ final class CutoverEngine {
 		sort( $expected_active );
 
 		$checks = array(
-			'target_theme_active'       => self::TARGET_THEME === get_stylesheet(),
-			'expected_plugins_active'   => $expected_active === $current_active,
-			'bridge_still_active'       => in_array( self::BRIDGE_PLUGIN, $current_active, true ),
+			'target_theme_active'         => self::TARGET_THEME === get_stylesheet(),
+			'expected_plugins_active'     => $expected_active === $current_active,
+			'bridge_still_active'         => in_array( self::BRIDGE_PLUGIN, $current_active, true ),
 			'protected_options_unchanged' => $this->protected_options() === ( $before['protected_options'] ?? array() ),
 		);
 
@@ -691,7 +696,8 @@ final class CutoverEngine {
 	 * Verify current active cutover state has not drifted before manual rollback.
 	 *
 	 * @param array<string,mixed> $before  Pre-cutover runtime state.
-	 * @param list<string>        $plugins Plugins deactivated by cutover.
+	 * @param array        $plugins Plugins deactivated by cutover.
+	 * @phpstan-param list<string> $plugins
 	 */
 	private function active_cutover_matches_snapshot( array $before, array $plugins ): bool {
 		return $this->cutover_health( $before, $plugins )['healthy'];
@@ -866,7 +872,8 @@ final class CutoverEngine {
 	/**
 	 * Normalize explicit plugin basenames.
 	 *
-	 * @param list<string> $plugins Candidate basenames.
+	 * @param array $plugins Candidate basenames.
+	 * @phpstan-param list<string> $plugins
 	 * @return list<string>
 	 */
 	private function normalize_plugins( array $plugins ): array {
@@ -898,7 +905,8 @@ final class CutoverEngine {
 	 *
 	 * @param array<string,mixed> $requested Requested flags.
 	 * @param array<string,mixed> $runtime   Current runtime.
-	 * @param list<string>        $plugins   Plugins to deactivate.
+	 * @param array        $plugins   Plugins to deactivate.
+	 * @phpstan-param list<string> $plugins
 	 * @return array{flush_rewrites:bool,flush_object_cache:bool,refresh_sitemaps:bool}
 	 */
 	private function normalize_maintenance( array $requested, array $runtime, array $plugins ): array {
@@ -942,7 +950,6 @@ final class CutoverEngine {
 				'post_status'    => 'any',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
-				'meta_key'       => MigrationEngine::STATE_META,
 				'orderby'        => 'ID',
 				'order'          => 'ASC',
 			)
@@ -951,8 +958,12 @@ final class CutoverEngine {
 		$rows = array();
 		foreach ( $ids as $id ) {
 			$object_id = (int) $id;
-			$backup    = get_post_meta( $object_id, MigrationEngine::BACKUP_META, true );
-			$state     = get_post_meta( $object_id, MigrationEngine::STATE_META, true );
+			if ( ! metadata_exists( 'post', $object_id, MigrationEngine::STATE_META ) ) {
+				continue;
+			}
+
+			$backup = get_post_meta( $object_id, MigrationEngine::BACKUP_META, true );
+			$state  = get_post_meta( $object_id, MigrationEngine::STATE_META, true );
 
 			$rows[] = array(
 				'object_id'     => $object_id,
