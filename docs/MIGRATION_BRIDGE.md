@@ -105,7 +105,7 @@ The analyzer therefore does not crawl public URLs, store snapshots or propose de
 
 ## Phase 8B — SEO/GEO baseline snapshot
 
-Status: **implementation candidate**
+Status: **complete**
 
 Phase 8B adds a comparison-oriented public-output snapshot before any migration transformation is allowed.
 
@@ -180,6 +180,58 @@ The Phase 8B snapshot declares:
 - `private_content_collected=false`;
 - `body_content_persisted=false`;
 - `legacy_output_is_authority=false`.
+
+## Phase 8C — Builder and plugin dependency graph
+
+Status: **implementation candidate**
+
+Phase 8C converts the Phase 8A inventory and Phase 8B baseline into a read-only migration plan.
+
+### Content coupling
+
+The bridge scans WordPress resources for dependency signals from:
+
+- native block markup;
+- Elementor edit-mode/data metadata;
+- Divi builder metadata and `et_pb_` shortcode usage;
+- registered shortcode identifiers appearing in content.
+
+The scan may inspect private/draft content in memory because migration planning must know whether those resources depend on a legacy builder. The report never exports private bodies, raw builder payloads or shortcode attributes.
+
+Each coupled resource is represented by object ID, post type, status, public URL only when actually public, builder IDs/evidence and shortcode identifiers.
+
+### Classification contract
+
+Detected components use exactly these classifications:
+
+- `KEEP`: destination-native or authoritative business/operational dependency;
+- `REPLACE`: active SEO/GEO authority candidate whose signals must be migrated before removal;
+- `MIGRATE`: content is directly coupled to a legacy builder;
+- `OPTIONAL`: installed dependency not required by the destination baseline;
+- `REMOVE-CANDIDATE`: inactive/redundant-looking dependency requiring explicit review;
+- `UNKNOWN`: insufficient evidence or conflicting authority.
+
+No classification grants removal authority. Every component has `auto_remove=false`.
+
+### Provider authority candidates
+
+SEO, Schema and multilingual providers are correlated with public signals observed in the Phase 8B baseline. The result distinguishes no active provider, one exclusive active provider candidate, multiple active-provider conflict, and inactive providers only.
+
+This is deliberately conservative: an installed/active provider can be an authority candidate, but the bridge does not claim callback-level ownership without a provider-specific adapter/acceptance contract.
+
+### Graph edges and safety
+
+The machine-readable report includes resource-to-builder and resource-to-shortcode edges so later migration stages can identify exactly which resources block removal.
+
+Phase 8C declares and tests:
+
+- no WordPress mutation during graph generation;
+- no plugin removal;
+- no theme switching;
+- no automatic removal authority;
+- no raw content export;
+- no builder payload export;
+- reuse of the persisted Phase 8B baseline when available.
 
 ## Phase 8A acceptance evidence
 
