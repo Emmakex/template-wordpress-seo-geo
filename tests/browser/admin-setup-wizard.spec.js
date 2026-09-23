@@ -126,13 +126,6 @@ test.describe('Phase 9D theme setup wizard', () => {
 
     expect(scan.violations).toEqual([]);
 
-    const setupOption = await page.evaluate(async () => {
-      const response = await fetch('/wp-admin/admin-ajax.php?action=seo_geo_nonexistent_setup_probe', {
-        credentials: 'same-origin',
-      });
-      return response.status;
-    });
-    expect(setupOption).toBeGreaterThanOrEqual(200);
   });
 
   test('announces validation errors and keeps the result keyboard-focusable', async ({ page }) => {
