@@ -1847,7 +1847,7 @@ Evidence:
 
 ### Microphase 9C — Entity and GEO configuration
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1871,9 +1871,18 @@ Deliverables:
 - crawler policy reuses Core;
 - GEO/discovery opt-ins reuse existing llms.txt/Markdown/provenance authorities.
 
+9C is closed.
+
+Evidence:
+
+- final candidate `f6592459f3da94353b317d4c7529ee262ca43def` passed Foundation `35891851206`, Package `35891851157`, PHP Quality `35891851148`, WordPress Smoke `35891851159`, Accessibility/Responsive `35891851222`, Performance `35891851165`, Self-contained Theme `35891851408` and Native Multilingual `35891851154`;
+- PR #90 was squash-merged as `215f26e336b7772223a955f1284e500b935d19dd`;
+- post-merge `main` repeated all eight gates successfully: Foundation `35892343305`, Package `35892343445`, PHP Quality `35892343430`, WordPress Smoke `35892343480`, Accessibility/Responsive `35892343290`, Performance `35892343401`, Self-contained Theme `35892343313` and Native Multilingual `35892343413`;
+- zero-plugin runtime proved explicit entity/GEO validation, visible-fact authority retention, invalid claim rejection and unchanged protected setup state.
+
 ### Microphase 9D — Theme-owned wizard UI
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 
