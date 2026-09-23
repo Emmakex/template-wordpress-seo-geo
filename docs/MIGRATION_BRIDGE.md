@@ -403,7 +403,7 @@ The engine may reuse the active theme preset or accept an explicit compatible pr
 
 ## Phase 8F — SEO/GEO parity and regression engine
 
-Status: **implementation candidate**
+Status: **complete**
 
 8F turns the persisted Phase 8B public-output baseline into a strict acceptance reference for the transformed sandbox.
 
@@ -468,85 +468,35 @@ Status: **implementation candidate**
 
 ### Mandatory external recovery evidence
 
-Before any theme switch or plugin deactivation, the cutover engine requires recent evidence for:
+Before any theme switch or plugin deactivation, the cutover engine requires recent evidence for a complete database backup and the uploads tree. Each record contains a recovery reference, SHA-256, creation time, scope and positive byte size; evidence older than 24 hours is rejected.
 
-- a complete database backup;
-- the uploads tree.
-
-Each record must include a recovery reference, SHA-256, creation time, scope and positive byte size. Evidence older than 24 hours is rejected.
-
-The bridge deliberately does not pretend that a WordPress plugin can create provider-independent database/uploads disaster-recovery artifacts. Hosting/CLI backup systems create those artifacts; the bridge validates and records their evidence before mutation.
+The bridge deliberately does not claim to create provider-independent database/uploads disaster-recovery artifacts itself. Hosting or CLI backup systems create those artifacts; the bridge validates and records their evidence before mutation.
 
 ### Internal recovery snapshot
 
-Immediately before cutover the bridge appends a non-autoloaded record under `seo_geo_cutover_history_v1` containing:
+Immediately before cutover the bridge appends a non-autoloaded record under `seo_geo_cutover_history_v1` containing the original active theme/plugins, installed package versions, protected options, persisted baseline/redirect fingerprints, migrated-resource backup fingerprints, external recovery evidence and the exact planned actions.
 
-- original active theme and installed theme versions;
-- exact active-plugin list and plugin versions;
-- protected options: home/site URLs, permalink structure, search visibility and active preset;
-- persisted baseline ID/hash and redirect-map hash;
-- migrated resource IDs plus existing 8E backup/state fingerprints;
-- external database/uploads backup evidence;
-- exact planned actions and parity-allowlist fingerprint.
+Raw 8E rollback bodies are not copied into cutover history.
 
-Raw 8E rollback bodies are not copied into the cutover history.
+### Cutover blockers and mutation boundary
 
-### Cutover blockers
+A plan is blocked while the sandbox marker is enabled, search visibility is disabled, multisite is detected, the target theme or baseline is missing, fresh 8F parity is not accepted, backups are missing/stale, another cutover is active, or an unsafe plugin deactivation is requested.
 
-A production plan is blocked when:
+Only explicit `REPLACE`, `REMOVE-CANDIDATE` and `OPTIONAL` plugin dependencies may be deactivated. `KEEP`, `UNKNOWN` and still-`MIGRATE` dependencies remain blocking. The Migration Bridge itself cannot be deactivated before final acceptance.
 
-- `SEO_GEO_MIGRATION_SANDBOX` is still enabled;
-- WordPress search-engine visibility is disabled;
-- multisite is detected (until a dedicated multisite cutover contract exists);
-- destination theme is missing;
-- the persisted baseline is missing;
-- fresh 8F parity is not accepted;
-- required database/uploads evidence is absent, invalid or stale;
-- another cutover is still `prepared` or `cutover-active`;
-- a requested plugin basename is invalid;
-- a requested plugin is not active;
-- the Migration Bridge itself is requested for deactivation;
-- any dependency classification for a requested plugin is `KEEP`, `UNKNOWN` or `MIGRATE`.
+8G never deletes plugins/themes, clears uploads or resets the database.
 
-Explicit `REPLACE`, `REMOVE-CANDIDATE` and `OPTIONAL` components may be deactivated only when named in the cutover request.
+### Execution, post-check and rollback
 
-### Execution and maintenance
+The engine may switch to `seo-geo-theme`, deactivate only approved explicit plugins, and run rewrite/object-cache/sitemap refresh only when runtime changes require it.
 
-8G may:
+Immediately after cutover it verifies the expected theme/plugin state, continued bridge activity, unchanged protected options and fresh 8F parity. Failure triggers automatic runtime rollback.
 
-- switch to the destination `seo-geo-theme`;
-- deactivate only approved explicit plugin basenames;
-- flush rewrite rules when a theme transition requires it;
-- flush WordPress object cache after runtime changes;
-- refresh WordPress sitemap cache when runtime changes require it.
-
-It never deletes plugins/themes, clears uploads or resets the database. External cache providers remain provider-specific; 8G emits a warning rather than pretending a generic purge covers every cache/CDN.
-
-### Immediate post-cutover health
-
-The engine verifies:
-
-- destination theme is active;
-- active plugins equal the pre-cutover list minus only the explicitly approved deactivations;
-- the Migration Bridge remains active;
-- protected options did not change;
-- a fresh public-output snapshot passes the 8F parity engine.
-
-Any failed runtime/parity post-check triggers automatic restoration of the original theme and deactivated plugins.
-
-### Manual rollback
-
-While status is `cutover-active`, an administrator may explicitly roll back with capability + nonce + confirmation.
-
-Rollback first checks that current runtime still matches the cutover state. If unrelated theme/plugin drift is detected, it refuses to overwrite those external changes.
-
-A successful rollback restores the recorded theme/plugins, reruns required maintenance and verifies fresh parity. If runtime state restores but parity still fails, the record becomes `rolled-back-review-required` and the stored external database/uploads references identify the next disaster-recovery layer.
+Manual rollback is available while status remains `cutover-active`. It first refuses unrelated runtime drift, then restores the recorded theme/plugins and verifies fresh parity. If runtime restoration succeeds but parity does not, the record becomes `rolled-back-review-required` so external database/uploads recovery can be used without hiding the unresolved state.
 
 ### Final acceptance
 
-Acceptance requires a fresh runtime health check and fresh 8F parity. It changes the record from `cutover-active` to `accepted`.
-
-Only explicit acceptance closes runtime rollback. Recovery evidence remains retained for Phase 8H audit/reporting.
+Explicit acceptance requires fresh runtime health and fresh 8F parity. It changes the record to `accepted`, closes runtime rollback and retains recovery evidence for the Phase 8H audit/report.
 
 ## Phase 8A acceptance evidence
 
