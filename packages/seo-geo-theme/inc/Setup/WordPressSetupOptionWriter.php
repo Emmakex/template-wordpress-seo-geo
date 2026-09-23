@@ -18,6 +18,7 @@ final class WordPressSetupOptionWriter implements SetupOptionWriterInterface {
 	/**
 	 * Read one option while preserving absence.
 	 *
+	 * @param string $option_name Option name.
 	 * @return array{exists:bool,value:mixed}
 	 */
 	public function read( string $option_name ): array {
@@ -32,6 +33,9 @@ final class WordPressSetupOptionWriter implements SetupOptionWriterInterface {
 
 	/**
 	 * Persist one exact option value and verify read-back.
+	 *
+	 * @param string $option_name Option name.
+	 * @param mixed  $value       Exact option value.
 	 */
 	public function write( string $option_name, mixed $value ): bool {
 		$current = $this->read( $option_name );
@@ -50,6 +54,8 @@ final class WordPressSetupOptionWriter implements SetupOptionWriterInterface {
 
 	/**
 	 * Remove one option and verify absence.
+	 *
+	 * @param string $option_name Option name.
 	 */
 	public function delete( string $option_name ): bool {
 		$current = $this->read( $option_name );
