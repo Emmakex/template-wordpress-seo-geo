@@ -71,10 +71,10 @@ final class SandboxMigrationLab {
 			'environment'    => array(
 				'sandbox_marker'           => $sandbox_marked,
 				'search_engine_visibility' => $search_discouraged ? 'discouraged' : 'public',
-				'destination_theme'         => $active_stylesheet,
-				'destination_theme_active'  => $destination_active,
-				'baseline_available'        => $baseline_available,
-				'dependency_graph_ready'    => $dependency_complete,
+				'destination_theme'        => $active_stylesheet,
+				'destination_theme_active' => $destination_active,
+				'baseline_available'       => $baseline_available,
+				'dependency_graph_ready'   => $dependency_complete,
 			),
 			'blockers'       => $blockers,
 			'migration'      => array(
@@ -82,11 +82,11 @@ final class SandboxMigrationLab {
 				'summary' => $this->state_summary( $states ),
 			),
 			'safety'         => array(
-				'production_cutover_allowed' => false,
-				'production_mutation_allowed' => false,
-				'indexing_allowed'            => false,
+				'production_cutover_allowed'    => false,
+				'production_mutation_allowed'   => false,
+				'indexing_allowed'              => false,
 				'canonical_competition_allowed' => false,
-				'baseline_is_reference_only'  => true,
+				'baseline_is_reference_only'    => true,
 			),
 		);
 	}
@@ -106,7 +106,7 @@ final class SandboxMigrationLab {
 				continue;
 			}
 
-			$component_id  = $component['component_id'] ?? null;
+			$component_id   = $component['component_id'] ?? null;
 			$classification = $component['classification'] ?? null;
 			if ( ! is_string( $component_id ) || ! is_string( $classification ) ) {
 				continue;
@@ -120,8 +120,8 @@ final class SandboxMigrationLab {
 			};
 
 			$states[] = array(
-				'component_id'  => $component_id,
-				'state'         => $state,
+				'component_id'   => $component_id,
+				'state'          => $state,
 				'classification' => $classification,
 			);
 		}
