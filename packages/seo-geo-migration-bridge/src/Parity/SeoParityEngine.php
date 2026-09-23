@@ -81,7 +81,7 @@ final class SeoParityEngine {
 				);
 			}
 
-			foreach ( $this->schema_conflicts( $after ) as $conflict ) {
+			foreach ( array_merge( $this->ownership_conflicts( $after ), $this->schema_conflicts( $after ) ) as $conflict ) {
 				$this->record_difference(
 					$differences,
 					$allowlist,
@@ -89,7 +89,8 @@ final class SeoParityEngine {
 					$conflict['signal'],
 					$conflict['before'],
 					$conflict['after'],
-					$conflict['reason']
+					$conflict['reason'],
+					false
 				);
 			}
 
@@ -101,7 +102,8 @@ final class SeoParityEngine {
 					'internal-link-broken:' . $broken_path,
 					false,
 					true,
-					'candidate-internal-link-target-is-broken'
+					'candidate-internal-link-target-is-broken',
+					false
 				);
 			}
 
@@ -277,6 +279,51 @@ final class SeoParityEngine {
 	}
 
 	/**
+	 * Detect hard single-owner SEO conflicts in candidate output.
+	 *
+	 * @param array<string,mixed> $page Candidate page.
+	 * @return list<array{signal:string,before:mixed,after:mixed,reason:string}>
+	 */
+	private function ownership_conflicts( array $page ): array {
+		$ownership = isset( $page['ownership'] ) && is_array( $page['ownership'] ) ? $page['ownership'] : array();
+		$conflicts = array();
+
+		foreach (
+			array(
+				'canonical_count'        => 'canonical-owner-conflict',
+				'robots_count'           => 'robots-owner-conflict',
+				'meta_description_count' => 'meta-description-owner-conflict',
+				'title_count'            => 'title-owner-conflict',
+			) as $key => $signal
+		) {
+			$count = isset( $ownership[ $key ] ) ? (int) $ownership[ $key ] : 0;
+			if ( 1 < $count ) {
+				$conflicts[] = array(
+					'signal' => $signal,
+					'before' => 1,
+					'after'  => $count,
+					'reason' => 'candidate-single-owner-signal-is-duplicated',
+				);
+			}
+		}
+
+		$hreflang_duplicates = isset( $ownership['hreflang_duplicates'] ) && is_array( $ownership['hreflang_duplicates'] )
+			? $this->normalize_string_list( $ownership['hreflang_duplicates'] )
+			: array();
+
+		if ( array() !== $hreflang_duplicates ) {
+			$conflicts[] = array(
+				'signal' => 'hreflang-owner-conflict',
+				'before' => array(),
+				'after'  => $hreflang_duplicates,
+				'reason' => 'candidate-hreflang-language-key-is-duplicated',
+			);
+		}
+
+		return $conflicts;
+	}
+
+	/**
 	 * Detect exact duplicate JSON-LD blocks in candidate output.
 	 *
 	 * @param array<string,mixed> $page Candidate page.
@@ -401,6 +448,7 @@ final class SeoParityEngine {
 	 * @param mixed                     $before      Baseline normalized value.
 	 * @param mixed                     $after       Candidate normalized value.
 	 * @param string                    $reason      Difference reason.
+	 * @param bool                      $allowable   Whether an exact allowlist rule may approve this difference.
 	 */
 	private function record_difference(
 		array &$differences,
@@ -409,9 +457,10 @@ final class SeoParityEngine {
 		string $signal,
 		mixed $before,
 		mixed $after,
-		string $reason
+		string $reason,
+		bool $allowable = true
 	): void {
-		$approval = $allowlist->approval( $path, $signal, $before, $after );
+		$approval = $allowable ? $allowlist->approval( $path, $signal, $before, $after ) : null;
 
 		$differences[] = array(
 			'path'          => ParityAllowlist::normalize_path( $path ),
@@ -421,6 +470,7 @@ final class SeoParityEngine {
 			'before_sha256' => ParityAllowlist::fingerprint( $before ),
 			'after_sha256'  => ParityAllowlist::fingerprint( $after ),
 			'allowlist'     => $approval,
+			'allowable'     => $allowable,
 		);
 	}
 
