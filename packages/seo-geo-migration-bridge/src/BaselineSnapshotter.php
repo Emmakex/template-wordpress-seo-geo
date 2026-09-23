@@ -16,9 +16,32 @@ use SeoGeo\MigrationBridge\Http\WordPressHttpClient;
  * Captures a same-origin, anonymous, comparison-oriented migration baseline.
  */
 final class BaselineSnapshotter {
+	/**
+	 * Public URL inventory service.
+	 *
+	 * @var PublicUrlInventory
+	 */
 	private PublicUrlInventory $url_inventory;
+
+	/**
+	 * HTML signal extractor.
+	 *
+	 * @var HtmlSnapshotExtractor
+	 */
 	private HtmlSnapshotExtractor $extractor;
+
+	/**
+	 * Baseline persistence service.
+	 *
+	 * @var BaselineSnapshotStore
+	 */
 	private BaselineSnapshotStore $store;
+
+	/**
+	 * Anonymous HTTP client.
+	 *
+	 * @var HttpClientInterface
+	 */
 	private HttpClientInterface $http;
 
 	/**
