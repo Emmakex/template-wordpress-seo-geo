@@ -383,9 +383,8 @@ final class HtmlSnapshotExtractor {
 				continue;
 			}
 
-			$links = array();
-			$child_xpath = new DOMXPath( $node->ownerDocument );
-			$anchors = $child_xpath->query( './/a[@href]', $node );
+			$links   = array();
+			$anchors = $xpath->query( './/a[@href]', $node );
 			if ( false !== $anchors ) {
 				foreach ( $anchors as $anchor ) {
 					if ( $anchor instanceof DOMElement ) {
