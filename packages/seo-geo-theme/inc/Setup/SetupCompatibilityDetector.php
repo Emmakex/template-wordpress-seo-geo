@@ -52,8 +52,8 @@ final class SetupCompatibilityDetector {
 
 		foreach (
 			array(
-				'woocommerce/woocommerce.php' => array( 'commerce-provider', 'woocommerce' ),
-				'elementor/elementor.php'     => array( 'legacy-builder', 'elementor' ),
+				'woocommerce/woocommerce.php'   => array( 'commerce-provider', 'woocommerce' ),
+				'elementor/elementor.php'       => array( 'legacy-builder', 'elementor' ),
 				'divi-builder/divi-builder.php' => array( 'legacy-builder', 'divi' ),
 			) as $basename => $warning
 		) {
@@ -67,13 +67,13 @@ final class SetupCompatibilityDetector {
 				'seo'      => $seo_provider,
 				'language' => $language_provider,
 			),
-			'warnings'  => $warnings,
-			'safety'    => array(
-				'detection_only'          => true,
-				'integration_required'    => false,
-				'plugins_mutated'         => false,
-				'credentials_read'        => false,
-				'credentials_written'     => false,
+			'warnings' => $warnings,
+			'safety'   => array(
+				'detection_only'       => true,
+				'integration_required' => false,
+				'plugins_mutated'      => false,
+				'credentials_read'     => false,
+				'credentials_written'  => false,
 			),
 		);
 	}
