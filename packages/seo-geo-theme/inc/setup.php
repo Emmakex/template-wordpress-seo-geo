@@ -21,6 +21,7 @@ require_once __DIR__ . '/Setup/SetupOptionWriterInterface.php';
 require_once __DIR__ . '/Setup/WordPressSetupOptionWriter.php';
 require_once __DIR__ . '/Setup/SetupReportStore.php';
 require_once __DIR__ . '/Setup/SetupRewriteMaintenance.php';
+require_once __DIR__ . '/Setup/SetupWriteFailure.php';
 require_once __DIR__ . '/Setup/SetupExecutor.php';
 require_once __DIR__ . '/Wizard/SetupWizardCopy.php';
 require_once __DIR__ . '/Wizard/SetupWizardPreview.php';
