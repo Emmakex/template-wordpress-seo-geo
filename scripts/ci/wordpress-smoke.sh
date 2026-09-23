@@ -300,6 +300,7 @@ SEARCH_ROBOTS_LINE="$(grep -i "name='robots'" "$SEARCH_BODY" | head -n 1 | tr -d
 
 source scripts/ci/migration-bridge-site-analyzer-acceptance.sh
 source scripts/ci/migration-bridge-baseline-acceptance.sh
+source scripts/ci/migration-bridge-dependency-graph-acceptance.sh
 
 printf '[smoke] Checking runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
@@ -310,4 +311,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted a fatal, warning, notice or uncaught error" "no PHP runtime diagnostics" "$MATCH" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; Phase 8B public baseline capture/persistence passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"
+printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; Phase 8B public baseline capture/persistence passed; Phase 8C dependency graph passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"
