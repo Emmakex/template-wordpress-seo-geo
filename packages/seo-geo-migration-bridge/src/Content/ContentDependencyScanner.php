@@ -98,7 +98,7 @@ final class ContentDependencyScanner {
 				$id                    = $detector->id();
 				$builders[]            = array(
 					'id'       => $id,
-					'evidence' => array_values( array_map( 'strval', $result['evidence'] ) ),
+					'evidence' => array_map( 'strval', $result['evidence'] ),
 				);
 				$builder_counts[ $id ] = ( $builder_counts[ $id ] ?? 0 ) + 1;
 			}
@@ -185,7 +185,6 @@ final class ContentDependencyScanner {
 			return null;
 		}
 
-		$url = get_permalink( $post );
-		return false === $url ? null : $url;
+		return get_permalink( $post );
 	}
 }
