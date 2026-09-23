@@ -462,7 +462,7 @@ Accessibility/Responsive and Performance Baseline now include a representative p
 
 ## Phase 8G — Safe cutover and rollback
 
-Status: **implementation candidate**
+Status: **complete**
 
 8G introduces the first production-runtime mutations, but only after the migration has already passed sandbox transformation and 8F parity.
 
@@ -499,6 +499,30 @@ Manual rollback is available while status remains `cutover-active`. It first ref
 ### Final acceptance
 
 Explicit acceptance requires fresh runtime health and fresh 8F parity. It changes the record to `accepted`, closes runtime rollback and retains recovery evidence for the Phase 8H audit/report.
+
+### 8G acceptance evidence
+
+Final implementation candidate `bffb8b1f8a4fec960d681e4e6effdad283aa37e5` passed all six required gates:
+
+- Foundation CI `35875100904`;
+- Phase 1 Package CI `35875100776`;
+- PHP Quality CI `35875100797` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35875100885`;
+- Accessibility & Responsive CI `35875100967`;
+- Performance Baseline CI `35875101125`.
+
+PR #79 was squash-merged as `4693f99b430b83f9039a0943575f13f45f7a82bf`.
+
+Post-merge `main` repeated the six-gate acceptance successfully:
+
+- Foundation CI `35875813384`;
+- Phase 1 Package CI `35875813344`;
+- PHP Quality CI `35875813456`;
+- WordPress Smoke CI `35875813345`;
+- Accessibility & Responsive CI `35875813328`;
+- Performance Baseline CI `35875813333`.
+
+The runtime acceptance proved backup and quality evidence requirements, KEEP/MIGRATE protection, automatic rollback on failed parity, manual rollback, explicit acceptance and rollback closure after acceptance.
 
 ## Phase 8A acceptance evidence
 
