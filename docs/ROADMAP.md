@@ -1373,7 +1373,7 @@ The next roadmap step is Phase 8 — Existing-site adoption and safe migration.
 
 ## Phase 8 — Existing-site adoption and safe migration
 
-Status: **in progress**
+Status: **complete**
 
 Goal:
 
@@ -1722,7 +1722,7 @@ A Phase 8 exit audit found one remaining unmet criterion: no administrator/opera
 
 ### Microphase 8I — Operator UI and Phase 8 exit
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1748,37 +1748,110 @@ Deliverables:
 - WordPress runtime acceptance for EN and ES rendering plus capability enforcement;
 - final Phase 8 exit-criteria audit after merge.
 
+8I is closed.
+
+Evidence:
+
+- final candidate `783c3473363bf5a6dd95b6668db408ebbe0bbd59` passed Foundation `35881439395`, Package `35881439605`, PHP Quality `35881439382`, WordPress Smoke `35881439637`, Accessibility/Responsive `35881439748` and Performance `35881439439`;
+- PR #84 was squash-merged as `e7f9c80ee0a8229917c0995f349ab49a4b0a00c3`;
+- post-merge `main` passed the same six gates again: Foundation `35881964530`, Package `35881964347`, PHP Quality `35881964370`, WordPress Smoke `35881964477`, Accessibility/Responsive `35881964534` and Performance `35881964253`;
+- WordPress Smoke proved EN/ES key completeness, Tools registration, capability enforcement, semantic rendering, privacy boundaries and unchanged protected state.
+
 ### Phase 8 exit criteria
 
-Phase 8 closes only when:
+Phase 8 is **closed**.
+
+All exit criteria are satisfied:
 
 - analysis is non-destructive by default;
-- at least one representative legacy WordPress fixture is migrated through sandbox rather than production-first;
+- representative legacy fixtures migrate through sandbox rather than production-first;
 - builder/plugin dependencies are explicitly classified;
-- no tracked SEO-critical URL or signal disappears without an approved migration decision;
+- tracked SEO/GEO signals are parity-gated with explicit approvals;
 - cutover and rollback are tested;
-- Migration Bridge is proven non-required for the final self-contained theme baseline;
-- EN/ES admin/operator UI ships together;
-- required security, PHP quality, WordPress runtime, accessibility and performance gates are green.
+- the final destination theme is self-contained and Migration Bridge is not a runtime dependency;
+- EN/ES operator UI ships together;
+- security, PHP quality, WordPress runtime, accessibility and performance gates are green.
 
 ## Phase 9 — Theme onboarding and operator experience
 
-Status: **planned**
+Status: **active**
 
-The onboarding layer serves both clean installations and sites that arrived through Phase 8 migration.
+The onboarding layer serves both clean installations and sites that arrived through Phase 8 migration. The theme owns onboarding and remains zero-required-plugin.
+
+### Microphase 9A — Setup foundation and migration handoff
+
+Status: **active**
 
 Deliverables:
 
-- theme-owned setup wizard/admin screen;
-- preset choice, including the completed five-preset catalog;
-- primary/additional language configuration;
-- organization/entity basics;
-- crawler/GEO opt-ins;
-- generated setup report;
-- migrated-site mode that can consume an accepted Migration Bridge report without making the bridge a runtime dependency;
-- optional detection of external systems only for compatibility warnings or enhancements.
+- versioned theme-owned setup configuration contract;
+- read-only setup plan before any setup option mutation;
+- allowlisted access to the completed five-preset catalog;
+- read-only consumer for accepted `seo_geo_migration_report_v1` without loading Migration Bridge;
+- clean-install versus migrated-site mode resolution;
+- compatibility warnings from detected external systems without making them required;
+- explicit 9A safety flags: no page creation, plugin installation, plugin activation/deactivation, external credentials or setup mutations.
 
-The onboarding flow must not instruct users to install an SEO/GEO plugin to complete the baseline setup.
+### Microphase 9B — Preset and language configuration
+
+Status: **planned**
+
+Deliverables:
+
+- explicit choice across all five completed presets;
+- primary/additional language configuration through the existing native language authority;
+- routing/x-default validation;
+- no automatic translation or route fabrication.
+
+### Microphase 9C — Entity and GEO configuration
+
+Status: **planned**
+
+Deliverables:
+
+- explicit organization/local-business identity basics;
+- existing visible-fact gates remain authoritative;
+- crawler policy reuses Core;
+- GEO/discovery opt-ins reuse existing llms.txt/Markdown/provenance authorities.
+
+### Microphase 9D — Theme-owned wizard UI
+
+Status: **planned**
+
+Deliverables:
+
+- WordPress-native theme setup screen;
+- EN/ES operator copy together;
+- capability, nonce and explicit confirmation for mutations;
+- accessible keyboard/focus/error behavior;
+- responsive administration layout.
+
+### Microphase 9E — Setup execution and generated report
+
+Status: **planned**
+
+Deliverables:
+
+- atomic application of validated setup choices;
+- migrated-site handoff consumption without Migration Bridge runtime dependency;
+- advisory compatibility warnings;
+- non-sensitive generated setup report;
+- idempotent rerun/update behavior.
+
+### Microphase 9F — Onboarding acceptance
+
+Status: **planned**
+
+Deliverables:
+
+- clean-install and migrated-site acceptance;
+- zero-required-plugin acceptance;
+- EN/ES browser accessibility/responsive acceptance;
+- performance baseline;
+- security/PHP quality/static contracts;
+- proof that onboarding never instructs installation of an SEO/GEO plugin.
+
+The onboarding flow must not install or require an SEO/GEO plugin to complete the baseline setup.
 
 ## Phase 10 — Distribution and production release
 
