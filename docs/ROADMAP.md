@@ -1815,7 +1815,7 @@ Evidence:
 
 ### Microphase 9B — Preset and language configuration
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1836,9 +1836,18 @@ Deliverables:
 - routing/x-default validation;
 - no automatic translation or route fabrication.
 
+9B is closed.
+
+Evidence:
+
+- final candidate `bf0f0530204a3ed8e84f575f6fb2b76a380ff6c5` passed Foundation `35889610406`, Package `35889610241`, PHP Quality `35889610245`, WordPress Smoke `35889610203`, Self-contained Theme `35889610206`, Native Multilingual `35889610240`, Accessibility/Responsive `35889610358` and Performance `35889610374`;
+- PR #88 was squash-merged as `0bc511ccc175b63df842db2b7b9bf181f7c1fda3`;
+- post-merge `main` passed the same eight gates again: Foundation `35890113366`, Package `35890113361`, PHP Quality `35890113304`, WordPress Smoke `35890113371`, Self-contained Theme `35890113329`, Native Multilingual `35890113300`, Accessibility/Responsive `35890113277` and Performance `35890113320`;
+- self-contained runtime proved normalized explicit preset/language validation, invalid preset/locale/routing rejection and unchanged protected setup state.
+
 ### Microphase 9C — Entity and GEO configuration
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 

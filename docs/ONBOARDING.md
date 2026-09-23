@@ -93,7 +93,7 @@ The self-contained acceptance proved both clean-install and migrated-site setup 
 
 ## Phase 9B — Preset and language configuration
 
-Status: **implementation candidate**
+Status: **complete**
 
 9B adds validated, explicit preset and native-language configuration on top of the read-only 9A plan. It still performs no persistence; atomic setup writes remain reserved for Phase 9E.
 
@@ -126,3 +126,37 @@ Validation:
 - never persists preset/language options or mutates provider/plugin state.
 
 Self-contained acceptance validates a correct Corporate EN/ES prefix configuration plus unsupported-preset, duplicate-locale and single-language-prefix failures while proving setup options remain unchanged.
+
+### 9B acceptance evidence
+
+Final candidate `bf0f0530204a3ed8e84f575f6fb2b76a380ff6c5` passed:
+
+- Foundation CI `35889610406`;
+- Phase 1 Package CI `35889610241`;
+- PHP Quality CI `35889610245` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35889610203`;
+- Self-contained Theme CI `35889610206`;
+- Native Multilingual CI `35889610240`;
+- Accessibility & Responsive CI `35889610358`;
+- Performance Baseline CI `35889610374`.
+
+PR #88 was squash-merged as `0bc511ccc175b63df842db2b7b9bf181f7c1fda3`.
+
+Post-merge `main` repeated all eight gates successfully:
+
+- Foundation CI `35890113366`;
+- Phase 1 Package CI `35890113361`;
+- PHP Quality CI `35890113304`;
+- WordPress Smoke CI `35890113371`;
+- Self-contained Theme CI `35890113329`;
+- Native Multilingual CI `35890113300`;
+- Accessibility & Responsive CI `35890113277`;
+- Performance Baseline CI `35890113320`.
+
+The runtime acceptance proved explicit preset/native-language normalization, invalid preset/locale/routing rejection and unchanged setup state.
+
+## Phase 9C — Entity and GEO configuration
+
+Status: **active**
+
+9C validates explicit site-entity and GEO/discovery choices by composing the existing Core authorities. It must not fabricate organization/local-business facts, addresses, coordinates, ratings, crawler guarantees or content selections.
