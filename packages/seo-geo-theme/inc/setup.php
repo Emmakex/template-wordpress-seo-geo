@@ -17,6 +17,10 @@ require_once __DIR__ . '/Setup/SetupCompatibilityDetector.php';
 require_once __DIR__ . '/Setup/SetupPlanner.php';
 require_once __DIR__ . '/Setup/PresetLanguageValidator.php';
 require_once __DIR__ . '/Setup/EntityGeoValidator.php';
+require_once __DIR__ . '/Setup/SetupOptionWriterInterface.php';
+require_once __DIR__ . '/Setup/WordPressSetupOptionWriter.php';
+require_once __DIR__ . '/Setup/SetupReportStore.php';
+require_once __DIR__ . '/Setup/SetupExecutor.php';
 require_once __DIR__ . '/Wizard/SetupWizardCopy.php';
 require_once __DIR__ . '/Wizard/SetupWizardPreview.php';
 require_once __DIR__ . '/Wizard/AdminSetupWizard.php';
@@ -50,6 +54,26 @@ function seo_geo_theme_validate_preset_language_setup( array $input ): array {
  */
 function seo_geo_theme_validate_entity_geo_setup( array $input ): array {
 	return ( new \SeoGeo\Theme\Setup\EntityGeoValidator() )->validate( $input );
+}
+
+/**
+ * Validate and atomically apply one complete setup candidate.
+ *
+ * @param array<string,mixed> $input     Explicit setup values.
+ * @param bool                $confirmed Explicit save acknowledgement.
+ * @return array<string,mixed>
+ */
+function seo_geo_theme_apply_setup( array $input, bool $confirmed ): array {
+	return ( new \SeoGeo\Theme\Setup\SetupExecutor() )->execute( $input, $confirmed );
+}
+
+/**
+ * Return the latest non-sensitive setup report.
+ *
+ * @return array<string,mixed>|null
+ */
+function seo_geo_theme_setup_report(): ?array {
+	return ( new \SeoGeo\Theme\Setup\SetupReportStore() )->latest();
 }
 
 /**
