@@ -93,6 +93,36 @@ The self-contained acceptance proved both clean-install and migrated-site setup 
 
 ## Phase 9B — Preset and language configuration
 
-Status: **active**
+Status: **implementation candidate**
 
-9B will add validated, explicit preset and native-language configuration on top of the read-only 9A plan. It will not create translations, invent routes or silently change external-provider ownership.
+9B adds validated, explicit preset and native-language configuration on top of the read-only 9A plan. It still performs no persistence; atomic setup writes remain reserved for Phase 9E.
+
+The public validation entrypoint is:
+
+```php
+$result = seo_geo_theme_validate_preset_language_setup(
+    array(
+        'preset'           => 'corporate',
+        'default_language' => 'en',
+        'languages'        => array(
+            'en' => 'en_US',
+            'es' => 'es_ES',
+        ),
+        'routing'          => 'prefix',
+        'x_default'        => 'en',
+    )
+);
+```
+
+Validation:
+
+- accepts only the five allowlisted presets;
+- delegates language-map validation to `NativeLanguageConfiguration::from_array()`;
+- normalizes through the same Core authority later used by runtime;
+- rejects duplicate locales, invalid codes/locales, unknown routing modes, invalid default/x-default values and single-language prefix routing;
+- reports preset baseline locales that are not configured as advisory warnings rather than fabricating languages;
+- warns when a third-party multilingual provider currently owns language behavior;
+- never creates translations or routes;
+- never persists preset/language options or mutates provider/plugin state.
+
+Self-contained acceptance validates a correct Corporate EN/ES prefix configuration plus unsupported-preset, duplicate-locale and single-language-prefix failures while proving setup options remain unchanged.

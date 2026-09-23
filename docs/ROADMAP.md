@@ -1815,7 +1815,19 @@ Evidence:
 
 ### Microphase 9B — Preset and language configuration
 
-Status: **active**
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- `seo_geo_theme_validate_preset_language_setup()` validates explicit choices without persistence;
+- only the completed five-preset allowlist is accepted;
+- `NativeLanguageConfiguration::from_array()` provides strict pre-persistence validation using the same Core rules as runtime;
+- `NativeLanguageConfiguration::to_array()` exports normalized default/languages/routing/x-default state;
+- duplicate locales, malformed language maps, unsupported presets and single-language prefix routing are rejected;
+- preset baseline locales not selected are advisory only and are never auto-created;
+- external language-provider ownership is reported as a warning rather than silently overridden;
+- validation creates no translations/routes and mutates no setup/provider/plugin state;
+- self-contained acceptance fingerprints setup state before/after valid and invalid cases.
 
 Deliverables:
 

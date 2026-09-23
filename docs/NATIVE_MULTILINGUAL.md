@@ -55,6 +55,26 @@ Rules:
 - malformed configuration is rejected atomically rather than partially applied;
 - no browser, URL parameter or client-side value can grant or mutate the configured language set.
 
+## Strict onboarding validation
+
+Phase 9B exposes the same native-language authority for pre-persistence validation:
+
+```php
+$config = \SeoGeo\Core\Language\NativeLanguageConfiguration::from_array( $candidate );
+```
+
+Unlike `from_wordpress()`, invalid explicit input returns `null` instead of falling back. This lets onboarding reject malformed language maps before any option is written while keeping runtime fallback behavior unchanged.
+
+A valid configuration can be exported in normalized form through:
+
+```php
+$normalized = $config->to_array();
+```
+
+The normalized form contains `default`, `languages`, `routing` and `x_default`. It uses the same validation rules as runtime: safe locales, unique locale ownership, configured default/x-default and allowlisted routing modes.
+
+Phase 9B adds one onboarding rule on top of Core validation: `prefix` routing is rejected for a single-language configuration because no translated namespace exists to route.
+
 ## Safe fallback
 
 When the option is absent or invalid, native mode remains a normal single-language WordPress site:
