@@ -215,6 +215,22 @@ Only reports with `ready_for_handoff=true` may be persisted to `seo_geo_migratio
 
 The handoff report contains hashes/references and bounded metrics only. It does not contain post bodies, builder payloads, credentials or raw backup artifacts, and it is explicitly not a runtime dependency.
 
+## Phase 8I — Operator UI
+
+The temporary bridge now exposes a read-only operator screen under **Tools → SEO/GEO Migration**.
+
+The screen:
+
+- requires `manage_options`;
+- ships English and Spanish copy together;
+- summarizes baseline, dependency-plan, cutover and final-report status;
+- shows blocking/advisory review counts plus bridge disposition;
+- resolves the safest next step without executing it;
+- contains no mutation form or POST endpoint;
+- renders bounded metadata only and never exposes private bodies, builder payloads, credentials or raw backup artifacts.
+
+`Plugin::operator_status()` exposes the same bounded read-only state for acceptance/diagnostics.
+
 ## Safety boundary
 
 The bridge follows these rules:
