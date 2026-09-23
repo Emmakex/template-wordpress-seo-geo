@@ -526,7 +526,7 @@ The runtime acceptance proved backup and quality evidence requirements, KEEP/MIG
 
 ## Phase 8H — Migration report
 
-Status: **implementation candidate**
+Status: **complete**
 
 8H converts the migration evidence into one stable handoff artifact that Phase 9 can consume after the temporary Migration Bridge is removed.
 
@@ -566,6 +566,32 @@ $storage = \SeoGeo\MigrationBridge\Plugin::migration_report_store()?->save( $rep
 The stable handoff option is `seo_geo_migration_report_v1`, stored non-autoloaded. Phase 9 may read that option without loading the Migration Bridge plugin.
 
 The report/store contract forbids private post bodies, raw Elementor/Divi payloads, credentials and raw database/uploads backup content.
+
+### 8H acceptance evidence
+
+Final implementation candidate `62a3a9914469f74d5a88e586b3409b1b6388649f` passed:
+
+- Foundation CI `35878260227`;
+- Phase 1 Package CI `35878260279`;
+- PHP Quality CI `35878260020` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35878260287`;
+- Accessibility & Responsive CI `35878260087`;
+- Performance Baseline CI `35878260054`.
+
+PR #81 was squash-merged as `20df50545f84a14cd172147259e1233447660424`.
+
+Post-merge `main` repeated all six gates successfully:
+
+- Foundation CI `35878908448`;
+- Phase 1 Package CI `35878908405`;
+- PHP Quality CI `35878908466`;
+- WordPress Smoke CI `35878908657`;
+- Accessibility & Responsive CI `35878908524`;
+- Performance Baseline CI `35878908520`.
+
+WordPress Smoke proved that the final report consolidates dependencies, migrated-resource fingerprints, fresh parity, quality comparisons, manual-review rows and accepted cutover evidence; persistence is non-autoloaded and private bodies/raw backup content are absent.
+
+Phase 8 is complete. The Migration Bridge remains a temporary migration tool; its persisted `seo_geo_migration_report_v1` handoff may be consumed by Phase 9 without loading this plugin at runtime.
 
 ## Phase 8A acceptance evidence
 
