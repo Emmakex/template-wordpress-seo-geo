@@ -92,6 +92,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 *
 	 * @param WP_Post $post Resource to transform.
 	 * @return array{content:string,delete_meta:list<string>,update_meta:array<string,mixed>}
+	 * @throws RuntimeException When the Divi tree cannot be migrated safely.
 	 */
 	public function transform( WP_Post $post ): array {
 		$plan = $this->plan( $post );
@@ -123,12 +124,12 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 * @return list<array<string,mixed>>|null
 	 */
 	private function parse_tree( string $content ): ?array {
-		$root = array(
+		$root   = array(
 			'tag'      => '__root__',
 			'attrs'    => array(),
 			'children' => array(),
 		);
-		$stack = array( &$root );
+		$stack  = array( &$root );
 		$offset = 0;
 
 		if ( false === preg_match_all( '/\[(\/?)(et_pb_[a-z0-9_]+)([^\]]*)\]/i', $content, $matches, PREG_OFFSET_CAPTURE ) ) {
@@ -205,7 +206,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 *
 	 * @param list<array<string,mixed>> $nodes     Parsed nodes.
 	 * @param array<string,int>          $tags      Tag counts.
-	 * @param list<int>                  $media_ids Media IDs.
+	 * @param array                      $media_ids Media IDs.
+	 * @phpstan-param list<int> $media_ids
 	 */
 	private function collect_tags( array $nodes, array &$tags, array &$media_ids ): void {
 		foreach ( $nodes as $node ) {
@@ -239,7 +241,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 * Render parsed nodes to native blocks.
 	 *
 	 * @param list<array<string,mixed>> $nodes  Parsed nodes.
-	 * @param list<string>              $blocks Serialized blocks.
+	 * @param array                     $blocks Serialized blocks.
+	 * @phpstan-param list<string> $blocks
 	 */
 	private function render_nodes( array $nodes, array &$blocks ): void {
 		foreach ( $nodes as $node ) {
@@ -270,6 +273,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 * @param string                    $tag      Module tag.
 	 * @param array<string,mixed>       $attrs    Module attributes.
 	 * @param list<array<string,mixed>> $children Module children.
+	 * @throws RuntimeException When an unsupported module reaches transformation.
 	 */
 	private function render_module( string $tag, array $attrs, array $children ): string {
 		return match ( $tag ) {
@@ -286,6 +290,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 * Return concatenated literal child text.
 	 *
 	 * @param list<array<string,mixed>> $children Child nodes.
+	 * @throws RuntimeException When a text module contains nested modules.
 	 */
 	private function children_text( array $children ): string {
 		$text = '';
@@ -328,6 +333,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 * Render Divi image preserving media ID where available.
 	 *
 	 * @param array<string,mixed> $attrs Module attributes.
+	 * @throws RuntimeException When an image has no usable source.
 	 */
 	private function image_block( array $attrs ): string {
 		$id  = isset( $attrs['attachment_id'] ) ? (int) $attrs['attachment_id'] : 0;
@@ -344,9 +350,9 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			throw new RuntimeException( 'Divi image module has no usable media URL.' );
 		}
 
-		$alt   = isset( $attrs['alt'] ) && is_string( $attrs['alt'] ) ? $attrs['alt'] : '';
+		$alt        = isset( $attrs['alt'] ) && is_string( $attrs['alt'] ) ? $attrs['alt'] : '';
 		$attrs_json = 0 < $id ? ' {"id":' . $id . ',"sizeSlug":"full","linkDestination":"none"}' : ' {"sizeSlug":"full","linkDestination":"none"}';
-		$class = 0 < $id ? ' class="wp-image-' . $id . '"' : '';
+		$class      = 0 < $id ? ' class="wp-image-' . $id . '"' : '';
 
 		return '<!-- wp:image' . $attrs_json . ' --><figure class="wp-block-image size-full"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt ) . '"' . $class . '/></figure><!-- /wp:image -->';
 	}
