@@ -94,10 +94,10 @@ final class OperatorStatus {
 		$cutover_status = $this->cutover_status( $cutover );
 
 		return array(
-			'schema_version' => 1,
-			'mode'           => 'operator-status-read-only',
-			'generated_at'   => gmdate( DATE_ATOM ),
-			'baseline'       => array(
+			'schema_version'  => 1,
+			'mode'            => 'operator-status-read-only',
+			'generated_at'    => gmdate( DATE_ATOM ),
+			'baseline'        => array(
 				'available' => is_array( $baseline ),
 				'id'        => is_array( $baseline ) && is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256'    => is_array( $baseline ) && is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
@@ -110,7 +110,7 @@ final class OperatorStatus {
 				$cutover_status,
 				$final_report
 			),
-			'safety' => array(
+			'safety'          => array(
 				'mutations_performed'          => false,
 				'private_content_exported'     => false,
 				'builder_payload_exported'     => false,
