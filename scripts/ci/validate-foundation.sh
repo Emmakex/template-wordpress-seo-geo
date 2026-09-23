@@ -109,6 +109,13 @@ required_paths=(
   "packages/seo-geo-migration-bridge/src/BaselineSnapshotStore.php"
   "packages/seo-geo-migration-bridge/src/Http/HttpClientInterface.php"
   "packages/seo-geo-migration-bridge/src/Http/WordPressHttpClient.php"
+  "packages/seo-geo-migration-bridge/src/DependencyGraphBuilder.php"
+  "packages/seo-geo-migration-bridge/src/ProviderAuthorityResolver.php"
+  "packages/seo-geo-migration-bridge/src/Content/ContentDependencyDetectorInterface.php"
+  "packages/seo-geo-migration-bridge/src/Content/ContentDependencyScanner.php"
+  "packages/seo-geo-migration-bridge/src/Content/NativeBlocksContentDetector.php"
+  "packages/seo-geo-migration-bridge/src/Content/ElementorContentDetector.php"
+  "packages/seo-geo-migration-bridge/src/Content/DiviContentDetector.php"
   "packages/seo-geo-migration-bridge/src/Builders/BuilderDetectorInterface.php"
   "packages/seo-geo-migration-bridge/src/Builders/NativeBlocksDetector.php"
   "packages/seo-geo-migration-bridge/src/Builders/ElementorDetector.php"
@@ -131,6 +138,7 @@ required_paths=(
   "scripts/ci/validate-migration-bridge.php"
   "scripts/ci/migration-bridge-site-analyzer-acceptance.sh"
   "scripts/ci/migration-bridge-baseline-acceptance.sh"
+  "scripts/ci/migration-bridge-dependency-graph-acceptance.sh"
   "scripts/ci/native-language-smoke.sh"
   "scripts/ci/native-routing-smoke.sh"
   "scripts/ci/native-translation-relations-smoke.sh"
@@ -167,4 +175,4 @@ php scripts/ci/validate-saas-digital-product-preset.php
 php scripts/ci/validate-migration-bridge.php
 bash scripts/ci/validate-ci-path-scope.sh
 
-printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts, the Phase 8A/8B Migration Bridge safety contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
+printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts, the Phase 8A/8B/8C Migration Bridge safety contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
