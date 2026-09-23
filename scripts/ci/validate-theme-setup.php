@@ -174,7 +174,9 @@ foreach (
 		'wp_verify_nonce(',
 		'wp_nonce_field( self::NONCE_ACTION )',
 		"'seo_geo_preview_confirm'",
-		"'seo_geo_validate'",
+		"'seo_geo_apply_confirm'",
+		"'seo_geo_setup_action'",
+		'SetupExecutor',
 		'seo-geo-setup-results',
 		'aria-live',
 	) as $guard
@@ -186,7 +188,7 @@ foreach (
 }
 
 $wizard_copy = (string) file_get_contents( $wizard_dir . '/SetupWizardCopy.php' );
-foreach ( array( "'en' => array(", "'es' => array(", "'preview_confirm'", "'privacy_note'" ) as $guard ) {
+foreach ( array( "'en' => array(", "'es' => array(", "'preview_confirm'", "'apply_confirm'", "'result_applied'", "'privacy_note'" ) as $guard ) {
 	if ( ! str_contains( $wizard_copy, $guard ) ) {
 		fwrite( STDERR, 'Phase 9D EN/ES copy guard missing: ' . $guard . PHP_EOL );
 		exit( 1 );
