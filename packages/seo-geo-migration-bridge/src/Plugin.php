@@ -14,6 +14,8 @@ use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
 use SeoGeo\MigrationBridge\Migration\MigrationEngine;
 use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
+use SeoGeo\MigrationBridge\Report\MigrationReportEngine;
+use SeoGeo\MigrationBridge\Report\MigrationReportStore;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
 
@@ -85,6 +87,20 @@ final class Plugin {
 	private static ?AdminCutoverController $cutover_controller = null;
 
 	/**
+	 * Read-only final migration report engine singleton.
+	 *
+	 * @var MigrationReportEngine|null
+	 */
+	private static ?MigrationReportEngine $migration_report = null;
+
+	/**
+	 * Persistent final migration report store singleton.
+	 *
+	 * @var MigrationReportStore|null
+	 */
+	private static ?MigrationReportStore $migration_report_store = null;
+
+	/**
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
@@ -97,6 +113,8 @@ final class Plugin {
 		self::$parity_engine        ??= new SeoParityEngine();
 		self::$cutover_engine       ??= new CutoverEngine();
 		self::$cutover_controller   ??= new AdminCutoverController( self::$cutover_engine );
+		self::$migration_report     ??= new MigrationReportEngine();
+		self::$migration_report_store ??= new MigrationReportStore();
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -150,5 +168,19 @@ final class Plugin {
 	 */
 	public static function cutover_engine(): ?CutoverEngine {
 		return self::$cutover_engine;
+	}
+
+	/**
+	 * Return the read-only final migration report engine.
+	 */
+	public static function migration_report(): ?MigrationReportEngine {
+		return self::$migration_report;
+	}
+
+	/**
+	 * Return the persistent final migration report store.
+	 */
+	public static function migration_report_store(): ?MigrationReportStore {
+		return self::$migration_report_store;
 	}
 }
