@@ -236,7 +236,7 @@ The runtime acceptance proved explicit entity/GEO normalization, visible-fact au
 
 ## Phase 9D — Theme-owned wizard UI
 
-Status: **implementation candidate**
+Status: **complete**
 
 9D turns the validated 9A–9C setup model into one WordPress-native theme wizard. The UI remains a presentation layer over existing validators and does not introduce parallel preset, language, entity or GEO authorities.
 
@@ -258,3 +258,17 @@ Delivered:
 Self-contained acceptance renders EN/ES, submits a valid nonce-protected preview, verifies assets/capability enforcement and fingerprints protected setup state before/after.
 
 Browser acceptance logs into WordPress admin and exercises the wizard at 320/768/1440 with axe WCAG A/AA, responsive reflow, keyboard navigation, valid preview focus and announced validation errors.
+
+### 9D acceptance evidence
+
+Final candidate `d5ecc25e5ac9506e5c965eef8fd892224218a8cf` passed all eight gates: Foundation `35896877290`, Package `35896877207`, PHP Quality `35896877228`, WordPress Smoke `35896877259`, Self-contained Theme `35896877277`, Native Multilingual `35896877196`, Accessibility/Responsive `35896877471` and Performance `35896877134`.
+
+PR #94 was squash-merged as `a841b3ccee453554e50826176e310c9d7c95310b`.
+
+Post-merge `main` repeated all eight gates successfully: Foundation `35897366497`, Package `35897366553`, PHP Quality `35897366546`, WordPress Smoke `35897366570`, Self-contained Theme `35897366543`, Native Multilingual `35897366527`, Accessibility/Responsive `35897366647` and Performance `35897366562`.
+
+## Phase 9E — Setup execution and generated report
+
+Status: **active**
+
+9E is the first onboarding microphase allowed to persist configuration. Persistence must remain atomic, validator-backed, idempotent and limited to the existing theme/Core option authorities.
