@@ -126,6 +126,50 @@ foreach (
 	}
 }
 
+$entity_geo = (string) file_get_contents( $setup_dir . '/EntityGeoValidator.php' );
+foreach (
+	array(
+		"'entity-geo-validation'",
+		'SchemaIdentityResolver::normalize_site_entity_type',
+		'SchemaLocalBusinessResolver::supported_types',
+		'normalize_address_candidate',
+		'normalize_geo_candidate',
+		'sanitize_configuration',
+		"'visible_fact_gate_required'",
+		"'schema_output_ready'",
+		"'content_provenance'",
+		"'entity_facts_inferred'",
+		"'crawler_guarantees_made'",
+	) as $guard
+) {
+	if ( ! str_contains( $entity_geo, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C entity/GEO guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$identity_authority = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Schema/SchemaIdentityResolver.php' );
+foreach ( array( 'public static function supported_site_entity_types(): array', 'public static function normalize_site_entity_type(' ) as $guard ) {
+	if ( ! str_contains( $identity_authority, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C Schema identity authority guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$local_business_authority = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Schema/SchemaLocalBusinessResolver.php' );
+foreach (
+	array(
+		'public static function supported_types(): array',
+		'public function normalize_address_candidate(',
+		'public function normalize_geo_candidate(',
+	) as $guard
+) {
+	if ( ! str_contains( $local_business_authority, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C LocalBusiness authority guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
 $language_config = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php' );
 foreach ( array( 'public static function from_array(', 'public function to_array(): array' ) as $guard ) {
 	if ( ! str_contains( $language_config, $guard ) ) {
