@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 8A/8B/8C/8D Migration Bridge safety contract.
+ * Validate the Phase 8A/8B/8C/8D/8E Migration Bridge safety contract.
  */
 
 declare(strict_types=1);
@@ -59,6 +59,12 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Content/DiviContentDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxGuard.php',
 	MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxMigrationLab.php',
+	MIGRATION_BRIDGE_DIR . '/src/Migration/BuilderMigrationAdapterInterface.php',
+	MIGRATION_BRIDGE_DIR . '/src/Migration/ElementorMigrationAdapter.php',
+	MIGRATION_BRIDGE_DIR . '/src/Migration/DiviMigrationAdapter.php',
+	MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationPresetResolver.php',
+	MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php',
+	MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -75,7 +81,7 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
-		'Version: 0.4.0',
+		'Version: 0.5.0',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -92,7 +98,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Http/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Sandbox/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Sandbox/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Migration/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -116,12 +123,33 @@ $destructive_calls = array(
 	'wp_schedule_single_event',
 );
 
+$migration_engine_path = MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php';
+$migration_engine_allowed_calls = array(
+	'wp_update_post',
+	'add_post_meta',
+	'update_post_meta',
+	'delete_post_meta',
+);
+
 foreach ( $php_files as $path ) {
 	$source = (string) file_get_contents( $path );
 
 	foreach ( $destructive_calls as $function_name ) {
-		if ( 1 === preg_match( '/\\b' . preg_quote( $function_name, '/' ) . '\\s*\\(/', $source ) ) {
-			fail_migration_bridge( 'destructive-api', 'Migration Bridge contains a forbidden production mutation call.', $path, 'non-destructive migration boundary', $function_name );
+		if ( 1 !== preg_match( '/\\b' . preg_quote( $function_name, '/' ) . '\\s*\\(/', $source ) ) {
+			continue;
+		}
+
+		$is_authorized_engine_call = $migration_engine_path === $path
+			&& in_array( $function_name, $migration_engine_allowed_calls, true );
+
+		if ( ! $is_authorized_engine_call ) {
+			fail_migration_bridge(
+				'destructive-api',
+				'Mutation API exists outside the explicitly authorized Phase 8E Migration Engine boundary.',
+				$path,
+				'only approved sandbox mutation APIs in MigrationEngine.php',
+				$function_name
+			);
 		}
 	}
 }
@@ -257,9 +285,72 @@ foreach (
 	}
 }
 
+$migration_engine = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php' );
+foreach (
+	array(
+		"current_user_can( 'manage_options' )",
+		'current_user_can( \'edit_post\', $object_id )',
+		'wp_verify_nonce(',
+		'if ( ! $confirmed )',
+		'public const BACKUP_META',
+		'add_post_meta( $post->ID, self::BACKUP_META',
+	) as $engine_guard
+) {
+	if ( ! str_contains( $migration_engine, $engine_guard ) ) {
+		fail_migration_bridge( 'migration-engine-safety', 'Phase 8E Migration Engine is missing an authorization or backup guard.', MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php', $engine_guard, 'missing' );
+	}
+}
+
+foreach (
+	array(
+		"/'sandbox_only'\\s*=>\\s*true/",
+		"/'plugin_mutation_allowed'\\s*=>\\s*false/",
+		"/'theme_mutation_allowed'\\s*=>\\s*false/",
+		"/'url_change_allowed'\\s*=>\\s*false/",
+		"/'object_id_change_allowed'\\s*=>\\s*false/",
+		"/'unsupported_content_dropped'\\s*=>\\s*false/",
+	) as $engine_safety_guard
+) {
+	if ( 1 !== preg_match( $engine_safety_guard, $migration_engine ) ) {
+		fail_migration_bridge( 'migration-engine-safety', 'Phase 8E Migration Engine is missing a sandbox/preservation safety declaration.', MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php', $engine_safety_guard, 'missing' );
+	}
+}
+
+$admin_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php' );
+foreach (
+	array(
+		"admin_post_",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer(",
+		'\'migrate\' !== $confirm',
+	) as $controller_guard
+) {
+	if ( ! str_contains( $admin_controller, $controller_guard ) ) {
+		fail_migration_bridge( 'migration-admin-entrypoint', 'Phase 8E administrator entrypoint is missing capability, nonce or explicit-confirmation enforcement.', MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php', $controller_guard, 'missing' );
+	}
+}
+
+$elementor_adapter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Migration/ElementorMigrationAdapter.php' );
+$divi_adapter      = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Migration/DiviMigrationAdapter.php' );
+
+foreach (
+	array(
+		'unsupported-elementor-widget:',
+		'elementor-no-supported-widgets',
+	) as $adapter_guard
+) {
+	if ( ! str_contains( $elementor_adapter, $adapter_guard ) ) {
+		fail_migration_bridge( 'elementor-adapter-blocker', 'Elementor adapter must expose unsupported content as blockers.', MIGRATION_BRIDGE_DIR . '/src/Migration/ElementorMigrationAdapter.php', $adapter_guard, 'missing' );
+	}
+}
+
+if ( ! str_contains( $divi_adapter, 'unsupported-divi-module:' ) ) {
+	fail_migration_bridge( 'divi-adapter-blocker', 'Divi adapter must expose unsupported modules as blockers.', MIGRATION_BRIDGE_DIR . '/src/Migration/DiviMigrationAdapter.php', 'unsupported-divi-module:', 'missing' );
+}
+
 $http_client = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php' );
 if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
 	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
 }
 
-printf( "Migration Bridge static contract OK: Phase 8A is read-only; 8B baseline is bounded; 8C planning is non-destructive; 8D sandbox requires an explicit marker and blocks indexing/cutover.\n" );
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations confined to an authorized, backed-up Migration Engine.\n" );
