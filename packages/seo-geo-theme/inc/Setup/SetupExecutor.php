@@ -78,6 +78,16 @@ final class SetupExecutor {
 	 * @return array<string,mixed>
 	 */
 	public function execute( array $input, bool $confirmed ): array {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return $this->failure(
+				array( 'setup-capability-required' ),
+				array(),
+				null,
+				false,
+				array()
+			);
+		}
+
 		if ( ! $confirmed ) {
 			return $this->failure(
 				array( 'apply-confirmation-required' ),
@@ -111,6 +121,24 @@ final class SetupExecutor {
 			$errors[] = 'migration-handoff-still-runtime-dependent';
 		}
 
+		if (
+			true === ( $handoff['valid'] ?? false )
+			&& 0 < (int) ( $handoff['blocking_review_count'] ?? 0 )
+		) {
+			$errors[] = 'migration-handoff-blocking-review';
+		}
+
+		$warnings = array_values(
+			array_unique(
+				array_merge(
+					$warnings,
+					$this->compatibility_warning_codes(
+						is_array( $plan['compatibility'] ?? null ) ? $plan['compatibility'] : array()
+					)
+				)
+			)
+		);
+
 		if ( array() !== $errors ) {
 			return $this->failure(
 				array_values( array_unique( $errors ) ),
@@ -130,9 +158,20 @@ final class SetupExecutor {
 			)
 		);
 
-		$setup_state = $this->setup_state( $normalized, $handoff_summary, $config_sha256 );
-		$targets     = $authority_options;
+		$setup_state      = $this->setup_state( $normalized, $handoff_summary, $config_sha256 );
+		$targets          = $authority_options;
+		$language_current = $this->writer->read( NativeLanguageConfiguration::OPTION_NAME );
+		$language_changed = true !== $language_current['exists']
+			|| $language_current['value'] !== $authority_options[ NativeLanguageConfiguration::OPTION_NAME ];
+
 		$targets[ SetupConfigurationContract::OPTION_NAME ] = $setup_state;
+
+		if ( $language_changed ) {
+			$targets[ SetupRewriteMaintenance::OPTION_NAME ] = array(
+				'schema_version'       => 1,
+				'configuration_sha256' => $config_sha256,
+			);
+		}
 
 		$existing_report = $this->reports->latest();
 		if (
@@ -171,7 +210,8 @@ final class SetupExecutor {
 				$plan,
 				$warnings,
 				$config_sha256,
-				$changed_options
+				$changed_options,
+				$language_changed
 			);
 
 			$current_report = $snapshots[ SetupReportStore::OPTION_NAME ];
@@ -323,6 +363,7 @@ final class SetupExecutor {
 	 * @param list<string>        $warnings        Validation warnings.
 	 * @param string              $config_sha256   Configuration fingerprint.
 	 * @param list<string>        $changed_options Changed option names.
+	 * @param bool                $rewrite_flush_pending Whether a rewrite flush was scheduled.
 	 * @return array<string,mixed>
 	 */
 	private function report(
@@ -330,7 +371,8 @@ final class SetupExecutor {
 		array $plan,
 		array $warnings,
 		string $config_sha256,
-		array $changed_options
+		array $changed_options,
+		bool $rewrite_flush_pending
 	): array {
 		$preset_language = is_array( $normalized['preset_language'] ?? null ) ? $normalized['preset_language'] : array();
 		$entity_geo      = is_array( $normalized['entity_geo'] ?? null ) ? $normalized['entity_geo'] : array();
@@ -368,6 +410,9 @@ final class SetupExecutor {
 			'compatibility'        => $this->bounded_compatibility( $compatibility ),
 			'validation_warnings'  => $warnings,
 			'changed_options'      => array_values( $changed_options ),
+			'maintenance'          => array(
+				'rewrite_flush_pending' => $rewrite_flush_pending,
+			),
 			'safety'               => array(
 				'pages_created'              => false,
 				'plugins_installed'          => false,
@@ -405,6 +450,29 @@ final class SetupExecutor {
 			'blocking_review_count' => isset( $handoff['blocking_review_count'] ) ? (int) $handoff['blocking_review_count'] : 0,
 			'advisory_review_count' => isset( $handoff['advisory_review_count'] ) ? (int) $handoff['advisory_review_count'] : 0,
 		);
+	}
+
+	/**
+	 * Convert structured compatibility notices into bounded operator warning codes.
+	 *
+	 * @param array<string,mixed> $compatibility Current compatibility result.
+	 * @return list<string>
+	 */
+	private function compatibility_warning_codes( array $compatibility ): array {
+		$warnings = is_array( $compatibility['warnings'] ?? null ) ? $compatibility['warnings'] : array();
+		$codes    = array();
+
+		foreach ( $warnings as $warning ) {
+			if ( ! is_array( $warning ) ) {
+				continue;
+			}
+
+			$type     = is_string( $warning['type'] ?? null ) ? sanitize_key( $warning['type'] ) : 'unknown';
+			$provider = is_string( $warning['provider'] ?? null ) ? sanitize_key( $warning['provider'] ) : 'unknown';
+			$codes[]  = 'compatibility:' . $type . ':' . $provider;
+		}
+
+		return array_values( array_unique( $codes ) );
 	}
 
 	/**
