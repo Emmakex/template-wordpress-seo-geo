@@ -47,6 +47,33 @@ final class SchemaIdentityResolver {
 	}
 
 	/**
+	 * Return supported explicit site entity types.
+	 *
+	 * @return list<string>
+	 */
+	public static function supported_site_entity_types(): array {
+		return array(
+			self::SITE_ENTITY_ORGANIZATION,
+			self::SITE_ENTITY_LOCAL_BUSINESS,
+		);
+	}
+
+	/**
+	 * Normalize one explicit site entity type.
+	 *
+	 * @param mixed $value Candidate entity type.
+	 */
+	public static function normalize_site_entity_type( mixed $value ): ?string {
+		if ( ! is_string( $value ) ) {
+			return null;
+		}
+
+		$value = sanitize_key( $value );
+
+		return in_array( $value, self::supported_site_entity_types(), true ) ? $value : null;
+	}
+
+	/**
 	 * Resolve the explicitly configured site Organization identity.
 	 *
 	 * The site name and home URL remain the authoritative baseline values.
@@ -82,16 +109,7 @@ final class SchemaIdentityResolver {
 			return null;
 		}
 
-		$type = $configuration['site_entity_type'] ?? null;
-		if ( ! is_string( $type ) ) {
-			return null;
-		}
-
-		if ( ! in_array( $type, array( self::SITE_ENTITY_ORGANIZATION, self::SITE_ENTITY_LOCAL_BUSINESS ), true ) ) {
-			return null;
-		}
-
-		return $type;
+		return self::normalize_site_entity_type( $configuration['site_entity_type'] ?? null );
 	}
 
 	/**
