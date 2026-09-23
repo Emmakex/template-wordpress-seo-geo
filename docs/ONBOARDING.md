@@ -236,6 +236,25 @@ The runtime acceptance proved explicit entity/GEO normalization, visible-fact au
 
 ## Phase 9D — Theme-owned wizard UI
 
-Status: **active**
+Status: **implementation candidate**
 
-9D turns the validated 9A–9C setup model into one WordPress-native theme wizard. The UI must remain a presentation layer over existing validators and must not introduce parallel preset, language, entity or GEO authorities.
+9D turns the validated 9A–9C setup model into one WordPress-native theme wizard. The UI remains a presentation layer over existing validators and does not introduce parallel preset, language, entity or GEO authorities.
+
+The theme now registers **Appearance → SEO/GEO Setup**. Phase 9D is preview-only: submitting the form validates the candidate through `PresetLanguageValidator` and `EntityGeoValidator`; it does not persist setup options.
+
+Delivered:
+
+- built-in key-complete English/Spanish copy selected from the WordPress user locale;
+- preset/language, entity and GEO/discovery sections on one native admin screen;
+- current theme/Core state prefilled read-only from the same authorities used at runtime;
+- nonce + `manage_options` capability enforcement for preview submissions;
+- explicit acknowledgement that validation does not save configuration;
+- server-side result summary with errors/warnings and normalized preview;
+- `aria-live` result region plus automatic focus management after validation;
+- responsive admin grid collapsing to one column at the WordPress mobile breakpoint;
+- wizard CSS/JS enqueued only on its own admin page;
+- no setup option writes, page creation, plugin mutation, cron, external credentials or outbound POSTs.
+
+Self-contained acceptance renders EN/ES, submits a valid nonce-protected preview, verifies assets/capability enforcement and fingerprints protected setup state before/after.
+
+Browser acceptance logs into WordPress admin and exercises the wizard at 320/768/1440 with axe WCAG A/AA, responsive reflow, keyboard navigation, valid preview focus and announced validation errors.
