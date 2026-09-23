@@ -196,17 +196,17 @@ foreach (
 $dependency_graph = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php' );
 foreach (
 	array(
-		"'mode'           => 'read-only-planning'",
-		"'mutations_performed'       => false",
-		"'plugin_removal_performed'  => false",
-		"'theme_switch_performed'    => false",
-		"'raw_content_exported'      => false",
-		"'builder_payload_exported'  => false",
-		"'automatic_removal_allowed' => false",
-		"'auto_remove'     => false",
+		"/'mode'\\s*=>\\s*'read-only-planning'/",
+		"/'mutations_performed'\\s*=>\\s*false/",
+		"/'plugin_removal_performed'\\s*=>\\s*false/",
+		"/'theme_switch_performed'\\s*=>\\s*false/",
+		"/'raw_content_exported'\\s*=>\\s*false/",
+		"/'builder_payload_exported'\\s*=>\\s*false/",
+		"/'automatic_removal_allowed'\\s*=>\\s*false/",
+		"/'auto_remove'\\s*=>\\s*false/",
 	) as $graph_guard
 ) {
-	if ( ! str_contains( $dependency_graph, $graph_guard ) ) {
+	if ( 1 !== preg_match( $graph_guard, $dependency_graph ) ) {
 		fail_migration_bridge( 'dependency-graph-safety', 'Phase 8C dependency graph is missing a required non-destructive planning guard.', MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php', $graph_guard, 'missing' );
 	}
 }
@@ -214,12 +214,12 @@ foreach (
 $content_scanner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Content/ContentDependencyScanner.php' );
 foreach (
 	array(
-		"'raw_content_exported'    => false",
-		"'builder_payload_exported' => false",
-		"'private_body_exported'   => false",
+		"/'raw_content_exported'\\s*=>\\s*false/",
+		"/'builder_payload_exported'\\s*=>\\s*false/",
+		"/'private_body_exported'\\s*=>\\s*false/",
 	) as $scanner_guard
 ) {
-	if ( ! str_contains( $content_scanner, $scanner_guard ) ) {
+	if ( 1 !== preg_match( $scanner_guard, $content_scanner ) ) {
 		fail_migration_bridge( 'dependency-scan-privacy', 'Phase 8C content scanner is missing a required privacy guard.', MIGRATION_BRIDGE_DIR . '/src/Content/ContentDependencyScanner.php', $scanner_guard, 'missing' );
 	}
 }
