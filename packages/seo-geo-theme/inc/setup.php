@@ -20,6 +20,7 @@ require_once __DIR__ . '/Setup/EntityGeoValidator.php';
 require_once __DIR__ . '/Setup/SetupOptionWriterInterface.php';
 require_once __DIR__ . '/Setup/WordPressSetupOptionWriter.php';
 require_once __DIR__ . '/Setup/SetupReportStore.php';
+require_once __DIR__ . '/Setup/SetupRewriteMaintenance.php';
 require_once __DIR__ . '/Setup/SetupExecutor.php';
 require_once __DIR__ . '/Wizard/SetupWizardCopy.php';
 require_once __DIR__ . '/Wizard/SetupWizardPreview.php';
@@ -90,3 +91,4 @@ function seo_geo_theme_setup_wizard(): \SeoGeo\Theme\Wizard\AdminSetupWizard {
 }
 
 seo_geo_theme_setup_wizard()->register();
+( new \SeoGeo\Theme\Setup\SetupRewriteMaintenance() )->register();
