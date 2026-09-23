@@ -1595,35 +1595,49 @@ The next microphase is 8F — SEO parity and regression engine.
 
 ### Microphase 8F — SEO parity and regression engine
 
-Status: **implementation candidate**
+Status: **complete**
 
-Current implementation scope:
+Delivered:
 
 - origin-neutral old-vs-new comparison keyed by public path/query rather than staging hostname;
-- exact fingerprint-bound allowlist rules requiring resource path, signal, before/after SHA-256 and reason;
-- URL presence/status/indexability, canonical, robots, title/meta, language, hreflang, Open Graph, Schema type/count, H1, internal-link and primary-content fingerprint comparison;
-- candidate single-owner evidence for title/meta/canonical/robots plus duplicate hreflang detection;
-- hard non-allowable regressions for duplicate canonical/robots/meta/title ownership, duplicate hreflang language keys, duplicate Schema blocks and known broken internal links;
-- redirect-map and sitemap-topology comparison;
-- parity reports expose hashes/status only, not raw before/after content;
-- production cutover remains explicitly disallowed by the parity report;
-- representative post-migration native-block fixture added to Playwright/axe and Lighthouse budgets;
-- Accessibility & Responsive and Performance Baseline workflows now trigger for Migration Bridge/parity changes.
+- URL presence/status/indexability parity for every tracked snapshot resource;
+- canonical, robots, title/meta, HTML language, hreflang and Open Graph comparison;
+- Schema type/block-count comparison plus duplicate JSON-LD fingerprint conflict detection;
+- H1, internal-link and primary-visible-content fingerprint comparison;
+- single-owner evidence for title, meta description, canonical and robots plus duplicate hreflang language-key detection;
+- hard non-allowable regressions for duplicate ownership, duplicate Schema and known broken internal links;
+- redirect-map validation and sitemap topology consistency;
+- exact intentional-difference allowlist bound to path + signal + before/after SHA-256 + non-empty reason;
+- stale allowlist approvals automatically stop matching changed candidate values;
+- parity reports expose hashes/decision metadata rather than raw before/after bodies;
+- production cutover remains explicitly disallowed by the 8F report;
+- representative post-migration native-block fixture added to browser and Lighthouse acceptance;
+- Accessibility & Responsive CI expanded from EN/ES to EN/ES + migration and passed 36/36 Playwright/axe cases;
+- Performance Baseline CI expanded to three pages × three Lighthouse samples;
+- post-migration representative Lighthouse median remained performance 100, LCP 641.68 ms, CLS 0, TBT 0 ms, 18,829 B transfer, 5 requests, 0 third-party requests and 0 project-owned frontend JS;
+- Migration Bridge version 0.6.0.
 
-Deliverables:
+8F is closed.
 
-- old-vs-new comparison for every tracked public URL;
-- URL/status/indexability parity;
-- canonical/robots/hreflang ownership checks;
-- title/meta preservation or explicit approved change;
-- Schema-owner conflict detection;
-- redirect-map validation;
-- internal-link and broken-link checks;
-- sitemap consistency;
-- performance/accessibility checks on representative migrated pages;
-- explicit allowlist for intentional differences so acceptance distinguishes planned improvements from regressions.
+Evidence:
 
-A migration cannot be accepted merely because pages look correct.
+- implementation PR #77 final candidate `080141158162f739ba6bf862720678f11f6e56a8` passed all six required workflows;
+- Foundation CI `35870573572`;
+- Phase 1 Package CI `35870573394`;
+- PHP Quality CI `35870573512` passed WPCS + PHPStan level 6 without suppressions;
+- WordPress Smoke CI `35870573493` proved identical parity, regression detection, exact approval, stale-approval rejection, hard ownership/Schema conflict blocking, broken-link blocking and invalid-snapshot blocking;
+- Accessibility & Responsive CI `35870573412` passed 36/36 cases;
+- Performance Baseline CI `35870573501` passed all enforced budgets;
+- PR #77 was squash-merged as `20822daa6adb287212b287e3b83a0fe3e333e338`;
+- post-merge `main` passed the same six gates again: Foundation `35871165650`, Phase 1 Package `35871165526`, PHP Quality `35871165428`, WordPress Smoke `35871165350`, Accessibility & Responsive `35871165421` and Performance Baseline `35871165554`;
+- post-merge browser acceptance again passed 36/36 cases;
+- post-merge migration Lighthouse median was performance 100, LCP 641.68 ms, CLS 0, TBT 0 ms, 18,829 B transfer, 5 requests, zero third-party requests and zero project-owned frontend JS.
+
+Engineering findings were resolved at source: the initial wildcard/prefix allowlist divergence was replaced by exact fingerprint-bound approvals; WPCS alignment and PHPDoc findings were corrected; `serialize()` was removed from fingerprint fallback; and the single PHPStan redundant blocker comparison was removed without lowering level 6 or adding suppressions.
+
+A migration still cannot be accepted merely because pages look correct. 8F provides evidence only and does not authorize production cutover.
+
+The next microphase is 8G — Safe cutover and rollback.
 
 ### Microphase 8G — Safe cutover and rollback
 
