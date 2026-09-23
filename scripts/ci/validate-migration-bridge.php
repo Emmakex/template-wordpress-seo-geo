@@ -463,7 +463,7 @@ foreach (
 		'update_option(',
 		"'prepared'",
 		"'cutover-active'",
-		"'accepted'",
+		"'status'",
 	) as $cutover_store_guard
 ) {
 	if ( ! str_contains( $cutover_store, $cutover_store_guard ) ) {
