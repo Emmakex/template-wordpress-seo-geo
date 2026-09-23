@@ -102,21 +102,21 @@ final class OperatorStatus {
 				'id'        => is_array( $baseline ) && is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256'    => is_array( $baseline ) && is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
 			),
-			'dependency_plan'=> $dependency,
-			'cutover'        => $cutover_status,
-			'final_report'   => $final_report,
-			'next_step'      => $this->next_step(
+			'dependency_plan' => $dependency,
+			'cutover'         => $cutover_status,
+			'final_report'    => $final_report,
+			'next_step'       => $this->next_step(
 				is_array( $baseline ),
 				$cutover_status,
 				$final_report
 			),
-			'safety'         => array(
-				'mutations_performed'         => false,
-				'private_content_exported'    => false,
-				'builder_payload_exported'    => false,
-				'credentials_exported'        => false,
-				'raw_recovery_exported'       => false,
-				'page_render_executes_actions'=> false,
+			'safety' => array(
+				'mutations_performed'          => false,
+				'private_content_exported'     => false,
+				'builder_payload_exported'     => false,
+				'credentials_exported'         => false,
+				'raw_recovery_exported'        => false,
+				'page_render_executes_actions' => false,
 			),
 		);
 	}
@@ -194,9 +194,9 @@ final class OperatorStatus {
 	 * @return array<string,mixed>
 	 */
 	private function report_status( ?array $envelope, ?array $report ): array {
-		$manual = is_array( $report['manual_review'] ?? null ) ? $report['manual_review'] : array();
-		$blocking = is_array( $manual['blocking'] ?? null ) ? $manual['blocking'] : array();
-		$advisory = is_array( $manual['advisory'] ?? null ) ? $manual['advisory'] : array();
+		$manual      = is_array( $report['manual_review'] ?? null ) ? $report['manual_review'] : array();
+		$blocking    = is_array( $manual['blocking'] ?? null ) ? $manual['blocking'] : array();
+		$advisory    = is_array( $manual['advisory'] ?? null ) ? $manual['advisory'] : array();
 		$disposition = is_array( $report['bridge_disposition'] ?? null ) ? $report['bridge_disposition'] : array();
 
 		return array(
