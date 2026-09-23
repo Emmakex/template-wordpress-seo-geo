@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 8A/8B Migration Bridge safety contract.
+ * Validate the Phase 8A/8B/8C Migration Bridge safety contract.
  */
 
 declare(strict_types=1);
@@ -50,6 +50,13 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Http/HttpClientInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php',
+	MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php',
+	MIGRATION_BRIDGE_DIR . '/src/ProviderAuthorityResolver.php',
+	MIGRATION_BRIDGE_DIR . '/src/Content/ContentDependencyDetectorInterface.php',
+	MIGRATION_BRIDGE_DIR . '/src/Content/ContentDependencyScanner.php',
+	MIGRATION_BRIDGE_DIR . '/src/Content/NativeBlocksContentDetector.php',
+	MIGRATION_BRIDGE_DIR . '/src/Content/ElementorContentDetector.php',
+	MIGRATION_BRIDGE_DIR . '/src/Content/DiviContentDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -66,7 +73,7 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
-		'Version: 0.2.0',
+		'Version: 0.3.0',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -81,7 +88,8 @@ $php_files = array_merge(
 	array( MIGRATION_BRIDGE_DIR . '/seo-geo-migration-bridge.php' ),
 	glob( MIGRATION_BRIDGE_DIR . '/src/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Http/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Http/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -116,8 +124,13 @@ foreach ( $php_files as $path ) {
 }
 
 $read_only_files = array_merge(
-	array( MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php' ),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array()
+	array(
+		MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php',
+		MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php',
+		MIGRATION_BRIDGE_DIR . '/src/ProviderAuthorityResolver.php',
+	),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array()
 );
 
 foreach ( $read_only_files as $path ) {
@@ -180,9 +193,40 @@ foreach (
 	}
 }
 
+$dependency_graph = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php' );
+foreach (
+	array(
+		"'mode'           => 'read-only-planning'",
+		"'mutations_performed'       => false",
+		"'plugin_removal_performed'  => false",
+		"'theme_switch_performed'    => false",
+		"'raw_content_exported'      => false",
+		"'builder_payload_exported'  => false",
+		"'automatic_removal_allowed' => false",
+		"'auto_remove'     => false",
+	) as $graph_guard
+) {
+	if ( ! str_contains( $dependency_graph, $graph_guard ) ) {
+		fail_migration_bridge( 'dependency-graph-safety', 'Phase 8C dependency graph is missing a required non-destructive planning guard.', MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php', $graph_guard, 'missing' );
+	}
+}
+
+$content_scanner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Content/ContentDependencyScanner.php' );
+foreach (
+	array(
+		"'raw_content_exported'    => false",
+		"'builder_payload_exported' => false",
+		"'private_body_exported'   => false",
+	) as $scanner_guard
+) {
+	if ( ! str_contains( $content_scanner, $scanner_guard ) ) {
+		fail_migration_bridge( 'dependency-scan-privacy', 'Phase 8C content scanner is missing a required privacy guard.', MIGRATION_BRIDGE_DIR . '/src/Content/ContentDependencyScanner.php', $scanner_guard, 'missing' );
+	}
+}
+
 $http_client = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php' );
 if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
 	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
 }
 
-printf( "Migration Bridge static contract OK: Phase 8A remains read-only; Phase 8B capture is anonymous/same-origin and persistence is limited to one non-autoloaded bridge option.\n" );
+printf( "Migration Bridge static contract OK: Phase 8A remains read-only; Phase 8B capture is bounded and explicit; Phase 8C dependency planning is non-destructive with no automatic removal or raw payload export.\n" );
