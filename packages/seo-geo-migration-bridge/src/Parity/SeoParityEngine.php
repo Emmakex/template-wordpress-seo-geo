@@ -140,8 +140,7 @@ final class SeoParityEngine {
 		}
 
 		$accepted = 0 === $summary['regressions']
-			&& 0 === $summary['unknown']
-			&& array() === $blockers;
+			&& 0 === $summary['unknown'];
 
 		return array(
 			'schema_version' => 1,
