@@ -25,8 +25,9 @@ final class CutoverSnapshotStore {
 	 * @return array{saved:bool,id:string|null,reason:string|null}
 	 */
 	public function create( array $snapshot ): array {
-		$history = $this->history();
-		$latest  = $this->latest();
+		$history         = $this->history();
+		$latest          = $this->latest();
+		$history_exists  = false !== get_option( self::OPTION_NAME, false );
 
 		if ( is_array( $latest ) && in_array( $latest['status'] ?? null, array( 'prepared', 'cutover-active' ), true ) ) {
 			return array(
@@ -59,7 +60,7 @@ final class CutoverSnapshotStore {
 			'records'        => $history,
 		);
 
-		$saved = array() === $history || false === get_option( self::OPTION_NAME, false )
+		$saved = ! $history_exists
 			? add_option( self::OPTION_NAME, $payload, '', false )
 			: update_option( self::OPTION_NAME, $payload, false );
 
