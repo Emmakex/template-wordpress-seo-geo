@@ -84,6 +84,56 @@ The lab report exposes `migrate`, `manual-review`, `unchanged` and `blocked` sta
 
 A vendor-specific staging feature may create the clone, but it does not replace these provider-neutral acceptance checks.
 
+## Phase 8E — Migration Engine
+
+Phase 8E is the first bridge phase allowed to mutate WordPress content, and only inside an accepted Phase 8D sandbox.
+
+The engine exposes a non-mutating plan first:
+
+```php
+$engine = \SeoGeo\MigrationBridge\Plugin::migration_engine();
+$plan = $engine?->plan( $post_id, 'elementor', 'corporate' );
+```
+
+Execution requires all of the following:
+
+- explicit sandbox readiness from Phase 8D;
+- an administrator with `manage_options` **and** edit permission for the exact resource;
+- a nonce scoped to the exact resource + adapter;
+- an explicit confirmation flag;
+- a supported builder adapter plan with zero blockers;
+- a migration backup created before the content write.
+
+The administrator entrypoint is registered as authenticated `admin_post_seo_geo_migration_execute`; it repeats capability, nonce and explicit-confirmation checks before calling the engine.
+
+### Supported adapter boundary
+
+Phase 8E ships conservative adapters for:
+
+- Elementor: heading, text editor, image, button, divider and spacer;
+- Divi: text, button, image, divider and spacer inside section/row/column structure.
+
+Unknown Elementor widgets and Divi modules become blockers. They are never silently removed.
+
+The adapters target native WordPress core blocks. Builder-specific visual styling/layout settings are not claimed to reproduce pixel-for-pixel; those differences remain visible to sandbox acceptance and later parity/manual review.
+
+### Preservation
+
+The engine changes the existing WordPress resource in place and verifies after mutation that:
+
+- object ID did not change;
+- slug did not change;
+- permalink path did not change;
+- referenced media IDs remain the same where the adapter can preserve them;
+- plugins and active theme are not modified;
+- business systems classified as `KEEP` remain outside the mutation scope.
+
+Before the content write, the engine stores a private rollback source in `_seo_geo_migration_backup_v1`. The public migration result exposes only hashes/status/preservation metadata, not the backup body.
+
+### Preset boundary
+
+An explicitly requested preset must be one of the five bundled presets and must not conflict with the active destination-theme preset. The Migration Engine does not silently switch presets or force content into a different information architecture.
+
 ## Safety boundary
 
 The bridge follows these rules:
@@ -94,9 +144,12 @@ The bridge follows these rules:
 - private/draft content is not inventoried;
 - page bodies are not stored in the baseline;
 - Phase 8B persistence is limited to the dedicated Migration Bridge option;
-- no theme/plugin activation, deactivation, switching or content rewrite occurs;
+- no theme/plugin activation, deactivation or switching occurs;
+- content rewrite is permitted only in Phase 8E's authorized `MigrationEngine.php` sandbox boundary;
 - Phase 8C content scanning exports dependency metadata only, never raw content/builder payloads;
 - Phase 8C never removes plugins, switches themes or rewrites content;
+- Phase 8E mutations require capability + edit permission + nonce + explicit confirmation + backup;
+- unsupported builder structures remain blockers;
 - production transformation/cutover remains a later explicitly authorized phase.
 
 The plugin is temporary adoption tooling and is never required by the final self-contained theme.
