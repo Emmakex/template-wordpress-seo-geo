@@ -70,13 +70,32 @@ final class AdminCutoverController {
 			wp_die( esc_html__( 'Cutover was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 		}
 
+		$backup_evidence  = isset( $_POST['backup_evidence'] ) && is_string( $_POST['backup_evidence'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['backup_evidence'] ) )
+			: '';
+		$plugins          = isset( $_POST['plugins'] ) && is_string( $_POST['plugins'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['plugins'] ) )
+			: '';
+		$allowlist        = isset( $_POST['allowlist'] ) && is_string( $_POST['allowlist'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['allowlist'] ) )
+			: '';
+		$quality_evidence = isset( $_POST['quality_evidence'] ) && is_string( $_POST['quality_evidence'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['quality_evidence'] ) )
+			: '';
+		$maintenance      = isset( $_POST['maintenance'] ) && is_string( $_POST['maintenance'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['maintenance'] ) )
+			: '';
+		$nonce            = isset( $_POST['_wpnonce'] ) && is_string( $_POST['_wpnonce'] )
+			? sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) )
+			: '';
+
 		$result = $this->engine->execute(
-			$this->decode_array_value( $_POST['backup_evidence'] ?? null ),
-			$this->decode_string_list_value( $_POST['plugins'] ?? null ),
-			$this->decode_list_value( $_POST['allowlist'] ?? null ),
-			$this->decode_array_value( $_POST['quality_evidence'] ?? null ),
-			$this->decode_array_value( $_POST['maintenance'] ?? null ),
-			$this->submitted_nonce( $_POST['_wpnonce'] ?? null ),
+			$this->decode_array_value( $backup_evidence ),
+			$this->decode_string_list_value( $plugins ),
+			$this->decode_list_value( $allowlist ),
+			$this->decode_array_value( $quality_evidence ),
+			$this->decode_array_value( $maintenance ),
+			$nonce,
 			true
 		);
 
@@ -98,9 +117,16 @@ final class AdminCutoverController {
 			wp_die( esc_html__( 'Rollback was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 		}
 
+		$allowlist = isset( $_POST['allowlist'] ) && is_string( $_POST['allowlist'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['allowlist'] ) )
+			: '';
+		$nonce     = isset( $_POST['_wpnonce'] ) && is_string( $_POST['_wpnonce'] )
+			? sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) )
+			: '';
+
 		$result = $this->engine->rollback(
-			$this->decode_list_value( $_POST['allowlist'] ?? null ),
-			$this->submitted_nonce( $_POST['_wpnonce'] ?? null ),
+			$this->decode_list_value( $allowlist ),
+			$nonce,
 			true
 		);
 
@@ -122,9 +148,16 @@ final class AdminCutoverController {
 			wp_die( esc_html__( 'Acceptance was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 		}
 
+		$allowlist = isset( $_POST['allowlist'] ) && is_string( $_POST['allowlist'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['allowlist'] ) )
+			: '';
+		$nonce     = isset( $_POST['_wpnonce'] ) && is_string( $_POST['_wpnonce'] )
+			? sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) )
+			: '';
+
 		$result = $this->engine->accept(
-			$this->decode_list_value( $_POST['allowlist'] ?? null ),
-			$this->submitted_nonce( $_POST['_wpnonce'] ?? null ),
+			$this->decode_list_value( $allowlist ),
+			$nonce,
 			true
 		);
 
@@ -151,7 +184,7 @@ final class AdminCutoverController {
 			return array();
 		}
 
-		$decoded = json_decode( sanitize_textarea_field( wp_unslash( $value ) ), true );
+		$decoded = json_decode( $value, true );
 		return is_array( $decoded ) ? $decoded : array();
 	}
 
@@ -166,7 +199,7 @@ final class AdminCutoverController {
 			return array();
 		}
 
-		$decoded = json_decode( sanitize_textarea_field( wp_unslash( $value ) ), true );
+		$decoded = json_decode( $value, true );
 		return is_array( $decoded ) && array_is_list( $decoded ) ? $decoded : array();
 	}
 
@@ -183,15 +216,6 @@ final class AdminCutoverController {
 				'is_string'
 			)
 		);
-	}
-
-	/**
-	 * Normalize the submitted nonce after request verification.
-	 *
-	 * @param mixed $value Raw nonce value.
-	 */
-	private function submitted_nonce( mixed $value ): string {
-		return is_string( $value ) ? sanitize_text_field( wp_unslash( $value ) ) : '';
 	}
 
 	/**
