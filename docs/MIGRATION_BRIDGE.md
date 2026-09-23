@@ -403,7 +403,7 @@ The engine may reuse the active theme preset or accept an explicit compatible pr
 
 ## Phase 8F — SEO/GEO parity and regression engine
 
-Status: **implementation candidate**
+Status: **complete**
 
 8F turns the persisted Phase 8B public-output baseline into a strict acceptance reference for the transformed sandbox.
 
