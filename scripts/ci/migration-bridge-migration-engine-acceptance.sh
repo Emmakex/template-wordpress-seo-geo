@@ -139,7 +139,8 @@ $theme_before = array(
 $elementor_permalink_before = get_permalink( $elementor_id );
 $divi_permalink_before      = get_permalink( $divi_id );
 $unsupported_before         = get_post( $unsupported_id );
-$unsupported_meta_before    = get_post_meta( $unsupported_id, '_elementor_data', true );
+$unsupported_meta_before    = (string) get_post_meta( $unsupported_id, '_elementor_data', true );
+$unsupported_meta_hash_before = hash( 'sha256', $unsupported_meta_before );
 
 $elementor_plan = $engine->plan( $elementor_id, 'elementor', 'corporate' );
 $divi_plan      = $engine->plan( $divi_id, 'divi', 'corporate' );
@@ -201,7 +202,7 @@ echo wp_json_encode(
 				'permalink'      => get_permalink( $elementor_id ),
 				'content'        => $elementor_after?->post_content,
 				'edit_mode'      => get_post_meta( $elementor_id, '_elementor_edit_mode', true ),
-				'elementor_data' => get_post_meta( $elementor_id, '_elementor_data', true ),
+				'elementor_data_sha256' => hash( 'sha256', (string) get_post_meta( $elementor_id, '_elementor_data', true ) ),
 				'thumbnail_id'   => (int) get_post_meta( $elementor_id, '_thumbnail_id', true ),
 				'backup_exists'  => is_array( $elementor_backup ),
 				'backup_sha256'  => is_array( $elementor_backup ) && is_string( $elementor_backup['sha256'] ?? null ) ? $elementor_backup['sha256'] : null,
@@ -221,15 +222,15 @@ echo wp_json_encode(
 				'id'             => $unsupported_after?->ID,
 				'post_name'      => $unsupported_after?->post_name,
 				'content'        => $unsupported_after?->post_content,
-				'elementor_data' => get_post_meta( $unsupported_id, '_elementor_data', true ),
-				'backup_exists'  => metadata_exists( 'post', $unsupported_id, MigrationEngine::BACKUP_META ),
+				'elementor_data_sha256' => hash( 'sha256', (string) get_post_meta( $unsupported_id, '_elementor_data', true ) ),
+				'backup_exists'         => metadata_exists( 'post', $unsupported_id, MigrationEngine::BACKUP_META ),
 			),
 		),
 		'before' => array(
 			'elementor_permalink' => $elementor_permalink_before,
 			'divi_permalink'      => $divi_permalink_before,
 			'unsupported_content' => $unsupported_before?->post_content,
-			'unsupported_meta'    => $unsupported_meta_before,
+			'unsupported_meta_sha256' => $unsupported_meta_hash_before,
 		),
 		'invariants' => array(
 			'active_plugins_same' => $active_plugins_before === $active_plugins_after,
@@ -343,7 +344,7 @@ assert after["divi"]["state_exists"] is True
 assert after["unsupported"]["id"] == ids["unsupported"]
 assert after["unsupported"]["post_name"] == "unsupported-elementor-fixture"
 assert after["unsupported"]["content"] == report["before"]["unsupported_content"] == "UNSUPPORTED SOURCE MARKER"
-assert after["unsupported"]["elementor_data"] == report["before"]["unsupported_meta"]
+assert after["unsupported"]["elementor_data_sha256"] == report["before"]["unsupported_meta_sha256"]
 assert after["unsupported"]["backup_exists"] is False
 
 assert report["invariants"]["active_plugins_same"] is True
