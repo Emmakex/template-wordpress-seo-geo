@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge;
 
+use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
+use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
+
 /**
  * Exposes migration analysis and baseline services without frontend mutation hooks.
  */
@@ -35,12 +38,22 @@ final class Plugin {
 	private static ?DependencyGraphBuilder $dependency_graph = null;
 
 	/**
+	 * Sandbox migration lab singleton.
+	 *
+	 * @var SandboxMigrationLab|null
+	 */
+	private static ?SandboxMigrationLab $sandbox_lab = null;
+
+	/**
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
 		self::$analyzer             ??= new SiteAnalyzer();
 		self::$baseline_snapshotter ??= new BaselineSnapshotter();
 		self::$dependency_graph     ??= new DependencyGraphBuilder();
+		self::$sandbox_lab          ??= new SandboxMigrationLab();
+
+		SandboxGuard::boot();
 	}
 
 	/**
@@ -62,5 +75,12 @@ final class Plugin {
 	 */
 	public static function dependency_graph(): ?DependencyGraphBuilder {
 		return self::$dependency_graph;
+	}
+
+	/**
+	 * Return the provider-neutral sandbox migration lab.
+	 */
+	public static function sandbox_lab(): ?SandboxMigrationLab {
+		return self::$sandbox_lab;
 	}
 }
