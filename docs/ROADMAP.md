@@ -1514,16 +1514,42 @@ The next microphase is 8D — Sandbox Migration Lab.
 
 ### Microphase 8D — Sandbox Migration Lab
 
-Deliverables:
+Status: **complete**
 
-- documented isolated clone/staging workflow;
-- sandbox is non-indexable and cannot become a competing public canonical source;
-- destination SEO/GEO theme installed only in sandbox first;
-- baseline snapshot imported for comparison;
-- migration-state report showing migrated, blocked, manual-review and unchanged resources;
-- no production cutover before sandbox acceptance.
+Delivered:
 
-The repository should prefer provider-neutral sandbox contracts. Vendor-specific staging integrations remain optional adapters.
+- provider-neutral clone/staging acceptance contract independent from any hosting vendor;
+- explicit `SEO_GEO_MIGRATION_SANDBOX=true` marker required before sandbox runtime guards activate;
+- WordPress search-engine visibility requirement (`blog_public=0`);
+- marker-gated `noindex`, `nofollow` and `noarchive` robots directives;
+- defense-in-depth `X-Robots-Tag: noindex, nofollow, noarchive`;
+- destination `seo-geo-theme` activation required in sandbox before migration readiness;
+- persisted Phase 8B baseline required and reused as comparison reference;
+- Phase 8C dependency graph required before readiness;
+- sandbox readiness blockers for missing marker, public search visibility, wrong theme, missing baseline or missing dependency graph;
+- migration-state projection from 8C classifications into `migrate`, `manual-review`, `unchanged` and `blocked`;
+- explicit declarations that production cutover, production mutation, indexing and canonical competition are not allowed in Phase 8D;
+- protected-state regression proving report generation does not alter posts, postmeta, terms, active plugins, active theme, permalink state or the stored baseline;
+- documented provider-neutral clone/staging workflow in `docs/MIGRATION_BRIDGE.md`;
+- Migration Bridge 0.4.0 and real WordPress 7.1 / PHP 8.2 acceptance.
+
+8D is closed.
+
+Evidence:
+
+- implementation PR #73 passed all four required workflows on final candidate `b31c70df3763435179fb22c78502b048fbd9592d`;
+- Foundation CI `35864681343` validated the Phase 8A–8D static safety contract and required repository paths;
+- Phase 1 Package CI `35864681268` passed package/runtime contract validation;
+- PHP Quality CI `35864681148` passed WPCS and PHPStan level 6 with no new baseline or global suppression;
+- WordPress Smoke CI `35864681238` proved the explicit sandbox marker, destination-theme/baseline/graph readiness, robots meta noindex, X-Robots-Tag and unchanged protected state;
+- PR #73 was squash-merged as `9d9c171967113e7a1c2f98f202d307ef764b3f6d`;
+- post-merge `main` passed all four triggered workflows again: Foundation `35864890150`, Phase 1 Package `35864890171`, PHP Quality `35864889933` and WordPress Smoke `35864890050`.
+
+Adoption findings were resolved at source: WPCS report alignment was corrected without changing behavior, and the final candidate passed PHPStan level 6 without suppressions. No Phase 8D finding required a product rollback or error-register entry.
+
+The repository continues to prefer provider-neutral sandbox contracts. Vendor-specific staging integrations remain optional adapters.
+
+The next microphase is 8E — Migration Engine.
 
 ### Microphase 8E — Migration Engine
 
