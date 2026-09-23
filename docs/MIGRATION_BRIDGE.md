@@ -586,11 +586,28 @@ The remaining Phase 8 exit gap is not report functionality: it is the explicit E
 
 ## Phase 8I — Operator UI and Phase 8 exit
 
-Status: **active**
+Status: **implementation candidate**
 
 8I adds the human-facing migration operations screen needed to close Phase 8 without expanding Phase 9 onboarding scope.
 
-It will provide:
+The plugin now registers a read-only screen under **Tools → SEO/GEO Migration**. It is available only to `manage_options` users and contains no mutation form or POST handler.
+
+Operator state comes from `OperatorStatus`, which exposes only bounded metadata:
+
+- persisted baseline availability/fingerprint;
+- dependency classification counts;
+- latest cutover status;
+- final report availability, review counts and bridge disposition;
+- one safe next-step key;
+- explicit read-only/privacy safety flags.
+
+When the final 8H handoff exists, dependency counts are read from that report. Before handoff, the screen may fall back to the existing 8A/8C read-only analyzer/graph in memory.
+
+`OperatorCopy` ships one key-complete English/Spanish catalog. The selected language follows the WordPress user locale, with English fallback.
+
+The screen never renders post bodies, Elementor/Divi payloads, credentials or raw database/uploads recovery artifacts. Opening the screen does not execute migration, cutover, rollback or report persistence.
+
+It provides:
 
 - one capability-gated WordPress Tools screen for Migration Bridge status;
 - built-in English and Spanish operator copy shipped together;
