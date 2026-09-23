@@ -1,0 +1,90 @@
+.seo-geo-setup-wizard {
+	max-width: 1180px;
+}
+
+.seo-geo-setup-wizard__steps {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+	margin: 18px 0;
+}
+
+.seo-geo-setup-wizard__step {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 12px 14px;
+	font-weight: 600;
+}
+
+.seo-geo-setup-wizard__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px 24px;
+}
+
+.seo-geo-setup-wizard fieldset {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	margin: 20px 0;
+	padding: 18px;
+}
+
+.seo-geo-setup-wizard legend {
+	font-size: 1.1rem;
+	font-weight: 600;
+	padding: 0 6px;
+}
+
+.seo-geo-setup-wizard label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.seo-geo-setup-wizard input[type="text"],
+.seo-geo-setup-wizard textarea,
+.seo-geo-setup-wizard select {
+	box-sizing: border-box;
+	max-width: 100%;
+	width: 100%;
+}
+
+.seo-geo-setup-wizard__checkbox label {
+	display: inline;
+	font-weight: 400;
+}
+
+.seo-geo-setup-wizard__results {
+	margin-top: 24px;
+	outline: none;
+}
+
+.seo-geo-setup-wizard__summary {
+	display: grid;
+	grid-template-columns: minmax(150px, 220px) 1fr;
+	gap: 8px 16px;
+}
+
+.seo-geo-setup-wizard__summary dt {
+	font-weight: 600;
+}
+
+.seo-geo-setup-wizard__summary dd {
+	margin: 0;
+}
+
+@media (max-width: 782px) {
+	.seo-geo-setup-wizard__steps,
+	.seo-geo-setup-wizard__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.seo-geo-setup-wizard fieldset {
+		padding: 14px;
+	}
+
+	.seo-geo-setup-wizard__summary {
+		grid-template-columns: 1fr;
+	}
+}
