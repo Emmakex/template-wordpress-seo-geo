@@ -13,6 +13,8 @@ use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
 use SeoGeo\MigrationBridge\Migration\MigrationEngine;
+use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
+use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
 use SeoGeo\MigrationBridge\Report\MigrationReportEngine;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
@@ -87,6 +89,20 @@ final class Plugin {
 	private static ?AdminCutoverController $cutover_controller = null;
 
 	/**
+	 * Read-only Migration Bridge operator status singleton.
+	 *
+	 * @var OperatorStatus|null
+	 */
+	private static ?OperatorStatus $operator_status = null;
+
+	/**
+	 * Migration Bridge operator screen singleton.
+	 *
+	 * @var AdminOperatorScreen|null
+	 */
+	private static ?AdminOperatorScreen $operator_screen = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -113,12 +129,15 @@ final class Plugin {
 		self::$parity_engine          ??= new SeoParityEngine();
 		self::$cutover_engine         ??= new CutoverEngine();
 		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
+		self::$operator_status        ??= new OperatorStatus();
+		self::$operator_screen        ??= new AdminOperatorScreen( self::$operator_status );
 		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
 		self::$cutover_controller->boot();
+		self::$operator_screen->register();
 	}
 
 	/**
@@ -168,6 +187,13 @@ final class Plugin {
 	 */
 	public static function cutover_engine(): ?CutoverEngine {
 		return self::$cutover_engine;
+	}
+
+	/**
+	 * Return the read-only Migration Bridge operator status service.
+	 */
+	public static function operator_status(): ?OperatorStatus {
+		return self::$operator_status;
 	}
 
 	/**

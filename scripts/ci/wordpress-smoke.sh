@@ -306,6 +306,7 @@ source scripts/ci/migration-bridge-migration-engine-acceptance.sh
 source scripts/ci/migration-bridge-parity-acceptance.sh
 source scripts/ci/migration-bridge-cutover-acceptance.sh
 source scripts/ci/migration-bridge-report-acceptance.sh
+source scripts/ci/migration-bridge-operator-ui-acceptance.sh
 
 printf '[smoke] Checking runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
@@ -316,4 +317,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted a fatal, warning, notice or uncaught error" "no PHP runtime diagnostics" "$MATCH" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; Phase 8B public baseline capture/persistence passed; Phase 8C dependency graph passed; Phase 8D sandbox lab passed; Phase 8E Migration Engine passed; Phase 8F SEO/GEO parity engine passed; Phase 8G safe cutover/rollback passed; Phase 8H migration report passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"
+printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; Phase 8B public baseline capture/persistence passed; Phase 8C dependency graph passed; Phase 8D sandbox lab passed; Phase 8E Migration Engine passed; Phase 8F SEO/GEO parity engine passed; Phase 8G safe cutover/rollback passed; Phase 8H migration report passed; Phase 8I operator UI passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"

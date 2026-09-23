@@ -1722,7 +1722,19 @@ A Phase 8 exit audit found one remaining unmet criterion: no administrator/opera
 
 ### Microphase 8I — Operator UI and Phase 8 exit
 
-Status: **active**
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- a capability-gated Tools → SEO/GEO Migration screen is registered by the temporary Migration Bridge;
+- one built-in key-complete catalog ships English and Spanish operator copy together;
+- the screen is status-only: it exposes no POST form, admin-post mutation endpoint or report-persistence control;
+- baseline, dependency classifications, accepted cutover and final handoff report status are summarized without private bodies or raw recovery artifacts;
+- dependency status reads the persisted final report when available and falls back to live read-only analysis before handoff;
+- blocking/advisory review counts and final bridge disposition are visible;
+- server-side next-step guidance resolves baseline capture, sandbox/parity continuation, cutover acceptance, final report, review or bridge removal;
+- page rendering has explicit safety flags and is runtime-tested against a protected-state fingerprint;
+- runtime acceptance renders both EN and ES, verifies key completeness, semantic headings/tables, Tools registration and unauthorized-user rejection.
 
 Deliverables:
 
