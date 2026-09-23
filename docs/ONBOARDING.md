@@ -4,7 +4,7 @@ Phase 9 makes onboarding a theme-owned capability for both clean installations a
 
 ## Phase 9A — Setup foundation and migration handoff
 
-Status: **implementation candidate**
+Status: **complete**
 
 9A is deliberately read-only. It builds a setup plan but does not persist setup choices, create pages, install/activate/deactivate plugins, store external credentials or load Migration Bridge code.
 
@@ -62,3 +62,29 @@ Self-contained Theme acceptance runs with zero active plugins and proves both pa
 2. synthetic accepted Phase 8 handoff → migrated-site setup plan while Migration Bridge classes are absent.
 
 Protected setup state is fingerprinted before/after planning and must remain unchanged.
+
+
+### Phase 9A acceptance evidence
+
+Final candidate `f89514cc7051da8917fece779d26a8331cd41a72` passed all eight applicable gates:
+
+- Foundation CI `35883921399`;
+- Phase 1 Package CI `35883921389`;
+- PHP Quality CI `35883921378` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35883921384`;
+- Accessibility & Responsive CI `35883921391`;
+- Performance Baseline CI `35883921405`;
+- Self-contained Theme CI `35883921418`;
+- Native Multilingual CI `35883921401`.
+
+PR #86 was squash-merged as `17d4cc185addce336a3f2f86079b03dbf00a3468`.
+
+Post-merge `main` repeated all eight gates successfully: Foundation `35884423588`, Package `35884423936`, PHP Quality `35884423746`, WordPress Smoke `35884423606`, Accessibility/Responsive `35884423721`, Performance `35884423669`, Self-contained Theme `35884423758` and Native Multilingual `35884423933`.
+
+The zero-plugin acceptance explicitly proved clean and migrated setup-plan modes, all five preset choices, migration handoff consumption with Migration Bridge runtime absent and unchanged protected setup state.
+
+## Phase 9B — Preset and language configuration
+
+Status: **active**
+
+9B turns the validated 9A plan into an explicit configuration candidate for preset and native languages. It must reuse the existing preset registry and `NativeLanguageConfiguration`, validate routing/x-default semantics, and still avoid automatic translation or route creation.
