@@ -166,10 +166,10 @@ final class SeoParityEngine {
 				'accessibility' => 'required-on-representative-migrated-pages',
 			),
 			'safety'         => array(
-				'mutations_performed'                 => false,
-				'production_cutover_allowed'          => false,
+				'mutations_performed'                   => false,
+				'production_cutover_allowed'            => false,
 				'allowlist_requires_exact_fingerprints' => true,
-				'legacy_output_is_authority'          => false,
+				'legacy_output_is_authority'            => false,
 			),
 		);
 	}
@@ -219,55 +219,55 @@ final class SeoParityEngine {
 	 */
 	private function page_signals( array $before, array $after ): array {
 		return array(
-			'http-status' => array(
+			'http-status'            => array(
 				'before' => (int) ( $before['http']['status'] ?? 0 ),
 				'after'  => (int) ( $after['http']['status'] ?? 0 ),
 			),
-			'indexability' => array(
+			'indexability'           => array(
 				'before' => $this->normalize_indexability( $before['indexability'] ?? null ),
 				'after'  => $this->normalize_indexability( $after['indexability'] ?? null ),
 			),
-			'canonical' => array(
+			'canonical'              => array(
 				'before' => $this->normalize_optional_url( $before['canonical'] ?? null ),
 				'after'  => $this->normalize_optional_url( $after['canonical'] ?? null ),
 			),
-			'robots' => array(
+			'robots'                 => array(
 				'before' => $this->normalize_directives( $before['robots'] ?? null ),
 				'after'  => $this->normalize_directives( $after['robots'] ?? null ),
 			),
-			'title' => array(
+			'title'                  => array(
 				'before' => $before['title'] ?? null,
 				'after'  => $after['title'] ?? null,
 			),
-			'meta-description' => array(
+			'meta-description'       => array(
 				'before' => $before['meta_description'] ?? null,
 				'after'  => $after['meta_description'] ?? null,
 			),
-			'html-lang' => array(
+			'html-lang'              => array(
 				'before' => $before['html_lang'] ?? null,
 				'after'  => $after['html_lang'] ?? null,
 			),
-			'hreflang' => array(
+			'hreflang'               => array(
 				'before' => $this->normalize_hreflang( $before['hreflang'] ?? array() ),
 				'after'  => $this->normalize_hreflang( $after['hreflang'] ?? array() ),
 			),
-			'open-graph' => array(
+			'open-graph'             => array(
 				'before' => $this->normalize_open_graph( $before['open_graph'] ?? array() ),
 				'after'  => $this->normalize_open_graph( $after['open_graph'] ?? array() ),
 			),
-			'schema-types' => array(
+			'schema-types'           => array(
 				'before' => $this->normalize_string_list( $before['schema']['types'] ?? array() ),
 				'after'  => $this->normalize_string_list( $after['schema']['types'] ?? array() ),
 			),
-			'schema-block-count' => array(
+			'schema-block-count'     => array(
 				'before' => (int) ( $before['schema']['block_count'] ?? 0 ),
 				'after'  => (int) ( $after['schema']['block_count'] ?? 0 ),
 			),
-			'h1-count' => array(
+			'h1-count'               => array(
 				'before' => (int) ( $before['h1_count'] ?? 0 ),
 				'after'  => (int) ( $after['h1_count'] ?? 0 ),
 			),
-			'internal-links' => array(
+			'internal-links'         => array(
 				'before' => $this->normalize_url_list( $before['internal_links'] ?? array() ),
 				'after'  => $this->normalize_url_list( $after['internal_links'] ?? array() ),
 			),
@@ -391,10 +391,10 @@ final class SeoParityEngine {
 	/**
 	 * Compare observed redirect maps.
 	 *
-	 * @param array<string,mixed>        $baseline    Baseline snapshot.
-	 * @param array<string,mixed>        $candidate   Candidate snapshot.
-	 * @param ParityAllowlist            $allowlist   Explicit approvals.
-	 * @param list<array<string,mixed>>  $differences Difference accumulator.
+	 * @param array<string,mixed>       $baseline    Baseline snapshot.
+	 * @param array<string,mixed>       $candidate   Candidate snapshot.
+	 * @param ParityAllowlist           $allowlist   Explicit approvals.
+	 * @param list<array<string,mixed>> $differences Difference accumulator.
 	 */
 	private function compare_redirects( array $baseline, array $candidate, ParityAllowlist $allowlist, array &$differences ): void {
 		$before = $this->redirect_map( $baseline );
@@ -722,7 +722,8 @@ final class SeoParityEngine {
 	/**
 	 * Return a blocked parity report.
 	 *
-	 * @param list<string> $blockers Blocking contract errors.
+	 * @param array $blockers Blocking contract errors.
+	 * @phpstan-param list<string> $blockers
 	 * @return array<string,mixed>
 	 */
 	private function blocked_report( array $blockers ): array {
@@ -745,10 +746,10 @@ final class SeoParityEngine {
 				'accessibility' => 'required-on-representative-migrated-pages',
 			),
 			'safety'         => array(
-				'mutations_performed'                 => false,
-				'production_cutover_allowed'          => false,
+				'mutations_performed'                   => false,
+				'production_cutover_allowed'            => false,
 				'allowlist_requires_exact_fingerprints' => true,
-				'legacy_output_is_authority'          => false,
+				'legacy_output_is_authority'            => false,
 			),
 		);
 	}
