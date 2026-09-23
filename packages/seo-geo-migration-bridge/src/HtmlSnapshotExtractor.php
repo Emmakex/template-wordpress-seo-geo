@@ -104,10 +104,10 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Minimal extraction when DOM is unavailable or malformed input cannot load.
 	 *
-	 * @param array<string, mixed> $result  Base result.
-	 * @param string               $url     Public URL being inspected.
-	 * @param int                  $status  HTTP response status.
-	 * @param string               $html    Public response body.
+	 * @param array<string, mixed>  $result  Base result.
+	 * @param string                $url     Public URL being inspected.
+	 * @param int                   $status  HTTP response status.
+	 * @param string                $html    Public response body.
 	 * @param array<string, string> $headers Normalized response headers.
 	 * @return array<string,mixed>
 	 */
@@ -368,7 +368,7 @@ final class HtmlSnapshotExtractor {
 
 		foreach ( $nodes as $node ) {
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
-			$tag  = strtolower( $node->nodeName );
+			$tag = strtolower( $node->nodeName );
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
 			$text = $this->normalize_text( (string) $node->textContent );
 			if ( '' === $text || 1 !== preg_match( '/^h([1-6])$/', $tag, $match ) ) {
