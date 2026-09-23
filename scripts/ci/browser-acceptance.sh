@@ -234,4 +234,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_acceptance "runtime-php" "WordPress emitted a PHP runtime diagnostic during browser acceptance" "no PHP fatal/warning/notice/uncaught error" "runtime diagnostics detected" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'Browser acceptance OK: EN/ES representative pages passed Chromium at 320/768/1440 with axe WCAG A/AA, reflow, keyboard/focus, landmarks/headings and reduced-motion assertions.\n'
+printf 'Browser acceptance OK: EN/ES representative pages plus the Phase 9D admin wizard passed Chromium at 320/768/1440 with axe WCAG A/AA, responsive reflow and keyboard/focus assertions.\n'
