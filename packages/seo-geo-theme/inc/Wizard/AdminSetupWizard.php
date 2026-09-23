@@ -567,7 +567,7 @@ final class AdminSetupWizard {
 			: '';
 
 		return array(
-			'candidate' => array(
+			'candidate'         => array(
 				'preset'                      => $preset,
 				'default_language'            => $default_language,
 				'languages'                   => $this->parse_language_lines( $language_lines ),
