@@ -1882,7 +1882,7 @@ Evidence:
 
 ### Microphase 9D — Theme-owned wizard UI
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1904,9 +1904,18 @@ Deliverables:
 - accessible keyboard/focus/error behavior;
 - responsive administration layout.
 
+9D is closed.
+
+Evidence:
+
+- final candidate `d5ecc25e5ac9506e5c965eef8fd892224218a8cf` passed Foundation `35896877290`, Package `35896877207`, PHP Quality `35896877228`, WordPress Smoke `35896877259`, Self-contained Theme `35896877277`, Native Multilingual `35896877196`, Accessibility/Responsive `35896877471` and Performance `35896877134`;
+- PR #94 was squash-merged as `a841b3ccee453554e50826176e310c9d7c95310b`;
+- post-merge `main` repeated all eight gates successfully: Foundation `35897366497`, Package `35897366553`, PHP Quality `35897366546`, WordPress Smoke `35897366570`, Self-contained Theme `35897366543`, Native Multilingual `35897366527`, Accessibility/Responsive `35897366647` and Performance `35897366562`;
+- browser/runtime acceptance proved EN/ES rendering, keyboard/axe behavior, responsive reflow, nonce/capability enforcement, preview-only validation and unchanged protected setup state.
+
 ### Microphase 9E — Setup execution and generated report
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 
