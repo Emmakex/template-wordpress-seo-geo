@@ -47,7 +47,7 @@ final class MigrationHandoffReader {
 		$safety = $report['safety'] ?? null;
 		if (
 			! is_array( $safety )
-			|| true !== ( $safety['report_is_runtime_dependency'] ?? null ) === false
+			|| false !== ( $safety['report_is_runtime_dependency'] ?? null )
 		) {
 			return $this->invalid( 'runtime-dependency-contract-invalid' );
 		}
