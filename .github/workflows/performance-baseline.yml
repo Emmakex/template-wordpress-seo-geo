@@ -43,7 +43,7 @@ concurrency:
 
 jobs:
   performance-baseline:
-    name: EN/ES Lighthouse baseline
+    name: EN/ES + migration Lighthouse baseline
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
