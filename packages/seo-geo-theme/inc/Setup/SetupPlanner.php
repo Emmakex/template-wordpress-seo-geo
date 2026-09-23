@@ -84,13 +84,13 @@ final class SetupPlanner {
 					'x_default' => $languages->x_default_language_code(),
 				),
 			),
-			'migration_handoff' => $handoff,
+			'migration_handoff'      => $handoff,
 			'compatibility'     => array(
 				'providers' => $compatibility['providers'],
 				'warnings'  => $warnings,
 			),
-			'next_step' => $this->next_step( $handoff, $active_preset ),
-			'safety'    => array(
+			'next_step'              => $this->next_step( $handoff, $active_preset ),
+			'safety'                 => array(
 				'setup_mutations_performed'  => false,
 				'pages_created'              => false,
 				'plugins_installed'          => false,
