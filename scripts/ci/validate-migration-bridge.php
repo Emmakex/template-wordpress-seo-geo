@@ -288,21 +288,21 @@ foreach (
 $migration_engine = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php' );
 foreach (
 	array(
-		"/current_user_can\\( 'manage_options' \\)/",
-		"/current_user_can\\( 'edit_post', \\$object_id \\)/",
-		"/wp_verify_nonce\\(/",
-		"/if \\( ! \\$confirmed \\)/",
-		"/public const BACKUP_META/",
-		"/add_post_meta\\( \\$post->ID, self::BACKUP_META/",
-		"/'sandbox_only'\\s*=>\\s*true/",
-		"/'plugin_mutation_allowed'\\s*=>\\s*false/",
-		"/'theme_mutation_allowed'\\s*=>\\s*false/",
-		"/'url_change_allowed'\\s*=>\\s*false/",
-		"/'object_id_change_allowed'\\s*=>\\s*false/",
-		"/'unsupported_content_dropped'\\s*=>\\s*false/",
+		"current_user_can( 'manage_options' )",
+		'current_user_can( \'edit_post\', $object_id )',
+		'wp_verify_nonce(',
+		'if ( ! $confirmed )',
+		'public const BACKUP_META',
+		'add_post_meta( $post->ID, self::BACKUP_META',
+		"'sandbox_only'               => true",
+		"'plugin_mutation_allowed'    => false",
+		"'theme_mutation_allowed'     => false",
+		"'url_change_allowed'         => false",
+		"'object_id_change_allowed'   => false",
+		"'unsupported_content_dropped' => false",
 	) as $engine_guard
 ) {
-	if ( 1 !== preg_match( $engine_guard, $migration_engine ) ) {
+	if ( ! str_contains( $migration_engine, $engine_guard ) ) {
 		fail_migration_bridge( 'migration-engine-safety', 'Phase 8E Migration Engine is missing an authorization, backup or preservation guard.', MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php', $engine_guard, 'missing' );
 	}
 }
@@ -310,13 +310,13 @@ foreach (
 $admin_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php' );
 foreach (
 	array(
-		"/admin_post_/",
-		"/current_user_can\\( 'manage_options' \\)/",
-		"/check_admin_referer\\(/",
-		"/'migrate' !== \\$confirm/",
+		"admin_post_",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer(",
+		'\'migrate\' !== $confirm',
 	) as $controller_guard
 ) {
-	if ( 1 !== preg_match( $controller_guard, $admin_controller ) ) {
+	if ( ! str_contains( $admin_controller, $controller_guard ) ) {
 		fail_migration_bridge( 'migration-admin-entrypoint', 'Phase 8E administrator entrypoint is missing capability, nonce or explicit-confirmation enforcement.', MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php', $controller_guard, 'missing' );
 	}
 }
