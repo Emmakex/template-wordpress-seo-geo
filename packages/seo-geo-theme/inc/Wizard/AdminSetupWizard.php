@@ -67,7 +67,7 @@ final class AdminSetupWizard {
 	 * @param SetupWizardPreview|null    $preview        Optional preview validator.
 	 * @param SetupWizardCopy|null       $copy           Optional localized copy.
 	 * @param CrawlerPolicyResolver|null $crawler_policy Optional crawler authority.
-	 * @param SetupExecutor|null          $executor       Optional atomic executor.
+	 * @param SetupExecutor|null         $executor       Optional atomic executor.
 	 */
 	public function __construct(
 		?SetupPlanner $planner = null,
@@ -567,7 +567,7 @@ final class AdminSetupWizard {
 			: '';
 
 		return array(
-			'candidate' => array(
+			'candidate'          => array(
 				'preset'                      => $preset,
 				'default_language'            => $default_language,
 				'languages'                   => $this->parse_language_lines( $language_lines ),
@@ -595,6 +595,17 @@ final class AdminSetupWizard {
 
 		if ( 'POST' !== $method ) {
 			return null;
+		}
+
+		if (
+			! isset( $_POST['_wpnonce'] )
+			|| ! is_string( $_POST['_wpnonce'] )
+			|| ! wp_verify_nonce(
+				sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ),
+				self::NONCE_ACTION
+			)
+		) {
+			wp_die( esc_html( $this->copy->text( 'forbidden' ) ), '', array( 'response' => 403 ) );
 		}
 
 		$action = isset( $_POST['seo_geo_setup_action'] ) && is_string( $_POST['seo_geo_setup_action'] )
