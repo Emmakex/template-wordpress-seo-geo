@@ -274,12 +274,12 @@ final class CutoverEngine {
 				'requires_confirmation'   => true,
 			),
 			'safety'         => array(
-				'plugin_deletion_allowed'             => false,
-				'theme_deletion_allowed'              => false,
-				'database_reset_allowed'              => false,
-				'uploads_reset_allowed'               => false,
-				'bridge_deactivation_allowed'         => false,
-				'rollback_required_until_acceptance'  => true,
+				'plugin_deletion_allowed'            => false,
+				'theme_deletion_allowed'             => false,
+				'database_reset_allowed'             => false,
+				'uploads_reset_allowed'              => false,
+				'bridge_deactivation_allowed'        => false,
+				'rollback_required_until_acceptance' => true,
 			),
 		);
 
