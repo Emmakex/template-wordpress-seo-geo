@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 8A/8B/8C Migration Bridge safety contract.
+ * Validate the Phase 8A/8B/8C/8D Migration Bridge safety contract.
  */
 
 declare(strict_types=1);
@@ -57,6 +57,8 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Content/NativeBlocksContentDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Content/ElementorContentDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Content/DiviContentDetector.php',
+	MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxGuard.php',
+	MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxMigrationLab.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -73,7 +75,7 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
-		'Version: 0.3.0',
+		'Version: 0.4.0',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -89,7 +91,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Http/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Sandbox/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -224,9 +227,39 @@ foreach (
 	}
 }
 
+$sandbox_guard = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxGuard.php' );
+foreach (
+	array(
+		"/public const MARKER = 'SEO_GEO_MIGRATION_SANDBOX'/",
+		"/defined\( self::MARKER \)/",
+		"/'noindex'\]\\s*=\\s*true/",
+		"/'nofollow'\]\\s*=\\s*true/",
+		"/X-Robots-Tag/",
+	) as $sandbox_guard_rule
+) {
+	if ( 1 !== preg_match( $sandbox_guard_rule, $sandbox_guard ) ) {
+		fail_migration_bridge( 'sandbox-indexing-guard', 'Phase 8D sandbox guard is missing an explicit marker or indexing defense.', MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxGuard.php', $sandbox_guard_rule, 'missing' );
+	}
+}
+
+$sandbox_lab = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxMigrationLab.php' );
+foreach (
+	array(
+		"/'production_cutover_allowed'\\s*=>\\s*false/",
+		"/'production_mutation_allowed'\\s*=>\\s*false/",
+		"/'indexing_allowed'\\s*=>\\s*false/",
+		"/'canonical_competition_allowed'\\s*=>\\s*false/",
+		"/'baseline_is_reference_only'\\s*=>\\s*true/",
+	) as $sandbox_rule
+) {
+	if ( 1 !== preg_match( $sandbox_rule, $sandbox_lab ) ) {
+		fail_migration_bridge( 'sandbox-lab-safety', 'Phase 8D sandbox lab is missing a non-production safety declaration.', MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxMigrationLab.php', $sandbox_rule, 'missing' );
+	}
+}
+
 $http_client = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php' );
 if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
 	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
 }
 
-printf( "Migration Bridge static contract OK: Phase 8A remains read-only; Phase 8B capture is bounded and explicit; Phase 8C dependency planning is non-destructive with no automatic removal or raw payload export.\n" );
+printf( "Migration Bridge static contract OK: Phase 8A is read-only; 8B baseline is bounded; 8C planning is non-destructive; 8D sandbox requires an explicit marker and blocks indexing/cutover.\n" );
