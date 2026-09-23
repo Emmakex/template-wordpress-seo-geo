@@ -22,6 +22,7 @@ $required = array(
 	$setup_dir . '/SetupOptionWriterInterface.php',
 	$setup_dir . '/WordPressSetupOptionWriter.php',
 	$setup_dir . '/SetupReportStore.php',
+	$setup_dir . '/SetupRewriteMaintenance.php',
 	$setup_dir . '/SetupExecutor.php',
 	$wizard_dir . '/SetupWizardCopy.php',
 	$wizard_dir . '/SetupWizardPreview.php',
@@ -86,6 +87,27 @@ foreach ( array( 'add_option(', 'wp_insert_post', 'activate_plugin', 'deactivate
 	}
 }
 
+$rewrite_maintenance = (string) file_get_contents( $setup_dir . '/SetupRewriteMaintenance.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_theme_setup_rewrite_flush_v1';",
+		"add_action( 'init'",
+		'flush_rewrite_rules( false )',
+		'$this->writer->delete( self::OPTION_NAME )',
+	) as $guard
+) {
+	if ( ! str_contains( $rewrite_maintenance, $guard ) ) {
+		fwrite( STDERR, 'Phase 9E rewrite-maintenance guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+foreach ( array( 'update_option(', 'delete_option(', 'add_option(', 'wp_insert_post', 'activate_plugin', 'deactivate_plugins', 'wp_remote_post', '$_POST' ) as $forbidden_maintenance_primitive ) {
+	if ( str_contains( $rewrite_maintenance, $forbidden_maintenance_primitive ) ) {
+		fwrite( STDERR, 'Phase 9E rewrite maintenance exceeds its writer-only boundary: ' . $forbidden_maintenance_primitive . PHP_EOL );
+		exit( 1 );
+	}
+}
+
 $executor = (string) file_get_contents( $setup_dir . '/SetupExecutor.php' );
 foreach (
 	array(
@@ -99,7 +121,11 @@ foreach (
 		'CrawlerPolicyResolver::OPTION_NAME',
 		'LlmsTxtResolver::OPTION_NAME',
 		'MarkdownAlternateResolver::OPTION_NAME',
+		"'setup-capability-required'",
 		"'apply-confirmation-required'",
+		"'migration-handoff-blocking-review'",
+		'SetupRewriteMaintenance::OPTION_NAME',
+		"'rewrite_flush_pending'",
 		"'setup-write-failed:'",
 		"'setup-rollback-failed:'",
 		"'migration_bridge_loaded'",
@@ -379,7 +405,10 @@ foreach (
 		'function seo_geo_theme_setup_plan(): array',
 		'function seo_geo_theme_validate_preset_language_setup( array $input ): array',
 		'function seo_geo_theme_validate_entity_geo_setup( array $input ): array',
+		'function seo_geo_theme_apply_setup( array $input, bool $confirmed ): array',
+		'function seo_geo_theme_setup_report(): ?array',
 		'function seo_geo_theme_setup_wizard(): \\SeoGeo\\Theme\\Wizard\\AdminSetupWizard',
+		'SetupRewriteMaintenance() )->register()',
 	) as $guard
 ) {
 	if ( ! str_contains( $bootstrap, $guard ) ) {
