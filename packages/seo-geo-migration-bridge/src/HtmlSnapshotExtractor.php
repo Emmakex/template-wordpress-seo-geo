@@ -91,7 +91,7 @@ final class HtmlSnapshotExtractor {
 		$result['h1_count']         = count(
 			array_filter(
 				$result['headings'],
-				static fn( array $heading ): bool => 1 === ( $heading['level'] ?? 0 )
+				static fn( array $heading ): bool => 1 === $heading['level']
 			)
 		);
 		$result['breadcrumbs']      = $this->breadcrumbs( $xpath, $url );
