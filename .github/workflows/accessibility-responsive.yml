@@ -5,6 +5,8 @@ on:
     paths:
       - 'packages/seo-geo-theme/**'
       - 'packages/seo-geo-core/**'
+      - 'packages/seo-geo-migration-bridge/**'
+      - 'scripts/ci/migration-bridge-parity-acceptance.sh'
       - 'tests/browser/**'
       - 'tests/fixtures/**'
       - 'scripts/ci/browser-acceptance.sh'
@@ -20,6 +22,8 @@ on:
     paths:
       - 'packages/seo-geo-theme/**'
       - 'packages/seo-geo-core/**'
+      - 'packages/seo-geo-migration-bridge/**'
+      - 'scripts/ci/migration-bridge-parity-acceptance.sh'
       - 'tests/browser/**'
       - 'tests/fixtures/**'
       - 'scripts/ci/browser-acceptance.sh'
