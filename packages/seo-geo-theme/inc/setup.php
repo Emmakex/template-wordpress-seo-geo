@@ -16,6 +16,7 @@ require_once __DIR__ . '/Setup/MigrationHandoffReader.php';
 require_once __DIR__ . '/Setup/SetupCompatibilityDetector.php';
 require_once __DIR__ . '/Setup/SetupPlanner.php';
 require_once __DIR__ . '/Setup/PresetLanguageValidator.php';
+require_once __DIR__ . '/Setup/EntityGeoValidator.php';
 
 use SeoGeo\Theme\Setup\SetupPlanner;
 
@@ -36,4 +37,14 @@ function seo_geo_theme_setup_plan(): array {
  */
 function seo_geo_theme_validate_preset_language_setup( array $input ): array {
 	return ( new \SeoGeo\Theme\Setup\PresetLanguageValidator() )->validate( $input );
+}
+
+/**
+ * Validate explicit site-entity and GEO/discovery choices without persistence.
+ *
+ * @param array<string,mixed> $input Candidate setup values.
+ * @return array<string,mixed>
+ */
+function seo_geo_theme_validate_entity_geo_setup( array $input ): array {
+	return ( new \SeoGeo\Theme\Setup\EntityGeoValidator() )->validate( $input );
 }
