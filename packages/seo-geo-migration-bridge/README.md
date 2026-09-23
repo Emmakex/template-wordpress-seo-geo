@@ -200,6 +200,21 @@ After cutover it verifies the exact expected theme/plugin state, protected optio
 
 Final acceptance performs fresh health + parity checks and changes the record to `accepted`. At that point runtime rollback is closed, while recovery evidence remains available for audit/disaster recovery.
 
+## Phase 8H — Final migration report
+
+Phase 8H provides a read-only final report plus an explicit non-autoloaded handoff store.
+
+```php
+$report = \SeoGeo\MigrationBridge\Plugin::migration_report()?->generate( $parity_allowlist );
+$save = \SeoGeo\MigrationBridge\Plugin::migration_report_store()?->save( $report );
+```
+
+The report consolidates dependency counts/decisions, migration fingerprints, fresh URL/SEO/GEO parity, representative accessibility/performance comparisons, unresolved review items and cutover/rollback evidence.
+
+Only reports with `ready_for_handoff=true` may be persisted to `seo_geo_migration_report_v1`. Existing reports are not overwritten unless explicitly requested.
+
+The handoff report contains hashes/references and bounded metrics only. It does not contain post bodies, builder payloads, credentials or raw backup artifacts, and it is explicitly not a runtime dependency.
+
 ## Safety boundary
 
 The bridge follows these rules:

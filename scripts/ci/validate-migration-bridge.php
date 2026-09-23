@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 8A/8B/8C/8D/8E/8F/8G Migration Bridge safety contract.
+ * Validate the Phase 8A/8B/8C/8D/8E/8F/8G/8H Migration Bridge safety contract.
  */
 
 declare(strict_types=1);
@@ -74,6 +74,8 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverSnapshotStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php',
+	MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -90,7 +92,7 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
-		'Version: 0.7.0',
+		'Version: 0.8.0',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -110,7 +112,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Sandbox/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Migration/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Parity/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Cutover/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Cutover/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Report/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -176,6 +179,7 @@ $read_only_files = array_merge(
 		MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php',
 		MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php',
 		MIGRATION_BRIDGE_DIR . '/src/ProviderAuthorityResolver.php',
+		MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php',
 	),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array()
@@ -535,6 +539,53 @@ foreach (
 			'Phase 8G administrator entrypoints are missing capability, nonce or explicit-confirmation enforcement.',
 			MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php',
 			$controller_guard,
+			'missing'
+		);
+	}
+}
+
+$report_engine = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php' );
+foreach (
+	array(
+		"/'mode'\\s*=>\\s*'migration-report'/",
+		"/'ready_for_handoff'/",
+		"/'mutations_performed'\\s*=>\\s*false/",
+		"/'private_content_exported'\\s*=>\\s*false/",
+		"/'raw_backup_content_exported'\\s*=>\\s*false/",
+		"/'report_is_runtime_dependency'\\s*=>\\s*false/",
+		"/'replaced_deactivated'/",
+		"/'intentional_improvements'/",
+		"/'bridge_disposition'/",
+	) as $report_guard
+) {
+	if ( 1 !== preg_match( $report_guard, $report_engine ) ) {
+		fail_migration_bridge(
+			'migration-report-contract',
+			'Phase 8H report engine is missing a required handoff, privacy or disposition contract.',
+			MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php',
+			$report_guard,
+			'missing'
+		);
+	}
+}
+
+$report_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_migration_report_v1';",
+		'add_option( self::OPTION_NAME',
+		"'', false )",
+		'update_option( self::OPTION_NAME',
+		"'report-not-ready-for-handoff'",
+		"'report-exists'",
+	) as $report_store_guard
+) {
+	if ( ! str_contains( $report_store, $report_store_guard ) ) {
+		fail_migration_bridge(
+			'migration-report-storage',
+			'Phase 8H report persistence must remain explicit, final-only and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportStore.php',
+			$report_store_guard,
 			'missing'
 		);
 	}

@@ -524,6 +524,49 @@ Post-merge `main` repeated the six-gate acceptance successfully:
 
 The runtime acceptance proved backup and quality evidence requirements, KEEP/MIGRATE protection, automatic rollback on failed parity, manual rollback, explicit acceptance and rollback closure after acceptance.
 
+## Phase 8H — Migration report
+
+Status: **implementation candidate**
+
+8H converts the migration evidence into one stable handoff artifact that Phase 9 can consume after the temporary Migration Bridge is removed.
+
+The report engine is exposed through:
+
+```php
+$report = \SeoGeo\MigrationBridge\Plugin::migration_report()?->generate( $parity_allowlist );
+```
+
+Generation is read-only. It consolidates:
+
+- the persisted 8B public-output baseline;
+- the current 8C dependency graph;
+- 8E migrated-resource IDs and before/after/backup fingerprints;
+- a fresh 8F parity comparison bound to the same exact allowlist hash used at cutover;
+- representative Accessibility/Responsive and Performance before/after summaries retained by 8G;
+- the accepted 8G cutover record and its recovery references.
+
+The dependency section reports before/after active-plugin counts and before/after legacy-builder-coupled resource counts. Component decisions distinguish KEEP, replaced/deactivated, remove candidates and actual deletion. Actual deletion remains false because 8G forbids plugin/theme deletion.
+
+Fresh parity exposes URL/status/redirect counts and intentional approved improvements as path/signal/fingerprint/reason metadata. Raw old/new values are not copied.
+
+Manual-review rows separate blocking `MIGRATE`/`UNKNOWN` or parity regressions from advisory cleanup candidates and missing comparison summaries.
+
+Bridge disposition is evidence-driven:
+
+- `remove` when the accepted report has no remaining review items;
+- `retain-audit-only` when migration is accepted but review items remain;
+- `retain-operational` only while the migration itself is not final and rollback/cutover capability is still operationally required.
+
+A ready report may be explicitly saved through:
+
+```php
+$storage = \SeoGeo\MigrationBridge\Plugin::migration_report_store()?->save( $report );
+```
+
+The stable handoff option is `seo_geo_migration_report_v1`, stored non-autoloaded. Phase 9 may read that option without loading the Migration Bridge plugin.
+
+The report/store contract forbids private post bodies, raw Elementor/Divi payloads, credentials and raw database/uploads backup content.
+
 ## Phase 8A acceptance evidence
 
 Phase 8A closed through PR #67.

@@ -1683,7 +1683,20 @@ The next microphase is 8H — Migration report.
 
 ### Microphase 8H — Migration report
 
-Status: **active**
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- a read-only report engine consolidates the accepted 8B baseline, current 8C dependency graph, 8E migration fingerprints, fresh 8F parity and the accepted 8G cutover record;
+- before/after dependency counts include active plugins and legacy-builder-coupled resources;
+- kept, replaced/deactivated, removed and remove-candidate decisions are explicit; 8H never pretends deactivation equals deletion;
+- URL/status/redirect parity is summarized separately from approved SEO/GEO signal improvements;
+- Accessibility/Responsive and Performance evidence now retains bounded scalar before/after metric summaries for the final report;
+- unresolved dependency, parity and quality-comparison items are separated into blocking and advisory review rows;
+- cutover lifecycle and database/uploads recovery evidence are included as references/hashes only;
+- the report determines whether the bridge can be removed, retained audit-only or is still operationally required because migration is not final;
+- a final ready report may be explicitly persisted to non-autoloaded `seo_geo_migration_report_v1` for Phase 9 consumption;
+- persisted reports contain no post bodies, builder payloads, credentials or raw backup artifacts and do not make the Migration Bridge a runtime dependency.
 
 Deliverables:
 
