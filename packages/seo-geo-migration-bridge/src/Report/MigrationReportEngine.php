@@ -166,12 +166,12 @@ final class MigrationReportEngine {
 		$disposition       = $this->bridge_disposition( $ready_for_handoff, $manual_review );
 
 		$report = array(
-			'schema_version'    => 1,
-			'mode'              => 'migration-report',
-			'generated_at'      => gmdate( DATE_ATOM ),
-			'ready_for_handoff' => $ready_for_handoff,
-			'blockers'          => $blockers,
-			'baseline'          => array(
+			'schema_version'     => 1,
+			'mode'               => 'migration-report',
+			'generated_at'       => gmdate( DATE_ATOM ),
+			'ready_for_handoff'  => $ready_for_handoff,
+			'blockers'           => $blockers,
+			'baseline'           => array(
 				'id'     => is_array( $baseline ) && is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256' => is_array( $baseline ) && is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
 			),
@@ -254,16 +254,16 @@ final class MigrationReportEngine {
 		sort( $replaced );
 
 		return array(
-			'before' => array(
+			'before'    => array(
 				'active_plugin_count'      => count( $before_active ),
 				'legacy_builder_resources' => count( $before_legacy_resources ),
 			),
-			'after' => array(
+			'after'     => array(
 				'active_plugin_count'      => count( $after_active ),
 				'legacy_builder_resources' => count( $current_legacy_resources ),
 				'classification_summary'   => isset( $graph['summary'] ) && is_array( $graph['summary'] ) ? $graph['summary'] : array(),
 			),
-			'delta' => array(
+			'delta'     => array(
 				'active_plugins'           => count( $after_active ) - count( $before_active ),
 				'legacy_builder_resources' => count( $current_legacy_resources ) - count( $before_legacy_resources ),
 			),
@@ -287,7 +287,7 @@ final class MigrationReportEngine {
 		$resources = isset( $graph['content']['resources'] ) && is_array( $graph['content']['resources'] )
 			? $graph['content']['resources']
 			: array();
-		$ids = array();
+		$ids       = array();
 
 		foreach ( $resources as $resource ) {
 			if ( ! is_array( $resource ) || ! isset( $resource['object_id'] ) ) {
@@ -437,7 +437,7 @@ final class MigrationReportEngine {
 				continue;
 			}
 
-			$signal = $difference['signal'];
+			$signal   = $difference['signal'];
 			if ( 'presence' === $signal ) {
 				++$url_redirect['presence_changes'];
 			}
@@ -602,8 +602,9 @@ final class MigrationReportEngine {
 	/**
 	 * Decide the bridge lifecycle after report generation.
 	 *
-	 * @param bool                                                        $ready         Whether report can hand off to Phase 9.
-	 * @param array{blocking:list<array<string,mixed>>,advisory:list<array<string,mixed>>} $manual_review Manual-review rows.
+	 * @param bool  $ready         Whether report can hand off to Phase 9.
+	 * @param array $manual_review Manual-review rows.
+	 * @phpstan-param array{blocking:list<array<string,mixed>>,advisory:list<array<string,mixed>>} $manual_review
 	 * @return array{decision:string,runtime_dependency_required:bool,reason:string}
 	 */
 	private function bridge_disposition( bool $ready, array $manual_review ): array {
