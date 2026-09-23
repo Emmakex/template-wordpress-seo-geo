@@ -236,7 +236,7 @@ The runtime acceptance proved explicit entity/GEO normalization, visible-fact au
 
 ## Phase 9D — Theme-owned wizard UI
 
-Status: **implementation candidate**
+Status: **complete**
 
 9D turns the validated 9A–9C setup model into one WordPress-native theme wizard. The UI remains a presentation layer over existing validators and does not introduce parallel preset, language, entity or GEO authorities.
 
@@ -258,3 +258,28 @@ Delivered:
 Self-contained acceptance renders EN/ES, submits a valid nonce-protected preview, verifies assets/capability enforcement and fingerprints protected setup state before/after.
 
 Browser acceptance logs into WordPress admin and exercises the wizard at 320/768/1440 with axe WCAG A/AA, responsive reflow, keyboard navigation, valid preview focus and announced validation errors.
+
+### 9D acceptance evidence
+
+Final candidate `d5ecc25e5ac9506e5c965eef8fd892224218a8cf` passed all eight gates:
+
+- Foundation CI `35896877290`;
+- Phase 1 Package CI `35896877207`;
+- PHP Quality CI `35896877228` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35896877259`;
+- Self-contained Theme CI `35896877277`;
+- Native Multilingual CI `35896877196`;
+- Accessibility & Responsive CI `35896877471`;
+- Performance Baseline CI `35896877134`.
+
+PR #94 was squash-merged as `a841b3ccee453554e50826176e310c9d7c95310b`.
+
+Post-merge `main` repeated all eight gates successfully: Foundation `35897366497`, Package `35897366553`, PHP Quality `35897366546`, WordPress Smoke `35897366570`, Self-contained Theme `35897366543`, Native Multilingual `35897366527`, Accessibility/Responsive `35897366647` and Performance `35897366562`.
+
+Acceptance also fixed two integration defects at root cause: the browser fixture now receives the same preset catalog as the distributable theme, and empty optional LocalBusiness inputs are not interpreted as configured LocalBusiness facts.
+
+## Phase 9E — Setup execution and generated report
+
+Status: **active**
+
+9E is the first onboarding microphase allowed to persist configuration. It must apply only values that pass the existing 9B/9C validators, update the authoritative Core/theme options atomically, consume migrated-site handoff metadata without loading Migration Bridge code, and persist a non-sensitive setup report suitable for idempotent reruns.
