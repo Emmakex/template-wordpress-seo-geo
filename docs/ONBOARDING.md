@@ -4,7 +4,7 @@ Phase 9 makes onboarding a theme-owned capability for both clean installations a
 
 ## Phase 9A — Setup foundation and migration handoff
 
-Status: **implementation candidate**
+Status: **complete**
 
 9A is deliberately read-only. It builds a setup plan but does not persist setup choices, create pages, install/activate/deactivate plugins, store external credentials or load Migration Bridge code.
 
@@ -62,3 +62,37 @@ Self-contained Theme acceptance runs with zero active plugins and proves both pa
 2. synthetic accepted Phase 8 handoff → migrated-site setup plan while Migration Bridge classes are absent.
 
 Protected setup state is fingerprinted before/after planning and must remain unchanged.
+
+### 9A acceptance evidence
+
+Final candidate `f89514cc7051da8917fece779d26a8331cd41a72` passed:
+
+- Foundation CI `35883921399`;
+- Phase 1 Package CI `35883921389`;
+- PHP Quality CI `35883921378` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35883921384`;
+- Self-contained Theme CI `35883921418`;
+- Native Multilingual CI `35883921401`;
+- Accessibility & Responsive CI `35883921391`;
+- Performance Baseline CI `35883921405`.
+
+PR #86 was squash-merged as `17d4cc185addce336a3f2f86079b03dbf00a3468`.
+
+Post-merge `main` repeated all eight gates successfully:
+
+- Foundation CI `35884423588`;
+- Phase 1 Package CI `35884423936`;
+- PHP Quality CI `35884423746`;
+- WordPress Smoke CI `35884423606`;
+- Self-contained Theme CI `35884423758`;
+- Native Multilingual CI `35884423933`;
+- Accessibility & Responsive CI `35884423721`;
+- Performance Baseline CI `35884423669`.
+
+The self-contained acceptance proved both clean-install and migrated-site setup planning with zero active plugins, five presets, no Migration Bridge runtime and unchanged protected setup state.
+
+## Phase 9B — Preset and language configuration
+
+Status: **active**
+
+9B will add validated, explicit preset and native-language configuration on top of the read-only 9A plan. It will not create translations, invent routes or silently change external-provider ownership.
