@@ -129,6 +129,7 @@ required_paths=(
   "packages/seo-geo-migration-bridge/src/Cutover/PublicSnapshotProviderInterface.php"
   "packages/seo-geo-migration-bridge/src/Cutover/BaselinePublicSnapshotProvider.php"
   "packages/seo-geo-migration-bridge/src/Cutover/BackupEvidenceValidator.php"
+  "packages/seo-geo-migration-bridge/src/Cutover/QualityEvidenceValidator.php"
   "packages/seo-geo-migration-bridge/src/Cutover/CutoverSnapshotStore.php"
   "packages/seo-geo-migration-bridge/src/Cutover/CutoverEngine.php"
   "packages/seo-geo-migration-bridge/src/Cutover/AdminCutoverController.php"
