@@ -118,7 +118,7 @@ final class MigrationReportEngine {
 				: null
 		);
 
-		$allowlist_sha256 = ParityAllowlist::fingerprint( $allowlist_rules );
+		$allowlist_sha256          = ParityAllowlist::fingerprint( $allowlist_rules );
 		$expected_allowlist_sha256 = is_array( $cutover )
 			&& isset( $cutover['actions']['parity_allowlist_hash'] )
 			&& is_string( $cutover['actions']['parity_allowlist_hash'] )
@@ -154,9 +154,9 @@ final class MigrationReportEngine {
 			$blockers[] = $quality_blocker;
 		}
 
-		$dependencies  = $this->dependencies( $analysis, $graph, $cutover );
-		$migrations    = $this->migrations( $cutover );
-		$manual_review = $this->manual_review( $graph, $parity_report, $quality );
+		$dependencies     = $this->dependencies( $analysis, $graph, $cutover );
+		$migrations       = $this->migrations( $cutover );
+		$manual_review    = $this->manual_review( $graph, $parity_report, $quality );
 		$cutover_evidence = $this->cutover_evidence( $cutover );
 
 		$blockers = array_values( array_unique( $blockers ) );
@@ -175,19 +175,19 @@ final class MigrationReportEngine {
 				'id'     => is_array( $baseline ) && is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256' => is_array( $baseline ) && is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
 			),
-			'dependencies'      => $dependencies,
-			'migrations'        => $migrations,
-			'parity'            => $this->parity_summary( $parity_report, $allowlist_sha256 ),
-			'quality'           => $quality['evidence'],
-			'manual_review'     => $manual_review,
-			'cutover'           => $cutover_evidence,
-			'bridge_disposition'=> $disposition,
-			'safety'            => array(
-				'mutations_performed'        => false,
-				'private_content_exported'   => false,
-				'raw_backup_content_exported'=> false,
-				'credentials_exported'       => false,
-				'report_is_runtime_dependency'=> false,
+			'dependencies'       => $dependencies,
+			'migrations'         => $migrations,
+			'parity'             => $this->parity_summary( $parity_report, $allowlist_sha256 ),
+			'quality'            => $quality['evidence'],
+			'manual_review'      => $manual_review,
+			'cutover'            => $cutover_evidence,
+			'bridge_disposition' => $disposition,
+			'safety'             => array(
+				'mutations_performed'          => false,
+				'private_content_exported'     => false,
+				'raw_backup_content_exported'  => false,
+				'credentials_exported'         => false,
+				'report_is_runtime_dependency' => false,
 			),
 		);
 
@@ -228,8 +228,8 @@ final class MigrationReportEngine {
 		$before_legacy_resources  = array_values( array_unique( array_merge( $current_legacy_resources, $migrated_resources ) ) );
 		sort( $before_legacy_resources );
 
-		$components = isset( $graph['components'] ) && is_array( $graph['components'] ) ? $graph['components'] : array();
-		$kept = array();
+		$components        = isset( $graph['components'] ) && is_array( $graph['components'] ) ? $graph['components'] : array();
+		$kept              = array();
 		$remove_candidates = array();
 
 		foreach ( $components as $component ) {
@@ -255,24 +255,24 @@ final class MigrationReportEngine {
 
 		return array(
 			'before' => array(
-				'active_plugin_count'        => count( $before_active ),
-				'legacy_builder_resources'   => count( $before_legacy_resources ),
+				'active_plugin_count'      => count( $before_active ),
+				'legacy_builder_resources' => count( $before_legacy_resources ),
 			),
-			'after'  => array(
-				'active_plugin_count'        => count( $after_active ),
-				'legacy_builder_resources'   => count( $current_legacy_resources ),
-				'classification_summary'     => isset( $graph['summary'] ) && is_array( $graph['summary'] ) ? $graph['summary'] : array(),
+			'after' => array(
+				'active_plugin_count'      => count( $after_active ),
+				'legacy_builder_resources' => count( $current_legacy_resources ),
+				'classification_summary'   => isset( $graph['summary'] ) && is_array( $graph['summary'] ) ? $graph['summary'] : array(),
 			),
-			'delta'  => array(
-				'active_plugins'             => count( $after_active ) - count( $before_active ),
-				'legacy_builder_resources'   => count( $current_legacy_resources ) - count( $before_legacy_resources ),
+			'delta' => array(
+				'active_plugins'           => count( $after_active ) - count( $before_active ),
+				'legacy_builder_resources' => count( $current_legacy_resources ) - count( $before_legacy_resources ),
 			),
 			'decisions' => array(
-				'kept'                       => $kept,
-				'replaced_deactivated'       => $replaced,
-				'removed'                    => array(),
-				'remove_candidates'          => $remove_candidates,
-				'deletion_performed'         => false,
+				'kept'                 => $kept,
+				'replaced_deactivated' => $replaced,
+				'removed'              => array(),
+				'remove_candidates'    => $remove_candidates,
+				'deletion_performed'   => false,
 			),
 		);
 	}
@@ -337,7 +337,7 @@ final class MigrationReportEngine {
 	 * @return array{count:int,resources:list<array<string,mixed>>}
 	 */
 	private function migrations( ?array $cutover ): array {
-		$rows = is_array( $cutover['migration'] ?? null ) ? $cutover['migration'] : array();
+		$rows      = is_array( $cutover['migration'] ?? null ) ? $cutover['migration'] : array();
 		$resources = array();
 
 		foreach ( $rows as $row ) {
@@ -372,12 +372,12 @@ final class MigrationReportEngine {
 	 * @return array{evidence:array<string,mixed>,blockers:list<string>}
 	 */
 	private function quality( ?array $cutover ): array {
-		$stored = is_array( $cutover['quality'] ?? null ) ? $cutover['quality'] : array();
+		$stored   = is_array( $cutover['quality'] ?? null ) ? $cutover['quality'] : array();
 		$evidence = array();
 		$blockers = array();
 
 		foreach ( array( 'accessibility', 'performance' ) as $key ) {
-			$row = isset( $stored[ $key ] ) && is_array( $stored[ $key ] ) ? $stored[ $key ] : array();
+			$row    = isset( $stored[ $key ] ) && is_array( $stored[ $key ] ) ? $stored[ $key ] : array();
 			$passed = true === ( $row['passed'] ?? false );
 			if ( ! $passed ) {
 				$blockers[] = 'quality-evidence-not-passed:' . $key;
@@ -413,10 +413,10 @@ final class MigrationReportEngine {
 	private function parity_summary( ?array $parity_report, string $allowlist_sha256 ): array {
 		if ( ! is_array( $parity_report ) ) {
 			return array(
-				'accepted'         => false,
-				'allowlist_sha256' => $allowlist_sha256,
-				'summary'          => array(),
-				'url_redirect'     => array(),
+				'accepted'                 => false,
+				'allowlist_sha256'         => $allowlist_sha256,
+				'summary'                  => array(),
+				'url_redirect'             => array(),
 				'intentional_improvements' => array(),
 			);
 		}
@@ -468,7 +468,7 @@ final class MigrationReportEngine {
 			'allowlist_sha256'         => $allowlist_sha256,
 			'summary'                  => isset( $parity_report['summary'] ) && is_array( $parity_report['summary'] ) ? $parity_report['summary'] : array(),
 			'url_redirect'             => $url_redirect,
-			'intentional_improvements'=> $improvements,
+			'intentional_improvements' => $improvements,
 		);
 	}
 
@@ -491,7 +491,7 @@ final class MigrationReportEngine {
 			}
 
 			$classification = is_string( $component['classification'] ?? null ) ? $component['classification'] : 'UNKNOWN';
-			$row = array(
+			$row            = array(
 				'type'           => 'dependency',
 				'component_id'   => $component['component_id'],
 				'classification' => $classification,
@@ -560,7 +560,7 @@ final class MigrationReportEngine {
 			);
 		}
 
-		$events = array();
+		$events        = array();
 		$stored_events = isset( $cutover['events'] ) && is_array( $cutover['events'] ) ? $cutover['events'] : array();
 		foreach ( $stored_events as $event ) {
 			if ( ! is_array( $event ) || ! is_string( $event['status'] ?? null ) ) {
@@ -573,7 +573,7 @@ final class MigrationReportEngine {
 			);
 		}
 
-		$backup = is_array( $cutover['backup'] ?? null ) ? $cutover['backup'] : array();
+		$backup      = is_array( $cutover['backup'] ?? null ) ? $cutover['backup'] : array();
 		$backup_rows = array();
 		foreach ( $backup as $key => $row ) {
 			if ( ! is_string( $key ) || ! is_array( $row ) ) {
@@ -590,12 +590,12 @@ final class MigrationReportEngine {
 		}
 
 		return array(
-			'id'               => is_string( $cutover['id'] ?? null ) ? $cutover['id'] : null,
-			'status'           => is_string( $cutover['status'] ?? null ) ? $cutover['status'] : null,
-			'created_at'       => is_string( $cutover['created_at'] ?? null ) ? $cutover['created_at'] : null,
-			'events'           => $events,
-			'backup_evidence'  => $backup_rows,
-			'plan_sha256'      => is_string( $cutover['plan_sha256'] ?? null ) ? $cutover['plan_sha256'] : null,
+			'id'              => is_string( $cutover['id'] ?? null ) ? $cutover['id'] : null,
+			'status'          => is_string( $cutover['status'] ?? null ) ? $cutover['status'] : null,
+			'created_at'      => is_string( $cutover['created_at'] ?? null ) ? $cutover['created_at'] : null,
+			'events'          => $events,
+			'backup_evidence' => $backup_rows,
+			'plan_sha256'     => is_string( $cutover['plan_sha256'] ?? null ) ? $cutover['plan_sha256'] : null,
 		);
 	}
 
@@ -609,24 +609,24 @@ final class MigrationReportEngine {
 	private function bridge_disposition( bool $ready, array $manual_review ): array {
 		if ( ! $ready ) {
 			return array(
-				'decision'                   => 'retain-operational',
-				'runtime_dependency_required'=> true,
-				'reason'                     => 'migration-not-finally-accepted',
+				'decision'                    => 'retain-operational',
+				'runtime_dependency_required' => true,
+				'reason'                      => 'migration-not-finally-accepted',
 			);
 		}
 
 		if ( array() !== $manual_review['blocking'] || array() !== $manual_review['advisory'] ) {
 			return array(
-				'decision'                   => 'retain-audit-only',
-				'runtime_dependency_required'=> false,
-				'reason'                     => 'final-report-has-manual-review-items',
+				'decision'                    => 'retain-audit-only',
+				'runtime_dependency_required' => false,
+				'reason'                      => 'final-report-has-manual-review-items',
 			);
 		}
 
 		return array(
-			'decision'                   => 'remove',
-			'runtime_dependency_required'=> false,
-			'reason'                     => 'accepted-report-has-no-operational-bridge-dependency',
+			'decision'                    => 'remove',
+			'runtime_dependency_required' => false,
+			'reason'                      => 'accepted-report-has-no-operational-bridge-dependency',
 		);
 	}
 }
