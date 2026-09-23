@@ -93,14 +93,30 @@ $backup_evidence = array(
 	),
 );
 
+$quality_evidence = array(
+	'accessibility' => array(
+		'reference'  => 'ci-accessibility-phase-8g',
+		'sha256'     => hash( 'sha256', 'phase-8g-accessibility-evidence' ),
+		'created_at' => $now,
+		'passed'     => true,
+	),
+	'performance' => array(
+		'reference'  => 'ci-performance-phase-8g',
+		'sha256'     => hash( 'sha256', 'phase-8g-performance-evidence' ),
+		'created_at' => $now,
+		'passed'     => true,
+	),
+);
+
 $stable_provider = new Phase8GSequenceSnapshotProvider( array( $baseline ) );
 $plan_engine     = new CutoverEngine( null, null, null, null, $stable_provider );
 
-$missing_backup_plan = $plan_engine->plan( array(), array( 'wordpress-seo/wp-seo.php' ) );
-$keep_plan = $plan_engine->plan( $backup_evidence, array( 'woocommerce/woocommerce.php' ) );
-$migrate_plan = $plan_engine->plan( $backup_evidence, array( 'elementor/elementor.php' ) );
-$bridge_plan = $plan_engine->plan( $backup_evidence, array( 'seo-geo-migration-bridge/seo-geo-migration-bridge.php' ) );
-$safe_plan = $plan_engine->plan( $backup_evidence, array( 'wordpress-seo/wp-seo.php' ) );
+$missing_backup_plan = $plan_engine->plan( array(), array( 'wordpress-seo/wp-seo.php' ), array(), $quality_evidence );
+$missing_quality_plan = $plan_engine->plan( $backup_evidence, array( 'wordpress-seo/wp-seo.php' ), array(), array() );
+$keep_plan = $plan_engine->plan( $backup_evidence, array( 'woocommerce/woocommerce.php' ), array(), $quality_evidence );
+$migrate_plan = $plan_engine->plan( $backup_evidence, array( 'elementor/elementor.php' ), array(), $quality_evidence );
+$bridge_plan = $plan_engine->plan( $backup_evidence, array( 'seo-geo-migration-bridge/seo-geo-migration-bridge.php' ), array(), $quality_evidence );
+$safe_plan = $plan_engine->plan( $backup_evidence, array( 'wordpress-seo/wp-seo.php' ), array(), $quality_evidence );
 
 $execute_nonce  = wp_create_nonce( CutoverEngine::execute_nonce_action() );
 $rollback_nonce = wp_create_nonce( CutoverEngine::rollback_nonce_action() );
@@ -110,6 +126,7 @@ $confirmation_error = $plan_engine->execute(
 	$backup_evidence,
 	array( 'wordpress-seo/wp-seo.php' ),
 	array(),
+	$quality_evidence,
 	array(),
 	$execute_nonce,
 	false
@@ -118,6 +135,7 @@ $nonce_error = $plan_engine->execute(
 	$backup_evidence,
 	array( 'wordpress-seo/wp-seo.php' ),
 	array(),
+	$quality_evidence,
 	array(),
 	'invalid-nonce',
 	true
@@ -134,6 +152,7 @@ $auto_result = $auto_engine->execute(
 	$backup_evidence,
 	array( 'wordpress-seo/wp-seo.php' ),
 	array(),
+	$quality_evidence,
 	array(),
 	$execute_nonce,
 	true
@@ -155,6 +174,7 @@ $manual_execute = $manual_engine->execute(
 	$backup_evidence,
 	array( 'wordpress-seo/wp-seo.php' ),
 	array(),
+	$quality_evidence,
 	array(),
 	$execute_nonce,
 	true
@@ -186,6 +206,7 @@ $accepted_execute = $accept_engine->execute(
 	$backup_evidence,
 	array( 'wordpress-seo/wp-seo.php' ),
 	array(),
+	$quality_evidence,
 	array(),
 	$execute_nonce,
 	true
@@ -231,7 +252,8 @@ $history_summary = array_map(
 echo wp_json_encode(
 	array(
 		'plans' => array(
-			'missing_backup' => $missing_backup_plan,
+			'missing_backup'  => $missing_backup_plan,
+			'missing_quality' => $missing_quality_plan,
 			'keep'           => $keep_plan,
 			'migrate'        => $migrate_plan,
 			'bridge'         => $bridge_plan,
@@ -299,6 +321,9 @@ plans = report["plans"]
 assert plans["missing_backup"]["ready"] is False
 assert any(item.startswith("backup:backup-evidence-missing:") for item in plans["missing_backup"]["blockers"])
 
+assert plans["missing_quality"]["ready"] is False
+assert any(item.startswith("quality:quality-evidence-missing:") for item in plans["missing_quality"]["blockers"])
+
 assert plans["keep"]["ready"] is False
 assert any(item.startswith("plugin-deactivation-not-approved:woocommerce/woocommerce.php:") for item in plans["keep"]["blockers"])
 
@@ -315,6 +340,9 @@ assert safe["current_theme"] == "legacy-child"
 assert safe["plugins"]["deactivate"] == ["wordpress-seo/wp-seo.php"]
 assert safe["plugins"]["delete"] == []
 assert safe["backup"]["valid"] is True
+assert safe["quality"]["valid"] is True
+assert sorted(safe["quality"]["evidence"]) == ["accessibility", "performance"]
+assert all(row["passed"] is True for row in safe["quality"]["evidence"].values())
 assert safe["parity"]["accepted"] is True
 assert len(safe["parity"]["report_hash"]) == 64
 assert len(safe["plan_sha256"]) == 64
