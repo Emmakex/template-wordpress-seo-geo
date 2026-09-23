@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 8A/8B/8C/8D/8E/8F Migration Bridge safety contract.
+ * Validate the Phase 8A/8B/8C/8D/8E/8F/8G Migration Bridge safety contract.
  */
 
 declare(strict_types=1);
@@ -67,6 +67,12 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Parity/ParityAllowlist.php',
 	MIGRATION_BRIDGE_DIR . '/src/Parity/SeoParityEngine.php',
+	MIGRATION_BRIDGE_DIR . '/src/Cutover/PublicSnapshotProviderInterface.php',
+	MIGRATION_BRIDGE_DIR . '/src/Cutover/BaselinePublicSnapshotProvider.php',
+	MIGRATION_BRIDGE_DIR . '/src/Cutover/BackupEvidenceValidator.php',
+	MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverSnapshotStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverEngine.php',
+	MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -83,7 +89,7 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
-		'Version: 0.6.0',
+		'Version: 0.7.0',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -102,7 +108,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Sandbox/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Migration/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Parity/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Parity/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Cutover/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -122,16 +129,24 @@ $destructive_calls = array(
 	'activate_plugin',
 	'deactivate_plugins',
 	'switch_theme',
+	'delete_plugins',
+	'delete_theme',
 	'wp_schedule_event',
 	'wp_schedule_single_event',
 );
 
-$migration_engine_path = MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php';
-$migration_engine_allowed_calls = array(
-	'wp_update_post',
-	'add_post_meta',
-	'update_post_meta',
-	'delete_post_meta',
+$authorized_mutation_calls = array(
+	MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php' => array(
+		'wp_update_post',
+		'add_post_meta',
+		'update_post_meta',
+		'delete_post_meta',
+	),
+	MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverEngine.php' => array(
+		'activate_plugin',
+		'deactivate_plugins',
+		'switch_theme',
+	),
 );
 
 foreach ( $php_files as $path ) {
@@ -142,15 +157,13 @@ foreach ( $php_files as $path ) {
 			continue;
 		}
 
-		$is_authorized_engine_call = $migration_engine_path === $path
-			&& in_array( $function_name, $migration_engine_allowed_calls, true );
-
-		if ( ! $is_authorized_engine_call ) {
+		$allowed_calls = $authorized_mutation_calls[ $path ] ?? array();
+		if ( ! in_array( $function_name, $allowed_calls, true ) ) {
 			fail_migration_bridge(
 				'destructive-api',
-				'Mutation API exists outside the explicitly authorized Phase 8E Migration Engine boundary.',
+				'Mutation API exists outside an explicitly authorized migration/cutover engine boundary.',
 				$path,
-				'only approved sandbox mutation APIs in MigrationEngine.php',
+				'only approved mutation APIs in MigrationEngine.php or CutoverEngine.php',
 				$function_name
 			);
 		}
@@ -410,6 +423,97 @@ foreach (
 ) {
 	if ( ! str_contains( $html_extractor, $ownership_guard ) ) {
 		fail_migration_bridge( 'parity-ownership-evidence', 'HTML snapshot extractor is missing Phase 8F ownership evidence.', MIGRATION_BRIDGE_DIR . '/src/HtmlSnapshotExtractor.php', $ownership_guard, 'missing' );
+	}
+}
+
+$cutover_engine = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverEngine.php' );
+foreach (
+	array(
+		"/'mode'\\s*=>\\s*'production-cutover-plan'/",
+		"/'plugin_deletion_allowed'\\s*=>\\s*false/",
+		"/'theme_deletion_allowed'\\s*=>\\s*false/",
+		"/'database_reset_allowed'\\s*=>\\s*false/",
+		"/'uploads_reset_allowed'\\s*=>\\s*false/",
+		"/'bridge_deactivation_allowed'\\s*=>\\s*false/",
+		"/'rollback_required_until_acceptance'\\s*=>\\s*true/",
+		"/backup_verified_before_mutation/",
+		"/post_cutover_parity_passed/",
+		"/rolled-back-auto/",
+		"/rollback_state_drift/",
+	) as $cutover_guard
+) {
+	if ( 1 !== preg_match( $cutover_guard, $cutover_engine ) ) {
+		fail_migration_bridge( 'cutover-safety', 'Phase 8G cutover engine is missing a required backup, rollback or destructive-action guard.', MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverEngine.php', $cutover_guard, 'missing' );
+	}
+}
+
+$cutover_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverSnapshotStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_cutover_history_v1';",
+		"add_option( self::OPTION_NAME, \\$payload, '', false )",
+		"update_option(",
+		"'prepared'",
+		"'cutover-active'",
+		"'accepted'",
+	) as $cutover_store_guard
+) {
+	if ( ! str_contains( $cutover_store, str_replace( '\\
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E migration backed-up; 8F parity strict; 8G cutover backup-gated, reversible and acceptance-locked.\n" );
+, '
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, $cutover_store_guard ) ) ) {
+		fail_migration_bridge( 'cutover-history', 'Phase 8G cutover history must remain persistent, non-autoloaded and stateful.', MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverSnapshotStore.php', $cutover_store_guard, 'missing' );
+	}
+}
+
+$backup_validator = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Cutover/BackupEvidenceValidator.php' );
+foreach (
+	array(
+		"'database' => 'full-database'",
+		"'uploads'  => 'uploads-tree'",
+		"backup-sha256-invalid:",
+		"backup-created-at-invalid-or-stale:",
+	) as $backup_guard
+) {
+	if ( ! str_contains( $backup_validator, $backup_guard ) ) {
+		fail_migration_bridge( 'cutover-backup-evidence', 'Phase 8G requires recent hash-bound database and uploads backup evidence.', MIGRATION_BRIDGE_DIR . '/src/Cutover/BackupEvidenceValidator.php', $backup_guard, 'missing' );
+	}
+}
+
+$cutover_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php' );
+foreach (
+	array(
+		"admin_post_",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer(",
+		"'cutover' !== \\$confirm",
+		"'rollback' !== \\$confirm",
+		"'accept' !== \\$confirm",
+	) as $controller_guard
+) {
+	if ( ! str_contains( $cutover_controller, str_replace( '\\
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, '
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, $controller_guard ) ) ) {
+		fail_migration_bridge( 'cutover-admin-entrypoint', 'Phase 8G administrator entrypoints are missing capability, nonce or explicit-confirmation enforcement.', MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php', $controller_guard, 'missing' );
 	}
 }
 
