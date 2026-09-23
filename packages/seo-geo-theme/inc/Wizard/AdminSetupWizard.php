@@ -15,10 +15,11 @@ use SeoGeo\Core\Geo\MarkdownAlternateResolver;
 use SeoGeo\Core\Language\NativeLanguageConfiguration;
 use SeoGeo\Core\Schema\SchemaIdentityResolver;
 use SeoGeo\Core\Schema\SchemaLocalBusinessResolver;
+use SeoGeo\Theme\Setup\SetupExecutor;
 use SeoGeo\Theme\Setup\SetupPlanner;
 
 /**
- * Renders one WordPress-native preview/validation wizard without persistence.
+ * Renders one WordPress-native preview/apply setup wizard.
  */
 final class AdminSetupWizard {
 	public const PAGE_SLUG    = 'seo-geo-setup';
@@ -37,6 +38,13 @@ final class AdminSetupWizard {
 	 * @var SetupWizardPreview
 	 */
 	private SetupWizardPreview $preview;
+
+	/**
+	 * Atomic setup executor.
+	 *
+	 * @var SetupExecutor
+	 */
+	private SetupExecutor $executor;
 
 	/**
 	 * Localized copy.
@@ -59,17 +67,20 @@ final class AdminSetupWizard {
 	 * @param SetupWizardPreview|null    $preview        Optional preview validator.
 	 * @param SetupWizardCopy|null       $copy           Optional localized copy.
 	 * @param CrawlerPolicyResolver|null $crawler_policy Optional crawler authority.
+	 * @param SetupExecutor|null          $executor       Optional atomic executor.
 	 */
 	public function __construct(
 		?SetupPlanner $planner = null,
 		?SetupWizardPreview $preview = null,
 		?SetupWizardCopy $copy = null,
-		?CrawlerPolicyResolver $crawler_policy = null
+		?CrawlerPolicyResolver $crawler_policy = null,
+		?SetupExecutor $executor = null
 	) {
 		$this->planner        = $planner ?? new SetupPlanner();
 		$this->preview        = $preview ?? new SetupWizardPreview();
 		$this->copy           = $copy ?? new SetupWizardCopy();
 		$this->crawler_policy = $crawler_policy ?? new CrawlerPolicyResolver();
+		$this->executor       = $executor ?? new SetupExecutor( $this->preview, $this->planner );
 	}
 
 	/**
@@ -131,11 +142,18 @@ final class AdminSetupWizard {
 		$plan      = $this->planner->plan();
 		$candidate = $this->initial_candidate( $plan );
 		$result    = null;
+		$action    = $this->submission_action();
 
-		if ( $this->is_preview_submission() ) {
+		if ( null !== $action ) {
 			$submission = $this->submitted_candidate();
 			$candidate  = $submission['candidate'];
-			$result     = $this->preview->validate( $candidate, $submission['confirmed'] );
+
+			if ( 'apply' === $action ) {
+				$result = $this->executor->execute( $candidate, $submission['apply_confirmed'] );
+				$plan   = $this->planner->plan();
+			} else {
+				$result = $this->preview->validate( $candidate, $submission['preview_confirmed'] );
+			}
 		}
 
 		?>
@@ -155,7 +173,6 @@ final class AdminSetupWizard {
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'themes.php?page=' . self::PAGE_SLUG ) ); ?>">
 				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
-				<input type="hidden" name="seo_geo_setup_action" value="preview">
 
 				<?php $this->render_preset_languages( $candidate, $plan ); ?>
 				<?php $this->render_identity( $candidate ); ?>
@@ -169,11 +186,22 @@ final class AdminSetupWizard {
 							id="seo-geo-preview-confirm"
 							name="seo_geo_preview_confirm"
 							value="1"
-							required
 						>
 						<label for="seo-geo-preview-confirm"><?php echo esc_html( $this->copy->text( 'preview_confirm' ) ); ?></label>
 					</p>
-					<?php submit_button( $this->copy->text( 'validate' ), 'primary', 'seo_geo_validate', false ); ?>
+					<p class="seo-geo-setup-wizard__checkbox">
+						<input
+							type="checkbox"
+							id="seo-geo-apply-confirm"
+							name="seo_geo_apply_confirm"
+							value="1"
+						>
+						<label for="seo-geo-apply-confirm"><?php echo esc_html( $this->copy->text( 'apply_confirm' ) ); ?></label>
+					</p>
+					<p class="submit">
+						<button type="submit" class="button button-secondary" name="seo_geo_setup_action" value="preview"><?php echo esc_html( $this->copy->text( 'validate' ) ); ?></button>
+						<button type="submit" class="button button-primary" name="seo_geo_setup_action" value="apply"><?php echo esc_html( $this->copy->text( 'apply' ) ); ?></button>
+					</p>
 					<p class="description"><?php echo esc_html( $this->copy->text( 'privacy_note' ) ); ?></p>
 				</fieldset>
 			</form>
