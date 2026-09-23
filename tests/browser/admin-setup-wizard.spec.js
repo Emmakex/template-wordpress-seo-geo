@@ -39,6 +39,8 @@ test.describe('Phase 9D theme setup wizard', () => {
     await expect(page.getByLabel('Preset')).toBeVisible();
     await expect(page.getByLabel('Language map')).toBeVisible();
     await expect(page.getByLabel('Site entity')).toBeVisible();
+    await expect(page.getByLabel('I confirm these validated settings should be applied to this site.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Apply setup' })).toBeVisible();
 
     const scan = await new AxeBuilder({ page })
       .include('.seo-geo-setup-wizard')
@@ -102,7 +104,7 @@ test.describe('Phase 9D theme setup wizard', () => {
     await page.getByLabel('GPTBot').selectOption('disallow');
     await page.getByLabel('Enable llms.txt').check();
     await page.getByLabel('Enable Markdown alternates').check();
-    await page.getByLabel('I understand this validates a preview only and does not save settings.').check();
+    await page.getByLabel('I understand preview validates only and does not save settings.').check();
 
     await page.getByRole('button', { name: 'Validate setup' }).click();
 
@@ -136,7 +138,7 @@ test.describe('Phase 9D theme setup wizard', () => {
     await page.getByLabel('Language map').fill('en=en_US');
     await page.getByLabel('Native routing').selectOption('prefix');
     await page.getByLabel('Site entity').selectOption('organization');
-    await page.getByLabel('I understand this validates a preview only and does not save settings.').check();
+    await page.getByLabel('I understand preview validates only and does not save settings.').check();
 
     await page.getByRole('button', { name: 'Validate setup' }).click();
 
