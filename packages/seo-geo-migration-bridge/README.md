@@ -184,6 +184,8 @@ A ready plan requires recent, hash-bound recovery evidence for both:
 - a complete database backup;
 - the uploads tree.
 
+It also requires recent, passed evidence for the representative migration **Accessibility/Responsive** and **Performance** gates. Backup evidence alone never authorizes production cutover.
+
 The bridge does not claim to create those environment-specific artifacts itself. It records their reference, SHA-256, timestamp, scope and size, together with the WordPress state required for deterministic rollback.
 
 Before mutation, the bridge stores an append-only recovery record containing the active theme/plugins, installed package versions, protected options, baseline/redirect fingerprints and migrated-resource backup fingerprints.
