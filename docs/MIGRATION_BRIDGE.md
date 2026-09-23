@@ -526,7 +526,7 @@ The runtime acceptance proved backup and quality evidence requirements, KEEP/MIG
 
 ## Phase 8H — Migration report
 
-Status: **implementation candidate**
+Status: **complete**
 
 8H converts the migration evidence into one stable handoff artifact that Phase 9 can consume after the temporary Migration Bridge is removed.
 
@@ -566,6 +566,39 @@ $storage = \SeoGeo\MigrationBridge\Plugin::migration_report_store()?->save( $rep
 The stable handoff option is `seo_geo_migration_report_v1`, stored non-autoloaded. Phase 9 may read that option without loading the Migration Bridge plugin.
 
 The report/store contract forbids private post bodies, raw Elementor/Divi payloads, credentials and raw database/uploads backup content.
+
+### 8H acceptance evidence
+
+Final candidate `62a3a9914469f74d5a88e586b3409b1b6388649f` passed all six required gates:
+
+- Foundation CI `35878260227`;
+- Phase 1 Package CI `35878260279`;
+- PHP Quality CI `35878260020` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35878260287`;
+- Accessibility & Responsive CI `35878260087`;
+- Performance Baseline CI `35878260054`.
+
+PR #81 was squash-merged as `20df50545f84a14cd172147259e1233447660424`.
+
+Post-merge `main` repeated the same six gates successfully: Foundation `35878908448`, Package `35878908405`, PHP Quality `35878908466`, WordPress Smoke `35878908657`, Accessibility/Responsive `35878908524` and Performance `35878908520`.
+
+The remaining Phase 8 exit gap is not report functionality: it is the explicit EN/ES administrator/operator interface required by the Phase 8 exit criteria.
+
+## Phase 8I — Operator UI and Phase 8 exit
+
+Status: **active**
+
+8I adds the human-facing migration operations screen needed to close Phase 8 without expanding Phase 9 onboarding scope.
+
+It will provide:
+
+- one capability-gated WordPress Tools screen for Migration Bridge status;
+- built-in English and Spanish operator copy shipped together;
+- locale-aware status for baseline, dependency plan, cutover and final handoff report;
+- safe next-step guidance without executing migration/cutover mutations from page rendering;
+- bridge disposition and unresolved review summary from the persisted 8H report;
+- semantic headings/tables/status text suitable for keyboard and screen-reader use;
+- no private bodies, builder payloads, credentials or raw recovery artifacts.
 
 ## Phase 8A acceptance evidence
 
