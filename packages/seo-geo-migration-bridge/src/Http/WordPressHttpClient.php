@@ -16,6 +16,7 @@ final class WordPressHttpClient implements HttpClientInterface {
 	/**
 	 * Fetch one public URL.
 	 *
+	 * @param string $url Public URL to request.
 	 * @return array{
 	 *     status:int,
 	 *     body:string,
@@ -42,9 +43,9 @@ final class WordPressHttpClient implements HttpClientInterface {
 				'status'  => 0,
 				'body'    => '',
 				'headers' => array(
-					'content_type'  => '',
-					'location'      => '',
-					'x_robots_tag'  => '',
+					'content_type' => '',
+					'location'     => '',
+					'x_robots_tag' => '',
 				),
 				'error'   => $response->get_error_code(),
 			);
