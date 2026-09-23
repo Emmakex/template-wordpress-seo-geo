@@ -1476,15 +1476,41 @@ The next microphase is 8C — Builder and plugin dependency graph.
 
 ### Microphase 8C — Builder and plugin dependency graph
 
-Deliverables:
+Status: **complete**
 
-- classify detected dependencies as KEEP, REPLACE, MIGRATE, OPTIONAL, REMOVE-CANDIDATE or UNKNOWN;
-- identify pages/resources coupled to Elementor, Divi or other detected builders;
-- identify public SEO signals currently owned by each SEO/Schema/multilingual provider;
-- detect dependencies that cannot be removed safely;
-- generate a migration plan before destructive actions exist.
+Delivered:
+
+- content-level dependency scanning for native blocks, Elementor, Divi and registered shortcodes;
+- resource-level dependency records for public, private, draft, pending and future content without exporting post bodies;
+- explicit resource-to-builder and resource-to-shortcode graph edges;
+- conservative component classifications: KEEP, REPLACE, MIGRATE, OPTIONAL, REMOVE-CANDIDATE and UNKNOWN;
+- builder classification that keeps native blocks, marks content-coupled Elementor/Divi for migration and never grants automatic removal;
+- provider classification that preserves business/operational systems and treats SEO/Schema/multilingual ownership as an authority candidate requiring confirmation;
+- correlation of Phase 8B observed public SEO/Schema/multilingual signals with detected provider families;
+- automatic reuse of the persisted Phase 8B baseline when available;
+- unknown/unmapped plugins surfaced for manual review rather than silently removed;
+- explicit `auto_remove=false` for every classified component;
+- privacy guards proving raw post bodies, Elementor payloads, Divi bodies and shortcode attributes are not exported;
+- protected-state regression proving graph generation does not alter posts, postmeta, terms, active plugins, active theme or permalink configuration;
+- Migration Bridge 0.3.0, technical documentation and real WordPress 7.1 / PHP 8.2 acceptance.
+
+8C is closed.
+
+Evidence:
+
+- implementation PR #71 passed all four required workflows on final candidate `f39773e1ca3960dcbceb87af6d8b6885be56326c`;
+- Foundation CI `35863681158` validated the Phase 8A/8B/8C static safety contract and repository paths;
+- Phase 1 Package CI `35863681162` passed package/runtime contract validation;
+- PHP Quality CI `35863681055` passed WPCS and PHPStan level 6 without a new baseline or global suppression;
+- WordPress Smoke CI `35863681047` proved native/Elementor/Divi/shortcode dependency mapping, persisted-baseline reuse, provider classifications, no raw payload leakage and unchanged protected client state;
+- PR #71 was squash-merged as `3e2d3d6c703b4dc48ca5f67c65354ed9cbfebc9d`;
+- post-merge `main` passed all four triggered workflows again: Foundation `35863849260`, Phase 1 Package `35863849284`, PHP Quality `35863849264` and WordPress Smoke `35863849299`.
+
+Adoption findings were resolved in code without lowering standards: WPCS alignment/PHPDoc issues and PHPStan redundant guards were removed at source. No Phase 8C finding required a product rollback or error-register entry.
 
 No production plugin/theme is automatically removed because another component appears to cover similar behavior.
+
+The next microphase is 8D — Sandbox Migration Lab.
 
 ### Microphase 8D — Sandbox Migration Lab
 
