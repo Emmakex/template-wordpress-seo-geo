@@ -317,7 +317,7 @@ final class MigrationEngine {
 	/**
 	 * Capture only metadata that the adapter may change.
 	 *
-	 * @param int                                                                         $object_id WordPress resource ID.
+	 * @param int                                                                            $object_id WordPress resource ID.
 	 * @param array{content:string,delete_meta:list<string>,update_meta:array<string,mixed>} $payload   Mutation payload.
 	 * @return array<string,array{exists:bool,value:mixed}>
 	 */
@@ -355,7 +355,7 @@ final class MigrationEngine {
 	/**
 	 * Restore the resource after a failed post-mutation invariant.
 	 *
-	 * @param int                                                                                                           $object_id WordPress resource ID.
+	 * @param int                                                                                                            $object_id WordPress resource ID.
 	 * @param array{post_content:string,post_name:string,permalink:string,meta:array<string,array{exists:bool,value:mixed}>} $before    Original state.
 	 */
 	private function restore( int $object_id, array $before ): void {
