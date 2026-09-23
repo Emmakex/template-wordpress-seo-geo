@@ -162,6 +162,8 @@ for required_file in \
   "${BUILT_THEME}/inc/Setup/SetupOptionWriterInterface.php" \
   "${BUILT_THEME}/inc/Setup/WordPressSetupOptionWriter.php" \
   "${BUILT_THEME}/inc/Setup/SetupReportStore.php" \
+  "${BUILT_THEME}/inc/Setup/SetupRewriteMaintenance.php" \
+  "${BUILT_THEME}/inc/Setup/SetupWriteFailure.php" \
   "${BUILT_THEME}/inc/Setup/SetupExecutor.php" \
   "${BUILT_THEME}/inc/Wizard/SetupWizardCopy.php" \
   "${BUILT_THEME}/inc/Wizard/SetupWizardPreview.php" \
