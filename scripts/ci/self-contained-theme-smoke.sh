@@ -793,7 +793,7 @@ fi
 
 UNAUTHORIZED_STDOUT="$TMP_DIR/phase9d-unauthorized.out"
 UNAUTHORIZED_STDERR="$TMP_DIR/phase9d-unauthorized.err"
-if wp_cli eval 'wp_set_current_user( 0 ); $screen = new \\SeoGeo\\Theme\\Wizard\\AdminSetupWizard( null, null, new \\SeoGeo\\Theme\\Wizard\\SetupWizardCopy( "en_US" ) ); $screen->render_page();' >"$UNAUTHORIZED_STDOUT" 2>"$UNAUTHORIZED_STDERR"; then
+if wp_cli eval 'wp_set_current_user( 0 ); $screen = new \SeoGeo\Theme\Wizard\AdminSetupWizard( null, null, new \SeoGeo\Theme\Wizard\SetupWizardCopy( "en_US" ) ); $screen->render_page();' >"$UNAUTHORIZED_STDOUT" 2>"$UNAUTHORIZED_STDERR"; then
   fail_smoke "phase9d-capability" "Unauthorized user could render the Phase 9D wizard" "wp_die / non-zero exit" "render succeeded"
 fi
 
