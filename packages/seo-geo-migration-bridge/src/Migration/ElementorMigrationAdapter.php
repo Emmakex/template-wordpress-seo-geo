@@ -109,6 +109,7 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	/**
 	 * Decode Elementor JSON tree.
 	 *
+	 * @param WP_Post $post Resource containing Elementor metadata.
 	 * @return array<int,mixed>|null
 	 */
 	private function tree( WP_Post $post ): ?array {
@@ -220,6 +221,8 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 
 	/**
 	 * Render HTML-preserving native block.
+	 *
+	 * @param string $html Trusted legacy HTML after WordPress sanitization.
 	 */
 	private function html_block( string $html ): string {
 		return '<!-- wp:html -->' . wp_kses_post( $html ) . '<!-- /wp:html -->';
@@ -269,6 +272,7 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	/**
 	 * Build a stable blocked plan.
 	 *
+	 * @param string $blocker Stable blocker code.
 	 * @return array{supported:bool,source:string,target:string,operations:list<string>,blockers:list<string>,warnings:list<string>,media_ids:list<int>}
 	 */
 	private function blocked_plan( string $blocker ): array {
