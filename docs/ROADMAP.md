@@ -1425,16 +1425,54 @@ The next microphase is 8B — SEO/GEO baseline snapshot.
 
 ### Microphase 8B — SEO/GEO baseline snapshot
 
-Deliverables:
+Status: **complete**
 
-- crawl/inventory of relevant public URLs;
-- HTTP status, indexability, title, meta description, canonical, robots, hreflang, Open Graph and Schema snapshot;
-- H1/headings, breadcrumbs, internal links and primary-content fingerprints where practical;
-- sitemap and redirect inventory;
-- language and content-type classification;
-- persisted migration baseline used only as an acceptance reference, never as an authority to reproduce invalid/duplicate legacy output.
+Implementation boundary:
 
-Primary rule: an existing valuable public URL remains stable unless an explicit migration decision requires a change.
+- capture remains inside the temporary Migration Bridge and never becomes a final theme dependency;
+- public requests are anonymous, same-origin only and do not follow redirects by default;
+- inventory combines public WordPress resources with bounded same-origin robots.txt/sitemap discovery;
+- private/draft content and authenticated page output are excluded;
+- page bodies and raw JSON-LD payloads are not persisted; comparison-safe fingerprints are stored instead;
+- the persisted legacy baseline is an acceptance reference only and is explicitly not SEO/GEO authority;
+- persistence is limited to the dedicated non-autoloaded `seo_geo_migration_baseline_v1` option and requires an explicit call;
+- an existing baseline is not overwritten without explicit replacement intent.
+
+Delivered:
+
+- public URL inventory for home, published public post types, archives, public taxonomy terms, author archives with public posts and sitemap-discovered URLs;
+- bounded default capture of 500 URLs with a hard 5,000-URL ceiling and explicit truncation reporting;
+- HTTP status, content type, redirect location and X-Robots-Tag capture;
+- derived indexability state;
+- title, meta description, canonical and robots snapshot;
+- HTML language and hreflang snapshot;
+- Open Graph property snapshot;
+- JSON-LD block count, Schema types and deterministic SHA-256 fingerprints;
+- H1-H6 outline, H1 count, breadcrumb signals and same-origin internal-link inventory;
+- primary-content byte/word counts plus SHA-256 fingerprint without persisted body content;
+- robots.txt and same-origin sitemap inventory/fingerprints;
+- redirects observed while crawling inventoried URLs;
+- explicit baseline persistence with overwrite protection;
+- protected-state regression proof showing posts, terms, active plugins, active theme and permalink structure remain unchanged outside the dedicated bridge option;
+- real WordPress 7.1 / PHP 8.2 acceptance;
+- documentation in `docs/MIGRATION_BRIDGE.md` and the package README.
+
+8B is closed.
+
+Evidence:
+
+- implementation PR #69 passed all four workflows triggered by the final candidate `4f98e330ab8f4bea3862677e93d792c77b259fed`;
+- Foundation CI `35859818659` validated the Phase 8A/8B Migration Bridge static safety contract and required repository paths;
+- Phase 1 Package CI `35859818690` validated package/runtime syntax and package contract;
+- PHP Quality CI `35859818674` passed WPCS and PHPStan level 6 with no new baseline or error suppression;
+- WordPress Smoke CI `35859818683` proved real public capture, sitemap discovery, metadata/Schema/content fingerprints, non-autoloaded persistence, overwrite rejection and unchanged protected client state;
+- PR #69 was squash-merged as `e795d0acb4302d6fd143d81a7ab405cb15ad7894`;
+- post-merge `main` passed all four triggered workflows again: Foundation `35860079163`, Phase 1 Package `35860079244`, PHP Quality `35860079101` and WordPress Smoke `35860079124`;
+- Self-contained Theme CI was correctly not triggered because Phase 8B changed only the temporary Migration Bridge, migration acceptance harness and migration documentation; distributable theme/Core paths were unchanged.
+
+Adoption findings were fixed at root cause without lowering standards: WPCS PHPDoc/alignment findings and PHPStan redundant type guards were corrected in code. The WordPress runtime acceptance had already passed before the final static-quality corrections and passed again on the final candidate. No Phase 8B finding met the error-register criteria.
+
+The next microphase is 8C — Builder and plugin dependency graph.
 
 ### Microphase 8C — Builder and plugin dependency graph
 
