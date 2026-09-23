@@ -148,6 +148,7 @@ required_paths=(
   "packages/seo-geo-migration-bridge/src/Builders/ElementorDetector.php"
   "packages/seo-geo-migration-bridge/src/Builders/DiviDetector.php"
   "docs/MIGRATION_BRIDGE.md"
+  "docs/ONBOARDING.md"
   "scripts/build-theme-package.sh"
   "scripts/ci/self-contained-theme-smoke.sh"
   "scripts/ci/discovery-privacy-acceptance.sh"
