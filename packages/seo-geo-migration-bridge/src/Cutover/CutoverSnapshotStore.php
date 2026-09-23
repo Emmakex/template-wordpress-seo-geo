@@ -85,7 +85,7 @@ final class CutoverSnapshotStore {
 		$updated = false;
 
 		foreach ( $history as &$record ) {
-			if ( ! is_array( $record ) || ( $record['id'] ?? null ) !== $id ) {
+			if ( ( $record['id'] ?? null ) !== $id ) {
 				continue;
 			}
 
@@ -130,8 +130,7 @@ final class CutoverSnapshotStore {
 			return null;
 		}
 
-		$latest = end( $history );
-		return is_array( $latest ) ? $latest : null;
+		return end( $history );
 	}
 
 	/**
