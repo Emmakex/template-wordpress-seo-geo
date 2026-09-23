@@ -29,6 +29,7 @@ final class MigrationPresetResolver {
 	/**
 	 * Resolve one explicitly requested or currently active preset.
 	 *
+	 * @param string|null $requested Optional explicitly selected preset.
 	 * @return array{selected:string|null,valid:bool,reason:string}
 	 */
 	public function resolve( ?string $requested = null ): array {
