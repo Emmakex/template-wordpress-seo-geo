@@ -119,6 +119,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	/**
 	 * Parse nested Divi shortcodes into a minimal tree.
 	 *
+	 * @param string $content Divi shortcode content.
 	 * @return list<array<string,mixed>>|null
 	 */
 	private function parse_tree( string $content ): ?array {
@@ -304,6 +305,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 
 	/**
 	 * Render HTML-preserving native block.
+	 *
+	 * @param string $html Trusted legacy HTML after WordPress sanitization.
 	 */
 	private function html_block( string $html ): string {
 		return '<!-- wp:html -->' . wp_kses_post( $html ) . '<!-- /wp:html -->';
@@ -351,6 +354,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	/**
 	 * Build a stable blocked plan.
 	 *
+	 * @param string $blocker Stable blocker code.
 	 * @return array{supported:bool,source:string,target:string,operations:list<string>,blockers:list<string>,warnings:list<string>,media_ids:list<int>}
 	 */
 	private function blocked_plan( string $blocker ): array {
