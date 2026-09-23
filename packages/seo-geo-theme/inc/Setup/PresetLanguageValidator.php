@@ -66,7 +66,7 @@ final class PresetLanguageValidator {
 			$errors[] = 'prefix-routing-requires-multiple-languages';
 		}
 
-		$preset_document = '' !== $preset ? \seo_geo_theme_preset_document( $preset, 'preset.json' ) : null;
+		$preset_document     = '' !== $preset ? \seo_geo_theme_preset_document( $preset, 'preset.json' ) : null;
 		$preset_multilingual = is_array( $preset_document['multilingual'] ?? null )
 			? $preset_document['multilingual']
 			: array();
@@ -102,12 +102,12 @@ final class PresetLanguageValidator {
 		$valid = array() === $errors && null !== $language_configuration && is_array( $preset_document );
 
 		return array(
-			'schema_version' => 1,
-			'mode'           => 'preset-language-validation',
-			'valid'          => $valid,
-			'errors'         => $errors,
-			'warnings'       => $warnings,
-			'normalized'     => $valid
+			'schema_version'      => 1,
+			'mode'                => 'preset-language-validation',
+			'valid'               => $valid,
+			'errors'              => $errors,
+			'warnings'            => $warnings,
+			'normalized'          => $valid
 				? array(
 					'preset'      => $preset,
 					'languages'   => $language_configuration->to_array(),
@@ -123,12 +123,12 @@ final class PresetLanguageValidator {
 			'provider_ownership' => array(
 				'language' => $language_provider,
 			),
-			'safety' => array(
-				'options_persisted'       => false,
-				'translations_created'    => false,
-				'routes_created'          => false,
-				'provider_state_mutated'  => false,
-				'plugins_mutated'         => false,
+			'safety'             => array(
+				'options_persisted'      => false,
+				'translations_created'   => false,
+				'routes_created'         => false,
+				'provider_state_mutated' => false,
+				'plugins_mutated'        => false,
 			),
 		);
 	}
