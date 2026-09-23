@@ -487,7 +487,10 @@ final class AdminSetupWizard {
 		) {
 			$key = 'seo_geo_lb_' . $field;
 			if ( isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ) {
-				$local[ $field ] = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+				$value = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+				if ( '' !== $value ) {
+					$local[ $field ] = $value;
+				}
 			}
 		}
 
