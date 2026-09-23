@@ -99,12 +99,42 @@ $quality_evidence = array(
 		'sha256'     => hash( 'sha256', 'phase-8g-accessibility-evidence' ),
 		'created_at' => $now,
 		'passed'     => true,
+		'comparison' => array(
+			'before' => array(
+				'passed_cases' => 34,
+				'total_cases'  => 36,
+				'violations'   => 2,
+			),
+			'after'  => array(
+				'passed_cases' => 36,
+				'total_cases'  => 36,
+				'violations'   => 0,
+			),
+		),
 	),
 	'performance' => array(
 		'reference'  => 'ci-performance-phase-8g',
 		'sha256'     => hash( 'sha256', 'phase-8g-performance-evidence' ),
 		'created_at' => $now,
 		'passed'     => true,
+		'comparison' => array(
+			'before' => array(
+				'performance_score' => 98,
+				'lcp_ms'            => 780.0,
+				'cls'               => 0.01,
+				'tbt_ms'            => 0,
+				'transfer_bytes'     => 19500,
+				'requests'           => 6,
+			),
+			'after'  => array(
+				'performance_score' => 100,
+				'lcp_ms'            => 641.68,
+				'cls'               => 0.0,
+				'tbt_ms'            => 0,
+				'transfer_bytes'     => 18829,
+				'requests'           => 5,
+			),
+		),
 	),
 );
 
