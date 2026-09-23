@@ -134,6 +134,35 @@ Before the content write, the engine stores a private rollback source in `_seo_g
 
 An explicitly requested preset must be one of the five bundled presets and must not conflict with the active destination-theme preset. The Migration Engine does not silently switch presets or force content into a different information architecture.
 
+## Phase 8F — SEO/GEO parity and regression engine
+
+Phase 8F compares the persisted Phase 8B baseline against a candidate public-output snapshot before any production cutover is considered.
+
+```php
+$engine = \SeoGeo\MigrationBridge\Plugin::parity_engine();
+$report = $engine?->compare( $baseline, $candidate, $allowlist_rules );
+```
+
+Comparison identity is origin-neutral: production and sandbox hosts are reduced to the same path/query identity. Canonicals, hreflang URLs, internal links, redirects and sitemap resources are normalized the same way so a staging hostname alone is not treated as a regression.
+
+The engine checks URL presence/status/indexability, canonical/robots, title/meta, HTML language, hreflang, Open Graph, Schema type/count, H1 count, internal links, visible-content fingerprints, redirect maps and sitemap topology.
+
+Intentional differences are approved only through exact rules bound to:
+
+- resource path;
+- signal name;
+- baseline SHA-256;
+- candidate SHA-256;
+- a non-empty reason.
+
+A stale rule cannot approve a later unrelated change.
+
+Some regressions are deliberately non-allowable: duplicate canonical/robots/meta/title ownership, duplicate hreflang language keys, duplicate JSON-LD blocks and known broken internal links. These remain blocking even when a matching allowlist rule is supplied.
+
+The parity report contains hashes and decision metadata, not raw before/after bodies. It always declares `production_cutover_allowed=false`; 8F is evidence, not deployment authority.
+
+Accessibility and Performance gates include a representative post-migration page composed from the same conservative native-block families emitted by 8E.
+
 ## Safety boundary
 
 The bridge follows these rules:

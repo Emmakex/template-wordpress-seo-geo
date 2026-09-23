@@ -5,6 +5,8 @@ on:
     paths:
       - 'packages/seo-geo-theme/**'
       - 'packages/seo-geo-core/**'
+      - 'packages/seo-geo-migration-bridge/**'
+      - 'scripts/ci/migration-bridge-parity-acceptance.sh'
       - 'tests/performance/**'
       - 'tests/fixtures/**'
       - 'scripts/ci/performance-baseline.sh'
@@ -20,6 +22,8 @@ on:
     paths:
       - 'packages/seo-geo-theme/**'
       - 'packages/seo-geo-core/**'
+      - 'packages/seo-geo-migration-bridge/**'
+      - 'scripts/ci/migration-bridge-parity-acceptance.sh'
       - 'tests/performance/**'
       - 'tests/fixtures/**'
       - 'scripts/ci/performance-baseline.sh'
@@ -39,7 +43,7 @@ concurrency:
 
 jobs:
   performance-baseline:
-    name: EN/ES Lighthouse baseline
+    name: EN/ES + migration Lighthouse baseline
     runs-on: ubuntu-latest
     timeout-minutes: 25
 

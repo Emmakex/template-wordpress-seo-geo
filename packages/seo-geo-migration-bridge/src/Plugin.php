@@ -11,6 +11,7 @@ namespace SeoGeo\MigrationBridge;
 
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
 use SeoGeo\MigrationBridge\Migration\MigrationEngine;
+use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
 
@@ -61,6 +62,13 @@ final class Plugin {
 	private static ?AdminMigrationController $migration_controller = null;
 
 	/**
+	 * Read-only SEO/GEO parity engine singleton.
+	 *
+	 * @var SeoParityEngine|null
+	 */
+	private static ?SeoParityEngine $parity_engine = null;
+
+	/**
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
@@ -70,6 +78,7 @@ final class Plugin {
 		self::$sandbox_lab          ??= new SandboxMigrationLab();
 		self::$migration_engine     ??= new MigrationEngine();
 		self::$migration_controller ??= new AdminMigrationController( self::$migration_engine );
+		self::$parity_engine        ??= new SeoParityEngine();
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -108,5 +117,12 @@ final class Plugin {
 	 */
 	public static function migration_engine(): ?MigrationEngine {
 		return self::$migration_engine;
+	}
+
+	/**
+	 * Return the read-only SEO/GEO parity engine.
+	 */
+	public static function parity_engine(): ?SeoParityEngine {
+		return self::$parity_engine;
 	}
 }

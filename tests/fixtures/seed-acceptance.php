@@ -71,6 +71,16 @@ $spanish_copy = array(
 	'Contact us' => 'Contactar',
 );
 
+$migration_content = '<!-- wp:heading --><h2 class="wp-block-heading">Representative migrated content</h2><!-- /wp:heading -->'
+	. "\n\n" . '<!-- wp:html --><p>This page represents the conservative native-block output produced by the Phase 8E Migration Engine.</p><!-- /wp:html -->'
+	. "\n\n" . '<!-- wp:buttons --><div class="wp-block-buttons">'
+	. '<!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/acceptance-en/">Primary migrated action</a></div><!-- /wp:button -->'
+	. '<!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/acceptance-es/?fixture_lang=es">Secondary migrated action</a></div><!-- /wp:button -->'
+	. '<!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/">Return home</a></div><!-- /wp:button -->'
+	. '</div><!-- /wp:buttons -->'
+	. "\n\n" . '<!-- wp:separator --><hr class="wp-block-separator has-alpha-channel-opacity"/><!-- /wp:separator -->'
+	. "\n\n" . '<!-- wp:spacer {"height":"32px"} --><div style="height:32px" aria-hidden="true" class="wp-block-spacer"></div><!-- /wp:spacer -->';
+
 $pages = array(
 	array(
 		'slug'    => 'acceptance-en',
@@ -81,6 +91,11 @@ $pages = array(
 		'slug'    => 'acceptance-es',
 		'title'   => 'Aceptación de accesibilidad y diseño responsive — Español',
 		'content' => strtr( $content, $spanish_copy ),
+	),
+	array(
+		'slug'    => 'migration-parity-fixture',
+		'title'   => 'Migration parity representative',
+		'content' => $migration_content,
 	),
 );
 
@@ -110,4 +125,4 @@ foreach ( $pages as $page ) {
 	WP_CLI::log( sprintf( 'Seeded %s as page %d.', $page['slug'], (int) $result ) );
 }
 
-WP_CLI::success( 'Representative EN/ES accessibility fixtures seeded.' );
+WP_CLI::success( 'Representative EN/ES plus post-migration accessibility fixtures seeded.' );

@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 8A/8B/8C/8D/8E Migration Bridge safety contract.
+ * Validate the Phase 8A/8B/8C/8D/8E/8F Migration Bridge safety contract.
  */
 
 declare(strict_types=1);
@@ -65,6 +65,8 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationPresetResolver.php',
 	MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Parity/ParityAllowlist.php',
+	MIGRATION_BRIDGE_DIR . '/src/Parity/SeoParityEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -81,7 +83,7 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
-		'Version: 0.5.0',
+		'Version: 0.6.0',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -99,7 +101,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Http/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Sandbox/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Migration/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Migration/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Parity/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -348,9 +351,71 @@ if ( ! str_contains( $divi_adapter, 'unsupported-divi-module:' ) ) {
 	fail_migration_bridge( 'divi-adapter-blocker', 'Divi adapter must expose unsupported modules as blockers.', MIGRATION_BRIDGE_DIR . '/src/Migration/DiviMigrationAdapter.php', 'unsupported-divi-module:', 'missing' );
 }
 
+$parity_engine = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Parity/SeoParityEngine.php' );
+foreach (
+	array(
+		"/'mode'\\s*=>\\s*'seo-geo-parity'/",
+		"/'mutations_performed'\\s*=>\\s*false/",
+		"/'production_cutover_allowed'\\s*=>\\s*false/",
+		"/'allowlist_requires_exact_fingerprints'\\s*=>\\s*true/",
+		"/'legacy_output_is_authority'\\s*=>\\s*false/",
+		"/'canonical_robots'\\s*=>\\s*true/",
+		"/'schema_conflicts'\\s*=>\\s*true/",
+		"/'redirect_map'\\s*=>\\s*true/",
+		"/'internal_links'\\s*=>\\s*true/",
+		"/'sitemap_consistency'\\s*=>\\s*true/",
+	) as $parity_guard
+) {
+	if ( 1 !== preg_match( $parity_guard, $parity_engine ) ) {
+		fail_migration_bridge( 'parity-engine-safety', 'Phase 8F parity engine is missing a required comparison or non-cutover guard.', MIGRATION_BRIDGE_DIR . '/src/Parity/SeoParityEngine.php', $parity_guard, 'missing' );
+	}
+}
+
+foreach (
+	array(
+		"'canonical-owner-conflict'",
+		"'robots-owner-conflict'",
+		"'hreflang-owner-conflict'",
+		"'schema-duplicate-blocks'",
+		"'candidate-internal-link-target-is-broken'",
+	) as $hard_regression_guard
+) {
+	if ( ! str_contains( $parity_engine, $hard_regression_guard ) ) {
+		fail_migration_bridge( 'parity-hard-regression', 'Phase 8F parity engine is missing a required non-allowable regression class.', MIGRATION_BRIDGE_DIR . '/src/Parity/SeoParityEngine.php', $hard_regression_guard, 'missing' );
+	}
+}
+
+$parity_allowlist = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Parity/ParityAllowlist.php' );
+foreach (
+	array(
+		"before_sha256",
+		"after_sha256",
+		"hash_equals(",
+		"reason",
+	) as $allowlist_guard
+) {
+	if ( ! str_contains( $parity_allowlist, $allowlist_guard ) ) {
+		fail_migration_bridge( 'parity-allowlist', 'Phase 8F allowlist must remain exact, fingerprint-bound and reasoned.', MIGRATION_BRIDGE_DIR . '/src/Parity/ParityAllowlist.php', $allowlist_guard, 'missing' );
+	}
+}
+
+$html_extractor = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/HtmlSnapshotExtractor.php' );
+foreach (
+	array(
+		"'canonical_count'",
+		"'robots_count'",
+		"'meta_description_count'",
+		"'hreflang_duplicates'",
+	) as $ownership_guard
+) {
+	if ( ! str_contains( $html_extractor, $ownership_guard ) ) {
+		fail_migration_bridge( 'parity-ownership-evidence', 'HTML snapshot extractor is missing Phase 8F ownership evidence.', MIGRATION_BRIDGE_DIR . '/src/HtmlSnapshotExtractor.php', $ownership_guard, 'missing' );
+	}
+}
+
 $http_client = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php' );
 if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
 	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
 }
 
-printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations confined to an authorized, backed-up Migration Engine.\n" );
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );

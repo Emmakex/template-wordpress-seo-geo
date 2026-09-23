@@ -401,6 +401,65 @@ The engine may reuse the active theme preset or accept an explicit compatible pr
 
 8F remains responsible for candidate-vs-baseline SEO/GEO parity.
 
+## Phase 8F — SEO/GEO parity and regression engine
+
+Status: **implementation candidate**
+
+8F turns the persisted Phase 8B public-output baseline into a strict acceptance reference for the transformed sandbox.
+
+### Origin-neutral comparison
+
+Production and sandbox origins are not expected to match. The parity engine therefore keys resources by path/query and normalizes URL-valued SEO signals the same way. A hostname change alone is not a regression; a path, status, canonical target, hreflang relationship or redirect target change is.
+
+### Compared signals
+
+For every tracked public path the engine compares:
+
+- URL presence and HTTP status;
+- indexability state;
+- canonical and robots directives;
+- title and meta description;
+- HTML language and hreflang;
+- Open Graph;
+- Schema type set and block count;
+- H1 count;
+- internal links;
+- primary visible-content SHA-256.
+
+It also compares observed redirects and sitemap status/location-count topology.
+
+### Ownership/conflict evidence
+
+The HTML extractor records candidate counts for title, meta description, canonical and robots output plus duplicated hreflang language keys.
+
+Hard conflicts are non-allowable:
+
+- duplicated canonical;
+- duplicated robots meta;
+- duplicated meta description;
+- duplicated title;
+- duplicated hreflang language key;
+- exact duplicate JSON-LD block fingerprints;
+- internal links that target a known tracked 4xx/error resource.
+
+### Intentional-difference allowlist
+
+An intentional difference must identify:
+
+- exact path;
+- exact signal;
+- baseline-value SHA-256;
+- candidate-value SHA-256;
+- non-empty reason.
+
+Rules are not wildcard approvals. If the candidate value changes again, its hash changes and the previous approval no longer matches.
+
+### Privacy and phase boundary
+
+The parity report exposes fingerprints and decision metadata rather than raw compared bodies. It is read-only and always declares `production_cutover_allowed=false`.
+
+Accessibility/Responsive and Performance Baseline now include a representative post-migration native-block fixture and are triggered by Migration Bridge/parity changes. Passing the parity comparator alone is therefore not sufficient to close 8F.
+
 ## Phase 8A acceptance evidence
 
 Phase 8A closed through PR #67.

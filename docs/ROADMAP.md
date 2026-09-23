@@ -1595,6 +1595,21 @@ The next microphase is 8F — SEO parity and regression engine.
 
 ### Microphase 8F — SEO parity and regression engine
 
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- origin-neutral old-vs-new comparison keyed by public path/query rather than staging hostname;
+- exact fingerprint-bound allowlist rules requiring resource path, signal, before/after SHA-256 and reason;
+- URL presence/status/indexability, canonical, robots, title/meta, language, hreflang, Open Graph, Schema type/count, H1, internal-link and primary-content fingerprint comparison;
+- candidate single-owner evidence for title/meta/canonical/robots plus duplicate hreflang detection;
+- hard non-allowable regressions for duplicate canonical/robots/meta/title ownership, duplicate hreflang language keys, duplicate Schema blocks and known broken internal links;
+- redirect-map and sitemap-topology comparison;
+- parity reports expose hashes/status only, not raw before/after content;
+- production cutover remains explicitly disallowed by the parity report;
+- representative post-migration native-block fixture added to Playwright/axe and Lighthouse budgets;
+- Accessibility & Responsive and Performance Baseline workflows now trigger for Migration Bridge/parity changes.
+
 Deliverables:
 
 - old-vs-new comparison for every tracked public URL;
