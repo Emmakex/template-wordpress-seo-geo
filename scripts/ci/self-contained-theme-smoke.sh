@@ -157,6 +157,7 @@ for required_file in \
   "${BUILT_THEME}/inc/Setup/MigrationHandoffReader.php" \
   "${BUILT_THEME}/inc/Setup/SetupCompatibilityDetector.php" \
   "${BUILT_THEME}/inc/Setup/SetupPlanner.php" \
+  "${BUILT_THEME}/inc/Setup/EntityGeoValidator.php" \
   "${BUILT_THEME}/presets/corporate/preset.json" \
   "${BUILT_THEME}/presets/corporate/content-map.json" \
   "${BUILT_THEME}/presets/corporate/patterns.json" \
@@ -417,6 +418,184 @@ PY
 fi
 
 printf '[self-contained] Phase 9B validation OK: explicit preset + native language configuration normalized; invalid preset/locale/routing rejected; no setup state mutated.\n'
+
+printf '[self-contained] Checking Phase 9C entity and GEO validation.\n'
+PHASE9C_STATE_BEFORE="$(wp_cli eval '$state=array(
+"setup"=>get_option("seo_geo_theme_setup_v1",null),
+"identity"=>get_option("seo_geo_schema_identity",null),
+"local_business"=>get_option("seo_geo_schema_local_business",null),
+"crawler"=>get_option("seo_geo_crawler_policy",null),
+"llms"=>get_option("seo_geo_llms_txt",null),
+"markdown"=>get_option("seo_geo_markdown_alternates",null),
+"plugins"=>get_option("active_plugins",array())
+); echo hash("sha256",wp_json_encode($state));' 2>/dev/null | tr -d '\r\n')"
+
+PHASE9C_JSON="$(wp_cli eval '$cases=array(
+"organization"=>seo_geo_theme_validate_entity_geo_setup(array(
+  "preset"=>"corporate",
+  "site_entity_type"=>"organization",
+  "confirm_identity"=>true,
+  "crawler_policy"=>array("oai_searchbot"=>"allow","gptbot"=>"disallow"),
+  "llms_txt_enabled"=>true,
+  "markdown_alternates_enabled"=>true
+)),
+"local_business"=>seo_geo_theme_validate_entity_geo_setup(array(
+  "preset"=>"local-business",
+  "site_entity_type"=>"local_business",
+  "confirm_identity"=>true,
+  "local_business"=>array(
+    "type"=>"ProfessionalService",
+    "street_address"=>"123 Main Street",
+    "address_locality"=>"Barcelona",
+    "address_region"=>"Catalonia",
+    "postal_code"=>"08001",
+    "address_country"=>"ES",
+    "telephone"=>"+34 930 000 000",
+    "price_range"=>"€€",
+    "latitude"=>"41.38740",
+    "longitude"=>"2.16860"
+  ),
+  "crawler_policy"=>array(),
+  "llms_txt_enabled"=>false,
+  "markdown_alternates_enabled"=>false
+)),
+"missing_address"=>seo_geo_theme_validate_entity_geo_setup(array(
+  "preset"=>"local-business",
+  "site_entity_type"=>"local_business",
+  "confirm_identity"=>true,
+  "local_business"=>array("type"=>"LocalBusiness"),
+  "crawler_policy"=>array(),
+  "llms_txt_enabled"=>false,
+  "markdown_alternates_enabled"=>false
+)),
+"bad_coordinates"=>seo_geo_theme_validate_entity_geo_setup(array(
+  "preset"=>"local-business",
+  "site_entity_type"=>"local_business",
+  "confirm_identity"=>true,
+  "local_business"=>array(
+    "type"=>"LocalBusiness",
+    "street_address"=>"123 Main Street",
+    "address_locality"=>"Barcelona",
+    "postal_code"=>"08001",
+    "address_country"=>"ES",
+    "latitude"=>"41.38",
+    "longitude"=>"2.16"
+  ),
+  "crawler_policy"=>array(),
+  "llms_txt_enabled"=>false,
+  "markdown_alternates_enabled"=>false
+)),
+"unconfirmed"=>seo_geo_theme_validate_entity_geo_setup(array(
+  "preset"=>"corporate",
+  "site_entity_type"=>"organization",
+  "confirm_identity"=>false,
+  "crawler_policy"=>array(),
+  "llms_txt_enabled"=>false,
+  "markdown_alternates_enabled"=>false
+)),
+"bad_crawler"=>seo_geo_theme_validate_entity_geo_setup(array(
+  "preset"=>"corporate",
+  "site_entity_type"=>"organization",
+  "confirm_identity"=>true,
+  "crawler_policy"=>array("gptbot"=>"maybe"),
+  "llms_txt_enabled"=>false,
+  "markdown_alternates_enabled"=>false
+)),
+"fabricated_claim"=>seo_geo_theme_validate_entity_geo_setup(array(
+  "preset"=>"local-business",
+  "site_entity_type"=>"local_business",
+  "confirm_identity"=>true,
+  "local_business"=>array(
+    "type"=>"LocalBusiness",
+    "street_address"=>"123 Main Street",
+    "address_locality"=>"Barcelona",
+    "postal_code"=>"08001",
+    "address_country"=>"ES",
+    "aggregate_rating"=>"5.0"
+  ),
+  "crawler_policy"=>array(),
+  "llms_txt_enabled"=>false,
+  "markdown_alternates_enabled"=>false
+))
+); echo wp_json_encode($cases,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);' 2>/dev/null | tr -d '\r\n')" \
+  || fail_smoke "phase9c-validation" "Could not evaluate Phase 9C entity/GEO validation" "JSON validation cases" "wp eval failed"
+
+printf '%s' "$PHASE9C_JSON" >"$TMP_DIR/phase9c-validation.json"
+
+PHASE9C_STATE_AFTER="$(wp_cli eval '$state=array(
+"setup"=>get_option("seo_geo_theme_setup_v1",null),
+"identity"=>get_option("seo_geo_schema_identity",null),
+"local_business"=>get_option("seo_geo_schema_local_business",null),
+"crawler"=>get_option("seo_geo_crawler_policy",null),
+"llms"=>get_option("seo_geo_llms_txt",null),
+"markdown"=>get_option("seo_geo_markdown_alternates",null),
+"plugins"=>get_option("active_plugins",array())
+); echo hash("sha256",wp_json_encode($state));' 2>/dev/null | tr -d '\r\n')"
+
+[[ "$PHASE9C_STATE_BEFORE" == "$PHASE9C_STATE_AFTER" ]] \
+  || fail_smoke "phase9c-mutated-state" "Phase 9C validation changed protected setup/GEO state" "$PHASE9C_STATE_BEFORE" "$PHASE9C_STATE_AFTER"
+
+if ! PHASE9C_ASSERTION="$(python3 - "$TMP_DIR/phase9c-validation.json" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    p=json.load(f)
+
+org=p["organization"]
+assert org["valid"] is True
+assert org["errors"] == []
+assert org["normalized"]["entity"]["site_entity_type"] == "organization"
+assert org["normalized"]["entity"]["confirmed"] is True
+assert org["normalized"]["entity"]["local_business"] is None
+assert org["normalized"]["entity"]["visible_fact_gate_required"] is False
+assert org["normalized"]["entity"]["schema_output_ready"] is False
+assert org["normalized"]["geo"]["crawler_policy"]["value"] == {
+    "oai_searchbot":"allow",
+    "gptbot":"disallow",
+}
+assert org["normalized"]["geo"]["llms_txt"]["enabled"] is True
+assert org["normalized"]["geo"]["markdown"]["enabled"] is True
+assert org["normalized"]["geo"]["provenance"] == {
+    "mode":"native-eligible-content",
+    "configurable":False,
+}
+assert all(v is False for v in org["safety"].values())
+
+lb=p["local_business"]
+assert lb["valid"] is True
+entity=lb["normalized"]["entity"]
+assert entity["site_entity_type"] == "local_business"
+assert entity["visible_fact_gate_required"] is True
+assert entity["schema_output_ready"] is False
+assert entity["local_business"]["type"] == "ProfessionalService"
+assert entity["local_business"]["street_address"] == "123 Main Street"
+assert entity["local_business"]["address_locality"] == "Barcelona"
+assert entity["local_business"]["postal_code"] == "08001"
+assert entity["local_business"]["address_country"] == "ES"
+assert entity["local_business"]["latitude"] == 41.3874
+assert entity["local_business"]["longitude"] == 2.1686
+
+assert p["missing_address"]["valid"] is False
+assert "local-business-physical-address-required" in p["missing_address"]["errors"]
+
+assert p["bad_coordinates"]["valid"] is False
+assert "local-business-coordinates-invalid" in p["bad_coordinates"]["errors"]
+
+assert p["unconfirmed"]["valid"] is False
+assert "identity-confirmation-required" in p["unconfirmed"]["errors"]
+
+assert p["bad_crawler"]["valid"] is False
+assert "invalid-crawler-state:gptbot" in p["bad_crawler"]["errors"]
+
+assert p["fabricated_claim"]["valid"] is False
+assert "unsupported-local-business-field:aggregate_rating" in p["fabricated_claim"]["errors"]
+
+print("ok")
+PY
+)"; then
+  fail_smoke "phase9c-contract" "Phase 9C validation contract is invalid" "explicit entity/GEO validation without inferred facts or mutation" "${PHASE9C_ASSERTION:-python assertion failed}"
+fi
+
+printf '[self-contained] Phase 9C validation OK: explicit entity/GEO choices normalized; visible-fact authority retained; invalid address/coordinates/crawler/claim input rejected; no setup state mutated.\n'
 
 if ! RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $r->getFileName();' 2>"$RUNTIME_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$RUNTIME_EVAL_ERROR" | head -c 240)"

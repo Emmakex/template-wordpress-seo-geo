@@ -75,6 +75,7 @@ required_paths=(
   "packages/seo-geo-theme/inc/Setup/SetupCompatibilityDetector.php"
   "packages/seo-geo-theme/inc/Setup/SetupPlanner.php"
   "packages/seo-geo-theme/inc/Setup/PresetLanguageValidator.php"
+  "packages/seo-geo-theme/inc/Setup/EntityGeoValidator.php"
   "packages/seo-geo-core/README.md"
   "packages/seo-geo-core/src/Runtime.php"
   "packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php"

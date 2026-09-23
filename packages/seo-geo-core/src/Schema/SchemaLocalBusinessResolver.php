@@ -74,6 +74,38 @@ final class SchemaLocalBusinessResolver {
 	);
 
 	/**
+	 * Return supported LocalBusiness Schema types.
+	 *
+	 * @return list<string>
+	 */
+	public static function supported_types(): array {
+		return self::SUPPORTED_TYPES;
+	}
+
+	/**
+	 * Normalize one candidate address using the runtime authority.
+	 *
+	 * Visibility is intentionally not asserted here; runtime Schema emission
+	 * still requires these facts to be visible in the public document.
+	 *
+	 * @param array<string,mixed> $configuration Candidate LocalBusiness configuration.
+	 * @return array<string,string>|null
+	 */
+	public function normalize_address_candidate( array $configuration ): ?array {
+		return $this->address( $configuration );
+	}
+
+	/**
+	 * Normalize candidate coordinates using the runtime authority.
+	 *
+	 * @param array<string,mixed> $configuration Candidate LocalBusiness configuration.
+	 * @return array<string,float|string>|null
+	 */
+	public function normalize_geo_candidate( array $configuration ): ?array {
+		return $this->geo( $configuration );
+	}
+
+	/**
 	 * Stable node-ID generator.
 	 *
 	 * @var SchemaNodeIds

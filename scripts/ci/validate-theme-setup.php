@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 9A/9B theme setup foundation contract.
+ * Validate the Phase 9A/9B/9C theme setup foundation contract.
  *
  * @package SeoGeoTheme
  */
@@ -17,6 +17,7 @@ $required = array(
 	$setup_dir . '/SetupCompatibilityDetector.php',
 	$setup_dir . '/SetupPlanner.php',
 	$setup_dir . '/PresetLanguageValidator.php',
+	$setup_dir . '/EntityGeoValidator.php',
 );
 
 foreach ( $required as $path ) {
@@ -49,7 +50,7 @@ foreach ( $php_files as $path ) {
 	$source = (string) file_get_contents( $path );
 	foreach ( $forbidden as $primitive ) {
 		if ( str_contains( $source, $primitive ) ) {
-			fwrite( STDERR, 'Phase 9A/9B read-only setup code contains forbidden primitive ' . $primitive . ' in ' . $path . PHP_EOL );
+			fwrite( STDERR, 'Phase 9A/9B/9C read-only setup code contains forbidden primitive ' . $primitive . ' in ' . $path . PHP_EOL );
 			exit( 1 );
 		}
 	}
@@ -125,10 +126,96 @@ foreach (
 	}
 }
 
+$entity_geo = (string) file_get_contents( $setup_dir . '/EntityGeoValidator.php' );
+foreach (
+	array(
+		"'entity-geo-validation'",
+		'SchemaIdentityResolver::normalize_site_entity_type',
+		'SchemaLocalBusinessResolver::supported_types',
+		'normalize_address_candidate',
+		'normalize_geo_candidate',
+		'sanitize_configuration',
+		"'visible_fact_gate_required'",
+		"'schema_output_ready'",
+		"'content_provenance'",
+		"'entity_facts_inferred'",
+		"'crawler_guarantees_made'",
+	) as $guard
+) {
+	if ( ! str_contains( $entity_geo, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C entity/GEO guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$identity_authority = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Schema/SchemaIdentityResolver.php' );
+foreach ( array( 'public static function supported_site_entity_types(): array', 'public static function normalize_site_entity_type(' ) as $guard ) {
+	if ( ! str_contains( $identity_authority, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C Schema identity authority guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$local_business_authority = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Schema/SchemaLocalBusinessResolver.php' );
+foreach (
+	array(
+		'public static function supported_types(): array',
+		'public function normalize_address_candidate(',
+		'public function normalize_geo_candidate(',
+	) as $guard
+) {
+	if ( ! str_contains( $local_business_authority, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C LocalBusiness authority guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
 $language_config = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php' );
 foreach ( array( 'public static function from_array(', 'public function to_array(): array' ) as $guard ) {
 	if ( ! str_contains( $language_config, $guard ) ) {
 		fwrite( STDERR, 'Phase 9B native language authority guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$entity_geo = (string) file_get_contents( $setup_dir . '/EntityGeoValidator.php' );
+foreach (
+	array(
+		"'entity-geo-validation'",
+		'SchemaIdentityResolver::normalize_site_entity_type',
+		'SchemaLocalBusinessResolver::supported_types',
+		'normalize_address_candidate',
+		'normalize_geo_candidate',
+		'CrawlerPolicyResolver::OPTION_NAME',
+		'LlmsTxtResolver::OPTION_NAME',
+		'MarkdownAlternateResolver::OPTION_NAME',
+		"'visible_fact_gate_required'",
+		"'schema_output_ready'",
+		"'entity_facts_inferred'",
+		"'address_inferred'",
+		"'coordinates_inferred'",
+		"'ratings_reviews_inferred'",
+		"'crawler_guarantees_made'",
+	) as $guard
+) {
+	if ( ! str_contains( $entity_geo, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C entity/GEO guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$identity_resolver = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Schema/SchemaIdentityResolver.php' );
+foreach ( array( 'public static function supported_site_entity_types(): array', 'public static function normalize_site_entity_type(' ) as $guard ) {
+	if ( ! str_contains( $identity_resolver, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C identity authority guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$local_business_resolver = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Schema/SchemaLocalBusinessResolver.php' );
+foreach ( array( 'public static function supported_types(): array', 'public function normalize_address_candidate(', 'public function normalize_geo_candidate(' ) as $guard ) {
+	if ( ! str_contains( $local_business_resolver, $guard ) ) {
+		fwrite( STDERR, 'Phase 9C LocalBusiness authority guard missing: ' . $guard . PHP_EOL );
 		exit( 1 );
 	}
 }
@@ -138,6 +225,7 @@ foreach (
 	array(
 		'function seo_geo_theme_setup_plan(): array',
 		'function seo_geo_theme_validate_preset_language_setup( array $input ): array',
+		'function seo_geo_theme_validate_entity_geo_setup( array $input ): array',
 	) as $guard
 ) {
 	if ( ! str_contains( $bootstrap, $guard ) ) {
@@ -146,4 +234,4 @@ foreach (
 	}
 }
 
-printf( "Phase 9A/9B setup static contract OK: handoff-aware planning plus preset/native-language validation remain non-persistent.\n" );
+printf( "Phase 9A/9B/9C setup static contract OK: handoff-aware planning plus preset/language/entity/GEO validation remain non-persistent.\n" );

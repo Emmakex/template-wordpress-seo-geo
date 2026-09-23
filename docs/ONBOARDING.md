@@ -157,6 +157,59 @@ The runtime acceptance proved explicit preset/native-language normalization, inv
 
 ## Phase 9C — Entity and GEO configuration
 
-Status: **active**
+Status: **implementation candidate**
 
-9C validates explicit site-entity and GEO/discovery choices by composing the existing Core authorities. It must not fabricate organization/local-business facts, addresses, coordinates, ratings, crawler guarantees or content selections.
+9C validates explicit site-entity and GEO/discovery choices by composing the existing Core authorities. It does not persist options; atomic application remains reserved for Phase 9E.
+
+The public entrypoint is:
+
+```php
+$result = seo_geo_theme_validate_entity_geo_setup(
+    array(
+        'preset'                       => 'local-business',
+        'site_entity_type'             => 'local_business',
+        'confirm_identity'             => true,
+        'local_business'               => array(
+            'type'             => 'ProfessionalService',
+            'street_address'   => '123 Main Street',
+            'address_locality' => 'Barcelona',
+            'postal_code'      => '08001',
+            'address_country'  => 'ES',
+            'latitude'         => '41.38740',
+            'longitude'        => '2.16860',
+        ),
+        'crawler_policy'               => array(
+            'oai_searchbot' => 'allow',
+            'gptbot'        => 'disallow',
+        ),
+        'llms_txt_enabled'             => true,
+        'markdown_alternates_enabled'  => true,
+    )
+);
+```
+
+### Identity authority
+
+The candidate site entity must be one of the Core-supported explicit identities: `organization` or `local_business`. Identity confirmation is mandatory.
+
+Organization name and URL are not duplicated in onboarding; runtime continues to derive them from the WordPress site title and home URL.
+
+LocalBusiness validation reuses `SchemaLocalBusinessResolver` for address and coordinate normalization. The onboarding result deliberately reports `schema_output_ready=false`: final LocalBusiness Schema remains blocked until the existing runtime visible-fact gate proves the configured address and optional public facts are visible on the public document.
+
+9C only accepts basic LocalBusiness fields. It does not accept review/rating payloads, infer coordinates, infer opening hours or create location content.
+
+### GEO/discovery authority
+
+Crawler choices are validated against `CrawlerPolicyResolver::supported_crawlers()` and its allow/inherit/disallow states, then normalized through `sanitize_configuration()`.
+
+Discovery opt-ins are bound to the existing Core authorities:
+
+- `seo_geo_llms_txt` through `LlmsTxtResolver`;
+- `seo_geo_markdown_alternates` through `MarkdownAlternateResolver`;
+- provenance remains the existing native eligible-content behavior from `ContentProvenanceResolver`.
+
+These controls do not claim ranking, inclusion, citation, training or crawler behavior guarantees. If WordPress site visibility is non-public, explicit discovery/allow choices are reported as advisory-inactive.
+
+### Safety
+
+Validation performs no option writes, page creation, plugin mutation, content selection, credential access or outbound requests. The self-contained acceptance fingerprints setup/entity/GEO/plugin options before and after valid and invalid validation cases.
