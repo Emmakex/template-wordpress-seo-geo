@@ -129,6 +129,8 @@ final class Plugin {
 		self::$parity_engine          ??= new SeoParityEngine();
 		self::$cutover_engine         ??= new CutoverEngine();
 		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
+		self::$operator_status        ??= new OperatorStatus();
+		self::$operator_screen        ??= new AdminOperatorScreen( self::$operator_status );
 		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
 
