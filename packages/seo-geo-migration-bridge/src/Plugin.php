@@ -28,11 +28,19 @@ final class Plugin {
 	private static ?BaselineSnapshotter $baseline_snapshotter = null;
 
 	/**
+	 * Migration dependency graph singleton.
+	 *
+	 * @var DependencyGraphBuilder|null
+	 */
+	private static ?DependencyGraphBuilder $dependency_graph = null;
+
+	/**
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
 		self::$analyzer             ??= new SiteAnalyzer();
 		self::$baseline_snapshotter ??= new BaselineSnapshotter();
+		self::$dependency_graph     ??= new DependencyGraphBuilder();
 	}
 
 	/**
@@ -47,5 +55,12 @@ final class Plugin {
 	 */
 	public static function baseline_snapshotter(): ?BaselineSnapshotter {
 		return self::$baseline_snapshotter;
+	}
+
+	/**
+	 * Return the read-only migration dependency graph builder.
+	 */
+	public static function dependency_graph(): ?DependencyGraphBuilder {
+		return self::$dependency_graph;
 	}
 }

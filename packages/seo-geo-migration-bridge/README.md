@@ -46,6 +46,23 @@ An existing baseline is not overwritten unless the caller passes `true` as the r
 
 The stored legacy baseline is an **acceptance reference only**. It is never treated as authority to reproduce invalid, duplicate or unsafe legacy output.
 
+## Phase 8C — dependency graph
+
+The dependency graph combines the Phase 8A environment inventory with the persisted Phase 8B public baseline:
+
+```php
+$analysis = \SeoGeo\MigrationBridge\Plugin::analyzer()?->analyze();
+$graph = null !== $analysis
+    ? \SeoGeo\MigrationBridge\Plugin::dependency_graph()?->build( $analysis )
+    : null;
+```
+
+Phase 8C may inspect post bodies and known builder meta **inside WordPress** to detect coupling, but the report exports only resource IDs/status/public URLs, builder identifiers, shortcode identifiers and bounded evidence strings. It does not export raw post bodies, Elementor payloads, Divi bodies or shortcode attributes.
+
+The graph classifies components conservatively as `KEEP`, `REPLACE`, `MIGRATE`, `OPTIONAL`, `REMOVE-CANDIDATE` or `UNKNOWN`. Every component has `auto_remove=false`; removal remains a later explicit migration decision.
+
+It also records explicit resource-to-builder/shortcode edges and provider authority **candidates** for SEO, Schema and multilingual signals. Provider detection is never treated as proof of callback-level ownership.
+
 ## Safety boundary
 
 The bridge follows these rules:
@@ -57,7 +74,8 @@ The bridge follows these rules:
 - page bodies are not stored in the baseline;
 - Phase 8B persistence is limited to the dedicated Migration Bridge option;
 - no theme/plugin activation, deactivation, switching or content rewrite occurs;
-- builder-content dependency mapping remains Phase 8C;
+- Phase 8C content scanning exports dependency metadata only, never raw content/builder payloads;
+- Phase 8C never removes plugins, switches themes or rewrites content;
 - production transformation/cutover remains a later explicitly authorized phase.
 
 The plugin is temporary adoption tooling and is never required by the final self-contained theme.
