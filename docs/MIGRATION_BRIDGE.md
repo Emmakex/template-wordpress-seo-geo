@@ -103,6 +103,84 @@ A provider becomes supported only after its specific ownership/adapter contract 
 The analyzer therefore does not crawl public URLs, store snapshots or propose destructive actions in 8A.
 
 
+## Phase 8B — SEO/GEO baseline snapshot
+
+Status: **implementation candidate**
+
+Phase 8B adds a comparison-oriented public-output snapshot before any migration transformation is allowed.
+
+### Capture contract
+
+The baseline service is exposed through:
+
+```php
+$snapshotter = \SeoGeo\MigrationBridge\Plugin::baseline_snapshotter();
+$snapshot = $snapshotter?->capture();
+```
+
+Capture is anonymous and constrained to the configured WordPress home origin. The default HTTP transport does not follow redirects and does not send WordPress authentication cookies.
+
+The URL inventory combines:
+
+- the home page;
+- published publicly queryable posts/pages/custom post types;
+- public post-type archives;
+- non-empty public taxonomy terms;
+- author archives that currently have public posts;
+- same-origin public URLs discovered from robots.txt and sitemap indexes;
+- optional explicit same-origin seed URLs.
+
+The default capture ceiling is 500 URLs and the report declares when discovery was truncated. A caller may raise the limit up to the hard ceiling of 5,000 URLs.
+
+### Page signals
+
+For each inventoried URL the snapshot records, where available:
+
+- HTTP status, response content type, redirect location and X-Robots-Tag;
+- derived indexability state;
+- title, meta description, canonical and robots;
+- HTML language and hreflang;
+- Open Graph properties;
+- JSON-LD Schema block count, types and deterministic SHA-256 fingerprints;
+- H1-H6 outline and H1 count;
+- visible breadcrumb-container signals;
+- same-origin internal links;
+- primary-content byte count, word count and SHA-256 fingerprint;
+- source/content-type classification from WordPress or sitemap discovery;
+- request error code when the anonymous request failed.
+
+Public body content is **not** stored in the baseline.
+
+### Sitemap and redirect inventory
+
+The snapshot reads same-origin sitemap declarations from `robots.txt` and probes the conventional WordPress/generic sitemap index endpoints. Same-origin sitemap indexes are followed to a bounded depth, and each sitemap is represented by status, location count and body fingerprint.
+
+Redirect coverage in 8B is intentionally labeled `observed-during-baseline`: redirects are recorded only when an inventoried URL returns a 3xx response. Provider-specific redirect databases/rules are not silently read or treated as authoritative in this microphase; those dependencies remain part of 8C classification/adapters.
+
+### Persistence contract
+
+Persistence is explicit:
+
+```php
+$storage = $snapshotter?->persist( $snapshot );
+```
+
+The bridge stores one envelope in the non-autoloaded option `seo_geo_migration_baseline_v1`. Existing baseline data is not overwritten unless the caller explicitly enables replacement.
+
+Persistence is limited to Migration Bridge state. It must not alter posts, terms, active plugins, active theme, permalink structure or public SEO output.
+
+The persisted legacy snapshot is an acceptance reference for later parity checks, not an instruction to reproduce duplicate, invalid or unsafe legacy markup.
+
+### Privacy and authority
+
+The Phase 8B snapshot declares:
+
+- `same_origin_only=true`;
+- `authenticated_requests=false`;
+- `private_content_collected=false`;
+- `body_content_persisted=false`;
+- `legacy_output_is_authority=false`.
+
 ## Phase 8A acceptance evidence
 
 Phase 8A closed through PR #67.
@@ -111,4 +189,4 @@ Final PR candidate `494139b10d3c2cc57eafb4cf499017d49c7e5fdb` passed Foundation,
 
 The key runtime proof is WordPress Smoke: the analyzer inspected a synthetic legacy installation containing active/inactive plugins, Elementor, Divi, WooCommerce, Yoast, a child theme, CPT/taxonomy/shortcode, menu and custom CSS, while the protected-state fingerprint remained unchanged.
 
-The next Migration Bridge capability is Phase 8B: capture and persist a public SEO/GEO baseline snapshot without turning legacy output into the new authority.
+The Phase 8A analyzer remains the non-destructive environment inventory. Phase 8B adds the public-output baseline described above without turning legacy output into the new authority.
