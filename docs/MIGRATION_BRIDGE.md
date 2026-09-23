@@ -470,6 +470,8 @@ Status: **implementation candidate**
 
 Before any theme switch or plugin deactivation, the cutover engine requires recent evidence for a complete database backup and the uploads tree. Each record contains a recovery reference, SHA-256, creation time, scope and positive byte size; evidence older than 24 hours is rejected.
 
+A production cutover also requires recent, passed evidence for both the representative migrated-page Accessibility/Responsive gate and the Performance/Lighthouse gate. Quality evidence carries a reference, SHA-256, creation time and pass state; stale or failed evidence blocks the plan.
+
 The bridge deliberately does not claim to create provider-independent database/uploads disaster-recovery artifacts itself. Hosting or CLI backup systems create those artifacts; the bridge validates and records their evidence before mutation.
 
 ### Internal recovery snapshot
