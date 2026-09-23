@@ -70,6 +70,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/PublicSnapshotProviderInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/BaselinePublicSnapshotProvider.php',
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/BackupEvidenceValidator.php',
+	MIGRATION_BRIDGE_DIR . '/src/Cutover/QualityEvidenceValidator.php',
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverSnapshotStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/CutoverEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php',
@@ -486,6 +487,89 @@ foreach (
 ) {
 	if ( ! str_contains( $backup_validator, $backup_guard ) ) {
 		fail_migration_bridge( 'cutover-backup-evidence', 'Phase 8G requires recent hash-bound database and uploads backup evidence.', MIGRATION_BRIDGE_DIR . '/src/Cutover/BackupEvidenceValidator.php', $backup_guard, 'missing' );
+	}
+}
+
+$quality_validator = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Cutover/QualityEvidenceValidator.php' );
+foreach (
+	array(
+		"'accessibility'",
+		"'performance'",
+		"quality-gate-not-passed:",
+		"quality-created-at-invalid-or-stale:",
+		"'passed'     => \\$passed",
+	) as $quality_guard
+) {
+	if ( ! str_contains( $quality_validator, str_replace( '\\
+foreach (
+	array(
+		"admin_post_",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer(",
+		"'cutover' !== \\$confirm",
+		"'rollback' !== \\$confirm",
+		"'accept' !== \\$confirm",
+	) as $controller_guard
+) {
+	if ( ! str_contains( $cutover_controller, str_replace( '\\
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, '
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, $controller_guard ) ) ) {
+		fail_migration_bridge( 'cutover-admin-entrypoint', 'Phase 8G administrator entrypoints are missing capability, nonce or explicit-confirmation enforcement.', MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php', $controller_guard, 'missing' );
+	}
+}
+
+$http_client = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php' );
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, '
+foreach (
+	array(
+		"admin_post_",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer(",
+		"'cutover' !== \\$confirm",
+		"'rollback' !== \\$confirm",
+		"'accept' !== \\$confirm",
+	) as $controller_guard
+) {
+	if ( ! str_contains( $cutover_controller, str_replace( '\\
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, '
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, $controller_guard ) ) ) {
+		fail_migration_bridge( 'cutover-admin-entrypoint', 'Phase 8G administrator entrypoints are missing capability, nonce or explicit-confirmation enforcement.', MIGRATION_BRIDGE_DIR . '/src/Cutover/AdminCutoverController.php', $controller_guard, 'missing' );
+	}
+}
+
+$http_client = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php' );
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: 8A read-only; 8B baseline bounded; 8C planning non-destructive; 8D sandbox isolated; 8E mutations authorized/backed-up; 8F parity read-only, fingerprint-allowlisted and cutover-blocking.\n" );
+, $quality_guard ) ) ) {
+		fail_migration_bridge( 'cutover-quality-evidence', 'Phase 8G requires recent passed accessibility/performance evidence.', MIGRATION_BRIDGE_DIR . '/src/Cutover/QualityEvidenceValidator.php', $quality_guard, 'missing' );
 	}
 }
 
