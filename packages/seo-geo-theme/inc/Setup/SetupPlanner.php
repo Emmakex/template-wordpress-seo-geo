@@ -49,9 +49,9 @@ final class SetupPlanner {
 	 * @return array<string,mixed>
 	 */
 	public function plan(): array {
-		$handoff      = $this->handoff_reader->read();
+		$handoff       = $this->handoff_reader->read();
 		$compatibility = $this->compatibility->detect();
-		$languages    = NativeLanguageConfiguration::from_wordpress();
+		$languages     = NativeLanguageConfiguration::from_wordpress();
 		$active_preset = \seo_geo_theme_active_preset_id();
 		$presets       = $this->presets();
 
@@ -84,21 +84,21 @@ final class SetupPlanner {
 					'x_default' => $languages->x_default_language_code(),
 				),
 			),
-			'migration_handoff'      => $handoff,
-			'compatibility'          => array(
+			'migration_handoff' => $handoff,
+			'compatibility'     => array(
 				'providers' => $compatibility['providers'],
 				'warnings'  => $warnings,
 			),
-			'next_step'              => $this->next_step( $handoff, $active_preset ),
-			'safety'                 => array(
-				'setup_mutations_performed' => false,
-				'pages_created'             => false,
-				'plugins_installed'         => false,
-				'plugins_activated'         => false,
-				'plugins_deactivated'       => false,
-				'external_credentials_read' => false,
-				'external_credentials_saved'=> false,
-				'migration_bridge_loaded'   => false,
+			'next_step' => $this->next_step( $handoff, $active_preset ),
+			'safety'    => array(
+				'setup_mutations_performed'  => false,
+				'pages_created'              => false,
+				'plugins_installed'          => false,
+				'plugins_activated'          => false,
+				'plugins_deactivated'        => false,
+				'external_credentials_read'  => false,
+				'external_credentials_saved' => false,
+				'migration_bridge_loaded'    => false,
 			),
 		);
 	}
@@ -120,9 +120,9 @@ final class SetupPlanner {
 			$schema = is_array( $document['schema'] ?? null ) ? $document['schema'] : array();
 
 			$presets[] = array(
-				'id'                     => $preset_id,
-				'site_type'              => is_string( $document['site_type'] ?? null ) ? $document['site_type'] : $preset_id,
-				'suggested_site_identity'=> is_string( $schema['site_identity'] ?? null ) ? $schema['site_identity'] : null,
+				'id'                             => $preset_id,
+				'site_type'                      => is_string( $document['site_type'] ?? null ) ? $document['site_type'] : $preset_id,
+				'suggested_site_identity'        => is_string( $schema['site_identity'] ?? null ) ? $schema['site_identity'] : null,
 				'identity_confirmation_required' => true === ( $schema['requires_confirmation'] ?? false ),
 			);
 		}
