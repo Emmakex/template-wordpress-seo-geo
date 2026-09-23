@@ -233,6 +233,74 @@ Phase 8C declares and tests:
 - no builder payload export;
 - reuse of the persisted Phase 8B baseline when available.
 
+## Phase 8D — Sandbox Migration Lab
+
+Status: **implementation candidate**
+
+Phase 8D defines a provider-neutral acceptance contract for an isolated clone/staging environment. The repository does not assume that Hostinger, WP Engine, a VPS script or any other vendor owns the cloning workflow.
+
+### Clone/staging workflow
+
+Before migration work starts:
+
+1. create an isolated copy of database and required WordPress files/uploads using the hosting/provider's supported mechanism;
+2. place the sandbox on a non-production origin;
+3. define `SEO_GEO_MIGRATION_SANDBOX=true` in sandbox `wp-config.php`;
+4. disable WordPress search-engine visibility (`blog_public=0`);
+5. ensure the temporary Migration Bridge is active in the sandbox;
+6. install/activate the destination `seo-geo-theme` in sandbox only;
+7. retain/import the accepted Phase 8B baseline envelope;
+8. regenerate/read the Phase 8C dependency graph;
+9. require the Sandbox Migration Lab report to be `ready=true` before Phase 8E transformations may exist.
+
+Production does not receive the destination-theme switch merely because the sandbox is ready.
+
+### Indexing isolation
+
+An explicitly marked sandbox forces:
+
+- `noindex`;
+- `nofollow`;
+- `noarchive`;
+- `X-Robots-Tag: noindex, nofollow, noarchive`.
+
+The lab additionally requires WordPress's own search-engine visibility setting to be disabled. This layered contract prevents the sandbox from becoming a competing public index/canonical destination even when a hosting platform's own staging protection is incomplete.
+
+The guard is marker-gated: it does not change normal production output unless `SEO_GEO_MIGRATION_SANDBOX` is explicitly true.
+
+### Sandbox readiness
+
+The report is blocked when any of these are missing:
+
+- explicit sandbox marker;
+- disabled search-engine visibility;
+- active destination `seo-geo-theme`;
+- persisted Phase 8B baseline;
+- valid Phase 8C dependency graph.
+
+### Migration-state report
+
+Phase 8D maps 8C classifications to lab states:
+
+- KEEP → `unchanged`;
+- MIGRATE / REPLACE → `migrate`;
+- OPTIONAL / REMOVE-CANDIDATE / UNKNOWN → `manual-review`;
+- unsupported future classifications → `blocked`.
+
+The report is descriptive only. It does not transform content.
+
+### Safety contract
+
+The report always declares:
+
+- `production_cutover_allowed=false`;
+- `production_mutation_allowed=false`;
+- `indexing_allowed=false`;
+- `canonical_competition_allowed=false`;
+- `baseline_is_reference_only=true`.
+
+Phase 8E may only introduce explicitly authorized transformations after this sandbox contract is accepted.
+
 ## Phase 8A acceptance evidence
 
 Phase 8A closed through PR #67.
