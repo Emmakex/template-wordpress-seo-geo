@@ -185,10 +185,9 @@ $read_only_files = array_merge(
 		MIGRATION_BRIDGE_DIR . '/src/ProviderAuthorityResolver.php',
 		MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php',
 	),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array()
-);
 	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array()
 );
 
 foreach ( $read_only_files as $path ) {
