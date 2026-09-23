@@ -339,7 +339,7 @@ final class MigrationEngine {
 	/**
 	 * Apply adapter-owned meta operations.
 	 *
-	 * @param int                                                                         $object_id WordPress resource ID.
+	 * @param int                                                                            $object_id WordPress resource ID.
 	 * @param array{content:string,delete_meta:list<string>,update_meta:array<string,mixed>} $payload   Mutation payload.
 	 */
 	private function apply_meta_operations( int $object_id, array $payload ): void {
