@@ -95,7 +95,7 @@ final class ContentDependencyScanner {
 					continue;
 				}
 
-				$id = $detector->id();
+				$id         = $detector->id();
 				$builders[] = array(
 					'id'       => $id,
 					'evidence' => array_values( array_map( 'strval', $result['evidence'] ) ),
@@ -133,9 +133,9 @@ final class ContentDependencyScanner {
 			'shortcode_counts' => $shortcode_counts,
 			'safety'           => array(
 				'content_scan_performed'   => true,
-				'raw_content_exported'      => false,
-				'builder_payload_exported'  => false,
-				'private_body_exported'     => false,
+				'raw_content_exported'     => false,
+				'builder_payload_exported' => false,
+				'private_body_exported'    => false,
 			),
 		);
 	}
