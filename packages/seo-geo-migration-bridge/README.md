@@ -63,6 +63,27 @@ The graph classifies components conservatively as `KEEP`, `REPLACE`, `MIGRATE`, 
 
 It also records explicit resource-to-builder/shortcode edges and provider authority **candidates** for SEO, Schema and multilingual signals. Provider detection is never treated as proof of callback-level ownership.
 
+## Phase 8D — Sandbox Migration Lab
+
+The sandbox layer is provider-neutral. A hosting control panel may create the clone, but the Migration Bridge only considers it a valid migration lab when all required conditions are independently verifiable.
+
+Required sandbox marker in `wp-config.php`:
+
+```php
+define( 'SEO_GEO_MIGRATION_SANDBOX', true );
+```
+
+The lab also requires WordPress search-engine visibility to be disabled, the destination `seo-geo-theme` to be active, the persisted Phase 8B baseline to exist and the Phase 8C dependency graph to be available.
+
+When the marker is enabled the bridge adds defense-in-depth sandbox indexing guards:
+
+- WordPress robots directives force `noindex`, `nofollow` and `noarchive`;
+- HTTP responses include `X-Robots-Tag: noindex, nofollow, noarchive`.
+
+The lab report exposes `migrate`, `manual-review`, `unchanged` and `blocked` states and always declares production cutover/mutation/indexing/canonical competition as disallowed.
+
+A vendor-specific staging feature may create the clone, but it does not replace these provider-neutral acceptance checks.
+
 ## Safety boundary
 
 The bridge follows these rules:
