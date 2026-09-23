@@ -126,6 +126,12 @@ required_paths=(
   "packages/seo-geo-migration-bridge/src/Migration/AdminMigrationController.php"
   "packages/seo-geo-migration-bridge/src/Parity/ParityAllowlist.php"
   "packages/seo-geo-migration-bridge/src/Parity/SeoParityEngine.php"
+  "packages/seo-geo-migration-bridge/src/Cutover/PublicSnapshotProviderInterface.php"
+  "packages/seo-geo-migration-bridge/src/Cutover/BaselinePublicSnapshotProvider.php"
+  "packages/seo-geo-migration-bridge/src/Cutover/BackupEvidenceValidator.php"
+  "packages/seo-geo-migration-bridge/src/Cutover/CutoverSnapshotStore.php"
+  "packages/seo-geo-migration-bridge/src/Cutover/CutoverEngine.php"
+  "packages/seo-geo-migration-bridge/src/Cutover/AdminCutoverController.php"
   "packages/seo-geo-migration-bridge/src/Builders/BuilderDetectorInterface.php"
   "packages/seo-geo-migration-bridge/src/Builders/NativeBlocksDetector.php"
   "packages/seo-geo-migration-bridge/src/Builders/ElementorDetector.php"
@@ -152,6 +158,7 @@ required_paths=(
   "scripts/ci/migration-bridge-sandbox-lab-acceptance.sh"
   "scripts/ci/migration-bridge-migration-engine-acceptance.sh"
   "scripts/ci/migration-bridge-parity-acceptance.sh"
+  "scripts/ci/migration-bridge-cutover-acceptance.sh"
   "scripts/ci/native-language-smoke.sh"
   "scripts/ci/native-routing-smoke.sh"
   "scripts/ci/native-translation-relations-smoke.sh"
@@ -188,4 +195,4 @@ php scripts/ci/validate-saas-digital-product-preset.php
 php scripts/ci/validate-migration-bridge.php
 bash scripts/ci/validate-ci-path-scope.sh
 
-printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts, the Phase 8A/8B/8C/8D/8E/8F Migration Bridge safety contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
+printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts, the Phase 8A/8B/8C/8D/8E/8F/8G Migration Bridge safety contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
