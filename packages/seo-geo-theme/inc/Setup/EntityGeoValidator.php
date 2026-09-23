@@ -49,8 +49,8 @@ final class EntityGeoValidator {
 		$this->crawler_policy = $crawler_policy ?? new CrawlerPolicyResolver();
 
 		if ( null === $local_business ) {
-			$ids            = new SchemaNodeIds();
-			$identity       = new SchemaIdentityResolver( $ids );
+			$ids             = new SchemaNodeIds();
+			$identity        = new SchemaIdentityResolver( $ids );
 			$visible_content = new SchemaVisibleContentResolver();
 			$local_business  = new SchemaLocalBusinessResolver( $ids, $identity, $visible_content );
 		}
@@ -116,7 +116,7 @@ final class EntityGeoValidator {
 
 		$crawler_policy = $this->validate_crawler_policy( $input['crawler_policy'] ?? array(), $errors );
 
-		$llms_enabled = $this->boolean_value( $input, 'llms_txt_enabled', $errors );
+		$llms_enabled     = $this->boolean_value( $input, 'llms_txt_enabled', $errors );
 		$markdown_enabled = $this->boolean_value( $input, 'markdown_alternates_enabled', $errors );
 
 		if (
@@ -176,12 +176,12 @@ final class EntityGeoValidator {
 				)
 				: null,
 			'authorities'    => array(
-				'identity'             => SchemaIdentityResolver::class,
-				'local_business'       => SchemaLocalBusinessResolver::class,
-				'crawler_policy'       => CrawlerPolicyResolver::class,
-				'llms_txt'             => LlmsTxtResolver::class,
-				'markdown_alternates'  => MarkdownAlternateResolver::class,
-				'content_provenance'   => ContentProvenanceResolver::class,
+				'identity'            => SchemaIdentityResolver::class,
+				'local_business'      => SchemaLocalBusinessResolver::class,
+				'crawler_policy'      => CrawlerPolicyResolver::class,
+				'llms_txt'            => LlmsTxtResolver::class,
+				'markdown_alternates' => MarkdownAlternateResolver::class,
+				'content_provenance'  => ContentProvenanceResolver::class,
 			),
 			'safety'         => array(
 				'options_persisted'        => false,
@@ -199,7 +199,7 @@ final class EntityGeoValidator {
 	/**
 	 * Validate basic LocalBusiness option values.
 	 *
-	 * @param mixed        $value  Candidate LocalBusiness map.
+	 * @param mixed $value  Candidate LocalBusiness map.
 	 * @param array $errors Validation errors.
 	 * @phpstan-param list<string> $errors
 	 * @return array<string,mixed>|null
@@ -284,7 +284,7 @@ final class EntityGeoValidator {
 	/**
 	 * Validate crawler settings strictly before using Core normalization.
 	 *
-	 * @param mixed        $value  Candidate crawler policy.
+	 * @param mixed $value  Candidate crawler policy.
 	 * @param array $errors Validation errors.
 	 * @phpstan-param list<string> $errors
 	 * @return array<string,string>
@@ -321,7 +321,8 @@ final class EntityGeoValidator {
 	 *
 	 * @param array<string,mixed> $input  Candidate input.
 	 * @param string              $key    Boolean key.
-	 * @param list<string>        $errors Validation errors.
+	 * @param array               $errors Validation errors.
+	 * @phpstan-param list<string> $errors
 	 */
 	private function boolean_value( array $input, string $key, array &$errors ): bool {
 		if ( ! array_key_exists( $key, $input ) ) {
