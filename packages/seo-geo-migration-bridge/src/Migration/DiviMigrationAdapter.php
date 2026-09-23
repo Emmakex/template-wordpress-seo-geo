@@ -147,7 +147,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			if ( $token_start > $offset ) {
 				$text = substr( $content, $offset, $token_start - $offset );
 				if ( false !== $text && '' !== trim( $text ) ) {
-					$current = count( $stack ) - 1;
+					$current                         = count( $stack ) - 1;
 					$stack[ $current ]['children'][] = array(
 						'tag'      => '__text__',
 						'attrs'    => array(),
@@ -172,14 +172,14 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 					$attrs = array();
 				}
 
-				$current = count( $stack ) - 1;
+				$current                         = count( $stack ) - 1;
 				$stack[ $current ]['children'][] = array(
 					'tag'      => $tag,
 					'attrs'    => $attrs,
 					'children' => array(),
 				);
-				$child_index = count( $stack[ $current ]['children'] ) - 1;
-				$stack[]     =& $stack[ $current ]['children'][ $child_index ];
+				$child_index                     = count( $stack[ $current ]['children'] ) - 1;
+				$stack[]                         =& $stack[ $current ]['children'][ $child_index ];
 			}
 
 			$offset = $token_start + strlen( $token );
@@ -188,7 +188,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		if ( $offset < strlen( $content ) ) {
 			$text = substr( $content, $offset );
 			if ( false !== $text && '' !== trim( $text ) ) {
-				$current = count( $stack ) - 1;
+				$current                         = count( $stack ) - 1;
 				$stack[ $current ]['children'][] = array(
 					'tag'      => '__text__',
 					'attrs'    => array(),
@@ -205,8 +205,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 * Collect Divi tags and media IDs.
 	 *
 	 * @param list<array<string,mixed>> $nodes     Parsed nodes.
-	 * @param array<string,int>          $tags      Tag counts.
-	 * @param array                      $media_ids Media IDs.
+	 * @param array<string,int>         $tags      Tag counts.
+	 * @param array                     $media_ids Media IDs.
 	 * @phpstan-param list<int> $media_ids
 	 */
 	private function collect_tags( array $nodes, array &$tags, array &$media_ids ): void {
