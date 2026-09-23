@@ -333,6 +333,91 @@ wp_cli eval 'if ( class_exists( "\\SeoGeo\\MigrationBridge\\Plugin", false ) ) {
 
 printf '[self-contained] Phase 9A setup foundation OK: clean/migrated modes resolved; five presets available; handoff consumed without Migration Bridge runtime; planning mutation-free.\n'
 
+printf '[self-contained] Checking Phase 9B preset and language validation.\n'
+PHASE9B_STATE_BEFORE="$(wp_cli eval '$state=array(
+"setup"=>get_option("seo_geo_theme_setup_v1",null),
+"preset"=>get_option("seo_geo_active_preset",null),
+"languages"=>get_option("seo_geo_native_languages",null)
+); echo hash("sha256",wp_json_encode($state));' 2>/dev/null | tr -d '\r\n')"
+
+PHASE9B_JSON="$(wp_cli eval '$cases=array(
+"valid"=>seo_geo_theme_validate_preset_language_setup(array(
+  "preset"=>"corporate",
+  "default_language"=>"en",
+  "languages"=>array("en"=>"en_US","es"=>"es_ES"),
+  "routing"=>"prefix",
+  "x_default"=>"en"
+)),
+"unsupported"=>seo_geo_theme_validate_preset_language_setup(array(
+  "preset"=>"unknown-preset",
+  "default_language"=>"en",
+  "languages"=>array("en"=>"en_US"),
+  "routing"=>"disabled"
+)),
+"duplicate_locale"=>seo_geo_theme_validate_preset_language_setup(array(
+  "preset"=>"corporate",
+  "default_language"=>"en",
+  "languages"=>array("en"=>"en_US","es"=>"en_US"),
+  "routing"=>"prefix"
+)),
+"single_prefix"=>seo_geo_theme_validate_preset_language_setup(array(
+  "preset"=>"corporate",
+  "default_language"=>"en",
+  "languages"=>array("en"=>"en_US"),
+  "routing"=>"prefix"
+))
+); echo wp_json_encode($cases,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);' 2>/dev/null | tr -d '\r\n')" \
+  || fail_smoke "phase9b-validation" "Could not evaluate Phase 9B preset/language validation" "JSON validation cases" "wp eval failed"
+
+printf '%s' "$PHASE9B_JSON" >"$TMP_DIR/phase9b-validation.json"
+
+PHASE9B_STATE_AFTER="$(wp_cli eval '$state=array(
+"setup"=>get_option("seo_geo_theme_setup_v1",null),
+"preset"=>get_option("seo_geo_active_preset",null),
+"languages"=>get_option("seo_geo_native_languages",null)
+); echo hash("sha256",wp_json_encode($state));' 2>/dev/null | tr -d '\r\n')"
+
+[[ "$PHASE9B_STATE_BEFORE" == "$PHASE9B_STATE_AFTER" ]] \
+  || fail_smoke "phase9b-mutated-state" "Phase 9B validation changed protected setup state" "$PHASE9B_STATE_BEFORE" "$PHASE9B_STATE_AFTER"
+
+if ! PHASE9B_ASSERTION="$(python3 - "$TMP_DIR/phase9b-validation.json" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    p=json.load(f)
+
+valid=p["valid"]
+assert valid["valid"] is True
+assert valid["errors"] == []
+assert valid["normalized"]["preset"] == "corporate"
+assert valid["normalized"]["languages"] == {
+    "default":"en",
+    "languages":{"en":"en_US","es":"es_ES"},
+    "routing":"prefix",
+    "x_default":"en"
+}
+assert valid["provider_ownership"]["language"] == "native"
+assert all(v is False for v in valid["safety"].values())
+
+unsupported=p["unsupported"]
+assert unsupported["valid"] is False
+assert "unsupported-preset" in unsupported["errors"]
+
+duplicate=p["duplicate_locale"]
+assert duplicate["valid"] is False
+assert "invalid-language-configuration" in duplicate["errors"]
+
+single=p["single_prefix"]
+assert single["valid"] is False
+assert "prefix-routing-requires-multiple-languages" in single["errors"]
+
+print("ok")
+PY
+)"; then
+  fail_smoke "phase9b-contract" "Phase 9B validation contract is invalid" "normalized explicit preset/language validation without mutation" "${PHASE9B_ASSERTION:-python assertion failed}"
+fi
+
+printf '[self-contained] Phase 9B validation OK: explicit preset + native language configuration normalized; invalid preset/locale/routing rejected; no setup state mutated.\n'
+
 if ! RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $r->getFileName();' 2>"$RUNTIME_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$RUNTIME_EVAL_ERROR" | head -c 240)"
   fail_smoke "runtime-eval" "Could not resolve embedded runtime class" "Runtime class available from theme" "${ERROR_TEXT:-wp eval failed}" "wp eval ReflectionClass Runtime"
