@@ -60,6 +60,10 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 			$unsupported
 		);
 
+		if ( array() === $widgets ) {
+			$blockers[] = 'elementor-no-supported-widgets';
+		}
+
 		return array(
 			'supported'  => array() === $blockers,
 			'source'     => 'elementor',
