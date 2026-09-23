@@ -1915,7 +1915,20 @@ Evidence:
 
 ### Microphase 9E — Setup execution and generated report
 
-Status: **active**
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- `SetupExecutor` revalidates the full wizard candidate through the existing 9B/9C authorities before any write;
+- all option mutations are isolated behind `SetupOptionWriterInterface`; only `WordPressSetupOptionWriter` may call `update_option`/`delete_option`;
+- authoritative writes cover preset, native languages, explicit Schema identity, LocalBusiness basics, crawler policy, llms.txt, Markdown alternates and the theme-owned setup state;
+- llms.txt/Markdown setup changes preserve existing bounded configuration and change only their explicit `enabled` flag;
+- setup execution snapshots every affected option, verifies each write and rolls all changed options back in reverse order on any failure;
+- rerunning an already-applied identical configuration is idempotent: no option/report rewrite occurs and the original report timestamp/hash remain stable;
+- `seo_geo_theme_setup_report_v1` stores a non-sensitive generated report with configuration/report fingerprints, preset/language/entity/GEO summaries, compatibility warnings and bounded migration-handoff metadata;
+- LocalBusiness address/telephone/coordinates never enter the generated report; they remain only in the authoritative LocalBusiness option;
+- the wizard exposes separate Preview and Apply actions using the same capability/nonce boundary plus an explicit apply confirmation;
+- zero-plugin acceptance injects a mid-write failure and proves protected state is byte-for-byte restored.
 
 Deliverables:
 
