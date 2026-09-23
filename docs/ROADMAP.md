@@ -1553,15 +1553,45 @@ The next microphase is 8E — Migration Engine.
 
 ### Microphase 8E — Migration Engine
 
-Deliverables:
+Status: **complete**
 
-- controlled migration from supported builder/content structures toward native blocks/patterns/templates where accepted;
-- preset selection as the destination information architecture, without forcing content into an incompatible preset;
-- preserve business systems that remain authoritative;
-- preserve media/content IDs and URLs where safe;
-- explicit adapter boundaries for builder-specific transformations;
-- unsupported modules/components stay visible as blockers/manual-review items rather than being silently dropped;
-- every mutating operation is capability/nonce protected and explicitly initiated by an administrator.
+Delivered:
+
+- plan-before-mutate Migration Engine exposed through the temporary Migration Bridge;
+- Phase 8D sandbox readiness required before any transformation can be ready;
+- explicit administrator authorization: `manage_options`, exact-resource `edit_post`, nonce and confirmation;
+- static CI mutation boundary allowing post/meta writes only inside `src/Migration/MigrationEngine.php`;
+- pre-write private rollback source in `_seo_geo_migration_backup_v1`;
+- post-write state/hash marker in `_seo_geo_migration_state_v1`;
+- immediate restore path when post-mutation resource identity/permalink invariants fail;
+- object ID, slug and permalink-path preservation checks;
+- media/featured-media ID preservation for supported Elementor image migrations;
+- conservative Elementor adapter for heading, text editor, image, button, divider and spacer;
+- conservative Divi adapter for text, button, image, divider and spacer inside section/row/column structure;
+- unsupported Elementor widgets and Divi modules surfaced as explicit blockers, never silently dropped;
+- destination preset validation across all five bundled presets without silently switching the active preset;
+- Phase 8C `KEEP` business systems surfaced and preserved outside the mutation scope;
+- authenticated admin-post entrypoint with repeated capability/nonce/explicit-confirmation enforcement;
+- acceptance-report privacy tightened so private builder payloads are compared by SHA-256 rather than serialized;
+- real WordPress 7.1 / PHP 8.2 acceptance proving supported Elementor/Divi migration and unsupported-content blocking.
+
+8E is closed.
+
+Evidence:
+
+- implementation PR #75 passed all four required workflows on final candidate `042a463155adc24ed1f45405a914807a0cf39767`;
+- Foundation CI `35867636883` validated the Phase 8A–8E static safety/mutation contract;
+- Phase 1 Package CI `35867637009` passed package/runtime contract validation;
+- PHP Quality CI `35867636901` passed WPCS and PHPStan level 6 without lowering standards or adding global suppressions;
+- WordPress Smoke CI `35867637089` proved supported Elementor/Divi → native-block migration, object/slug/path/media preservation, WooCommerce KEEP preservation, nonce/confirmation rejection, preset mismatch rejection and unsupported Elementor form blocking;
+- PR #75 was squash-merged as `030148d4ab063c11e9b1842b7323da0ee465cd27`;
+- post-merge `main` passed all four triggered workflows again: Foundation `35867885927`, Phase 1 Package `35867885970`, PHP Quality `35867886666` and WordPress Smoke `35867886058`.
+
+Engineering findings were resolved at source: brittle validator regexes were replaced by semantic/whitespace-tolerant guards, WPCS alignment/PHPDoc findings were corrected, PHPStan redundant Divi parser guards were removed, and private builder data was eliminated from the acceptance report. No Phase 8E finding required a product rollback or error-register entry.
+
+No production cutover, plugin removal/deactivation, theme switch or term mutation exists in 8E.
+
+The next microphase is 8F — SEO parity and regression engine.
 
 ### Microphase 8F — SEO parity and regression engine
 
