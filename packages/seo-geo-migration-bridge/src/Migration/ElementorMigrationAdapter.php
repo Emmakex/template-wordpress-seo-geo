@@ -213,7 +213,6 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	 * Render heading block.
 	 *
 	 * @param array<string,mixed> $settings Widget settings.
-	 * @throws RuntimeException When an image has no usable source.
 	 */
 	private function heading_block( array $settings ): string {
 		$text      = isset( $settings['title'] ) && is_string( $settings['title'] ) ? wp_strip_all_tags( $settings['title'] ) : '';
@@ -237,6 +236,7 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	 * Render image block while preserving attachment ID when known.
 	 *
 	 * @param array<string,mixed> $settings Widget settings.
+	 * @throws RuntimeException When an image has no usable source.
 	 */
 	private function image_block( array $settings ): string {
 		$image = isset( $settings['image'] ) && is_array( $settings['image'] ) ? $settings['image'] : array();
