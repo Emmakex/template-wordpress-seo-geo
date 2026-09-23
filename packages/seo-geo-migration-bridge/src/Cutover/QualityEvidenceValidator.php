@@ -60,11 +60,16 @@ final class QualityEvidenceValidator {
 				$errors[] = 'quality-created-at-invalid-or-stale:' . $key;
 			}
 
+			$comparison = isset( $row['comparison'] ) && is_array( $row['comparison'] )
+				? $this->comparison( $row['comparison'] )
+				: null;
+
 			$normalized[ $key ] = array(
 				'reference'  => $reference,
 				'sha256'     => $sha256,
 				'created_at' => $created_at,
 				'passed'     => $passed,
+				'comparison' => $comparison,
 			);
 		}
 
@@ -76,5 +81,61 @@ final class QualityEvidenceValidator {
 			'evidence' => $normalized,
 			'errors'   => $errors,
 		);
+	}
+
+	/**
+	 * Normalize a compact before/after quality comparison.
+	 *
+	 * @param array<string,mixed> $comparison Raw comparison.
+	 * @return array{before:array<string,int|float|string|bool>,after:array<string,int|float|string|bool>}|null
+	 */
+	private function comparison( array $comparison ): ?array {
+		$before = $this->metrics( $comparison['before'] ?? null );
+		$after  = $this->metrics( $comparison['after'] ?? null );
+
+		if ( array() === $before || array() === $after ) {
+			return null;
+		}
+
+		return array(
+			'before' => $before,
+			'after'  => $after,
+		);
+	}
+
+	/**
+	 * Keep only bounded scalar quality metrics.
+	 *
+	 * @param mixed $metrics Candidate metric map.
+	 * @return array<string,int|float|string|bool>
+	 */
+	private function metrics( mixed $metrics ): array {
+		if ( ! is_array( $metrics ) ) {
+			return array();
+		}
+
+		$normalized = array();
+		foreach ( $metrics as $key => $value ) {
+			if ( ! is_string( $key ) || ! is_scalar( $value ) ) {
+				continue;
+			}
+
+			$key = sanitize_key( $key );
+			if ( '' === $key || 30 < strlen( $key ) || 50 <= count( $normalized ) ) {
+				continue;
+			}
+
+			if ( is_string( $value ) ) {
+				$value = sanitize_text_field( $value );
+				if ( 100 < strlen( $value ) ) {
+					continue;
+				}
+			}
+
+			$normalized[ $key ] = $value;
+		}
+
+		ksort( $normalized );
+		return $normalized;
 	}
 }
