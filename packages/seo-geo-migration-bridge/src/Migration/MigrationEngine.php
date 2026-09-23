@@ -139,28 +139,28 @@ final class MigrationEngine {
 		}
 
 		return array(
-			'schema_version' => 1,
-			'mode'           => 'migration-plan',
-			'ready'          => array() === $blockers && true === $adapter_plan['supported'] && true === $lab['ready'],
-			'object_id'      => $object_id,
-			'adapter'        => $adapter_id,
-			'preset'         => $preset,
-			'preservation'   => $preservation,
-			'adapter_plan'   => $adapter_plan,
+			'schema_version'   => 1,
+			'mode'             => 'migration-plan',
+			'ready'            => array() === $blockers && true === $adapter_plan['supported'] && true === $lab['ready'],
+			'object_id'        => $object_id,
+			'adapter'          => $adapter_id,
+			'preset'           => $preset,
+			'preservation'     => $preservation,
+			'adapter_plan'     => $adapter_plan,
 			'business_systems' => $this->preserved_business_systems( $graph ),
 			'blockers'         => $blockers,
-			'authorization'  => array(
+			'authorization'    => array(
 				'requires_manage_options' => true,
 				'requires_edit_post'      => true,
 				'requires_nonce'          => true,
 				'requires_confirmation'   => true,
 			),
-			'safety'         => array(
-				'sandbox_only'               => true,
-				'plugin_mutation_allowed'    => false,
-				'theme_mutation_allowed'     => false,
-				'url_change_allowed'         => false,
-				'object_id_change_allowed'   => false,
+			'safety'           => array(
+				'sandbox_only'                => true,
+				'plugin_mutation_allowed'     => false,
+				'theme_mutation_allowed'      => false,
+				'url_change_allowed'          => false,
+				'object_id_change_allowed'    => false,
 				'unsupported_content_dropped' => false,
 			),
 		);
@@ -216,7 +216,7 @@ final class MigrationEngine {
 		}
 
 		$before_permalink = get_permalink( $post );
-		$before = array(
+		$before           = array(
 			'post_content' => (string) $post->post_content,
 			'post_name'    => (string) $post->post_name,
 			'permalink'    => $before_permalink,
@@ -281,13 +281,13 @@ final class MigrationEngine {
 		update_post_meta( $post->ID, self::STATE_META, $state );
 
 		return array(
-			'schema_version' => 1,
-			'mode'           => 'migration-execution',
-			'status'         => 'migrated',
-			'object_id'      => (int) $after->ID,
-			'adapter'        => $adapter_id,
-			'preset'         => $plan['preset']['selected'],
-			'preserved'      => array(
+			'schema_version'   => 1,
+			'mode'             => 'migration-execution',
+			'status'           => 'migrated',
+			'object_id'        => (int) $after->ID,
+			'adapter'          => $adapter_id,
+			'preset'           => $plan['preset']['selected'],
+			'preserved'        => array(
 				'object_id'      => true,
 				'post_name'      => true,
 				'permalink_path' => true,
@@ -295,10 +295,10 @@ final class MigrationEngine {
 			),
 			'business_systems' => $plan['business_systems'],
 			'backup_created'   => true,
-			'safety'          => array(
-				'sandbox_only'            => true,
-				'plugins_changed'         => false,
-				'theme_changed'           => false,
+			'safety'           => array(
+				'sandbox_only'             => true,
+				'plugins_changed'          => false,
+				'theme_changed'            => false,
 				'unsupported_content_lost' => false,
 			),
 		);
@@ -317,7 +317,8 @@ final class MigrationEngine {
 	/**
 	 * Capture only metadata that the adapter may change.
 	 *
-	 * @param array{content:string,delete_meta:list<string>,update_meta:array<string,mixed>} $payload Mutation payload.
+	 * @param int                                                                         $object_id WordPress resource ID.
+	 * @param array{content:string,delete_meta:list<string>,update_meta:array<string,mixed>} $payload   Mutation payload.
 	 * @return array<string,array{exists:bool,value:mixed}>
 	 */
 	private function capture_meta( int $object_id, array $payload ): array {
@@ -338,7 +339,8 @@ final class MigrationEngine {
 	/**
 	 * Apply adapter-owned meta operations.
 	 *
-	 * @param array{content:string,delete_meta:list<string>,update_meta:array<string,mixed>} $payload Mutation payload.
+	 * @param int                                                                         $object_id WordPress resource ID.
+	 * @param array{content:string,delete_meta:list<string>,update_meta:array<string,mixed>} $payload   Mutation payload.
 	 */
 	private function apply_meta_operations( int $object_id, array $payload ): void {
 		foreach ( $payload['delete_meta'] as $key ) {
@@ -353,7 +355,8 @@ final class MigrationEngine {
 	/**
 	 * Restore the resource after a failed post-mutation invariant.
 	 *
-	 * @param array{post_content:string,post_name:string,permalink:string,meta:array<string,array{exists:bool,value:mixed}>} $before Original state.
+	 * @param int                                                                                                           $object_id WordPress resource ID.
+	 * @param array{post_content:string,post_name:string,permalink:string,meta:array<string,array{exists:bool,value:mixed}>} $before    Original state.
 	 */
 	private function restore( int $object_id, array $before ): void {
 		wp_update_post(
