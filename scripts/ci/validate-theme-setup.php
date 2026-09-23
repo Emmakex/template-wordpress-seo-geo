@@ -117,7 +117,7 @@ foreach (
 		'wp_nonce_field( self::NONCE_ACTION )',
 		"'seo_geo_preview_confirm'",
 		"'seo_geo_validate'",
-		"'seo-geo-setup-results'",
+		'seo-geo-setup-results',
 		"'aria-live'",
 	) as $guard
 ) {
