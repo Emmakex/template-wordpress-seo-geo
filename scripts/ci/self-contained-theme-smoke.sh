@@ -157,7 +157,15 @@ for required_file in \
   "${BUILT_THEME}/inc/Setup/MigrationHandoffReader.php" \
   "${BUILT_THEME}/inc/Setup/SetupCompatibilityDetector.php" \
   "${BUILT_THEME}/inc/Setup/SetupPlanner.php" \
+  "${BUILT_THEME}/inc/Setup/PresetLanguageValidator.php" \
   "${BUILT_THEME}/inc/Setup/EntityGeoValidator.php" \
+  "${BUILT_THEME}/inc/Setup/SetupOptionWriterInterface.php" \
+  "${BUILT_THEME}/inc/Setup/WordPressSetupOptionWriter.php" \
+  "${BUILT_THEME}/inc/Setup/SetupReportStore.php" \
+  "${BUILT_THEME}/inc/Setup/SetupExecutor.php" \
+  "${BUILT_THEME}/inc/Wizard/SetupWizardCopy.php" \
+  "${BUILT_THEME}/inc/Wizard/SetupWizardPreview.php" \
+  "${BUILT_THEME}/inc/Wizard/AdminSetupWizard.php" \
   "${BUILT_THEME}/presets/corporate/preset.json" \
   "${BUILT_THEME}/presets/corporate/content-map.json" \
   "${BUILT_THEME}/presets/corporate/patterns.json" \
@@ -777,10 +785,13 @@ assert "corporate" in preview
 assert "en=en_US" in preview
 assert "organization" in preview
 
+assert "Apply setup" in en
+assert "Aplicar configuración" in es
+assert 'name="seo_geo_apply_confirm"' in en
+assert 'value="apply"' in en
+
 for html in (en, es, preview):
     lower=html.lower()
-    assert "Apply setup" not in html
-    assert "Guardar configuración" not in html
     assert 'type="password"' not in lower
     assert 'name="seo_geo_external_credential' not in lower
     assert 'name="seo_geo_api_key' not in lower
@@ -801,7 +812,7 @@ UNAUTHORIZED_TEXT="$(cat "$UNAUTHORIZED_STDOUT" "$UNAUTHORIZED_STDERR" | tr -d '
 [[ "$UNAUTHORIZED_TEXT" == *"You do not have permission to use the SEO/GEO setup wizard."* ]] \
   || fail_smoke "phase9d-capability-message" "Unauthorized Phase 9D response did not use bounded EN guidance" "permission message" "${UNAUTHORIZED_TEXT:-empty}"
 
-printf '[self-contained] Phase 9D wizard OK: Appearance screen registered; EN/ES preview is nonce/capability-gated, focus-managed, responsive-assets-loaded and mutation-free.\n'
+printf '[self-contained] Phase 9D/9E wizard surface OK: Appearance screen registered; EN/ES preview/apply controls are nonce/capability-gated, focus-managed and credential-free.\n'
 
 if ! RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $r->getFileName();' 2>"$RUNTIME_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$RUNTIME_EVAL_ERROR" | head -c 240)"
