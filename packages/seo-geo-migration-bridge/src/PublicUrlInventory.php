@@ -16,7 +16,8 @@ final class PublicUrlInventory {
 	/**
 	 * Build the URL inventory.
 	 *
-	 * @param list<string> $sitemap_urls Same-origin URLs discovered from sitemaps.
+	 * @param array<int, string> $sitemap_urls Same-origin URLs discovered from sitemaps.
+	 * @param int                $limit        Maximum number of URLs to return.
 	 * @return array{discovered:int,truncated:bool,urls:list<array<string,mixed>>}
 	 */
 	public function build( array $sitemap_urls = array(), int $limit = 500 ): array {
@@ -118,7 +119,11 @@ final class PublicUrlInventory {
 	/**
 	 * Add or merge one URL row.
 	 *
-	 * @param array<string, array<string,mixed>> $rows Existing rows by URL.
+	 * @param array<string, array<string,mixed>> $rows         Existing rows by URL.
+	 * @param string                             $url          Candidate public URL.
+	 * @param string                             $source       Discovery source.
+	 * @param string                             $content_type Resource/content classification.
+	 * @param int|null                           $object_id    Related WordPress object ID, when known.
 	 */
 	private function add_row( array &$rows, string $url, string $source, string $content_type, ?int $object_id ): void {
 		$normalized = $this->normalize_same_origin_url( $url );
@@ -151,6 +156,8 @@ final class PublicUrlInventory {
 
 	/**
 	 * Normalize a URL and reject anything outside the configured home origin.
+	 *
+	 * @param string $url Candidate URL.
 	 */
 	private function normalize_same_origin_url( string $url ): ?string {
 		$url       = html_entity_decode( trim( $url ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
@@ -173,8 +180,8 @@ final class PublicUrlInventory {
 			return null;
 		}
 
-		$path  = isset( $parts['path'] ) && '' !== (string) $parts['path'] ? (string) $parts['path'] : '/';
-		$query = isset( $parts['query'] ) && '' !== (string) $parts['query'] ? '?' . (string) $parts['query'] : '';
+		$path          = isset( $parts['path'] ) && '' !== (string) $parts['path'] ? (string) $parts['path'] : '/';
+		$query         = isset( $parts['query'] ) && '' !== (string) $parts['query'] ? '?' . (string) $parts['query'] : '';
 		$port_fragment = in_array(
 			$port,
 			array(
@@ -189,6 +196,8 @@ final class PublicUrlInventory {
 
 	/**
 	 * Return the default port for a scheme.
+	 *
+	 * @param string $scheme URL scheme.
 	 */
 	private function default_port( string $scheme ): int {
 		return 'https' === $scheme ? 443 : 80;
