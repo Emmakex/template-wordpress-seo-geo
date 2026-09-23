@@ -72,6 +72,76 @@ final class NativeLanguageConfiguration {
 	}
 
 	/**
+	 * Validate an explicit native language configuration.
+	 *
+	 * Unlike from_wordpress(), invalid input returns null rather than silently
+	 * falling back. Setup/onboarding can therefore show validation errors before
+	 * any option is persisted.
+	 *
+	 * @param array<string,mixed> $raw Candidate configuration.
+	 */
+	public static function from_array( array $raw ): ?self {
+		$raw_default   = $raw['default'] ?? null;
+		$raw_languages = $raw['languages'] ?? null;
+		$raw_routing   = $raw['routing'] ?? self::ROUTING_DISABLED;
+		$raw_x_default = $raw['x_default'] ?? null;
+
+		if (
+			! is_string( $raw_default )
+			|| ! is_array( $raw_languages )
+			|| array() === $raw_languages
+			|| ! is_string( $raw_routing )
+			|| ( null !== $raw_x_default && ! is_string( $raw_x_default ) )
+		) {
+			return null;
+		}
+
+		$routing_mode = strtolower( trim( $raw_routing ) );
+		if ( ! in_array( $routing_mode, array( self::ROUTING_DISABLED, self::ROUTING_PREFIX ), true ) ) {
+			return null;
+		}
+
+		$languages    = array();
+		$seen_locales = array();
+
+		foreach ( $raw_languages as $raw_code => $raw_locale ) {
+			if ( ! is_string( $raw_code ) || ! is_string( $raw_locale ) ) {
+				return null;
+			}
+
+			$code   = self::normalize_language_code( $raw_code );
+			$locale = self::normalize_locale( $raw_locale );
+
+			if ( null === $code || null === $locale || isset( $languages[ $code ] ) ) {
+				return null;
+			}
+
+			$locale_key = strtolower( $locale );
+			if ( isset( $seen_locales[ $locale_key ] ) ) {
+				return null;
+			}
+
+			$languages[ $code ]          = $locale;
+			$seen_locales[ $locale_key ] = true;
+		}
+
+		$default_language_code = self::normalize_language_code( $raw_default );
+		if ( null === $default_language_code || ! isset( $languages[ $default_language_code ] ) ) {
+			return null;
+		}
+
+		$x_default_language_code = null;
+		if ( is_string( $raw_x_default ) ) {
+			$x_default_language_code = self::normalize_language_code( $raw_x_default );
+			if ( null === $x_default_language_code || ! isset( $languages[ $x_default_language_code ] ) ) {
+				return null;
+			}
+		}
+
+		return new self( $default_language_code, $languages, $routing_mode, $x_default_language_code );
+	}
+
+	/**
 	 * Resolve the native language configuration from WordPress.
 	 *
 	 * Malformed configuration is rejected atomically and falls back to the
@@ -90,64 +160,21 @@ final class NativeLanguageConfiguration {
 			return $fallback;
 		}
 
-		$raw_default   = $raw['default'] ?? null;
-		$raw_languages = $raw['languages'] ?? null;
-		$raw_routing   = $raw['routing'] ?? self::ROUTING_DISABLED;
-		$raw_x_default = $raw['x_default'] ?? null;
+		return self::from_array( $raw ) ?? $fallback;
+	}
 
-		if (
-			! is_string( $raw_default )
-			|| ! is_array( $raw_languages )
-			|| array() === $raw_languages
-			|| ! is_string( $raw_routing )
-			|| ( null !== $raw_x_default && ! is_string( $raw_x_default ) )
-		) {
-			return $fallback;
-		}
-
-		$routing_mode = strtolower( trim( $raw_routing ) );
-		if ( ! in_array( $routing_mode, array( self::ROUTING_DISABLED, self::ROUTING_PREFIX ), true ) ) {
-			return $fallback;
-		}
-
-		$languages    = array();
-		$seen_locales = array();
-
-		foreach ( $raw_languages as $raw_code => $raw_locale ) {
-			if ( ! is_string( $raw_code ) || ! is_string( $raw_locale ) ) {
-				return $fallback;
-			}
-
-			$code   = self::normalize_language_code( $raw_code );
-			$locale = self::normalize_locale( $raw_locale );
-
-			if ( null === $code || null === $locale || isset( $languages[ $code ] ) ) {
-				return $fallback;
-			}
-
-			$locale_key = strtolower( $locale );
-			if ( isset( $seen_locales[ $locale_key ] ) ) {
-				return $fallback;
-			}
-
-			$languages[ $code ]          = $locale;
-			$seen_locales[ $locale_key ] = true;
-		}
-
-		$default_language_code = self::normalize_language_code( $raw_default );
-		if ( null === $default_language_code || ! isset( $languages[ $default_language_code ] ) ) {
-			return $fallback;
-		}
-
-		$x_default_language_code = null;
-		if ( is_string( $raw_x_default ) ) {
-			$x_default_language_code = self::normalize_language_code( $raw_x_default );
-			if ( null === $x_default_language_code || ! isset( $languages[ $x_default_language_code ] ) ) {
-				return $fallback;
-			}
-		}
-
-		return new self( $default_language_code, $languages, $routing_mode, $x_default_language_code );
+	/**
+	 * Export the normalized server-authoritative configuration.
+	 *
+	 * @return array{default:string,languages:array<string,string>,routing:string,x_default:string|null}
+	 */
+	public function to_array(): array {
+		return array(
+			'default'   => $this->default_language_code,
+			'languages' => $this->languages,
+			'routing'   => $this->routing_mode,
+			'x_default' => $this->x_default_language_code,
+		);
 	}
 
 	/**
