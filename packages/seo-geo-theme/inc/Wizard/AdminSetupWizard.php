@@ -405,9 +405,9 @@ final class AdminSetupWizard {
 	/**
 	 * Render validation errors/warnings.
 	 *
-	 * @param string $label_key Copy label key.
-	 * @param array<int,mixed> $issues Issue codes.
-	 * @param string $type      Notice type.
+	 * @param string           $label_key Copy label key.
+	 * @param array<int,mixed> $issues    Issue codes.
+	 * @param string           $type      Notice type.
 	 */
 	private function render_issues( string $label_key, array $issues, string $type ): void {
 		$issues = array_values( array_filter( $issues, 'is_string' ) );
