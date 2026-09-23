@@ -16,6 +16,7 @@ interface HttpClientInterface {
 	/**
 	 * Fetch one URL.
 	 *
+	 * @param string $url Public URL to request.
 	 * @return array{
 	 *     status:int,
 	 *     body:string,
