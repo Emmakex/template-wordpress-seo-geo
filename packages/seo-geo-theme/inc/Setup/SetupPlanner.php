@@ -85,7 +85,7 @@ final class SetupPlanner {
 				),
 			),
 			'migration_handoff'      => $handoff,
-			'compatibility'     => array(
+			'compatibility'          => array(
 				'providers' => $compatibility['providers'],
 				'warnings'  => $warnings,
 			),
