@@ -506,19 +506,19 @@ final class AdminSetupWizard {
 			}
 		}
 
-		$language_lines = isset( $_POST['seo_geo_languages'] ) && is_string( $_POST['seo_geo_languages'] )
+		$language_lines   = isset( $_POST['seo_geo_languages'] ) && is_string( $_POST['seo_geo_languages'] )
 			? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_languages'] ) )
 			: '';
-		$preset = isset( $_POST['seo_geo_preset'] ) && is_string( $_POST['seo_geo_preset'] )
+		$preset           = isset( $_POST['seo_geo_preset'] ) && is_string( $_POST['seo_geo_preset'] )
 			? sanitize_key( wp_unslash( $_POST['seo_geo_preset'] ) )
 			: '';
 		$default_language = isset( $_POST['seo_geo_default_language'] ) && is_string( $_POST['seo_geo_default_language'] )
 			? sanitize_text_field( wp_unslash( $_POST['seo_geo_default_language'] ) )
 			: '';
-		$routing = isset( $_POST['seo_geo_routing'] ) && is_string( $_POST['seo_geo_routing'] )
+		$routing          = isset( $_POST['seo_geo_routing'] ) && is_string( $_POST['seo_geo_routing'] )
 			? sanitize_key( wp_unslash( $_POST['seo_geo_routing'] ) )
 			: '';
-		$x_default = isset( $_POST['seo_geo_x_default'] ) && is_string( $_POST['seo_geo_x_default'] )
+		$x_default        = isset( $_POST['seo_geo_x_default'] ) && is_string( $_POST['seo_geo_x_default'] )
 			? sanitize_text_field( wp_unslash( $_POST['seo_geo_x_default'] ) )
 			: '';
 		$site_entity_type = isset( $_POST['seo_geo_entity_type'] ) && is_string( $_POST['seo_geo_entity_type'] )
