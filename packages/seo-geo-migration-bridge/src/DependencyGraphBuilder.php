@@ -23,6 +23,13 @@ final class DependencyGraphBuilder {
 	 * @return array<string,mixed>
 	 */
 	public function build( array $analysis, ?array $baseline = null ): array {
+		if ( null === $baseline ) {
+			$envelope = ( new BaselineSnapshotStore() )->latest();
+			if ( is_array( $envelope ) && isset( $envelope['snapshot'] ) && is_array( $envelope['snapshot'] ) ) {
+				$baseline = $envelope['snapshot'];
+			}
+		}
+
 		$scanner     = new ContentDependencyScanner();
 		$content     = $scanner->scan();
 		$providers   = isset( $analysis['providers'] ) && is_array( $analysis['providers'] ) ? $analysis['providers'] : array();
@@ -51,7 +58,12 @@ final class DependencyGraphBuilder {
 			'generated_at'   => gmdate( DATE_ATOM ),
 			'components'     => $components,
 			'content'        => $content,
+			'edges'          => $this->dependency_edges( $content ),
 			'authorities'    => $authorities,
+			'baseline'       => array(
+				'available' => null !== $baseline,
+				'kind'      => is_array( $baseline ) && is_string( $baseline['kind'] ?? null ) ? $baseline['kind'] : null,
+			),
 			'summary'        => $this->summary( $components ),
 			'safety'         => array(
 				'mutations_performed'       => false,
@@ -269,6 +281,57 @@ final class DependencyGraphBuilder {
 		}
 
 		return $rows;
+	}
+
+	/**
+	 * Build explicit resource dependency edges.
+	 *
+	 * @param array<string, mixed> $content Content dependency scan.
+	 * @return list<array{from:string,to:string,kind:string}>
+	 */
+	private function dependency_edges( array $content ): array {
+		$edges     = array();
+		$resources = isset( $content['resources'] ) && is_array( $content['resources'] ) ? $content['resources'] : array();
+
+		foreach ( $resources as $resource ) {
+			if ( ! is_array( $resource ) || ! isset( $resource['object_id'] ) ) {
+				continue;
+			}
+
+			$from     = 'resource:' . (int) $resource['object_id'];
+			$builders = isset( $resource['builders'] ) && is_array( $resource['builders'] ) ? $resource['builders'] : array();
+			foreach ( $builders as $builder ) {
+				$id = is_array( $builder ) ? ( $builder['id'] ?? null ) : null;
+				if ( is_string( $id ) && '' !== $id ) {
+					$edges[] = array(
+						'from' => $from,
+						'to'   => 'builder:' . $id,
+						'kind' => 'content-builder',
+					);
+				}
+			}
+
+			$shortcodes = isset( $resource['shortcodes'] ) && is_array( $resource['shortcodes'] ) ? $resource['shortcodes'] : array();
+			foreach ( $shortcodes as $shortcode ) {
+				if ( is_string( $shortcode ) && '' !== $shortcode ) {
+					$edges[] = array(
+						'from' => $from,
+						'to'   => 'shortcode:' . $shortcode,
+						'kind' => 'content-shortcode',
+					);
+				}
+			}
+		}
+
+		usort(
+			$edges,
+			static fn( array $left, array $right ): int => strcmp(
+				$left['from'] . '|' . $left['to'] . '|' . $left['kind'],
+				$right['from'] . '|' . $right['to'] . '|' . $right['kind']
+			)
+		);
+
+		return $edges;
 	}
 
 	/**
