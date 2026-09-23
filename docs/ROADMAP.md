@@ -1882,7 +1882,19 @@ Evidence:
 
 ### Microphase 9D — Theme-owned wizard UI
 
-Status: **active**
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- Appearance → SEO/GEO Setup is theme-owned and requires `manage_options`;
+- wizard copy ships EN/ES together from one key-complete catalog;
+- preset/language/entity/GEO fields are composed from the 9A–9C authorities rather than duplicated;
+- POST preview is nonce-verified and explicitly acknowledged as non-persistent;
+- valid/invalid previews are rendered in an `aria-live` focus target;
+- wizard-specific CSS is responsive at the WordPress 782px breakpoint and JS only manages result focus;
+- static CI forbids option/content/plugin/cron/outbound mutation primitives in the Wizard layer;
+- zero-plugin runtime acceptance proves page registration, EN/ES rendering, preview validation, asset loading, capability enforcement and unchanged protected setup state;
+- Playwright/axe covers the admin wizard at 320/768/1440, including keyboard flow, responsive reflow and validation-error announcement.
 
 Deliverables:
 

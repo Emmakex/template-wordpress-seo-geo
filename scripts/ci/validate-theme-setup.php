@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 9A/9B/9C theme setup foundation contract.
+ * Validate the Phase 9A/9B/9C/9D theme setup contract.
  *
  * @package SeoGeoTheme
  */
@@ -8,7 +8,8 @@
 declare(strict_types=1);
 
 $root = dirname( __DIR__, 2 );
-$setup_dir = $root . '/packages/seo-geo-theme/inc/Setup';
+$setup_dir  = $root . '/packages/seo-geo-theme/inc/Setup';
+$wizard_dir = $root . '/packages/seo-geo-theme/inc/Wizard';
 
 $required = array(
 	$root . '/packages/seo-geo-theme/inc/setup.php',
@@ -18,6 +19,11 @@ $required = array(
 	$setup_dir . '/SetupPlanner.php',
 	$setup_dir . '/PresetLanguageValidator.php',
 	$setup_dir . '/EntityGeoValidator.php',
+	$wizard_dir . '/SetupWizardCopy.php',
+	$wizard_dir . '/SetupWizardPreview.php',
+	$wizard_dir . '/AdminSetupWizard.php',
+	$root . '/packages/seo-geo-theme/assets/admin/setup-wizard.css',
+	$root . '/packages/seo-geo-theme/assets/admin/setup-wizard.js',
 );
 
 foreach ( $required as $path ) {
@@ -54,6 +60,93 @@ foreach ( $php_files as $path ) {
 			exit( 1 );
 		}
 	}
+}
+
+$wizard_files = glob( $wizard_dir . '/*.php' ) ?: array();
+$wizard_forbidden = array(
+	'add_option',
+	'update_option',
+	'delete_option',
+	'wp_insert_post',
+	'wp_update_post',
+	'wp_delete_post',
+	'activate_plugin',
+	'deactivate_plugins',
+	'delete_plugins',
+	'switch_theme',
+	'wp_remote_post',
+	'wp_schedule_event',
+	'wp_schedule_single_event',
+);
+
+foreach ( $wizard_files as $path ) {
+	$source = (string) file_get_contents( $path );
+	foreach ( $wizard_forbidden as $primitive ) {
+		if ( str_contains( $source, $primitive ) ) {
+			fwrite( STDERR, 'Phase 9D wizard contains forbidden mutation primitive ' . $primitive . ' in ' . $path . PHP_EOL );
+			exit( 1 );
+		}
+	}
+}
+
+$wizard_preview = (string) file_get_contents( $wizard_dir . '/SetupWizardPreview.php' );
+foreach (
+	array(
+		"'theme-setup-wizard-preview'",
+		'PresetLanguageValidator',
+		'EntityGeoValidator',
+		"'options_persisted'",
+		"'pages_created'",
+		"'plugins_mutated'",
+		"'credentials_requested'",
+		"'outbound_requests_made'",
+	) as $guard
+) {
+	if ( ! str_contains( $wizard_preview, $guard ) ) {
+		fwrite( STDERR, 'Phase 9D preview guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$wizard_screen = (string) file_get_contents( $wizard_dir . '/AdminSetupWizard.php' );
+foreach (
+	array(
+		'add_theme_page(',
+		"current_user_can( 'manage_options' )",
+		'wp_verify_nonce(',
+		'wp_nonce_field( self::NONCE_ACTION )',
+		"'seo_geo_preview_confirm'",
+		"'seo_geo_validate'",
+		'seo-geo-setup-results',
+		'aria-live',
+	) as $guard
+) {
+	if ( ! str_contains( $wizard_screen, $guard ) ) {
+		fwrite( STDERR, 'Phase 9D admin wizard guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$wizard_copy = (string) file_get_contents( $wizard_dir . '/SetupWizardCopy.php' );
+foreach ( array( "'en' => array(", "'es' => array(", "'preview_confirm'", "'privacy_note'" ) as $guard ) {
+	if ( ! str_contains( $wizard_copy, $guard ) ) {
+		fwrite( STDERR, 'Phase 9D EN/ES copy guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$wizard_css = (string) file_get_contents( $root . '/packages/seo-geo-theme/assets/admin/setup-wizard.css' );
+foreach ( array( '@media (max-width: 782px)', 'grid-template-columns: 1fr' ) as $guard ) {
+	if ( ! str_contains( $wizard_css, $guard ) ) {
+		fwrite( STDERR, 'Phase 9D responsive CSS guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$wizard_js = (string) file_get_contents( $root . '/packages/seo-geo-theme/assets/admin/setup-wizard.js' );
+if ( ! str_contains( $wizard_js, 'seo-geo-setup-results' ) || ! str_contains( $wizard_js, 'results.focus()' ) ) {
+	fwrite( STDERR, 'Phase 9D focus-management guard is missing.' . PHP_EOL );
+	exit( 1 );
 }
 
 $contract = (string) file_get_contents( $setup_dir . '/SetupConfigurationContract.php' );
@@ -226,6 +319,7 @@ foreach (
 		'function seo_geo_theme_setup_plan(): array',
 		'function seo_geo_theme_validate_preset_language_setup( array $input ): array',
 		'function seo_geo_theme_validate_entity_geo_setup( array $input ): array',
+		'function seo_geo_theme_setup_wizard(): \\SeoGeo\\Theme\\Wizard\\AdminSetupWizard',
 	) as $guard
 ) {
 	if ( ! str_contains( $bootstrap, $guard ) ) {
@@ -234,4 +328,4 @@ foreach (
 	}
 }
 
-printf( "Phase 9A/9B/9C setup static contract OK: handoff-aware planning plus preset/language/entity/GEO validation remain non-persistent.\n" );
+printf( "Phase 9A/9B/9C/9D setup static contract OK: planning/validation remain non-persistent and the EN/ES wizard is capability+nonce-gated, responsive and preview-only.\n" );

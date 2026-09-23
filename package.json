@@ -6,7 +6,7 @@
   },
   "scripts": {
     "test:browser": "playwright test",
-    "test:browser:check": "node --check playwright.config.js && node --check tests/browser/accessibility.spec.js"
+    "test:browser:check": "node --check playwright.config.js && node --check tests/browser/accessibility.spec.js && node --check tests/browser/admin-setup-wizard.spec.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

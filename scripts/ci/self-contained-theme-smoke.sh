@@ -597,6 +597,212 @@ fi
 
 printf '[self-contained] Phase 9C validation OK: explicit entity/GEO choices normalized; visible-fact authority retained; invalid address/coordinates/crawler/claim input rejected; no setup state mutated.\n'
 
+printf '[self-contained] Checking Phase 9D theme-owned wizard UI.\n'
+PHASE9D_RUNNER="$TMP_DIR/phase9d-wizard-runner.php"
+cat >"$PHASE9D_RUNNER" <<'PHP'
+<?php
+
+use SeoGeo\Theme\Wizard\AdminSetupWizard;
+use SeoGeo\Theme\Wizard\SetupWizardCopy;
+
+wp_set_current_user( 1 );
+
+$protected_state = static function (): array {
+	return array(
+		'setup'          => get_option( 'seo_geo_theme_setup_v1', null ),
+		'preset'         => get_option( 'seo_geo_active_preset', null ),
+		'languages'      => get_option( 'seo_geo_native_languages', null ),
+		'identity'       => get_option( 'seo_geo_schema_identity', null ),
+		'local_business' => get_option( 'seo_geo_schema_local_business', null ),
+		'crawler'        => get_option( 'seo_geo_crawler_policy', null ),
+		'llms'           => get_option( 'seo_geo_llms_txt', null ),
+		'markdown'       => get_option( 'seo_geo_markdown_alternates', null ),
+		'plugins'        => get_option( 'active_plugins', array() ),
+	);
+};
+
+$fingerprint = static function ( array $state ): string {
+	$encoded = wp_json_encode( $state, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	return hash( 'sha256', false === $encoded ? '' : $encoded );
+};
+
+$before = $fingerprint( $protected_state() );
+
+$catalogs = SetupWizardCopy::catalogs();
+$en_keys  = array_keys( $catalogs['en'] ?? array() );
+$es_keys  = array_keys( $catalogs['es'] ?? array() );
+sort( $en_keys );
+sort( $es_keys );
+
+do_action( 'admin_menu' );
+global $submenu;
+$appearance_rows = isset( $submenu['themes.php'] ) && is_array( $submenu['themes.php'] ) ? $submenu['themes.php'] : array();
+$registered      = false;
+
+foreach ( $appearance_rows as $row ) {
+	if (
+		is_array( $row )
+		&& isset( $row[1], $row[2] )
+		&& 'manage_options' === $row[1]
+		&& AdminSetupWizard::PAGE_SLUG === $row[2]
+	) {
+		$registered = true;
+		break;
+	}
+}
+
+$_SERVER['REQUEST_METHOD'] = 'GET';
+$_POST                     = array();
+$_REQUEST                  = array();
+
+$en_screen = new AdminSetupWizard( null, null, new SetupWizardCopy( 'en_US' ) );
+ob_start();
+$en_screen->render_page();
+$english_html = (string) ob_get_clean();
+
+$es_screen = new AdminSetupWizard( null, null, new SetupWizardCopy( 'es_ES' ) );
+ob_start();
+$es_screen->render_page();
+$spanish_html = (string) ob_get_clean();
+
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = array(
+	'_wpnonce'                         => wp_create_nonce( AdminSetupWizard::NONCE_ACTION ),
+	'seo_geo_setup_action'             => 'preview',
+	'seo_geo_preset'                   => 'corporate',
+	'seo_geo_default_language'         => 'en',
+	'seo_geo_languages'                => "en=en_US\nes=es_ES",
+	'seo_geo_routing'                  => 'prefix',
+	'seo_geo_x_default'                => 'en',
+	'seo_geo_entity_type'              => 'organization',
+	'seo_geo_confirm_identity'         => '1',
+	'seo_geo_crawler_oai_searchbot'    => 'allow',
+	'seo_geo_crawler_gptbot'           => 'disallow',
+	'seo_geo_llms_txt_enabled'         => '1',
+	'seo_geo_markdown_alternates_enabled' => '1',
+	'seo_geo_preview_confirm'          => '1',
+	'seo_geo_validate'                 => '1',
+);
+$_REQUEST = $_POST;
+
+$preview_screen = new AdminSetupWizard( null, null, new SetupWizardCopy( 'en_US' ) );
+ob_start();
+$preview_screen->render_page();
+$preview_html = (string) ob_get_clean();
+
+do_action( 'admin_enqueue_scripts', 'appearance_page_' . AdminSetupWizard::PAGE_SLUG );
+
+$after = $fingerprint( $protected_state() );
+
+echo wp_json_encode(
+	array(
+		'registered'   => $registered,
+		'catalog_keys' => array(
+			'en' => $en_keys,
+			'es' => $es_keys,
+		),
+		'catalog_empty' => array(
+			'en' => array_keys( array_filter( $catalogs['en'] ?? array(), static fn( mixed $value ): bool => ! is_string( $value ) || '' === trim( $value ) ) ),
+			'es' => array_keys( array_filter( $catalogs['es'] ?? array(), static fn( mixed $value ): bool => ! is_string( $value ) || '' === trim( $value ) ) ),
+		),
+		'english_html' => $english_html,
+		'spanish_html' => $spanish_html,
+		'preview_html' => $preview_html,
+		'assets'       => array(
+			'style'  => wp_style_is( 'seo-geo-setup-wizard', 'enqueued' ),
+			'script' => wp_script_is( 'seo-geo-setup-wizard', 'enqueued' ),
+		),
+		'state_fingerprint' => array(
+			'before' => $before,
+			'after'  => $after,
+		),
+	),
+	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+);
+PHP
+
+docker cp "$PHASE9D_RUNNER" "$WP_CONTAINER":/var/www/html/wp-content/phase9d-wizard-runner.php \
+  || fail_smoke "phase9d-runner-copy" "Could not copy Phase 9D wizard runner" "runner copied" "docker cp failed"
+
+if ! PHASE9D_JSON="$(wp_cli eval-file /var/www/html/wp-content/phase9d-wizard-runner.php 2>"$TMP_DIR/phase9d-wizard.stderr")"; then
+  PHASE9D_ERROR="$(tr -d '\r' <"$TMP_DIR/phase9d-wizard.stderr" | head -c 1000)"
+  fail_smoke "phase9d-runner" "Phase 9D wizard runner failed" "JSON wizard acceptance" "${PHASE9D_ERROR:-wp eval-file failed}"
+fi
+
+printf '%s' "$PHASE9D_JSON" >"$TMP_DIR/phase9d-wizard.json"
+
+if ! PHASE9D_ASSERTION="$(python3 - "$TMP_DIR/phase9d-wizard.json" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    p=json.load(f)
+
+assert p["registered"] is True
+assert p["catalog_keys"]["en"] == p["catalog_keys"]["es"]
+assert len(p["catalog_keys"]["en"]) >= 45
+assert p["catalog_empty"] == {"en": [], "es": []}
+assert p["assets"] == {"style": True, "script": True}
+assert p["state_fingerprint"]["before"] == p["state_fingerprint"]["after"]
+
+en=p["english_html"]
+es=p["spanish_html"]
+preview=p["preview_html"]
+
+for required in (
+    "<h1>SEO/GEO Setup</h1>",
+    "1. Preset and languages",
+    "2. Site identity",
+    "3. GEO and discovery",
+    "4. Review",
+    'name="seo_geo_preset"',
+    'name="seo_geo_languages"',
+    'name="seo_geo_entity_type"',
+    'name="seo_geo_preview_confirm"',
+):
+    assert required in en
+
+for required in (
+    "<h1>Configuración SEO/GEO</h1>",
+    "1. Preset e idiomas",
+    "2. Identidad del sitio",
+    "3. GEO y descubrimiento",
+    "4. Revisión",
+):
+    assert required in es
+
+assert "Setup preview is valid." in preview
+assert 'id="seo-geo-setup-results"' in preview
+assert 'tabindex="-1"' in preview
+assert 'aria-live="polite"' in preview
+assert "corporate" in preview
+assert "en=en_US" in preview
+assert "organization" in preview
+
+for html in (en, es, preview):
+    lower=html.lower()
+    assert "Apply setup" not in html
+    assert "Guardar configuración" not in html
+    assert 'type="password"' not in lower
+    assert 'name="seo_geo_external_credential' not in lower
+    assert 'name="seo_geo_api_key' not in lower
+
+print("ok")
+PY
+)"; then
+  fail_smoke "phase9d-contract" "Phase 9D wizard UI contract is invalid" "EN/ES nonce-gated responsive preview-only wizard without state mutation" "${PHASE9D_ASSERTION:-python assertion failed}"
+fi
+
+UNAUTHORIZED_STDOUT="$TMP_DIR/phase9d-unauthorized.out"
+UNAUTHORIZED_STDERR="$TMP_DIR/phase9d-unauthorized.err"
+if wp_cli eval 'wp_set_current_user( 0 ); $screen = new \SeoGeo\Theme\Wizard\AdminSetupWizard( null, null, new \SeoGeo\Theme\Wizard\SetupWizardCopy( "en_US" ) ); $screen->render_page();' >"$UNAUTHORIZED_STDOUT" 2>"$UNAUTHORIZED_STDERR"; then
+  fail_smoke "phase9d-capability" "Unauthorized user could render the Phase 9D wizard" "wp_die / non-zero exit" "render succeeded"
+fi
+
+UNAUTHORIZED_TEXT="$(cat "$UNAUTHORIZED_STDOUT" "$UNAUTHORIZED_STDERR" | tr -d '\r' | head -c 1000)"
+[[ "$UNAUTHORIZED_TEXT" == *"You do not have permission to use the SEO/GEO setup wizard."* ]] \
+  || fail_smoke "phase9d-capability-message" "Unauthorized Phase 9D response did not use bounded EN guidance" "permission message" "${UNAUTHORIZED_TEXT:-empty}"
+
+printf '[self-contained] Phase 9D wizard OK: Appearance screen registered; EN/ES preview is nonce/capability-gated, focus-managed, responsive-assets-loaded and mutation-free.\n'
+
 if ! RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $r->getFileName();' 2>"$RUNTIME_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$RUNTIME_EVAL_ERROR" | head -c 240)"
   fail_smoke "runtime-eval" "Could not resolve embedded runtime class" "Runtime class available from theme" "${ERROR_TEXT:-wp eval failed}" "wp eval ReflectionClass Runtime"
