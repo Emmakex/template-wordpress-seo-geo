@@ -157,7 +157,7 @@ The runtime acceptance proved explicit preset/native-language normalization, inv
 
 ## Phase 9C — Entity and GEO configuration
 
-Status: **implementation candidate**
+Status: **complete**
 
 9C validates explicit site-entity and GEO/discovery choices by composing the existing Core authorities. It does not persist options; atomic application remains reserved for Phase 9E.
 
@@ -213,3 +213,29 @@ These controls do not claim ranking, inclusion, citation, training or crawler be
 ### Safety
 
 Validation performs no option writes, page creation, plugin mutation, content selection, credential access or outbound requests. The self-contained acceptance fingerprints setup/entity/GEO/plugin options before and after valid and invalid validation cases.
+
+
+### 9C acceptance evidence
+
+Final candidate `f6592459f3da94353b317d4c7529ee262ca43def` passed all eight gates:
+
+- Foundation CI `35891851206`;
+- Phase 1 Package CI `35891851157`;
+- PHP Quality CI `35891851148` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35891851159`;
+- Accessibility & Responsive CI `35891851222`;
+- Performance Baseline CI `35891851165`;
+- Self-contained Theme CI `35891851408`;
+- Native Multilingual CI `35891851154`.
+
+PR #90 was squash-merged as `215f26e336b7772223a955f1284e500b935d19dd`.
+
+Post-merge `main` repeated all eight gates successfully: Foundation `35892343305`, Package `35892343445`, PHP Quality `35892343430`, WordPress Smoke `35892343480`, Accessibility/Responsive `35892343290`, Performance `35892343401`, Self-contained Theme `35892343313` and Native Multilingual `35892343413`.
+
+The runtime acceptance proved explicit entity/GEO normalization, visible-fact authority retention, rejection of invalid address/coordinates/crawler/claim input and unchanged setup state.
+
+## Phase 9D — Theme-owned wizard UI
+
+Status: **active**
+
+9D turns the validated 9A–9C setup model into one WordPress-native theme wizard. The UI must remain a presentation layer over existing validators and must not introduce parallel preset, language, entity or GEO authorities.
