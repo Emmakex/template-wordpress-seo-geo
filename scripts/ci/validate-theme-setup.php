@@ -113,7 +113,7 @@ foreach (
 	array(
 		'add_theme_page(',
 		"current_user_can( 'manage_options' )",
-		'check_admin_referer( self::NONCE_ACTION )',
+		'wp_verify_nonce(',
 		'wp_nonce_field( self::NONCE_ACTION )',
 		"'seo_geo_preview_confirm'",
 		"'seo_geo_validate'",
