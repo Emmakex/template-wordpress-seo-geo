@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 9A theme setup foundation contract.
+ * Validate the Phase 9A/9B theme setup foundation contract.
  *
  * @package SeoGeoTheme
  */
@@ -16,6 +16,7 @@ $required = array(
 	$setup_dir . '/MigrationHandoffReader.php',
 	$setup_dir . '/SetupCompatibilityDetector.php',
 	$setup_dir . '/SetupPlanner.php',
+	$setup_dir . '/PresetLanguageValidator.php',
 );
 
 foreach ( $required as $path ) {
@@ -48,7 +49,7 @@ foreach ( $php_files as $path ) {
 	$source = (string) file_get_contents( $path );
 	foreach ( $forbidden as $primitive ) {
 		if ( str_contains( $source, $primitive ) ) {
-			fwrite( STDERR, 'Phase 9A read-only setup code contains forbidden primitive ' . $primitive . ' in ' . $path . PHP_EOL );
+			fwrite( STDERR, 'Phase 9A/9B read-only setup code contains forbidden primitive ' . $primitive . ' in ' . $path . PHP_EOL );
 			exit( 1 );
 		}
 	}
@@ -106,10 +107,43 @@ foreach (
 	}
 }
 
-$bootstrap = (string) file_get_contents( $root . '/packages/seo-geo-theme/inc/setup.php' );
-if ( ! str_contains( $bootstrap, 'function seo_geo_theme_setup_plan(): array' ) ) {
-	fwrite( STDERR, 'Phase 9A setup-plan public function is missing.' . PHP_EOL );
-	exit( 1 );
+$preset_language = (string) file_get_contents( $setup_dir . '/PresetLanguageValidator.php' );
+foreach (
+	array(
+		"'preset-language-validation'",
+		'seo_geo_theme_preset_ids()',
+		'NativeLanguageConfiguration::from_array',
+		"'prefix-routing-requires-multiple-languages'",
+		"'translations_created'",
+		"'routes_created'",
+		"'provider_state_mutated'",
+	) as $guard
+) {
+	if ( ! str_contains( $preset_language, $guard ) ) {
+		fwrite( STDERR, 'Phase 9B preset/language guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
 }
 
-printf( "Phase 9A setup foundation static contract OK: versioned, handoff-aware, preset/language-authoritative and read-only.\n" );
+$language_config = (string) file_get_contents( $root . '/packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php' );
+foreach ( array( 'public static function from_array(', 'public function to_array(): array' ) as $guard ) {
+	if ( ! str_contains( $language_config, $guard ) ) {
+		fwrite( STDERR, 'Phase 9B native language authority guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$bootstrap = (string) file_get_contents( $root . '/packages/seo-geo-theme/inc/setup.php' );
+foreach (
+	array(
+		'function seo_geo_theme_setup_plan(): array',
+		'function seo_geo_theme_validate_preset_language_setup( array $input ): array',
+	) as $guard
+) {
+	if ( ! str_contains( $bootstrap, $guard ) ) {
+		fwrite( STDERR, 'Phase 9 setup bootstrap guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+printf( "Phase 9A/9B setup static contract OK: handoff-aware planning plus preset/native-language validation remain non-persistent.\n" );
