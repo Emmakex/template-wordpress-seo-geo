@@ -147,13 +147,13 @@ final class DependencyGraphBuilder {
 		$authority_by_cat = array();
 
 		foreach ( $authorities as $authority ) {
-			if ( is_array( $authority ) && is_string( $authority['category'] ?? null ) ) {
+			if ( is_string( $authority['category'] ?? null ) ) {
 				$authority_by_cat[ $authority['category'] ] = $authority;
 			}
 		}
 
 		foreach ( $providers as $category => $category_providers ) {
-			if ( ! is_string( $category ) || ! is_array( $category_providers ) ) {
+			if ( ! is_array( $category_providers ) ) {
 				continue;
 			}
 
