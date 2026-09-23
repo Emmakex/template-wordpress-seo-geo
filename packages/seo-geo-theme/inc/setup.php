@@ -24,5 +24,5 @@ use SeoGeo\Theme\Setup\SetupPlanner;
  * @return array<string,mixed>
  */
 function seo_geo_theme_setup_plan(): array {
-	return ( new SetupPlanner() )->plan();
+	return ( new \SeoGeo\Theme\Setup\SetupPlanner() )->plan();
 }
