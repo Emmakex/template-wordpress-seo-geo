@@ -1,6 +1,9 @@
 /**
  * Focus Phase 9D validation results after page load.
+ *
+ * @package SeoGeoTheme
  */
+
 document.addEventListener(
 	'DOMContentLoaded',
 	function () {
