@@ -154,7 +154,7 @@ final class SetupExecutor {
 		$config_sha256     = $this->fingerprint(
 			array(
 				'options'   => $authority_options,
-				'migration'            => $handoff_summary,
+				'migration' => $handoff_summary,
 			)
 		);
 
@@ -347,7 +347,7 @@ final class SetupExecutor {
 				'llms_txt_enabled'            => true === ( $geo['llms_txt']['enabled'] ?? false ),
 				'markdown_alternates_enabled' => true === ( $geo['markdown']['enabled'] ?? false ),
 			),
-			'migration' => $handoff_summary,
+			'migration'            => $handoff_summary,
 		);
 	}
 
