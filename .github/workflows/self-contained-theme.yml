@@ -60,6 +60,8 @@ jobs:
           php -l packages/seo-geo-theme/inc/Setup/SetupOptionWriterInterface.php
           php -l packages/seo-geo-theme/inc/Setup/WordPressSetupOptionWriter.php
           php -l packages/seo-geo-theme/inc/Setup/SetupReportStore.php
+          php -l packages/seo-geo-theme/inc/Setup/SetupRewriteMaintenance.php
+          php -l packages/seo-geo-theme/inc/Setup/SetupWriteFailure.php
           php -l packages/seo-geo-theme/inc/Setup/SetupExecutor.php
           php -l packages/seo-geo-core/src/Runtime.php
 
