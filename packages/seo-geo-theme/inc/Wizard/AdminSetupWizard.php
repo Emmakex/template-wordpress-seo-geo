@@ -53,13 +53,6 @@ final class AdminSetupWizard {
 	private CrawlerPolicyResolver $crawler_policy;
 
 	/**
-	 * Registered admin page hook.
-	 *
-	 * @var string|null
-	 */
-	private ?string $page_hook = null;
-
-	/**
 	 * Construct the wizard.
 	 *
 	 * @param SetupPlanner|null          $planner        Optional setup planner.
@@ -91,7 +84,7 @@ final class AdminSetupWizard {
 	 * Register the Appearance screen.
 	 */
 	public function register_page(): void {
-		$this->page_hook = add_theme_page(
+		add_theme_page(
 			$this->copy->text( 'page_title' ),
 			$this->copy->text( 'menu_title' ),
 			'manage_options',
@@ -106,7 +99,7 @@ final class AdminSetupWizard {
 	 * @param string $hook Current admin page hook.
 	 */
 	public function enqueue_assets( string $hook ): void {
-		if ( null === $this->page_hook || $hook !== $this->page_hook ) {
+		if ( 'appearance_page_' . self::PAGE_SLUG !== $hook ) {
 			return;
 		}
 
