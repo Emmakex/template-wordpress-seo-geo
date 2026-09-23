@@ -437,7 +437,7 @@ final class MigrationReportEngine {
 				continue;
 			}
 
-			$signal   = $difference['signal'];
+			$signal = $difference['signal'];
 			if ( 'presence' === $signal ) {
 				++$url_redirect['presence_changes'];
 			}
@@ -449,7 +449,7 @@ final class MigrationReportEngine {
 			}
 
 			if ( 'allowed' === ( $difference['status'] ?? null ) ) {
-				$approval = isset( $difference['allowlist'] ) && is_array( $difference['allowlist'] )
+				$approval       = isset( $difference['allowlist'] ) && is_array( $difference['allowlist'] )
 					? $difference['allowlist']
 					: array();
 				$improvements[] = array(
