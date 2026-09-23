@@ -563,7 +563,7 @@ final class HtmlSnapshotExtractor {
 	 *
 	 * These checks are not a replacement for a full WCAG audit.
 	 *
-	 * @param DOMXPath                         $xpath    DOM XPath context.
+	 * @param DOMXPath                           $xpath    DOM XPath context.
 	 * @param list<array{level:int,text:string}> $headings Extracted heading outline.
 	 * @return array{
 	 *     analyzed:bool,
