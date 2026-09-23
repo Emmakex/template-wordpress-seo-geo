@@ -163,6 +163,41 @@ The parity report contains hashes and decision metadata, not raw before/after bo
 
 Accessibility and Performance gates include a representative post-migration page composed from the same conservative native-block families emitted by 8E.
 
+## Phase 8G — Safe cutover and rollback
+
+Phase 8G is the first bridge layer authorized to change the production presentation/runtime boundary.
+
+The cutover engine is exposed through:
+
+```php
+$engine = \SeoGeo\MigrationBridge\Plugin::cutover_engine();
+$plan = $engine?->plan(
+    $backup_evidence,
+    $plugins_to_deactivate,
+    $parity_allowlist,
+    $maintenance
+);
+```
+
+A ready plan requires recent, hash-bound recovery evidence for both:
+
+- a complete database backup;
+- the uploads tree.
+
+The bridge does not claim to create those environment-specific artifacts itself. It records their reference, SHA-256, timestamp, scope and size, together with the WordPress state required for deterministic rollback.
+
+Before mutation, the bridge stores an append-only recovery record containing the active theme/plugins, installed package versions, protected options, baseline/redirect fingerprints and migrated-resource backup fingerprints.
+
+Production cutover is blocked when the sandbox marker is still enabled, search-engine visibility is disabled, the persisted baseline is missing, the destination theme is unavailable, fresh 8F parity is not accepted, or another cutover is active.
+
+Only explicit plugin basenames may be deactivated. A plugin is eligible only when its dependency classifications are entirely within `REPLACE`, `REMOVE-CANDIDATE` or `OPTIONAL`. Any `KEEP`, `UNKNOWN` or `MIGRATE` classification blocks deactivation. The Migration Bridge itself remains active until acceptance.
+
+The engine never deletes plugins/themes, resets the database or clears uploads.
+
+After cutover it verifies the exact expected theme/plugin state, protected options and fresh SEO/GEO parity. Failure triggers automatic runtime rollback. Manual rollback is also available while the cutover remains unaccepted and refuses to overwrite unrelated runtime drift.
+
+Final acceptance performs fresh health + parity checks and changes the record to `accepted`. At that point runtime rollback is closed, while recovery evidence remains available for audit/disaster recovery.
+
 ## Safety boundary
 
 The bridge follows these rules:
