@@ -146,7 +146,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 
 			if ( $token_start > $offset ) {
 				$text = substr( $content, $offset, $token_start - $offset );
-				if ( false !== $text && '' !== trim( $text ) ) {
+				if ( '' !== trim( $text ) ) {
 					$current                         = count( $stack ) - 1;
 					$stack[ $current ]['children'][] = array(
 						'tag'      => '__text__',
@@ -168,9 +168,6 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 				array_pop( $stack );
 			} else {
 				$attrs = shortcode_parse_atts( $raw_attrs );
-				if ( ! is_array( $attrs ) ) {
-					$attrs = array();
-				}
 
 				$current                         = count( $stack ) - 1;
 				$stack[ $current ]['children'][] = array(
@@ -187,7 +184,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 
 		if ( $offset < strlen( $content ) ) {
 			$text = substr( $content, $offset );
-			if ( false !== $text && '' !== trim( $text ) ) {
+			if ( '' !== trim( $text ) ) {
 				$current                         = count( $stack ) - 1;
 				$stack[ $current ]['children'][] = array(
 					'tag'      => '__text__',
