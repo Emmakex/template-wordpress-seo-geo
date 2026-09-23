@@ -124,7 +124,7 @@ final class CutoverEngine {
 	 * Build a non-mutating cutover plan.
 	 *
 	 * @param array<string,mixed> $backup_evidence       External recovery evidence.
-	 * @param array        $plugins_to_deactivate Explicit plugin basenames.
+	 * @param array               $plugins_to_deactivate Explicit plugin basenames.
 	 * @phpstan-param list<string> $plugins_to_deactivate
 	 * @param array<int,mixed>    $allowlist_rules       Phase 8F exact-difference approvals.
 	 * @param array<string,mixed> $quality_evidence      Accessibility/performance evidence.
@@ -291,7 +291,7 @@ final class CutoverEngine {
 	 * Execute an explicitly confirmed production cutover.
 	 *
 	 * @param array<string,mixed> $backup_evidence       External recovery evidence.
-	 * @param array        $plugins_to_deactivate Explicit plugin basenames.
+	 * @param array               $plugins_to_deactivate Explicit plugin basenames.
 	 * @phpstan-param list<string> $plugins_to_deactivate
 	 * @param array<int,mixed>    $allowlist_rules       Exact parity approvals.
 	 * @param array<string,mixed> $quality_evidence      Accessibility/performance evidence.
@@ -596,7 +596,7 @@ final class CutoverEngine {
 	/**
 	 * Apply controlled theme/plugin changes.
 	 *
-	 * @param array        $plugins     Plugins to deactivate.
+	 * @param array               $plugins     Plugins to deactivate.
 	 * @phpstan-param list<string> $plugins
 	 * @param array<string,mixed> $maintenance Maintenance flags.
 	 */
@@ -618,7 +618,7 @@ final class CutoverEngine {
 	 * Restore the exact runtime state controlled by this cutover.
 	 *
 	 * @param array<string,mixed> $before      Pre-cutover runtime state.
-	 * @param array        $plugins     Plugins deactivated by cutover.
+	 * @param array               $plugins     Plugins deactivated by cutover.
 	 * @phpstan-param list<string> $plugins
 	 * @param array<string,mixed> $maintenance Maintenance flags.
 	 */
@@ -670,7 +670,7 @@ final class CutoverEngine {
 	 * Validate cutover state immediately after mutations.
 	 *
 	 * @param array<string,mixed> $before  Pre-cutover runtime state.
-	 * @param array        $plugins Plugins intentionally deactivated.
+	 * @param array               $plugins Plugins intentionally deactivated.
 	 * @phpstan-param list<string> $plugins
 	 * @return array{healthy:bool,checks:array<string,bool>}
 	 */
@@ -696,7 +696,7 @@ final class CutoverEngine {
 	 * Verify current active cutover state has not drifted before manual rollback.
 	 *
 	 * @param array<string,mixed> $before  Pre-cutover runtime state.
-	 * @param array        $plugins Plugins deactivated by cutover.
+	 * @param array               $plugins Plugins deactivated by cutover.
 	 * @phpstan-param list<string> $plugins
 	 */
 	private function active_cutover_matches_snapshot( array $before, array $plugins ): bool {
@@ -905,7 +905,7 @@ final class CutoverEngine {
 	 *
 	 * @param array<string,mixed> $requested Requested flags.
 	 * @param array<string,mixed> $runtime   Current runtime.
-	 * @param array        $plugins   Plugins to deactivate.
+	 * @param array               $plugins   Plugins to deactivate.
 	 * @phpstan-param list<string> $plugins
 	 * @return array{flush_rewrites:bool,flush_object_cache:bool,refresh_sitemaps:bool}
 	 */
