@@ -119,16 +119,16 @@ final class DependencyGraphBuilder {
 			}
 
 			$rows[] = array(
-				'component_id'    => 'builder:' . $id,
-				'type'            => 'builder',
-				'id'              => $id,
-				'installed'       => $installed,
-				'active'          => $active,
-				'classification'  => $classification,
-				'reason'          => $reason,
-				'resource_count'  => $resource_count,
-				'auto_remove'     => false,
-				'manual_review'   => 'REMOVE-CANDIDATE' === $classification || 'OPTIONAL' === $classification,
+				'component_id'   => 'builder:' . $id,
+				'type'           => 'builder',
+				'id'             => $id,
+				'installed'      => $installed,
+				'active'         => $active,
+				'classification' => $classification,
+				'reason'         => $reason,
+				'resource_count' => $resource_count,
+				'auto_remove'    => false,
+				'manual_review'  => 'REMOVE-CANDIDATE' === $classification || 'OPTIONAL' === $classification,
 			);
 		}
 
@@ -138,8 +138,8 @@ final class DependencyGraphBuilder {
 	/**
 	 * Build provider component decisions.
 	 *
-	 * @param array<string, mixed>              $providers   Provider catalog.
-	 * @param list<array<string,mixed>>         $authorities Authority candidates.
+	 * @param array<string, mixed>      $providers   Provider catalog.
+	 * @param list<array<string,mixed>> $authorities Authority candidates.
 	 * @return list<array<string,mixed>>
 	 */
 	private function provider_components( array $providers, array $authorities ): array {
@@ -193,6 +193,12 @@ final class DependencyGraphBuilder {
 
 	/**
 	 * Classify one provider conservatively.
+	 *
+	 * @param string      $category Provider category.
+	 * @param string      $id       Provider identifier.
+	 * @param bool        $active   Whether the provider is active.
+	 * @param string|null $owner    Exclusive authority candidate, when known.
+	 * @param bool        $conflict Whether multiple active authority candidates exist.
 	 */
 	private function provider_classification( string $category, string $id, bool $active, ?string $owner, bool $conflict ): string {
 		if ( $conflict ) {
@@ -215,6 +221,9 @@ final class DependencyGraphBuilder {
 
 	/**
 	 * Return a stable reason for a provider classification.
+	 *
+	 * @param string $classification Migration classification.
+	 * @param bool   $conflict       Whether authority candidates conflict.
 	 */
 	private function provider_reason( string $classification, bool $conflict ): string {
 		if ( $conflict ) {
