@@ -21,16 +21,19 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Extract one page snapshot.
 	 *
-	 * @param array{content_type:string,location:string,x_robots_tag:string} $headers Response headers.
+	 * @param string                $url     Public URL being inspected.
+	 * @param int                   $status  HTTP response status.
+	 * @param string                $html    Public response body.
+	 * @param array<string, string> $headers Normalized response headers.
 	 * @return array<string,mixed>
 	 */
 	public function extract( string $url, int $status, string $html, array $headers ): array {
 		$result = array(
 			'http'             => array(
-				'status'         => $status,
-				'content_type'   => $headers['content_type'],
-				'location'       => $headers['location'],
-				'x_robots_tag'   => $headers['x_robots_tag'],
+				'status'       => $status,
+				'content_type' => $headers['content_type'],
+				'location'     => $headers['location'],
+				'x_robots_tag' => $headers['x_robots_tag'],
 			),
 			'indexability'     => $this->indexability( $status, '', $headers['x_robots_tag'] ),
 			'title'            => null,
@@ -101,8 +104,11 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Minimal extraction when DOM is unavailable or malformed input cannot load.
 	 *
-	 * @param array<string,mixed> $result Base result.
-	 * @param array{content_type:string,location:string,x_robots_tag:string} $headers Response headers.
+	 * @param array<string, mixed> $result  Base result.
+	 * @param string               $url     Public URL being inspected.
+	 * @param int                  $status  HTTP response status.
+	 * @param string               $html    Public response body.
+	 * @param array<string, string> $headers Normalized response headers.
 	 * @return array<string,mixed>
 	 */
 	private function fallback_extract( array $result, string $url, int $status, string $html, array $headers ): array {
@@ -122,8 +128,8 @@ final class HtmlSnapshotExtractor {
 			$result['robots'] = html_entity_decode( $match[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		}
 
-		$result['indexability'] = $this->indexability( $status, (string) ( $result['robots'] ?? '' ), $headers['x_robots_tag'] );
-		$text                   = $this->normalize_text( wp_strip_all_tags( $html ) );
+		$result['indexability']    = $this->indexability( $status, (string) ( $result['robots'] ?? '' ), $headers['x_robots_tag'] );
+		$text                      = $this->normalize_text( wp_strip_all_tags( $html ) );
 		$result['primary_content'] = $this->fingerprint_text( $text );
 
 		return $result;
@@ -131,6 +137,9 @@ final class HtmlSnapshotExtractor {
 
 	/**
 	 * Resolve one XPath text value.
+	 *
+	 * @param DOMXPath $xpath DOM XPath context.
+	 * @param string   $query XPath query.
 	 */
 	private function first_text( DOMXPath $xpath, string $query ): ?string {
 		$nodes = $xpath->query( $query );
@@ -138,12 +147,17 @@ final class HtmlSnapshotExtractor {
 			return null;
 		}
 
+		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
 		$text = $this->normalize_text( (string) $nodes->item( 0 )?->textContent );
 		return '' !== $text ? $text : null;
 	}
 
 	/**
 	 * Resolve one XPath attribute.
+	 *
+	 * @param DOMXPath $xpath     DOM XPath context.
+	 * @param string   $query     XPath query.
+	 * @param string   $attribute Attribute name.
 	 */
 	private function first_attribute( DOMXPath $xpath, string $query, string $attribute ): ?string {
 		$nodes = $xpath->query( $query );
@@ -159,6 +173,7 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Extract reciprocal alternate language links.
 	 *
+	 * @param DOMXPath $xpath DOM XPath context.
 	 * @return list<array{lang:string,url:string}>
 	 */
 	private function hreflang( DOMXPath $xpath ): array {
@@ -194,6 +209,7 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Extract Open Graph properties.
 	 *
+	 * @param DOMXPath $xpath DOM XPath context.
 	 * @return list<array{property:string,content:string}>
 	 */
 	private function open_graph( DOMXPath $xpath ): array {
@@ -230,6 +246,7 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Extract comparison-safe JSON-LD fingerprints and types.
 	 *
+	 * @param DOMXPath $xpath DOM XPath context.
 	 * @return array{block_count:int,types:list<string>,blocks:list<array{valid_json:bool,types:list<string>,sha256:string}>}
 	 */
 	private function schema( DOMXPath $xpath ): array {
@@ -246,6 +263,7 @@ final class HtmlSnapshotExtractor {
 		}
 
 		foreach ( $nodes as $node ) {
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
 			$raw   = trim( (string) $node->textContent );
 			$value = json_decode( $raw, true );
 			$types = array();
@@ -285,8 +303,8 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Collect @type values recursively.
 	 *
-	 * @param mixed        $value Current decoded JSON value.
-	 * @param list<string> $types Collected types.
+	 * @param mixed              $value Current decoded JSON value.
+	 * @param array<int, string> $types Collected types.
 	 */
 	private function collect_schema_types( mixed $value, array &$types ): void {
 		if ( ! is_array( $value ) ) {
@@ -338,6 +356,7 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Extract H1-H6 outline.
 	 *
+	 * @param DOMXPath $xpath DOM XPath context.
 	 * @return list<array{level:int,text:string}>
 	 */
 	private function headings( DOMXPath $xpath ): array {
@@ -348,7 +367,9 @@ final class HtmlSnapshotExtractor {
 		}
 
 		foreach ( $nodes as $node ) {
-			$tag = strtolower( $node->nodeName );
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
+			$tag  = strtolower( $node->nodeName );
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
 			$text = $this->normalize_text( (string) $node->textContent );
 			if ( '' === $text || 1 !== preg_match( '/^h([1-6])$/', $tag, $match ) ) {
 				continue;
@@ -366,6 +387,8 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Extract visible breadcrumb containers heuristically.
 	 *
+	 * @param DOMXPath $xpath    DOM XPath context.
+	 * @param string   $base_url Public page URL used to resolve relative links.
 	 * @return list<array{text:string,links:list<string>}>
 	 */
 	private function breadcrumbs( DOMXPath $xpath, string $base_url ): array {
@@ -378,6 +401,7 @@ final class HtmlSnapshotExtractor {
 		}
 
 		foreach ( $nodes as $node ) {
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
 			$text = $this->normalize_text( (string) $node->textContent );
 			if ( '' === $text ) {
 				continue;
@@ -410,6 +434,8 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Extract same-origin internal links.
 	 *
+	 * @param DOMXPath $xpath    DOM XPath context.
+	 * @param string   $base_url Public page URL used to resolve relative links.
 	 * @return list<string>
 	 */
 	private function internal_links( DOMXPath $xpath, string $base_url ): array {
@@ -438,6 +464,7 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Hash primary visible content without persisting the body.
 	 *
+	 * @param DOMXPath $xpath DOM XPath context.
 	 * @return array{bytes:int,word_count:int,sha256:string|null}
 	 */
 	private function primary_content( DOMXPath $xpath ): array {
@@ -457,12 +484,14 @@ final class HtmlSnapshotExtractor {
 			);
 		}
 
+		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
 		return $this->fingerprint_text( $this->normalize_text( (string) $node->textContent ) );
 	}
 
 	/**
 	 * Convert text into non-reversible comparison metadata.
 	 *
+	 * @param string $text Normalized visible text.
 	 * @return array{bytes:int,word_count:int,sha256:string|null}
 	 */
 	private function fingerprint_text( string $text ): array {
@@ -486,6 +515,9 @@ final class HtmlSnapshotExtractor {
 	/**
 	 * Classify indexability from response and robots signals.
 	 *
+	 * @param int    $status       HTTP response status.
+	 * @param string $robots       Robots meta content.
+	 * @param string $x_robots_tag X-Robots-Tag header content.
 	 * @return array{state:string,indexable:bool|null,reasons:list<string>}
 	 */
 	private function indexability( int $status, string $robots, string $x_robots_tag ): array {
@@ -534,6 +566,8 @@ final class HtmlSnapshotExtractor {
 
 	/**
 	 * Normalize human-readable text.
+	 *
+	 * @param string $text Source text.
 	 */
 	private function normalize_text( string $text ): string {
 		$normalized = preg_replace( '/\s+/u', ' ', trim( $text ) );
@@ -542,6 +576,9 @@ final class HtmlSnapshotExtractor {
 
 	/**
 	 * Resolve and normalize a same-origin link.
+	 *
+	 * @param string $href     Link href.
+	 * @param string $base_url Public page URL used to resolve relative links.
 	 */
 	private function normalize_internal_url( string $href, string $base_url ): ?string {
 		$href = trim( html_entity_decode( $href, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
@@ -605,6 +642,8 @@ final class HtmlSnapshotExtractor {
 
 	/**
 	 * Collapse dot segments in a URL path.
+	 *
+	 * @param string $path URL path.
 	 */
 	private function normalize_path( string $path ): string {
 		$segments = explode( '/', $path );
