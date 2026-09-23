@@ -509,15 +509,30 @@ final class AdminSetupWizard {
 		$language_lines = isset( $_POST['seo_geo_languages'] ) && is_string( $_POST['seo_geo_languages'] )
 			? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_languages'] ) )
 			: '';
+		$preset = isset( $_POST['seo_geo_preset'] ) && is_string( $_POST['seo_geo_preset'] )
+			? sanitize_key( wp_unslash( $_POST['seo_geo_preset'] ) )
+			: '';
+		$default_language = isset( $_POST['seo_geo_default_language'] ) && is_string( $_POST['seo_geo_default_language'] )
+			? sanitize_text_field( wp_unslash( $_POST['seo_geo_default_language'] ) )
+			: '';
+		$routing = isset( $_POST['seo_geo_routing'] ) && is_string( $_POST['seo_geo_routing'] )
+			? sanitize_key( wp_unslash( $_POST['seo_geo_routing'] ) )
+			: '';
+		$x_default = isset( $_POST['seo_geo_x_default'] ) && is_string( $_POST['seo_geo_x_default'] )
+			? sanitize_text_field( wp_unslash( $_POST['seo_geo_x_default'] ) )
+			: '';
+		$site_entity_type = isset( $_POST['seo_geo_entity_type'] ) && is_string( $_POST['seo_geo_entity_type'] )
+			? sanitize_key( wp_unslash( $_POST['seo_geo_entity_type'] ) )
+			: '';
 
 		return array(
 			'candidate' => array(
-				'preset'                      => $this->key_value( $_POST['seo_geo_preset'] ?? null ),
-				'default_language'            => $this->text_value( $_POST['seo_geo_default_language'] ?? null ),
+				'preset'                      => $preset,
+				'default_language'            => $default_language,
 				'languages'                   => $this->parse_language_lines( $language_lines ),
-				'routing'                     => $this->key_value( $_POST['seo_geo_routing'] ?? null ),
-				'x_default'                   => $this->nullable_text_value( $_POST['seo_geo_x_default'] ?? null ),
-				'site_entity_type'            => $this->key_value( $_POST['seo_geo_entity_type'] ?? null ),
+				'routing'                     => $routing,
+				'x_default'                   => '' !== $x_default ? $x_default : null,
+				'site_entity_type'            => $site_entity_type,
 				'confirm_identity'            => isset( $_POST['seo_geo_confirm_identity'] ),
 				'local_business'              => $local,
 				'crawler_policy'              => $crawlers,
@@ -593,35 +608,6 @@ final class AdminSetupWizard {
 		}
 
 		return implode( "\n", $lines );
-	}
-
-	/**
-	 * Sanitize one candidate key.
-	 *
-	 * @param mixed $value Candidate value.
-	 */
-	private function key_value( mixed $value ): string {
-		return is_string( $value ) ? sanitize_key( wp_unslash( $value ) ) : '';
-	}
-
-	/**
-	 * Sanitize one candidate text value.
-	 *
-	 * @param mixed $value Candidate value.
-	 */
-	private function text_value( mixed $value ): string {
-		return is_string( $value ) ? sanitize_text_field( wp_unslash( $value ) ) : '';
-	}
-
-	/**
-	 * Sanitize one nullable candidate text value.
-	 *
-	 * @param mixed $value Candidate value.
-	 */
-	private function nullable_text_value( mixed $value ): ?string {
-		$text = $this->text_value( $value );
-
-		return '' !== $text ? $text : null;
 	}
 
 	/**
