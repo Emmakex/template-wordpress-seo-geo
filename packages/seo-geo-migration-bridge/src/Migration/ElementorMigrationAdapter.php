@@ -84,6 +84,7 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	 *
 	 * @param WP_Post $post Resource to transform.
 	 * @return array{content:string,delete_meta:list<string>,update_meta:array<string,mixed>}
+	 * @throws RuntimeException When the Elementor tree cannot be migrated safely.
 	 */
 	public function transform( WP_Post $post ): array {
 		$plan = $this->plan( $post );
@@ -130,7 +131,8 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	 *
 	 * @param array<int,mixed>   $nodes     Elementor nodes.
 	 * @param array<string, int> $widgets   Widget counts by type.
-	 * @param list<int>          $media_ids Collected media IDs.
+	 * @param array              $media_ids Collected media IDs.
+	 * @phpstan-param list<int> $media_ids
 	 */
 	private function collect_widgets( array $nodes, array &$widgets, array &$media_ids ): void {
 		foreach ( $nodes as $node ) {
@@ -165,7 +167,8 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	 * Convert Elementor nodes to serialized core blocks.
 	 *
 	 * @param array<int,mixed> $nodes  Elementor nodes.
-	 * @param list<string>     $blocks Serialized blocks.
+	 * @param array            $blocks Serialized blocks.
+	 * @phpstan-param list<string> $blocks
 	 */
 	private function render_nodes( array $nodes, array &$blocks ): void {
 		foreach ( $nodes as $node ) {
@@ -192,6 +195,7 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	 *
 	 * @param string              $widget_type Elementor widget type.
 	 * @param array<string,mixed> $settings    Elementor widget settings.
+	 * @throws RuntimeException When an unsupported widget reaches transformation.
 	 */
 	private function render_widget( string $widget_type, array $settings ): string {
 		return match ( $widget_type ) {
@@ -209,6 +213,7 @@ final class ElementorMigrationAdapter implements BuilderMigrationAdapterInterfac
 	 * Render heading block.
 	 *
 	 * @param array<string,mixed> $settings Widget settings.
+	 * @throws RuntimeException When an image has no usable source.
 	 */
 	private function heading_block( array $settings ): string {
 		$text      = isset( $settings['title'] ) && is_string( $settings['title'] ) ? wp_strip_all_tags( $settings['title'] ) : '';
