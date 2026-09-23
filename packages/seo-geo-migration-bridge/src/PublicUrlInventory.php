@@ -160,28 +160,34 @@ final class PublicUrlInventory {
 	 * @param string $url Candidate URL.
 	 */
 	private function normalize_same_origin_url( string $url ): ?string {
-		$url       = html_entity_decode( trim( $url ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-		$parts     = wp_parse_url( $url );
-		$home      = wp_parse_url( home_url( '/' ) );
-		$scheme    = is_array( $parts ) && isset( $parts['scheme'] ) ? strtolower( (string) $parts['scheme'] ) : '';
-		$host      = is_array( $parts ) && isset( $parts['host'] ) ? strtolower( (string) $parts['host'] ) : '';
-		$home_host = is_array( $home ) && isset( $home['host'] ) ? strtolower( (string) $home['host'] ) : '';
+		$url              = html_entity_decode( trim( $url ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$home_url         = home_url( '/' );
+		$scheme_value     = wp_parse_url( $url, PHP_URL_SCHEME );
+		$host_value       = wp_parse_url( $url, PHP_URL_HOST );
+		$port_value       = wp_parse_url( $url, PHP_URL_PORT );
+		$path_value       = wp_parse_url( $url, PHP_URL_PATH );
+		$query_value      = wp_parse_url( $url, PHP_URL_QUERY );
+		$home_scheme      = wp_parse_url( $home_url, PHP_URL_SCHEME );
+		$home_host_value  = wp_parse_url( $home_url, PHP_URL_HOST );
+		$home_port_value  = wp_parse_url( $home_url, PHP_URL_PORT );
+		$scheme           = is_string( $scheme_value ) ? strtolower( $scheme_value ) : '';
+		$host             = is_string( $host_value ) ? strtolower( $host_value ) : '';
+		$home_host        = is_string( $home_host_value ) ? strtolower( $home_host_value ) : '';
+		$home_scheme_name = is_string( $home_scheme ) ? strtolower( $home_scheme ) : 'http';
 
 		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) || '' === $host || $host !== $home_host ) {
 			return null;
 		}
 
-		$port      = isset( $parts['port'] ) ? (int) $parts['port'] : $this->default_port( $scheme );
-		$home_port = is_array( $home ) && isset( $home['port'] )
-			? (int) $home['port']
-			: $this->default_port( is_array( $home ) && isset( $home['scheme'] ) ? strtolower( (string) $home['scheme'] ) : 'http' );
+		$port      = is_int( $port_value ) ? $port_value : $this->default_port( $scheme );
+		$home_port = is_int( $home_port_value ) ? $home_port_value : $this->default_port( $home_scheme_name );
 
 		if ( $port !== $home_port ) {
 			return null;
 		}
 
-		$path          = isset( $parts['path'] ) && '' !== (string) $parts['path'] ? (string) $parts['path'] : '/';
-		$query         = isset( $parts['query'] ) && '' !== (string) $parts['query'] ? '?' . (string) $parts['query'] : '';
+		$path          = is_string( $path_value ) && '' !== $path_value ? $path_value : '/';
+		$query         = is_string( $query_value ) && '' !== $query_value ? '?' . $query_value : '';
 		$port_fragment = in_array(
 			$port,
 			array(
