@@ -34,7 +34,7 @@ final class SetupWizardPreview {
 	 * Construct the preview service.
 	 *
 	 * @param PresetLanguageValidator|null $preset_language Optional validator.
-	 * @param EntityGeoValidator|null       $entity_geo      Optional validator.
+	 * @param EntityGeoValidator|null      $entity_geo      Optional validator.
 	 */
 	public function __construct(
 		?PresetLanguageValidator $preset_language = null,
