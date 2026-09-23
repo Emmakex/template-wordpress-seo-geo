@@ -29,6 +29,8 @@ final class AdminMigrationController {
 
 	/**
 	 * Construct the controller.
+	 *
+	 * @param MigrationEngine $engine Controlled migration engine.
 	 */
 	public function __construct( MigrationEngine $engine ) {
 		$this->engine = $engine;
