@@ -1597,41 +1597,47 @@ The next microphase is 8F — SEO parity and regression engine.
 
 Status: **complete**
 
-Current implementation scope:
+Delivered:
 
 - origin-neutral old-vs-new comparison keyed by public path/query rather than staging hostname;
-- exact fingerprint-bound allowlist rules requiring resource path, signal, before/after SHA-256 and reason;
-- URL presence/status/indexability, canonical, robots, title/meta, language, hreflang, Open Graph, Schema type/count, H1, internal-link and primary-content fingerprint comparison;
-- candidate single-owner evidence for title/meta/canonical/robots plus duplicate hreflang detection;
-- hard non-allowable regressions for duplicate canonical/robots/meta/title ownership, duplicate hreflang language keys, duplicate Schema blocks and known broken internal links;
-- redirect-map and sitemap-topology comparison;
-- parity reports expose hashes/status only, not raw before/after content;
-- production cutover remains explicitly disallowed by the parity report;
-- representative post-migration native-block fixture added to Playwright/axe and Lighthouse budgets;
-- Accessibility & Responsive and Performance Baseline workflows now trigger for Migration Bridge/parity changes.
+- URL presence/status/indexability parity for every tracked snapshot resource;
+- canonical, robots, title/meta, HTML language, hreflang and Open Graph comparison;
+- Schema type/block-count comparison plus duplicate JSON-LD fingerprint conflict detection;
+- H1, internal-link and primary-visible-content fingerprint comparison;
+- single-owner evidence for title, meta description, canonical and robots plus duplicate hreflang language-key detection;
+- hard non-allowable regressions for duplicate ownership, duplicate Schema and known broken internal links;
+- redirect-map validation and sitemap topology consistency;
+- exact intentional-difference allowlist bound to path + signal + before/after SHA-256 + non-empty reason;
+- stale allowlist approvals automatically stop matching changed candidate values;
+- parity reports expose hashes/decision metadata rather than raw before/after bodies;
+- production cutover remains explicitly disallowed by the 8F report;
+- representative post-migration native-block fixture added to browser and Lighthouse acceptance;
+- Accessibility & Responsive CI expanded from EN/ES to EN/ES + migration and passed 36/36 Playwright/axe cases;
+- Performance Baseline CI expanded to three pages × three Lighthouse samples;
+- post-migration representative Lighthouse median remained performance 100, LCP 641.68 ms, CLS 0, TBT 0 ms, 18,829 B transfer, 5 requests, 0 third-party requests and 0 project-owned frontend JS;
+- Migration Bridge version 0.6.0.
 
-Validation evidence:
+8F is closed.
 
-- PR #77 final candidate `080141158162f739ba6bf862720678f11f6e56a8` passed Foundation `35870573572`, Package `35870573394`, PHP Quality `35870573512`, WordPress Smoke `35870573493`, Accessibility/Responsive `35870573412` and Performance `35870573501`;
+Evidence:
+
+- implementation PR #77 final candidate `080141158162f739ba6bf862720678f11f6e56a8` passed all six required workflows;
+- Foundation CI `35870573572`;
+- Phase 1 Package CI `35870573394`;
+- PHP Quality CI `35870573512` passed WPCS + PHPStan level 6 without suppressions;
+- WordPress Smoke CI `35870573493` proved identical parity, regression detection, exact approval, stale-approval rejection, hard ownership/Schema conflict blocking, broken-link blocking and invalid-snapshot blocking;
+- Accessibility & Responsive CI `35870573412` passed 36/36 cases;
+- Performance Baseline CI `35870573501` passed all enforced budgets;
 - PR #77 was squash-merged as `20822daa6adb287212b287e3b83a0fe3e333e338`;
-- post-merge `main` passed the same six gates again: Foundation `35871165650`, Package `35871165526`, PHP Quality `35871165428`, WordPress Smoke `35871165350`, Accessibility/Responsive `35871165421` and Performance `35871165554`.
+- post-merge `main` passed the same six gates again: Foundation `35871165650`, Phase 1 Package `35871165526`, PHP Quality `35871165428`, WordPress Smoke `35871165350`, Accessibility & Responsive `35871165421` and Performance Baseline `35871165554`;
+- post-merge browser acceptance again passed 36/36 cases;
+- post-merge migration Lighthouse median was performance 100, LCP 641.68 ms, CLS 0, TBT 0 ms, 18,829 B transfer, 5 requests, zero third-party requests and zero project-owned frontend JS.
 
-The exact-difference allowlist was hardened during adoption so wildcard approvals are impossible; intentional changes require path + signal + before/after SHA-256 + reason. No WPCS/PHPStan suppression or relaxed Lighthouse/accessibility threshold was introduced.
+Engineering findings were resolved at source: the initial wildcard/prefix allowlist divergence was replaced by exact fingerprint-bound approvals; WPCS alignment and PHPDoc findings were corrected; `serialize()` was removed from fingerprint fallback; and the single PHPStan redundant blocker comparison was removed without lowering level 6 or adding suppressions.
 
-Deliverables:
+A migration still cannot be accepted merely because pages look correct. 8F provides evidence only and does not authorize production cutover.
 
-- old-vs-new comparison for every tracked public URL;
-- URL/status/indexability parity;
-- canonical/robots/hreflang ownership checks;
-- title/meta preservation or explicit approved change;
-- Schema-owner conflict detection;
-- redirect-map validation;
-- internal-link and broken-link checks;
-- sitemap consistency;
-- performance/accessibility checks on representative migrated pages;
-- explicit allowlist for intentional differences so acceptance distinguishes planned improvements from regressions.
-
-A migration cannot be accepted merely because pages look correct.
+The next microphase is 8G — Safe cutover and rollback.
 
 ### Microphase 8G — Safe cutover and rollback
 
@@ -1640,16 +1646,15 @@ Status: **implementation candidate**
 Current implementation scope:
 
 - recent SHA-256-bound external evidence is mandatory for both a full database backup and the uploads tree before any cutover mutation;
-- the bridge records an append-only non-autoloaded cutover history containing recovery metadata, pre-cutover theme/plugin state, protected option values, baseline/redirect fingerprints and migration-backup fingerprints;
-- production cutover is blocked while the sandbox marker remains enabled, search visibility is disabled, the baseline is missing, the target theme is missing, parity is unaccepted, or another cutover is active;
-- plugin deletion and theme deletion are forbidden; requested deactivations are allowed only for explicit `REPLACE`, `REMOVE-CANDIDATE` or `OPTIONAL` classifications;
-- `KEEP`, `UNKNOWN` and still-`MIGRATE` dependencies block deactivation;
-- the Migration Bridge itself cannot be deactivated before explicit acceptance;
-- theme switch/plugin deactivation are followed by only the required rewrite, object-cache and sitemap refresh operations;
-- post-cutover runtime health and fresh SEO/GEO parity are mandatory; failure triggers immediate automatic runtime rollback;
-- manual rollback refuses to overwrite unrelated runtime drift and restores only the state controlled by the cutover;
-- rollback remains available while status is `cutover-active`; explicit final acceptance closes runtime rollback but retains recovery evidence;
-- full external DB/uploads backup references remain available for disaster recovery if runtime rollback alone cannot restore parity.
+- append-only non-autoloaded cutover history records recovery metadata, pre-cutover theme/plugin state, protected options, baseline/redirect fingerprints and migration-backup fingerprints;
+- production cutover is blocked while sandbox mode/search invisibility remains, parity is unaccepted, backup evidence is invalid, the target theme is missing or another cutover is active;
+- requested plugin deactivations are explicit and dependency-aware: `REPLACE`, `REMOVE-CANDIDATE` and `OPTIONAL` are eligible, while `KEEP`, `UNKNOWN` and `MIGRATE` remain blocking;
+- Migration Bridge self-deactivation, plugin/theme deletion, database reset and uploads reset are forbidden;
+- required rewrite/object-cache/sitemap maintenance is bounded to actual runtime changes;
+- post-cutover runtime health plus fresh SEO/GEO parity are mandatory and failure triggers automatic rollback;
+- manual rollback refuses unrelated runtime drift and verifies parity after restoration;
+- explicit final acceptance is the only state that closes runtime rollback, while recovery evidence remains retained;
+- acceptance covers blocked backup/KEEP/MIGRATE/bridge cases, nonce/confirmation rejection, automatic rollback, manual rollback and final acceptance.
 
 Deliverables:
 
