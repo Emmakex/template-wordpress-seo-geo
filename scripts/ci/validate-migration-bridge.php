@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 8A Migration Bridge safety contract.
+ * Validate the Phase 8A/8B Migration Bridge safety contract.
  */
 
 declare(strict_types=1);
@@ -44,6 +44,12 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/README.md',
 	MIGRATION_BRIDGE_DIR . '/src/Plugin.php',
 	MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php',
+	MIGRATION_BRIDGE_DIR . '/src/PublicUrlInventory.php',
+	MIGRATION_BRIDGE_DIR . '/src/HtmlSnapshotExtractor.php',
+	MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotter.php',
+	MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Http/HttpClientInterface.php',
+	MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -52,7 +58,7 @@ $required = array(
 
 foreach ( $required as $path ) {
 	if ( ! is_file( $path ) ) {
-		fail_migration_bridge( 'missing-file', 'Phase 8A Migration Bridge file is missing.', $path, 'file exists', 'missing' );
+		fail_migration_bridge( 'missing-file', 'Migration Bridge required file is missing.', $path, 'file exists', 'missing' );
 	}
 }
 
@@ -60,6 +66,7 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
+		'Version: 0.2.0',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -70,10 +77,15 @@ foreach (
 	}
 }
 
-$forbidden_calls = array(
-	'add_option',
+$php_files = array_merge(
+	array( MIGRATION_BRIDGE_DIR . '/seo-geo-migration-bridge.php' ),
+	glob( MIGRATION_BRIDGE_DIR . '/src/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Http/*.php' ) ?: array()
+);
+
+$destructive_calls = array(
 	'delete_option',
-	'update_option',
 	'set_theme_mod',
 	'remove_theme_mod',
 	'wp_insert_post',
@@ -93,39 +105,84 @@ $forbidden_calls = array(
 	'wp_schedule_single_event',
 );
 
-$php_files = array_merge(
-	array( MIGRATION_BRIDGE_DIR . '/seo-geo-migration-bridge.php' ),
-	glob( MIGRATION_BRIDGE_DIR . '/src/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array()
-);
-
 foreach ( $php_files as $path ) {
 	$source = (string) file_get_contents( $path );
 
-	foreach ( $forbidden_calls as $function_name ) {
+	foreach ( $destructive_calls as $function_name ) {
 		if ( 1 === preg_match( '/\\b' . preg_quote( $function_name, '/' ) . '\\s*\\(/', $source ) ) {
-			fail_migration_bridge( 'mutation-api', 'Phase 8A analyzer contains a forbidden WordPress mutation call.', $path, 'read-only API surface', $function_name );
+			fail_migration_bridge( 'destructive-api', 'Migration Bridge contains a forbidden production mutation call.', $path, 'non-destructive migration boundary', $function_name );
+		}
+	}
+}
+
+$read_only_files = array_merge(
+	array( MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php' ),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array()
+);
+
+foreach ( $read_only_files as $path ) {
+	$source = (string) file_get_contents( $path );
+
+	foreach ( array( 'add_option', 'update_option', 'delete_option' ) as $function_name ) {
+		if ( 1 === preg_match( '/\\b' . preg_quote( $function_name, '/' ) . '\\s*\\(/', $source ) ) {
+			fail_migration_bridge( 'analyzer-option-write', 'Phase 8A analyzer contains a forbidden option mutation call.', $path, 'strictly read-only analyzer', $function_name );
 		}
 	}
 
 	if ( str_contains( $source, '->query(' ) || str_contains( $source, '->insert(' ) || str_contains( $source, '->update(' ) || str_contains( $source, '->delete(' ) ) {
-		fail_migration_bridge( 'database-mutation', 'Phase 8A analyzer contains a direct database mutation/query primitive.', $path, 'no direct database writes/queries', 'database method found' );
+		fail_migration_bridge( 'analyzer-database-mutation', 'Phase 8A analyzer contains a direct database mutation/query primitive.', $path, 'no direct database writes/queries', 'database method found' );
 	}
 }
 
 $site_analyzer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php' );
-$safety_guards = array(
-	"/'mode'\\s*=>\\s*'read-only'/",
-	"/'mutations_performed'\\s*=>\\s*false/",
-	"/'content_scan_performed'\\s*=>\\s*false/",
-	"/'credentials_collected'\\s*=>\\s*false/",
-	"/'option_values_exported'\\s*=>\\s*false/",
-);
-
-foreach ( $safety_guards as $guard ) {
+foreach (
+	array(
+		"/'mode'\\s*=>\\s*'read-only'/",
+		"/'mutations_performed'\\s*=>\\s*false/",
+		"/'content_scan_performed'\\s*=>\\s*false/",
+		"/'credentials_collected'\\s*=>\\s*false/",
+		"/'option_values_exported'\\s*=>\\s*false/",
+	) as $guard
+) {
 	if ( 1 !== preg_match( $guard, $site_analyzer ) ) {
-		fail_migration_bridge( 'safety-report', 'Migration report is missing a required read-only safety flag.', MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php', $guard, 'missing' );
+		fail_migration_bridge( 'analyzer-safety-report', 'Migration analyzer report is missing a required read-only safety flag.', MIGRATION_BRIDGE_DIR . '/src/SiteAnalyzer.php', $guard, 'missing' );
 	}
 }
 
-printf( "Migration Bridge static contract OK: read-only package boundary and mutation guard pass.\n" );
+$store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_migration_baseline_v1';",
+		'add_option( self::OPTION_NAME',
+		'update_option( self::OPTION_NAME',
+		"add_option( self::OPTION_NAME, \$envelope, '', false )",
+		'update_option( self::OPTION_NAME, $envelope, false )',
+	) as $storage_guard
+) {
+	if ( ! str_contains( $store, $storage_guard ) ) {
+		fail_migration_bridge( 'baseline-storage-boundary', 'Phase 8B persistence escaped the dedicated non-autoloaded option contract.', MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotStore.php', $storage_guard, 'missing' );
+	}
+}
+
+$snapshotter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotter.php' );
+foreach (
+	array(
+		"'same_origin_only'           => true",
+		"'authenticated_requests'     => false",
+		"'private_content_collected'  => false",
+		"'body_content_persisted'     => false",
+		"'legacy_output_is_authority' => false",
+		"'mode'    => 'observed-during-baseline'",
+	) as $guard
+) {
+	if ( ! str_contains( $snapshotter, $guard ) ) {
+		fail_migration_bridge( 'baseline-safety-report', 'Phase 8B snapshot is missing a required safety/authority declaration.', MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotter.php', $guard, 'missing' );
+	}
+}
+
+$http_client = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php' );
+if ( ! str_contains( $http_client, "'redirection' => 0" ) || ! str_contains( $http_client, "'cookies'     => array()" ) ) {
+	fail_migration_bridge( 'baseline-http-boundary', 'Default baseline HTTP transport must remain anonymous and must not follow redirects.', MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php', 'redirection=0 and empty cookies', 'guard missing' );
+}
+
+printf( "Migration Bridge static contract OK: Phase 8A remains read-only; Phase 8B capture is anonymous/same-origin and persistence is limited to one non-autoloaded bridge option.\n" );
