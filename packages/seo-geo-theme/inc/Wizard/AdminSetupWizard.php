@@ -362,9 +362,9 @@ final class AdminSetupWizard {
 	 * @param array<string,mixed> $result Validation result.
 	 */
 	private function render_result( array $result ): void {
-		$valid    = true === ( $result['valid'] ?? false );
-		$errors   = is_array( $result['errors'] ?? null ) ? $result['errors'] : array();
-		$warnings = is_array( $result['warnings'] ?? null ) ? $result['warnings'] : array();
+		$valid      = true === ( $result['valid'] ?? false );
+		$errors     = is_array( $result['errors'] ?? null ) ? $result['errors'] : array();
+		$warnings   = is_array( $result['warnings'] ?? null ) ? $result['warnings'] : array();
 		$normalized = is_array( $result['normalized'] ?? null ) ? $result['normalized'] : array();
 		?>
 		<section
@@ -446,17 +446,17 @@ final class AdminSetupWizard {
 		}
 
 		return array(
-			'preset'                       => is_string( $current['preset'] ?? null ) ? $current['preset'] : '',
-			'default_language'             => is_string( $languages['default'] ?? null ) ? $languages['default'] : '',
-			'languages'                    => is_array( $languages['locales'] ?? null ) ? $languages['locales'] : array(),
-			'routing'                      => is_string( $languages['routing'] ?? null ) ? $languages['routing'] : NativeLanguageConfiguration::ROUTING_DISABLED,
-			'x_default'                    => is_string( $languages['x_default'] ?? null ) ? $languages['x_default'] : '',
-			'site_entity_type'             => is_array( $identity ) && is_string( $identity['site_entity_type'] ?? null ) ? $identity['site_entity_type'] : SchemaIdentityResolver::SITE_ENTITY_ORGANIZATION,
-			'confirm_identity'             => false,
-			'local_business'               => is_array( $local ) ? $local : array(),
-			'crawler_policy'               => $crawlers,
-			'llms_txt_enabled'             => is_array( $llms ) && true === ( $llms['enabled'] ?? false ),
-			'markdown_alternates_enabled'  => is_array( $markdown ) && true === ( $markdown['enabled'] ?? false ),
+			'preset'                      => is_string( $current['preset'] ?? null ) ? $current['preset'] : '',
+			'default_language'            => is_string( $languages['default'] ?? null ) ? $languages['default'] : '',
+			'languages'                   => is_array( $languages['locales'] ?? null ) ? $languages['locales'] : array(),
+			'routing'                     => is_string( $languages['routing'] ?? null ) ? $languages['routing'] : NativeLanguageConfiguration::ROUTING_DISABLED,
+			'x_default'                   => is_string( $languages['x_default'] ?? null ) ? $languages['x_default'] : '',
+			'site_entity_type'            => is_array( $identity ) && is_string( $identity['site_entity_type'] ?? null ) ? $identity['site_entity_type'] : SchemaIdentityResolver::SITE_ENTITY_ORGANIZATION,
+			'confirm_identity'            => false,
+			'local_business'              => is_array( $local ) ? $local : array(),
+			'crawler_policy'              => $crawlers,
+			'llms_txt_enabled'            => is_array( $llms ) && true === ( $llms['enabled'] ?? false ),
+			'markdown_alternates_enabled' => is_array( $markdown ) && true === ( $markdown['enabled'] ?? false ),
 		);
 	}
 
@@ -466,7 +466,16 @@ final class AdminSetupWizard {
 	 * @return array{candidate:array<string,mixed>,confirmed:bool}
 	 */
 	private function submitted_candidate(): array {
-		check_admin_referer( self::NONCE_ACTION );
+		if (
+			! isset( $_POST['_wpnonce'] )
+			|| ! is_string( $_POST['_wpnonce'] )
+			|| ! wp_verify_nonce(
+				sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ),
+				self::NONCE_ACTION
+			)
+		) {
+			wp_die( esc_html( $this->copy->text( 'forbidden' ) ), '', array( 'response' => 403 ) );
+		}
 
 		$local = array();
 		foreach (
@@ -503,12 +512,12 @@ final class AdminSetupWizard {
 
 		return array(
 			'candidate' => array(
-				'preset'                      => $this->post_key( 'seo_geo_preset' ),
-				'default_language'            => $this->post_text( 'seo_geo_default_language' ),
+				'preset'                      => $this->key_value( $_POST['seo_geo_preset'] ?? null ),
+				'default_language'            => $this->text_value( $_POST['seo_geo_default_language'] ?? null ),
 				'languages'                   => $this->parse_language_lines( $language_lines ),
-				'routing'                     => $this->post_key( 'seo_geo_routing' ),
-				'x_default'                   => $this->nullable_post_text( 'seo_geo_x_default' ),
-				'site_entity_type'            => $this->post_key( 'seo_geo_entity_type' ),
+				'routing'                     => $this->key_value( $_POST['seo_geo_routing'] ?? null ),
+				'x_default'                   => $this->nullable_text_value( $_POST['seo_geo_x_default'] ?? null ),
+				'site_entity_type'            => $this->key_value( $_POST['seo_geo_entity_type'] ?? null ),
 				'confirm_identity'            => isset( $_POST['seo_geo_confirm_identity'] ),
 				'local_business'              => $local,
 				'crawler_policy'              => $crawlers,
@@ -533,11 +542,13 @@ final class AdminSetupWizard {
 	/**
 	 * Parse code=locale lines into the native language map.
 	 *
+	 * @param string $value Candidate language lines.
 	 * @return array<string,string>
 	 */
 	private function parse_language_lines( string $value ): array {
-		$languages = array();
-		$lines     = preg_split( '/\r\n|\r|\n/', $value ) ?: array();
+		$languages   = array();
+		$split_lines = preg_split( '/\r\n|\r|\n/', $value );
+		$lines       = is_array( $split_lines ) ? $split_lines : array();
 
 		foreach ( $lines as $index => $line ) {
 			$line = trim( $line );
@@ -585,36 +596,32 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Return one sanitized POST key.
+	 * Sanitize one candidate key.
 	 *
-	 * @param string $name Field name.
+	 * @param mixed $value Candidate value.
 	 */
-	private function post_key( string $name ): string {
-		return isset( $_POST[ $name ] ) && is_string( $_POST[ $name ] )
-			? sanitize_key( wp_unslash( $_POST[ $name ] ) )
-			: '';
+	private function key_value( mixed $value ): string {
+		return is_string( $value ) ? sanitize_key( wp_unslash( $value ) ) : '';
 	}
 
 	/**
-	 * Return one sanitized POST text value.
+	 * Sanitize one candidate text value.
 	 *
-	 * @param string $name Field name.
+	 * @param mixed $value Candidate value.
 	 */
-	private function post_text( string $name ): string {
-		return isset( $_POST[ $name ] ) && is_string( $_POST[ $name ] )
-			? sanitize_text_field( wp_unslash( $_POST[ $name ] ) )
-			: '';
+	private function text_value( mixed $value ): string {
+		return is_string( $value ) ? sanitize_text_field( wp_unslash( $value ) ) : '';
 	}
 
 	/**
-	 * Return one nullable sanitized POST text value.
+	 * Sanitize one nullable candidate text value.
 	 *
-	 * @param string $name Field name.
+	 * @param mixed $value Candidate value.
 	 */
-	private function nullable_post_text( string $name ): ?string {
-		$value = $this->post_text( $name );
+	private function nullable_text_value( mixed $value ): ?string {
+		$text = $this->text_value( $value );
 
-		return '' !== $value ? $value : null;
+		return '' !== $text ? $text : null;
 	}
 
 	/**
@@ -668,8 +675,8 @@ final class AdminSetupWizard {
 			return $this->copy->text( 'not_set' );
 		}
 
-		$crawler = is_array( $value['crawler_policy']['value'] ?? null ) ? $value['crawler_policy']['value'] : array();
-		$llms    = true === ( $value['llms_txt']['enabled'] ?? false ) ? 'llms.txt:on' : 'llms.txt:off';
+		$crawler  = is_array( $value['crawler_policy']['value'] ?? null ) ? $value['crawler_policy']['value'] : array();
+		$llms     = true === ( $value['llms_txt']['enabled'] ?? false ) ? 'llms.txt:on' : 'llms.txt:off';
 		$markdown = true === ( $value['markdown']['enabled'] ?? false ) ? 'markdown:on' : 'markdown:off';
 
 		$parts = array( $llms, $markdown );
