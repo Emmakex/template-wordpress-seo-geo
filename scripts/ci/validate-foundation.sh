@@ -85,6 +85,7 @@ required_paths=(
   "packages/seo-geo-theme/inc/Setup/WordPressSetupOptionWriter.php"
   "packages/seo-geo-theme/inc/Setup/SetupReportStore.php"
   "packages/seo-geo-theme/inc/Setup/SetupRewriteMaintenance.php"
+  "packages/seo-geo-theme/inc/Setup/SetupWriteFailure.php"
   "packages/seo-geo-theme/inc/Setup/SetupExecutor.php"
   "packages/seo-geo-core/README.md"
   "packages/seo-geo-core/src/Runtime.php"
