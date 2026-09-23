@@ -13,14 +13,25 @@ namespace SeoGeo\MigrationBridge;
  * Exposes migration analysis and baseline services without frontend mutation hooks.
  */
 final class Plugin {
+	/**
+	 * Read-only analyzer singleton.
+	 *
+	 * @var SiteAnalyzer|null
+	 */
 	private static ?SiteAnalyzer $analyzer = null;
+
+	/**
+	 * Public baseline snapshotter singleton.
+	 *
+	 * @var BaselineSnapshotter|null
+	 */
 	private static ?BaselineSnapshotter $baseline_snapshotter = null;
 
 	/**
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
-		self::$analyzer ??= new SiteAnalyzer();
+		self::$analyzer             ??= new SiteAnalyzer();
 		self::$baseline_snapshotter ??= new BaselineSnapshotter();
 	}
 
