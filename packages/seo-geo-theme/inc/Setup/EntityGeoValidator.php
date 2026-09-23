@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Theme\Setup;
 
+use SeoGeo\Core\Geo\ContentProvenanceResolver;
 use SeoGeo\Core\Geo\CrawlerPolicyResolver;
 use SeoGeo\Core\Geo\LlmsTxtResolver;
 use SeoGeo\Core\Geo\MarkdownAlternateResolver;
@@ -90,8 +91,11 @@ final class EntityGeoValidator {
 		}
 
 		if ( null !== $entity_type && is_array( $preset_document ) ) {
-			$recommended = isset( $preset_document['schema']['site_identity'] ) && is_string( $preset_document['schema']['site_identity'] )
-				? $preset_document['schema']['site_identity']
+			$preset_schema = isset( $preset_document['schema'] ) && is_array( $preset_document['schema'] )
+				? $preset_document['schema']
+				: array();
+			$recommended   = isset( $preset_schema['site_identity'] ) && is_string( $preset_schema['site_identity'] )
+				? $preset_schema['site_identity']
 				: null;
 
 			if ( null !== $recommended && $recommended !== $entity_type ) {
@@ -177,7 +181,7 @@ final class EntityGeoValidator {
 				'crawler_policy'       => CrawlerPolicyResolver::class,
 				'llms_txt'             => LlmsTxtResolver::class,
 				'markdown_alternates'  => MarkdownAlternateResolver::class,
-				'content_provenance'   => 'SeoGeo\\Core\\Geo\\ContentProvenanceResolver',
+				'content_provenance'   => ContentProvenanceResolver::class,
 			),
 			'safety'         => array(
 				'options_persisted'        => false,
@@ -196,7 +200,8 @@ final class EntityGeoValidator {
 	 * Validate basic LocalBusiness option values.
 	 *
 	 * @param mixed        $value  Candidate LocalBusiness map.
-	 * @param list<string> $errors Validation errors.
+	 * @param array $errors Validation errors.
+	 * @phpstan-param list<string> $errors
 	 * @return array<string,mixed>|null
 	 */
 	private function validate_local_business( mixed $value, array &$errors ): ?array {
@@ -280,7 +285,8 @@ final class EntityGeoValidator {
 	 * Validate crawler settings strictly before using Core normalization.
 	 *
 	 * @param mixed        $value  Candidate crawler policy.
-	 * @param list<string> $errors Validation errors.
+	 * @param array $errors Validation errors.
+	 * @phpstan-param list<string> $errors
 	 * @return array<string,string>
 	 */
 	private function validate_crawler_policy( mixed $value, array &$errors ): array {
