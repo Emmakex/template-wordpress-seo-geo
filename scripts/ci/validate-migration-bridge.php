@@ -294,16 +294,25 @@ foreach (
 		'if ( ! $confirmed )',
 		'public const BACKUP_META',
 		'add_post_meta( $post->ID, self::BACKUP_META',
-		"'sandbox_only'               => true",
-		"'plugin_mutation_allowed'    => false",
-		"'theme_mutation_allowed'     => false",
-		"'url_change_allowed'         => false",
-		"'object_id_change_allowed'   => false",
-		"'unsupported_content_dropped' => false",
 	) as $engine_guard
 ) {
 	if ( ! str_contains( $migration_engine, $engine_guard ) ) {
-		fail_migration_bridge( 'migration-engine-safety', 'Phase 8E Migration Engine is missing an authorization, backup or preservation guard.', MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php', $engine_guard, 'missing' );
+		fail_migration_bridge( 'migration-engine-safety', 'Phase 8E Migration Engine is missing an authorization or backup guard.', MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php', $engine_guard, 'missing' );
+	}
+}
+
+foreach (
+	array(
+		"/'sandbox_only'\\s*=>\\s*true/",
+		"/'plugin_mutation_allowed'\\s*=>\\s*false/",
+		"/'theme_mutation_allowed'\\s*=>\\s*false/",
+		"/'url_change_allowed'\\s*=>\\s*false/",
+		"/'object_id_change_allowed'\\s*=>\\s*false/",
+		"/'unsupported_content_dropped'\\s*=>\\s*false/",
+	) as $engine_safety_guard
+) {
+	if ( 1 !== preg_match( $engine_safety_guard, $migration_engine ) ) {
+		fail_migration_bridge( 'migration-engine-safety', 'Phase 8E Migration Engine is missing a sandbox/preservation safety declaration.', MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php', $engine_safety_guard, 'missing' );
 	}
 }
 
