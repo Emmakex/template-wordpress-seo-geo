@@ -586,7 +586,7 @@ The remaining Phase 8 exit gap is not report functionality: it is the explicit E
 
 ## Phase 8I — Operator UI and Phase 8 exit
 
-Status: **implementation candidate**
+Status: **complete**
 
 8I adds the human-facing migration operations screen needed to close Phase 8 without expanding Phase 9 onboarding scope.
 
@@ -616,6 +616,32 @@ It provides:
 - bridge disposition and unresolved review summary from the persisted 8H report;
 - semantic headings/tables/status text suitable for keyboard and screen-reader use;
 - no private bodies, builder payloads, credentials or raw recovery artifacts.
+
+### 8I acceptance evidence
+
+Final candidate `783c3473363bf5a6dd95b6668db408ebbe0bbd59` passed all six required gates:
+
+- Foundation CI `35881439395`;
+- Phase 1 Package CI `35881439605`;
+- PHP Quality CI `35881439382` — WPCS + PHPStan level 6;
+- WordPress Smoke CI `35881439637`;
+- Accessibility & Responsive CI `35881439748`;
+- Performance Baseline CI `35881439439`.
+
+PR #84 was squash-merged as `e7f9c80ee0a8229917c0995f349ab49a4b0a00c3`.
+
+Post-merge `main` repeated all six gates successfully:
+
+- Foundation CI `35881964530`;
+- Phase 1 Package CI `35881964347`;
+- PHP Quality CI `35881964370`;
+- WordPress Smoke CI `35881964477`;
+- Accessibility & Responsive CI `35881964534`;
+- Performance Baseline CI `35881964253`.
+
+WordPress Smoke proved that the Tools screen is registered, EN/ES catalogs are complete, unauthorized users are rejected, rendering is semantic/privacy-bounded and the protected migration state fingerprint is unchanged before/after rendering.
+
+Phase 8 is complete. The temporary bridge may now be removed or retained audit-only according to the accepted 8H disposition; Phase 9 consumes the persisted handoff without loading Migration Bridge at runtime.
 
 ## Phase 8A acceptance evidence
 
