@@ -12,6 +12,11 @@ const fixtures = [
     path: '/acceptance-es/?fixture_lang=es',
     htmlLang: /^es(?:-|$)/i,
   },
+  {
+    language: 'MIGRATION',
+    path: '/migration-parity-fixture/?fixture_lang=en',
+    htmlLang: /^en(?:-|$)/i,
+  },
 ];
 
 const wcagTags = [
