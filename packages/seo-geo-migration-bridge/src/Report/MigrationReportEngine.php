@@ -500,7 +500,7 @@ final class MigrationReportEngine {
 
 			if ( in_array( $classification, array( 'MIGRATE', 'UNKNOWN' ), true ) ) {
 				$blocking[] = $row;
-			} elseif ( true === ( $component['manual_review'] ?? false ) ) {
+			} elseif ( in_array( $classification, array( 'OPTIONAL', 'REMOVE-CANDIDATE' ), true ) ) {
 				$advisory[] = $row;
 			}
 		}
