@@ -67,8 +67,8 @@ final class SetupCompatibilityDetector {
 				'seo'      => $seo_provider,
 				'language' => $language_provider,
 			),
-			'warnings' => $warnings,
-			'safety'   => array(
+			'warnings'  => $warnings,
+			'safety'    => array(
 				'detection_only'       => true,
 				'integration_required' => false,
 				'plugins_mutated'      => false,
