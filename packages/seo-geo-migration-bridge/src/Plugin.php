@@ -104,16 +104,16 @@ final class Plugin {
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
-		self::$analyzer             ??= new SiteAnalyzer();
-		self::$baseline_snapshotter ??= new BaselineSnapshotter();
-		self::$dependency_graph     ??= new DependencyGraphBuilder();
-		self::$sandbox_lab          ??= new SandboxMigrationLab();
-		self::$migration_engine     ??= new MigrationEngine();
-		self::$migration_controller ??= new AdminMigrationController( self::$migration_engine );
-		self::$parity_engine        ??= new SeoParityEngine();
-		self::$cutover_engine       ??= new CutoverEngine();
-		self::$cutover_controller   ??= new AdminCutoverController( self::$cutover_engine );
-		self::$migration_report     ??= new MigrationReportEngine();
+		self::$analyzer               ??= new SiteAnalyzer();
+		self::$baseline_snapshotter   ??= new BaselineSnapshotter();
+		self::$dependency_graph       ??= new DependencyGraphBuilder();
+		self::$sandbox_lab            ??= new SandboxMigrationLab();
+		self::$migration_engine       ??= new MigrationEngine();
+		self::$migration_controller   ??= new AdminMigrationController( self::$migration_engine );
+		self::$parity_engine          ??= new SeoParityEngine();
+		self::$cutover_engine         ??= new CutoverEngine();
+		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
+		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
 
 		SandboxGuard::boot();
