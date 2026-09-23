@@ -53,10 +53,10 @@ final class SetupExecutor {
 	/**
 	 * Construct the executor.
 	 *
-	 * @param SetupWizardPreview|null        $preview Optional validator.
-	 * @param SetupPlanner|null              $planner Optional setup planner.
-	 * @param SetupOptionWriterInterface|null $writer Optional mutation boundary.
-	 * @param SetupReportStore|null          $reports Optional report reader.
+	 * @param SetupWizardPreview|null         $preview Optional validator.
+	 * @param SetupPlanner|null               $planner Optional setup planner.
+	 * @param SetupOptionWriterInterface|null $writer  Optional mutation boundary.
+	 * @param SetupReportStore|null           $reports Optional report reader.
 	 */
 	public function __construct(
 		?SetupWizardPreview $preview = null,
@@ -177,7 +177,7 @@ final class SetupExecutor {
 		if (
 			$this->targets_match( $targets )
 			&& is_array( $existing_report )
-			&& $config_sha256 === ( $existing_report['configuration_sha256'] ?? null )
+			&& ( $existing_report['configuration_sha256'] ?? null ) === $config_sha256
 		) {
 			return $this->success(
 				$normalized,
@@ -199,9 +199,7 @@ final class SetupExecutor {
 					continue;
 				}
 
-				if ( ! $this->writer->write( $option_name, $value ) ) {
-					throw new SetupWriteFailure( $option_name );
-				}
+				$this->require_write( $option_name, $value );
 				$changed_options[] = $option_name;
 			}
 
@@ -217,11 +215,9 @@ final class SetupExecutor {
 			$current_report = $snapshots[ SetupReportStore::OPTION_NAME ];
 			if (
 				true !== $current_report['exists']
-				|| $current_report['value'] !== $report
+				|| $report !== $current_report['value']
 			) {
-				if ( ! $this->writer->write( SetupReportStore::OPTION_NAME, $report ) ) {
-					throw new SetupWriteFailure( SetupReportStore::OPTION_NAME );
-				}
+				$this->require_write( SetupReportStore::OPTION_NAME, $report );
 			}
 		} catch ( Throwable $throwable ) {
 			$rollback_errors = $this->rollback( $snapshots, array_merge( $changed_options, array( SetupReportStore::OPTION_NAME ) ) );
@@ -237,7 +233,7 @@ final class SetupExecutor {
 		}
 
 		$stored_report = $this->reports->latest();
-		if ( ! is_array( $stored_report ) || $config_sha256 !== ( $stored_report['configuration_sha256'] ?? null ) ) {
+		if ( ! is_array( $stored_report ) || ( $stored_report['configuration_sha256'] ?? null ) !== $config_sha256 ) {
 			$rollback_errors = $this->rollback( $snapshots, array_merge( $changed_options, array( SetupReportStore::OPTION_NAME ) ) );
 
 			return $this->failure(
@@ -360,9 +356,11 @@ final class SetupExecutor {
 	 *
 	 * @param array<string,mixed> $normalized      Complete normalized setup.
 	 * @param array<string,mixed> $plan            Current setup plan.
-	 * @param list<string>        $warnings        Validation warnings.
+	 * @param array               $warnings        Validation warnings.
+	 * @phpstan-param list<string> $warnings
 	 * @param string              $config_sha256   Configuration fingerprint.
-	 * @param list<string>        $changed_options Changed option names.
+	 * @param array               $changed_options Changed option names.
+	 * @phpstan-param list<string> $changed_options
 	 * @param bool                $rewrite_flush_pending Whether a rewrite flush was scheduled.
 	 * @return array<string,mixed>
 	 */
@@ -509,9 +507,23 @@ final class SetupExecutor {
 	}
 
 	/**
+	 * Persist one required option or identify the exact failed write.
+	 *
+	 * @param string $option_name Option name.
+	 * @param mixed  $value       Exact option value.
+	 * @throws SetupWriteFailure When verified persistence fails.
+	 */
+	private function require_write( string $option_name, mixed $value ): void {
+		if ( ! $this->writer->write( $option_name, $value ) ) {
+			throw new SetupWriteFailure( $option_name );
+		}
+	}
+
+	/**
 	 * Snapshot one option list before mutation.
 	 *
-	 * @param list<string> $option_names Option names.
+	 * @param array $option_names Option names.
+	 * @phpstan-param list<string> $option_names
 	 * @return array<string,array{exists:bool,value:mixed}>
 	 */
 	private function snapshots( array $option_names ): array {
@@ -543,7 +555,8 @@ final class SetupExecutor {
 	 * Restore changed option snapshots in reverse order.
 	 *
 	 * @param array<string,array{exists:bool,value:mixed}> $snapshots       Original values.
-	 * @param list<string>                                  $changed_options Potentially changed options.
+	 * @param array                                         $changed_options Potentially changed options.
+	 * @phpstan-param list<string> $changed_options
 	 * @return list<string>
 	 */
 	private function rollback( array $snapshots, array $changed_options ): array {
@@ -612,11 +625,14 @@ final class SetupExecutor {
 	/**
 	 * Build one failed execution result.
 	 *
-	 * @param list<string>             $errors          Errors.
-	 * @param list<string>             $warnings        Warnings.
-	 * @param array<string,mixed>|null $normalized      Normalized candidate.
+	 * @param array                    $errors             Errors.
+	 * @phpstan-param list<string> $errors
+	 * @param array                    $warnings           Warnings.
+	 * @phpstan-param list<string> $warnings
+	 * @param array<string,mixed>|null $normalized         Normalized candidate.
 	 * @param bool                     $rollback_attempted Whether rollback ran.
-	 * @param list<string>             $changed_options Options changed before failure.
+	 * @param array                    $changed_options    Options changed before failure.
+	 * @phpstan-param list<string> $changed_options
 	 * @return array<string,mixed>
 	 */
 	private function failure(
@@ -645,9 +661,11 @@ final class SetupExecutor {
 	 * Build one successful execution result.
 	 *
 	 * @param array<string,mixed> $normalized      Normalized setup.
-	 * @param list<string>        $warnings        Validation warnings.
+	 * @param array               $warnings        Validation warnings.
+	 * @phpstan-param list<string> $warnings
 	 * @param string              $config_sha256   Configuration fingerprint.
-	 * @param list<string>        $changed_options Changed option names.
+	 * @param array               $changed_options Changed option names.
+	 * @phpstan-param list<string> $changed_options
 	 * @param array<string,mixed> $report          Stored non-sensitive report.
 	 * @param bool                $idempotent      Whether no writes were needed.
 	 * @return array<string,mixed>
@@ -674,32 +692,5 @@ final class SetupExecutor {
 			'rollback_attempted'   => false,
 			'report'               => $report,
 		);
-	}
-}
-
-/**
- * Internal exception used to identify the exact failed option.
- */
-final class SetupWriteFailure extends \RuntimeException {
-	/**
-	 * Failed option name.
-	 *
-	 * @var string
-	 */
-	private string $failed_option_name;
-
-	/**
-	 * Create the failure.
-	 */
-	public function __construct( string $option_name ) {
-		parent::__construct( 'Setup option write failed.' );
-		$this->failed_option_name = $option_name;
-	}
-
-	/**
-	 * Return the failed option name.
-	 */
-	public function option_name(): string {
-		return $this->failed_option_name;
 	}
 }
