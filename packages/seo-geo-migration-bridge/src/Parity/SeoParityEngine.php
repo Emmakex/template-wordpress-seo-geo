@@ -464,7 +464,7 @@ final class SeoParityEngine {
 
 		$differences[] = array(
 			'path'          => ParityAllowlist::normalize_path( $path ),
-			'signal'        => sanitize_key( str_replace( '.', '-', $signal ) ),
+			'signal'        => ParityAllowlist::normalize_signal( $signal ),
 			'status'        => null !== $approval ? 'allowed' : 'regression',
 			'reason'        => $reason,
 			'before_sha256' => ParityAllowlist::fingerprint( $before ),
