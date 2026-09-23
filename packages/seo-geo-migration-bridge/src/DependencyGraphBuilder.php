@@ -25,7 +25,7 @@ final class DependencyGraphBuilder {
 	public function build( array $analysis, ?array $baseline = null ): array {
 		if ( null === $baseline ) {
 			$envelope = ( new BaselineSnapshotStore() )->latest();
-			if ( is_array( $envelope ) && isset( $envelope['snapshot'] ) && is_array( $envelope['snapshot'] ) ) {
+			if ( null !== $envelope && isset( $envelope['snapshot'] ) && is_array( $envelope['snapshot'] ) ) {
 				$baseline = $envelope['snapshot'];
 			}
 		}
@@ -62,7 +62,7 @@ final class DependencyGraphBuilder {
 			'authorities'    => $authorities,
 			'baseline'       => array(
 				'available' => null !== $baseline,
-				'kind'      => is_array( $baseline ) && is_string( $baseline['kind'] ?? null ) ? $baseline['kind'] : null,
+				'kind'      => null !== $baseline && is_string( $baseline['kind'] ?? null ) ? $baseline['kind'] : null,
 			),
 			'summary'        => $this->summary( $components ),
 			'safety'         => array(
@@ -98,8 +98,8 @@ final class DependencyGraphBuilder {
 				continue;
 			}
 
-			$installed     = true === ( $builder['installed'] ?? false );
-			$active        = true === ( $builder['active'] ?? false );
+			$installed      = true === ( $builder['installed'] ?? false );
+			$active         = true === ( $builder['active'] ?? false );
 			$resource_count = isset( $builder_counts[ $id ] ) ? (int) $builder_counts[ $id ] : 0;
 
 			if ( 'native-blocks' === $id ) {
