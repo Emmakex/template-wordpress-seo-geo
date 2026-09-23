@@ -281,7 +281,7 @@ final class SetupExecutor {
 		);
 
 		return array(
-			'seo_geo_active_preset'                  => is_string( $preset_language['preset'] ?? null ) ? $preset_language['preset'] : '',
+			'seo_geo_active_preset' => is_string( $preset_language['preset'] ?? null ) ? $preset_language['preset'] : '',
 			NativeLanguageConfiguration::OPTION_NAME => $language_config,
 			SchemaIdentityResolver::OPTION_NAME      => array(
 				'site_entity_type' => $entity_type,
@@ -338,16 +338,16 @@ final class SetupExecutor {
 				'routing'   => is_string( $languages['routing'] ?? null ) ? $languages['routing'] : null,
 				'x_default' => is_string( $languages['x_default'] ?? null ) ? $languages['x_default'] : null,
 			),
-			'site_entity'          => array(
+			'site_entity' => array(
 				'type'                      => is_string( $entity['site_entity_type'] ?? null ) ? $entity['site_entity_type'] : null,
 				'local_business_configured' => is_array( $entity['local_business'] ?? null ),
 			),
-			'geo'                  => array(
+			'geo' => array(
 				'crawler_policy_sha256'       => $this->fingerprint( $crawler ),
-				'llms_txt_enabled'             => true === ( $geo['llms_txt']['enabled'] ?? false ),
+				'llms_txt_enabled'            => true === ( $geo['llms_txt']['enabled'] ?? false ),
 				'markdown_alternates_enabled' => true === ( $geo['markdown']['enabled'] ?? false ),
 			),
-			'migration'            => $handoff_summary,
+			'migration' => $handoff_summary,
 		);
 	}
 
@@ -393,34 +393,34 @@ final class SetupExecutor {
 				'routing'   => is_string( $languages['routing'] ?? null ) ? $languages['routing'] : null,
 				'x_default' => is_string( $languages['x_default'] ?? null ) ? $languages['x_default'] : null,
 			),
-			'entity'               => array(
-				'type'                      => is_string( $entity['site_entity_type'] ?? null ) ? $entity['site_entity_type'] : null,
-				'local_business_configured' => is_array( $entity['local_business'] ?? null ),
+			'entity' => array(
+				'type'                       => is_string( $entity['site_entity_type'] ?? null ) ? $entity['site_entity_type'] : null,
+				'local_business_configured'  => is_array( $entity['local_business'] ?? null ),
 				'visible_fact_gate_required' => true === ( $entity['visible_fact_gate_required'] ?? false ),
 			),
-			'geo'                  => array(
+			'geo' => array(
 				'crawler_policy_sha256'       => $this->fingerprint( is_array( $geo['crawler_policy']['value'] ?? null ) ? $geo['crawler_policy']['value'] : array() ),
-				'llms_txt_enabled'             => true === ( $geo['llms_txt']['enabled'] ?? false ),
+				'llms_txt_enabled'            => true === ( $geo['llms_txt']['enabled'] ?? false ),
 				'markdown_alternates_enabled' => true === ( $geo['markdown']['enabled'] ?? false ),
-				'provenance_mode'              => is_string( $geo['provenance']['mode'] ?? null ) ? $geo['provenance']['mode'] : null,
+				'provenance_mode'             => is_string( $geo['provenance']['mode'] ?? null ) ? $geo['provenance']['mode'] : null,
 			),
-			'migration_handoff'    => $this->handoff_summary( $handoff ),
-			'compatibility'        => $this->bounded_compatibility( $compatibility ),
-			'validation_warnings'  => $warnings,
-			'changed_options'      => array_values( $changed_options ),
-			'maintenance'          => array(
+			'migration_handoff'   => $this->handoff_summary( $handoff ),
+			'compatibility'       => $this->bounded_compatibility( $compatibility ),
+			'validation_warnings' => $warnings,
+			'changed_options'     => array_values( $changed_options ),
+			'maintenance'         => array(
 				'rewrite_flush_pending' => $rewrite_flush_pending,
 			),
-			'safety'               => array(
-				'pages_created'              => false,
-				'plugins_installed'          => false,
-				'plugins_activated'          => false,
-				'plugins_deactivated'        => false,
-				'external_credentials_read'  => false,
-				'external_credentials_saved' => false,
-				'private_content_exported'   => false,
+			'safety' => array(
+				'pages_created'                  => false,
+				'plugins_installed'              => false,
+				'plugins_activated'              => false,
+				'plugins_deactivated'            => false,
+				'external_credentials_read'      => false,
+				'external_credentials_saved'     => false,
+				'private_content_exported'       => false,
 				'local_business_facts_in_report' => false,
-				'migration_bridge_loaded'    => false,
+				'migration_bridge_loaded'        => false,
 			),
 		);
 
@@ -502,7 +502,7 @@ final class SetupExecutor {
 				'seo'      => is_string( $providers['seo'] ?? null ) ? $providers['seo'] : 'native',
 				'language' => is_string( $providers['language'] ?? null ) ? $providers['language'] : 'native',
 			),
-			'warnings'  => $bounded,
+			'warnings' => $bounded,
 		);
 	}
 
