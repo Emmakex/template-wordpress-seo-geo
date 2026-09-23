@@ -47,10 +47,10 @@ final class BaselineSnapshotter {
 	/**
 	 * Construct the snapshot service.
 	 *
-	 * @param PublicUrlInventory|null      $url_inventory Optional URL inventory service.
-	 * @param HtmlSnapshotExtractor|null   $extractor     Optional HTML signal extractor.
-	 * @param BaselineSnapshotStore|null   $store         Optional persistence service.
-	 * @param HttpClientInterface|null     $http          Optional anonymous HTTP transport.
+	 * @param PublicUrlInventory|null    $url_inventory Optional URL inventory service.
+	 * @param HtmlSnapshotExtractor|null $extractor     Optional HTML signal extractor.
+	 * @param BaselineSnapshotStore|null $store         Optional persistence service.
+	 * @param HttpClientInterface|null   $http          Optional anonymous HTTP transport.
 	 */
 	public function __construct(
 		?PublicUrlInventory $url_inventory = null,
@@ -95,7 +95,7 @@ final class BaselineSnapshotter {
 				$response['headers']
 			);
 
-			$status_key                    = (string) $response['status'];
+			$status_key                   = (string) $response['status'];
 			$status_counts[ $status_key ] = ( $status_counts[ $status_key ] ?? 0 ) + 1;
 
 			$indexability = $signals['indexability'] ?? null;
@@ -305,8 +305,8 @@ final class BaselineSnapshotter {
 				'sha256'       => '' !== $robots_response['body'] ? hash( 'sha256', $robots_response['body'] ) : null,
 				'sitemap_urls' => $robots_sitemaps,
 			),
-			'sitemaps'  => $sitemaps,
-			'page_urls' => $page_urls,
+			'sitemaps'   => $sitemaps,
+			'page_urls'  => $page_urls,
 		);
 	}
 
