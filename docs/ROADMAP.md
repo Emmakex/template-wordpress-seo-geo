@@ -1595,7 +1595,7 @@ The next microphase is 8F — SEO parity and regression engine.
 
 ### Microphase 8F — SEO parity and regression engine
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1609,6 +1609,14 @@ Current implementation scope:
 - production cutover remains explicitly disallowed by the parity report;
 - representative post-migration native-block fixture added to Playwright/axe and Lighthouse budgets;
 - Accessibility & Responsive and Performance Baseline workflows now trigger for Migration Bridge/parity changes.
+
+Validation evidence:
+
+- PR #77 final candidate `080141158162f739ba6bf862720678f11f6e56a8` passed Foundation `35870573572`, Package `35870573394`, PHP Quality `35870573512`, WordPress Smoke `35870573493`, Accessibility/Responsive `35870573412` and Performance `35870573501`;
+- PR #77 was squash-merged as `20822daa6adb287212b287e3b83a0fe3e333e338`;
+- post-merge `main` passed the same six gates again: Foundation `35871165650`, Package `35871165526`, PHP Quality `35871165428`, WordPress Smoke `35871165350`, Accessibility/Responsive `35871165421` and Performance `35871165554`.
+
+The exact-difference allowlist was hardened during adoption so wildcard approvals are impossible; intentional changes require path + signal + before/after SHA-256 + reason. No WPCS/PHPStan suppression or relaxed Lighthouse/accessibility threshold was introduced.
 
 Deliverables:
 
@@ -1626,6 +1634,22 @@ Deliverables:
 A migration cannot be accepted merely because pages look correct.
 
 ### Microphase 8G — Safe cutover and rollback
+
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- recent SHA-256-bound external evidence is mandatory for both a full database backup and the uploads tree before any cutover mutation;
+- the bridge records an append-only non-autoloaded cutover history containing recovery metadata, pre-cutover theme/plugin state, protected option values, baseline/redirect fingerprints and migration-backup fingerprints;
+- production cutover is blocked while the sandbox marker remains enabled, search visibility is disabled, the baseline is missing, the target theme is missing, parity is unaccepted, or another cutover is active;
+- plugin deletion and theme deletion are forbidden; requested deactivations are allowed only for explicit `REPLACE`, `REMOVE-CANDIDATE` or `OPTIONAL` classifications;
+- `KEEP`, `UNKNOWN` and still-`MIGRATE` dependencies block deactivation;
+- the Migration Bridge itself cannot be deactivated before explicit acceptance;
+- theme switch/plugin deactivation are followed by only the required rewrite, object-cache and sitemap refresh operations;
+- post-cutover runtime health and fresh SEO/GEO parity are mandatory; failure triggers immediate automatic runtime rollback;
+- manual rollback refuses to overwrite unrelated runtime drift and restores only the state controlled by the cutover;
+- rollback remains available while status is `cutover-active`; explicit final acceptance closes runtime rollback but retains recovery evidence;
+- full external DB/uploads backup references remain available for disaster recovery if runtime rollback alone cannot restore parity.
 
 Deliverables:
 
