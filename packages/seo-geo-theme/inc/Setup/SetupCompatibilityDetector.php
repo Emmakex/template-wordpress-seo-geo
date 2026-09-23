@@ -34,7 +34,7 @@ final class SetupCompatibilityDetector {
 	/**
 	 * Return informational providers and compatibility warnings.
 	 *
-	 * @return array<string,mixed>
+	 * @return array{providers:array{seo:string,language:string},warnings:list<array<string,mixed>>,safety:array<string,bool>}
 	 */
 	public function detect(): array {
 		$seo_provider      = $this->integrations->seo_provider();
