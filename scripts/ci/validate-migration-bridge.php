@@ -458,14 +458,14 @@ $cutover_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Cutove
 foreach (
 	array(
 		"public const OPTION_NAME = 'seo_geo_cutover_history_v1';",
-		"add_option( self::OPTION_NAME, \\$payload, '', false )",
+		'add_option( self::OPTION_NAME',
+		"'', false )",
 		'update_option(',
 		"'prepared'",
 		"'cutover-active'",
 		"'accepted'",
 	) as $cutover_store_guard
 ) {
-	$cutover_store_guard = str_replace( '\\$', '$', $cutover_store_guard );
 	if ( ! str_contains( $cutover_store, $cutover_store_guard ) ) {
 		fail_migration_bridge(
 			'cutover-history',
@@ -504,10 +504,9 @@ foreach (
 		"'performance'",
 		'quality-gate-not-passed:',
 		'quality-created-at-invalid-or-stale:',
-		"'passed'     => \\$passed",
+		"'passed'",
 	) as $quality_guard
 ) {
-	$quality_guard = str_replace( '\\$', '$', $quality_guard );
 	if ( ! str_contains( $quality_validator, $quality_guard ) ) {
 		fail_migration_bridge(
 			'cutover-quality-evidence',
@@ -525,12 +524,11 @@ foreach (
 		'admin_post_',
 		"current_user_can( 'manage_options' )",
 		'check_admin_referer(',
-		"'cutover' !== \\$confirm",
-		"'rollback' !== \\$confirm",
-		"'accept' !== \\$confirm",
+		"'cutover' !==",
+		"'rollback' !==",
+		"'accept' !==",
 	) as $controller_guard
 ) {
-	$controller_guard = str_replace( '\\$', '$', $controller_guard );
 	if ( ! str_contains( $cutover_controller, $controller_guard ) ) {
 		fail_migration_bridge(
 			'cutover-admin-entrypoint',
