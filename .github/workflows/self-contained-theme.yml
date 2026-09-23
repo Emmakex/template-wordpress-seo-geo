@@ -50,6 +50,11 @@ jobs:
           bash -n scripts/build-theme-package.sh
           bash -n scripts/ci/self-contained-theme-smoke.sh
           php -l packages/seo-geo-theme/inc/seo-geo-core/bootstrap.php
+          php -l packages/seo-geo-theme/inc/setup.php
+          php -l packages/seo-geo-theme/inc/Setup/SetupConfigurationContract.php
+          php -l packages/seo-geo-theme/inc/Setup/MigrationHandoffReader.php
+          php -l packages/seo-geo-theme/inc/Setup/SetupCompatibilityDetector.php
+          php -l packages/seo-geo-theme/inc/Setup/SetupPlanner.php
           php -l packages/seo-geo-core/src/Runtime.php
 
       - name: Build self-contained theme

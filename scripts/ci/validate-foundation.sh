@@ -69,6 +69,11 @@ required_paths=(
   "packages/seo-geo-theme/README.md"
   "packages/seo-geo-theme/inc/seo-geo-core/bootstrap.php"
   "packages/seo-geo-theme/inc/presets.php"
+  "packages/seo-geo-theme/inc/setup.php"
+  "packages/seo-geo-theme/inc/Setup/SetupConfigurationContract.php"
+  "packages/seo-geo-theme/inc/Setup/MigrationHandoffReader.php"
+  "packages/seo-geo-theme/inc/Setup/SetupCompatibilityDetector.php"
+  "packages/seo-geo-theme/inc/Setup/SetupPlanner.php"
   "packages/seo-geo-core/README.md"
   "packages/seo-geo-core/src/Runtime.php"
   "packages/seo-geo-core/src/Language/NativeLanguageConfiguration.php"
@@ -143,6 +148,7 @@ required_paths=(
   "packages/seo-geo-migration-bridge/src/Builders/ElementorDetector.php"
   "packages/seo-geo-migration-bridge/src/Builders/DiviDetector.php"
   "docs/MIGRATION_BRIDGE.md"
+  "docs/ONBOARDING.md"
   "scripts/build-theme-package.sh"
   "scripts/ci/self-contained-theme-smoke.sh"
   "scripts/ci/discovery-privacy-acceptance.sh"
@@ -158,6 +164,7 @@ required_paths=(
   "scripts/ci/saas-digital-product-preset-acceptance.sh"
   "scripts/ci/validate-saas-digital-product-preset.php"
   "scripts/ci/validate-migration-bridge.php"
+  "scripts/ci/validate-theme-setup.php"
   "scripts/ci/migration-bridge-site-analyzer-acceptance.sh"
   "scripts/ci/migration-bridge-baseline-acceptance.sh"
   "scripts/ci/migration-bridge-dependency-graph-acceptance.sh"
@@ -201,6 +208,7 @@ php scripts/ci/validate-publisher-preset.php
 php scripts/ci/validate-ecommerce-preset.php
 php scripts/ci/validate-saas-digital-product-preset.php
 php scripts/ci/validate-migration-bridge.php
+php scripts/ci/validate-theme-setup.php
 bash scripts/ci/validate-ci-path-scope.sh
 
-printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts, the Phase 8A/8B/8C/8D/8E/8F/8G/8H/8I Migration Bridge safety contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
+printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts, the Phase 8A/8B/8C/8D/8E/8F/8G/8H/8I Migration Bridge safety contract, the Phase 9A read-only setup foundation contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"

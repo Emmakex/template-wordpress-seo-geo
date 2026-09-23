@@ -152,6 +152,11 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternateResolver.php" \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternatePresenter.php" \
   "${BUILT_THEME}/inc/presets.php" \
+  "${BUILT_THEME}/inc/setup.php" \
+  "${BUILT_THEME}/inc/Setup/SetupConfigurationContract.php" \
+  "${BUILT_THEME}/inc/Setup/MigrationHandoffReader.php" \
+  "${BUILT_THEME}/inc/Setup/SetupCompatibilityDetector.php" \
+  "${BUILT_THEME}/inc/Setup/SetupPlanner.php" \
   "${BUILT_THEME}/presets/corporate/preset.json" \
   "${BUILT_THEME}/presets/corporate/content-map.json" \
   "${BUILT_THEME}/presets/corporate/patterns.json" \
@@ -232,6 +237,101 @@ ACTIVE_PLUGINS="$(wp_cli plugin list --status=active --field=name 2>/dev/null | 
 if docker exec "$WP_CONTAINER" test -d /var/www/html/wp-content/plugins/seo-geo-core; then
   fail_smoke "plugin-absent" "SEO GEO Core plugin directory must not be installed" "plugin directory absent" "directory exists"
 fi
+
+printf '[self-contained] Checking Phase 9A read-only setup foundation.\n'
+SETUP_CLEAN_JSON="$(wp_cli eval 'echo wp_json_encode( seo_geo_theme_setup_plan(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );' 2>/dev/null | tr -d '\r\n')" \
+  || fail_smoke "setup-plan-clean" "Could not generate clean-install setup plan" "JSON setup plan" "wp eval failed"
+
+printf '%s' "$SETUP_CLEAN_JSON" >"$TMP_DIR/setup-clean.json"
+
+if ! SETUP_CLEAN_ASSERTION="$(python3 - "$TMP_DIR/setup-clean.json" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    p=json.load(f)
+assert p["schema_version"] == 1
+assert p["mode"] == "theme-setup-plan-read-only"
+assert p["site_mode"] == "clean"
+assert p["migration_handoff"]["available"] is False
+assert [x["id"] for x in p["available_presets"]] == ["corporate","local-business","publisher","ecommerce","saas-digital-product"]
+assert p["compatibility"]["providers"] == {"seo":"native","language":"native"}
+assert p["compatibility"]["warnings"] == []
+assert p["next_step"] == "choose-preset"
+assert p["configuration_contract"]["option_name"] == "seo_geo_theme_setup_v1"
+assert p["configuration_contract"]["ownership"]["seo_geo_plugin_required"] is False
+assert p["configuration_contract"]["ownership"]["migration_bridge_required"] is False
+assert all(v is False for v in p["safety"].values())
+print("ok")
+PY
+)"; then
+  fail_smoke "setup-plan-clean-contract" "Clean-install Phase 9A setup plan is invalid" "read-only five-preset native setup plan" "${SETUP_CLEAN_ASSERTION:-python assertion failed}"
+fi
+
+wp_cli eval 'add_option( "seo_geo_migration_report_v1", array(
+  "schema_version" => 1,
+  "id" => "phase-9a-handoff",
+  "saved_at" => gmdate( DATE_ATOM ),
+  "sha256" => str_repeat( "a", 64 ),
+  "report" => array(
+    "schema_version" => 1,
+    "mode" => "migration-report",
+    "ready_for_handoff" => true,
+    "report_sha256" => str_repeat( "b", 64 ),
+    "manual_review" => array( "blocking" => array(), "advisory" => array( array( "type" => "cleanup" ) ) ),
+    "bridge_disposition" => array( "decision" => "retain-audit-only", "runtime_dependency_required" => false ),
+    "safety" => array( "report_is_runtime_dependency" => false )
+  )
+), "", false );' >/dev/null \
+  || fail_smoke "setup-handoff-fixture" "Could not create accepted migration handoff fixture" "non-autoloaded handoff option" "failed"
+
+SETUP_STATE_BEFORE="$(wp_cli eval '$state=array(
+"setup"=>get_option("seo_geo_theme_setup_v1",null),
+"preset"=>get_option("seo_geo_active_preset",null),
+"languages"=>get_option("seo_geo_native_languages",null),
+"entity"=>get_option("seo_geo_schema_identity",null),
+"crawler"=>get_option("seo_geo_crawler_policy",null),
+"plugins"=>get_option("active_plugins",array())
+); echo hash("sha256",wp_json_encode($state));' 2>/dev/null | tr -d '\r\n')"
+
+SETUP_MIGRATED_JSON="$(wp_cli eval 'echo wp_json_encode( seo_geo_theme_setup_plan(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );' 2>/dev/null | tr -d '\r\n')" \
+  || fail_smoke "setup-plan-migrated" "Could not generate migrated-site setup plan" "JSON setup plan" "wp eval failed"
+printf '%s' "$SETUP_MIGRATED_JSON" >"$TMP_DIR/setup-migrated.json"
+
+SETUP_STATE_AFTER="$(wp_cli eval '$state=array(
+"setup"=>get_option("seo_geo_theme_setup_v1",null),
+"preset"=>get_option("seo_geo_active_preset",null),
+"languages"=>get_option("seo_geo_native_languages",null),
+"entity"=>get_option("seo_geo_schema_identity",null),
+"crawler"=>get_option("seo_geo_crawler_policy",null),
+"plugins"=>get_option("active_plugins",array())
+); echo hash("sha256",wp_json_encode($state));' 2>/dev/null | tr -d '\r\n')"
+
+[[ "$SETUP_STATE_BEFORE" == "$SETUP_STATE_AFTER" ]] \
+  || fail_smoke "setup-plan-mutated-state" "Phase 9A setup planning changed protected setup state" "$SETUP_STATE_BEFORE" "$SETUP_STATE_AFTER"
+
+if ! SETUP_MIGRATED_ASSERTION="$(python3 - "$TMP_DIR/setup-migrated.json" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    p=json.load(f)
+assert p["site_mode"] == "migrated"
+h=p["migration_handoff"]
+assert h["available"] is True and h["valid"] is True
+assert h["source"] == "migration-bridge-handoff-v1"
+assert h["bridge_disposition"] == "retain-audit-only"
+assert h["runtime_dependency_required"] is False
+assert h["blocking_review_count"] == 0
+assert h["advisory_review_count"] == 1
+assert p["next_step"] == "choose-preset"
+assert p["safety"]["migration_bridge_loaded"] is False
+print("ok")
+PY
+)"; then
+  fail_smoke "setup-plan-migrated-contract" "Migrated-site Phase 9A setup plan is invalid" "handoff-aware plan without Migration Bridge runtime" "${SETUP_MIGRATED_ASSERTION:-python assertion failed}"
+fi
+
+wp_cli eval 'if ( class_exists( "\\SeoGeo\\MigrationBridge\\Plugin", false ) ) { exit( 1 ); } delete_option( "seo_geo_migration_report_v1" );' >/dev/null \
+  || fail_smoke "setup-plan-bridge-independent" "Phase 9A required Migration Bridge runtime code" "Migration Bridge class absent" "class loaded"
+
+printf '[self-contained] Phase 9A setup foundation OK: clean/migrated modes resolved; five presets available; handoff consumed without Migration Bridge runtime; planning mutation-free.\n'
 
 if ! RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $r->getFileName();' 2>"$RUNTIME_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$RUNTIME_EVAL_ERROR" | head -c 240)"

@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once get_template_directory() . '/inc/seo-geo-core/bootstrap.php';
 require_once get_template_directory() . '/inc/presets.php';
+require_once get_template_directory() . '/inc/setup.php';
 
 /**
  * Load project-owned translations.

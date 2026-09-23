@@ -1780,7 +1780,19 @@ The onboarding layer serves both clean installations and sites that arrived thro
 
 ### Microphase 9A — Setup foundation and migration handoff
 
-Status: **active**
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- `seo_geo_theme_setup_plan()` produces a versioned read-only setup plan;
+- `SetupConfigurationContract` defines future theme-owned option `seo_geo_theme_setup_v1` without persisting it in 9A;
+- all five completed presets are read from the existing allowlisted registry;
+- current languages come from `NativeLanguageConfiguration`;
+- accepted `seo_geo_migration_report_v1` is consumed directly without loading Migration Bridge classes;
+- clean vs migrated mode is resolved deterministically;
+- external SEO/language providers plus WooCommerce/Elementor/Divi are advisory compatibility signals only;
+- self-contained acceptance proves clean + migrated planning with zero active plugins and unchanged protected setup state;
+- static CI forbids setup option writes, page creation, plugin mutation, scheduling, POST handlers and outbound POST calls inside the 9A setup layer.
 
 Deliverables:
 

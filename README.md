@@ -80,6 +80,7 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/PRESETS.md`
 - `docs/COMPATIBILITY.md`
 - `docs/MIGRATION_BRIDGE.md`
+- `docs/ONBOARDING.md`
 - `docs/CI_QUALITY_GATES.md`
 - `docs/ROADMAP.md`
 - `docs/engineering/GLOBAL_ENGINEERING_RULES.md`
