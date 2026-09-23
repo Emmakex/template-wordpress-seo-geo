@@ -168,6 +168,7 @@ printf '[browser] Installing repository packages and acceptance fixtures.\n'
 docker exec "$WP_CONTAINER" mkdir -p \
   /var/www/html/wp-content/plugins/seo-geo-core \
   /var/www/html/wp-content/themes/seo-geo-theme \
+  /var/www/html/wp-content/themes/seo-geo-theme/presets \
   /var/www/html/wp-content/mu-plugins \
   || fail_acceptance "package-dirs" "Could not create WordPress package directories" "package directories created" "mkdir failed" "docker exec mkdir"
 
@@ -175,6 +176,8 @@ docker cp packages/seo-geo-core/. "$WP_CONTAINER":/var/www/html/wp-content/plugi
   || fail_acceptance "plugin-copy" "Could not copy SEO GEO Core into WordPress" "plugin copied" "docker cp failed" "docker cp plugin"
 docker cp packages/seo-geo-theme/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
   || fail_acceptance "theme-copy" "Could not copy SEO GEO Starter into WordPress" "theme copied" "docker cp failed" "docker cp theme"
+docker cp presets/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/presets/ \
+  || fail_acceptance "preset-copy" "Could not copy the bundled preset catalog into the browser theme fixture" "preset catalog copied" "docker cp failed" "docker cp presets"
 docker cp tests/fixtures/acceptance-language.php "$WP_CONTAINER":/var/www/html/wp-content/mu-plugins/seo-geo-acceptance-language.php \
   || fail_acceptance "locale-fixture-copy" "Could not copy acceptance locale MU-plugin" "locale fixture copied" "docker cp failed" "docker cp locale fixture"
 docker cp tests/fixtures/seed-acceptance.php "$WP_CONTAINER":/var/www/html/wp-content/seed-acceptance.php \
@@ -201,6 +204,9 @@ wp_cli plugin activate seo-geo-core >/dev/null \
   || fail_acceptance "plugin-activate" "SEO GEO Core could not be activated" "plugin active" "activation failed" "wp plugin activate seo-geo-core"
 wp_cli theme activate seo-geo-theme >/dev/null \
   || fail_acceptance "theme-activate" "SEO GEO Starter could not be activated" "theme active" "activation failed" "wp theme activate seo-geo-theme"
+
+wp_cli eval 'if ( ! is_array( seo_geo_theme_preset_document( "corporate", "preset.json" ) ) ) { exit( 1 ); }' >/dev/null \
+  || fail_acceptance "preset-fixture" "Browser fixture cannot resolve the Corporate preset" "corporate preset available to the theme" "preset unavailable" "wp eval preset fixture"
 
 wp_cli rewrite structure '/%postname%/' --hard >/dev/null \
   || fail_acceptance "permalink-structure" "Could not configure pretty permalinks" "post-name permalinks enabled" "rewrite structure failed" "wp rewrite structure"
