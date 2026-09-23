@@ -66,6 +66,9 @@ final class MigrationEngine {
 	/**
 	 * Build a non-mutating migration plan.
 	 *
+	 * @param int         $object_id  WordPress resource ID.
+	 * @param string      $adapter_id Builder adapter identifier.
+	 * @param string|null $preset_id  Optional destination preset.
 	 * @return array<string,mixed>
 	 */
 	public function plan( int $object_id, string $adapter_id, ?string $preset_id = null ): array {
@@ -122,7 +125,6 @@ final class MigrationEngine {
 		$preservation = null;
 		if ( $post instanceof WP_Post ) {
 			$permalink    = get_permalink( $post );
-			$permalink    = is_string( $permalink ) ? $permalink : '';
 			$featured_id  = get_post_thumbnail_id( $post );
 			$preservation = array(
 				'object_id'         => (int) $post->ID,
@@ -146,7 +148,7 @@ final class MigrationEngine {
 			'preservation'   => $preservation,
 			'adapter_plan'   => $adapter_plan,
 			'business_systems' => $this->preserved_business_systems( $graph ),
-			'blockers'       => $blockers,
+			'blockers'         => $blockers,
 			'authorization'  => array(
 				'requires_manage_options' => true,
 				'requires_edit_post'      => true,
@@ -167,6 +169,11 @@ final class MigrationEngine {
 	/**
 	 * Execute one explicitly confirmed migration.
 	 *
+	 * @param int         $object_id  WordPress resource ID.
+	 * @param string      $adapter_id Builder adapter identifier.
+	 * @param string      $nonce      Resource/adapter scoped nonce.
+	 * @param string|null $preset_id  Optional destination preset.
+	 * @param bool        $confirmed  Explicit administrator confirmation.
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public function execute(
@@ -209,7 +216,6 @@ final class MigrationEngine {
 		}
 
 		$before_permalink = get_permalink( $post );
-		$before_permalink = is_string( $before_permalink ) ? $before_permalink : '';
 		$before = array(
 			'post_content' => (string) $post->post_content,
 			'post_name'    => (string) $post->post_name,
@@ -255,7 +261,6 @@ final class MigrationEngine {
 		}
 
 		$after_permalink = get_permalink( $after );
-		$after_permalink = is_string( $after_permalink ) ? $after_permalink : '';
 		$preserved       = (int) $after->ID === (int) $post->ID
 			&& (string) $after->post_name === $before['post_name']
 			&& $this->url_path( $after_permalink ) === $this->url_path( $before['permalink'] );
@@ -289,7 +294,7 @@ final class MigrationEngine {
 				'media_ids'      => $plan['adapter_plan']['media_ids'],
 			),
 			'business_systems' => $plan['business_systems'],
-			'backup_created'  => true,
+			'backup_created'   => true,
 			'safety'          => array(
 				'sandbox_only'            => true,
 				'plugins_changed'         => false,
@@ -301,6 +306,9 @@ final class MigrationEngine {
 
 	/**
 	 * Return nonce action for one exact migration.
+	 *
+	 * @param int    $object_id  WordPress resource ID.
+	 * @param string $adapter_id Builder adapter identifier.
 	 */
 	public static function nonce_action( int $object_id, string $adapter_id ): string {
 		return 'seo_geo_migrate_' . $object_id . '_' . sanitize_key( $adapter_id );
@@ -398,6 +406,8 @@ final class MigrationEngine {
 
 	/**
 	 * Normalize a URL to its path for cross-origin sandbox parity.
+	 *
+	 * @param string $url Absolute or relative URL.
 	 */
 	private function url_path( string $url ): string {
 		$path = wp_parse_url( $url, PHP_URL_PATH );
