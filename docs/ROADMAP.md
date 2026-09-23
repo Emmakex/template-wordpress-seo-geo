@@ -1847,7 +1847,22 @@ Evidence:
 
 ### Microphase 9C — Entity and GEO configuration
 
-Status: **active**
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- `seo_geo_theme_validate_entity_geo_setup()` validates explicit entity/GEO choices without persistence;
+- `SchemaIdentityResolver` exposes the same supported entity-type authority used by runtime;
+- `SchemaLocalBusinessResolver` exposes address/coordinate candidate normalization backed by its runtime rules;
+- Organization and LocalBusiness choices require explicit identity confirmation;
+- LocalBusiness basics require a physical address; coordinates are optional but, when provided, must pass the Core precision/range authority;
+- unsupported LocalBusiness fields such as rating/review claims are rejected rather than ignored into setup state;
+- LocalBusiness validation never marks Schema output ready: the existing public-document visible-fact gate remains authoritative at render time;
+- crawler choices are strictly validated against `CrawlerPolicyResolver` and then normalized through its sanitizer;
+- `llms.txt` and Markdown alternates are explicit boolean opt-ins bound to their existing Core option authorities;
+- provenance is reported as native behavior on eligible content, not as fabricated or separately configurable data;
+- private-site discovery choices produce an advisory rather than a false crawler guarantee;
+- self-contained acceptance fingerprints identity/crawler/discovery/plugin state before/after all valid and invalid cases.
 
 Deliverables:
 
