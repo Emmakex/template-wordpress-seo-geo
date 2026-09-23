@@ -814,6 +814,354 @@ UNAUTHORIZED_TEXT="$(cat "$UNAUTHORIZED_STDOUT" "$UNAUTHORIZED_STDERR" | tr -d '
 
 printf '[self-contained] Phase 9D/9E wizard surface OK: Appearance screen registered; EN/ES preview/apply controls are nonce/capability-gated, focus-managed and credential-free.\n'
 
+printf '[self-contained] Checking Phase 9E atomic setup execution and report.\n'
+PHASE9E_RUNNER="$TMP_DIR/phase9e-execution-runner.php"
+cat >"$PHASE9E_RUNNER" <<'PHP'
+<?php
+
+use SeoGeo\Core\Geo\CrawlerPolicyResolver;
+use SeoGeo\Theme\Setup\SetupExecutor;
+use SeoGeo\Theme\Setup\SetupOptionWriterInterface;
+use SeoGeo\Theme\Setup\SetupReportStore;
+use SeoGeo\Theme\Setup\WordPressSetupOptionWriter;
+use SeoGeo\Theme\Wizard\AdminSetupWizard;
+use SeoGeo\Theme\Wizard\SetupWizardCopy;
+
+final class Phase9EFailingWriter implements SetupOptionWriterInterface {
+	private SetupOptionWriterInterface $delegate;
+	private string $fail_option;
+	private bool $failed = false;
+
+	public function __construct( SetupOptionWriterInterface $delegate, string $fail_option ) {
+		$this->delegate    = $delegate;
+		$this->fail_option = $fail_option;
+	}
+
+	public function read( string $option_name ): array {
+		return $this->delegate->read( $option_name );
+	}
+
+	public function write( string $option_name, mixed $value ): bool {
+		if ( ! $this->failed && $this->fail_option === $option_name ) {
+			$this->failed = true;
+			return false;
+		}
+
+		return $this->delegate->write( $option_name, $value );
+	}
+
+	public function delete( string $option_name ): bool {
+		return $this->delegate->delete( $option_name );
+	}
+}
+
+wp_set_current_user( 1 );
+
+update_option(
+	'seo_geo_migration_report_v1',
+	array(
+		'schema_version' => 1,
+		'id'             => 'phase-9e-handoff',
+		'saved_at'       => gmdate( DATE_ATOM ),
+		'sha256'         => str_repeat( 'a', 64 ),
+		'report'         => array(
+			'schema_version'    => 1,
+			'mode'              => 'migration-report',
+			'ready_for_handoff' => true,
+			'report_sha256'     => str_repeat( 'b', 64 ),
+			'manual_review'     => array(
+				'blocking' => array(),
+				'advisory' => array( array( 'type' => 'cleanup' ) ),
+			),
+			'bridge_disposition' => array(
+				'decision'                    => 'retain-audit-only',
+				'runtime_dependency_required' => false,
+			),
+			'safety' => array(
+				'report_is_runtime_dependency' => false,
+			),
+		),
+	),
+	false
+);
+
+$candidate = array(
+	'preset'           => 'local-business',
+	'default_language' => 'en',
+	'languages'        => array(
+		'en' => 'en_US',
+		'es' => 'es_ES',
+	),
+	'routing'          => 'prefix',
+	'x_default'        => 'en',
+	'site_entity_type' => 'local_business',
+	'confirm_identity' => true,
+	'local_business'   => array(
+		'type'             => 'ProfessionalService',
+		'street_address'   => '123 Main Street',
+		'address_locality' => 'Barcelona',
+		'address_region'   => 'Catalonia',
+		'postal_code'      => '08001',
+		'address_country'  => 'ES',
+		'telephone'        => '+34 930 000 000',
+		'price_range'      => '€€',
+		'latitude'         => '41.38740',
+		'longitude'        => '2.16860',
+	),
+	'crawler_policy' => array(
+		'oai_searchbot' => 'allow',
+		'gptbot'        => 'disallow',
+	),
+	'llms_txt_enabled'            => true,
+	'markdown_alternates_enabled' => true,
+);
+
+$state = static function (): array {
+	return array(
+		'setup'          => get_option( 'seo_geo_theme_setup_v1', null ),
+		'report'         => get_option( 'seo_geo_theme_setup_report_v1', null ),
+		'preset'         => get_option( 'seo_geo_active_preset', null ),
+		'languages'      => get_option( 'seo_geo_native_languages', null ),
+		'identity'       => get_option( 'seo_geo_schema_identity', null ),
+		'local_business' => get_option( 'seo_geo_schema_local_business', null ),
+		'crawler'        => get_option( 'seo_geo_crawler_policy', null ),
+		'llms'           => get_option( 'seo_geo_llms_txt', null ),
+		'markdown'       => get_option( 'seo_geo_markdown_alternates', null ),
+		'handoff'        => get_option( 'seo_geo_migration_report_v1', null ),
+		'plugins'        => get_option( 'active_plugins', array() ),
+	);
+};
+
+$fingerprint = static function ( array $value ): string {
+	$encoded = wp_json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	return hash( 'sha256', false === $encoded ? '' : $encoded );
+};
+
+$page_count_before = (int) wp_count_posts( 'page' )->publish;
+
+$unconfirmed_before = $fingerprint( $state() );
+$unconfirmed        = seo_geo_theme_apply_setup( $candidate, false );
+$unconfirmed_after  = $fingerprint( $state() );
+
+$first       = seo_geo_theme_apply_setup( $candidate, true );
+$report_one  = seo_geo_theme_setup_report();
+$after_first = $state();
+$first_hash  = $fingerprint( $after_first );
+
+$second       = seo_geo_theme_apply_setup( $candidate, true );
+$report_two   = seo_geo_theme_setup_report();
+$after_second = $state();
+$second_hash  = $fingerprint( $after_second );
+
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = array(
+	'_wpnonce'                            => wp_create_nonce( AdminSetupWizard::NONCE_ACTION ),
+	'seo_geo_setup_action'                => 'apply',
+	'seo_geo_preset'                      => 'local-business',
+	'seo_geo_default_language'            => 'en',
+	'seo_geo_languages'                   => "en=en_US\nes=es_ES",
+	'seo_geo_routing'                     => 'prefix',
+	'seo_geo_x_default'                   => 'en',
+	'seo_geo_entity_type'                 => 'local_business',
+	'seo_geo_confirm_identity'            => '1',
+	'seo_geo_lb_type'                     => 'ProfessionalService',
+	'seo_geo_lb_street_address'           => '123 Main Street',
+	'seo_geo_lb_address_locality'         => 'Barcelona',
+	'seo_geo_lb_address_region'           => 'Catalonia',
+	'seo_geo_lb_postal_code'              => '08001',
+	'seo_geo_lb_address_country'          => 'ES',
+	'seo_geo_lb_telephone'                => '+34 930 000 000',
+	'seo_geo_lb_price_range'              => '€€',
+	'seo_geo_lb_latitude'                 => '41.38740',
+	'seo_geo_lb_longitude'                => '2.16860',
+	'seo_geo_crawler_oai_searchbot'       => 'allow',
+	'seo_geo_crawler_gptbot'              => 'disallow',
+	'seo_geo_llms_txt_enabled'            => '1',
+	'seo_geo_markdown_alternates_enabled' => '1',
+	'seo_geo_apply_confirm'               => '1',
+);
+$_REQUEST = $_POST;
+
+$screen = new AdminSetupWizard( null, null, new SetupWizardCopy( 'en_US' ) );
+ob_start();
+$screen->render_page();
+$apply_html = (string) ob_get_clean();
+
+$failure_candidate = $candidate;
+$failure_candidate['preset']           = 'corporate';
+$failure_candidate['site_entity_type'] = 'organization';
+$failure_candidate['local_business']   = array();
+$failure_candidate['crawler_policy']   = array( 'gptbot' => 'allow' );
+$failure_candidate['llms_txt_enabled'] = false;
+
+$failure_before = $fingerprint( $state() );
+$failing_writer = new Phase9EFailingWriter(
+	new WordPressSetupOptionWriter(),
+	CrawlerPolicyResolver::OPTION_NAME
+);
+$failure = ( new SetupExecutor( null, null, $failing_writer ) )->execute( $failure_candidate, true );
+$failure_after = $fingerprint( $state() );
+
+$alloptions = wp_load_alloptions();
+$page_count_after = (int) wp_count_posts( 'page' )->publish;
+
+echo wp_json_encode(
+	array(
+		'unconfirmed' => array(
+			'result' => $unconfirmed,
+			'before' => $unconfirmed_before,
+			'after'  => $unconfirmed_after,
+		),
+		'first'        => $first,
+		'second'       => $second,
+		'report_one'   => $report_one,
+		'report_two'   => $report_two,
+		'state_hashes' => array(
+			'first'  => $first_hash,
+			'second' => $second_hash,
+		),
+		'apply_html'   => $apply_html,
+		'failure'      => array(
+			'result' => $failure,
+			'before' => $failure_before,
+			'after'  => $failure_after,
+		),
+		'options'      => array(
+			'preset'         => get_option( 'seo_geo_active_preset', null ),
+			'languages'      => get_option( 'seo_geo_native_languages', null ),
+			'identity'       => get_option( 'seo_geo_schema_identity', null ),
+			'local_business' => get_option( 'seo_geo_schema_local_business', null ),
+			'crawler'        => get_option( 'seo_geo_crawler_policy', null ),
+			'llms'           => get_option( 'seo_geo_llms_txt', null ),
+			'markdown'       => get_option( 'seo_geo_markdown_alternates', null ),
+			'setup'          => get_option( 'seo_geo_theme_setup_v1', null ),
+		),
+		'autoloaded' => array(
+			'setup'  => array_key_exists( 'seo_geo_theme_setup_v1', $alloptions ),
+			'report' => array_key_exists( SetupReportStore::OPTION_NAME, $alloptions ),
+		),
+		'page_counts' => array(
+			'before' => $page_count_before,
+			'after'  => $page_count_after,
+		),
+		'bridge_loaded' => class_exists( '\\SeoGeo\\MigrationBridge\\Plugin', false ),
+	),
+	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+);
+PHP
+
+docker cp "$PHASE9E_RUNNER" "$WP_CONTAINER":/var/www/html/wp-content/phase9e-execution-runner.php \
+  || fail_smoke "phase9e-runner-copy" "Could not copy Phase 9E execution runner" "runner copied" "docker cp failed"
+
+if ! PHASE9E_JSON="$(wp_cli eval-file /var/www/html/wp-content/phase9e-execution-runner.php 2>"$TMP_DIR/phase9e-execution.stderr")"; then
+  PHASE9E_ERROR="$(tr -d '\r' <"$TMP_DIR/phase9e-execution.stderr" | head -c 1200)"
+  fail_smoke "phase9e-runner" "Phase 9E execution runner failed" "JSON atomic setup acceptance" "${PHASE9E_ERROR:-wp eval-file failed}"
+fi
+
+printf '%s' "$PHASE9E_JSON" >"$TMP_DIR/phase9e-execution.json"
+
+if grep -Fq '123 Main Street' "$TMP_DIR/phase9e-execution.json"; then
+  :
+fi
+
+if ! PHASE9E_ASSERTION="$(python3 - "$TMP_DIR/phase9e-execution.json" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    p=json.load(f)
+
+u=p["unconfirmed"]
+assert u["result"]["applied"] is False
+assert "apply-confirmation-required" in u["result"]["errors"]
+assert u["before"] == u["after"]
+
+first=p["first"]
+assert first["valid"] is True
+assert first["applied"] is True
+assert first["idempotent"] is False
+assert first["rollback_attempted"] is False
+assert len(first["configuration_sha256"]) == 64
+expected_changed={
+    "seo_geo_active_preset",
+    "seo_geo_native_languages",
+    "seo_geo_schema_identity",
+    "seo_geo_schema_local_business",
+    "seo_geo_crawler_policy",
+    "seo_geo_llms_txt",
+    "seo_geo_markdown_alternates",
+    "seo_geo_theme_setup_v1",
+}
+assert expected_changed.issubset(set(first["changed_options"]))
+
+second=p["second"]
+assert second["valid"] is True
+assert second["applied"] is True
+assert second["idempotent"] is True
+assert second["changed_options"] == []
+assert p["state_hashes"]["first"] == p["state_hashes"]["second"]
+
+r1=p["report_one"]
+r2=p["report_two"]
+assert r1 == r2
+assert r1["mode"] == "theme-setup-report"
+assert r1["site_mode"] == "migrated"
+assert r1["preset"] == "local-business"
+assert r1["entity"]["type"] == "local_business"
+assert r1["entity"]["local_business_configured"] is True
+assert r1["migration_handoff"]["source"] == "migration-bridge-handoff-v1"
+assert r1["migration_handoff"]["id"] == "phase-9e-handoff"
+assert r1["migration_handoff"]["bridge_disposition"] == "retain-audit-only"
+assert r1["compatibility"]["providers"] == {"seo":"native","language":"native"}
+assert len(r1["configuration_sha256"]) == 64
+assert len(r1["report_sha256"]) == 64
+assert all(v is False for v in r1["safety"].values())
+
+serialized_report=json.dumps(r1, ensure_ascii=False)
+for private_value in ("123 Main Street","+34 930 000 000","41.3874","2.1686"):
+    assert private_value not in serialized_report
+
+opts=p["options"]
+assert opts["preset"] == "local-business"
+assert opts["languages"] == {
+    "default":"en",
+    "languages":{"en":"en_US","es":"es_ES"},
+    "routing":"prefix",
+    "x_default":"en",
+}
+assert opts["identity"] == {"site_entity_type":"local_business"}
+assert opts["local_business"]["street_address"] == "123 Main Street"
+assert opts["local_business"]["address_locality"] == "Barcelona"
+assert opts["crawler"] == {"oai_searchbot":"allow","gptbot":"disallow"}
+assert opts["llms"]["enabled"] is True
+assert opts["markdown"]["enabled"] is True
+assert opts["setup"]["mode"] == "theme-setup-applied"
+assert opts["setup"]["configuration_sha256"] == r1["configuration_sha256"]
+
+assert p["autoloaded"] == {"setup":False,"report":False}
+assert p["page_counts"]["before"] == p["page_counts"]["after"]
+assert p["bridge_loaded"] is False
+
+html=p["apply_html"]
+assert "Setup already matches these validated settings." in html
+assert r1["configuration_sha256"] in html
+assert r1["report_sha256"] in html
+
+failure=p["failure"]
+assert failure["before"] == failure["after"]
+result=failure["result"]
+assert result["valid"] is False
+assert result["applied"] is False
+assert result["rollback_attempted"] is True
+assert "setup-write-failed:seo_geo_crawler_policy" in result["errors"]
+assert not any(x.startswith("setup-rollback-failed:") for x in result["errors"])
+
+print("ok")
+PY
+)"; then
+  fail_smoke "phase9e-contract" "Phase 9E atomic setup execution contract is invalid" "validated atomic/idempotent setup with rollback and privacy-bounded report" "${PHASE9E_ASSERTION:-python assertion failed}"
+fi
+
+printf '[self-contained] Phase 9E setup execution OK: validated options applied atomically; rerun idempotent; injected mid-write failure rolled back; migrated handoff/report remained bridge-independent and privacy-bounded.\n'
+
 if ! RUNTIME_FILE="$(wp_cli eval '$r = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $r->getFileName();' 2>"$RUNTIME_EVAL_ERROR" | tr -d '\r\n')"; then
   ERROR_TEXT="$(tr -d '\r' <"$RUNTIME_EVAL_ERROR" | head -c 240)"
   fail_smoke "runtime-eval" "Could not resolve embedded runtime class" "Runtime class available from theme" "${ERROR_TEXT:-wp eval failed}" "wp eval ReflectionClass Runtime"
