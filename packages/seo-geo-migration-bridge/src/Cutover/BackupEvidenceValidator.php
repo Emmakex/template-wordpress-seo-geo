@@ -40,7 +40,7 @@ final class BackupEvidenceValidator {
 				continue;
 			}
 
-			$reference  = isset( $row['reference'] ) && is_string( $row['reference'] ) ? trim( $row['reference'] ) : '';
+			$reference  = isset( $row['reference'] ) && is_string( $row['reference'] ) ? sanitize_text_field( $row['reference'] ) : '';
 			$sha256     = isset( $row['sha256'] ) && is_string( $row['sha256'] ) ? strtolower( trim( $row['sha256'] ) ) : '';
 			$created_at = isset( $row['created_at'] ) && is_string( $row['created_at'] ) ? trim( $row['created_at'] ) : '';
 			$scope      = isset( $row['scope'] ) && is_string( $row['scope'] ) ? sanitize_key( $row['scope'] ) : '';
