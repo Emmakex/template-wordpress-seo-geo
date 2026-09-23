@@ -57,6 +57,17 @@ final class HtmlSnapshotExtractor {
 				'word_count' => 0,
 				'sha256'     => null,
 			),
+			'document'         => array(
+				'html_bytes' => strlen( $html ),
+			),
+			'accessibility'    => array(
+				'analyzed'                     => false,
+				'images_total'                 => 0,
+				'images_missing_alt_attribute' => 0,
+				'links_total'                  => 0,
+				'links_unlabeled'              => 0,
+				'heading_level_skips'          => 0,
+			),
 		);
 
 		if ( '' === trim( $html ) || ! class_exists( DOMDocument::class ) ) {
@@ -94,6 +105,7 @@ final class HtmlSnapshotExtractor {
 				static fn( array $heading ): bool => 1 === $heading['level']
 			)
 		);
+		$result['accessibility']    = $this->accessibility( $xpath, $result['headings'] );
 		$result['breadcrumbs']      = $this->breadcrumbs( $xpath, $url );
 		$result['internal_links']   = $this->internal_links( $xpath, $url );
 		$result['primary_content']  = $this->primary_content( $xpath );
@@ -459,6 +471,97 @@ final class HtmlSnapshotExtractor {
 		$links = array_values( array_unique( $links ) );
 		sort( $links );
 		return $links;
+	}
+
+	/**
+	 * Extract lightweight accessibility signals for pre-cutover regression checks.
+	 *
+	 * These checks are not a replacement for a full WCAG audit.
+	 *
+	 * @param DOMXPath                         $xpath    DOM XPath context.
+	 * @param list<array{level:int,text:string}> $headings Extracted heading outline.
+	 * @return array{
+	 *     analyzed:bool,
+	 *     images_total:int,
+	 *     images_missing_alt_attribute:int,
+	 *     links_total:int,
+	 *     links_unlabeled:int,
+	 *     heading_level_skips:int
+	 * }
+	 */
+	private function accessibility( DOMXPath $xpath, array $headings ): array {
+		$images_total                 = 0;
+		$images_missing_alt_attribute = 0;
+		$links_total                  = 0;
+		$links_unlabeled              = 0;
+		$heading_level_skips          = 0;
+
+		$images = $xpath->query( '//img' );
+		if ( false !== $images ) {
+			foreach ( $images as $image ) {
+				if ( ! $image instanceof DOMElement ) {
+					continue;
+				}
+
+				++$images_total;
+				if ( ! $image->hasAttribute( 'alt' ) ) {
+					++$images_missing_alt_attribute;
+				}
+			}
+		}
+
+		$links = $xpath->query( '//a[@href]' );
+		if ( false !== $links ) {
+			foreach ( $links as $link ) {
+				if ( ! $link instanceof DOMElement ) {
+					continue;
+				}
+
+				++$links_total;
+				// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM extension property.
+				$label = $this->normalize_text( (string) $link->textContent );
+				if ( '' === $label ) {
+					$label = $this->normalize_text( $link->getAttribute( 'aria-label' ) );
+				}
+				if ( '' === $label ) {
+					$label = $this->normalize_text( $link->getAttribute( 'title' ) );
+				}
+
+				if ( '' === $label ) {
+					$link_images = $xpath->query( './/img[@alt]', $link );
+					if ( false !== $link_images ) {
+						foreach ( $link_images as $link_image ) {
+							if ( $link_image instanceof DOMElement && '' !== $this->normalize_text( $link_image->getAttribute( 'alt' ) ) ) {
+								$label = 'image-alt';
+								break;
+							}
+						}
+					}
+				}
+
+				if ( '' === $label ) {
+					++$links_unlabeled;
+				}
+			}
+		}
+
+		$previous_level = null;
+		foreach ( $headings as $heading ) {
+			$level = $heading['level'];
+			if ( null !== $previous_level && $level > $previous_level + 1 ) {
+				++$heading_level_skips;
+			}
+			$previous_level = $level;
+		}
+
+		return array(
+			'analyzed'                     => true,
+			'images_total'                 => $images_total,
+			'images_missing_alt_attribute' => $images_missing_alt_attribute,
+			'links_total'                  => $links_total,
+			'links_unlabeled'              => $links_unlabeled,
+			'heading_level_skips'          => $heading_level_skips,
+		);
 	}
 
 	/**
