@@ -778,9 +778,12 @@ assert "en=en_US" in preview
 assert "organization" in preview
 
 for html in (en, es, preview):
+    lower=html.lower()
     assert "Apply setup" not in html
     assert "Guardar configuración" not in html
-    assert "external credential" not in html.lower()
+    assert 'type="password"' not in lower
+    assert 'name="seo_geo_external_credential' not in lower
+    assert 'name="seo_geo_api_key' not in lower
 
 print("ok")
 PY
