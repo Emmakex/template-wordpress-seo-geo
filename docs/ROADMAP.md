@@ -1683,7 +1683,7 @@ The next microphase is 8H — Migration report.
 
 ### Microphase 8H — Migration report
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1708,6 +1708,33 @@ Deliverables:
 - unresolved manual-review items;
 - cutover/rollback evidence;
 - final Migration Bridge disposition: remove, retain in audit-only mode or retain only when a documented operational feature requires it.
+
+8H is closed.
+
+Evidence:
+
+- final candidate `62a3a9914469f74d5a88e586b3409b1b6388649f` passed Foundation `35878260227`, Package `35878260279`, PHP Quality `35878260020`, WordPress Smoke `35878260287`, Accessibility/Responsive `35878260087` and Performance `35878260054`;
+- PR #81 was squash-merged as `20df50545f84a14cd172147259e1233447660424`;
+- post-merge `main` passed the same six gates again: Foundation `35878908448`, Package `35878908405`, PHP Quality `35878908466`, WordPress Smoke `35878908657`, Accessibility/Responsive `35878908524` and Performance `35878908520`;
+- the final report is non-autoloaded, privacy-bounded and explicitly not a runtime dependency.
+
+A Phase 8 exit audit found one remaining unmet criterion: no administrator/operator screen currently exists for the Migration Bridge, so the EN/ES operator UI criterion is not yet satisfied.
+
+### Microphase 8I — Operator UI and Phase 8 exit
+
+Status: **active**
+
+Deliverables:
+
+- capability-gated Migration Bridge screen under WordPress Tools;
+- English and Spanish operator copy shipped together from one key-complete catalog;
+- locale-aware migration status for baseline, dependency planning, cutover and final report;
+- visible blocking/advisory review counts and final bridge disposition;
+- read-only rendering: opening the screen performs no migration, cutover or report persistence;
+- semantic headings, status lists/tables and accessible operator guidance;
+- no private post bodies, builder payloads, credentials or raw backup artifacts;
+- WordPress runtime acceptance for EN and ES rendering plus capability enforcement;
+- final Phase 8 exit-criteria audit after merge.
 
 ### Phase 8 exit criteria
 
