@@ -75,6 +75,13 @@ final class CutoverEngine {
 	private BackupEvidenceValidator $backup_validator;
 
 	/**
+	 * Migration quality evidence validator.
+	 *
+	 * @var QualityEvidenceValidator
+	 */
+	private QualityEvidenceValidator $quality_validator;
+
+	/**
 	 * Cutover history store.
 	 *
 	 * @var CutoverSnapshotStore
@@ -90,6 +97,7 @@ final class CutoverEngine {
 	 * @param SeoParityEngine|null                 $parity            Optional parity-engine override.
 	 * @param PublicSnapshotProviderInterface|null $snapshot_provider Optional public snapshot provider.
 	 * @param BackupEvidenceValidator|null         $backup_validator  Optional backup validator.
+	 * @param QualityEvidenceValidator|null        $quality_validator Optional quality validator.
 	 * @param CutoverSnapshotStore|null            $store             Optional history store.
 	 */
 	public function __construct(
@@ -99,6 +107,7 @@ final class CutoverEngine {
 		?SeoParityEngine $parity = null,
 		?PublicSnapshotProviderInterface $snapshot_provider = null,
 		?BackupEvidenceValidator $backup_validator = null,
+		?QualityEvidenceValidator $quality_validator = null,
 		?CutoverSnapshotStore $store = null
 	) {
 		$this->analyzer          = $analyzer ?? new SiteAnalyzer();
@@ -107,6 +116,7 @@ final class CutoverEngine {
 		$this->parity            = $parity ?? new SeoParityEngine();
 		$this->snapshot_provider = $snapshot_provider ?? new BaselinePublicSnapshotProvider();
 		$this->backup_validator  = $backup_validator ?? new BackupEvidenceValidator();
+		$this->quality_validator = $quality_validator ?? new QualityEvidenceValidator();
 		$this->store             = $store ?? new CutoverSnapshotStore();
 	}
 
@@ -116,6 +126,7 @@ final class CutoverEngine {
 	 * @param array<string,mixed> $backup_evidence       External recovery evidence.
 	 * @param list<string>        $plugins_to_deactivate Explicit plugin basenames.
 	 * @param array<int,mixed>    $allowlist_rules       Phase 8F exact-difference approvals.
+	 * @param array<string,mixed> $quality_evidence      Accessibility/performance evidence.
 	 * @param array<string,mixed> $maintenance           Optional maintenance flags.
 	 * @return array<string,mixed>
 	 */
@@ -123,6 +134,7 @@ final class CutoverEngine {
 		array $backup_evidence,
 		array $plugins_to_deactivate = array(),
 		array $allowlist_rules = array(),
+		array $quality_evidence = array(),
 		array $maintenance = array()
 	): array {
 		$blockers = array();
@@ -151,6 +163,11 @@ final class CutoverEngine {
 		$backup = $this->backup_validator->validate( $backup_evidence );
 		foreach ( $backup['errors'] as $error ) {
 			$blockers[] = 'backup:' . $error;
+		}
+
+		$quality = $this->quality_validator->validate( $quality_evidence );
+		foreach ( $quality['errors'] as $error ) {
+			$blockers[] = 'quality:' . $error;
 		}
 
 		$analysis = $this->analyzer->analyze();
@@ -236,6 +253,10 @@ final class CutoverEngine {
 				'valid'    => $backup['valid'],
 				'evidence' => $backup['evidence'],
 			),
+			'quality'        => array(
+				'valid'    => $quality['valid'],
+				'evidence' => $quality['evidence'],
+			),
 			'parity'         => is_array( $parity_report )
 				? array(
 					'accepted'    => true === ( $parity_report['accepted'] ?? false ),
@@ -271,6 +292,7 @@ final class CutoverEngine {
 	 * @param array<string,mixed> $backup_evidence       External recovery evidence.
 	 * @param list<string>        $plugins_to_deactivate Explicit plugin basenames.
 	 * @param array<int,mixed>    $allowlist_rules       Exact parity approvals.
+	 * @param array<string,mixed> $quality_evidence      Accessibility/performance evidence.
 	 * @param array<string,mixed> $maintenance           Maintenance flags.
 	 * @param string              $nonce                 Cutover nonce.
 	 * @param bool                $confirmed             Explicit confirmation.
@@ -280,6 +302,7 @@ final class CutoverEngine {
 		array $backup_evidence,
 		array $plugins_to_deactivate,
 		array $allowlist_rules,
+		array $quality_evidence,
 		array $maintenance,
 		string $nonce,
 		bool $confirmed
@@ -289,7 +312,7 @@ final class CutoverEngine {
 			return $auth;
 		}
 
-		$plan = $this->plan( $backup_evidence, $plugins_to_deactivate, $allowlist_rules, $maintenance );
+		$plan = $this->plan( $backup_evidence, $plugins_to_deactivate, $allowlist_rules, $quality_evidence, $maintenance );
 		if ( true !== $plan['ready'] ) {
 			return new WP_Error(
 				'seo_geo_cutover_not_ready',
@@ -306,6 +329,7 @@ final class CutoverEngine {
 		$snapshot = array(
 			'plan_sha256'    => $plan['plan_sha256'],
 			'backup'         => $plan['backup']['evidence'],
+			'quality'        => $plan['quality']['evidence'],
 			'baseline'       => array(
 				'id'                  => is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256'              => is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : $this->fingerprint( $baseline['snapshot'] ),
