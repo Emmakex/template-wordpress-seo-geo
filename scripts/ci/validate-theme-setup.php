@@ -118,7 +118,7 @@ foreach (
 		"'seo_geo_preview_confirm'",
 		"'seo_geo_validate'",
 		'seo-geo-setup-results',
-		"'aria-live'",
+		'aria-live',
 	) as $guard
 ) {
 	if ( ! str_contains( $wizard_screen, $guard ) ) {
