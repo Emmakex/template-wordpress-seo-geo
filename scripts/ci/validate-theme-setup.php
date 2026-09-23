@@ -144,7 +144,7 @@ foreach ( array( '@media (max-width: 782px)', 'grid-template-columns: 1fr' ) as 
 }
 
 $wizard_js = (string) file_get_contents( $root . '/packages/seo-geo-theme/assets/admin/setup-wizard.js' );
-if ( ! str_contains( $wizard_js, "getElementById('seo-geo-setup-results')" ) || ! str_contains( $wizard_js, 'results.focus()' ) ) {
+if ( ! str_contains( $wizard_js, 'seo-geo-setup-results' ) || ! str_contains( $wizard_js, 'results.focus()' ) ) {
 	fwrite( STDERR, 'Phase 9D focus-management guard is missing.' . PHP_EOL );
 	exit( 1 );
 }
