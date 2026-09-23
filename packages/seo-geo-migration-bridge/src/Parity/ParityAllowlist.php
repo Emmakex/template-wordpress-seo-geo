@@ -113,7 +113,7 @@ final class ParityAllowlist {
 	public static function fingerprint( mixed $value ): string {
 		$encoded = wp_json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		if ( false === $encoded ) {
-			$encoded = serialize( $value );
+			$encoded = '[unencodable:' . get_debug_type( $value ) . ']';
 		}
 
 		return hash( 'sha256', $encoded );
