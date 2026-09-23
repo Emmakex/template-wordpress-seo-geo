@@ -91,16 +91,14 @@ final class ContentDependencyScanner {
 
 			foreach ( $this->detectors as $detector ) {
 				$result = $detector->inspect( $post );
-				if ( true !== ( $result['coupled'] ?? false ) ) {
+				if ( true !== $result['coupled'] ) {
 					continue;
 				}
 
 				$id = $detector->id();
 				$builders[] = array(
 					'id'       => $id,
-					'evidence' => isset( $result['evidence'] ) && is_array( $result['evidence'] )
-						? array_values( array_map( 'strval', $result['evidence'] ) )
-						: array(),
+					'evidence' => array_values( array_map( 'strval', $result['evidence'] ) ),
 				);
 				$builder_counts[ $id ] = ( $builder_counts[ $id ] ?? 0 ) + 1;
 			}
@@ -134,10 +132,10 @@ final class ContentDependencyScanner {
 			'builder_counts'   => $builder_counts,
 			'shortcode_counts' => $shortcode_counts,
 			'safety'           => array(
-				'content_scan_performed' => true,
-				'raw_content_exported'    => false,
-				'builder_payload_exported' => false,
-				'private_body_exported'   => false,
+				'content_scan_performed'   => true,
+				'raw_content_exported'      => false,
+				'builder_payload_exported'  => false,
+				'private_body_exported'     => false,
 			),
 		);
 	}
@@ -155,7 +153,7 @@ final class ContentDependencyScanner {
 
 		$matches = array();
 		$result  = preg_match_all( '/' . get_shortcode_regex() . '/s', $content, $matches );
-		if ( false === $result || 0 === $result || ! isset( $matches[2] ) || ! is_array( $matches[2] ) ) {
+		if ( false === $result || 0 === $result ) {
 			return array();
 		}
 
