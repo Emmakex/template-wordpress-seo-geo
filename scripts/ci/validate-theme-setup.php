@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Phase 9A/9B/9C/9D theme setup contract.
+ * Validate the Phase 9A/9B/9C/9D/9E theme setup contract.
  *
  * @package SeoGeoTheme
  */
@@ -19,6 +19,10 @@ $required = array(
 	$setup_dir . '/SetupPlanner.php',
 	$setup_dir . '/PresetLanguageValidator.php',
 	$setup_dir . '/EntityGeoValidator.php',
+	$setup_dir . '/SetupOptionWriterInterface.php',
+	$setup_dir . '/WordPressSetupOptionWriter.php',
+	$setup_dir . '/SetupReportStore.php',
+	$setup_dir . '/SetupExecutor.php',
 	$wizard_dir . '/SetupWizardCopy.php',
 	$wizard_dir . '/SetupWizardPreview.php',
 	$wizard_dir . '/AdminSetupWizard.php',
@@ -52,13 +56,67 @@ $forbidden = array(
 	'admin_post_',
 );
 
+$writer_path = $setup_dir . '/WordPressSetupOptionWriter.php';
+
 foreach ( $php_files as $path ) {
+	if ( $writer_path === $path ) {
+		continue;
+	}
+
 	$source = (string) file_get_contents( $path );
 	foreach ( $forbidden as $primitive ) {
 		if ( str_contains( $source, $primitive ) ) {
-			fwrite( STDERR, 'Phase 9A/9B/9C read-only setup code contains forbidden primitive ' . $primitive . ' in ' . $path . PHP_EOL );
+			fwrite( STDERR, 'Phase 9A/9B/9C/9E non-writer setup code contains forbidden primitive ' . $primitive . ' in ' . $path . PHP_EOL );
 			exit( 1 );
 		}
+	}
+}
+
+$writer_source = (string) file_get_contents( $writer_path );
+foreach ( array( 'update_option(', 'delete_option(', "'exists'", "'value'" ) as $guard ) {
+	if ( ! str_contains( $writer_source, $guard ) ) {
+		fwrite( STDERR, 'Phase 9E option-writer guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+foreach ( array( 'add_option(', 'wp_insert_post', 'activate_plugin', 'deactivate_plugins', 'wp_remote_post', '$_POST' ) as $forbidden_writer_primitive ) {
+	if ( str_contains( $writer_source, $forbidden_writer_primitive ) ) {
+		fwrite( STDERR, 'Phase 9E writer exceeds its option-only mutation boundary: ' . $forbidden_writer_primitive . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$executor = (string) file_get_contents( $setup_dir . '/SetupExecutor.php' );
+foreach (
+	array(
+		"'theme-setup-execution'",
+		'SetupWizardPreview',
+		'SetupConfigurationContract::OPTION_NAME',
+		'SetupReportStore::OPTION_NAME',
+		'NativeLanguageConfiguration::OPTION_NAME',
+		'SchemaIdentityResolver::OPTION_NAME',
+		'SchemaLocalBusinessResolver::OPTION_NAME',
+		'CrawlerPolicyResolver::OPTION_NAME',
+		'LlmsTxtResolver::OPTION_NAME',
+		'MarkdownAlternateResolver::OPTION_NAME',
+		"'apply-confirmation-required'",
+		"'setup-write-failed:'",
+		"'setup-rollback-failed:'",
+		"'migration_bridge_loaded'",
+		"'local_business_facts_in_report'",
+	) as $guard
+) {
+	if ( ! str_contains( $executor, $guard ) ) {
+		fwrite( STDERR, 'Phase 9E executor guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+$report_store = (string) file_get_contents( $setup_dir . '/SetupReportStore.php' );
+foreach ( array( "public const OPTION_NAME = 'seo_geo_theme_setup_report_v1';", "'theme-setup-report'", "'configuration_sha256'", "'report_sha256'" ) as $guard ) {
+	if ( ! str_contains( $report_store, $guard ) ) {
+		fwrite( STDERR, 'Phase 9E report-store guard missing: ' . $guard . PHP_EOL );
+		exit( 1 );
 	}
 }
 
@@ -328,4 +386,4 @@ foreach (
 	}
 }
 
-printf( "Phase 9A/9B/9C/9D setup static contract OK: planning/validation remain non-persistent and the EN/ES wizard is capability+nonce-gated, responsive and preview-only.\n" );
+printf( "Phase 9A/9B/9C/9D/9E setup static contract OK: planning/validation remain authority-driven; option mutation is isolated; setup execution is rollback-capable/idempotent; the EN/ES wizard remains capability+nonce-gated.\n" );
