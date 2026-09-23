@@ -140,12 +140,9 @@ final class AdminSetupWizard {
 		$result    = null;
 
 		if ( $this->is_preview_submission() ) {
-			check_admin_referer( self::NONCE_ACTION );
-			$candidate = $this->submitted_candidate();
-			$result    = $this->preview->validate(
-				$candidate,
-				isset( $_POST['seo_geo_preview_confirm'] )
-			);
+			$submission = $this->submitted_candidate();
+			$candidate  = $submission['candidate'];
+			$result     = $this->preview->validate( $candidate, $submission['confirmed'] );
 		}
 
 		?>
@@ -466,9 +463,11 @@ final class AdminSetupWizard {
 	/**
 	 * Parse one nonce-verified preview submission.
 	 *
-	 * @return array<string,mixed>
+	 * @return array{candidate:array<string,mixed>,confirmed:bool}
 	 */
 	private function submitted_candidate(): array {
+		check_admin_referer( self::NONCE_ACTION );
+
 		$local = array();
 		foreach (
 			array(
@@ -503,17 +502,20 @@ final class AdminSetupWizard {
 			: '';
 
 		return array(
-			'preset'                       => $this->post_key( 'seo_geo_preset' ),
-			'default_language'             => $this->post_text( 'seo_geo_default_language' ),
-			'languages'                    => $this->parse_language_lines( $language_lines ),
-			'routing'                      => $this->post_key( 'seo_geo_routing' ),
-			'x_default'                    => $this->nullable_post_text( 'seo_geo_x_default' ),
-			'site_entity_type'             => $this->post_key( 'seo_geo_entity_type' ),
-			'confirm_identity'             => isset( $_POST['seo_geo_confirm_identity'] ),
-			'local_business'               => $local,
-			'crawler_policy'               => $crawlers,
-			'llms_txt_enabled'             => isset( $_POST['seo_geo_llms_txt_enabled'] ),
-			'markdown_alternates_enabled'  => isset( $_POST['seo_geo_markdown_alternates_enabled'] ),
+			'candidate' => array(
+				'preset'                      => $this->post_key( 'seo_geo_preset' ),
+				'default_language'            => $this->post_text( 'seo_geo_default_language' ),
+				'languages'                   => $this->parse_language_lines( $language_lines ),
+				'routing'                     => $this->post_key( 'seo_geo_routing' ),
+				'x_default'                   => $this->nullable_post_text( 'seo_geo_x_default' ),
+				'site_entity_type'            => $this->post_key( 'seo_geo_entity_type' ),
+				'confirm_identity'            => isset( $_POST['seo_geo_confirm_identity'] ),
+				'local_business'              => $local,
+				'crawler_policy'              => $crawlers,
+				'llms_txt_enabled'            => isset( $_POST['seo_geo_llms_txt_enabled'] ),
+				'markdown_alternates_enabled' => isset( $_POST['seo_geo_markdown_alternates_enabled'] ),
+			),
+			'confirmed' => isset( $_POST['seo_geo_preview_confirm'] ),
 		);
 	}
 
@@ -525,13 +527,7 @@ final class AdminSetupWizard {
 			? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) )
 			: '';
 
-		if ( 'POST' !== $method ) {
-			return false;
-		}
-
-		return isset( $_POST['seo_geo_setup_action'] )
-			&& is_string( $_POST['seo_geo_setup_action'] )
-			&& 'preview' === sanitize_key( wp_unslash( $_POST['seo_geo_setup_action'] ) );
+		return 'POST' === $method;
 	}
 
 	/**
