@@ -26,7 +26,9 @@ final class BaselineSnapshotStore {
 	 * Existing baselines are not replaced unless the caller explicitly opts in.
 	 *
 	 * @param array<string,mixed> $snapshot Baseline snapshot.
+	 * @param bool                $replace  Whether an existing baseline may be replaced.
 	 * @return array{saved:bool,id:string|null,saved_at:string|null,sha256:string|null,replaced:bool,reason:string|null}
+	 * @throws RuntimeException When the snapshot cannot be encoded.
 	 */
 	public function save( array $snapshot, bool $replace = false ): array {
 		$existing = $this->latest();
