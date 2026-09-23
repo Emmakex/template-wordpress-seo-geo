@@ -1,7 +1,13 @@
-document.addEventListener('DOMContentLoaded', function () {
-	var results = document.getElementById('seo-geo-setup-results');
+/**
+ * Focus Phase 9D validation results after page load.
+ */
+document.addEventListener(
+	'DOMContentLoaded',
+	function () {
+		var results = document.getElementById( 'seo-geo-setup-results' );
 
-	if (results) {
-		results.focus();
+		if ( results ) {
+			results.focus();
+		}
 	}
-});
+);
