@@ -86,6 +86,10 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminSandboxHandoffController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Review/DependencyReviewStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Portable/PortableClonePlanner.php',
+	MIGRATION_BRIDGE_DIR . '/src/Portable/PortableCloneJobStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Portable/PortablePackageManifest.php',
+	MIGRATION_BRIDGE_DIR . '/src/Portable/AdminPortableCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -138,7 +142,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Cutover/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Report/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Review/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Review/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Portable/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -175,6 +180,9 @@ $authorized_mutation_calls = array(
 		'activate_plugin',
 		'deactivate_plugins',
 		'switch_theme',
+	),
+	MIGRATION_BRIDGE_DIR . '/src/Portable/PortableCloneJobStore.php' => array(
+		'delete_option',
 	),
 );
 
@@ -346,6 +354,96 @@ foreach (
 ) {
 	if ( 1 !== preg_match( $scanner_guard, $content_scanner ) ) {
 		fail_migration_bridge( 'dependency-scan-privacy', 'Phase 8C content scanner is missing a required privacy guard.', MIGRATION_BRIDGE_DIR . '/src/Content/ContentDependencyScanner.php', $scanner_guard, 'missing' );
+	}
+}
+
+$portable_planner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Portable/PortableClonePlanner.php' );
+foreach (
+	array(
+		"'mode'           => 'local-subdirectory'",
+		"'production_mutation_allowed' => false",
+		"'destructive_overwrite_allowed'=> false",
+		"'target_must_be_empty'         => true",
+		"'credentials_exported'         => false",
+		"'target-directory-not-empty'",
+		"'target-table-prefix-exists'",
+		"'dependency-review-incomplete'",
+	) as $portable_plan_guard
+) {
+	if ( ! str_contains( $portable_planner, $portable_plan_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-plan',
+			'Portable clone planning is missing a required non-destructive target guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Portable/PortableClonePlanner.php',
+			$portable_plan_guard,
+			'missing'
+		);
+	}
+}
+
+$portable_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Portable/PortableCloneJobStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_migration_portable_clone_job_v1';",
+		"add_option( self::OPTION_NAME, \$job, '', false )",
+		"update_option( self::OPTION_NAME, \$job, false )",
+		"'status'         => 'planned'",
+		"'stage'          => 'inventory'",
+	) as $portable_store_guard
+) {
+	if ( ! str_contains( $portable_store, $portable_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-job-store',
+			'Portable clone job state must remain dedicated, non-autoloaded and resumable.',
+			MIGRATION_BRIDGE_DIR . '/src/Portable/PortableCloneJobStore.php',
+			$portable_store_guard,
+			'missing'
+		);
+	}
+}
+
+$portable_manifest = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Portable/PortablePackageManifest.php' );
+foreach (
+	array(
+		"'kind'           => 'seo-geo-portable-site-package'",
+		"'contains_private_site_data' => true",
+		"'repository_safe'            => false",
+		"'wp_config_included'         => false",
+		"'credentials_included'       => false",
+		"'auth_salts_included'        => false",
+		"'production_restore_allowed' => false",
+		"'blind_dynamic_data_restore_allowed' => false",
+	) as $portable_manifest_guard
+) {
+	if ( ! str_contains( $portable_manifest, $portable_manifest_guard ) ) {
+		fail_migration_bridge(
+			'portable-package-privacy',
+			'Portable package manifest is missing a required privacy or restore-safety guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Portable/PortablePackageManifest.php',
+			$portable_manifest_guard,
+			'missing'
+		);
+	}
+}
+
+$portable_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Portable/AdminPortableCloneController.php' );
+foreach (
+	array(
+		"current_user_can( 'manage_options' )",
+		'check_admin_referer( self::PREPARE_NONCE_ACTION )',
+		'check_admin_referer( self::CANCEL_NONCE_ACTION )',
+		"'admin_post_' . self::PREPARE_ACTION",
+		"'admin_post_' . self::CANCEL_ACTION",
+	) as $portable_controller_guard
+) {
+	if ( ! str_contains( $portable_controller, $portable_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-admin',
+			'Portable clone planning actions must remain administrator/nonce gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Portable/AdminPortableCloneController.php',
+			$portable_controller_guard,
+			'missing'
+		);
 	}
 }
 
