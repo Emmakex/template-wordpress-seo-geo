@@ -156,7 +156,13 @@ Do not copy credentials, private content or raw database/uploads artifacts into 
 
 ## Boundary with Phase 10D
 
-This document defines installation and migration prerequisites. Detailed production verification, rollback execution and disaster-recovery procedures are owned by Phase 10D.
+This document defines installation and migration prerequisites. The accepted production procedures are:
+
+- `docs/SANDBOX_TO_PRODUCTION.md` for sandbox exit and production entry;
+- `docs/PRODUCTION_VERIFICATION.md` for public production acceptance and abort criteria;
+- `docs/ROLLBACK_RECOVERY.md` for runtime rollback, data recovery and post-recovery verification.
+
+Installation is not complete merely because the theme activates; the applicable Phase 10D production checks must also pass.
 
 ## 10C acceptance evidence
 
