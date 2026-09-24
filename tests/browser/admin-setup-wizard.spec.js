@@ -201,8 +201,7 @@ test.describe('Phase 9 onboarding wizard', () => {
     });
 
     await expect(page.getByLabel('Preset')).toHaveValue('corporate');
-    await expect(page.getByLabel('Mapa de idiomas')).toContainText('en=en_US');
-    await expect(page.getByLabel('Mapa de idiomas')).toContainText('es=es_ES');
+    await expect(page.getByLabel('Mapa de idiomas')).toHaveValue(/en=en_US[\s\S]*es=es_ES/);
     await page.getByLabel('Confirmo que esta identidad describe el sitio público real.').check();
     await page.getByLabel('Confirmo que estos ajustes validados deben aplicarse a este sitio.').check();
     await page.getByRole('button', { name: 'Aplicar configuración' }).click();
