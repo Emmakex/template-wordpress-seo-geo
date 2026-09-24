@@ -2045,13 +2045,25 @@ Evidence:
 
 ### Microphase 10C — Client installation and cloning documentation
 
-Status: **active**
+Status: **implementation candidate**
 
 Deliverables:
 
 - migration/install documentation for real client sites;
 - documentation for project cloning and per-client customization;
 - documented safe update path for customized client builds.
+
+Current implementation scope:
+
+- `docs/CLIENT_INSTALLATION.md` defines clean-install and existing-site paths around the deterministic release ZIP;
+- existing production sites remain on the accepted legacy stack until sandbox, dependency, parity, quality and backup evidence are accepted;
+- the final baseline remains one self-contained theme with zero required SEO/GEO plugins; Migration Bridge is temporary adoption tooling only;
+- installation verification covers canonical/indexability, sitemap, hreflang, Schema, redirects, crawler policy, llms.txt/Markdown opt-ins, accessibility and performance;
+- `docs/CLIENT_CLONING.md` separates upstream-owned runtime/release machinery from client presentation customizations;
+- client-specific site values stay in onboarding/runtime configuration and secrets stay outside repository/release metadata;
+- customized updates require a reviewable three-way merge, relevant CI, deterministic client ZIP, sandbox verification and preservation of the previous accepted client artifact;
+- `scripts/ci/validate-client-delivery-docs.py` makes the operational invariants a Foundation contract;
+- the root README now points to Phase 10C and the client delivery guides instead of the obsolete Phase 9E pointer.
 
 ### Microphase 10D — Production verification and recovery
 
