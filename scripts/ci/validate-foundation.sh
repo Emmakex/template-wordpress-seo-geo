@@ -165,6 +165,7 @@ required_paths=(
   "packages/seo-geo-migration-bridge/src/Builders/ElementorDetector.php"
   "packages/seo-geo-migration-bridge/src/Builders/DiviDetector.php"
   "docs/MIGRATION_BRIDGE.md"
+  "docs/MIGRATION_BRIDGE_RELEASE.md"
   "docs/ONBOARDING.md"
   "docs/RELEASE_ARTIFACT.md"
   "docs/RELEASE_VERSIONING.md"
