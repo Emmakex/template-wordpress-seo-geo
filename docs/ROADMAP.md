@@ -1774,7 +1774,7 @@ All exit criteria are satisfied:
 
 ## Phase 9 — Theme onboarding and operator experience
 
-Status: **active**
+Status: **complete**
 
 The onboarding layer serves both clean installations and sites that arrived through Phase 8 migration. The theme owns onboarding and remains zero-required-plugin.
 
@@ -1949,7 +1949,7 @@ Evidence:
 
 ### Microphase 9F — Onboarding acceptance
 
-Status: **implementation candidate**
+Status: **complete**
 
 Deliverables:
 
@@ -1972,11 +1972,78 @@ Current implementation scope:
 
 The onboarding flow must not install or require an SEO/GEO plugin to complete the baseline setup.
 
+9F and Phase 9 are closed.
+
+Evidence:
+
+- final candidate `182fd363e452b99c10fa92a9ce7a762aeb1e576f` passed Foundation `35940051706`, Package `35940051681`, PHP Quality `35940051684`, WordPress Smoke `35940051804`, Self-contained Theme `35940051739`, Native Multilingual `35940051931`, Accessibility/Responsive `35940051597` and Performance `35940051711`;
+- PR #101 was squash-merged as `d09355c1de026a63338691c68366df467f49f8b9`;
+- post-merge `main` repeated all eight gates successfully: Foundation `35940301513`, Package `35940301507`, PHP Quality `35940301544`, WordPress Smoke `35940301522`, Self-contained Theme `35940301517`, Native Multilingual `35940301500`, Accessibility/Responsive `35940301551` and Performance `35940301533`;
+- Phase 9F exposed and fixed the clean-install nullable migration-handoff regression before release;
+- final browser acceptance uses only the self-contained theme with zero active plugins and proves EN/ES persistent/idempotent onboarding.
+
 ## Phase 10 — Distribution and production release
+
+Status: **active**
+
+### Microphase 10A — Reproducible release ZIP and runtime integrity
+
+Status: **active**
+
+10A establishes the distributable artifact before versioning, upgrade and real-site release work.
+
+Deliverables:
+
+- deterministic single-theme ZIP from the self-contained theme build;
+- stable ZIP root `seo-geo-theme/` with no repository-only files;
+- SHA-256 artifact checksum;
+- embedded SEO/GEO runtime integrity manifest/check;
+- reproducibility acceptance proving two builds from the same source are byte-identical;
+- release-artifact CI evidence without publishing a GitHub Release yet.
+
+### Microphase 10B — Versioning, changelog and upgrade acceptance
 
 Status: **planned**
 
 Deliverables:
+
+- version source of truth and release metadata;
+- changelog contract;
+- clean-install and upgrade tests with zero required plugins;
+- compatibility/rollback checks across supported WordPress/PHP baseline.
+
+### Microphase 10C — Client installation and cloning documentation
+
+Status: **planned**
+
+Deliverables:
+
+- migration/install documentation for real client sites;
+- documentation for project cloning and per-client customization;
+- documented safe update path for customized client builds.
+
+### Microphase 10D — Production verification and recovery
+
+Status: **planned**
+
+Deliverables:
+
+- production verification checklist;
+- documented rollback/recovery checklist;
+- sandbox-to-production acceptance checklist.
+
+### Microphase 10E — Stable release decision
+
+Status: **planned**
+
+Deliverables:
+
+- decision on deprecating/removing the transitional standalone Core plugin wrapper;
+- real-site production acceptance after sandbox validation;
+- first stable release go/no-go evidence.
+
+Phase 10 overall deliverables:
+
 
 - reproducible **single-theme ZIP** build;
 - embedded SEO/GEO runtime integrity check;

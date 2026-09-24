@@ -332,7 +332,7 @@ The runtime acceptance proved atomic option-only setup application, exact rollba
 
 ## Phase 9F — Onboarding acceptance
 
-Status: **implementation candidate**
+Status: **complete**
 
 9F is the final onboarding acceptance pass. It does not introduce a new product owner or persistence boundary; it consolidates clean-install and migrated-site proof across the existing Phase 9 setup flow.
 
@@ -360,3 +360,16 @@ The acceptance surface now exercises the production onboarding shape rather than
 - both clean and migrated setup paths preserve zero active plugins and stable page counts;
 - setup copy explicitly states in EN/ES that no SEO/GEO plugin is required for baseline setup;
 - the static setup contract rejects common operator guidance that would instruct installation of an SEO/GEO plugin.
+
+
+### 9F final acceptance evidence
+
+Final candidate `182fd363e452b99c10fa92a9ce7a762aeb1e576f` passed all eight gates: Foundation `35940051706`, Package `35940051681`, PHP Quality `35940051684`, WordPress Smoke `35940051804`, Self-contained Theme `35940051739`, Native Multilingual `35940051931`, Accessibility/Responsive `35940051597` and Performance `35940051711`.
+
+PR #101 was squash-merged as `d09355c1de026a63338691c68366df467f49f8b9`.
+
+Post-merge `main` repeated all eight gates successfully: Foundation `35940301513`, Package `35940301507`, PHP Quality `35940301544`, WordPress Smoke `35940301522`, Self-contained Theme `35940301517`, Native Multilingual `35940301500`, Accessibility/Responsive `35940301551` and Performance `35940301533`.
+
+Phase 9F also fixed the clean-install setup regression where absent migration metadata was incorrectly treated as a required array. The final acceptance now permanently covers both `site_mode=clean` and `site_mode=migrated`, with zero active plugins, stable page counts, privacy-bounded reporting and EN/ES persistent/idempotent Apply behavior.
+
+Phase 9 onboarding is complete. Distribution work continues in Roadmap Phase 10.
