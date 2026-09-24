@@ -98,7 +98,7 @@ def main() -> int:
             "### Mode B — No staging, but WordPress/hosting access exists",
             "### Mode C — Limited WordPress access",
             "retain production as data authority",
-            "stale sandbox databases",
+            "Stale sandbox databases",
             "SEO/GEO Manager coordinates portable-sandbox/migration operations.",
         ),
         "PORTABLE_SANDBOX.md",
