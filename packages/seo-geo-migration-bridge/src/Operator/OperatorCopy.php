@@ -196,6 +196,7 @@ final class OperatorCopy {
 				'baseline_capture_success'       => 'La línea base SEO/GEO se capturó y guardó correctamente.',
 				'baseline_capture_exists'        => 'Ya existe una línea base. No se ha reemplazado.',
 				'baseline_capture_error'         => 'No se pudo capturar o guardar la línea base. No se ejecutó ninguna acción de migración.',
+				'next_sandbox_preflight'         => 'Completa todas las protecciones de aislamiento, recuperación y revisión de dependencias del sandbox antes de ejecutar acciones de migración.',
 				'next_continue_migration'        => 'Continúa la migración en sandbox y la validación de paridad antes del cambio a producción.',
 				'next_complete_cutover'          => 'Completa y acepta explícitamente el cambio reversible a producción antes de la entrega final.',
 				'next_generate_report'           => 'Genera y guarda el informe final de migración después de aceptar el cambio a producción.',
