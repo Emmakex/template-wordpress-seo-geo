@@ -7,6 +7,8 @@ PORTABLE_RUNNER="$TMP_DIR/migration-portable-clone-runner.php"
 cat >"$PORTABLE_RUNNER" <<'PHP'
 <?php
 
+use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
+use SeoGeo\MigrationBridge\Operator\OperatorCopy;
 use SeoGeo\MigrationBridge\Plugin;
 use SeoGeo\MigrationBridge\Portable\AdminPortableCloneController;
 use SeoGeo\MigrationBridge\Portable\PortableCloneJobStore;
@@ -74,6 +76,12 @@ $store->cancel();
 $cancelled = $store->latest();
 $cleared = $store->clear_terminal();
 
+wp_set_current_user( 1 );
+$operator = new AdminOperatorScreen( Plugin::operator_status(), new OperatorCopy( 'en_US' ) );
+ob_start();
+$operator->render_page();
+$operator_html = (string) ob_get_clean();
+
 foreach ( $reviewed_ids as $component_id ) {
 	$reviews->clear( $component_id );
 }
@@ -93,6 +101,7 @@ echo wp_json_encode(
 		'cancelled'          => $cancelled,
 		'cleared'            => $cleared,
 		'after_clear'        => $store->latest(),
+		'operator_html'      => $operator_html,
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 );
@@ -172,6 +181,13 @@ assert payload["cancelled"]["status"] == "cancelled"
 assert payload["cancelled"]["stage"] == "cancelled"
 assert payload["cleared"] is True
 assert payload["after_clear"] is None
+
+html = payload["operator_html"]
+assert "<h2>Portable clone</h2>" in html
+assert 'value="seo_geo_migration_prepare_portable_clone"' in html
+assert 'name="target_directory"' in html
+assert "Prepare portable clone job" in html
+assert "another migration plugin" in html
 
 print("ok")
 PY
