@@ -274,14 +274,14 @@ final class IncrementalBaselineCapture {
 
 		$sitemaps = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
 
-		$sitemaps[] = array(
+		$sitemaps[]        = array(
 			'url'            => $url,
 			'status'         => $response['status'],
 			'sha256'         => '' !== $response['body'] ? hash( 'sha256', $response['body'] ) : null,
 			'location_count' => count( $locations ),
 			'error'          => $response['error'],
 		);
-		$state['sitemaps']        = $sitemaps;
+		$state['sitemaps'] = $sitemaps;
 
 		foreach ( $locations as $location ) {
 			$normalized = $this->normalize_same_origin_url( $location );
@@ -399,24 +399,24 @@ final class IncrementalBaselineCapture {
 		) {
 			$redirects = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
 
-			$redirects[] = array(
+			$redirects[]        = array(
 				'from'   => $url,
 				'to'     => $response['headers']['location'],
 				'status' => $response['status'],
 			);
-			$state['redirects']        = $redirects;
+			$state['redirects'] = $redirects;
 		}
 
 		$pages = is_array( $state['pages'] ?? null ) ? $state['pages'] : array();
 
-		$pages[] = array_merge(
+		$pages[]        = array_merge(
 			$row,
 			$signals,
 			array(
 				'request_error' => $response['error'],
 			)
 		);
-		$state['pages']        = $pages;
+		$state['pages'] = $pages;
 
 		return $state;
 	}
@@ -524,11 +524,11 @@ final class IncrementalBaselineCapture {
 			}
 		}
 
-		$queue[] = array(
+		$queue[]                = array(
 			'url'   => $normalized,
 			'depth' => $depth,
 		);
-		$state['sitemap_queue']                = $queue;
+		$state['sitemap_queue'] = $queue;
 	}
 
 	/**
