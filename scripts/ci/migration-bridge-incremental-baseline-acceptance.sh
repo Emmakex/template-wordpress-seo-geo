@@ -228,4 +228,4 @@ PY
   fail_smoke "incremental-baseline-contract" "Incremental baseline contract is invalid" "0.8.3-compatible resumable capture with selectable 1-20 page batches" "${INCREMENTAL_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Incremental baseline OK: persisted/reconstructed between steps, <=2 requests per step, final baseline complete.\n'
+printf '[smoke] Incremental baseline OK: 0.8.3 progress compatible; default=10; selectable batch=20 persisted; final baseline complete.\n'
