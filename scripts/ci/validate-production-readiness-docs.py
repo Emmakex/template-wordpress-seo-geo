@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
 PRODUCTION = ROOT / "docs/PRODUCTION_VERIFICATION.md"
@@ -97,10 +98,37 @@ def main() -> int:
         raise SystemExit("Production acceptance example has an unexpected top-level schema")
     if record["schema_version"] != 1 or record["mode"] != "seo-geo-production-acceptance":
         raise SystemExit("Production acceptance example identity is invalid")
+
+    production_url = urlparse(record["production_origin"])
+    sandbox_url = urlparse(record["sandbox"]["origin"])
+    if production_url.scheme not in {"http", "https"} or not production_url.netloc:
+        raise SystemExit("Production origin must be an absolute HTTP(S) URL")
+    if sandbox_url.scheme not in {"http", "https"} or not sandbox_url.netloc:
+        raise SystemExit("Sandbox origin must be an absolute HTTP(S) URL")
+    production_origin = (production_url.scheme, production_url.netloc.lower())
+    sandbox_origin = (sandbox_url.scheme, sandbox_url.netloc.lower())
+    if production_origin == sandbox_origin:
+        raise SystemExit("Sandbox and production origins must be distinct")
     if not re.fullmatch(r"[0-9a-f]{64}", record["release"]["zip_sha256"]):
         raise SystemExit("Production acceptance release SHA-256 must be 64 lowercase hex chars")
     if not re.fullmatch(r"[0-9a-f]{40}", record["release"]["upstream_commit"]):
         raise SystemExit("Production acceptance upstream commit must be 40 lowercase hex chars")
+    if not re.fullmatch(r"[0-9a-f]{64}", record["rollback"]["previous_zip_sha256"]):
+        raise SystemExit("Rollback ZIP SHA-256 must be 64 lowercase hex chars")
+    if not record["backups"]["database_reference"]:
+        raise SystemExit("Production acceptance must include a database recovery reference")
+    if not record["rollback"]["artifact_reference"]:
+        raise SystemExit("Production acceptance must include a rollback artifact reference")
+    expected_checks = {
+        "runtime",
+        "seo_geo",
+        "functionality",
+        "accessibility",
+        "performance",
+        "logs",
+    }
+    if set(record["production_checks"]) != expected_checks:
+        raise SystemExit("Production acceptance checks do not match the Phase 10D schema")
     if record["sandbox"]["migration_marker"] is not True:
         raise SystemExit("Sandbox example must retain the migration marker")
     if record["sandbox"]["search_visibility"] is not False:
