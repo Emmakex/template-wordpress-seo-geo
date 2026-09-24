@@ -29,8 +29,8 @@ async function gotoWizard(page, language = 'en') {
   await expect(page.locator('.seo-geo-setup-wizard')).toBeVisible();
 }
 
-async function fillCorporateCandidate(page) {
-  await page.locator('#seo-geo-preset').selectOption('corporate');
+async function fillSetupCandidate(page, preset = 'corporate') {
+  await page.locator('#seo-geo-preset').selectOption(preset);
   await page.locator('#seo-geo-default-language').fill('en');
   await page.locator('#seo-geo-languages').fill('en=en_US\nes=es_ES');
   await page.locator('#seo-geo-routing').selectOption('prefix');
@@ -147,8 +147,15 @@ test.describe('Phase 9F onboarding acceptance', () => {
   });
 
   test('applies clean onboarding in English and proves an unchanged Spanish rerun', async ({ page }, testInfo) => {
+    const presetByProject = {
+      'mobile-320': 'corporate',
+      'tablet-768': 'publisher',
+      'desktop-1440': 'ecommerce',
+    };
+    const preset = presetByProject[testInfo.project.name] || 'saas-digital-product';
+
     await gotoWizard(page, 'en');
-    await fillCorporateCandidate(page);
+    await fillSetupCandidate(page, preset);
     await page.locator('#seo-geo-apply-confirm').check();
 
     await page.getByRole('button', { name: 'Apply setup' }).click();
@@ -175,7 +182,7 @@ test.describe('Phase 9F onboarding acceptance', () => {
     await page.goto('/wp-admin/themes.php?page=seo-geo-setup&fixture_lang=es', {
       waitUntil: 'networkidle',
     });
-    await fillCorporateCandidate(page);
+    await fillSetupCandidate(page, preset);
     await page.locator('#seo-geo-apply-confirm').check();
 
     await page.getByRole('button', { name: 'Aplicar configuración' }).click();
