@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
+use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
+use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
 
 /**
  * Renders one capability-gated, read-only migration status screen under Tools.
@@ -83,6 +85,7 @@ final class AdminOperatorScreen {
 			<h1><?php echo esc_html( $this->copy->text( 'page_title' ) ); ?></h1>
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
 			<?php $this->render_baseline_result_notice(); ?>
+			<?php $this->render_dependency_review_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -135,6 +138,8 @@ final class AdminOperatorScreen {
 								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_reason' ) ); ?></th>
 								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_active' ) ); ?></th>
 								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_resources' ) ); ?></th>
+								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_review' ) ); ?></th>
+								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_action' ) ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -147,6 +152,24 @@ final class AdminOperatorScreen {
 										<td><?php echo esc_html( (string) ( $component['reason'] ?? '' ) ); ?></td>
 										<td><?php echo esc_html( true === ( $component['active'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td>
 										<td><?php echo esc_html( null !== ( $component['resource_count'] ?? null ) ? (string) (int) $component['resource_count'] : '—' ); ?></td>
+										<td>
+											<?php if ( 'UNKNOWN' === ( $component['classification'] ?? null ) ) : ?>
+												<?php if ( true === ( $component['reviewed'] ?? false ) ) : ?>
+													<code><?php echo esc_html( (string) ( $component['review_decision'] ?? '' ) ); ?></code>
+												<?php else : ?>
+													<?php echo esc_html( $this->copy->text( 'review_pending' ) ); ?>
+												<?php endif; ?>
+											<?php else : ?>
+												—
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ( 'UNKNOWN' === ( $component['classification'] ?? null ) ) : ?>
+												<?php $this->render_dependency_review_form( $component ); ?>
+											<?php else : ?>
+												—
+											<?php endif; ?>
+										</td>
 									</tr>
 								<?php endif; ?>
 							<?php endforeach; ?>
@@ -156,7 +179,12 @@ final class AdminOperatorScreen {
 			<?php endif; ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'review_heading' ) ); ?></h2>
+			<p><?php echo esc_html( $this->copy->text( 'dependency_review_help' ) ); ?></p>
 			<dl>
+				<dt><?php echo esc_html( $this->copy->text( 'label_reviewed_unknown' ) ); ?></dt>
+				<dd><?php echo esc_html( (string) (int) ( $status['dependency_plan']['reviewed_unknown_count'] ?? 0 ) ); ?></dd>
+				<dt><?php echo esc_html( $this->copy->text( 'label_unreviewed_unknown' ) ); ?></dt>
+				<dd><?php echo esc_html( (string) (int) ( $status['dependency_plan']['unreviewed_unknown_count'] ?? 0 ) ); ?></dd>
 				<dt><?php echo esc_html( $this->copy->text( 'label_blocking_review' ) ); ?></dt>
 				<dd><?php echo esc_html( (string) (int) ( $status['final_report']['blocking_review_count'] ?? 0 ) ); ?></dd>
 				<dt><?php echo esc_html( $this->copy->text( 'label_advisory_review' ) ); ?></dt>
@@ -218,6 +246,62 @@ final class AdminOperatorScreen {
 		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
 			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after an explicit dependency review action.
+	 */
+	private function render_dependency_review_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after the nonce-verified admin action.
+		$status = isset( $_GET['seo_geo_dependency_review'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_dependency_review'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'saved'   => 'dependency_review_saved',
+			'cleared' => 'dependency_review_cleared',
+			default   => null,
+		};
+
+		if ( null === $key ) {
+			return;
+		}
+		?>
+		<div class="notice notice-success is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render one explicit planning-only review form for an UNKNOWN dependency.
+	 *
+	 * @param array<string,mixed> $component Bounded dependency component.
+	 */
+	private function render_dependency_review_form( array $component ): void {
+		$component_id = is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '';
+		$current      = is_string( $component['review_decision'] ?? null ) ? $component['review_decision'] : 'UNREVIEWED';
+		if ( '' === $component_id ) {
+			return;
+		}
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( AdminDependencyReviewController::ACTION ); ?>">
+			<input type="hidden" name="component_id" value="<?php echo esc_attr( $component_id ); ?>">
+			<?php wp_nonce_field( AdminDependencyReviewController::NONCE_ACTION . ':' . $component_id ); ?>
+			<label class="screen-reader-text" for="seo-geo-review-<?php echo esc_attr( md5( $component_id ) ); ?>">
+				<?php echo esc_html( $this->copy->text( 'label_review' ) ); ?>
+			</label>
+			<select id="seo-geo-review-<?php echo esc_attr( md5( $component_id ) ); ?>" name="review_decision">
+				<option value="UNREVIEWED" <?php selected( $current, 'UNREVIEWED' ); ?>><?php echo esc_html( $this->copy->text( 'review_unreviewed' ) ); ?></option>
+				<?php foreach ( DependencyReviewStore::allowed_decisions() as $decision ) : ?>
+					<option value="<?php echo esc_attr( $decision ); ?>" <?php selected( $current, $decision ); ?>><?php echo esc_html( $decision ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<?php submit_button( $this->copy->text( 'review_save' ), 'secondary small', 'submit', false ); ?>
+		</form>
 		<?php
 	}
 
