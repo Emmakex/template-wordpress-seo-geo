@@ -11,7 +11,7 @@ This document fixes the first real-site acceptance target for the self-contained
 - Candidate main commit: `d3ff8353c08cfce6c796837a74e372ba7daf0073`
 - Candidate ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`
 - Stable decision: `no-go`
-- Pilot status: **production baseline + UNKNOWN review complete — sandbox clone/acceptance pending**
+- Pilot status: **production baseline + UNKNOWN review complete; Migration Bridge 0.8.7 accepted — sandbox clone/acceptance pending**
 
 The production Migration Bridge baseline was completed on 2026-09-24 and the operator screen reported `SEO/GEO baseline = Ready`. This is operator-confirmed real-site evidence; no private baseline payload or production credentials are committed to the repository. The dependency summary at that point was `KEEP=4`, `REPLACE=2`, `MIGRATE=1`, `OPTIONAL=0`, `REMOVE-CANDIDATE=0`, `UNKNOWN=13`. The v0.8.5 handoff generated on 2026-09-24 reported 4,311 discovered public resources, 500 captured resources, zero request failures and a truncated baseline by the configured cap. A second v0.8.6 handoff generated at `2026-09-24T19:56:28Z` recorded all 13 UNKNOWN items as explicitly reviewed: 10 operator decisions `KEEP` and 3 `MIGRATE`, with zero unreviewed UNKNOWN items. The bounded handoff file SHA-256 is `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`. These review decisions are planning evidence only and do not authorize production mutation.
 
@@ -24,6 +24,10 @@ Production remains on the current accepted site until a separate sandbox clone p
 ## Sandbox handoff status
 
 Production baseline capture and UNKNOWN dependency review are complete. The regenerated privacy-bounded Migration Bridge 0.8.6 handoff records `reviewed_unknown=13`, `unreviewed_unknown=0` and `complete=true`. The three UNKNOWN items marked `MIGRATE` are Classic Editor, Cookie Notice and Kairoseth AI Web Readiness; the remaining ten UNKNOWN items are recorded as operator `KEEP`. These decisions remain separate from raw dependency-graph classifications and do not authorize production mutation. The next accepted operation is to create a distinct non-production clone, carry the bounded review evidence into that clone, satisfy all sandbox isolation guards and run migration/parity/quality acceptance there.
+
+Migration Bridge **0.8.7** is the accepted bridge build for the next sandbox step. It was merged through PR #122 as `a6dfb95cdcbb33a823b8c8e12ff18556c47471f2`; all seven post-merge gates passed. The installable ZIP SHA-256 is `683d5a78c56b6c073963703153d2969f71f5b8f17e16dab7da4b05878133ebc9`.
+
+The sandbox is not ready merely because a hosting clone exists. Before migration actions, the operator preflight must prove a distinct origin from the production baseline, `SEO_GEO_MIGRATION_SANDBOX=true`, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true`, `SEO_GEO_MIGRATION_BACKUPS_READY=true`, search visibility disabled, destination Theme active, baseline/dependency graph available and UNKNOWN review complete.
 
 ## Sandbox preparation
 
