@@ -171,9 +171,9 @@ final class SandboxMigrationLab {
 			};
 
 			$states[] = array(
-				'component_id'   => $component_id,
-				'state'          => $state,
-				'classification' => $classification,
+				'component_id'    => $component_id,
+				'state'           => $state,
+				'classification'  => $classification,
 				'review_decision' => $review_decision,
 			);
 		}
