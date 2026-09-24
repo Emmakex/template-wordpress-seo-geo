@@ -2168,7 +2168,7 @@ Evidence:
 
 ### Microphase 10E.2 — Emmake baseline review and sandbox handoff
 
-Status: **active — production baseline complete; sandbox acceptance pending**
+Status: **active — production baseline + UNKNOWN review complete; sandbox clone/acceptance pending**
 
 Purpose:
 
@@ -2179,7 +2179,10 @@ Current real-site evidence:
 - emmake.com baseline reported `Ready` on 2026-09-24;
 - dependency summary: KEEP=4, REPLACE=2, MIGRATE=1, OPTIONAL=0, REMOVE-CANDIDATE=0, UNKNOWN=13;
 - first v0.8.5 sandbox handoff was generated/downloaded with 4,311 discovered resources, 500 captured, zero request failures and `truncated=true`;
-- v0.8.6 adds bounded UNKNOWN review decisions stored separately from raw dependency-graph authority;
+- regenerated v0.8.6 handoff at `2026-09-24T19:56:28Z` completed UNKNOWN review: `reviewed_unknown=13`, `unreviewed_unknown=0`, `complete=true`;
+- operator decisions across the 13 UNKNOWN items are 10 `KEEP` and 3 `MIGRATE`; the three `MIGRATE` items are Classic Editor, Cookie Notice and Kairoseth AI Web Readiness;
+- bounded handoff evidence SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
+- v0.8.6 keeps operator review decisions stored separately from raw dependency-graph authority;
 - production cutover remains missing/not authorized;
 - final migration report remains missing;
 - no production theme switch has occurred.
@@ -2194,6 +2197,8 @@ Deliverables:
 - create a distinct sandbox clone using fresh backup references;
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
+
+Current execution pointer: create the distinct Emmake sandbox clone from fresh recoverable backup references, set `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions, install the exact Theme candidate, then execute migration + parity + accessibility/performance acceptance in sandbox.
 
 10E.2 closes only after the sandbox is actually created and accepted. Production remains unchanged until then.
 
