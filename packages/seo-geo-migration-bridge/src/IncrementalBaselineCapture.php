@@ -22,9 +22,19 @@ final class IncrementalBaselineCapture {
 	private const DEFAULT_LIMIT = 500;
 
 	/**
-	 * Public pages fetched during one request.
+	 * Minimum operator-selectable public page batch size.
 	 */
-	private const PAGE_BATCH_SIZE = 2;
+	public const MIN_BATCH_SIZE = 1;
+
+	/**
+	 * Maximum operator-selectable public page batch size.
+	 */
+	public const MAX_BATCH_SIZE = 20;
+
+	/**
+	 * Recommended/default public page batch size.
+	 */
+	public const DEFAULT_BATCH_SIZE = 10;
 
 	/**
 	 * URL inventory service.
@@ -87,16 +97,22 @@ final class IncrementalBaselineCapture {
 	/**
 	 * Advance the capture by one bounded unit of work.
 	 *
-	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,error:string|null}
+	 * @param int|null $batch_size Requested page batch size; clamped to the accepted 1-20 range.
+	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,batch_size:int,error:string|null}
 	 */
-	public function advance(): array {
+	public function advance( ?int $batch_size = null ): array {
 		if ( is_array( $this->baseline_store->latest() ) ) {
-			return $this->result( 'complete', 'complete', 1, 1, null );
+			return $this->result( 'complete', 'complete', 1, 1, self::DEFAULT_BATCH_SIZE, null );
 		}
 
 		$state = $this->progress_store->latest();
 		if ( ! is_array( $state ) || 'complete' === ( $state['status'] ?? null ) ) {
-			$state = $this->initial_state();
+			$effective_batch_size = $this->normalize_batch_size( $batch_size ?? self::DEFAULT_BATCH_SIZE );
+			$state                = $this->initial_state( $effective_batch_size );
+		} else {
+			$stored_batch_size    = isset( $state['batch_size'] ) ? (int) $state['batch_size'] : self::DEFAULT_BATCH_SIZE;
+			$effective_batch_size = $this->normalize_batch_size( $batch_size ?? $stored_batch_size );
+			$state['batch_size']  = $effective_batch_size;
 		}
 
 		if ( 'error' === ( $state['status'] ?? null ) ) {
@@ -131,16 +147,16 @@ final class IncrementalBaselineCapture {
 	/**
 	 * Return bounded progress without advancing work.
 	 *
-	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,error:string|null}
+	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,batch_size:int,error:string|null}
 	 */
 	public function status(): array {
 		if ( is_array( $this->baseline_store->latest() ) ) {
-			return $this->result( 'complete', 'complete', 1, 1, null );
+			return $this->result( 'complete', 'complete', 1, 1, self::DEFAULT_BATCH_SIZE, null );
 		}
 
 		$state = $this->progress_store->latest();
 		if ( ! is_array( $state ) ) {
-			return $this->result( 'idle', 'idle', 0, 0, null );
+			return $this->result( 'idle', 'idle', 0, 0, self::DEFAULT_BATCH_SIZE, null );
 		}
 
 		return $this->status_from_state( $state );
@@ -151,7 +167,7 @@ final class IncrementalBaselineCapture {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function initial_state(): array {
+	private function initial_state( int $batch_size ): array {
 		return array(
 			'schema_version'   => 1,
 			'status'           => 'running',
@@ -159,6 +175,7 @@ final class IncrementalBaselineCapture {
 			'started_at'       => gmdate( DATE_ATOM ),
 			'updated_at'       => gmdate( DATE_ATOM ),
 			'limit'            => self::DEFAULT_LIMIT,
+			'batch_size'       => $this->normalize_batch_size( $batch_size ),
 			'robots_txt'       => array(
 				'url'          => home_url( '/robots.txt' ),
 				'status'       => 0,
@@ -337,7 +354,11 @@ final class IncrementalBaselineCapture {
 
 		$cursor = isset( $state['cursor'] ) ? (int) $state['cursor'] : 0;
 
-		$end = min( count( $rows ), $cursor + self::PAGE_BATCH_SIZE );
+		$batch_size = $this->normalize_batch_size(
+			isset( $state['batch_size'] ) ? (int) $state['batch_size'] : self::DEFAULT_BATCH_SIZE
+		);
+
+		$end = min( count( $rows ), $cursor + $batch_size );
 
 		for ( $index = $cursor; $index < $end; ++$index ) {
 			$row = is_array( $rows[ $index ] ?? null ) ? $rows[ $index ] : array();
@@ -535,7 +556,7 @@ final class IncrementalBaselineCapture {
 	 * Convert persistent state to bounded operator progress.
 	 *
 	 * @param array<string,mixed> $state Current state.
-	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,error:string|null}
+	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,batch_size:int,error:string|null}
 	 */
 	private function status_from_state( array $state ): array {
 		$status = is_string( $state['status'] ?? null ) ? $state['status'] : 'running';
@@ -560,9 +581,12 @@ final class IncrementalBaselineCapture {
 			$total = $processed + count( $queue );
 		}
 
+		$batch_size = $this->normalize_batch_size(
+			isset( $state['batch_size'] ) ? (int) $state['batch_size'] : self::DEFAULT_BATCH_SIZE
+		);
 		$error = is_string( $state['error'] ?? null ) && '' !== $state['error'] ? $state['error'] : null;
 
-		return $this->result( $status, $phase, $processed, $total, $error );
+		return $this->result( $status, $phase, $processed, $total, $batch_size, $error );
 	}
 
 	/**
@@ -572,10 +596,11 @@ final class IncrementalBaselineCapture {
 	 * @param string      $phase     Current capture phase.
 	 * @param int         $processed Processed units.
 	 * @param int         $total     Total known units.
-	 * @param string|null $error     Bounded error code.
-	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,error:string|null}
+	 * @param int         $batch_size Active page batch size.
+	 * @param string|null $error      Bounded error code.
+	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,batch_size:int,error:string|null}
 	 */
-	private function result( string $status, string $phase, int $processed, int $total, ?string $error ): array {
+	private function result( string $status, string $phase, int $processed, int $total, int $batch_size, ?string $error ): array {
 		$percent = 0 < $total ? (int) floor( ( $processed / $total ) * 100 ) : 0;
 		if ( 'complete' === $status ) {
 			$percent = 100;
@@ -586,9 +611,19 @@ final class IncrementalBaselineCapture {
 			'phase'     => $phase,
 			'processed' => max( 0, $processed ),
 			'total'     => max( 0, $total ),
-			'percent'   => max( 0, min( 100, $percent ) ),
-			'error'     => $error,
+			'percent'    => max( 0, min( 100, $percent ) ),
+			'batch_size' => $this->normalize_batch_size( $batch_size ),
+			'error'      => $error,
 		);
+	}
+
+	/**
+	 * Clamp one requested page batch size to the accepted operator range.
+	 *
+	 * @param int $batch_size Requested batch size.
+	 */
+	private function normalize_batch_size( int $batch_size ): int {
+		return max( self::MIN_BATCH_SIZE, min( self::MAX_BATCH_SIZE, $batch_size ) );
 	}
 
 	/**
