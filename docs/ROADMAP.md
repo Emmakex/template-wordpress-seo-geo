@@ -2213,6 +2213,84 @@ Migration Bridge v0.8.7 acceptance evidence:
 - post-merge Migration Bridge Release CI `36054164341` passed;
 - deterministic installable v0.8.7 ZIP SHA-256: `683d5a78c56b6c073963703153d2969f71f5b8f17e16dab7da4b05878133ebc9`.
 
+### Microphase 10E.2A — Portable Clone Engine
+
+Status: **active — remove external migration-plugin dependency before real-site sandbox acceptance closes**
+
+Purpose:
+
+Make the Migration Bridge capable of preparing its own migration environment instead of requiring a third-party cloning/migration plugin. This remains transitional Theme-acceptance work inside Phase 10E; it does not start SEO/GEO Manager Phase 11.
+
+Product rule:
+
+> A client may already have staging, but safe cloning/export/import must be a capability of our migration workflow, not a prerequisite supplied by another plugin.
+
+Execution slices:
+
+1. **10E.2A.1 — clone/package contract + resumable job lifecycle**
+   - provider-neutral local-clone/export/import modes;
+   - capability/nonce-gated operator actions;
+   - non-autoloaded resumable job state;
+   - strict target-path/table-prefix validation;
+   - package manifest with checksums and explicit private-data classification;
+   - no file/database copy yet.
+2. **10E.2A.2 — local same-host subdirectory clone**
+   - incremental filesystem inventory/copy with target recursion excluded;
+   - isolated target database/table prefix;
+   - resumable table copy;
+   - destination `wp-config.php` rewrite/injection;
+   - no destructive overwrite of a non-empty unknown target.
+3. **10E.2A.3 — URL/data rewrite**
+   - source → sandbox URL rewrite across WordPress core data and supported custom tables;
+   - serialized-data-safe transformations;
+   - explicit unsupported serialized/object payload review instead of silent corruption;
+   - preserve production as data authority.
+4. **10E.2A.4 — sandbox hardening**
+   - `blog_public=0`, sandbox markers, outbound transactional safeguards and cron policy;
+   - no staging canonical/hreflang/sitemap leakage;
+   - independent mutable storage verification;
+   - automatic handoff/preflight integration.
+5. **10E.2A.5 — portable export/import**
+   - resumable protected package creation;
+   - segmented files/database payloads with SHA-256 integrity;
+   - credentials/secrets excluded from the package contract where destination runtime can supply them;
+   - authenticated import, integrity verification and resumable restore;
+   - explicit package cleanup/expiry.
+6. **10E.2A.6 — recovery + real-host acceptance**
+   - interruption/resume acceptance;
+   - low-memory/shared-hosting acceptance;
+   - cleanup after success/failure/timeout;
+   - Emmake dogfood using `/nuevaweb/`;
+   - prove export/import on a second isolated WordPress fixture.
+
+Permanent safety boundaries:
+
+- never overwrite production or a non-empty unknown destination automatically;
+- never treat a URL folder alone as proof of isolation;
+- stale sandbox databases never overwrite newer production dynamic data;
+- cloning/export/import packages are sensitive operational artifacts and never enter repository evidence;
+- source credentials are never displayed in operator output or handoff JSON;
+- every mutating step is resumable and has an idempotent checkpoint;
+- target file/database writes are bounded to the explicitly approved destination;
+- package/clone cleanup must be possible without touching production content.
+
+### Microphase 10E.2B — Emmake sandbox migration acceptance
+
+Status: **waiting on isolated clone; may use the operator-created `/nuevaweb/` clone while 10E.2A removes that manual dependency for future clients**
+
+Acceptance sequence:
+
+- clone production completely into the approved isolated target;
+- install the accepted Migration Bridge build and exact Theme candidate;
+- pass sandbox preflight;
+- run dependency migration;
+- pass SEO/GEO parity;
+- pass accessibility/responsive/performance and critical functionality;
+- retain fresh production recovery references;
+- only then prepare reversible production cutover.
+
+Current engineering pointer: **10E.2A.1 — clone/package contract + resumable job lifecycle**. Eduardo may create the `/nuevaweb/` clone manually in parallel so 10E.2B can resume as soon as the clone is ready.
+
 10E.2 closes only after the sandbox is actually created and accepted. Production remains unchanged until then.
 
 Phase 10 overall deliverables:
