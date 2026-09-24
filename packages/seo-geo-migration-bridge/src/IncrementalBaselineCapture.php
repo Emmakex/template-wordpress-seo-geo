@@ -165,6 +165,7 @@ final class IncrementalBaselineCapture {
 	/**
 	 * Initial durable capture state.
 	 *
+	 * @param int $batch_size Initial page batch size.
 	 * @return array<string,mixed>
 	 */
 	private function initial_state( int $batch_size ): array {
@@ -584,7 +585,7 @@ final class IncrementalBaselineCapture {
 		$batch_size = $this->normalize_batch_size(
 			isset( $state['batch_size'] ) ? (int) $state['batch_size'] : self::DEFAULT_BATCH_SIZE
 		);
-		$error = is_string( $state['error'] ?? null ) && '' !== $state['error'] ? $state['error'] : null;
+		$error      = is_string( $state['error'] ?? null ) && '' !== $state['error'] ? $state['error'] : null;
 
 		return $this->result( $status, $phase, $processed, $total, $batch_size, $error );
 	}
@@ -607,10 +608,10 @@ final class IncrementalBaselineCapture {
 		}
 
 		return array(
-			'status'    => $status,
-			'phase'     => $phase,
-			'processed' => max( 0, $processed ),
-			'total'     => max( 0, $total ),
+			'status'     => $status,
+			'phase'      => $phase,
+			'processed'  => max( 0, $processed ),
+			'total'      => max( 0, $total ),
 			'percent'    => max( 0, min( 100, $percent ) ),
 			'batch_size' => $this->normalize_batch_size( $batch_size ),
 			'error'      => $error,
