@@ -74,7 +74,7 @@ final class SandboxMigrationLab {
 		$subdirectory_distinct = $same_origin && '/' !== $current_base_path && $source_base_path !== $current_base_path;
 		$sandbox_mode          = SandboxGuard::mode();
 		$storage_isolated      = SandboxGuard::storage_isolated();
-		$location_isolated     = 'origin' === $sandbox_mode
+		$location_isolated    = 'origin' === $sandbox_mode
 			? $distinct_origin
 			: ( 'subdirectory' === $sandbox_mode && $subdirectory_distinct && $storage_isolated );
 		$review                 = $this->review_status( $graph );
@@ -148,8 +148,8 @@ final class SandboxMigrationLab {
 				'reviewed_unknown'            => $review['reviewed_unknown'],
 				'unreviewed_unknown'          => $review['unreviewed_unknown'],
 			),
-			'blockers'  => $blockers,
-			'migration' => array(
+			'blockers'       => $blockers,
+			'migration'      => array(
 				'states'  => $states,
 				'summary' => $this->state_summary( $states ),
 			),
