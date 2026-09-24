@@ -11,6 +11,7 @@ namespace SeoGeo\MigrationBridge\Sandbox;
 
 use SeoGeo\MigrationBridge\BaselineSnapshotStore;
 use SeoGeo\MigrationBridge\DependencyGraphBuilder;
+use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
 use SeoGeo\MigrationBridge\SiteAnalyzer;
 
 /**
@@ -31,8 +32,10 @@ final class SandboxHandoffManifest {
 
 		$site       = is_array( $analysis['site'] ?? null ) ? $analysis['site'] : array();
 		$themes     = is_array( $analysis['themes'] ?? null ) ? $analysis['themes'] : array();
-		$components = is_array( $graph['components'] ?? null ) ? $graph['components'] : array();
-		$summary    = is_array( $graph['summary'] ?? null ) ? $graph['summary'] : array();
+		$components         = is_array( $graph['components'] ?? null ) ? $graph['components'] : array();
+		$summary            = is_array( $graph['summary'] ?? null ) ? $graph['summary'] : array();
+		$review_store       = new DependencyReviewStore();
+		$bounded_components = $this->bounded_components( $components, $review_store );
 
 		return array(
 			'schema_version' => 1,
@@ -48,7 +51,8 @@ final class SandboxHandoffManifest {
 			'baseline'       => $this->baseline_reference( $baseline ),
 			'dependencies'   => array(
 				'summary'    => $this->normalized_summary( $summary ),
-				'components' => $this->bounded_components( $components ),
+				'components' => $bounded_components,
+				'review'     => $this->review_summary( $bounded_components ),
 			),
 			'target'         => array(
 				'theme_stylesheet' => SandboxMigrationLab::DESTINATION_THEME,
@@ -72,7 +76,8 @@ final class SandboxHandoffManifest {
 				'raw_database_exported'     => false,
 				'raw_uploads_exported'      => false,
 				'customer_data_exported'    => false,
-				'baseline_body_content'     => false,
+				'baseline_body_content'              => false,
+				'review_decisions_execute_mutations' => false,
 			),
 		);
 	}
@@ -141,25 +146,65 @@ final class SandboxHandoffManifest {
 	}
 
 	/**
+	 * Summarize bounded operator review progress for UNKNOWN dependencies.
+	 *
+	 * @param list<array<string,mixed>> $components Bounded dependency rows.
+	 * @return array{reviewed_unknown:int,unreviewed_unknown:int,complete:bool}
+	 */
+	private function review_summary( array $components ): array {
+		$reviewed   = 0;
+		$unreviewed = 0;
+
+		foreach ( $components as $component ) {
+			if ( 'UNKNOWN' !== ( $component['classification'] ?? null ) ) {
+				continue;
+			}
+
+			if ( true === ( $component['reviewed'] ?? false ) ) {
+				++$reviewed;
+			} else {
+				++$unreviewed;
+			}
+		}
+
+		return array(
+			'reviewed_unknown'   => $reviewed,
+			'unreviewed_unknown' => $unreviewed,
+			'complete'           => 0 === $unreviewed,
+		);
+	}
+
+	/**
 	 * Keep only safe component planning fields.
 	 *
-	 * @param list<array<string,mixed>> $components Dependency graph components.
+	 * @param list<array<string,mixed>> $components   Dependency graph components.
+	 * @param DependencyReviewStore     $review_store Planning-only review store.
 	 * @return list<array<string,mixed>>
 	 */
-	private function bounded_components( array $components ): array {
+	private function bounded_components( array $components, DependencyReviewStore $review_store ): array {
 		$rows = array();
 
 		foreach ( $components as $component ) {
+			$component_id  = is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '';
+			$classification = is_string( $component['classification'] ?? null ) ? $component['classification'] : 'UNKNOWN';
+			$review         = 'UNKNOWN' === $classification && '' !== $component_id
+				? $review_store->decision_for( $component_id )
+				: null;
+
 			$rows[] = array(
-				'component_id'   => is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '',
-				'type'           => is_string( $component['type'] ?? null ) ? $component['type'] : '',
-				'id'             => is_string( $component['id'] ?? null ) ? $component['id'] : '',
-				'category'       => is_string( $component['category'] ?? null ) ? $component['category'] : null,
-				'active'         => true === ( $component['active'] ?? false ),
-				'classification' => is_string( $component['classification'] ?? null ) ? $component['classification'] : 'UNKNOWN',
-				'reason'         => is_string( $component['reason'] ?? null ) ? $component['reason'] : 'insufficient-evidence',
-				'resource_count' => isset( $component['resource_count'] ) ? max( 0, (int) $component['resource_count'] ) : null,
-				'manual_review'  => true === ( $component['manual_review'] ?? false ),
+				'component_id'    => $component_id,
+				'type'            => is_string( $component['type'] ?? null ) ? $component['type'] : '',
+				'id'              => is_string( $component['id'] ?? null ) ? $component['id'] : '',
+				'category'        => is_string( $component['category'] ?? null ) ? $component['category'] : null,
+				'active'          => true === ( $component['active'] ?? false ),
+				'classification'  => $classification,
+				'reason'          => is_string( $component['reason'] ?? null ) ? $component['reason'] : 'insufficient-evidence',
+				'resource_count'  => isset( $component['resource_count'] ) ? max( 0, (int) $component['resource_count'] ) : null,
+				'manual_review'   => true === ( $component['manual_review'] ?? false ),
+				'reviewed'        => is_array( $review ),
+				'review_decision' => is_array( $review ) ? $review['classification'] : null,
+				'review_reason'   => is_array( $review ) ? $review['reason'] : null,
+				'reviewed_at'     => is_array( $review ) ? $review['reviewed_at'] : null,
 			);
 		}
 
