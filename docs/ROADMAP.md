@@ -1949,7 +1949,16 @@ Evidence:
 
 ### Microphase 9F — Onboarding acceptance
 
-Status: **active**
+Status: **implementation candidate**
+
+Current implementation scope:
+
+- self-contained runtime acceptance now executes both a clean-site Corporate setup and the migrated LocalBusiness handoff path;
+- clean-site acceptance proves zero active plugins before/after, no page creation, clean report mode and stable idempotent rerun;
+- migrated-site acceptance retains atomic write, exact rollback, privacy-bounded report and Migration Bridge runtime-independence proof;
+- EN/ES browser acceptance performs real Apply plus an unchanged rerun, with axe and focus checks after persistence;
+- the wizard explicitly states that baseline onboarding requires no SEO/GEO plugin in EN/ES;
+- the static setup contract rejects operator copy that instructs SEO/GEO plugin installation or activation.
 
 Deliverables:
 
