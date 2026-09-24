@@ -407,7 +407,7 @@ final class SetupExecutor {
 			'migration_handoff'    => $this->handoff_summary( $handoff ),
 			'compatibility'        => $this->bounded_compatibility( $compatibility ),
 			'validation_warnings'  => $warnings,
-			'changed_options'      => array_values( $changed_options ),
+			'changed_options'      => $changed_options,
 			'maintenance'          => array(
 				'rewrite_flush_pending' => $rewrite_flush_pending,
 			),
@@ -652,7 +652,7 @@ final class SetupExecutor {
 			'errors'             => array_values( array_unique( $errors ) ),
 			'warnings'           => array_values( array_unique( $warnings ) ),
 			'normalized'         => $normalized,
-			'changed_options'    => array_values( $changed_options ),
+			'changed_options'    => $changed_options,
 			'rollback_attempted' => $rollback_attempted,
 			'report'             => null,
 		);
@@ -689,7 +689,7 @@ final class SetupExecutor {
 			'warnings'             => $warnings,
 			'normalized'           => $normalized,
 			'configuration_sha256' => $config_sha256,
-			'changed_options'      => array_values( $changed_options ),
+			'changed_options'      => $changed_options,
 			'rollback_attempted'   => false,
 			'report'               => $report,
 		);
