@@ -72,6 +72,7 @@ final class DependencyReviewStore {
 	/**
 	 * Return one decision when it exists.
 	 *
+	 * @param string $component_id Dependency component identifier.
 	 * @return array{classification:string,reason:string,reviewed_at:string}|null
 	 */
 	public function decision_for( string $component_id ): ?array {
@@ -82,6 +83,9 @@ final class DependencyReviewStore {
 
 	/**
 	 * Persist one bounded review decision.
+	 *
+	 * @param string $component_id   Dependency component identifier.
+	 * @param string $classification Fixed planning classification.
 	 */
 	public function save( string $component_id, string $classification ): bool {
 		if ( ! $this->valid_component_id( $component_id ) || ! in_array( $classification, self::allowed_decisions(), true ) ) {
@@ -107,6 +111,8 @@ final class DependencyReviewStore {
 
 	/**
 	 * Clear one review decision without deleting unrelated review state.
+	 *
+	 * @param string $component_id Dependency component identifier.
 	 */
 	public function clear( string $component_id ): bool {
 		if ( ! $this->valid_component_id( $component_id ) ) {
@@ -126,6 +132,8 @@ final class DependencyReviewStore {
 
 	/**
 	 * Convert a review classification to one stable non-free-text reason code.
+	 *
+	 * @param string $classification Fixed planning classification.
 	 */
 	private function reason_for( string $classification ): string {
 		return match ( $classification ) {
@@ -140,6 +148,8 @@ final class DependencyReviewStore {
 
 	/**
 	 * Validate one bounded dependency component identifier.
+	 *
+	 * @param string $component_id Dependency component identifier.
 	 */
 	private function valid_component_id( string $component_id ): bool {
 		if ( '' === $component_id || 220 < strlen( $component_id ) ) {
