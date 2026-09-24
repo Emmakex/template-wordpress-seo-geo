@@ -203,7 +203,7 @@ ACTIVE_PLUGINS="$(wp_cli plugin list --status=active --field=name 2>/dev/null | 
 [[ -z "$ACTIVE_PLUGINS" ]] \
   || fail_acceptance "zero-plugins-before-browser" "Phase 9F browser acceptance must start with zero active plugins" "empty active-plugin list" "$ACTIVE_PLUGINS" "wp plugin list --status=active"
 
-RUNTIME_FILE="$(wp_cli eval '$reflection = new ReflectionClass( \\SeoGeo\\Core\\Runtime::class ); echo (string) $reflection->getFileName();' 2>/dev/null | tr -d '\r\n')"
+RUNTIME_FILE="$(wp_cli eval '$reflection = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $reflection->getFileName();' 2>/dev/null | tr -d '\r\n')"
 case "$RUNTIME_FILE" in
   */wp-content/themes/seo-geo-theme/inc/seo-geo-core/src/Runtime.php) ;;
   *) fail_acceptance "embedded-runtime" "Browser acceptance did not load SEO/GEO Core from the self-contained theme" "theme/inc/seo-geo-core/src/Runtime.php" "$RUNTIME_FILE" "ReflectionClass Runtime" ;;
