@@ -2106,13 +2106,24 @@ Evidence:
 
 ### Microphase 10E — Stable release decision
 
-Status: **active**
+Status: **implementation candidate — stable NO-GO pending real-site acceptance**
 
 Deliverables:
 
 - decision on deprecating/removing the transitional standalone Core plugin wrapper;
 - real-site production acceptance after sandbox validation;
 - first stable release go/no-go evidence.
+
+Current implementation scope:
+
+- `release/stable-release-decision.json` records the machine-readable Phase 10E decision;
+- current decision is `no-go`, target `0.1.0` remains `release_channel=prestable`, and the explicit blocker is `real-site-production-acceptance-pending`;
+- `docs/STABLE_RELEASE_DECISION.md` defines the exact promotion path from no-go to go without fabricating real-site evidence;
+- the standalone `packages/seo-geo-core/seo-geo-core.php` disposition is `deprecated-retained-nondistributed`: deprecated for installation, retained temporarily for compatibility/development, excluded from the release ZIP and not required by acceptance;
+- `scripts/ci/validate-stable-release-decision.py` prevents `stable` promotion unless real-site acceptance is marked accepted with a bounded evidence reference and no blockers;
+- Foundation CI and Release Artifact CI both enforce the decision gate;
+- the changelog remains Unreleased while the decision is no-go;
+- Phase 10E cannot close and no stable release may be published until the selected real site completes the Phase 10C/10D sandbox-to-production acceptance.
 
 Phase 10 overall deliverables:
 
