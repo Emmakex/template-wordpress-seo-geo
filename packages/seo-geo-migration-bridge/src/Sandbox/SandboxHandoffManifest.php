@@ -30,8 +30,8 @@ final class SandboxHandoffManifest {
 		$baseline_snapshot = is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null;
 		$graph             = ( new DependencyGraphBuilder() )->build( $analysis, $baseline_snapshot );
 
-		$site       = is_array( $analysis['site'] ?? null ) ? $analysis['site'] : array();
-		$themes     = is_array( $analysis['themes'] ?? null ) ? $analysis['themes'] : array();
+		$site               = is_array( $analysis['site'] ?? null ) ? $analysis['site'] : array();
+		$themes             = is_array( $analysis['themes'] ?? null ) ? $analysis['themes'] : array();
 		$components         = is_array( $graph['components'] ?? null ) ? $graph['components'] : array();
 		$summary            = is_array( $graph['summary'] ?? null ) ? $graph['summary'] : array();
 		$review_store       = new DependencyReviewStore();
@@ -68,14 +68,14 @@ final class SandboxHandoffManifest {
 				'production_mutation_allowed'    => false,
 			),
 			'safety'         => array(
-				'read_only_generation'      => true,
-				'post_bodies_exported'      => false,
-				'builder_payloads_exported' => false,
-				'credentials_exported'      => false,
-				'option_values_exported'    => false,
-				'raw_database_exported'     => false,
-				'raw_uploads_exported'      => false,
-				'customer_data_exported'    => false,
+				'read_only_generation'               => true,
+				'post_bodies_exported'               => false,
+				'builder_payloads_exported'          => false,
+				'credentials_exported'               => false,
+				'option_values_exported'             => false,
+				'raw_database_exported'              => false,
+				'raw_uploads_exported'               => false,
+				'customer_data_exported'             => false,
 				'baseline_body_content'              => false,
 				'review_decisions_execute_mutations' => false,
 			),
@@ -185,7 +185,7 @@ final class SandboxHandoffManifest {
 		$rows = array();
 
 		foreach ( $components as $component ) {
-			$component_id  = is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '';
+			$component_id   = is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '';
 			$classification = is_string( $component['classification'] ?? null ) ? $component['classification'] : 'UNKNOWN';
 			$review         = 'UNKNOWN' === $classification && '' !== $component_id
 				? $review_store->decision_for( $component_id )
