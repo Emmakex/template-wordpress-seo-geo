@@ -215,11 +215,44 @@ foreach (
 }
 
 $wizard_copy = (string) file_get_contents( $wizard_dir . '/SetupWizardCopy.php' );
-foreach ( array( "'en' => array(", "'es' => array(", "'preview_confirm'", "'apply_confirm'", "'result_applied'", "'privacy_note'" ) as $guard ) {
+foreach ( array( "'en' => array(", "'es' => array(", "'preview_confirm'", "'apply_confirm'", "'result_applied'", "'privacy_note'", "'zero_plugin_notice'" ) as $guard ) {
 	if ( ! str_contains( $wizard_copy, $guard ) ) {
 		fwrite( STDERR, 'Phase 9D EN/ES copy guard missing: ' . $guard . PHP_EOL );
 		exit( 1 );
 	}
+}
+
+foreach (
+	array(
+		'Baseline onboarding is self-contained: no SEO/GEO plugin is required.',
+		'El onboarding base es autocontenido: no requiere ningún plugin SEO/GEO.',
+	) as $required_zero_plugin_copy
+) {
+	if ( ! str_contains( $wizard_copy, $required_zero_plugin_copy ) ) {
+		fwrite( STDERR, 'Phase 9F zero-plugin operator copy is missing: ' . $required_zero_plugin_copy . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+foreach (
+	array(
+		'Install an SEO/GEO plugin',
+		'Activate an SEO/GEO plugin',
+		'Instala un plugin SEO/GEO',
+		'Activa un plugin SEO/GEO',
+		'Instalar un plugin SEO/GEO',
+		'Activar un plugin SEO/GEO',
+	) as $forbidden_plugin_instruction
+) {
+	if ( false !== stripos( $wizard_copy, $forbidden_plugin_instruction ) ) {
+		fwrite( STDERR, 'Phase 9F wizard must never instruct SEO/GEO plugin installation or activation: ' . $forbidden_plugin_instruction . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+if ( ! str_contains( $wizard_screen, "$this->copy->text( 'zero_plugin_notice' )" ) ) {
+	fwrite( STDERR, 'Phase 9F zero-plugin notice is not rendered by the onboarding wizard.' . PHP_EOL );
+	exit( 1 );
 }
 
 $wizard_css = (string) file_get_contents( $root . '/packages/seo-geo-theme/assets/admin/setup-wizard.css' );
@@ -418,4 +451,4 @@ foreach (
 	}
 }
 
-printf( "Phase 9A/9B/9C/9D/9E setup static contract OK: planning/validation remain authority-driven; option mutation is isolated; setup execution is rollback-capable/idempotent; the EN/ES wizard remains capability+nonce-gated.\n" );
+printf( "Phase 9A/9B/9C/9D/9E/9F setup static contract OK: planning/validation remain authority-driven; setup execution is rollback-capable/idempotent; EN/ES onboarding remains capability+nonce-gated, self-contained and zero-plugin.\n" );
