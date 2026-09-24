@@ -249,26 +249,31 @@ final class IncrementalBaselineCapture {
 		}
 
 		$item = array_shift( $queue );
+
 		$state['sitemap_queue'] = $queue;
 
 		if ( ! is_array( $item ) || ! is_string( $item['url'] ?? null ) ) {
 			return $state;
 		}
 
-		$url   = $item['url'];
+		$url = $item['url'];
+
 		$depth = isset( $item['depth'] ) ? (int) $item['depth'] : 0;
 
 		$seen = is_array( $state['sitemap_seen'] ?? null ) ? $state['sitemap_seen'] : array();
 		if ( true === ( $seen[ $url ] ?? false ) ) {
 			return $state;
 		}
-		$seen[ $url ]        = true;
+		$seen[ $url ] = true;
+
 		$state['sitemap_seen'] = $seen;
 
-		$response  = $this->http->get( $url );
+		$response = $this->http->get( $url );
+
 		$locations = 200 === $response['status'] ? $this->extract_xml_locations( $response['body'] ) : array();
 
-		$sitemaps   = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
+		$sitemaps = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
+
 		$sitemaps[] = array(
 			'url'            => $url,
 			'status'         => $response['status'],
@@ -309,7 +314,8 @@ final class IncrementalBaselineCapture {
 	 */
 	private function prepare_inventory( array $state ): array {
 		$page_urls = is_array( $state['page_urls'] ?? null ) ? array_keys( $state['page_urls'] ) : array();
-		$limit     = isset( $state['limit'] ) ? (int) $state['limit'] : self::DEFAULT_LIMIT;
+
+		$limit = isset( $state['limit'] ) ? (int) $state['limit'] : self::DEFAULT_LIMIT;
 
 		$state['inventory'] = $this->url_inventory->build( $page_urls, $limit );
 		$state['cursor']    = 0;
@@ -326,18 +332,22 @@ final class IncrementalBaselineCapture {
 	 */
 	private function advance_pages( array $state ): array {
 		$inventory = is_array( $state['inventory'] ?? null ) ? $state['inventory'] : array();
-		$resources = is_array( $inventory['urls'] ?? null ) ? $inventory['urls'] : array();
-		$cursor    = isset( $state['cursor'] ) ? (int) $state['cursor'] : 0;
-		$end       = min( count( $resources ), $cursor + self::PAGE_BATCH_SIZE );
+
+		$rows = is_array( $inventory['urls'] ?? null ) ? $inventory['urls'] : array();
+
+		$cursor = isset( $state['cursor'] ) ? (int) $state['cursor'] : 0;
+
+		$end = min( count( $rows ), $cursor + self::PAGE_BATCH_SIZE );
 
 		for ( $index = $cursor; $index < $end; ++$index ) {
-			$resource = is_array( $resources[ $index ] ?? null ) ? $resources[ $index ] : array();
-			$state    = $this->capture_resource( $state, $resource );
+			$row = is_array( $rows[ $index ] ?? null ) ? $rows[ $index ] : array();
+
+			$state = $this->capture_resource( $state, $row );
 		}
 
 		$state['cursor'] = $end;
 
-		if ( $end >= count( $resources ) ) {
+		if ( $end >= count( $rows ) ) {
 			$state['phase'] = 'finalize';
 		}
 
@@ -348,13 +358,15 @@ final class IncrementalBaselineCapture {
 	 * Capture one public resource without retaining its raw body.
 	 *
 	 * @param array<string,mixed> $state    Current state.
-	 * @param array<string,mixed> $resource Resource row.
+	 * @param array<string,mixed> $row Resource row.
 	 * @return array<string,mixed>
 	 */
-	private function capture_resource( array $state, array $resource ): array {
-		$url      = is_string( $resource['url'] ?? null ) ? $resource['url'] : '';
+	private function capture_resource( array $state, array $row ): array {
+		$url = is_string( $row['url'] ?? null ) ? $row['url'] : '';
+
 		$response = $this->http->get( $url );
-		$signals  = $this->extractor->extract(
+
+		$signals = $this->extractor->extract(
 			$url,
 			$response['status'],
 			$response['body'],
@@ -362,7 +374,8 @@ final class IncrementalBaselineCapture {
 		);
 
 		$status_counts = is_array( $state['status_counts'] ?? null ) ? $state['status_counts'] : array();
-		$status_key    = (string) $response['status'];
+
+		$status_key = (string) $response['status'];
 		$status_counts[ $status_key ] = ( $status_counts[ $status_key ] ?? 0 ) + 1;
 		$state['status_counts']        = $status_counts;
 
@@ -384,7 +397,8 @@ final class IncrementalBaselineCapture {
 			&& $response['status'] < 400
 			&& '' !== $response['headers']['location']
 		) {
-			$redirects   = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
+			$redirects = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
+
 			$redirects[] = array(
 				'from'   => $url,
 				'to'     => $response['headers']['location'],
@@ -393,9 +407,10 @@ final class IncrementalBaselineCapture {
 			$state['redirects'] = $redirects;
 		}
 
-		$pages   = is_array( $state['pages'] ?? null ) ? $state['pages'] : array();
+		$pages = is_array( $state['pages'] ?? null ) ? $state['pages'] : array();
+
 		$pages[] = array_merge(
-			$resource,
+			$row,
 			$signals,
 			array(
 				'request_error' => $response['error'],
@@ -413,10 +428,13 @@ final class IncrementalBaselineCapture {
 	 * @return array<string,mixed>
 	 */
 	private function finalize( array $state ): array {
-		$inventory     = is_array( $state['inventory'] ?? null ) ? $state['inventory'] : array();
+		$inventory = is_array( $state['inventory'] ?? null ) ? $state['inventory'] : array();
+
 		$status_counts = is_array( $state['status_counts'] ?? null ) ? $state['status_counts'] : array();
-		$redirects     = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
-		$sitemaps      = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
+
+		$redirects = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
+
+		$sitemaps = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
 
 		ksort( $status_counts, SORT_NATURAL );
 		usort(
@@ -501,7 +519,7 @@ final class IncrementalBaselineCapture {
 
 		$queue = is_array( $state['sitemap_queue'] ?? null ) ? $state['sitemap_queue'] : array();
 		foreach ( $queue as $queued ) {
-			if ( is_array( $queued ) && $normalized === ( $queued['url'] ?? null ) ) {
+			if ( is_array( $queued ) && ( $queued['url'] ?? null ) === $normalized ) {
 				return;
 			}
 		}
@@ -521,18 +539,22 @@ final class IncrementalBaselineCapture {
 	 */
 	private function status_from_state( array $state ): array {
 		$status = is_string( $state['status'] ?? null ) ? $state['status'] : 'running';
-		$phase  = is_string( $state['phase'] ?? null ) ? $state['phase'] : 'robots';
+
+		$phase = is_string( $state['phase'] ?? null ) ? $state['phase'] : 'robots';
 
 		if ( 'pages' === $phase || 'finalize' === $phase || 'complete' === $phase ) {
 			$inventory = is_array( $state['inventory'] ?? null ) ? $state['inventory'] : array();
-			$resources = is_array( $inventory['urls'] ?? null ) ? $inventory['urls'] : array();
-			$total     = count( $resources );
+			$rows = is_array( $inventory['urls'] ?? null ) ? $inventory['urls'] : array();
+			$total     = count( $rows );
 			$processed = min( $total, isset( $state['cursor'] ) ? (int) $state['cursor'] : 0 );
 		} else {
-			$queue     = is_array( $state['sitemap_queue'] ?? null ) ? $state['sitemap_queue'] : array();
-			$seen      = is_array( $state['sitemap_seen'] ?? null ) ? $state['sitemap_seen'] : array();
+			$queue = is_array( $state['sitemap_queue'] ?? null ) ? $state['sitemap_queue'] : array();
+
+			$seen = is_array( $state['sitemap_seen'] ?? null ) ? $state['sitemap_seen'] : array();
+
 			$processed = count( array_filter( $seen ) );
-			$total     = $processed + count( $queue );
+
+			$total = $processed + count( $queue );
 		}
 
 		$error = is_string( $state['error'] ?? null ) && '' !== $state['error'] ? $state['error'] : null;
@@ -543,6 +565,11 @@ final class IncrementalBaselineCapture {
 	/**
 	 * Build one normalized result.
 	 *
+	 * @param string      $status    Capture status.
+	 * @param string      $phase     Current capture phase.
+	 * @param int         $processed Processed units.
+	 * @param int         $total     Total known units.
+	 * @param string|null $error     Bounded error code.
 	 * @return array{status:string,phase:string,processed:int,total:int,percent:int,error:string|null}
 	 */
 	private function result( string $status, string $phase, int $processed, int $total, ?string $error ): array {
