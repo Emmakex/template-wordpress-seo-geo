@@ -29,7 +29,21 @@ async function gotoWizard(page, language = 'en') {
   await expect(page.locator('.seo-geo-setup-wizard')).toBeVisible();
 }
 
-test.describe('Phase 9D theme setup wizard', () => {
+async function fillCorporateCandidate(page) {
+  await page.locator('#seo-geo-preset').selectOption('corporate');
+  await page.locator('#seo-geo-default-language').fill('en');
+  await page.locator('#seo-geo-languages').fill('en=en_US\nes=es_ES');
+  await page.locator('#seo-geo-routing').selectOption('prefix');
+  await page.locator('#seo-geo-x-default').fill('en');
+  await page.locator('#seo-geo-entity-type').selectOption('organization');
+  await page.locator('#seo-geo-confirm-identity').check();
+  await page.locator('#seo-geo-crawler-oai-searchbot').selectOption('allow');
+  await page.locator('#seo-geo-crawler-gptbot').selectOption('disallow');
+  await page.locator('#seo-geo-llms-txt').check();
+  await page.locator('#seo-geo-markdown').check();
+}
+
+test.describe('Phase 9F onboarding acceptance', () => {
   test('renders EN/ES with scoped WCAG acceptance and responsive reflow', async ({ page }, testInfo) => {
     await gotoWizard(page, 'en');
 
@@ -41,6 +55,7 @@ test.describe('Phase 9D theme setup wizard', () => {
     await expect(page.getByLabel('Site entity')).toBeVisible();
     await expect(page.getByLabel('I confirm these validated settings should be applied to this site.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Apply setup' })).toBeVisible();
+    await expect(page.getByText('Baseline onboarding is self-contained: no SEO/GEO plugin is required.')).toBeVisible();
 
     const scan = await new AxeBuilder({ page })
       .include('.seo-geo-setup-wizard')
@@ -76,6 +91,7 @@ test.describe('Phase 9D theme setup wizard', () => {
     await expect(page.getByLabel('Preset')).toBeVisible();
     await expect(page.getByLabel('Mapa de idiomas')).toBeVisible();
     await expect(page.getByLabel('Entidad del sitio')).toBeVisible();
+    await expect(page.getByText('El onboarding base es autocontenido: no requiere ningún plugin SEO/GEO.')).toBeVisible();
 
     const esScan = await new AxeBuilder({ page })
       .include('.seo-geo-setup-wizard')
@@ -128,6 +144,58 @@ test.describe('Phase 9D theme setup wizard', () => {
 
     expect(scan.violations).toEqual([]);
 
+  });
+
+  test('applies clean onboarding in English and proves an unchanged Spanish rerun', async ({ page }, testInfo) => {
+    await gotoWizard(page, 'en');
+    await fillCorporateCandidate(page);
+    await page.locator('#seo-geo-apply-confirm').check();
+
+    await page.getByRole('button', { name: 'Apply setup' }).click();
+
+    const firstResults = page.locator('#seo-geo-setup-results');
+    await expect(firstResults).toBeVisible();
+    await expect(firstResults).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'Setup was applied successfully.' })).toBeVisible();
+    await expect(firstResults).toContainText('Configuration fingerprint');
+    await expect(firstResults).toContainText('Setup report fingerprint');
+
+    const firstScan = await new AxeBuilder({ page })
+      .include('.seo-geo-setup-wizard')
+      .withTags(wcagTags)
+      .analyze();
+
+    await testInfo.attach('setup-wizard-apply-en-axe-results', {
+      body: JSON.stringify(firstScan, null, 2),
+      contentType: 'application/json',
+    });
+
+    expect(firstScan.violations).toEqual([]);
+
+    await page.goto('/wp-admin/themes.php?page=seo-geo-setup&fixture_lang=es', {
+      waitUntil: 'networkidle',
+    });
+    await fillCorporateCandidate(page);
+    await page.locator('#seo-geo-apply-confirm').check();
+
+    await page.getByRole('button', { name: 'Aplicar configuración' }).click();
+
+    const secondResults = page.locator('#seo-geo-setup-results');
+    await expect(secondResults).toBeVisible();
+    await expect(secondResults).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'El sitio ya coincide con estos ajustes validados.' })).toBeVisible();
+
+    const secondScan = await new AxeBuilder({ page })
+      .include('.seo-geo-setup-wizard')
+      .withTags(wcagTags)
+      .analyze();
+
+    await testInfo.attach('setup-wizard-apply-es-axe-results', {
+      body: JSON.stringify(secondScan, null, 2),
+      contentType: 'application/json',
+    });
+
+    expect(secondScan.violations).toEqual([]);
   });
 
   test('announces validation errors and keeps the result keyboard-focusable', async ({ page }) => {
