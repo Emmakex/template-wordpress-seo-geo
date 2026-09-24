@@ -151,7 +151,7 @@ final class AdminOperatorScreen {
 
 		$key = match ( $status ) {
 			'success'  => 'baseline_capture_success',
-			'progress' => 'baseline_capture_progress_notice',
+			'progress' => 'baseline_progress_notice',
 			'exists'   => 'baseline_capture_exists',
 			'error'    => 'baseline_capture_error',
 			default    => null,
@@ -179,12 +179,12 @@ final class AdminOperatorScreen {
 	 * @param array<string,mixed> $status Operator snapshot.
 	 */
 	private function render_baseline_capture_form( array $status ): void {
-		$capture   = is_array( $status['baseline_capture'] ?? null ) ? $status['baseline_capture'] : array();
+		$capture   = is_array( $status['capture'] ?? null ) ? $status['capture'] : array();
 		$running   = 'running' === ( $capture['status'] ?? null );
 		$processed = (int) ( $capture['processed'] ?? 0 );
 		$total     = (int) ( $capture['total'] ?? 0 );
 		$percent   = (int) ( $capture['percent'] ?? 0 );
-		$button    = $running ? 'baseline_capture_continue' : 'baseline_capture_button';
+		$button    = $running ? 'baseline_continue' : 'baseline_capture_button';
 		?>
 		<div class="seo-geo-migration-baseline-action">
 			<p><?php echo esc_html( $this->copy->text( 'baseline_capture_help' ) ); ?></p>
@@ -193,7 +193,7 @@ final class AdminOperatorScreen {
 					<?php
 					echo esc_html(
 						sprintf(
-							$this->copy->text( 'baseline_capture_progress' ),
+							$this->copy->text( 'baseline_progress' ),
 							$processed,
 							$total,
 							$percent
