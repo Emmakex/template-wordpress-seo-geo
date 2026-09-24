@@ -300,6 +300,7 @@ SEARCH_ROBOTS_LINE="$(grep -i "name='robots'" "$SEARCH_BODY" | head -n 1 | tr -d
 
 source scripts/ci/migration-bridge-site-analyzer-acceptance.sh
 source scripts/ci/migration-bridge-baseline-acceptance.sh
+source scripts/ci/migration-bridge-incremental-baseline-acceptance.sh
 source scripts/ci/migration-bridge-dependency-graph-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-lab-acceptance.sh
 source scripts/ci/migration-bridge-migration-engine-acceptance.sh
