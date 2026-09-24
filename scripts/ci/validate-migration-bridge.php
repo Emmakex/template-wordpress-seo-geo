@@ -853,7 +853,7 @@ foreach (
 		"'accepted_modes'                         => array( 'origin', 'subdirectory' )",
 		"'mode_marker'                            => SandboxGuard::MODE_MARKER",
 		"'origin_mode_requires_distinct_origin'   => true",
-		"'subdirectory_requires_storage_isolation'=> true",
+		"'subdirectory_requires_storage_isolation' => true",
 		"'subdirectory_storage_marker'            => SandboxGuard::STORAGE_ISOLATED_MARKER",
 		"'requires_marker'                        => SandboxGuard::MARKER",
 		"'requires_outbound_marker'       => SandboxGuard::OUTBOUND_SAFE_MARKER",
