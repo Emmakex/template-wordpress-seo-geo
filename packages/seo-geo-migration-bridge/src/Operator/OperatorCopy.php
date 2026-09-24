@@ -112,7 +112,7 @@ final class OperatorCopy {
 				'baseline_capture_success'       => 'SEO/GEO baseline captured and stored successfully.',
 				'baseline_capture_exists'        => 'A baseline already exists. It was not replaced.',
 				'baseline_capture_error'         => 'The baseline could not be captured or stored. No migration action was executed.',
-				'next_complete_sandbox_preflight' => 'Complete every sandbox isolation, recovery and dependency-review guard before running migration actions.',
+				'next_sandbox_preflight'         => 'Complete every sandbox isolation, recovery and dependency-review guard before running migration actions.',
 				'next_continue_migration'        => 'Continue the sandbox migration and parity workflow before production cutover.',
 				'next_complete_cutover'          => 'Complete and explicitly accept the reversible production cutover before final handoff.',
 				'next_generate_report'           => 'Generate and persist the final migration report after the accepted cutover.',
