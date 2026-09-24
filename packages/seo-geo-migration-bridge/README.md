@@ -227,9 +227,10 @@ The screen:
 - ships English and Spanish copy together;
 - summarizes baseline, dependency-plan, cutover and final-report status;
 - shows blocking/advisory review counts plus bridge disposition;
-- resolves the safest next step without executing it;
-- contains no mutation form or POST endpoint;
-- renders bounded metadata only and never exposes private bodies, builder payloads, credentials or raw backup artifacts.
+- resolves the safest next step without executing migration/cutover actions;
+- exposes explicit capability/nonce-gated planning actions for resumable baseline capture, UNKNOWN dependency review and sandbox-handoff download;
+- stores UNKNOWN review decisions separately from the dependency graph, so an operator review cannot silently authorize production plugin deactivation or theme switching;
+- renders/exports bounded metadata only and never exposes private bodies, builder payloads, credentials, arbitrary option values or raw backup artifacts.
 
 `Plugin::operator_status()` exposes the same bounded read-only state for acceptance/diagnostics.
 
