@@ -10,6 +10,7 @@ OPERATOR_RUNNER="$TMP_DIR/migration-operator-runner.php"
 cat >"$OPERATOR_RUNNER" <<'PHP'
 <?php
 
+use SeoGeo\MigrationBridge\Operator\AdminBaselineCaptureController;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
 use SeoGeo\MigrationBridge\Operator\OperatorCopy;
 use SeoGeo\MigrationBridge\Operator\OperatorStatus;
@@ -82,11 +83,31 @@ ob_start();
 $spanish_screen->render_page();
 $spanish_html = (string) ob_get_clean();
 
+$baseline_action_registered = false !== has_action(
+	'admin_post_' . AdminBaselineCaptureController::ACTION
+);
+
+$saved_baseline = get_option( 'seo_geo_migration_baseline_v1', null );
+if ( ! is_array( $saved_baseline ) ) {
+	throw new RuntimeException( 'Phase 8I fixture baseline is unavailable for missing-baseline UI acceptance.' );
+}
+delete_option( 'seo_geo_migration_baseline_v1' );
+
+$missing_spanish_screen = new AdminOperatorScreen( $status_service, new OperatorCopy( 'es_ES' ) );
+ob_start();
+$missing_spanish_screen->render_page();
+$missing_spanish_html = (string) ob_get_clean();
+
+if ( ! add_option( 'seo_geo_migration_baseline_v1', $saved_baseline, '', false ) ) {
+	throw new RuntimeException( 'Could not restore Phase 8I baseline after missing-baseline UI acceptance.' );
+}
+
 $after = $fingerprint( $protected_state() );
 
 echo wp_json_encode(
 	array(
 		'registered'        => $registered,
+		'baseline_action_registered' => $baseline_action_registered,
 		'catalog_keys'      => array(
 			'en' => $en_keys,
 			'es' => $es_keys,
@@ -98,6 +119,7 @@ echo wp_json_encode(
 		'status'            => $status,
 		'english_html'      => $english_html,
 		'spanish_html'      => $spanish_html,
+		'missing_spanish_html' => $missing_spanish_html,
 		'state_fingerprint' => array(
 			'before' => $before,
 			'after'  => $after,
@@ -133,8 +155,9 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
 assert payload["registered"] is True
+assert payload["baseline_action_registered"] is True
 assert payload["catalog_keys"]["en"] == payload["catalog_keys"]["es"]
-assert len(payload["catalog_keys"]["en"]) >= 30
+assert len(payload["catalog_keys"]["en"]) >= 35
 assert payload["catalog_empty"] == {"en": [], "es": []}
 assert payload["state_fingerprint"]["before"] == payload["state_fingerprint"]["after"]
 
@@ -193,6 +216,15 @@ assert "name=" not in es.lower()
 assert "post_content" not in en
 assert "post_content" not in es
 
+missing_es = payload["missing_spanish_html"]
+assert "<form" in missing_es.lower()
+assert 'admin-post.php' in missing_es
+assert 'name="action"' in missing_es
+assert 'value="seo_geo_migration_capture_baseline"' in missing_es
+assert 'name="_wpnonce"' in missing_es
+assert "Capturar línea base SEO/GEO" in missing_es
+assert "No cambia el tema, plugins, contenido" in missing_es
+
 print("ok")
 PY
 )"; then
@@ -209,4 +241,4 @@ UNAUTHORIZED_TEXT="$(cat "$UNAUTHORIZED_STDOUT" "$UNAUTHORIZED_STDERR" | tr -d '
 [[ "$UNAUTHORIZED_TEXT" == *"You do not have permission to view Migration Bridge status."* ]] \
   || fail_smoke "operator-capability-message" "Unauthorized operator response did not use bounded localized guidance" "permission message" "${UNAUTHORIZED_TEXT:-empty}"
 
-printf '[smoke] Phase 8I operator UI OK: Tools screen registered; EN/ES catalogs complete; rendering is capability-gated, semantic, privacy-bounded and mutation-free.\n'
+printf '[smoke] Phase 8I operator UI OK: Tools screen registered; EN/ES catalogs complete; viewing is mutation-free; missing baseline exposes one nonce/capability-gated capture action.\n'

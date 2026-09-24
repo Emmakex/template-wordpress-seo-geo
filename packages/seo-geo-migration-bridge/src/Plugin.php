@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
 use SeoGeo\MigrationBridge\Migration\MigrationEngine;
+use SeoGeo\MigrationBridge\Operator\AdminBaselineCaptureController;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
 use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
@@ -103,6 +104,13 @@ final class Plugin {
 	private static ?AdminOperatorScreen $operator_screen = null;
 
 	/**
+	 * Explicit public-baseline capture controller singleton.
+	 *
+	 * @var AdminBaselineCaptureController|null
+	 */
+	private static ?AdminBaselineCaptureController $baseline_capture_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -120,23 +128,25 @@ final class Plugin {
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
-		self::$analyzer               ??= new SiteAnalyzer();
-		self::$baseline_snapshotter   ??= new BaselineSnapshotter();
-		self::$dependency_graph       ??= new DependencyGraphBuilder();
-		self::$sandbox_lab            ??= new SandboxMigrationLab();
-		self::$migration_engine       ??= new MigrationEngine();
-		self::$migration_controller   ??= new AdminMigrationController( self::$migration_engine );
-		self::$parity_engine          ??= new SeoParityEngine();
-		self::$cutover_engine         ??= new CutoverEngine();
-		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
-		self::$operator_status        ??= new OperatorStatus();
-		self::$operator_screen        ??= new AdminOperatorScreen( self::$operator_status );
-		self::$migration_report       ??= new MigrationReportEngine();
-		self::$migration_report_store ??= new MigrationReportStore();
+		self::$analyzer                    ??= new SiteAnalyzer();
+		self::$baseline_snapshotter        ??= new BaselineSnapshotter();
+		self::$dependency_graph            ??= new DependencyGraphBuilder();
+		self::$sandbox_lab                 ??= new SandboxMigrationLab();
+		self::$migration_engine            ??= new MigrationEngine();
+		self::$migration_controller        ??= new AdminMigrationController( self::$migration_engine );
+		self::$parity_engine               ??= new SeoParityEngine();
+		self::$cutover_engine              ??= new CutoverEngine();
+		self::$cutover_controller          ??= new AdminCutoverController( self::$cutover_engine );
+		self::$operator_status             ??= new OperatorStatus();
+		self::$operator_screen             ??= new AdminOperatorScreen( self::$operator_status );
+		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$baseline_snapshotter );
+		self::$migration_report            ??= new MigrationReportEngine();
+		self::$migration_report_store      ??= new MigrationReportStore();
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
 		self::$cutover_controller->boot();
+		self::$baseline_capture_controller->boot();
 		self::$operator_screen->register();
 	}
 

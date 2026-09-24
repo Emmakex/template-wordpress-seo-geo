@@ -58,7 +58,7 @@ jobs:
       - name: Preserve installable candidate
         uses: actions/upload-artifact@v4
         with:
-          name: seo-geo-migration-bridge-0.8.1
+          name: seo-geo-migration-bridge-release
           path: |
             dist-migration-bridge/seo-geo-migration-bridge.zip
             dist-migration-bridge/seo-geo-migration-bridge.zip.sha256

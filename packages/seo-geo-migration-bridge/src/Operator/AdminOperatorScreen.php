@@ -80,6 +80,7 @@ final class AdminOperatorScreen {
 		<div class="wrap seo-geo-migration-operator">
 			<h1><?php echo esc_html( $this->copy->text( 'page_title' ) ); ?></h1>
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
+			<?php $this->render_baseline_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -128,9 +129,57 @@ final class AdminOperatorScreen {
 			<p class="notice notice-info inline">
 				<?php echo esc_html( $this->next_step_text( $status ) ); ?>
 			</p>
+			<?php if ( true !== ( $status['baseline']['available'] ?? false ) ) : ?>
+				<?php $this->render_baseline_capture_form(); ?>
+			<?php endif; ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'privacy_heading' ) ); ?></h2>
 			<p><?php echo esc_html( $this->copy->text( 'privacy_text' ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after an explicit baseline action.
+	 */
+	private function render_baseline_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after the nonce-verified admin action.
+		$status = isset( $_GET['seo_geo_baseline'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_baseline'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'success' => 'baseline_capture_success',
+			'exists'  => 'baseline_capture_exists',
+			'error'   => 'baseline_capture_error',
+			default   => null,
+		};
+
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'error' === $status ? 'notice notice-error' : 'notice notice-success';
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the explicit same-origin public baseline capture action.
+	 */
+	private function render_baseline_capture_form(): void {
+		?>
+		<div class="seo-geo-migration-baseline-action">
+			<p><?php echo esc_html( $this->copy->text( 'baseline_capture_help' ) ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminBaselineCaptureController::ACTION ); ?>">
+				<?php wp_nonce_field( AdminBaselineCaptureController::NONCE_ACTION ); ?>
+				<?php submit_button( $this->copy->text( 'baseline_capture_button' ), 'primary', 'submit', false ); ?>
+			</form>
 		</div>
 		<?php
 	}

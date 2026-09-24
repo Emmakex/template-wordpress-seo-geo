@@ -79,6 +79,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php',
 	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorStatus.php',
 	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminBaselineCaptureController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -95,7 +96,6 @@ $bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/seo-geo-migrat
 foreach (
 	array(
 		'Plugin Name: SEO/GEO Migration Bridge',
-		'Version: 0.8.1',
 		'Requires at least: 7.1',
 		'Requires PHP: 8.2',
 		'Text Domain: seo-geo-migration-bridge',
@@ -104,6 +104,20 @@ foreach (
 	if ( ! str_contains( $bootstrap, $header ) ) {
 		fail_migration_bridge( 'plugin-header', 'Migration Bridge plugin header is incomplete.', MIGRATION_BRIDGE_DIR . '/seo-geo-migration-bridge.php', $header, 'missing' );
 	}
+}
+
+if (
+	1 !== preg_match( '/^ \* Version:\s*([0-9]+\.[0-9]+\.[0-9]+)\s*$/m', $bootstrap, $version_match )
+	|| 1 !== preg_match( "/define\(\s*'SEO_GEO_MIGRATION_BRIDGE_VERSION'\s*,\s*'([^']+)'\s*\)/", $bootstrap, $constant_match )
+	|| $version_match[1] !== $constant_match[1]
+) {
+	fail_migration_bridge(
+		'plugin-version',
+		'Migration Bridge plugin header/runtime version metadata is missing or inconsistent.',
+		MIGRATION_BRIDGE_DIR . '/seo-geo-migration-bridge.php',
+		'matching semantic versions in header and runtime constant',
+		'version mismatch'
+	);
 }
 
 $php_files = array_merge(
@@ -638,19 +652,75 @@ foreach (
 	}
 }
 
-foreach ( glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array() as $operator_path ) {
+$strictly_read_only_operator_files = array(
+	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php',
+	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorStatus.php',
+);
+
+foreach ( $strictly_read_only_operator_files as $operator_path ) {
 	$operator_source = (string) file_get_contents( $operator_path );
 	foreach ( array( '$_POST', 'admin_post_', 'wp_nonce_field(', '<form' ) as $forbidden_operator_primitive ) {
 		if ( str_contains( $operator_source, $forbidden_operator_primitive ) ) {
 			fail_migration_bridge(
-				'operator-screen-mutation-entrypoint',
-				'Phase 8I operator UI must remain status-only and must not expose mutation submission primitives.',
+				'operator-status-mutation-entrypoint',
+				'Read-only operator status/copy code must not expose submission primitives.',
 				$operator_path,
 				'no POST/admin_post/nonce form primitives',
 				$forbidden_operator_primitive
 			);
 		}
 	}
+}
+
+foreach (
+	array(
+		'AdminBaselineCaptureController::ACTION',
+		'wp_nonce_field( AdminBaselineCaptureController::NONCE_ACTION )',
+		'<form method="post"',
+		"true !== ( \$status['baseline']['available'] ?? false )",
+	) as $baseline_form_guard
+) {
+	if ( ! str_contains( $operator_screen, $baseline_form_guard ) ) {
+		fail_migration_bridge(
+			'operator-baseline-action',
+			'Operator UI must expose the explicit baseline action only behind the missing-baseline branch and nonce form.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+			$baseline_form_guard,
+			'missing'
+		);
+	}
+}
+
+$baseline_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminBaselineCaptureController.php' );
+foreach (
+	array(
+		"public const ACTION = 'seo_geo_migration_capture_baseline';",
+		"current_user_can( 'manage_options' )",
+		'check_admin_referer( self::NONCE_ACTION )',
+		'$existing = $this->snapshotter->latest();',
+		'$snapshot = $this->snapshotter->capture();',
+		'$storage  = $this->snapshotter->persist( $snapshot );',
+	) as $baseline_controller_guard
+) {
+	if ( ! str_contains( $baseline_controller, $baseline_controller_guard ) ) {
+		fail_migration_bridge(
+			'baseline-admin-entrypoint',
+			'Baseline capture entrypoint must remain capability/nonce gated and refuse implicit overwrite.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminBaselineCaptureController.php',
+			$baseline_controller_guard,
+			'missing'
+		);
+	}
+}
+
+if ( str_contains( $baseline_controller, 'persist( $snapshot, true' ) ) {
+	fail_migration_bridge(
+		'baseline-overwrite',
+		'Baseline capture controller must never overwrite an existing baseline implicitly.',
+		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminBaselineCaptureController.php',
+		'persist without replace=true',
+		'implicit overwrite found'
+	);
 }
 
 $operator_copy = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' );
