@@ -6,9 +6,13 @@ on:
       - 'packages/seo-geo-theme/**'
       - 'packages/seo-geo-core/**'
       - 'presets/**'
+      - 'release/**'
+      - 'CHANGELOG.md'
       - 'scripts/build-theme-package.sh'
       - 'scripts/build-theme-release.py'
       - 'scripts/ci/release-artifact-acceptance.sh'
+      - 'scripts/ci/release-version-acceptance.py'
+      - 'scripts/ci/release-upgrade-acceptance.sh'
       - '.github/workflows/release-artifact.yml'
       - 'docs/RELEASE_ARTIFACT.md'
   push:
@@ -18,10 +22,15 @@ on:
       - 'packages/seo-geo-theme/**'
       - 'packages/seo-geo-core/**'
       - 'presets/**'
+      - 'release/**'
+      - 'CHANGELOG.md'
       - 'scripts/build-theme-package.sh'
       - 'scripts/build-theme-release.py'
       - 'scripts/ci/release-artifact-acceptance.sh'
+      - 'scripts/ci/release-version-acceptance.py'
+      - 'scripts/ci/release-upgrade-acceptance.sh'
       - '.github/workflows/release-artifact.yml'
+      - 'docs/RELEASE_ARTIFACT.md'
 
 permissions:
   contents: read
@@ -51,7 +60,11 @@ jobs:
         run: |
           bash -n scripts/build-theme-package.sh
           bash -n scripts/ci/release-artifact-acceptance.sh
-          python3 -m py_compile scripts/build-theme-release.py
+          bash -n scripts/ci/release-upgrade-acceptance.sh
+          python3 -m py_compile scripts/build-theme-release.py scripts/ci/release-version-acceptance.py
+
+      - name: Version and changelog contract
+        run: python3 scripts/ci/release-version-acceptance.py
 
       - name: Reproducibility and runtime integrity acceptance
         run: bash scripts/ci/release-artifact-acceptance.sh
@@ -69,3 +82,29 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
+
+  version-upgrade:
+    name: Version + zero-plugin upgrade
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          bash --version | head -n 1
+          python3 --version
+          docker version
+
+      - name: Validate version/upgrade scripts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          bash -n scripts/ci/release-upgrade-acceptance.sh
+          python3 -m py_compile scripts/build-theme-release.py scripts/ci/release-version-acceptance.py
+          python3 scripts/ci/release-version-acceptance.py
+
+      - name: WordPress 7.1 / PHP 8.2 upgrade and rollback acceptance
+        run: bash scripts/ci/release-upgrade-acceptance.sh
