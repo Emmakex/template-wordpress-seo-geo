@@ -144,7 +144,7 @@ PY
 fi
 
 # Same-origin subdirectory mode must be explicit and storage-isolated.
-ORIGINAL_HOME="$(wp_cli option get home --format=plaintext 2>"$TMP_DIR/sandbox-home.stderr" | tr -d '\r\n')" \
+ORIGINAL_HOME="$(wp_cli option get home 2>"$TMP_DIR/sandbox-home.stderr" | tr -d '\r\n')" \
   || fail_smoke "sandbox-home-read" "Could not read sandbox fixture home URL" "current home URL" "$(cat "$TMP_DIR/sandbox-home.stderr" | head -c 240)"
 [[ -n "$ORIGINAL_HOME" ]] \
   || fail_smoke "sandbox-home-empty" "Sandbox fixture home URL is empty" "non-empty home URL" "empty"
