@@ -353,7 +353,11 @@ $sandbox_guard = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Sandbo
 foreach (
 	array(
 		"/public const MARKER = 'SEO_GEO_MIGRATION_SANDBOX'/",
-		"/defined\( self::MARKER \)/",
+		"/public const OUTBOUND_SAFE_MARKER = 'SEO_GEO_MIGRATION_OUTBOUND_SAFE'/",
+		"/public const BACKUPS_READY_MARKER = 'SEO_GEO_MIGRATION_BACKUPS_READY'/",
+		"/constant_enabled\\( self::MARKER \\)/",
+		"/constant_enabled\\( self::OUTBOUND_SAFE_MARKER \\)/",
+		"/constant_enabled\\( self::BACKUPS_READY_MARKER \\)/",
 		"/'noindex'\]\\s*=\\s*true/",
 		"/'nofollow'\]\\s*=\\s*true/",
 		"/X-Robots-Tag/",
@@ -372,6 +376,13 @@ foreach (
 		"/'indexing_allowed'\\s*=>\\s*false/",
 		"/'canonical_competition_allowed'\\s*=>\\s*false/",
 		"/'baseline_is_reference_only'\\s*=>\\s*true/",
+		"/'review_decisions_are_planning'\\s*=>\\s*true/",
+		"/'sandbox-origin-not-distinct-from-baseline'/",
+		"/'outbound-safety-not-confirmed'/",
+		"/'fresh-backups-not-confirmed'/",
+		"/'dependency-review-incomplete'/",
+		"/SandboxGuard::outbound_safe\\(\\)/",
+		"/SandboxGuard::backups_ready\\(\\)/",
 	) as $sandbox_rule
 ) {
 	if ( 1 !== preg_match( $sandbox_rule, $sandbox_lab ) ) {
