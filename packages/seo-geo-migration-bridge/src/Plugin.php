@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
 use SeoGeo\MigrationBridge\Migration\MigrationEngine;
+use SeoGeo\MigrationBridge\Operator\AdminBaselineCaptureController;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
 use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
@@ -103,6 +104,13 @@ final class Plugin {
 	private static ?AdminOperatorScreen $operator_screen = null;
 
 	/**
+	 * Explicit public-baseline capture controller singleton.
+	 *
+	 * @var AdminBaselineCaptureController|null
+	 */
+	private static ?AdminBaselineCaptureController $baseline_capture_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -131,12 +139,14 @@ final class Plugin {
 		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
 		self::$operator_status        ??= new OperatorStatus();
 		self::$operator_screen        ??= new AdminOperatorScreen( self::$operator_status );
+		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$baseline_snapshotter );
 		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
 		self::$cutover_controller->boot();
+		self::$baseline_capture_controller->boot();
 		self::$operator_screen->register();
 	}
 
