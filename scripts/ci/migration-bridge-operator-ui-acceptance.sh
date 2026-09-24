@@ -6,6 +6,14 @@
 
 printf '[smoke] Checking Phase 8I EN/ES operator UI.\n'
 
+# Phase 8G restores production posture before this acceptance. Re-enable the
+# explicit sandbox posture only for the sandbox-readiness UI fixture, then
+# restore production posture after the assertions.
+wp_cli config set SEO_GEO_MIGRATION_SANDBOX true --raw >/dev/null \
+  || fail_smoke "operator-sandbox-marker" "Could not enable sandbox marker for operator readiness fixture" "SEO_GEO_MIGRATION_SANDBOX=true" "wp config set failed"
+wp_cli option update blog_public 0 >/dev/null \
+  || fail_smoke "operator-sandbox-search" "Could not disable search visibility for operator readiness fixture" "blog_public=0" "wp option update failed"
+
 OPERATOR_RUNNER="$TMP_DIR/migration-operator-runner.php"
 cat >"$OPERATOR_RUNNER" <<'PHP'
 <?php
@@ -295,4 +303,9 @@ UNAUTHORIZED_TEXT="$(cat "$UNAUTHORIZED_STDOUT" "$UNAUTHORIZED_STDERR" | tr -d '
 [[ "$UNAUTHORIZED_TEXT" == *"You do not have permission to view Migration Bridge status."* ]] \
   || fail_smoke "operator-capability-message" "Unauthorized operator response did not use bounded localized guidance" "permission message" "${UNAUTHORIZED_TEXT:-empty}"
 
-printf '[smoke] Phase 8I operator UI OK: Tools screen registered; EN/ES catalogs complete; baseline-ready view exposes bounded dependency detail + nonce/capability-gated sandbox handoff; missing baseline exposes capture only.\n'
+wp_cli config delete SEO_GEO_MIGRATION_SANDBOX >/dev/null 2>&1 \
+  || fail_smoke "operator-sandbox-marker-cleanup" "Could not restore production marker posture after operator UI fixture" "sandbox marker absent" "wp config delete failed"
+wp_cli option update blog_public 1 >/dev/null \
+  || fail_smoke "operator-sandbox-search-cleanup" "Could not restore production search visibility after operator UI fixture" "blog_public=1" "wp option update failed"
+
+printf '[smoke] Phase 8I operator UI OK: Tools screen registered; EN/ES catalogs complete; sandbox readiness + bounded dependency detail rendered safely; missing baseline exposes capture only.\n'
