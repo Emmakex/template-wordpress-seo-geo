@@ -69,20 +69,22 @@ It also records explicit resource-to-builder/shortcode edges and provider author
 
 The sandbox layer is provider-neutral. A hosting control panel may create the clone, but the Migration Bridge only considers it a valid migration lab when all required conditions are independently verifiable.
 
-Required sandbox marker in `wp-config.php`:
+Required sandbox markers in `wp-config.php`:
 
 ```php
 define( 'SEO_GEO_MIGRATION_SANDBOX', true );
+define( 'SEO_GEO_MIGRATION_OUTBOUND_SAFE', true );
+define( 'SEO_GEO_MIGRATION_BACKUPS_READY', true );
 ```
 
-The lab also requires WordPress search-engine visibility to be disabled, the destination `seo-geo-theme` to be active, the persisted Phase 8B baseline to exist and the Phase 8C dependency graph to be available.
+The first marker activates the sandbox indexing guard. The second is an explicit operator/environment confirmation that live email/SMS/payment/webhook mutations are disabled, redirected or using safe sandbox providers. The third confirms fresh recoverable database/uploads references exist outside the plugin. The lab also requires a **different HTTP(S) origin from the persisted production baseline**, WordPress search-engine visibility disabled, the destination `seo-geo-theme` active, the persisted Phase 8B baseline available, a valid Phase 8C dependency graph and complete operator review for every raw `UNKNOWN` component.
 
 When the marker is enabled the bridge adds defense-in-depth sandbox indexing guards:
 
 - WordPress robots directives force `noindex`, `nofollow` and `noarchive`;
 - HTTP responses include `X-Robots-Tag: noindex, nofollow, noarchive`.
 
-The lab report exposes `migrate`, `manual-review`, `unchanged` and `blocked` states and always declares production cutover/mutation/indexing/canonical competition as disallowed.
+The lab report exposes `migrate`, `manual-review`, `unchanged` and `blocked` states and always declares production cutover/mutation/indexing/canonical competition as disallowed. Raw `UNKNOWN` classifications remain unchanged in the graph; their explicit operator reviews are consumed only to derive the sandbox planning state.
 
 A vendor-specific staging feature may create the clone, but it does not replace these provider-neutral acceptance checks.
 
