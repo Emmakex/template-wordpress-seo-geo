@@ -117,6 +117,44 @@ final class AdminOperatorScreen {
 				</tbody>
 			</table>
 
+			<?php
+			$components = isset( $status['dependency_plan']['components'] ) && is_array( $status['dependency_plan']['components'] )
+				? $status['dependency_plan']['components']
+				: array();
+			?>
+			<?php if ( array() !== $components ) : ?>
+				<h2><?php echo esc_html( $this->copy->text( 'dependency_detail_heading' ) ); ?></h2>
+				<p><?php echo esc_html( $this->copy->text( 'dependency_detail_help' ) ); ?></p>
+				<div style="overflow-x:auto">
+					<table class="widefat striped">
+						<thead>
+							<tr>
+								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_component' ) ); ?></th>
+								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_type' ) ); ?></th>
+								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_classification' ) ); ?></th>
+								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_reason' ) ); ?></th>
+								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_active' ) ); ?></th>
+								<th scope="col"><?php echo esc_html( $this->copy->text( 'label_resources' ) ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $components as $component ) : ?>
+								<?php if ( is_array( $component ) ) : ?>
+									<tr>
+										<td><code><?php echo esc_html( (string) ( $component['id'] ?? $component['component_id'] ?? '' ) ); ?></code></td>
+										<td><?php echo esc_html( (string) ( $component['type'] ?? '' ) ); ?></td>
+										<td><code><?php echo esc_html( (string) ( $component['classification'] ?? 'UNKNOWN' ) ); ?></code></td>
+										<td><?php echo esc_html( (string) ( $component['reason'] ?? '' ) ); ?></td>
+										<td><?php echo esc_html( true === ( $component['active'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td>
+										<td><?php echo esc_html( null !== ( $component['resource_count'] ?? null ) ? (string) (int) $component['resource_count'] : '—' ); ?></td>
+									</tr>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			<?php endif; ?>
+
 			<h2><?php echo esc_html( $this->copy->text( 'review_heading' ) ); ?></h2>
 			<dl>
 				<dt><?php echo esc_html( $this->copy->text( 'label_blocking_review' ) ); ?></dt>
@@ -133,6 +171,14 @@ final class AdminOperatorScreen {
 			</p>
 			<?php if ( true !== ( $status['baseline']['available'] ?? false ) ) : ?>
 				<?php $this->render_baseline_capture_form( $status ); ?>
+			<?php else : ?>
+				<h2><?php echo esc_html( $this->copy->text( 'sandbox_handoff_heading' ) ); ?></h2>
+				<p><?php echo esc_html( $this->copy->text( 'sandbox_handoff_help' ) ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( AdminSandboxHandoffController::ACTION ); ?>">
+					<?php wp_nonce_field( AdminSandboxHandoffController::NONCE_ACTION ); ?>
+					<?php submit_button( $this->copy->text( 'sandbox_handoff_button' ), 'secondary', 'submit', false ); ?>
+				</form>
 			<?php endif; ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'privacy_heading' ) ); ?></h2>
