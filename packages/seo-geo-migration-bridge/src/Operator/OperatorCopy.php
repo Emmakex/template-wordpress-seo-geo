@@ -70,7 +70,7 @@ final class OperatorCopy {
 				'baseline_capture_continue'      => 'Continue baseline capture',
 				'baseline_capture_progress'      => 'Capture progress: %1$d of %2$d public resources (%3$d%%). Progress is saved after every small batch.',
 				'baseline_capture_progress_notice' => 'Progress saved. The next small batch will start automatically; if the connection closes, return here and continue safely.',
-				'baseline_capture_help'          => 'This explicit action anonymously reads same-origin public URLs in small resumable batches and stores only the Migration Bridge baseline/progress. It does not change the theme, plugins, content, permalinks, or public SEO output.'
+				'baseline_capture_help'          => 'This explicit action anonymously reads same-origin public URLs in small resumable batches and stores only the Migration Bridge baseline/progress. It does not change the theme, plugins, content, permalinks, or public SEO output.',
 				'baseline_capture_success'       => 'SEO/GEO baseline captured and stored successfully.',
 				'baseline_capture_exists'        => 'A baseline already exists. It was not replaced.',
 				'baseline_capture_error'         => 'The baseline could not be captured or stored. No migration action was executed.',
@@ -115,7 +115,7 @@ final class OperatorCopy {
 				'baseline_capture_continue'      => 'Continuar captura de línea base',
 				'baseline_capture_progress'      => 'Progreso de captura: %1$d de %2$d recursos públicos (%3$d%%). El progreso se guarda después de cada lote pequeño.',
 				'baseline_capture_progress_notice' => 'Progreso guardado. El siguiente lote pequeño se iniciará automáticamente; si se corta la conexión, vuelve aquí y continúa de forma segura.',
-				'baseline_capture_help'          => 'Esta acción explícita lee de forma anónima URLs públicas del mismo origen en lotes pequeños y reanudables, y guarda únicamente la línea base/progreso del Puente de migración. No cambia el tema, plugins, contenido, enlaces permanentes ni la salida SEO pública.'
+				'baseline_capture_help'          => 'Esta acción explícita lee de forma anónima URLs públicas del mismo origen en lotes pequeños y reanudables, y guarda únicamente la línea base/progreso del Puente de migración. No cambia el tema, plugins, contenido, enlaces permanentes ni la salida SEO pública.',
 				'baseline_capture_success'       => 'La línea base SEO/GEO se capturó y guardó correctamente.',
 				'baseline_capture_exists'        => 'Ya existe una línea base. No se ha reemplazado.',
 				'baseline_capture_error'         => 'No se pudo capturar o guardar la línea base. No se ejecutó ninguna acción de migración.',
