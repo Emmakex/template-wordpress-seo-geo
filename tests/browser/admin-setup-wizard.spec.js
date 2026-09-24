@@ -39,7 +39,7 @@ async function fillCorporateCandidate(page) {
   await page.locator('#seo-geo-confirm-identity').check();
   await page.locator('#seo-geo-crawler-oai-searchbot').selectOption('allow');
   await page.locator('#seo-geo-crawler-gptbot').selectOption('disallow');
-  await page.locator('#seo-geo-llms-txt').check();
+  await page.locator('#seo-geo-llms').check();
   await page.locator('#seo-geo-markdown').check();
 }
 
