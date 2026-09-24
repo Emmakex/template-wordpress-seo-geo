@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.2`;
+- current plugin version: `0.8.3`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -62,6 +62,6 @@ For the first Phase 10E pilot:
 5. create/use an isolated sandbox before transformation;
 6. retain current production backups/recovery references.
 
-The operator screen only shows the baseline capture action when no baseline exists. The action is capability/nonce protected, performs anonymous same-origin public requests, stores only the dedicated non-autoloaded Migration Bridge baseline option, and never replaces an existing baseline automatically.
+The operator screen only shows the baseline capture action when no baseline exists. The action is capability/nonce protected and now runs as a **resumable incremental capture**: robots/sitemap discovery is advanced one public resource at a time and page analysis is limited to two public pages per request. Progress is persisted in a dedicated non-autoloaded option after every small step, so a timeout/closed connection can resume instead of restarting. The final baseline is stored only after all accepted steps complete and an existing final baseline is never replaced automatically.
 
 The plugin is transitional for the Theme 0.1.0 migration path. Its accepted capabilities later become the migration module inside SEO/GEO Manager.
