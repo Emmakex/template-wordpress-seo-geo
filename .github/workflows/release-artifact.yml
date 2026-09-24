@@ -10,7 +10,7 @@ on:
       - 'scripts/build-theme-release.py'
       - 'scripts/ci/release-artifact-acceptance.sh'
       - '.github/workflows/release-artifact.yml'
-      - 'docs/ROADMAP.md'
+      - 'docs/RELEASE_ARTIFACT.md'
   push:
     branches:
       - main
@@ -22,7 +22,6 @@ on:
       - 'scripts/build-theme-release.py'
       - 'scripts/ci/release-artifact-acceptance.sh'
       - '.github/workflows/release-artifact.yml'
-      - 'docs/ROADMAP.md'
 
 permissions:
   contents: read
