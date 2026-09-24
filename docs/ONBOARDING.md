@@ -269,7 +269,7 @@ Post-merge `main` repeated all eight gates successfully: Foundation `35897366497
 
 ## Phase 9E — Setup execution and generated report
 
-Status: **implementation candidate**
+Status: **complete**
 
 9E is the first onboarding microphase allowed to persist configuration. Persistence is validator-backed, atomic at the application layer, idempotent and limited to the existing theme/Core option authorities.
 
@@ -318,3 +318,31 @@ The report never stores LocalBusiness street address, telephone, coordinates, pr
 Appearance → SEO/GEO Setup now exposes **Preview** and **Apply setup** as distinct actions. Both are nonce/capability-gated. Apply always revalidates server-side and requires a dedicated confirmation checkbox; it does not trust a previous preview.
 
 Self-contained acceptance proves a migrated LocalBusiness setup, stable idempotent rerun, non-autoloaded setup/report options, no page/plugin creation, Migration Bridge class absence and full rollback after an injected mid-write failure.
+
+
+### 9E acceptance evidence
+
+Final candidate `73a3a2d752241d50d0e3f968bbe0a69cb234bbea` passed all eight gates: Foundation `35937968265`, Package `35937968352`, PHP Quality `35937968217`, WordPress Smoke `35937968337`, Self-contained Theme `35937968239`, Native Multilingual `35937968360`, Accessibility/Responsive `35937968240` and Performance `35937968246`.
+
+PR #98 was squash-merged as `a95d325027a8e787f030e48fd82f4f626a7c3c65`.
+
+Post-merge `main` repeated all eight gates successfully: Foundation `35938267798`, Package `35938267866`, PHP Quality `35938267816`, WordPress Smoke `35938267890`, Self-contained Theme `35938267878`, Native Multilingual `35938267963`, Accessibility/Responsive `35938267901` and Performance `35938267767`.
+
+The runtime acceptance proved atomic option-only setup application, exact rollback after injected mid-write failure, stable idempotent reruns, non-autoloaded privacy-bounded reporting, migrated-site handoff without Migration Bridge runtime dependency and zero required plugins.
+
+## Phase 9F — Onboarding acceptance
+
+Status: **active**
+
+9F is the final onboarding acceptance pass. It does not introduce a new product owner or persistence boundary; it consolidates clean-install and migrated-site proof across the existing Phase 9 setup flow.
+
+Acceptance must prove:
+
+- clean-install onboarding from the built self-contained theme;
+- migrated-site onboarding using the bounded Phase 8 handoff;
+- zero required plugins before, during and after onboarding;
+- EN/ES keyboard, focus, axe and responsive behavior;
+- Lighthouse performance budgets;
+- WPCS, PHPStan level 6, security and static mutation-boundary contracts;
+- no operator copy instructs installation of an SEO/GEO plugin;
+- the final generated setup report remains non-sensitive and reproducible for an unchanged configuration.
