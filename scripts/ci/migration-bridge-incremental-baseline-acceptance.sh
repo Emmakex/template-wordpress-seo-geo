@@ -3,7 +3,7 @@
 #
 # Runs after the original Phase 8B acceptance, replaces that fixture baseline
 # with the incremental equivalent, and proves each reconstructed engine step
-# performs no more than two public HTTP requests.
+# preserves 0.8.3 progress and honors the operator-selected 1-20 page batch.
 
 printf '[smoke] Checking resumable incremental SEO/GEO baseline capture.\n'
 
@@ -90,9 +90,36 @@ final class MigrationIncrementalMappedHttpClient implements HttpClientInterface 
 $client         = new MigrationIncrementalMappedHttpClient( '__MAPPED_ORIGIN__', '__PUBLIC_HOST__' );
 $baseline_store = new BaselineSnapshotStore();
 $progress_store = new IncrementalBaselineStore();
-$steps          = 0;
-$max_delta      = 0;
-$result         = null;
+$compat_engine = new IncrementalBaselineCapture(
+	null,
+	null,
+	$baseline_store,
+	$progress_store,
+	$client
+);
+$result = $compat_engine->advance();
+
+$legacy_state = $progress_store->latest();
+if ( ! is_array( $legacy_state ) ) {
+	throw new RuntimeException( 'Incremental baseline compatibility fixture was not persisted.' );
+}
+unset( $legacy_state['batch_size'] );
+if ( ! $progress_store->save( $legacy_state ) ) {
+	throw new RuntimeException( 'Could not simulate 0.8.3 progress without a batch size.' );
+}
+
+$legacy_engine = new IncrementalBaselineCapture(
+	null,
+	null,
+	$baseline_store,
+	$progress_store,
+	$client
+);
+$legacy_status  = $legacy_engine->status();
+$legacy_default = $legacy_status['batch_size'];
+
+$steps     = 1;
+$max_delta = $client->requests;
 
 while ( $steps < 100 ) {
 	$before = $client->requests;
@@ -104,7 +131,7 @@ while ( $steps < 100 ) {
 		$progress_store,
 		$client
 	);
-	$result = $engine->advance();
+	$result = $engine->advance( 20 );
 
 	$delta     = $client->requests - $before;
 	$max_delta = max( $max_delta, $delta );
@@ -134,8 +161,10 @@ echo wp_json_encode(
 	array(
 		'steps'               => $steps,
 		'max_requests_step'   => $max_delta,
+		'legacy_default'      => $legacy_default,
 		'result'              => $result,
 		'progress_status'     => $progress['status'] ?? null,
+		'progress_batch_size' => $progress['batch_size'] ?? null,
 		'progress_phase'      => $progress['phase'] ?? null,
 		'baseline_kind'       => $snapshot['kind'] ?? null,
 		'captured'            => $crawl['captured'] ?? null,
@@ -177,11 +206,14 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     result = json.load(handle)
 
 assert result["steps"] >= 4
-assert result["max_requests_step"] <= 2
+assert result["max_requests_step"] <= 20
+assert result["legacy_default"] == 10
 assert result["result"]["status"] == "complete"
+assert result["result"]["batch_size"] == 20
 assert result["result"]["percent"] == 100
 assert result["progress_status"] == "complete"
 assert result["progress_phase"] == "complete"
+assert result["progress_batch_size"] == 20
 assert result["baseline_kind"] == "seo-geo-public-baseline"
 assert result["captured"] >= 2
 assert result["request_failures"] == 0
@@ -193,7 +225,7 @@ assert result["progress_autoloaded"] is False
 print("ok")
 PY
 )"; then
-  fail_smoke "incremental-baseline-contract" "Incremental baseline contract is invalid" "resumable multi-step capture with <=2 HTTP requests per step" "${INCREMENTAL_ASSERTION:-python assertion failed}"
+  fail_smoke "incremental-baseline-contract" "Incremental baseline contract is invalid" "0.8.3-compatible resumable capture with selectable 1-20 page batches" "${INCREMENTAL_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Incremental baseline OK: persisted/reconstructed between steps, <=2 requests per step, final baseline complete.\n'
+printf '[smoke] Incremental baseline OK: 0.8.3 progress compatible; default=10; selectable batch=20 persisted; final baseline complete.\n'

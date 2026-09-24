@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Operator;
 
+use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
+
 /**
  * Renders one capability-gated, read-only migration status screen under Tools.
  */
@@ -179,12 +181,13 @@ final class AdminOperatorScreen {
 	 * @param array<string,mixed> $status Operator snapshot.
 	 */
 	private function render_baseline_capture_form( array $status ): void {
-		$capture   = is_array( $status['capture'] ?? null ) ? $status['capture'] : array();
-		$running   = 'running' === ( $capture['status'] ?? null );
-		$processed = (int) ( $capture['processed'] ?? 0 );
-		$total     = (int) ( $capture['total'] ?? 0 );
-		$percent   = (int) ( $capture['percent'] ?? 0 );
-		$button    = $running ? 'baseline_continue' : 'baseline_capture_button';
+		$capture    = is_array( $status['capture'] ?? null ) ? $status['capture'] : array();
+		$running    = 'running' === ( $capture['status'] ?? null );
+		$processed  = (int) ( $capture['processed'] ?? 0 );
+		$total      = (int) ( $capture['total'] ?? 0 );
+		$percent    = (int) ( $capture['percent'] ?? 0 );
+		$batch_size = (int) ( $capture['batch_size'] ?? IncrementalBaselineCapture::DEFAULT_BATCH_SIZE );
+		$button     = $running ? 'baseline_continue' : 'baseline_capture_button';
 		?>
 		<div class="seo-geo-migration-baseline-action">
 			<p><?php echo esc_html( $this->copy->text( 'baseline_capture_help' ) ); ?></p>
@@ -206,33 +209,22 @@ final class AdminOperatorScreen {
 			<form id="seo-geo-baseline-capture-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminBaselineCaptureController::ACTION ); ?>">
 				<?php wp_nonce_field( AdminBaselineCaptureController::NONCE_ACTION ); ?>
+				<p>
+					<label for="seo-geo-baseline-batch-size"><strong><?php echo esc_html( $this->copy->text( 'batch_size_label' ) ); ?></strong></label>
+					<select id="seo-geo-baseline-batch-size" name="batch_size">
+						<?php for ( $size = IncrementalBaselineCapture::MIN_BATCH_SIZE; $size <= IncrementalBaselineCapture::MAX_BATCH_SIZE; ++$size ) : ?>
+							<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( $batch_size, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+						<?php endfor; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'batch_size_help' ) ); ?></p>
+				<?php if ( $running ) : ?>
+					<p><?php echo esc_html( sprintf( $this->copy->text( 'batch_size_current' ), $batch_size ) ); ?></p>
+				<?php endif; ?>
 				<?php submit_button( $this->copy->text( $button ), 'primary', 'submit', false ); ?>
 			</form>
-			<?php if ( $running && $this->should_auto_continue_baseline() ) : ?>
-				<script>
-					window.setTimeout(function () {
-						var form = document.getElementById('seo-geo-baseline-capture-form');
-						if (form) {
-							form.submit();
-						}
-					}, 500);
-				</script>
-			<?php endif; ?>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Auto-advance only after a successful persisted progress step.
-	 */
-	private function should_auto_continue_baseline(): bool {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect marker after nonce-verified action.
-		$result = isset( $_GET['seo_geo_baseline'] )
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded redirect marker.
-			? sanitize_key( wp_unslash( $_GET['seo_geo_baseline'] ) )
-			: '';
-
-		return 'progress' === $result;
 	}
 
 	/**
