@@ -162,6 +162,7 @@ final class AdminSetupWizard {
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
 			<div class="notice notice-info inline">
 				<p><?php echo esc_html( $this->copy->text( 'read_only_notice' ) ); ?></p>
+				<p><strong><?php echo esc_html( $this->copy->text( 'zero_plugin_notice' ) ); ?></strong></p>
 			</div>
 
 			<ol class="seo-geo-setup-wizard__steps" aria-label="<?php echo esc_attr( $this->copy->text( 'page_title' ) ); ?>">

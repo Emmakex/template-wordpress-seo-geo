@@ -859,6 +859,69 @@ final class Phase9EFailingWriter implements SetupOptionWriterInterface {
 
 wp_set_current_user( 1 );
 
+$phase9f_option_names = array(
+	'seo_geo_theme_setup_report_v1',
+	'seo_geo_theme_setup_v1',
+	'seo_geo_theme_setup_rewrite_flush_v1',
+	'seo_geo_active_preset',
+	'seo_geo_native_languages',
+	'seo_geo_schema_identity',
+	'seo_geo_schema_local_business',
+	'seo_geo_crawler_policy',
+	'seo_geo_llms_txt',
+	'seo_geo_markdown_alternates',
+	'seo_geo_migration_report_v1',
+);
+
+foreach ( $phase9f_option_names as $option_name ) {
+	delete_option( $option_name );
+}
+
+$clean_plugins_before = get_option( 'active_plugins', array() );
+$clean_pages_before   = (int) wp_count_posts( 'page' )->publish;
+$clean_candidate      = array(
+	'preset'           => 'corporate',
+	'default_language' => 'en',
+	'languages'        => array(
+		'en' => 'en_US',
+		'es' => 'es_ES',
+	),
+	'routing'          => 'prefix',
+	'x_default'        => 'en',
+	'site_entity_type' => 'organization',
+	'confirm_identity' => true,
+	'local_business'   => array(),
+	'crawler_policy'   => array(
+		'oai_searchbot' => 'allow',
+		'gptbot'        => 'disallow',
+	),
+	'llms_txt_enabled'            => true,
+	'markdown_alternates_enabled' => true,
+);
+
+$clean_first          = seo_geo_theme_apply_setup( $clean_candidate, true );
+$clean_report_first   = seo_geo_theme_setup_report();
+$clean_second         = seo_geo_theme_apply_setup( $clean_candidate, true );
+$clean_report_second  = seo_geo_theme_setup_report();
+$clean_plugins_after  = get_option( 'active_plugins', array() );
+$clean_pages_after    = (int) wp_count_posts( 'page' )->publish;
+
+$clean_acceptance = array(
+	'first'          => $clean_first,
+	'second'         => $clean_second,
+	'report_first'   => $clean_report_first,
+	'report_second'  => $clean_report_second,
+	'plugins_before' => $clean_plugins_before,
+	'plugins_after'  => $clean_plugins_after,
+	'pages_before'   => $clean_pages_before,
+	'pages_after'    => $clean_pages_after,
+	'handoff'        => get_option( 'seo_geo_migration_report_v1', null ),
+);
+
+foreach ( $phase9f_option_names as $option_name ) {
+	delete_option( $option_name );
+}
+
 update_option(
 	'seo_geo_migration_report_v1',
 	array(
@@ -1009,6 +1072,7 @@ $page_count_after = (int) wp_count_posts( 'page' )->publish;
 
 echo wp_json_encode(
 	array(
+		'clean_install' => $clean_acceptance,
 		'unconfirmed' => array(
 			'result' => $unconfirmed,
 			'before' => $unconfirmed_before,
@@ -1047,6 +1111,7 @@ echo wp_json_encode(
 			'after'  => $page_count_after,
 		),
 		'bridge_loaded' => class_exists( '\\SeoGeo\\MigrationBridge\\Plugin', false ),
+		'active_plugins' => get_option( 'active_plugins', array() ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 );
@@ -1066,6 +1131,25 @@ if ! PHASE9E_ASSERTION="$(python3 - "$TMP_DIR/phase9e-execution.json" <<'PY'
 import json, sys
 with open(sys.argv[1], encoding="utf-8") as f:
     p=json.load(f)
+
+clean=p["clean_install"]
+assert clean["plugins_before"] == []
+assert clean["plugins_after"] == []
+assert clean["pages_before"] == clean["pages_after"]
+assert clean["handoff"] is None
+assert clean["first"]["valid"] is True
+assert clean["first"]["applied"] is True
+assert clean["first"]["idempotent"] is False
+assert clean["second"]["valid"] is True
+assert clean["second"]["applied"] is True
+assert clean["second"]["idempotent"] is True
+assert clean["second"]["changed_options"] == []
+assert clean["report_first"] == clean["report_second"]
+assert clean["report_first"]["site_mode"] == "clean"
+assert clean["report_first"]["preset"] == "corporate"
+assert clean["report_first"]["entity"]["type"] == "organization"
+assert clean["report_first"]["migration_handoff"] is None
+assert all(v is False for v in clean["report_first"]["safety"].values())
 
 u=p["unconfirmed"]
 assert u["result"]["applied"] is False
@@ -1137,6 +1221,7 @@ assert opts["setup"]["configuration_sha256"] == r1["configuration_sha256"]
 assert p["autoloaded"] == {"setup":False,"report":False}
 assert p["page_counts"]["before"] == p["page_counts"]["after"]
 assert p["bridge_loaded"] is False
+assert p["active_plugins"] == []
 
 html=p["apply_html"]
 assert "Setup already matches these validated settings." in html
@@ -1158,13 +1243,14 @@ PY
   fail_smoke "phase9e-contract" "Phase 9E atomic setup execution contract is invalid" "validated atomic/idempotent setup with rollback and privacy-bounded report" "${PHASE9E_ASSERTION:-python assertion failed}"
 fi
 
-printf '[self-contained] Phase 9E setup execution OK: validated options applied atomically; rerun idempotent; injected mid-write failure rolled back; migrated handoff/report remained bridge-independent and privacy-bounded.\n'
+printf '[self-contained] Phase 9F onboarding acceptance OK: clean and migrated setup paths are zero-plugin, atomic/idempotent, rollback-safe, bridge-independent and privacy-bounded.\n'
 
 wp_cli eval '
 foreach (
 	array(
 		"seo_geo_theme_setup_report_v1",
 		"seo_geo_theme_setup_v1",
+		"seo_geo_theme_setup_rewrite_flush_v1",
 		"seo_geo_active_preset",
 		"seo_geo_native_languages",
 		"seo_geo_schema_identity",

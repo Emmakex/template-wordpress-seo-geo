@@ -346,3 +346,10 @@ Acceptance must prove:
 - WPCS, PHPStan level 6, security and static mutation-boundary contracts;
 - no operator copy instructs installation of an SEO/GEO plugin;
 - the final generated setup report remains non-sensitive and reproducible for an unchanged configuration.
+
+
+### 9F implementation candidate
+
+The final onboarding acceptance layer now consolidates the existing Phase 9 behavior instead of introducing another runtime owner. The candidate proves both clean and migrated setup paths, zero active plugins, no page creation, idempotent reruns, EN/ES Apply behavior with axe/focus checks, existing Lighthouse/quality gates and explicit operator-facing zero-plugin guidance.
+
+Static acceptance also rejects direct EN/ES instructions to install or activate an SEO/GEO plugin.
