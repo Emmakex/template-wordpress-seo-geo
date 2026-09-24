@@ -19,6 +19,16 @@ final class SandboxGuard {
 	public const MARKER = 'SEO_GEO_MIGRATION_SANDBOX';
 
 	/**
+	 * Explicit confirmation that live outbound transactions are disabled or safely redirected.
+	 */
+	public const OUTBOUND_SAFE_MARKER = 'SEO_GEO_MIGRATION_OUTBOUND_SAFE';
+
+	/**
+	 * Explicit confirmation that fresh recoverable database/uploads backup references exist.
+	 */
+	public const BACKUPS_READY_MARKER = 'SEO_GEO_MIGRATION_BACKUPS_READY';
+
+	/**
 	 * Register sandbox-only public guards.
 	 */
 	public static function boot(): void {
@@ -34,7 +44,30 @@ final class SandboxGuard {
 	 * Whether this installation is explicitly marked as a migration sandbox.
 	 */
 	public static function enabled(): bool {
-		return defined( self::MARKER ) && true === constant( self::MARKER );
+		return self::constant_enabled( self::MARKER );
+	}
+
+	/**
+	 * Whether sandbox outbound transactions were explicitly confirmed safe.
+	 */
+	public static function outbound_safe(): bool {
+		return self::constant_enabled( self::OUTBOUND_SAFE_MARKER );
+	}
+
+	/**
+	 * Whether fresh sandbox recovery references were explicitly confirmed.
+	 */
+	public static function backups_ready(): bool {
+		return self::constant_enabled( self::BACKUPS_READY_MARKER );
+	}
+
+	/**
+	 * Resolve a boolean runtime safety marker without accepting truthy strings.
+	 *
+	 * @param string $name Constant name.
+	 */
+	private static function constant_enabled( string $name ): bool {
+		return defined( $name ) && true === constant( $name );
 	}
 
 	/**
