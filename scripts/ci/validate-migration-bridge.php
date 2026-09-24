@@ -398,6 +398,9 @@ foreach (
 		'wp_verify_nonce(',
 		'if ( ! $confirmed )',
 		'public const BACKUP_META',
+		'new BaselineSnapshotStore()',
+		"is_array( \$baseline['snapshot'] ?? null ) ? \$baseline['snapshot'] : null",
+		'build( $analysis, $baseline_snapshot )',
 		'add_post_meta( $post->ID, self::BACKUP_META',
 	) as $engine_guard
 ) {
