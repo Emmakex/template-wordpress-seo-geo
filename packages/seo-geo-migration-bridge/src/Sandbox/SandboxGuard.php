@@ -29,6 +29,16 @@ final class SandboxGuard {
 	public const BACKUPS_READY_MARKER = 'SEO_GEO_MIGRATION_BACKUPS_READY';
 
 	/**
+	 * Optional sandbox location mode. Defaults to distinct-origin mode.
+	 */
+	public const MODE_MARKER = 'SEO_GEO_MIGRATION_SANDBOX_MODE';
+
+	/**
+	 * Explicit confirmation that a same-origin subdirectory uses isolated storage/runtime state.
+	 */
+	public const STORAGE_ISOLATED_MARKER = 'SEO_GEO_MIGRATION_STORAGE_ISOLATED';
+
+	/**
 	 * Register sandbox-only public guards.
 	 */
 	public static function boot(): void {
@@ -59,6 +69,33 @@ final class SandboxGuard {
 	 */
 	public static function backups_ready(): bool {
 		return self::constant_enabled( self::BACKUPS_READY_MARKER );
+	}
+
+	/**
+	 * Return the requested sandbox location mode.
+	 *
+	 * Missing mode keeps the v0.8.7 distinct-origin behavior.
+	 */
+	public static function mode(): string {
+		if ( ! defined( self::MODE_MARKER ) ) {
+			return 'origin';
+		}
+
+		$value = constant( self::MODE_MARKER );
+		if ( ! is_string( $value ) ) {
+			return 'invalid';
+		}
+
+		$value = strtolower( trim( $value ) );
+
+		return in_array( $value, array( 'origin', 'subdirectory' ), true ) ? $value : 'invalid';
+	}
+
+	/**
+	 * Whether same-origin subdirectory storage isolation was explicitly confirmed.
+	 */
+	public static function storage_isolated(): bool {
+		return self::constant_enabled( self::STORAGE_ISOLATED_MARKER );
 	}
 
 	/**
