@@ -112,6 +112,18 @@ Immediately after controlled cutover, execute `docs/PRODUCTION_VERIFICATION.md`.
 
 The final acceptance record must cover runtime, SEO/GEO, functionality, accessibility, performance and logs. Any material canonical/indexability/sitemap/hreflang/redirect regression, broken critical form, private-content exposure, fatal/5xx or artifact identity mismatch triggers rollback/recovery according to `docs/ROLLBACK_RECOVERY.md`.
 
+## Two-product scope
+
+The Theme 0.1.0 stable gate does **not** wait for the future SEO/GEO Manager product to be fully implemented. The current accepted Migration Bridge remains the migration implementation used for this Theme pilot.
+
+The portfolio decision adds a second, later acceptance use for emmake.com:
+
+- first: complete Theme sandbox + production acceptance for Phase 10E;
+- later: after Manager reaches its publishing/integration roadmap phases, use emmake.com as the first **Theme + Manager** integration pilot;
+- Manager publication acceptance starts draft-first and must prove idempotency, rollback and single SEO/GEO authority before public publishing is accepted.
+
+This separation prevents a new product roadmap from silently blocking the already-defined Theme stable-release gate.
+
 ## Promotion to stable
 
 Only after the real production acceptance is `accepted`:
