@@ -222,6 +222,36 @@ foreach ( array( "'en' => array(", "'es' => array(", "'preview_confirm'", "'appl
 	}
 }
 
+foreach (
+	array(
+		'No SEO/GEO plugin is required for baseline setup.',
+		'No se requiere ningún plugin SEO/GEO para la configuración base.',
+	) as $guard
+) {
+	if ( ! str_contains( $wizard_copy, $guard ) ) {
+		fwrite( STDERR, 'Phase 9F zero-plugin onboarding guidance missing: ' . $guard . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+foreach (
+	array(
+		'Install an SEO plugin',
+		'Install a GEO plugin',
+		'SEO plugin is required',
+		'GEO plugin is required',
+		'Instala un plugin SEO',
+		'Instala un plugin GEO',
+		'plugin SEO obligatorio',
+		'plugin GEO obligatorio',
+	) as $forbidden_guidance
+) {
+	if ( str_contains( $wizard_copy, $forbidden_guidance ) ) {
+		fwrite( STDERR, 'Phase 9F onboarding must not instruct operators to install an SEO/GEO plugin: ' . $forbidden_guidance . PHP_EOL );
+		exit( 1 );
+	}
+}
+
 $wizard_css = (string) file_get_contents( $root . '/packages/seo-geo-theme/assets/admin/setup-wizard.css' );
 foreach ( array( '@media (max-width: 782px)', 'grid-template-columns: 1fr' ) as $guard ) {
 	if ( ! str_contains( $wizard_css, $guard ) ) {
@@ -418,4 +448,4 @@ foreach (
 	}
 }
 
-printf( "Phase 9A/9B/9C/9D/9E setup static contract OK: planning/validation remain authority-driven; option mutation is isolated; setup execution is rollback-capable/idempotent; the EN/ES wizard remains capability+nonce-gated.\n" );
+printf( "Phase 9A/9B/9C/9D/9E/9F setup static contract OK: planning/validation remain authority-driven; option mutation is isolated; setup execution is rollback-capable/idempotent; EN/ES onboarding remains capability+nonce-gated and explicitly zero-plugin.\n" );
