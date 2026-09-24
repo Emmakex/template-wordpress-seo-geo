@@ -241,7 +241,7 @@ final class IncrementalBaselineCapture {
 	 * @return array<string,mixed>
 	 */
 	private function advance_sitemap( array $state ): array {
-		$queue = is_array( $state['sitemap_queue'] ?? null ) ? $state['sitemap_queue'] : array();
+		$queue                = is_array( $state['sitemap_queue'] ?? null ) ? $state['sitemap_queue'] : array();
 
 		if ( array() === $queue ) {
 			$state['phase'] = 'inventory';
@@ -272,7 +272,7 @@ final class IncrementalBaselineCapture {
 
 		$locations = 200 === $response['status'] ? $this->extract_xml_locations( $response['body'] ) : array();
 
-		$sitemaps = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
+		$sitemaps        = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
 
 		$sitemaps[] = array(
 			'url'            => $url,
@@ -375,9 +375,9 @@ final class IncrementalBaselineCapture {
 
 		$status_counts = is_array( $state['status_counts'] ?? null ) ? $state['status_counts'] : array();
 
-		$status_key = (string) $response['status'];
+		$status_key                   = (string) $response['status'];
 		$status_counts[ $status_key ] = ( $status_counts[ $status_key ] ?? 0 ) + 1;
-		$state['status_counts']        = $status_counts;
+		$state['status_counts']       = $status_counts;
 
 		$indexability = $signals['indexability'] ?? null;
 		if ( is_array( $indexability ) ) {
@@ -397,7 +397,7 @@ final class IncrementalBaselineCapture {
 			&& $response['status'] < 400
 			&& '' !== $response['headers']['location']
 		) {
-			$redirects = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
+			$redirects        = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
 
 			$redirects[] = array(
 				'from'   => $url,
@@ -407,7 +407,7 @@ final class IncrementalBaselineCapture {
 			$state['redirects'] = $redirects;
 		}
 
-		$pages = is_array( $state['pages'] ?? null ) ? $state['pages'] : array();
+		$pages        = is_array( $state['pages'] ?? null ) ? $state['pages'] : array();
 
 		$pages[] = array_merge(
 			$row,
