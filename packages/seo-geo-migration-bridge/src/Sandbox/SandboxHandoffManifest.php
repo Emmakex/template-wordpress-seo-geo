@@ -85,7 +85,7 @@ final class SandboxHandoffManifest {
 	 */
 	private function active_theme( array $themes ): ?array {
 		foreach ( $themes as $theme ) {
-			if ( ! is_array( $theme ) || 'active' !== ( $theme['status'] ?? null ) ) {
+			if ( 'active' !== ( $theme['status'] ?? null ) ) {
 				continue;
 			}
 
