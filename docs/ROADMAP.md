@@ -2076,13 +2076,24 @@ Evidence:
 
 ### Microphase 10D — Production verification and recovery
 
-Status: **active**
+Status: **implementation candidate**
 
 Deliverables:
 
 - production verification checklist;
 - documented rollback/recovery checklist;
 - sandbox-to-production acceptance checklist.
+
+Current implementation scope:
+
+- `docs/SANDBOX_TO_PRODUCTION.md` defines sandbox exit, production entry, environment separation, change-window and go/no-go gates;
+- `docs/PRODUCTION_VERIFICATION.md` verifies deployed release/checksum identity, runtime health, critical client behavior and material SEO/GEO output on the public production origin;
+- production blockers include fatal/5xx failures, unavailable administration, wrong artifact identity, material canonical/indexability/sitemap/hreflang/redirect regressions, broken critical transaction flows, private-content exposure and security-impacting regressions;
+- `docs/ROLLBACK_RECOVERY.md` distinguishes theme/runtime rollback from database/uploads recovery and requires the smallest safe recovery action;
+- dynamic sites explicitly forbid restoring stale databases over newer orders, submissions or customer changes without an explicit data-recovery decision;
+- Phase 8 Migration Bridge rollback remains authoritative only while its accepted cutover state still owns that operation; normal version rollback uses Phase 10 client artifacts;
+- `docs/templates/PRODUCTION_ACCEPTANCE_RECORD.example.json` provides a bounded evidence shape linking release, sandbox, backups, quality evidence, production checks and final decision without storing secrets;
+- `scripts/ci/validate-production-readiness-docs.py` makes the production-readiness and recovery invariants part of Foundation CI.
 
 ### Microphase 10E — Stable release decision
 
