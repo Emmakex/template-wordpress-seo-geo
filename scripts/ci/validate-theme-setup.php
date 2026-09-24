@@ -250,7 +250,7 @@ foreach (
 	}
 }
 
-if ( ! str_contains( $wizard_screen, "$this->copy->text( 'zero_plugin_notice' )" ) ) {
+if ( ! str_contains( $wizard_screen, "\$this->copy->text( 'zero_plugin_notice' )" ) ) {
 	fwrite( STDERR, 'Phase 9F zero-plugin notice is not rendered by the onboarding wizard.' . PHP_EOL );
 	exit( 1 );
 }
