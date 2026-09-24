@@ -138,8 +138,8 @@ final class OperatorStatus {
 		$source       = 'live-read-only';
 
 		try {
-			$analysis = $this->analyzer->analyze();
-			$graph    = $this->graph->build(
+			$analysis     = $this->analyzer->analyze();
+			$graph        = $this->graph->build(
 				$analysis,
 				is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null
 			);
