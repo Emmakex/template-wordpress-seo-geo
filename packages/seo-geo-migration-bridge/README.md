@@ -77,7 +77,18 @@ define( 'SEO_GEO_MIGRATION_OUTBOUND_SAFE', true );
 define( 'SEO_GEO_MIGRATION_BACKUPS_READY', true );
 ```
 
-The first marker activates the sandbox indexing guard. The second is an explicit operator/environment confirmation that live email/SMS/payment/webhook mutations are disabled, redirected or using safe sandbox providers. The third confirms fresh recoverable database/uploads references exist outside the plugin. The lab also requires a **different HTTP(S) origin from the persisted production baseline**, WordPress search-engine visibility disabled, the destination `seo-geo-theme` active, the persisted Phase 8B baseline available, a valid Phase 8C dependency graph and complete operator review for every raw `UNKNOWN` component.
+The default `origin` mode preserves the v0.8.7 rule: the sandbox HTTP(S) origin must differ from the production baseline origin.
+
+A hosting account may instead use a same-origin WordPress clone in an isolated subdirectory such as `https://example.com/nuevaweb/`. This requires two additional explicit markers:
+
+```php
+define( 'SEO_GEO_MIGRATION_SANDBOX_MODE', 'subdirectory' );
+define( 'SEO_GEO_MIGRATION_STORAGE_ISOLATED', true );
+```
+
+Subdirectory mode is accepted only when the production and sandbox origins are the same, the sandbox base path is non-root and differs from the baseline path, and storage/runtime isolation is explicitly confirmed. `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true` means the operator has verified that the clone uses its own WordPress database/table set and does not share mutable runtime storage with production. It is a confirmation marker; the Bridge does not create or infer that isolation.
+
+All modes also require WordPress search-engine visibility disabled, outbound transactions safe, fresh recoverable backup references, the destination `seo-geo-theme` active, the persisted Phase 8B baseline available, a valid Phase 8C dependency graph and complete operator review for every raw `UNKNOWN` component.
 
 When the marker is enabled the bridge adds defense-in-depth sandbox indexing guards:
 
