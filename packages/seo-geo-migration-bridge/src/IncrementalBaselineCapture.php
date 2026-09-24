@@ -241,7 +241,7 @@ final class IncrementalBaselineCapture {
 	 * @return array<string,mixed>
 	 */
 	private function advance_sitemap( array $state ): array {
-		$queue                = is_array( $state['sitemap_queue'] ?? null ) ? $state['sitemap_queue'] : array();
+		$queue = is_array( $state['sitemap_queue'] ?? null ) ? $state['sitemap_queue'] : array();
 
 		if ( array() === $queue ) {
 			$state['phase'] = 'inventory';
@@ -272,7 +272,7 @@ final class IncrementalBaselineCapture {
 
 		$locations = 200 === $response['status'] ? $this->extract_xml_locations( $response['body'] ) : array();
 
-		$sitemaps        = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
+		$sitemaps = is_array( $state['sitemaps'] ?? null ) ? $state['sitemaps'] : array();
 
 		$sitemaps[] = array(
 			'url'            => $url,
@@ -281,7 +281,7 @@ final class IncrementalBaselineCapture {
 			'location_count' => count( $locations ),
 			'error'          => $response['error'],
 		);
-		$state['sitemaps'] = $sitemaps;
+		$state['sitemaps']        = $sitemaps;
 
 		foreach ( $locations as $location ) {
 			$normalized = $this->normalize_same_origin_url( $location );
@@ -397,17 +397,17 @@ final class IncrementalBaselineCapture {
 			&& $response['status'] < 400
 			&& '' !== $response['headers']['location']
 		) {
-			$redirects        = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
+			$redirects = is_array( $state['redirects'] ?? null ) ? $state['redirects'] : array();
 
 			$redirects[] = array(
 				'from'   => $url,
 				'to'     => $response['headers']['location'],
 				'status' => $response['status'],
 			);
-			$state['redirects'] = $redirects;
+			$state['redirects']        = $redirects;
 		}
 
-		$pages        = is_array( $state['pages'] ?? null ) ? $state['pages'] : array();
+		$pages = is_array( $state['pages'] ?? null ) ? $state['pages'] : array();
 
 		$pages[] = array_merge(
 			$row,
@@ -416,7 +416,7 @@ final class IncrementalBaselineCapture {
 				'request_error' => $response['error'],
 			)
 		);
-		$state['pages'] = $pages;
+		$state['pages']        = $pages;
 
 		return $state;
 	}
@@ -528,7 +528,7 @@ final class IncrementalBaselineCapture {
 			'url'   => $normalized,
 			'depth' => $depth,
 		);
-		$state['sitemap_queue'] = $queue;
+		$state['sitemap_queue']                = $queue;
 	}
 
 	/**
