@@ -224,7 +224,7 @@ final class OperatorStatus {
 
 		$rows = array();
 		foreach ( $components as $component ) {
-			$component_id  = is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '';
+			$component_id   = is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '';
 			$classification = is_string( $component['classification'] ?? null ) ? $component['classification'] : 'UNKNOWN';
 			$review         = 'UNKNOWN' === $classification && '' !== $component_id
 				? $this->review_store->decision_for( $component_id )
