@@ -13,6 +13,8 @@ on:
       - 'scripts/ci/release-artifact-acceptance.sh'
       - 'scripts/ci/release-version-acceptance.py'
       - 'scripts/ci/release-upgrade-acceptance.sh'
+      - 'scripts/ci/validate-stable-release-decision.py'
+      - 'docs/STABLE_RELEASE_DECISION.md'
       - '.github/workflows/release-artifact.yml'
       - 'docs/RELEASE_ARTIFACT.md'
   push:
@@ -61,10 +63,12 @@ jobs:
           bash -n scripts/build-theme-package.sh
           bash -n scripts/ci/release-artifact-acceptance.sh
           bash -n scripts/ci/release-upgrade-acceptance.sh
-          python3 -m py_compile scripts/build-theme-release.py scripts/ci/release-version-acceptance.py
+          python3 -m py_compile scripts/build-theme-release.py scripts/ci/release-version-acceptance.py scripts/ci/validate-stable-release-decision.py
 
-      - name: Version and changelog contract
-        run: python3 scripts/ci/release-version-acceptance.py
+      - name: Version, changelog and stable-release decision contract
+        run: |
+          python3 scripts/ci/release-version-acceptance.py
+          python3 scripts/ci/validate-stable-release-decision.py
 
       - name: Reproducibility and runtime integrity acceptance
         run: bash scripts/ci/release-artifact-acceptance.sh

@@ -23,3 +23,4 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 - `release/version.json` is the authoritative target version source.
 - The WordPress `style.css` theme header must match that version exactly.
 - This entry remains Unreleased until the stable-release decision in the final Phase 10 gate.
+- Current Phase 10E decision is **NO-GO**: `0.1.0` remains `prestable` until a selected real site completes sandbox + production acceptance.

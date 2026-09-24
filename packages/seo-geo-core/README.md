@@ -4,7 +4,7 @@ Reusable source library for the native SEO/GEO runtime embedded in the installab
 
 This directory is **not a required WordPress plugin dependency**. The product build copies `src/` into the theme so a clean WordPress installation can use the SEO/GEO baseline with zero active plugins.
 
-`seo-geo-core.php` remains temporarily as an optional compatibility/development wrapper while the migration is completed. It delegates to the same context-neutral `SeoGeo\Core\Runtime` and is outside the required installation path.
+`seo-geo-core.php` is **deprecated for installation** and retained temporarily only as an optional compatibility/development wrapper through the first stable-release decision. It delegates to the same context-neutral `SeoGeo\Core\Runtime`, is outside the required installation path and is not distributed in the self-contained theme ZIP. New deployments must use the self-contained theme.
 
 ## Runtime modules
 

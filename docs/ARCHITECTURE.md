@@ -111,7 +111,7 @@ The bridge is temporary by product design. A completed migrated site must contin
 
 ## Optional plugin wrapper
 
-`packages/seo-geo-core/seo-geo-core.php` may remain temporarily as a compatibility/development wrapper while the architecture migrates. It is not part of the required installation path and must not be needed by acceptance tests for the distributable theme.
+`packages/seo-geo-core/seo-geo-core.php` has the Phase 10E disposition **deprecated-retained-nondistributed**. It is deprecated for new installation paths, retained temporarily for compatibility/development workflows, excluded from the deterministic self-contained release ZIP and not required by distributable-theme acceptance. Removal is deferred until after the first real-site stable-release acceptance confirms no supported workflow still depends on it.
 
 The context-neutral `SeoGeo\Core\Runtime` prevents duplicate initialization if both wrapper and theme are present during transitional development.
 
