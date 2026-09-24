@@ -92,7 +92,7 @@ Forbidden pattern:
     migrate/test for days
     restore Monday database over Friday production
 
-That can destroy newer orders, submissions, users and operational state.
+That can destroy newer orders, submissions, users and operational state. **Stale sandbox databases must never overwrite newer production data.**
 
 Instead:
 
