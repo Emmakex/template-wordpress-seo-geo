@@ -592,12 +592,12 @@ Status: **complete**
 
 8I adds the human-facing migration operations screen needed to close Phase 8 without expanding Phase 9 onboarding scope.
 
-The plugin now registers a read-only screen under **Tools → SEO/GEO Migration**. It is available only to `manage_options` users and contains no mutation form or POST handler.
+The Phase 8I baseline registered a read-only screen under **Tools → SEO/GEO Migration**. During the Phase 10E real-site pilot this screen was extended with explicit capability/nonce-gated planning actions for resumable baseline capture, UNKNOWN dependency review and privacy-bounded sandbox-handoff download. Opening/rendering the screen remains read-only; review actions persist only bounded planning metadata and do not execute migration, cutover, rollback, plugin deactivation or theme switching.
 
 Operator state comes from `OperatorStatus`, which exposes only bounded metadata:
 
 - persisted baseline availability/fingerprint;
-- dependency classification counts;
+- dependency classification counts plus bounded UNKNOWN review progress;
 - latest cutover status;
 - final report availability, review counts and bridge disposition;
 - one safe next-step key;
@@ -607,7 +607,7 @@ When the final 8H handoff exists, dependency counts are read from that report. B
 
 `OperatorCopy` ships one key-complete English/Spanish catalog. The selected language follows the WordPress user locale, with English fallback.
 
-The screen never renders post bodies, Elementor/Divi payloads, credentials or raw database/uploads recovery artifacts. Opening the screen does not execute migration, cutover, rollback or report persistence.
+The screen never renders post bodies, Elementor/Divi payloads, credentials or raw database/uploads recovery artifacts. UNKNOWN review decisions are stored in the non-autoloaded `seo_geo_migration_dependency_reviews_v1` option as component ID + fixed classification/reason code + timestamp. They are exported separately from the raw dependency classification and cannot authorize production deactivation by themselves.
 
 It provides:
 
@@ -615,6 +615,7 @@ It provides:
 - built-in English and Spanish operator copy shipped together;
 - locale-aware status for baseline, dependency plan, cutover and final handoff report;
 - safe next-step guidance without executing migration/cutover mutations from page rendering;
+- explicit planning-only UNKNOWN review decisions kept separate from dependency-graph authority;
 - bridge disposition and unresolved review summary from the persisted 8H report;
 - semantic headings/tables/status text suitable for keyboard and screen-reader use;
 - no private bodies, builder payloads, credentials or raw recovery artifacts.
