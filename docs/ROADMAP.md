@@ -2180,6 +2180,7 @@ Current real-site evidence:
 - dependency summary: KEEP=4, REPLACE=2, MIGRATE=1, OPTIONAL=0, REMOVE-CANDIDATE=0, UNKNOWN=13;
 - first v0.8.5 sandbox handoff was generated/downloaded with 4,311 discovered resources, 500 captured, zero request failures and `truncated=true`;
 - regenerated v0.8.6 handoff at `2026-09-24T19:56:28Z` completed UNKNOWN review: `reviewed_unknown=13`, `unreviewed_unknown=0`, `complete=true`;
+- v0.8.7 candidate adds a strict sandbox preflight: distinct origin, explicit sandbox/outbound/backups markers, search visibility off, destination Theme active, baseline/dependency graph available and all raw UNKNOWN items reviewed;
 - operator decisions across the 13 UNKNOWN items are 10 `KEEP` and 3 `MIGRATE`; the three `MIGRATE` items are Classic Editor, Cookie Notice and Kairoseth AI Web Readiness;
 - bounded handoff evidence SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - v0.8.6 keeps operator review decisions stored separately from raw dependency-graph authority;
@@ -2198,7 +2199,7 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: create the distinct Emmake sandbox clone from fresh recoverable backup references, set `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions, install the exact Theme candidate, then execute migration + parity + accessibility/performance acceptance in sandbox.
+Current execution pointer: create the distinct Emmake sandbox clone from fresh recoverable backup references, install Migration Bridge v0.8.7, set `SEO_GEO_MIGRATION_SANDBOX=true`, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true` and `SEO_GEO_MIGRATION_BACKUPS_READY=true`, disable WordPress search visibility, install/activate the exact Theme candidate, require the operator preflight to report `ready=true`, then execute migration + parity + accessibility/performance acceptance in sandbox.
 
 10E.2 closes only after the sandbox is actually created and accepted. Production remains unchanged until then.
 
