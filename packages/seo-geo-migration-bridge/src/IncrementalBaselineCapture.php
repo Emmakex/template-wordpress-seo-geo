@@ -357,8 +357,8 @@ final class IncrementalBaselineCapture {
 	/**
 	 * Capture one public resource without retaining its raw body.
 	 *
-	 * @param array<string,mixed> $state    Current state.
-	 * @param array<string,mixed> $row Resource row.
+	 * @param array<string,mixed> $state Current state.
+	 * @param array<string,mixed> $row   Resource row.
 	 * @return array<string,mixed>
 	 */
 	private function capture_resource( array $state, array $row ): array {
@@ -544,8 +544,11 @@ final class IncrementalBaselineCapture {
 
 		if ( 'pages' === $phase || 'finalize' === $phase || 'complete' === $phase ) {
 			$inventory = is_array( $state['inventory'] ?? null ) ? $state['inventory'] : array();
+
 			$rows = is_array( $inventory['urls'] ?? null ) ? $inventory['urls'] : array();
-			$total     = count( $rows );
+
+			$total = count( $rows );
+
 			$processed = min( $total, isset( $state['cursor'] ) ? (int) $state['cursor'] : 0 );
 		} else {
 			$queue = is_array( $state['sitemap_queue'] ?? null ) ? $state['sitemap_queue'] : array();
