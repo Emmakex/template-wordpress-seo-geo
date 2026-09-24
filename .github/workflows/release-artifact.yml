@@ -1,0 +1,71 @@
+name: Release Artifact CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'presets/**'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/build-theme-release.py'
+      - 'scripts/ci/release-artifact-acceptance.sh'
+      - '.github/workflows/release-artifact.yml'
+      - 'docs/RELEASE_ARTIFACT.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'presets/**'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/build-theme-release.py'
+      - 'scripts/ci/release-artifact-acceptance.sh'
+      - '.github/workflows/release-artifact.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-artifact-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-artifact:
+    name: Reproducible single-theme ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          bash --version | head -n 1
+          python3 --version
+
+      - name: Validate release scripts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          bash -n scripts/build-theme-package.sh
+          bash -n scripts/ci/release-artifact-acceptance.sh
+          python3 -m py_compile scripts/build-theme-release.py
+
+      - name: Reproducibility and runtime integrity acceptance
+        run: bash scripts/ci/release-artifact-acceptance.sh
+
+      - name: Build release candidate
+        run: python3 scripts/build-theme-release.py --output dist-release/seo-geo-theme.zip
+
+      - name: Preserve release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-geo-theme-release-candidate
+          path: |
+            dist-release/seo-geo-theme.zip
+            dist-release/seo-geo-theme.zip.sha256
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0

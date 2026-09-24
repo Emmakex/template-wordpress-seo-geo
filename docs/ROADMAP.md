@@ -1988,7 +1988,7 @@ Status: **active**
 
 ### Microphase 10A — Reproducible release ZIP and runtime integrity
 
-Status: **active**
+Status: **implementation candidate**
 
 10A establishes the distributable artifact before versioning, upgrade and real-site release work.
 
@@ -2000,6 +2000,16 @@ Deliverables:
 - embedded SEO/GEO runtime integrity manifest/check;
 - reproducibility acceptance proving two builds from the same source are byte-identical;
 - release-artifact CI evidence without publishing a GitHub Release yet.
+
+Current implementation scope:
+
+- `scripts/build-theme-release.py` reuses the self-contained theme assembler and writes a deterministic ZIP with fixed timestamps, normalized file modes and sorted entries;
+- every ZIP has the single root `seo-geo-theme/`;
+- `release-integrity.json` records SHA-256 hashes for every embedded Core runtime file plus a canonical runtime-tree fingerprint;
+- the builder emits a sibling `.sha256` file for the ZIP;
+- `scripts/ci/release-artifact-acceptance.sh` performs two independent builds and requires byte-for-byte identity;
+- acceptance rejects multiple roots, path traversal, repository-only paths, duplicate entries, unstable timestamps/modes and runtime/source hash drift;
+- `Release Artifact CI` preserves the ZIP and checksum as a short-lived workflow artifact and does not publish a release.
 
 ### Microphase 10B — Versioning, changelog and upgrade acceptance
 
