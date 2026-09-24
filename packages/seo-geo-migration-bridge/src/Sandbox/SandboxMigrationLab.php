@@ -63,17 +63,40 @@ final class SandboxMigrationLab {
 		$destination_active  = self::DESTINATION_THEME === $active_stylesheet;
 		$baseline_available  = null !== $baseline;
 		$dependency_complete = 1 === ( $graph['schema_version'] ?? null ) && 'read-only-planning' === ( $graph['mode'] ?? null );
-		$current_origin      = $this->origin_key( home_url( '/' ) );
-		$source_origin       = $this->baseline_origin( $baseline );
-		$distinct_origin     = '' !== $source_origin && '' !== $current_origin && $source_origin !== $current_origin;
-		$review              = $this->review_status( $graph );
+		$current_home_url       = home_url( '/' );
+		$source_home_url        = $this->baseline_home_url( $baseline );
+		$current_origin         = $this->origin_key( $current_home_url );
+		$source_origin          = $this->origin_key( $source_home_url );
+		$current_base_path      = $this->base_path( $current_home_url );
+		$source_base_path       = $this->base_path( $source_home_url );
+		$distinct_origin        = '' !== $source_origin && '' !== $current_origin && $source_origin !== $current_origin;
+		$same_origin            = '' !== $source_origin && $source_origin === $current_origin;
+		$subdirectory_distinct  = $same_origin && '/' !== $current_base_path && $source_base_path !== $current_base_path;
+		$sandbox_mode           = SandboxGuard::mode();
+		$storage_isolated       = SandboxGuard::storage_isolated();
+		$location_isolated      = 'origin' === $sandbox_mode
+			? $distinct_origin
+			: ( 'subdirectory' === $sandbox_mode && $subdirectory_distinct && $storage_isolated );
+		$review                 = $this->review_status( $graph );
 
 		$blockers = array();
 		if ( ! $sandbox_marked ) {
 			$blockers[] = 'sandbox-marker-missing';
 		}
-		if ( ! $distinct_origin ) {
+		if ( 'invalid' === $sandbox_mode ) {
+			$blockers[] = 'sandbox-mode-invalid';
+		} elseif ( $baseline_available && 'origin' === $sandbox_mode && ! $distinct_origin ) {
 			$blockers[] = 'sandbox-origin-not-distinct-from-baseline';
+		} elseif ( $baseline_available && 'subdirectory' === $sandbox_mode ) {
+			if ( ! $same_origin ) {
+				$blockers[] = 'sandbox-subdirectory-origin-mismatch';
+			}
+			if ( ! $subdirectory_distinct ) {
+				$blockers[] = 'sandbox-subdirectory-path-not-distinct';
+			}
+			if ( ! $storage_isolated ) {
+				$blockers[] = 'sandbox-storage-isolation-not-confirmed';
+			}
 		}
 		if ( ! $search_discouraged ) {
 			$blockers[] = 'search-engine-visibility-not-disabled';
@@ -100,14 +123,20 @@ final class SandboxMigrationLab {
 		$states = $this->migration_states( $graph );
 
 		return array(
-			'schema_version' => 2,
+			'schema_version' => 3,
 			'mode'           => 'sandbox-migration-lab',
 			'ready'          => array() === $blockers,
 			'environment'    => array(
 				'sandbox_marker'             => $sandbox_marked,
+				'sandbox_mode'               => $sandbox_mode,
 				'source_origin'              => $source_origin,
 				'current_origin'             => $current_origin,
+				'source_base_path'           => $source_base_path,
+				'current_base_path'          => $current_base_path,
 				'distinct_origin'            => $distinct_origin,
+				'distinct_subdirectory'      => $subdirectory_distinct,
+				'storage_isolation_confirmed'=> $storage_isolated,
+				'location_isolated'          => $location_isolated,
 				'search_engine_visibility'   => $search_discouraged ? 'discouraged' : 'public',
 				'outbound_safety_confirmed'  => $outbound_safe,
 				'fresh_backups_confirmed'    => $backups_ready,
@@ -232,15 +261,26 @@ final class SandboxMigrationLab {
 	}
 
 	/**
-	 * Return the normalized production/source origin recorded by the baseline.
+	 * Return the production/source home URL recorded by the baseline.
 	 *
 	 * @param array<string,mixed>|null $baseline Baseline snapshot.
 	 */
-	private function baseline_origin( ?array $baseline ): string {
+	private function baseline_home_url( ?array $baseline ): string {
 		$site = is_array( $baseline['site'] ?? null ) ? $baseline['site'] : array();
-		$url  = is_string( $site['home_url'] ?? null ) ? $site['home_url'] : '';
 
-		return $this->origin_key( $url );
+		return is_string( $site['home_url'] ?? null ) ? $site['home_url'] : '';
+	}
+
+	/**
+	 * Normalize an HTTP(S) URL to its directory-style base path.
+	 *
+	 * @param string $url URL to normalize.
+	 */
+	private function base_path( string $url ): string {
+		$path_value = wp_parse_url( $url, PHP_URL_PATH );
+		$path       = is_string( $path_value ) ? '/' . trim( $path_value, '/' ) : '/';
+
+		return '/' === $path ? '/' : trailingslashit( $path );
 	}
 
 	/**
