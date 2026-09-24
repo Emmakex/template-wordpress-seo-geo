@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import zipfile
@@ -15,6 +16,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 THEME_ROOT = "seo-geo-theme"
 RUNTIME_ROOT = Path("inc/seo-geo-core")
 INTEGRITY_FILE = Path("release-integrity.json")
+VERSION_FILE = REPOSITORY_ROOT / "release/version.json"
 FIXED_ZIP_TIME = (1980, 1, 1, 0, 0, 0)
 FILE_MODE = 0o100644
 
@@ -30,6 +32,35 @@ def canonical_json_bytes(value: object) -> bytes:
         sort_keys=True,
         separators=(",", ":"),
     ).encode("utf-8")
+
+
+def release_metadata(build_dir: Path) -> dict[str, object]:
+    if not VERSION_FILE.is_file():
+        raise RuntimeError("release/version.json is missing")
+
+    metadata = json.loads(VERSION_FILE.read_text(encoding="utf-8"))
+    expected = {"schema_version", "theme_slug", "version", "release_channel"}
+    if set(metadata) != expected:
+        raise RuntimeError("release/version.json does not match the Phase 10B schema")
+    if metadata["schema_version"] != 1 or metadata["theme_slug"] != THEME_ROOT:
+        raise RuntimeError("release/version.json theme identity is invalid")
+    if not isinstance(metadata["version"], str) or not re.fullmatch(
+        r"(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?",
+        metadata["version"],
+    ):
+        raise RuntimeError("release/version.json version is not valid SemVer")
+    if metadata["release_channel"] not in {"prestable", "stable"}:
+        raise RuntimeError("release/version.json release_channel is invalid")
+
+    style_file = build_dir / "style.css"
+    style = style_file.read_text(encoding="utf-8")
+    versions = re.findall(r"^\\s*Version:\\s*(.+?)\\s*$", style, re.MULTILINE)
+    if versions != [metadata["version"]]:
+        raise RuntimeError(
+            f"Built style.css version {versions!r} does not match release version {metadata['version']!r}"
+        )
+
+    return metadata
 
 
 def runtime_integrity(build_dir: Path) -> dict[str, object]:
@@ -60,7 +91,11 @@ def runtime_integrity(build_dir: Path) -> dict[str, object]:
 
 
 def write_integrity_manifest(build_dir: Path) -> None:
+    metadata = release_metadata(build_dir)
     manifest = runtime_integrity(build_dir)
+    manifest["theme_slug"] = metadata["theme_slug"]
+    manifest["theme_version"] = metadata["version"]
+    manifest["release_channel"] = metadata["release_channel"]
     payload = json.dumps(
         manifest,
         ensure_ascii=False,
