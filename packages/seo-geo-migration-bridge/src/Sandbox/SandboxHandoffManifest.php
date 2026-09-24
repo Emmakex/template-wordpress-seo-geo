@@ -67,7 +67,7 @@ final class SandboxHandoffManifest {
 				'subdirectory_requires_same_origin'      => true,
 				'subdirectory_requires_distinct_path'    => true,
 				'subdirectory_requires_non_root_path'    => true,
-				'subdirectory_requires_storage_isolation'=> true,
+				'subdirectory_requires_storage_isolation' => true,
 				'subdirectory_storage_marker'            => SandboxGuard::STORAGE_ISOLATED_MARKER,
 				'requires_marker'                        => SandboxGuard::MARKER,
 				'requires_marker_value'                  => true,
