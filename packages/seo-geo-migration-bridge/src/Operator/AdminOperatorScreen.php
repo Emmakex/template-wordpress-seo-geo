@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
+use SeoGeo\MigrationBridge\Portable\AdminPortableCloneController;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
 
@@ -86,6 +87,7 @@ final class AdminOperatorScreen {
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
 			<?php $this->render_baseline_result_notice(); ?>
 			<?php $this->render_dependency_review_result_notice(); ?>
+			<?php $this->render_portable_clone_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -216,6 +218,10 @@ final class AdminOperatorScreen {
 				</form>
 			<?php endif; ?>
 
+			<?php if ( true === ( $status['baseline']['available'] ?? false ) && true !== ( $status['sandbox']['active'] ?? false ) ) : ?>
+				<?php $this->render_portable_clone_section( $status ); ?>
+			<?php endif; ?>
+
 			<h2><?php echo esc_html( $this->copy->text( 'privacy_heading' ) ); ?></h2>
 			<p><?php echo esc_html( $this->copy->text( 'privacy_text' ) ); ?></p>
 		</div>
@@ -279,6 +285,105 @@ final class AdminOperatorScreen {
 		<div class="notice notice-success is-dismissible">
 			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after portable clone planning actions.
+	 */
+	private function render_portable_clone_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after a nonce-verified admin action.
+		$status = isset( $_GET['seo_geo_portable_clone'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_portable_clone'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'planned'   => 'portable_clone_planned',
+			'blocked'   => 'portable_clone_blocked',
+			'busy'      => 'portable_clone_busy',
+			'cancelled' => 'portable_clone_cancelled',
+			'error'     => 'portable_clone_error',
+			default     => null,
+		};
+
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = in_array( $status, array( 'blocked', 'busy', 'error' ), true )
+			? 'notice notice-error'
+			: 'notice notice-success';
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the Phase 10E.2A portable clone planning surface.
+	 *
+	 * @param array<string,mixed> $status Operator snapshot.
+	 */
+	private function render_portable_clone_section( array $status ): void {
+		$clone     = is_array( $status['portable_clone'] ?? null ) ? $status['portable_clone'] : array();
+		$available = true === ( $clone['available'] ?? false );
+		?>
+		<h2><?php echo esc_html( $this->copy->text( 'portable_clone_heading' ) ); ?></h2>
+		<p><?php echo esc_html( $this->copy->text( 'portable_clone_help' ) ); ?></p>
+
+		<?php if ( ! $available ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminPortableCloneController::PREPARE_ACTION ); ?>">
+				<?php wp_nonce_field( AdminPortableCloneController::PREPARE_NONCE_ACTION ); ?>
+				<p>
+					<label for="seo-geo-portable-target-directory">
+						<strong><?php echo esc_html( $this->copy->text( 'portable_clone_directory_label' ) ); ?></strong>
+					</label>
+					<input
+						id="seo-geo-portable-target-directory"
+						name="target_directory"
+						type="text"
+						value="seo-geo-sandbox"
+						pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,47}"
+						maxlength="48"
+						required
+					>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'portable_clone_directory_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( 'portable_clone_prepare_button' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php else : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'portable_clone_status_label' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $clone['status'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'portable_clone_stage_label' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $clone['stage'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'portable_clone_target_label' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $clone['target_directory'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'portable_clone_url_label' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $clone['target_home_url'] ?? '' ) ); ?></code></td>
+					</tr>
+				</tbody>
+			</table>
+			<p class="description"><?php echo esc_html( $this->copy->text( 'portable_clone_planning_only_help' ) ); ?></p>
+			<?php if ( in_array( $clone['status'] ?? null, array( 'planned', 'running' ), true ) ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( AdminPortableCloneController::CANCEL_ACTION ); ?>">
+					<?php wp_nonce_field( AdminPortableCloneController::CANCEL_NONCE_ACTION ); ?>
+					<?php submit_button( $this->copy->text( 'portable_clone_cancel_button' ), 'secondary', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
+		<?php endif; ?>
 		<?php
 	}
 
