@@ -51,3 +51,13 @@ The scenario:
 ## Release boundary
 
 Phase 10B does not publish a GitHub Release and does not declare the project stable. Its purpose is to ensure that a versioned candidate can be installed, upgraded and rolled back safely before client deployment documentation and production acceptance.
+
+## 10B acceptance evidence
+
+Final candidate `cf63aaeae0e2bdb6ad02e3db78fdce8e2cb3dafb` passed Foundation CI `35944383852` and Release Artifact CI `35944383820`.
+
+PR #105 was squash-merged as `994138dfc7a7ff3a07aea07f6c951a159a639540`.
+
+Post-merge `main` repeated Foundation CI `35944485076` and Release Artifact CI `35944485045`. The deterministic ZIP reproduced SHA-256 `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`.
+
+The upgrade/rollback acceptance proved WordPress 7.1 / PHP 8.2 compatibility, zero active plugins, preserved setup/report/content and idempotent setup across the synthetic `0.0.9 → 0.1.0 → 0.0.9` lifecycle.
