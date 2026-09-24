@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Migration;
 
 use RuntimeException;
+use SeoGeo\MigrationBridge\BaselineSnapshotStore;
 use SeoGeo\MigrationBridge\DependencyGraphBuilder;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
 use SeoGeo\MigrationBridge\SiteAnalyzer;
@@ -88,9 +89,11 @@ final class MigrationEngine {
 			$blockers[] = 'preset:' . $preset['reason'];
 		}
 
-		$analysis = ( new SiteAnalyzer() )->analyze();
-		$graph    = ( new DependencyGraphBuilder() )->build( $analysis );
-		$lab      = ( new SandboxMigrationLab() )->report( $analysis, $graph );
+		$analysis          = ( new SiteAnalyzer() )->analyze();
+		$baseline          = ( new BaselineSnapshotStore() )->latest();
+		$baseline_snapshot = is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null;
+		$graph             = ( new DependencyGraphBuilder() )->build( $analysis, $baseline_snapshot );
+		$lab               = ( new SandboxMigrationLab() )->report( $analysis, $graph );
 
 		foreach ( $lab['blockers'] as $lab_blocker ) {
 			if ( is_string( $lab_blocker ) ) {

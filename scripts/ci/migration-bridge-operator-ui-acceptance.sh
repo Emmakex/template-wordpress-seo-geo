@@ -6,6 +6,14 @@
 
 printf '[smoke] Checking Phase 8I EN/ES operator UI.\n'
 
+# Phase 8G restores production posture before this acceptance. Re-enable the
+# explicit sandbox posture only for the sandbox-readiness UI fixture, then
+# restore production posture after the assertions.
+wp_cli config set SEO_GEO_MIGRATION_SANDBOX true --raw >/dev/null \
+  || fail_smoke "operator-sandbox-marker" "Could not enable sandbox marker for operator readiness fixture" "SEO_GEO_MIGRATION_SANDBOX=true" "wp config set failed"
+wp_cli option update blog_public 0 >/dev/null \
+  || fail_smoke "operator-sandbox-search" "Could not disable search visibility for operator readiness fixture" "blog_public=0" "wp option update failed"
+
 OPERATOR_RUNNER="$TMP_DIR/migration-operator-runner.php"
 cat >"$OPERATOR_RUNNER" <<'PHP'
 <?php
@@ -191,6 +199,14 @@ assert status["cutover"]["accepted"] is True
 assert status["final_report"]["available"] is True
 assert status["final_report"]["ready_for_handoff"] is True
 assert status["final_report"]["runtime_dependency_required"] is False
+assert status["sandbox"]["active"] is True
+assert status["sandbox"]["ready"] is True
+assert status["sandbox"]["blockers"] == []
+assert status["sandbox"]["environment"]["sandbox_marker"] is True
+assert status["sandbox"]["environment"]["distinct_origin"] is True
+assert status["sandbox"]["environment"]["outbound_safety_confirmed"] is True
+assert status["sandbox"]["environment"]["fresh_backups_confirmed"] is True
+assert status["sandbox"]["environment"]["dependency_review_complete"] is True
 assert status["next_step"] in ("resolve-blockers", "review-advisories", "remove-bridge")
 assert status["safety"] == {
     "mutations_performed": False,
@@ -209,6 +225,7 @@ for required in (
     "<h2>Migration status</h2>",
     "<h2>Dependency classifications</h2>",
     "<h2>Review status</h2>",
+    "<h2>Sandbox readiness</h2>",
     "<h2>Recommended next step</h2>",
     "<h2>Safety and privacy</h2>",
     "<code>KEEP</code>",
@@ -223,6 +240,7 @@ for required in (
     "<h2>Estado de la migración</h2>",
     "<h2>Clasificaciones de dependencias</h2>",
     "<h2>Estado de revisión</h2>",
+    "<h2>Preparación del sandbox</h2>",
     "<h2>Siguiente paso recomendado</h2>",
     "<h2>Seguridad y privacidad</h2>",
 ):
@@ -238,6 +256,10 @@ assert "Download sandbox handoff JSON" in en
 assert "Descargar JSON de sandbox" in es
 assert "Reviewed UNKNOWN items" in en
 assert "UNKNOWN revisados" in es
+assert "Production baseline origin" in en
+assert "Outbound transactions safe" in en
+assert "Origen de la línea base de producción" in es
+assert "Transacciones salientes seguras" in es
 if status["dependency_plan"]["summary"]["UNKNOWN"] > 0:
     assert 'value="seo_geo_migration_review_dependency"' in en
     assert 'name="component_id"' in en
@@ -281,4 +303,9 @@ UNAUTHORIZED_TEXT="$(cat "$UNAUTHORIZED_STDOUT" "$UNAUTHORIZED_STDERR" | tr -d '
 [[ "$UNAUTHORIZED_TEXT" == *"You do not have permission to view Migration Bridge status."* ]] \
   || fail_smoke "operator-capability-message" "Unauthorized operator response did not use bounded localized guidance" "permission message" "${UNAUTHORIZED_TEXT:-empty}"
 
-printf '[smoke] Phase 8I operator UI OK: Tools screen registered; EN/ES catalogs complete; baseline-ready view exposes bounded dependency detail + nonce/capability-gated sandbox handoff; missing baseline exposes capture only.\n'
+wp_cli config delete SEO_GEO_MIGRATION_SANDBOX >/dev/null 2>&1 \
+  || fail_smoke "operator-sandbox-marker-cleanup" "Could not restore production marker posture after operator UI fixture" "sandbox marker absent" "wp config delete failed"
+wp_cli option update blog_public 1 >/dev/null \
+  || fail_smoke "operator-sandbox-search-cleanup" "Could not restore production search visibility after operator UI fixture" "blog_public=1" "wp option update failed"
+
+printf '[smoke] Phase 8I operator UI OK: Tools screen registered; EN/ES catalogs complete; sandbox readiness + bounded dependency detail rendered safely; missing baseline exposes capture only.\n'

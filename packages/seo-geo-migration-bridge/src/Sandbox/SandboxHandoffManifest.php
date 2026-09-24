@@ -64,7 +64,9 @@ final class SandboxHandoffManifest {
 				'requires_marker_value'          => true,
 				'requires_search_visibility_off' => true,
 				'requires_outbound_safety'       => true,
+				'requires_outbound_marker'       => SandboxGuard::OUTBOUND_SAFE_MARKER,
 				'requires_fresh_backups'         => true,
+				'requires_backup_marker'         => SandboxGuard::BACKUPS_READY_MARKER,
 				'production_mutation_allowed'    => false,
 			),
 			'safety'         => array(

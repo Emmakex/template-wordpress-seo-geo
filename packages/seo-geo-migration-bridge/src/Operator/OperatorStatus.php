@@ -15,6 +15,8 @@ use SeoGeo\MigrationBridge\DependencyGraphBuilder;
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
 use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
+use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
+use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
 use SeoGeo\MigrationBridge\SiteAnalyzer;
 use Throwable;
 
@@ -105,6 +107,7 @@ final class OperatorStatus {
 		$final_report   = $this->report_status( $report, $report_payload );
 		$cutover_status = $this->cutover_status( $cutover );
 		$capture        = ( new IncrementalBaselineCapture() )->status();
+		$sandbox        = $this->sandbox_status( $baseline );
 
 		return array(
 			'schema_version'  => 1,
@@ -119,10 +122,12 @@ final class OperatorStatus {
 			'dependency_plan' => $dependency,
 			'cutover'         => $cutover_status,
 			'final_report'    => $final_report,
+			'sandbox'         => $sandbox,
 			'next_step'       => $this->next_step(
 				is_array( $baseline ),
 				$cutover_status,
-				$final_report
+				$final_report,
+				$sandbox
 			),
 			'safety'          => array(
 				'mutations_performed'          => false,
@@ -265,6 +270,46 @@ final class OperatorStatus {
 	}
 
 	/**
+	 * Return bounded sandbox preflight status only on explicitly marked sandboxes.
+	 *
+	 * @param array<string,mixed>|null $baseline Baseline envelope.
+	 * @return array<string,mixed>
+	 */
+	private function sandbox_status( ?array $baseline ): array {
+		if ( ! SandboxGuard::enabled() ) {
+			return array(
+				'active'      => false,
+				'ready'       => false,
+				'blockers'    => array(),
+				'environment' => array(
+					'sandbox_marker' => false,
+				),
+			);
+		}
+
+		try {
+			$analysis         = $this->analyzer->analyze();
+			$graph            = $this->graph->build(
+				$analysis,
+				is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null
+			);
+			$report           = ( new SandboxMigrationLab( $this->review_store ) )->report( $analysis, $graph );
+			$report['active'] = true;
+
+			return $report;
+		} catch ( Throwable ) {
+			return array(
+				'active'      => true,
+				'ready'       => false,
+				'blockers'    => array( 'sandbox-preflight-error' ),
+				'environment' => array(
+					'sandbox_marker' => true,
+				),
+			);
+		}
+	}
+
+	/**
 	 * Normalize latest cutover state.
 	 *
 	 * @param array<string,mixed>|null $cutover Latest cutover record.
@@ -313,10 +358,14 @@ final class OperatorStatus {
 	 * @param bool                $baseline_available Whether baseline exists.
 	 * @param array<string,mixed> $cutover            Normalized cutover state.
 	 * @param array<string,mixed> $report             Normalized final-report state.
+	 * @param array<string,mixed> $sandbox            Normalized sandbox preflight state.
 	 */
-	private function next_step( bool $baseline_available, array $cutover, array $report ): string {
+	private function next_step( bool $baseline_available, array $cutover, array $report, array $sandbox ): string {
 		if ( ! $baseline_available ) {
 			return 'capture-baseline';
+		}
+		if ( true === ( $sandbox['active'] ?? false ) && true !== ( $sandbox['ready'] ?? false ) ) {
+			return 'sandbox-preflight';
 		}
 		if ( true !== ( $cutover['available'] ?? false ) ) {
 			return 'continue-migration';

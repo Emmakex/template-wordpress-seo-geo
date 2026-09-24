@@ -303,6 +303,21 @@ The report always declares:
 
 Phase 8E may only introduce explicitly authorized transformations after this sandbox contract is accepted.
 
+### Real sandbox preflight hardening
+
+The real-site pilot extends the accepted Phase 8D contract with explicit runtime evidence before any migration action is considered ready:
+
+- the current sandbox origin must differ from the production origin stored in the persisted baseline;
+- `SEO_GEO_MIGRATION_SANDBOX=true`;
+- `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true`;
+- `SEO_GEO_MIGRATION_BACKUPS_READY=true`;
+- WordPress search visibility disabled;
+- destination Theme active;
+- baseline and dependency graph available;
+- all raw `UNKNOWN` dependencies explicitly reviewed.
+
+The outbound/backups markers are operator/environment confirmations, not claims that the plugin created backups or reconfigured mail/payment providers. Reviewed `UNKNOWN` decisions remain planning metadata; the raw graph classification is preserved while the sandbox state maps reviewed `KEEP` to `unchanged`, reviewed `MIGRATE`/`REPLACE` to `migrate`, and reviewed `OPTIONAL`/`REMOVE-CANDIDATE` to `manual-review`.
+
 ## Phase 8E — Migration Engine
 
 Status: **implementation candidate**

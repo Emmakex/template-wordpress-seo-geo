@@ -64,6 +64,8 @@ assert manifest["target"]["theme_stylesheet"] == "seo-geo-theme"
 assert manifest["target"]["release_version"] == "0.1.0"
 assert manifest["sandbox"]["requires_distinct_origin"] is True
 assert manifest["sandbox"]["requires_marker"] == "SEO_GEO_MIGRATION_SANDBOX"
+assert manifest["sandbox"]["requires_outbound_marker"] == "SEO_GEO_MIGRATION_OUTBOUND_SAFE"
+assert manifest["sandbox"]["requires_backup_marker"] == "SEO_GEO_MIGRATION_BACKUPS_READY"
 assert manifest["sandbox"]["production_mutation_allowed"] is False
 
 safety = manifest["safety"]

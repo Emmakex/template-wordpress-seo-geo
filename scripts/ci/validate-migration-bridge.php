@@ -353,7 +353,11 @@ $sandbox_guard = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Sandbo
 foreach (
 	array(
 		"/public const MARKER = 'SEO_GEO_MIGRATION_SANDBOX'/",
-		"/defined\( self::MARKER \)/",
+		"/public const OUTBOUND_SAFE_MARKER = 'SEO_GEO_MIGRATION_OUTBOUND_SAFE'/",
+		"/public const BACKUPS_READY_MARKER = 'SEO_GEO_MIGRATION_BACKUPS_READY'/",
+		"/constant_enabled\\( self::MARKER \\)/",
+		"/constant_enabled\\( self::OUTBOUND_SAFE_MARKER \\)/",
+		"/constant_enabled\\( self::BACKUPS_READY_MARKER \\)/",
 		"/'noindex'\]\\s*=\\s*true/",
 		"/'nofollow'\]\\s*=\\s*true/",
 		"/X-Robots-Tag/",
@@ -372,6 +376,13 @@ foreach (
 		"/'indexing_allowed'\\s*=>\\s*false/",
 		"/'canonical_competition_allowed'\\s*=>\\s*false/",
 		"/'baseline_is_reference_only'\\s*=>\\s*true/",
+		"/'review_decisions_are_planning'\\s*=>\\s*true/",
+		"/'sandbox-origin-not-distinct-from-baseline'/",
+		"/'outbound-safety-not-confirmed'/",
+		"/'fresh-backups-not-confirmed'/",
+		"/'dependency-review-incomplete'/",
+		"/SandboxGuard::outbound_safe\\(\\)/",
+		"/SandboxGuard::backups_ready\\(\\)/",
 	) as $sandbox_rule
 ) {
 	if ( 1 !== preg_match( $sandbox_rule, $sandbox_lab ) ) {
@@ -387,6 +398,9 @@ foreach (
 		'wp_verify_nonce(',
 		'if ( ! $confirmed )',
 		'public const BACKUP_META',
+		'new BaselineSnapshotStore()',
+		"is_array( \$baseline['snapshot'] ?? null ) ? \$baseline['snapshot'] : null",
+		'build( $analysis, $baseline_snapshot )',
 		'add_post_meta( $post->ID, self::BACKUP_META',
 	) as $engine_guard
 ) {
@@ -838,6 +852,8 @@ foreach (
 		"'customer_data_exported'             => false",
 		"'requires_distinct_origin'       => true",
 		"'requires_marker'                => SandboxGuard::MARKER",
+		"'requires_outbound_marker'       => SandboxGuard::OUTBOUND_SAFE_MARKER",
+		"'requires_backup_marker'         => SandboxGuard::BACKUPS_READY_MARKER",
 		"'production_mutation_allowed'    => false",
 		"'review_decisions_execute_mutations' => false",
 	) as $handoff_guard
