@@ -12,6 +12,7 @@ cat >"$OPERATOR_RUNNER" <<'PHP'
 
 use SeoGeo\MigrationBridge\Operator\AdminBaselineCaptureController;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
+use SeoGeo\MigrationBridge\Operator\AdminSandboxHandoffController;
 use SeoGeo\MigrationBridge\Operator\OperatorCopy;
 use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Plugin;
@@ -86,6 +87,9 @@ $spanish_html = (string) ob_get_clean();
 $baseline_action_registered = false !== has_action(
 	'admin_post_' . AdminBaselineCaptureController::ACTION
 );
+$handoff_action_registered = false !== has_action(
+	'admin_post_' . AdminSandboxHandoffController::ACTION
+);
 
 $saved_baseline = get_option( 'seo_geo_migration_baseline_v1', null );
 if ( ! is_array( $saved_baseline ) ) {
@@ -108,6 +112,7 @@ echo wp_json_encode(
 	array(
 		'registered'        => $registered,
 		'baseline_action_registered' => $baseline_action_registered,
+		'handoff_action_registered'  => $handoff_action_registered,
 		'catalog_keys'      => array(
 			'en' => $en_keys,
 			'es' => $es_keys,
@@ -156,6 +161,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 
 assert payload["registered"] is True
 assert payload["baseline_action_registered"] is True
+assert payload["handoff_action_registered"] is True
 assert payload["catalog_keys"]["en"] == payload["catalog_keys"]["es"]
 assert len(payload["catalog_keys"]["en"]) >= 35
 assert payload["catalog_empty"] == {"en": [], "es": []}
@@ -167,6 +173,8 @@ assert status["mode"] == "operator-status-read-only"
 assert status["baseline"]["available"] is True
 assert status["dependency_plan"]["available"] is True
 assert status["dependency_plan"]["source"] == "final-report"
+assert isinstance(status["dependency_plan"]["components"], list)
+assert len(status["dependency_plan"]["components"]) > 0
 assert status["cutover"]["available"] is True
 assert status["cutover"]["accepted"] is True
 assert status["final_report"]["available"] is True
@@ -209,10 +217,14 @@ for required in (
 ):
     assert required in es
 
-assert "<form" not in en.lower()
-assert "<form" not in es.lower()
-assert "name=" not in en.lower()
-assert "name=" not in es.lower()
+assert 'value="seo_geo_migration_sandbox_handoff"' in en
+assert 'value="seo_geo_migration_sandbox_handoff"' in es
+assert "<h2>Sandbox handoff</h2>" in en
+assert "<h2>Entrega al sandbox</h2>" in es
+assert "<h2>Dependency detail</h2>" in en
+assert "<h2>Detalle de dependencias</h2>" in es
+assert "Download sandbox handoff JSON" in en
+assert "Descargar JSON de sandbox" in es
 assert "post_content" not in en
 assert "post_content" not in es
 
@@ -231,6 +243,7 @@ assert 'value="20"' in missing_es
 assert "Tamaño de lote (1-20)" in missing_es
 assert "Recomendado: 10 en hosting compartido." in missing_es
 assert "window.setTimeout" not in missing_es
+assert 'value="seo_geo_migration_sandbox_handoff"' not in missing_es
 
 print("ok")
 PY
@@ -248,4 +261,4 @@ UNAUTHORIZED_TEXT="$(cat "$UNAUTHORIZED_STDOUT" "$UNAUTHORIZED_STDERR" | tr -d '
 [[ "$UNAUTHORIZED_TEXT" == *"You do not have permission to view Migration Bridge status."* ]] \
   || fail_smoke "operator-capability-message" "Unauthorized operator response did not use bounded localized guidance" "permission message" "${UNAUTHORIZED_TEXT:-empty}"
 
-printf '[smoke] Phase 8I operator UI OK: Tools screen registered; EN/ES catalogs complete; viewing is mutation-free; missing baseline exposes one nonce/capability-gated capture action.\n'
+printf '[smoke] Phase 8I operator UI OK: Tools screen registered; EN/ES catalogs complete; baseline-ready view exposes bounded dependency detail + nonce/capability-gated sandbox handoff; missing baseline exposes capture only.\n'
