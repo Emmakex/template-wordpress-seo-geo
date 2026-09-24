@@ -16,6 +16,16 @@ Technical implementation, release packaging, onboarding, upgrade/rollback, clien
 
 No real-site production acceptance is fabricated by this repository.
 
+## Selected real-site pilot
+
+The first acceptance target is `https://emmake.com`.
+
+The accepted repository candidate is `d3ff8353c08cfce6c796837a74e372ba7daf0073`, with deterministic release ZIP SHA-256 `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`.
+
+PR #111 candidate and post-merge `main` both passed all seven triggered gates. The detailed pilot sequence is documented in `docs/REAL_SITE_PILOT.md`.
+
+The pilot remains `sandbox acceptance pending`; therefore the stable decision remains **NO-GO**.
+
 ## Transitional Core wrapper decision
 
 The standalone `packages/seo-geo-core/seo-geo-core.php` wrapper is:

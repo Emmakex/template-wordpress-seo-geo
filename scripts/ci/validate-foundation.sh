@@ -170,6 +170,7 @@ required_paths=(
   "docs/PRODUCTION_VERIFICATION.md"
   "docs/ROLLBACK_RECOVERY.md"
   "docs/STABLE_RELEASE_DECISION.md"
+  "docs/REAL_SITE_PILOT.md"
   "docs/templates/PRODUCTION_ACCEPTANCE_RECORD.example.json"
   "CHANGELOG.md"
   "release/version.json"
