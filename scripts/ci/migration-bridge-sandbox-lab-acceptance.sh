@@ -6,9 +6,55 @@
 
 printf '[smoke] Checking Phase 8D Sandbox Migration Lab.\n'
 
-wp_cli config set SEO_GEO_MIGRATION_SANDBOX true --raw >/dev/null   || fail_smoke "sandbox-marker-config" "Could not mark the fixture as an explicit migration sandbox" "SEO_GEO_MIGRATION_SANDBOX=true" "wp config set failed"
+wp_cli config set SEO_GEO_MIGRATION_SANDBOX true --raw >/dev/null \
+  || fail_smoke "sandbox-marker-config" "Could not mark the fixture as an explicit migration sandbox" "SEO_GEO_MIGRATION_SANDBOX=true" "wp config set failed"
+wp_cli config set SEO_GEO_MIGRATION_OUTBOUND_SAFE true --raw >/dev/null \
+  || fail_smoke "sandbox-outbound-config" "Could not confirm sandbox outbound safety" "SEO_GEO_MIGRATION_OUTBOUND_SAFE=true" "wp config set failed"
+wp_cli config set SEO_GEO_MIGRATION_BACKUPS_READY true --raw >/dev/null \
+  || fail_smoke "sandbox-backup-config" "Could not confirm fresh sandbox backup references" "SEO_GEO_MIGRATION_BACKUPS_READY=true" "wp config set failed"
 
-wp_cli option update blog_public 0 >/dev/null   || fail_smoke "sandbox-search-visibility" "Could not disable search-engine visibility in sandbox fixture" "blog_public=0" "wp option update failed"
+wp_cli option update blog_public 0 >/dev/null \
+  || fail_smoke "sandbox-search-visibility" "Could not disable search-engine visibility in sandbox fixture" "blog_public=0" "wp option update failed"
+
+if ! SANDBOX_PLAN_SETUP="$(wp_cli eval '
+$baseline = get_option( \SeoGeo\MigrationBridge\BaselineSnapshotStore::OPTION_NAME, null );
+if ( ! is_array( $baseline ) || ! is_array( $baseline["snapshot"] ?? null ) ) {
+	throw new RuntimeException( "Sandbox fixture baseline is unavailable." );
+}
+$baseline["snapshot"]["site"]["home_url"] = "https://production.example.test/";
+$encoded = wp_json_encode( $baseline["snapshot"], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+$baseline["sha256"] = hash( "sha256", false === $encoded ? "" : $encoded );
+update_option( \SeoGeo\MigrationBridge\BaselineSnapshotStore::OPTION_NAME, $baseline, false );
+
+$analyzer = \SeoGeo\MigrationBridge\Plugin::analyzer();
+$graph_builder = \SeoGeo\MigrationBridge\Plugin::dependency_graph();
+if ( ! $analyzer || ! $graph_builder ) {
+	throw new RuntimeException( "Sandbox dependency services are unavailable." );
+}
+$graph = $graph_builder->build( $analyzer->analyze(), $baseline["snapshot"] );
+$reviews = new \SeoGeo\MigrationBridge\Review\DependencyReviewStore();
+$count = 0;
+foreach ( $graph["components"] ?? array() as $component ) {
+	if ( ! is_array( $component ) || "UNKNOWN" !== ( $component["classification"] ?? null ) ) {
+		continue;
+	}
+	$component_id = $component["component_id"] ?? null;
+	if ( ! is_string( $component_id ) ) {
+		continue;
+	}
+	$decision = "plugin:legacy-site-fixture/legacy-site-fixture.php" === $component_id ? "MIGRATE" : "KEEP";
+	if ( ! $reviews->save( $component_id, $decision ) ) {
+		throw new RuntimeException( "Could not save sandbox dependency review." );
+	}
+	++$count;
+}
+echo (string) $count;
+' 2>"$TMP_DIR/sandbox-plan-setup.stderr" | tr -d '\r\n')"; then
+  SANDBOX_PLAN_SETUP_ERROR="$(tr -d '\r' <"$TMP_DIR/sandbox-plan-setup.stderr" | head -c 500)"
+  fail_smoke "sandbox-plan-setup" "Could not prepare reviewed sandbox dependency plan" "all UNKNOWN items reviewed" "${SANDBOX_PLAN_SETUP_ERROR:-wp eval failed}"
+fi
+[[ "$SANDBOX_PLAN_SETUP" =~ ^[1-9][0-9]*$ ]] \
+  || fail_smoke "sandbox-plan-review-count" "Sandbox fixture did not expose reviewed UNKNOWN dependencies" "positive review count" "$SANDBOX_PLAN_SETUP"
 
 if ! SANDBOX_STATE_BEFORE="$(wp_cli eval 'global $wpdb; echo hash( "sha256", serialize( array( get_option( "active_plugins", array() ), get_option( "stylesheet" ), get_option( "template" ), get_option( "permalink_structure" ), get_option( \SeoGeo\MigrationBridge\BaselineSnapshotStore::OPTION_NAME, null ), (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts}" ), (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->postmeta}" ), (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->terms}" ) ) ) );' 2>"$TMP_DIR/sandbox-state-before.stderr" | tr -d '\r\n')"; then
   SANDBOX_STATE_BEFORE_ERROR="$(tr -d '\r' <"$TMP_DIR/sandbox-state-before.stderr" | head -c 240)"
@@ -36,18 +82,26 @@ import sys
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
     report = json.load(handle)
 
-assert report["schema_version"] == 1
+assert report["schema_version"] == 2
 assert report["mode"] == "sandbox-migration-lab"
 assert report["ready"] is True
 assert report["blockers"] == []
 
 env = report["environment"]
 assert env["sandbox_marker"] is True
+assert env["source_origin"] == "https://production.example.test:443"
+assert env["current_origin"].startswith("http://127.0.0.1:")
+assert env["distinct_origin"] is True
 assert env["search_engine_visibility"] == "discouraged"
+assert env["outbound_safety_confirmed"] is True
+assert env["fresh_backups_confirmed"] is True
 assert env["destination_theme"] == "seo-geo-theme"
 assert env["destination_theme_active"] is True
 assert env["baseline_available"] is True
 assert env["dependency_graph_ready"] is True
+assert env["dependency_review_complete"] is True
+assert env["reviewed_unknown"] >= 1
+assert env["unreviewed_unknown"] == 0
 
 safety = report["safety"]
 assert safety == {
@@ -56,6 +110,7 @@ assert safety == {
     "indexing_allowed": False,
     "canonical_competition_allowed": False,
     "baseline_is_reference_only": True,
+    "review_decisions_are_planning": True,
 }
 
 summary = report["migration"]["summary"]
@@ -68,6 +123,13 @@ states = report["migration"]["states"]
 assert any(row["component_id"] == "builder:elementor" and row["state"] == "migrate" for row in states)
 assert any(row["component_id"] == "builder:divi" and row["state"] == "migrate" for row in states)
 assert any(row["component_id"] == "builder:native-blocks" and row["state"] == "unchanged" for row in states)
+assert any(
+    row["component_id"] == "plugin:legacy-site-fixture/legacy-site-fixture.php"
+    and row["classification"] == "UNKNOWN"
+    and row["review_decision"] == "MIGRATE"
+    and row["state"] == "migrate"
+    for row in states
+)
 
 print("ok")
 PY
@@ -95,4 +157,4 @@ fi
 
 [[ "$SANDBOX_STATE_AFTER" == "$SANDBOX_STATE_BEFORE" ]]   || fail_smoke "sandbox-read-only-regression" "Phase 8D lab report changed protected sandbox state" "$SANDBOX_STATE_BEFORE" "$SANDBOX_STATE_AFTER"
 
-printf '[smoke] Phase 8D sandbox lab OK: explicit marker + noindex defenses + destination theme + baseline + dependency graph, with no protected-state mutation.\n'
+printf '[smoke] Phase 8D sandbox lab OK: distinct origin + explicit marker + noindex + outbound/backups + reviewed dependency plan + destination theme, with no protected-state mutation.\n'
