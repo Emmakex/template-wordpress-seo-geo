@@ -48,8 +48,8 @@ final class SandboxHandoffManifest {
 				'php_version'       => is_string( $site['php_version'] ?? null ) ? $site['php_version'] : PHP_VERSION,
 				'active_theme'      => $this->active_theme( $themes ),
 			),
-			'baseline'     => $this->baseline_reference( $baseline ),
-			'dependencies' => array(
+			'baseline'       => $this->baseline_reference( $baseline ),
+			'dependencies'   => array(
 				'summary'    => $this->normalized_summary( $summary ),
 				'components' => $bounded_components,
 				'review'     => $this->review_summary( $bounded_components ),
