@@ -2131,6 +2131,35 @@ Current implementation scope:
 - `docs/REAL_SITE_PILOT.md` fixes `https://emmake.com` as the first real-site acceptance target without changing the stable decision until sandbox + production acceptance is actually completed;
 - the two-product portfolio is now documented, but SEO/GEO Manager is **not** a new blocker for Theme 0.1.0 and does not change the Phase 10E acceptance decision.
 
+### Microphase 10E.1 — Migration Bridge delivery artifact
+
+Status: **implementation candidate**
+
+Purpose:
+
+Create the exact installable Migration Bridge artifact required to begin the real-site emmake.com pilot without waiting for SEO/GEO Manager.
+
+Deliverables:
+
+- deterministic WordPress plugin ZIP rooted at `seo-geo-migration-bridge/`;
+- synchronized plugin header/runtime version validation;
+- byte-identical repeated builds from the same source;
+- normalized ZIP paths, timestamps and file modes;
+- PHP syntax validation for every shipped PHP file;
+- sibling SHA-256 checksum;
+- short-lived GitHub Actions artifact containing the installable ZIP + checksum;
+- operator documentation in `docs/MIGRATION_BRIDGE_RELEASE.md`.
+
+Boundary:
+
+- this artifact packages the already-accepted Phase 8 Migration Bridge v0.8.1;
+- it does not make Migration Bridge a permanent Theme dependency;
+- it does not start Phase 11;
+- it is used first for read-only analysis/baseline on emmake.com;
+- production Theme activation remains forbidden until sandbox/parity/quality acceptance passes.
+
+10E remains the active stable-release phase; 10E.1 only removes the delivery-artifact gap required to execute that acceptance.
+
 Phase 10 overall deliverables:
 
 
