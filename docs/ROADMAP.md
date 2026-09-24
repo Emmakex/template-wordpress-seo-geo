@@ -1379,7 +1379,7 @@ Goal:
 
 Support real client WordPress sites that already have a theme, page builder, plugins, content and accumulated SEO value. Migration must modernize the site without treating production as a disposable environment.
 
-A temporary **SEO/GEO Migration Bridge** is permitted as a separate plugin/tool because it must inspect the existing installation before the destination theme is active. It is not a baseline dependency of the final theme and must be removable after migration.
+The accepted Phase 8 implementation uses a separate **SEO/GEO Migration Bridge** package because it must inspect the existing installation before the destination Theme is active. It is not a baseline dependency of the final Theme. The package remains the proven Theme 0.1.0 migration path; the two-product roadmap later absorbs its accepted capabilities into SEO/GEO Manager as an optional migration module.
 
 ### Microphase 8A — Site Analyzer
 
@@ -2128,7 +2128,8 @@ Current implementation scope:
 - PR #111 was squash-merged as `d3ff8353c08cfce6c796837a74e372ba7daf0073`;
 - post-merge `main` repeated all seven triggered gates successfully: Foundation `35946388953`, Package `35946389089`, WordPress Smoke `35946388965`, Self-contained Theme `35946389064`, Accessibility/Responsive `35946388958`, Performance `35946388935` and Release Artifact `35946388985`;
 - the deterministic post-merge candidate ZIP reproduces SHA-256 `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`;
-- `docs/REAL_SITE_PILOT.md` fixes `https://emmake.com` as the first real-site acceptance target without changing the stable decision until sandbox + production acceptance is actually completed.
+- `docs/REAL_SITE_PILOT.md` fixes `https://emmake.com` as the first real-site acceptance target without changing the stable decision until sandbox + production acceptance is actually completed;
+- the two-product portfolio is now documented, but SEO/GEO Manager is **not** a new blocker for Theme 0.1.0 and does not change the Phase 10E acceptance decision.
 
 Phase 10 overall deliverables:
 
@@ -2143,6 +2144,292 @@ Phase 10 overall deliverables:
 - documented rollback/recovery checklist;
 - decision on deprecating/removing the transitional standalone Core plugin wrapper;
 - real-site production acceptance after sandbox validation before declaring the first stable release.
+
+## Product-track rule after Phase 10
+
+The roadmap now has two independently releasable products:
+
+- **SEO/GEO Theme** — Phases 0–10. Phase 10E remains the current execution pointer until the real-site stable-release acceptance closes.
+- **SEO/GEO Manager** — Phase 11 onward. It is planned now but must not be treated as active implementation while Phase 10E remains open under the project finish-before-advancing rule.
+
+The products may share context-neutral source, but they have independent versioning, ZIP artifacts, changelogs, compatibility matrices and stable-release decisions.
+
+The Manager roadmap does **not** reopen accepted Theme phases and does not make the Theme depend on a plugin.
+
+## Phase 11 — SEO/GEO Manager product
+
+Status: **planned — starts only after Phase 10E closes**
+
+Goal:
+
+Create a permanent, independently installable WordPress plugin that can analyze existing client sites, publish optimized landings/blogs, coordinate migration and continue operating after migration without requiring the SEO/GEO Theme or GitHub.
+
+Authoritative contracts:
+
+- `docs/PRODUCT_PORTFOLIO.md`;
+- `docs/SEO_GEO_MANAGER.md`;
+- `docs/CONTENT_PUBLISHING.md`;
+- `docs/PORTABLE_SANDBOX.md`;
+- accepted Phase 8 Migration Bridge behavior as migration regression baseline.
+
+### Microphase 11A — Manager package and independent release boundary
+
+Status: **planned**
+
+Deliverables:
+
+- create `packages/seo-geo-manager/` as a new plugin product, not a rename of `seo-geo-core.php`;
+- independent plugin version source, changelog and package metadata;
+- install/activate/deactivate with the Theme absent;
+- install/activate with the Theme present;
+- collision-safe packaging of any shared Core source needed by Manager;
+- no frontend remote-service dependency for normal page rendering;
+- EN/ES operator copy foundation;
+- Manager-specific Foundation/static package contract;
+- minimal WordPress smoke without changing client content.
+
+Acceptance:
+
+- Theme remains zero-required-plugin;
+- Manager activates independently;
+- Theme + Manager boots with no duplicate runtime initialization or public SEO/GEO output;
+- deprecated Core wrapper remains deprecated and is not repurposed.
+
+### Microphase 11B — Site Intelligence + Output Authority Resolver
+
+Status: **planned**
+
+Deliverables:
+
+- reuse/port the accepted read-only site inventory and public baseline concepts;
+- current theme/builder/plugin/business-system detection;
+- external SEO/Schema/multilingual provider detection;
+- per-signal authority decision for title/meta, canonical, robots, Open Graph, hreflang, Schema, sitemap, redirects and discovery surfaces;
+- explicit states for Theme-native, Manager-native, external-provider, WordPress-core, manual-review and blocked-conflict;
+- zero mutation while analyzing/deciding ownership.
+
+Acceptance:
+
+- Theme active → Theme remains default overlapping output authority;
+- supported external provider → Manager does not duplicate that output;
+- ambiguous/multiple providers → affected mutations are blocked;
+- no provider/generic theme path is classified but does not silently enable Manager-native output.
+
+### Microphase 11C — Secure content publication core
+
+Status: **planned**
+
+Deliverables:
+
+- versioned publication manifest;
+- authenticated/scoped publication endpoint;
+- dry-run and diff;
+- draft-first creation;
+- explicit publish/schedule authorization;
+- idempotency keys;
+- stable resource IDs;
+- expected-previous-fingerprint protection against stale overwrites;
+- bounded Manager-owned metadata mutation;
+- revision/change-set record;
+- rollback of Manager-owned changes;
+- public-output verification after publish/update;
+- non-sensitive publication report.
+
+Acceptance:
+
+- duplicate retry cannot create duplicate content;
+- payload mismatch on reused idempotency key is rejected;
+- stale update cannot overwrite newer human edits;
+- rollback does not restore unrelated site-wide/dynamic data;
+- deactivation/uninstall never deletes client-created content by default.
+
+### Microphase 11D — Blog Engine
+
+Status: **planned**
+
+Deliverables:
+
+- native WordPress post draft/update/publish path;
+- native-block content renderer first;
+- explicit author/provenance;
+- controlled category/tag policy;
+- source/reference model;
+- internal-link plan;
+- featured-media references;
+- localized article relationships;
+- provider-aware SEO/GEO metadata application;
+- real WordPress publication verification.
+
+Acceptance:
+
+- no fabricated authors, sources, quotes, dates or reviewer expertise;
+- BlogPosting/Article behavior only for genuine article surfaces;
+- retry/update/rollback acceptance;
+- EN/ES content relationship acceptance;
+- single-owner SEO/GEO output.
+
+### Microphase 11E — Landing Engine and content adapters
+
+Status: **planned**
+
+Deliverables:
+
+- landing intent/target registry;
+- slug/path/canonical planning;
+- native-block landing renderer first;
+- reusable layout/pattern composition;
+- unique value requirements for location/service/product landings;
+- duplicate-intent/near-duplicate review;
+- internal/external link plan;
+- provider-aware SEO/GEO application;
+- accepted write-adapter contract for future Elementor/Divi support.
+
+Acceptance:
+
+- no mass city/service token swapping;
+- no doorway-page batch acceptance without unique value;
+- no invented business facts, reviews, prices, certifications or performance claims;
+- unsupported builder modules block rather than disappear;
+- URL collisions and canonical/indexability changes are explicit.
+
+### Microphase 11F — Migration module absorption
+
+Status: **planned**
+
+Deliverables:
+
+- move/compose accepted Phase 8 analyzer, baseline, dependency graph, migration adapters, parity, cutover/rollback and final report into Manager module boundaries;
+- preserve privacy/capability/nonce/backup contracts;
+- migration mode can be enabled/disabled independently of publishing;
+- compatibility layer for accepted migration handoff where needed;
+- side-by-side regression acceptance against existing Migration Bridge fixtures.
+
+Retirement rule:
+
+The standalone `packages/seo-geo-migration-bridge` package cannot be removed until Manager proves equivalent or stronger acceptance for every supported Phase 8 contract. Package retirement must be its own reviewed change.
+
+### Microphase 11G — Portable Sandbox coordinator
+
+Status: **planned**
+
+Deliverables:
+
+- three supported modes: client staging, agency-managed portable sandbox, limited-access/export;
+- provider-neutral provisioner interface;
+- sandbox package/manifest;
+- environment isolation checks;
+- outbound email/payment/analytics safety guidance;
+- dynamic-site classification;
+- fresh-production re-read/data-sync rule before cutover;
+- evidence freshness policy.
+
+Acceptance:
+
+- clients without staging can complete migration acceptance without production-first testing;
+- sandbox origin cannot leak into canonical/hreflang/sitemap;
+- stale sandbox DB can never be blindly restored over newer production orders/submissions/users;
+- no credentials/backups/private payloads enter the repository.
+
+### Microphase 11H — Commercial packaging and operator UX
+
+Status: **planned**
+
+Deliverables:
+
+- deterministic Manager plugin ZIP + checksum/integrity;
+- independent upgrade/rollback path;
+- EN/ES operator dashboard for analysis, publishing and migration modules;
+- module enable/disable boundaries;
+- safe uninstall/deactivation behavior;
+- update-channel contract;
+- licensing/update-delivery boundary if commercial licensing is added;
+- license-service outage must not break the public website or delete client content;
+- client installation/admin guide.
+
+### Microphase 11I — Manager real-site acceptance and first stable release
+
+Status: **planned**
+
+Required real-site matrix:
+
+1. **Theme + Manager** — use emmake.com as the first integration pilot after Theme Phase 10E is already accepted;
+2. **Manager without Theme** — at least one representative existing WordPress site retaining its current supported theme/provider stack.
+
+Acceptance must include:
+
+- analysis without destructive mutation;
+- draft-first blog publication;
+- draft-first landing publication;
+- idempotent retry;
+- update + stale-write rejection;
+- rollback;
+- authority ownership with no duplicate SEO/GEO output;
+- portable-sandbox path where applicable;
+- accessibility/responsive and performance impact;
+- clean logs;
+- bounded production evidence.
+
+Only then may the Manager's own first stable release be promoted.
+
+## Phase 12 — Content operations and agency scale
+
+Status: **planned — only after Manager stable foundation**
+
+Phase 12 scales the publishing product without weakening Phase 11 safety contracts.
+
+### Microphase 12A — Editorial orchestration
+
+- content brief/status workflow;
+- content calendar;
+- draft/review/approval queue;
+- scheduled publication with observable retry semantics;
+- provider-neutral generation adapters;
+- generation and publication remain separate authorization steps.
+
+### Microphase 12B — Content refresh and drift monitoring
+
+- detect stale content/metadata/internal links;
+- detect broken links and material SEO/GEO ownership drift;
+- propose refreshes as reviewable change sets;
+- never auto-delete or deindex content solely because traffic/rankings changed.
+
+### Microphase 12C — Multi-client agency controller
+
+- central inventory of connected Manager installations;
+- scoped/revocable site credentials;
+- queue/status/reporting across clients;
+- per-site permissions and rate limits;
+- no shared supercredential that grants unrestricted WordPress administration;
+- client isolation and audit trail.
+
+### Microphase 12D — Search/performance feedback integrations
+
+- optional Search Console/Bing/analytics data adapters;
+- connect performance data to editorial decisions;
+- distinguish observed metrics from causal/ranking claims;
+- no automatic content mutation based only on volatile ranking/traffic signals.
+
+### Microphase 12E — Expanded compatibility matrix
+
+- individually accepted adapters for additional SEO, multilingual, builders, forms, ecommerce and hosting environments;
+- detection never equals support;
+- each adapter receives its own fixture/runtime acceptance before being labeled supported.
+
+## Cross-product non-negotiables
+
+These rules apply permanently:
+
+- Theme works with zero required plugins.
+- Manager works without Theme on supported WordPress installations.
+- Manager is not the deprecated Core wrapper.
+- Exactly one owner exists per overlapping public SEO/GEO signal.
+- Existing client sites are analyzed before mutation.
+- Publishing is draft-first by default, idempotent and rollback-capable.
+- Migration never assumes the client already has staging.
+- Dynamic production data is never replaced by a stale sandbox database without an explicit data-recovery decision.
+- Unsupported builders/providers are blockers/manual-review items, not silent data loss.
+- Credentials/private client data/backups never enter repository evidence.
+- Each product has its own version, release artifact and stable-release decision.
 
 ## Backlog rules
 

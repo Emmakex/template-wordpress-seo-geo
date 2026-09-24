@@ -26,6 +26,14 @@ PR #111 candidate and post-merge `main` both passed all seven triggered gates. T
 
 The pilot remains `sandbox acceptance pending`; therefore the stable decision remains **NO-GO**.
 
+## Product-portfolio boundary
+
+The new SEO/GEO Manager roadmap is **not** a new dependency or blocker for Theme 0.1.0. Theme stable acceptance still depends only on the existing Phase 10E real-site sandbox + production evidence.
+
+SEO/GEO Manager is a separate future plugin product with its own version/release acceptance. The current Migration Bridge may be used for the Theme pilot, then its accepted capabilities can be absorbed into Manager in a later phase with regression parity.
+
+The deprecated standalone Core wrapper is not renamed or promoted into Manager.
+
 ## Transitional Core wrapper decision
 
 The standalone `packages/seo-geo-core/seo-geo-core.php` wrapper is:

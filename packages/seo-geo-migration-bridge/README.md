@@ -1,6 +1,8 @@
 # SEO/GEO Migration Bridge
 
-Temporary WordPress migration tooling for adopting existing client sites without treating production as disposable.
+Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
+
+This **package** is transitional, but its migration capability is not being discarded. The roadmap moves the accepted analyzer/baseline/dependency/parity/cutover behavior into the permanent **SEO/GEO Manager** plugin as an optional migration module. Manager is a separate sellable product that also publishes landings/blogs and may remain installed after migration.
 
 ## Phase 8A — Site Analyzer
 
@@ -249,4 +251,4 @@ The bridge follows these rules:
 - unsupported builder structures remain blockers;
 - production transformation/cutover remains a later explicitly authorized phase.
 
-The plugin is temporary adoption tooling and is never required by the final self-contained theme.
+This bridge package is never required by the final self-contained Theme. It may be retired only after SEO/GEO Manager has absorbed its accepted contracts and regression acceptance proves parity. The future Manager plugin remains optional for the Theme and may stay active for ongoing publishing after migration mode is disabled.

@@ -1,8 +1,10 @@
 # Template WordPress SEO + GEO
 
-Reusable **self-contained WordPress block theme** for fast, technically clean, multilingual websites designed for classic search engines and modern AI-assisted discovery.
+This repository now defines a **two-product WordPress SEO/GEO portfolio** built for technically clean, multilingual websites designed for classic search engines and modern AI-assisted discovery.
 
-The installable product is intentionally **plugin-independent**: its SEO/GEO foundation ships inside the theme package. Third-party plugins may be added by a project later, but none are required for the baseline to work.
+**SEO/GEO Theme** remains the self-contained presentation product: its SEO/GEO foundation ships inside the theme package and requires zero SEO/GEO plugins for the documented baseline.
+
+**SEO/GEO Manager** is the planned permanent, independently installable plugin for site analysis, controlled landing/blog publication, migration and ongoing operations. It must work without the Theme, and the Theme must work without Manager. Migration is a module of Manager, not the whole product.
 
 ## ES
 
@@ -46,7 +48,7 @@ Implemented presets: `corporate`, `local-business`, `publisher`, `ecommerce` and
 
 ## Existing-site adoption
 
-**Phase 8 — Existing-site adoption and safe migration is complete.** The temporary Migration Bridge now covers read-only analysis, public SEO/GEO baseline capture, dependency classification, isolated sandbox migration, controlled Elementor/Divi conversion, strict parity, reversible production cutover, a privacy-bounded final handoff report and a capability-gated EN/ES operator screen. The bridge remains outside the final self-contained theme and is not a runtime dependency.
+**Phase 8 — Existing-site adoption and safe migration is complete.** The existing Migration Bridge package covers read-only analysis, public SEO/GEO baseline capture, dependency classification, isolated sandbox migration, controlled Elementor/Divi conversion, strict parity, reversible production cutover, a privacy-bounded final handoff report and a capability-gated EN/ES operator screen. It remains outside the self-contained Theme and is not a Theme runtime dependency. Long-term, those accepted migration capabilities are absorbed into the permanent SEO/GEO Manager plugin as an optional migration module; Manager may remain installed for publishing after migration.
 
 **Phase 9 — Theme onboarding and operator experience is complete.** **Phase 10C — Client installation and cloning documentation** and **Phase 10D — Production verification and recovery** are complete (with 10A–10B already closed). The active roadmap step is **Phase 10E — Stable release decision**. The current stable decision is **NO-GO** while the selected pilot `emmake.com` completes sandbox-to-production acceptance; the target remains `0.1.0` / `prestable`.
 
@@ -61,6 +63,10 @@ No phase advances until its implementation, required gates, acceptance criteria,
 ## Documentation
 
 - `docs/PRODUCT_VISION.md`
+- `docs/PRODUCT_PORTFOLIO.md`
+- `docs/SEO_GEO_MANAGER.md`
+- `docs/CONTENT_PUBLISHING.md`
+- `docs/PORTABLE_SANDBOX.md`
 - `docs/ARCHITECTURE.md`
 - `docs/SEO_GEO_SPEC.md`
 - `docs/NATIVE_SEO.md`

@@ -2,7 +2,9 @@
 
 ## Purpose
 
-The Migration Bridge is a temporary WordPress plugin/tool for adopting existing client sites before the self-contained SEO/GEO theme becomes the active production presentation layer.
+The current Migration Bridge package is the accepted Phase 8 WordPress migration implementation for adopting existing client sites before the self-contained SEO/GEO Theme becomes the active production presentation layer.
+
+The **package is transitional; the capability is not**. The long-term product home for analyzer, parity, migration, sandbox coordination and cutover/rollback is the permanent **SEO/GEO Manager** plugin. Manager also owns ongoing landing/blog publishing, so it may remain installed after migration while its migration mode is disabled.
 
 It exists because a real client site may already depend on:
 
@@ -15,7 +17,7 @@ It exists because a real client site may already depend on:
 - custom post types, taxonomies, shortcodes, widgets and menus;
 - custom CSS and project-owned PHP customizations.
 
-The bridge is **not** part of the final zero-plugin theme baseline.
+The bridge is **not** part of the final zero-plugin Theme baseline. Future Manager is also optional from the Theme perspective: Theme must keep working with zero required plugins.
 
 ## Phase 8A — Site Analyzer
 
@@ -641,7 +643,7 @@ Post-merge `main` repeated all six gates successfully:
 
 WordPress Smoke proved that the Tools screen is registered, EN/ES catalogs are complete, unauthorized users are rejected, rendering is semantic/privacy-bounded and the protected migration state fingerprint is unchanged before/after rendering.
 
-Phase 8 is complete. The temporary bridge may now be removed or retained audit-only according to the accepted 8H disposition; Phase 9 consumes the persisted handoff without loading Migration Bridge at runtime.
+Phase 8 is complete. For the existing Theme 0.1.0 path, the bridge may still be removed or retained audit-only according to the accepted 8H disposition; Phase 9 consumes the persisted handoff without loading Migration Bridge at runtime. For the two-product roadmap, these accepted migration contracts become the regression baseline that SEO/GEO Manager must absorb before the standalone bridge package can be retired.
 
 ## Phase 8A acceptance evidence
 

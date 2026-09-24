@@ -9,7 +9,8 @@ The installable baseline is the deterministic single-theme release ZIP produced 
 - Baseline runtime requires **zero active plugins**.
 - `packages/seo-geo-core/src` is bundled inside the theme release and is not installed as a required plugin.
 - The standalone Core plugin wrapper is transitional/development compatibility only.
-- The Migration Bridge is temporary existing-site adoption tooling; it is not a final runtime dependency.
+- The current Migration Bridge package is existing-site adoption tooling; it is not a Theme runtime dependency.
+- Future SEO/GEO Manager is a separate optional plugin product for publishing/operations and remains **optional** for Theme runtime.
 - Use the release ZIP and its sibling `.sha256` file from the same accepted build.
 
 Never replace an existing production theme with an unverified repository checkout or an unverified ZIP.
@@ -23,7 +24,7 @@ For every client, record:
 - WordPress/PHP baseline and hosting constraints;
 - current theme, active/must-use plugins and builder dependencies;
 - database and uploads backup references when the site is not disposable;
-- staging/sandbox URL and access path for existing-site adoption;
+- staging/sandbox URL and access path for existing-site adoption, **or** the selected portable-sandbox mode when the client has no staging;
 - DNS/CDN/cache ownership and rollback contacts;
 - any intentional SEO changes that are allowed to differ from the current public site.
 
@@ -58,7 +59,7 @@ The existing-site path is:
 1. Create current database and uploads backups with externally usable recovery references.
 2. Capture the existing public SEO/GEO baseline with the Migration Bridge.
 3. Build the dependency graph for themes, plugins, builders and content coupling.
-4. Create a non-production sandbox on a distinct origin.
+4. Create a non-production sandbox on a distinct origin. If the client has no staging, use the portable-sandbox strategy in `docs/PORTABLE_SANDBOX.md` rather than testing first in production.
 5. Set `SEO_GEO_MIGRATION_SANDBOX=true` and disable WordPress search-engine visibility in that sandbox.
 6. Install/activate the destination self-contained theme in sandbox only.
 7. Run supported migration transformations in sandbox.
@@ -68,11 +69,11 @@ The existing-site path is:
 11. Only after accepted evidence exists, execute the controlled production cutover flow documented in `docs/MIGRATION_BRIDGE.md`.
 12. Consume the final handoff from the theme onboarding flow without loading Migration Bridge code at runtime.
 
-The Migration Bridge may then be removed or retained only according to its accepted final disposition.
+For the current Theme 0.1.0 path, the Migration Bridge may then be removed or retained only according to its accepted final disposition. In the future two-product path, SEO/GEO Manager may remain installed because publishing is permanent while its migration mode is disabled.
 
 ## Sandbox gate
 
-A sandbox is a safety boundary, not a visual preview convenience.
+A sandbox is a safety boundary, not a visual preview convenience. The client does **not** need to own a staging feature in advance: `docs/PORTABLE_SANDBOX.md` defines client staging, agency-managed portable sandbox and limited-access modes.
 
 Before migration work starts, require all of the following:
 

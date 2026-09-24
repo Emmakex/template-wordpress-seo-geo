@@ -2,11 +2,14 @@
 
 ## Product boundary
 
-The installable baseline product is a **single self-contained WordPress block theme**. Baseline SEO/GEO behavior must work on a clean WordPress installation with **zero required plugins**.
+The repository defines a **two-product portfolio** with hard runtime independence.
 
-For adoption of an existing client site, the product may additionally provide a temporary **SEO/GEO Migration Bridge** plugin/tool. That bridge exists because it must inspect the legacy site before the destination theme is active. It is not a baseline runtime dependency, must be removable after migration, and may remain only in an explicitly accepted audit-only/operational mode.
+1. **SEO/GEO Theme** is a single self-contained WordPress block theme. Its baseline SEO/GEO behavior must work on a clean WordPress installation with **zero required plugins**.
+2. **SEO/GEO Manager** is a separate permanent WordPress plugin for analysis, controlled landing/blog publication, migration and ongoing operations. Manager must work on supported WordPress sites without requiring the Theme.
 
-The repository may keep source packages separated for maintainability, but distribution must not expose that separation as an installation requirement.
+The existing **SEO/GEO Migration Bridge** is the accepted Phase 8 migration implementation and remains valid for the Theme 0.1.0 acceptance path. Its package is transitional; the accepted migration capabilities are planned to move into Manager as an optional module.
+
+The repository may keep shared source packages separated for maintainability, but neither product distribution may expose that separation as a cross-product installation requirement.
 
 ## Repository shape
 
@@ -32,7 +35,8 @@ template-wordpress-seo-geo/
 │   │   │   ├── Seo/
 │   │   │   └── Runtime.php
 │   │   └── seo-geo-core.php   # optional compatibility wrapper, not required
-│   └── seo-geo-migration-bridge/   # temporary existing-site adoption tool
+│   ├── seo-geo-migration-bridge/   # accepted Phase 8 migration implementation
+│   └── seo-geo-manager/             # planned permanent plugin product
 ├── presets/
 ├── scripts/
 │   └── build-theme-package.sh
@@ -107,7 +111,28 @@ It must not become a second SEO/GEO output owner. It does not emit a competing c
 
 Production mutation is never inferred from analysis. Destructive actions require explicit administrator intent, WordPress capability checks, nonce/auth validation, a recoverable snapshot and a tested rollback path.
 
-The bridge is temporary by product design. A completed migrated site must continue to satisfy the single-theme/zero-required-plugin baseline after the bridge is removed.
+The current bridge **package** is transitional by product design. A completed migrated site must continue to satisfy the single-theme/zero-required-plugin Theme baseline even if the bridge/Manager is absent. The accepted migration capability itself is preserved and later absorbed into SEO/GEO Manager, where migration mode can be disabled while publishing/operations remain active.
+
+## SEO/GEO Manager ownership
+
+SEO/GEO Manager is a separate installable product, not a wrapper around the Theme and not a renamed Core compatibility plugin.
+
+Manager owns control-plane behavior such as:
+
+- read-only Site Intelligence and dependency analysis;
+- per-signal SEO/GEO Output Authority resolution;
+- versioned/idempotent content publication;
+- Landing Engine and Blog Engine;
+- optional migration/parity/cutover module;
+- portable-sandbox coordination;
+- provider/builder adapters;
+- bounded audit/change-set/rollback records.
+
+Manager must not become a second uncontrolled public-output owner. When the SEO/GEO Theme is active, Theme native runtime remains the default SEO/GEO output authority. When a supported external SEO provider owns a signal, Manager writes through that accepted adapter. Manager-native output is allowed only after an explicit conflict-free authority decision.
+
+Manager frontend behavior must remain local to WordPress; normal page rendering cannot require a live remote service.
+
+Detailed contracts live in `docs/PRODUCT_PORTFOLIO.md`, `docs/SEO_GEO_MANAGER.md`, `docs/CONTENT_PUBLISHING.md` and `docs/PORTABLE_SANDBOX.md`.
 
 ## Optional plugin wrapper
 
@@ -191,6 +216,8 @@ The most important packaging invariant is testable:
 `scripts/build-theme-package.sh` assembles that artifact. `Self-contained Theme CI` verifies the invariant on real WordPress rather than assuming that repository source layout equals installable product behavior.
 
 For existing-site adoption, a second invariant applies: production remains on the accepted legacy stack until a sandbox candidate has passed dependency, SEO-parity, runtime and rollback acceptance. Migration tooling may assist the transition but may not weaken the final single-theme baseline.
+
+For the Manager product, a third invariant applies: publishing must be draft-first by default, idempotent, authority-aware and rollback-capable. Theme + Manager and Manager + external-provider combinations must resolve exactly one owner for every overlapping SEO/GEO signal.
 
 ## Extensibility
 
