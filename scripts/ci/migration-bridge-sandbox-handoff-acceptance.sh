@@ -58,11 +58,21 @@ assert isinstance(review["reviewed_unknown"], int)
 assert isinstance(review["unreviewed_unknown"], int)
 assert review["complete"] == (review["unreviewed_unknown"] == 0)
 
+assert manifest["schema_version"] == 2
 assert manifest["mode"] == "seo-geo-sandbox-handoff"
 assert manifest["baseline"]["available"] is True
 assert manifest["target"]["theme_stylesheet"] == "seo-geo-theme"
 assert manifest["target"]["release_version"] == "0.1.0"
-assert manifest["sandbox"]["requires_distinct_origin"] is True
+assert manifest["sandbox"]["accepted_modes"] == ["origin", "subdirectory"]
+assert manifest["sandbox"]["default_mode"] == "origin"
+assert manifest["sandbox"]["mode_marker"] == "SEO_GEO_MIGRATION_SANDBOX_MODE"
+assert manifest["sandbox"]["origin_mode_requires_distinct_origin"] is True
+assert manifest["sandbox"]["subdirectory_mode_value"] == "subdirectory"
+assert manifest["sandbox"]["subdirectory_requires_same_origin"] is True
+assert manifest["sandbox"]["subdirectory_requires_distinct_path"] is True
+assert manifest["sandbox"]["subdirectory_requires_non_root_path"] is True
+assert manifest["sandbox"]["subdirectory_requires_storage_isolation"] is True
+assert manifest["sandbox"]["subdirectory_storage_marker"] == "SEO_GEO_MIGRATION_STORAGE_ISOLATED"
 assert manifest["sandbox"]["requires_marker"] == "SEO_GEO_MIGRATION_SANDBOX"
 assert manifest["sandbox"]["requires_outbound_marker"] == "SEO_GEO_MIGRATION_OUTBOUND_SAFE"
 assert manifest["sandbox"]["requires_backup_marker"] == "SEO_GEO_MIGRATION_BACKUPS_READY"

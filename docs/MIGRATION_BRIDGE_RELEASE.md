@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.7`;
+- current plugin version: `0.8.8`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -69,5 +69,7 @@ After the baseline is complete, 0.8.5 exposes the bounded dependency rows behind
 Version 0.8.6 adds an explicit operator-review workflow for `UNKNOWN` components. Each review is capability/nonce-gated and stores only the component ID, one fixed planning classification (`KEEP`, `REPLACE`, `MIGRATE`, `OPTIONAL` or `REMOVE-CANDIDATE`), a fixed reason code and timestamp in a non-autoloaded option. Review evidence is exported separately in the handoff manifest and **does not replace the raw dependency-graph classification or authorize production plugin deactivation/theme switching**. The operator can revise or clear a decision while the component remains a live `UNKNOWN` item.
 
 Version 0.8.7 hardens the real sandbox preflight. A clone is not ready until its origin differs from the production baseline origin, `SEO_GEO_MIGRATION_SANDBOX=true`, WordPress search visibility is disabled, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true`, `SEO_GEO_MIGRATION_BACKUPS_READY=true`, the destination Theme is active, the baseline/dependency graph are present and every raw `UNKNOWN` component has an explicit operator review. Reviewed `UNKNOWN` decisions affect sandbox planning only: `KEEP` becomes `unchanged`; `MIGRATE`/`REPLACE` become `migrate`; `OPTIONAL`/`REMOVE-CANDIDATE` remain `manual-review`. Raw graph classifications are preserved.
+
+Version 0.8.8 adds a second accepted sandbox topology for shared-hosting clients: an explicitly isolated same-origin subdirectory. The default remains `origin`. Subdirectory mode requires `SEO_GEO_MIGRATION_SANDBOX_MODE='subdirectory'`, a non-root base path different from the production baseline path and `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true`, in addition to all v0.8.7 guards. The operator UI exposes mode, production/sandbox paths and location/storage isolation. The Bridge never assumes that a folder is isolated merely because its URL path differs.
 
 The plugin is transitional for the Theme 0.1.0 migration path. Its accepted capabilities later become the migration module inside SEO/GEO Manager.
