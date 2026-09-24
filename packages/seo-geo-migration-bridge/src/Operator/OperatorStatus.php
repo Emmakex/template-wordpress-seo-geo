@@ -196,10 +196,6 @@ final class OperatorStatus {
 
 		$rows = array();
 		foreach ( $components as $component ) {
-			if ( ! is_array( $component ) ) {
-				continue;
-			}
-
 			$rows[] = array(
 				'component_id'   => is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '',
 				'type'           => is_string( $component['type'] ?? null ) ? $component['type'] : '',
@@ -216,13 +212,13 @@ final class OperatorStatus {
 		usort(
 			$rows,
 			static function ( array $left, array $right ) use ( $priority ): int {
-				$left_class  = is_string( $left['classification'] ?? null ) ? $left['classification'] : 'UNKNOWN';
-				$right_class = is_string( $right['classification'] ?? null ) ? $right['classification'] : 'UNKNOWN';
+				$left_class  = $left['classification'];
+				$right_class = $right['classification'];
 				$left_rank   = $priority[ $left_class ] ?? 99;
 				$right_rank  = $priority[ $right_class ] ?? 99;
 
 				return $left_rank === $right_rank
-					? strcmp( (string) ( $left['component_id'] ?? '' ), (string) ( $right['component_id'] ?? '' ) )
+					? strcmp( $left['component_id'], $right['component_id'] )
 					: $left_rank <=> $right_rank;
 			}
 		);
