@@ -1915,7 +1915,7 @@ Evidence:
 
 ### Microphase 9E — Setup execution and generated report
 
-Status: **implementation candidate**
+Status: **complete**
 
 Current implementation scope:
 
@@ -1938,9 +1938,18 @@ Deliverables:
 - non-sensitive generated setup report;
 - idempotent rerun/update behavior.
 
+9E is closed.
+
+Evidence:
+
+- final candidate `73a3a2d752241d50d0e3f968bbe0a69cb234bbea` passed Foundation `35937968265`, Package `35937968352`, PHP Quality `35937968217`, WordPress Smoke `35937968337`, Self-contained Theme `35937968239`, Native Multilingual `35937968360`, Accessibility/Responsive `35937968240` and Performance `35937968246`;
+- PR #98 was squash-merged as `a95d325027a8e787f030e48fd82f4f626a7c3c65`;
+- post-merge `main` repeated all eight gates successfully: Foundation `35938267798`, Package `35938267866`, PHP Quality `35938267816`, WordPress Smoke `35938267890`, Self-contained Theme `35938267878`, Native Multilingual `35938267963`, Accessibility/Responsive `35938267901` and Performance `35938267767`;
+- runtime acceptance proved validator-backed atomic application, read-back verification, full rollback on injected failure, stable idempotent rerun, privacy-bounded reporting and zero required plugins.
+
 ### Microphase 9F — Onboarding acceptance
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 
