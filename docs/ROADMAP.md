@@ -2023,7 +2023,7 @@ Evidence:
 
 ### Microphase 10B — Versioning, changelog and upgrade acceptance
 
-Status: **active**
+Status: **complete**
 
 Deliverables:
 
@@ -2032,9 +2032,20 @@ Deliverables:
 - clean-install and upgrade tests with zero required plugins;
 - compatibility/rollback checks across supported WordPress/PHP baseline.
 
+10B is closed.
+
+Evidence:
+
+- final candidate `cf63aaeae0e2bdb6ad02e3db78fdce8e2cb3dafb` passed Foundation `35944383852` and Release Artifact CI `35944383820`;
+- Release Artifact CI proved synchronized `release/version.json` / `style.css` / `CHANGELOG.md`, deterministic release metadata and WordPress 7.1 / PHP 8.2 zero-plugin upgrade + rollback;
+- PR #105 was squash-merged as `994138dfc7a7ff3a07aea07f6c951a159a639540`;
+- post-merge `main` repeated Foundation `35944485076` and Release Artifact CI `35944485045` successfully;
+- post-merge deterministic ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`;
+- the upgrade acceptance preserved setup state, setup report and published sentinel content across `0.0.9 → 0.1.0 → 0.0.9` with zero active plugins and idempotent re-Apply.
+
 ### Microphase 10C — Client installation and cloning documentation
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 
