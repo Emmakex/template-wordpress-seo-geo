@@ -15,10 +15,11 @@ use SeoGeo\Core\Geo\MarkdownAlternateResolver;
 use SeoGeo\Core\Language\NativeLanguageConfiguration;
 use SeoGeo\Core\Schema\SchemaIdentityResolver;
 use SeoGeo\Core\Schema\SchemaLocalBusinessResolver;
+use SeoGeo\Theme\Setup\SetupExecutor;
 use SeoGeo\Theme\Setup\SetupPlanner;
 
 /**
- * Renders one WordPress-native preview/validation wizard without persistence.
+ * Renders one WordPress-native preview/apply setup wizard.
  */
 final class AdminSetupWizard {
 	public const PAGE_SLUG    = 'seo-geo-setup';
@@ -37,6 +38,13 @@ final class AdminSetupWizard {
 	 * @var SetupWizardPreview
 	 */
 	private SetupWizardPreview $preview;
+
+	/**
+	 * Atomic setup executor.
+	 *
+	 * @var SetupExecutor
+	 */
+	private SetupExecutor $executor;
 
 	/**
 	 * Localized copy.
@@ -59,17 +67,20 @@ final class AdminSetupWizard {
 	 * @param SetupWizardPreview|null    $preview        Optional preview validator.
 	 * @param SetupWizardCopy|null       $copy           Optional localized copy.
 	 * @param CrawlerPolicyResolver|null $crawler_policy Optional crawler authority.
+	 * @param SetupExecutor|null         $executor       Optional atomic executor.
 	 */
 	public function __construct(
 		?SetupPlanner $planner = null,
 		?SetupWizardPreview $preview = null,
 		?SetupWizardCopy $copy = null,
-		?CrawlerPolicyResolver $crawler_policy = null
+		?CrawlerPolicyResolver $crawler_policy = null,
+		?SetupExecutor $executor = null
 	) {
 		$this->planner        = $planner ?? new SetupPlanner();
 		$this->preview        = $preview ?? new SetupWizardPreview();
 		$this->copy           = $copy ?? new SetupWizardCopy();
 		$this->crawler_policy = $crawler_policy ?? new CrawlerPolicyResolver();
+		$this->executor       = $executor ?? new SetupExecutor( $this->preview, $this->planner );
 	}
 
 	/**
@@ -131,11 +142,18 @@ final class AdminSetupWizard {
 		$plan      = $this->planner->plan();
 		$candidate = $this->initial_candidate( $plan );
 		$result    = null;
+		$action    = $this->submission_action();
 
-		if ( $this->is_preview_submission() ) {
+		if ( null !== $action ) {
 			$submission = $this->submitted_candidate();
 			$candidate  = $submission['candidate'];
-			$result     = $this->preview->validate( $candidate, $submission['confirmed'] );
+
+			if ( 'apply' === $action ) {
+				$result = $this->executor->execute( $candidate, $submission['apply_confirmed'] );
+				$plan   = $this->planner->plan();
+			} else {
+				$result = $this->preview->validate( $candidate, $submission['preview_confirmed'] );
+			}
 		}
 
 		?>
@@ -155,7 +173,6 @@ final class AdminSetupWizard {
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'themes.php?page=' . self::PAGE_SLUG ) ); ?>">
 				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
-				<input type="hidden" name="seo_geo_setup_action" value="preview">
 
 				<?php $this->render_preset_languages( $candidate, $plan ); ?>
 				<?php $this->render_identity( $candidate ); ?>
@@ -169,11 +186,22 @@ final class AdminSetupWizard {
 							id="seo-geo-preview-confirm"
 							name="seo_geo_preview_confirm"
 							value="1"
-							required
 						>
 						<label for="seo-geo-preview-confirm"><?php echo esc_html( $this->copy->text( 'preview_confirm' ) ); ?></label>
 					</p>
-					<?php submit_button( $this->copy->text( 'validate' ), 'primary', 'seo_geo_validate', false ); ?>
+					<p class="seo-geo-setup-wizard__checkbox">
+						<input
+							type="checkbox"
+							id="seo-geo-apply-confirm"
+							name="seo_geo_apply_confirm"
+							value="1"
+						>
+						<label for="seo-geo-apply-confirm"><?php echo esc_html( $this->copy->text( 'apply_confirm' ) ); ?></label>
+					</p>
+					<p class="submit">
+						<button type="submit" class="button button-secondary" name="seo_geo_setup_action" value="preview"><?php echo esc_html( $this->copy->text( 'validate' ) ); ?></button>
+						<button type="submit" class="button button-primary" name="seo_geo_setup_action" value="apply"><?php echo esc_html( $this->copy->text( 'apply' ) ); ?></button>
+					</p>
 					<p class="description"><?php echo esc_html( $this->copy->text( 'privacy_note' ) ); ?></p>
 				</fieldset>
 			</form>
@@ -359,6 +387,16 @@ final class AdminSetupWizard {
 		$errors     = is_array( $result['errors'] ?? null ) ? $result['errors'] : array();
 		$warnings   = is_array( $result['warnings'] ?? null ) ? $result['warnings'] : array();
 		$normalized = is_array( $result['normalized'] ?? null ) ? $result['normalized'] : array();
+		$execution  = 'theme-setup-execution' === ( $result['mode'] ?? null );
+		$applied    = true === ( $result['applied'] ?? false );
+		$idempotent = true === ( $result['idempotent'] ?? false );
+
+		$title_key = $valid ? 'result_ready' : 'result_invalid';
+		if ( $execution ) {
+			$title_key = $applied
+				? ( $idempotent ? 'result_unchanged' : 'result_applied' )
+				: 'result_apply_failed';
+		}
 		?>
 		<section
 			id="seo-geo-setup-results"
@@ -368,7 +406,7 @@ final class AdminSetupWizard {
 			aria-labelledby="seo-geo-setup-result-title"
 		>
 			<h2 id="seo-geo-setup-result-title">
-				<?php echo esc_html( $this->copy->text( $valid ? 'result_ready' : 'result_invalid' ) ); ?>
+				<?php echo esc_html( $this->copy->text( $title_key ) ); ?>
 			</h2>
 
 			<?php $this->render_issues( 'errors', $errors, 'error' ); ?>
@@ -389,6 +427,13 @@ final class AdminSetupWizard {
 					<dd><code><?php echo esc_html( $this->normalized_entity_text( $entity_geo['entity'] ?? null ) ); ?></code></dd>
 					<dt><?php echo esc_html( $this->copy->text( 'normalized_geo' ) ); ?></dt>
 					<dd><?php echo esc_html( $this->normalized_geo_text( $entity_geo['geo'] ?? null ) ); ?></dd>
+					<?php if ( $execution && $applied ) : ?>
+						<?php $report = is_array( $result['report'] ?? null ) ? $result['report'] : array(); ?>
+						<dt><?php echo esc_html( $this->copy->text( 'configuration_hash' ) ); ?></dt>
+						<dd><code><?php echo esc_html( $this->string_value( $result['configuration_sha256'] ?? null ) ); ?></code></dd>
+						<dt><?php echo esc_html( $this->copy->text( 'report_hash' ) ); ?></dt>
+						<dd><code><?php echo esc_html( $this->string_value( $report['report_sha256'] ?? null ) ); ?></code></dd>
+					<?php endif; ?>
 				</dl>
 			<?php endif; ?>
 		</section>
@@ -454,9 +499,9 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Parse one nonce-verified preview submission.
+	 * Parse one nonce-verified setup submission.
 	 *
-	 * @return array{candidate:array<string,mixed>,confirmed:bool}
+	 * @return array{candidate:array<string,mixed>,preview_confirmed:bool,apply_confirmed:bool}
 	 */
 	private function submitted_candidate(): array {
 		if (
@@ -522,7 +567,7 @@ final class AdminSetupWizard {
 			: '';
 
 		return array(
-			'candidate' => array(
+			'candidate'         => array(
 				'preset'                      => $preset,
 				'default_language'            => $default_language,
 				'languages'                   => $this->parse_language_lines( $language_lines ),
@@ -535,19 +580,39 @@ final class AdminSetupWizard {
 				'llms_txt_enabled'            => isset( $_POST['seo_geo_llms_txt_enabled'] ),
 				'markdown_alternates_enabled' => isset( $_POST['seo_geo_markdown_alternates_enabled'] ),
 			),
-			'confirmed' => isset( $_POST['seo_geo_preview_confirm'] ),
+			'preview_confirmed' => isset( $_POST['seo_geo_preview_confirm'] ),
+			'apply_confirmed'   => isset( $_POST['seo_geo_apply_confirm'] ),
 		);
 	}
 
 	/**
-	 * Report whether the current request is this page's preview POST.
+	 * Resolve the explicit wizard POST action.
 	 */
-	private function is_preview_submission(): bool {
+	private function submission_action(): ?string {
 		$method = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] )
 			? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) )
 			: '';
 
-		return 'POST' === $method;
+		if ( 'POST' !== $method ) {
+			return null;
+		}
+
+		if (
+			! isset( $_POST['_wpnonce'] )
+			|| ! is_string( $_POST['_wpnonce'] )
+			|| ! wp_verify_nonce(
+				sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ),
+				self::NONCE_ACTION
+			)
+		) {
+			wp_die( esc_html( $this->copy->text( 'forbidden' ) ), '', array( 'response' => 403 ) );
+		}
+
+		$action = isset( $_POST['seo_geo_setup_action'] ) && is_string( $_POST['seo_geo_setup_action'] )
+			? sanitize_key( wp_unslash( $_POST['seo_geo_setup_action'] ) )
+			: '';
+
+		return in_array( $action, array( 'preview', 'apply' ), true ) ? $action : null;
 	}
 
 	/**
@@ -679,6 +744,9 @@ final class AdminSetupWizard {
 	private function issue_text( string $issue ): string {
 		if ( 'preview-confirmation-required' === $issue ) {
 			return $this->copy->text( 'confirmation_required' );
+		}
+		if ( 'apply-confirmation-required' === $issue ) {
+			return $this->copy->text( 'apply_confirmation_required' );
 		}
 
 		return $this->copy->text( 'validation_issue' ) . ' ' . $issue;

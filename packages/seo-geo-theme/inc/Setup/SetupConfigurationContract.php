@@ -14,7 +14,7 @@ namespace SeoGeo\Theme\Setup;
  */
 final class SetupConfigurationContract {
 	/**
-	 * Future setup option owner.
+	 * Persisted theme setup state option.
 	 */
 	public const OPTION_NAME = 'seo_geo_theme_setup_v1';
 
