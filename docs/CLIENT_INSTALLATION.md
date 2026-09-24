@@ -157,3 +157,11 @@ Do not copy credentials, private content or raw database/uploads artifacts into 
 ## Boundary with Phase 10D
 
 This document defines installation and migration prerequisites. Detailed production verification, rollback execution and disaster-recovery procedures are owned by Phase 10D.
+
+## 10C acceptance evidence
+
+Final candidate `74a3e957b2a6e8fae7259aa201853c26254be4a0` passed Foundation CI `35944919439`.
+
+PR #107 was squash-merged as `d7d2a7e7273289c820abdddc09ddcd0ee1e0eda1`, and post-merge `main` repeated Foundation successfully as `35944954245`.
+
+The accepted Foundation contract requires this installation guide, `docs/CLIENT_CLONING.md` and `scripts/ci/validate-client-delivery-docs.py`; sandbox/parity/backups, zero-required-plugin delivery, customization boundaries and safe upstream-update guidance are now repository invariants.

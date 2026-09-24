@@ -2045,7 +2045,7 @@ Evidence:
 
 ### Microphase 10C — Client installation and cloning documentation
 
-Status: **implementation candidate**
+Status: **complete**
 
 Deliverables:
 
@@ -2065,9 +2065,18 @@ Current implementation scope:
 - `scripts/ci/validate-client-delivery-docs.py` makes the operational invariants a Foundation contract;
 - the root README now points to Phase 10C and the client delivery guides instead of the obsolete Phase 9E pointer.
 
+10C is closed.
+
+Evidence:
+
+- final candidate `74a3e957b2a6e8fae7259aa201853c26254be4a0` passed Foundation CI `35944919439`;
+- PR #107 was squash-merged as `d7d2a7e7273289c820abdddc09ddcd0ee1e0eda1`;
+- post-merge `main` repeated Foundation CI successfully as `35944954245`;
+- Foundation now requires both client delivery guides plus `validate-client-delivery-docs.py`, preventing future documentation edits from dropping sandbox/parity/backups, zero-plugin or safe-update invariants.
+
 ### Microphase 10D — Production verification and recovery
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 
