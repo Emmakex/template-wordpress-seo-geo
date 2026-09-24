@@ -12,6 +12,7 @@ namespace SeoGeo\MigrationBridge\Operator;
 use SeoGeo\MigrationBridge\BaselineSnapshotStore;
 use SeoGeo\MigrationBridge\Cutover\CutoverSnapshotStore;
 use SeoGeo\MigrationBridge\DependencyGraphBuilder;
+use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
 use SeoGeo\MigrationBridge\SiteAnalyzer;
 use Throwable;
@@ -56,26 +57,36 @@ final class OperatorStatus {
 	private DependencyGraphBuilder $graph;
 
 	/**
+	 * Resumable baseline capture status source.
+	 *
+	 * @var IncrementalBaselineCapture
+	 */
+	private IncrementalBaselineCapture $baseline_capture;
+
+	/**
 	 * Construct the status service.
 	 *
 	 * @param BaselineSnapshotStore|null  $baseline_store Optional baseline store.
 	 * @param CutoverSnapshotStore|null   $cutover_store  Optional cutover store.
 	 * @param MigrationReportStore|null   $report_store   Optional final-report store.
 	 * @param SiteAnalyzer|null           $analyzer       Optional site analyzer.
-	 * @param DependencyGraphBuilder|null $graph          Optional dependency graph.
+	 * @param DependencyGraphBuilder|null   $graph            Optional dependency graph.
+	 * @param IncrementalBaselineCapture|null $baseline_capture Optional incremental capture status.
 	 */
 	public function __construct(
 		?BaselineSnapshotStore $baseline_store = null,
 		?CutoverSnapshotStore $cutover_store = null,
 		?MigrationReportStore $report_store = null,
 		?SiteAnalyzer $analyzer = null,
-		?DependencyGraphBuilder $graph = null
+		?DependencyGraphBuilder $graph = null,
+		?IncrementalBaselineCapture $baseline_capture = null
 	) {
 		$this->baseline_store = $baseline_store ?? new BaselineSnapshotStore();
 		$this->cutover_store  = $cutover_store ?? new CutoverSnapshotStore();
 		$this->report_store   = $report_store ?? new MigrationReportStore();
 		$this->analyzer       = $analyzer ?? new SiteAnalyzer();
-		$this->graph          = $graph ?? new DependencyGraphBuilder();
+		$this->graph            = $graph ?? new DependencyGraphBuilder();
+		$this->baseline_capture = $baseline_capture ?? new IncrementalBaselineCapture();
 	}
 
 	/**
@@ -102,6 +113,7 @@ final class OperatorStatus {
 				'id'        => is_array( $baseline ) && is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256'    => is_array( $baseline ) && is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
 			),
+			'baseline_capture' => $this->baseline_capture->status(),
 			'dependency_plan' => $dependency,
 			'cutover'         => $cutover_status,
 			'final_report'    => $final_report,
