@@ -64,15 +64,15 @@ final class SandboxHandoffManifest {
 				'production_mutation_allowed'    => false,
 			),
 			'safety'         => array(
-				'read_only_generation'        => true,
-				'post_bodies_exported'        => false,
-				'builder_payloads_exported'   => false,
-				'credentials_exported'        => false,
-				'option_values_exported'      => false,
-				'raw_database_exported'       => false,
-				'raw_uploads_exported'        => false,
-				'customer_data_exported'      => false,
-				'baseline_body_content'       => false,
+				'read_only_generation'      => true,
+				'post_bodies_exported'      => false,
+				'builder_payloads_exported' => false,
+				'credentials_exported'      => false,
+				'option_values_exported'    => false,
+				'raw_database_exported'     => false,
+				'raw_uploads_exported'      => false,
+				'customer_data_exported'    => false,
+				'baseline_body_content'     => false,
 			),
 		);
 	}
@@ -110,15 +110,15 @@ final class SandboxHandoffManifest {
 		$crawl    = is_array( $snapshot['crawl'] ?? null ) ? $snapshot['crawl'] : array();
 
 		return array(
-			'available'         => is_array( $baseline ),
-			'id'                => is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
-			'sha256'            => is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
-			'kind'              => is_string( $snapshot['kind'] ?? null ) ? $snapshot['kind'] : null,
-			'generated_at'      => is_string( $snapshot['generated_at'] ?? null ) ? $snapshot['generated_at'] : null,
-			'discovered'        => isset( $crawl['discovered'] ) ? max( 0, (int) $crawl['discovered'] ) : 0,
-			'captured'          => isset( $crawl['captured'] ) ? max( 0, (int) $crawl['captured'] ) : 0,
-			'request_failures'  => isset( $crawl['request_failures'] ) ? max( 0, (int) $crawl['request_failures'] ) : 0,
-			'truncated'         => true === ( $crawl['truncated'] ?? false ),
+			'available'        => is_array( $baseline ),
+			'id'               => is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
+			'sha256'           => is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
+			'kind'             => is_string( $snapshot['kind'] ?? null ) ? $snapshot['kind'] : null,
+			'generated_at'     => is_string( $snapshot['generated_at'] ?? null ) ? $snapshot['generated_at'] : null,
+			'discovered'       => isset( $crawl['discovered'] ) ? max( 0, (int) $crawl['discovered'] ) : 0,
+			'captured'         => isset( $crawl['captured'] ) ? max( 0, (int) $crawl['captured'] ) : 0,
+			'request_failures' => isset( $crawl['request_failures'] ) ? max( 0, (int) $crawl['request_failures'] ) : 0,
+			'truncated'        => true === ( $crawl['truncated'] ?? false ),
 		);
 	}
 
