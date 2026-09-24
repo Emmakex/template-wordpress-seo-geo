@@ -132,9 +132,25 @@ final class OperatorStatus {
 	 * @return array<string,mixed>
 	 */
 	private function dependency_status( ?array $baseline, ?array $report ): array {
-		$summary    = null;
-		$components = array();
-		$source     = 'live-read-only';
+		$summary      = null;
+		$live_summary = array();
+		$components   = array();
+		$source       = 'live-read-only';
+
+		try {
+			$analysis = $this->analyzer->analyze();
+			$graph    = $this->graph->build(
+				$analysis,
+				is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null
+			);
+			$live_summary = isset( $graph['summary'] ) && is_array( $graph['summary'] ) ? $graph['summary'] : array();
+			$components   = isset( $graph['components'] ) && is_array( $graph['components'] )
+				? $this->bounded_component_rows( $graph['components'] )
+				: array();
+		} catch ( Throwable ) {
+			$live_summary = array();
+			$components   = array();
+		}
 
 		if (
 			is_array( $report )
@@ -143,23 +159,8 @@ final class OperatorStatus {
 		) {
 			$summary = $report['dependencies']['after']['classification_summary'];
 			$source  = 'final-report';
-		}
-
-		if ( ! is_array( $summary ) ) {
-			try {
-				$analysis = $this->analyzer->analyze();
-				$graph    = $this->graph->build(
-					$analysis,
-					is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null
-				);
-				$summary    = isset( $graph['summary'] ) && is_array( $graph['summary'] ) ? $graph['summary'] : array();
-				$components = isset( $graph['components'] ) && is_array( $graph['components'] )
-					? $this->bounded_component_rows( $graph['components'] )
-					: array();
-			} catch ( Throwable ) {
-				$summary    = array();
-				$components = array();
-			}
+		} else {
+			$summary = $live_summary;
 		}
 
 		$normalized = array();
