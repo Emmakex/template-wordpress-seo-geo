@@ -126,6 +126,7 @@ foreach (
 		"'apply-confirmation-required'",
 		"'migration-handoff-blocking-review'",
 		'SetupRewriteMaintenance::OPTION_NAME',
+		'private function setup_state( array $normalized, ?array $handoff_summary',
 		"'rewrite_flush_pending'",
 		"'setup-write-failed:'",
 		"'setup-rollback-failed:'",
