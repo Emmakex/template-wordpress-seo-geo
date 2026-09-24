@@ -11,15 +11,19 @@ This document fixes the first real-site acceptance target for the self-contained
 - Candidate main commit: `d3ff8353c08cfce6c796837a74e372ba7daf0073`
 - Candidate ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`
 - Stable decision: `no-go`
-- Pilot status: **sandbox acceptance pending**
+- Pilot status: **production baseline complete — sandbox handoff/acceptance pending**
 
-The public production homepage is reachable. Public sitemap/robots/llms endpoint checks performed through the external web-reading surface were inconclusive because that surface could not retrieve those endpoints; they must be verified directly during the technical baseline with browser/curl and are not marked pass/fail here.
+The production Migration Bridge baseline was completed on 2026-09-24 and the operator screen reported `SEO/GEO baseline = Ready`. This is operator-confirmed real-site evidence; no private baseline payload or production credentials are committed to the repository. The dependency summary at that point was `KEEP=4`, `REPLACE=2`, `MIGRATE=1`, `OPTIONAL=0`, `REMOVE-CANDIDATE=0`, `UNKNOWN=13`. These UNKNOWN items are review inputs for sandbox preparation, not permission to remove or mutate anything in production.
 
 ## Non-negotiable boundary
 
 The pilot does **not** switch production directly to the new theme.
 
 Production remains on the current accepted site until a separate sandbox clone passes the Phase 8–10D contracts. No real-site acceptance reference may be written into `release/stable-release-decision.json` until the final production verification is actually accepted.
+
+## Sandbox handoff status
+
+Production baseline capture is complete. The next accepted operation is to download the privacy-bounded sandbox handoff manifest from Migration Bridge 0.8.5, review the individual dependency rows, and create a distinct non-production clone. The handoff manifest is planning evidence only; it does not clone the database/uploads and does not authorize production mutation.
 
 ## Sandbox preparation
 
