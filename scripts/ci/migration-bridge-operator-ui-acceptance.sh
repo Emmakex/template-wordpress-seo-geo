@@ -16,6 +16,8 @@ use SeoGeo\MigrationBridge\Operator\AdminSandboxHandoffController;
 use SeoGeo\MigrationBridge\Operator\OperatorCopy;
 use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Plugin;
+use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
+use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
 
 wp_set_current_user( 1 );
 
@@ -41,6 +43,7 @@ $protected_state = static function (): array {
 		'baseline'       => get_option( 'seo_geo_migration_baseline_v1', null ),
 		'cutover'        => get_option( 'seo_geo_cutover_history_v1', null ),
 		'final_report'   => get_option( 'seo_geo_migration_report_v1', null ),
+		'dependency_reviews' => get_option( DependencyReviewStore::OPTION_NAME, null ),
 		'active_plugins' => $active_plugins,
 		'stylesheet'     => get_option( 'stylesheet', '' ),
 		'template'       => get_option( 'template', '' ),
@@ -90,6 +93,9 @@ $baseline_action_registered = false !== has_action(
 $handoff_action_registered = false !== has_action(
 	'admin_post_' . AdminSandboxHandoffController::ACTION
 );
+$review_action_registered = false !== has_action(
+	'admin_post_' . AdminDependencyReviewController::ACTION
+);
 
 $saved_baseline = get_option( 'seo_geo_migration_baseline_v1', null );
 if ( ! is_array( $saved_baseline ) ) {
@@ -113,6 +119,7 @@ echo wp_json_encode(
 		'registered'        => $registered,
 		'baseline_action_registered' => $baseline_action_registered,
 		'handoff_action_registered'  => $handoff_action_registered,
+		'review_action_registered'   => $review_action_registered,
 		'catalog_keys'      => array(
 			'en' => $en_keys,
 			'es' => $es_keys,
@@ -162,6 +169,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 assert payload["registered"] is True
 assert payload["baseline_action_registered"] is True
 assert payload["handoff_action_registered"] is True
+assert payload["review_action_registered"] is True
 assert payload["catalog_keys"]["en"] == payload["catalog_keys"]["es"]
 assert len(payload["catalog_keys"]["en"]) >= 35
 assert payload["catalog_empty"] == {"en": [], "es": []}
@@ -175,6 +183,9 @@ assert status["dependency_plan"]["available"] is True
 assert status["dependency_plan"]["source"] == "final-report"
 assert isinstance(status["dependency_plan"]["components"], list)
 assert len(status["dependency_plan"]["components"]) > 0
+assert isinstance(status["dependency_plan"]["reviewed_unknown_count"], int)
+assert isinstance(status["dependency_plan"]["unreviewed_unknown_count"], int)
+assert status["dependency_plan"]["review_complete"] == (status["dependency_plan"]["unreviewed_unknown_count"] == 0)
 assert status["cutover"]["available"] is True
 assert status["cutover"]["accepted"] is True
 assert status["final_report"]["available"] is True
@@ -225,6 +236,15 @@ assert "<h2>Dependency detail</h2>" in en
 assert "<h2>Detalle de dependencias</h2>" in es
 assert "Download sandbox handoff JSON" in en
 assert "Descargar JSON de sandbox" in es
+assert "Reviewed UNKNOWN items" in en
+assert "UNKNOWN revisados" in es
+if status["dependency_plan"]["summary"]["UNKNOWN"] > 0:
+    assert 'value="seo_geo_migration_review_dependency"' in en
+    assert 'name="component_id"' in en
+    assert 'name="review_decision"' in en
+    assert "Save review" in en
+    assert 'value="seo_geo_migration_review_dependency"' in es
+    assert "Guardar revisión" in es
 assert "post_content" not in en
 assert "post_content" not in es
 

@@ -2178,6 +2178,8 @@ Current real-site evidence:
 
 - emmake.com baseline reported `Ready` on 2026-09-24;
 - dependency summary: KEEP=4, REPLACE=2, MIGRATE=1, OPTIONAL=0, REMOVE-CANDIDATE=0, UNKNOWN=13;
+- first v0.8.5 sandbox handoff was generated/downloaded with 4,311 discovered resources, 500 captured, zero request failures and `truncated=true`;
+- v0.8.6 adds bounded UNKNOWN review decisions stored separately from raw dependency-graph authority;
 - production cutover remains missing/not authorized;
 - final migration report remains missing;
 - no production theme switch has occurred.
@@ -2185,7 +2187,8 @@ Current real-site evidence:
 Deliverables:
 
 - expose bounded dependency component rows, with UNKNOWN items first for review;
-- export authenticated nonce/capability-gated sandbox handoff JSON;
+- persist explicit capability/nonce-gated UNKNOWN planning decisions without changing raw graph classifications or production cutover authority;
+- export authenticated nonce/capability-gated sandbox handoff JSON with raw classifications + bounded review evidence;
 - include runtime identity, baseline identity/counts, dependency classifications and sandbox requirements;
 - exclude post bodies, builder payloads, credentials, arbitrary option values, database dumps, uploads and customer data;
 - create a distinct sandbox clone using fresh backup references;

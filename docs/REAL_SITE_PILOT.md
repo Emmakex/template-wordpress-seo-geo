@@ -11,9 +11,9 @@ This document fixes the first real-site acceptance target for the self-contained
 - Candidate main commit: `d3ff8353c08cfce6c796837a74e372ba7daf0073`
 - Candidate ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`
 - Stable decision: `no-go`
-- Pilot status: **production baseline complete — sandbox handoff/acceptance pending**
+- Pilot status: **production baseline + first handoff complete — UNKNOWN review/sandbox acceptance pending**
 
-The production Migration Bridge baseline was completed on 2026-09-24 and the operator screen reported `SEO/GEO baseline = Ready`. This is operator-confirmed real-site evidence; no private baseline payload or production credentials are committed to the repository. The dependency summary at that point was `KEEP=4`, `REPLACE=2`, `MIGRATE=1`, `OPTIONAL=0`, `REMOVE-CANDIDATE=0`, `UNKNOWN=13`. These UNKNOWN items are review inputs for sandbox preparation, not permission to remove or mutate anything in production.
+The production Migration Bridge baseline was completed on 2026-09-24 and the operator screen reported `SEO/GEO baseline = Ready`. This is operator-confirmed real-site evidence; no private baseline payload or production credentials are committed to the repository. The dependency summary at that point was `KEEP=4`, `REPLACE=2`, `MIGRATE=1`, `OPTIONAL=0`, `REMOVE-CANDIDATE=0`, `UNKNOWN=13`. The v0.8.5 handoff generated on 2026-09-24 reported 4,311 discovered public resources, 500 captured resources, zero request failures and a truncated baseline by the configured cap. These UNKNOWN items are review inputs for sandbox preparation, not permission to remove or mutate anything in production.
 
 ## Non-negotiable boundary
 
@@ -23,7 +23,7 @@ Production remains on the current accepted site until a separate sandbox clone p
 
 ## Sandbox handoff status
 
-Production baseline capture is complete. The next accepted operation is to download the privacy-bounded sandbox handoff manifest from Migration Bridge 0.8.5, review the individual dependency rows, and create a distinct non-production clone. The handoff manifest is planning evidence only; it does not clone the database/uploads and does not authorize production mutation.
+Production baseline capture is complete and the first privacy-bounded sandbox handoff manifest from Migration Bridge 0.8.5 has been generated/downloaded. Migration Bridge 0.8.6 adds explicit capability/nonce-gated UNKNOWN review decisions so the 13 unresolved components can be recorded one by one before sandbox acceptance. Those decisions remain separate from the raw dependency graph and do not authorize production mutation. After review, create a distinct non-production clone and regenerate the handoff so the sandbox receives the bounded review evidence.
 
 ## Sandbox preparation
 

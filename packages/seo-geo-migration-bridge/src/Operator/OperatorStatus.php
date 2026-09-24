@@ -14,6 +14,7 @@ use SeoGeo\MigrationBridge\Cutover\CutoverSnapshotStore;
 use SeoGeo\MigrationBridge\DependencyGraphBuilder;
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
+use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
 use SeoGeo\MigrationBridge\SiteAnalyzer;
 use Throwable;
 
@@ -57,6 +58,13 @@ final class OperatorStatus {
 	private DependencyGraphBuilder $graph;
 
 	/**
+	 * Planning-only dependency review decisions.
+	 *
+	 * @var DependencyReviewStore
+	 */
+	private DependencyReviewStore $review_store;
+
+	/**
 	 * Construct the status service.
 	 *
 	 * @param BaselineSnapshotStore|null  $baseline_store Optional baseline store.
@@ -64,19 +72,22 @@ final class OperatorStatus {
 	 * @param MigrationReportStore|null   $report_store   Optional final-report store.
 	 * @param SiteAnalyzer|null           $analyzer       Optional site analyzer.
 	 * @param DependencyGraphBuilder|null $graph          Optional dependency graph.
+	 * @param DependencyReviewStore|null  $review_store   Optional planning review store.
 	 */
 	public function __construct(
 		?BaselineSnapshotStore $baseline_store = null,
 		?CutoverSnapshotStore $cutover_store = null,
 		?MigrationReportStore $report_store = null,
 		?SiteAnalyzer $analyzer = null,
-		?DependencyGraphBuilder $graph = null
+		?DependencyGraphBuilder $graph = null,
+		?DependencyReviewStore $review_store = null
 	) {
 		$this->baseline_store = $baseline_store ?? new BaselineSnapshotStore();
 		$this->cutover_store  = $cutover_store ?? new CutoverSnapshotStore();
 		$this->report_store   = $report_store ?? new MigrationReportStore();
 		$this->analyzer       = $analyzer ?? new SiteAnalyzer();
 		$this->graph          = $graph ?? new DependencyGraphBuilder();
+		$this->review_store   = $review_store ?? new DependencyReviewStore();
 	}
 
 	/**
@@ -168,13 +179,30 @@ final class OperatorStatus {
 			$normalized[ $classification ] = isset( $summary[ $classification ] ) ? max( 0, (int) $summary[ $classification ] ) : 0;
 		}
 
+		$reviewed_unknown   = 0;
+		$unreviewed_unknown = 0;
+		foreach ( $components as $component ) {
+			if ( 'UNKNOWN' !== ( $component['classification'] ?? null ) ) {
+				continue;
+			}
+
+			if ( true === ( $component['reviewed'] ?? false ) ) {
+				++$reviewed_unknown;
+			} else {
+				++$unreviewed_unknown;
+			}
+		}
+
 		return array(
-			'available'      => array_sum( $normalized ) > 0,
-			'source'         => $source,
-			'summary'        => $normalized,
-			'components'     => $components,
-			'blocking_count' => $normalized['MIGRATE'] + $normalized['UNKNOWN'],
-			'advisory_count' => $normalized['OPTIONAL'] + $normalized['REMOVE-CANDIDATE'],
+			'available'                => array_sum( $normalized ) > 0,
+			'source'                   => $source,
+			'summary'                  => $normalized,
+			'components'               => $components,
+			'blocking_count'           => $normalized['MIGRATE'] + $normalized['UNKNOWN'],
+			'advisory_count'           => $normalized['OPTIONAL'] + $normalized['REMOVE-CANDIDATE'],
+			'reviewed_unknown_count'   => $reviewed_unknown,
+			'unreviewed_unknown_count' => $unreviewed_unknown,
+			'review_complete'          => 0 === $unreviewed_unknown,
 		);
 	}
 
@@ -196,16 +224,26 @@ final class OperatorStatus {
 
 		$rows = array();
 		foreach ( $components as $component ) {
+			$component_id   = is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '';
+			$classification = is_string( $component['classification'] ?? null ) ? $component['classification'] : 'UNKNOWN';
+			$review         = 'UNKNOWN' === $classification && '' !== $component_id
+				? $this->review_store->decision_for( $component_id )
+				: null;
+
 			$rows[] = array(
-				'component_id'   => is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '',
-				'type'           => is_string( $component['type'] ?? null ) ? $component['type'] : '',
-				'id'             => is_string( $component['id'] ?? null ) ? $component['id'] : '',
-				'category'       => is_string( $component['category'] ?? null ) ? $component['category'] : null,
-				'active'         => true === ( $component['active'] ?? false ),
-				'classification' => is_string( $component['classification'] ?? null ) ? $component['classification'] : 'UNKNOWN',
-				'reason'         => is_string( $component['reason'] ?? null ) ? $component['reason'] : 'insufficient-evidence',
-				'resource_count' => isset( $component['resource_count'] ) ? max( 0, (int) $component['resource_count'] ) : null,
-				'manual_review'  => true === ( $component['manual_review'] ?? false ),
+				'component_id'    => $component_id,
+				'type'            => is_string( $component['type'] ?? null ) ? $component['type'] : '',
+				'id'              => is_string( $component['id'] ?? null ) ? $component['id'] : '',
+				'category'        => is_string( $component['category'] ?? null ) ? $component['category'] : null,
+				'active'          => true === ( $component['active'] ?? false ),
+				'classification'  => $classification,
+				'reason'          => is_string( $component['reason'] ?? null ) ? $component['reason'] : 'insufficient-evidence',
+				'resource_count'  => isset( $component['resource_count'] ) ? max( 0, (int) $component['resource_count'] ) : null,
+				'manual_review'   => true === ( $component['manual_review'] ?? false ),
+				'reviewed'        => is_array( $review ),
+				'review_decision' => is_array( $review ) ? $review['classification'] : null,
+				'review_reason'   => is_array( $review ) ? $review['reason'] : null,
+				'reviewed_at'     => is_array( $review ) ? $review['reviewed_at'] : null,
 			);
 		}
 

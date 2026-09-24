@@ -61,6 +61,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Content/DiviContentDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxGuard.php',
 	MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxMigrationLab.php',
+	MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxHandoffManifest.php',
 	MIGRATION_BRIDGE_DIR . '/src/Migration/BuilderMigrationAdapterInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Migration/ElementorMigrationAdapter.php',
 	MIGRATION_BRIDGE_DIR . '/src/Migration/DiviMigrationAdapter.php',
@@ -82,6 +83,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorStatus.php',
 	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
 	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminBaselineCaptureController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminSandboxHandoffController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Review/DependencyReviewStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -133,7 +137,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Parity/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Cutover/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Report/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Review/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -777,20 +782,64 @@ foreach (
 	}
 }
 
+$review_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Review/DependencyReviewStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_migration_dependency_reviews_v1';",
+		"return array( 'KEEP', 'REPLACE', 'MIGRATE', 'OPTIONAL', 'REMOVE-CANDIDATE' );",
+		"add_option( self::OPTION_NAME, \$all, '', false )",
+		"update_option( self::OPTION_NAME, \$all, false )",
+		"'operator-review-retain-operational'",
+		"'operator-review-remove-candidate-after-sandbox'",
+	) as $review_store_guard
+) {
+	if ( ! str_contains( $review_store, $review_store_guard ) ) {
+		fail_migration_bridge(
+			'dependency-review-store',
+			'Dependency review store must remain bounded, non-autoloaded and classification-only.',
+			MIGRATION_BRIDGE_DIR . '/src/Review/DependencyReviewStore.php',
+			$review_store_guard,
+			'missing'
+		);
+	}
+}
+
+$review_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php' );
+foreach (
+	array(
+		"public const ACTION = 'seo_geo_migration_review_dependency';",
+		"current_user_can( 'manage_options' )",
+		'check_admin_referer( self::NONCE_ACTION . \':\' . $component_id )',
+		"'UNKNOWN' === ( \$component['classification'] ?? null )",
+		"'UNREVIEWED' === \$decision",
+	) as $review_controller_guard
+) {
+	if ( ! str_contains( $review_controller, $review_controller_guard ) ) {
+		fail_migration_bridge(
+			'dependency-review-entrypoint',
+			'Dependency review must remain capability/nonce gated and limited to current UNKNOWN components.',
+			MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php',
+			$review_controller_guard,
+			'missing'
+		);
+	}
+}
+
 $handoff_manifest = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxHandoffManifest.php' );
 foreach (
 	array(
 		"'mode'           => 'seo-geo-sandbox-handoff'",
-		"'post_bodies_exported'      => false",
-		"'builder_payloads_exported' => false",
-		"'credentials_exported'      => false",
-		"'option_values_exported'    => false",
-		"'raw_database_exported'     => false",
-		"'raw_uploads_exported'      => false",
-		"'customer_data_exported'    => false",
+		"'post_bodies_exported'               => false",
+		"'builder_payloads_exported'          => false",
+		"'credentials_exported'               => false",
+		"'option_values_exported'             => false",
+		"'raw_database_exported'              => false",
+		"'raw_uploads_exported'               => false",
+		"'customer_data_exported'             => false",
 		"'requires_distinct_origin'       => true",
 		"'requires_marker'                => SandboxGuard::MARKER",
 		"'production_mutation_allowed'    => false",
+		"'review_decisions_execute_mutations' => false",
 	) as $handoff_guard
 ) {
 	if ( ! str_contains( $handoff_manifest, $handoff_guard ) ) {
@@ -831,6 +880,9 @@ foreach (
 		'wp_nonce_field( AdminSandboxHandoffController::NONCE_ACTION )',
 		"'dependency_detail_heading'",
 		"'sandbox_handoff_heading'",
+		'AdminDependencyReviewController::ACTION',
+		'AdminDependencyReviewController::NONCE_ACTION',
+		"'dependency_review_help'",
 	) as $handoff_ui_guard
 ) {
 	if ( ! str_contains( $operator_screen, $handoff_ui_guard ) && ! str_contains( (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' ), $handoff_ui_guard ) ) {
