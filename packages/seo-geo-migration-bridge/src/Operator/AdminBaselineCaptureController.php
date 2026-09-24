@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Operator;
 
-use SeoGeo\MigrationBridge\BaselineSnapshotter;
+use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use Throwable;
 
 /**
@@ -27,19 +27,19 @@ final class AdminBaselineCaptureController {
 	public const NONCE_ACTION = 'seo_geo_migration_capture_baseline';
 
 	/**
-	 * Baseline snapshot service.
+	 * Incremental baseline capture service.
 	 *
-	 * @var BaselineSnapshotter
+	 * @var IncrementalBaselineCapture
 	 */
-	private BaselineSnapshotter $snapshotter;
+	private IncrementalBaselineCapture $capture;
 
 	/**
 	 * Construct the controller.
 	 *
-	 * @param BaselineSnapshotter $snapshotter Baseline service.
+	 * @param IncrementalBaselineCapture $capture Incremental capture service.
 	 */
-	public function __construct( BaselineSnapshotter $snapshotter ) {
-		$this->snapshotter = $snapshotter;
+	public function __construct( IncrementalBaselineCapture $capture ) {
+		$this->capture = $capture;
 	}
 
 	/**
@@ -63,24 +63,23 @@ final class AdminBaselineCaptureController {
 
 		check_admin_referer( self::NONCE_ACTION );
 
-		$existing = $this->snapshotter->latest();
-		if ( is_array( $existing ) ) {
-			$this->redirect( 'exists' );
-		}
-
 		try {
-			$snapshot = $this->snapshotter->capture();
-			$storage  = $this->snapshotter->persist( $snapshot );
+			$result = $this->capture->advance();
 		} catch ( Throwable ) {
 			$this->redirect( 'error' );
 		}
 
-		if ( ! $storage['saved'] ) {
-			$status = 'baseline-exists' === $storage['reason'] ? 'exists' : 'error';
-			$this->redirect( $status );
+		$status = is_string( $result['status'] ?? null ) ? $result['status'] : 'error';
+
+		if ( 'complete' === $status ) {
+			$this->redirect( 'success' );
 		}
 
-		$this->redirect( 'success' );
+		if ( 'error' === $status ) {
+			$this->redirect( 'error' );
+		}
+
+		$this->redirect( 'progress' );
 	}
 
 	/**
