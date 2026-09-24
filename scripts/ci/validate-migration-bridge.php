@@ -48,6 +48,8 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/HtmlSnapshotExtractor.php',
 	MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotter.php',
 	MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/IncrementalBaselineStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/IncrementalBaselineCapture.php',
 	MIGRATION_BRIDGE_DIR . '/src/Http/HttpClientInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php',
 	MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php',
@@ -261,6 +263,49 @@ foreach (
 ) {
 	if ( ! str_contains( $snapshotter, $guard ) ) {
 		fail_migration_bridge( 'baseline-safety-report', 'Phase 8B snapshot is missing a required safety/authority declaration.', MIGRATION_BRIDGE_DIR . '/src/BaselineSnapshotter.php', $guard, 'missing' );
+	}
+}
+
+$incremental_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/IncrementalBaselineStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_migration_baseline_progress_v1';",
+		"add_option( self::OPTION_NAME, \$state, '', false )",
+		'update_option( self::OPTION_NAME, $state, false )',
+	) as $incremental_store_guard
+) {
+	if ( ! str_contains( $incremental_store, $incremental_store_guard ) ) {
+		fail_migration_bridge(
+			'incremental-baseline-storage',
+			'Incremental baseline progress must remain dedicated and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/IncrementalBaselineStore.php',
+			$incremental_store_guard,
+			'missing'
+		);
+	}
+}
+
+$incremental_capture = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/IncrementalBaselineCapture.php' );
+foreach (
+	array(
+		'private const PAGE_BATCH_SIZE = 2;',
+		'$this->progress_store->save( $state );',
+		'$this->baseline_store->save( $snapshot, false );',
+		"'incremental_capture'        => true",
+		"'resumable_progress'         => true",
+		"'same_origin_only'           => true",
+		"'authenticated_requests'     => false",
+		"'body_content_persisted'     => false",
+	) as $incremental_capture_guard
+) {
+	if ( ! str_contains( $incremental_capture, $incremental_capture_guard ) ) {
+		fail_migration_bridge(
+			'incremental-baseline-contract',
+			'Incremental baseline capture is missing its bounded/resumable/privacy contract.',
+			MIGRATION_BRIDGE_DIR . '/src/IncrementalBaselineCapture.php',
+			$incremental_capture_guard,
+			'missing'
+		);
 	}
 }
 
@@ -676,8 +721,10 @@ foreach (
 	array(
 		'AdminBaselineCaptureController::ACTION',
 		'wp_nonce_field( AdminBaselineCaptureController::NONCE_ACTION )',
-		'<form method="post"',
+		'<form id="seo-geo-baseline-capture-form" method="post"',
 		"true !== ( \$status['baseline']['available'] ?? false )",
+		"render_baseline_capture_form( \$status )",
+		"window.setTimeout(function ()",
 	) as $baseline_form_guard
 ) {
 	if ( ! str_contains( $operator_screen, $baseline_form_guard ) ) {
@@ -697,30 +744,19 @@ foreach (
 		"public const ACTION = 'seo_geo_migration_capture_baseline';",
 		"current_user_can( 'manage_options' )",
 		'check_admin_referer( self::NONCE_ACTION )',
-		'$existing = $this->snapshotter->latest();',
-		'$snapshot = $this->snapshotter->capture();',
-		'$storage  = $this->snapshotter->persist( $snapshot );',
+		'$result = $this->capture->advance();',
+		"'progress'",
 	) as $baseline_controller_guard
 ) {
 	if ( ! str_contains( $baseline_controller, $baseline_controller_guard ) ) {
 		fail_migration_bridge(
 			'baseline-admin-entrypoint',
-			'Baseline capture entrypoint must remain capability/nonce gated and refuse implicit overwrite.',
+			'Baseline capture entrypoint must remain capability/nonce gated and advance only one resumable step.',
 			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminBaselineCaptureController.php',
 			$baseline_controller_guard,
 			'missing'
 		);
 	}
-}
-
-if ( str_contains( $baseline_controller, 'persist( $snapshot, true' ) ) {
-	fail_migration_bridge(
-		'baseline-overwrite',
-		'Baseline capture controller must never overwrite an existing baseline implicitly.',
-		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminBaselineCaptureController.php',
-		'persist without replace=true',
-		'implicit overwrite found'
-	);
 }
 
 $operator_copy = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' );

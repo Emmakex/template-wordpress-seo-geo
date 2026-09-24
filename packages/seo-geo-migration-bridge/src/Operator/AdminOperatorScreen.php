@@ -130,7 +130,7 @@ final class AdminOperatorScreen {
 				<?php echo esc_html( $this->next_step_text( $status ) ); ?>
 			</p>
 			<?php if ( true !== ( $status['baseline']['available'] ?? false ) ) : ?>
-				<?php $this->render_baseline_capture_form(); ?>
+				<?php $this->render_baseline_capture_form( $status ); ?>
 			<?php endif; ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'privacy_heading' ) ); ?></h2>
@@ -150,17 +150,22 @@ final class AdminOperatorScreen {
 			: '';
 
 		$key = match ( $status ) {
-			'success' => 'baseline_capture_success',
-			'exists'  => 'baseline_capture_exists',
-			'error'   => 'baseline_capture_error',
-			default   => null,
+			'success'  => 'baseline_capture_success',
+			'progress' => 'baseline_progress_notice',
+			'exists'   => 'baseline_capture_exists',
+			'error'    => 'baseline_capture_error',
+			default    => null,
 		};
 
 		if ( null === $key ) {
 			return;
 		}
 
-		$class = 'error' === $status ? 'notice notice-error' : 'notice notice-success';
+		$class = match ( $status ) {
+			'error'    => 'notice notice-error',
+			'progress' => 'notice notice-info',
+			default    => 'notice notice-success',
+		};
 		?>
 		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
 			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
@@ -170,18 +175,64 @@ final class AdminOperatorScreen {
 
 	/**
 	 * Render the explicit same-origin public baseline capture action.
+	 *
+	 * @param array<string,mixed> $status Operator snapshot.
 	 */
-	private function render_baseline_capture_form(): void {
+	private function render_baseline_capture_form( array $status ): void {
+		$capture   = is_array( $status['capture'] ?? null ) ? $status['capture'] : array();
+		$running   = 'running' === ( $capture['status'] ?? null );
+		$processed = (int) ( $capture['processed'] ?? 0 );
+		$total     = (int) ( $capture['total'] ?? 0 );
+		$percent   = (int) ( $capture['percent'] ?? 0 );
+		$button    = $running ? 'baseline_continue' : 'baseline_capture_button';
 		?>
 		<div class="seo-geo-migration-baseline-action">
 			<p><?php echo esc_html( $this->copy->text( 'baseline_capture_help' ) ); ?></p>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php if ( $running ) : ?>
+				<p>
+					<?php
+					echo esc_html(
+						sprintf(
+							$this->copy->text( 'baseline_progress' ),
+							$processed,
+							$total,
+							$percent
+						)
+					);
+					?>
+				</p>
+				<progress value="<?php echo esc_attr( (string) $percent ); ?>" max="100"><?php echo esc_html( (string) $percent ); ?>%</progress>
+			<?php endif; ?>
+			<form id="seo-geo-baseline-capture-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminBaselineCaptureController::ACTION ); ?>">
 				<?php wp_nonce_field( AdminBaselineCaptureController::NONCE_ACTION ); ?>
-				<?php submit_button( $this->copy->text( 'baseline_capture_button' ), 'primary', 'submit', false ); ?>
+				<?php submit_button( $this->copy->text( $button ), 'primary', 'submit', false ); ?>
 			</form>
+			<?php if ( $running && $this->should_auto_continue_baseline() ) : ?>
+				<script>
+					window.setTimeout(function () {
+						var form = document.getElementById('seo-geo-baseline-capture-form');
+						if (form) {
+							form.submit();
+						}
+					}, 500);
+				</script>
+			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Auto-advance only after a successful persisted progress step.
+	 */
+	private function should_auto_continue_baseline(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect marker after nonce-verified action.
+		$result = isset( $_GET['seo_geo_baseline'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded redirect marker.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_baseline'] ) )
+			: '';
+
+		return 'progress' === $result;
 	}
 
 	/**

@@ -41,6 +41,13 @@ final class Plugin {
 	private static ?BaselineSnapshotter $baseline_snapshotter = null;
 
 	/**
+	 * Resumable public baseline capture singleton.
+	 *
+	 * @var IncrementalBaselineCapture|null
+	 */
+	private static ?IncrementalBaselineCapture $incremental_baseline_capture = null;
+
+	/**
 	 * Migration dependency graph singleton.
 	 *
 	 * @var DependencyGraphBuilder|null
@@ -128,20 +135,23 @@ final class Plugin {
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
-		self::$analyzer                    ??= new SiteAnalyzer();
-		self::$baseline_snapshotter        ??= new BaselineSnapshotter();
-		self::$dependency_graph            ??= new DependencyGraphBuilder();
-		self::$sandbox_lab                 ??= new SandboxMigrationLab();
-		self::$migration_engine            ??= new MigrationEngine();
-		self::$migration_controller        ??= new AdminMigrationController( self::$migration_engine );
-		self::$parity_engine               ??= new SeoParityEngine();
-		self::$cutover_engine              ??= new CutoverEngine();
-		self::$cutover_controller          ??= new AdminCutoverController( self::$cutover_engine );
-		self::$operator_status             ??= new OperatorStatus();
-		self::$operator_screen             ??= new AdminOperatorScreen( self::$operator_status );
-		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$baseline_snapshotter );
-		self::$migration_report            ??= new MigrationReportEngine();
-		self::$migration_report_store      ??= new MigrationReportStore();
+		self::$analyzer               ??= new SiteAnalyzer();
+		self::$baseline_snapshotter   ??= new BaselineSnapshotter();
+		self::$dependency_graph       ??= new DependencyGraphBuilder();
+		self::$sandbox_lab            ??= new SandboxMigrationLab();
+		self::$migration_engine       ??= new MigrationEngine();
+		self::$migration_controller   ??= new AdminMigrationController( self::$migration_engine );
+		self::$parity_engine          ??= new SeoParityEngine();
+		self::$cutover_engine         ??= new CutoverEngine();
+		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
+		self::$operator_status        ??= new OperatorStatus();
+		self::$operator_screen        ??= new AdminOperatorScreen( self::$operator_status );
+		self::$migration_report       ??= new MigrationReportEngine();
+		self::$migration_report_store ??= new MigrationReportStore();
+
+		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
+
+		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$incremental_baseline_capture );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -162,6 +172,13 @@ final class Plugin {
 	 */
 	public static function baseline_snapshotter(): ?BaselineSnapshotter {
 		return self::$baseline_snapshotter;
+	}
+
+	/**
+	 * Return the resumable public baseline capture service.
+	 */
+	public static function incremental_baseline_capture(): ?IncrementalBaselineCapture {
+		return self::$incremental_baseline_capture;
 	}
 
 	/**

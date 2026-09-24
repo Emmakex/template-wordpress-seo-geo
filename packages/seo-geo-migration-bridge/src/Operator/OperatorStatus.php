@@ -12,6 +12,7 @@ namespace SeoGeo\MigrationBridge\Operator;
 use SeoGeo\MigrationBridge\BaselineSnapshotStore;
 use SeoGeo\MigrationBridge\Cutover\CutoverSnapshotStore;
 use SeoGeo\MigrationBridge\DependencyGraphBuilder;
+use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
 use SeoGeo\MigrationBridge\SiteAnalyzer;
 use Throwable;
@@ -92,6 +93,7 @@ final class OperatorStatus {
 		$dependency     = $this->dependency_status( $baseline, $report_payload );
 		$final_report   = $this->report_status( $report, $report_payload );
 		$cutover_status = $this->cutover_status( $cutover );
+		$capture        = ( new IncrementalBaselineCapture() )->status();
 
 		return array(
 			'schema_version'  => 1,
@@ -102,6 +104,7 @@ final class OperatorStatus {
 				'id'        => is_array( $baseline ) && is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256'    => is_array( $baseline ) && is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
 			),
+			'capture'         => $capture,
 			'dependency_plan' => $dependency,
 			'cutover'         => $cutover_status,
 			'final_report'    => $final_report,

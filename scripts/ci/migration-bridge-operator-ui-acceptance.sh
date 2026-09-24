@@ -222,7 +222,7 @@ assert 'admin-post.php' in missing_es
 assert 'name="action"' in missing_es
 assert 'value="seo_geo_migration_capture_baseline"' in missing_es
 assert 'name="_wpnonce"' in missing_es
-assert "Capturar línea base SEO/GEO" in missing_es
+assert "Iniciar captura segura de línea base SEO/GEO" in missing_es
 assert "No cambia el tema, plugins, contenido" in missing_es
 
 print("ok")
