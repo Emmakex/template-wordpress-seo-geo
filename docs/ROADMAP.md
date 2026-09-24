@@ -2076,7 +2076,7 @@ Evidence:
 
 ### Microphase 10D — Production verification and recovery
 
-Status: **implementation candidate**
+Status: **complete**
 
 Deliverables:
 
@@ -2095,9 +2095,18 @@ Current implementation scope:
 - `docs/templates/PRODUCTION_ACCEPTANCE_RECORD.example.json` provides a bounded evidence shape linking release, sandbox, backups, quality evidence, production checks and final decision without storing secrets;
 - `scripts/ci/validate-production-readiness-docs.py` makes the production-readiness and recovery invariants part of Foundation CI.
 
+10D is closed.
+
+Evidence:
+
+- final candidate `05e12c7fbfc5469d4b2f09cadf9ba7832f65963d` passed Foundation CI `35945432595`;
+- PR #109 was squash-merged as `fc4c863bd49628948acb69a3359198cfbf84b09f`;
+- post-merge `main` repeated Foundation CI successfully as `35945470124`;
+- Foundation now enforces sandbox exit, production abort/go-no-go, runtime-vs-data recovery, dynamic-site stale-database protection and the bounded production acceptance-record schema.
+
 ### Microphase 10E — Stable release decision
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 
