@@ -150,10 +150,6 @@ final class SandboxHandoffManifest {
 		$rows = array();
 
 		foreach ( $components as $component ) {
-			if ( ! is_array( $component ) ) {
-				continue;
-			}
-
 			$rows[] = array(
 				'component_id'   => is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '',
 				'type'           => is_string( $component['type'] ?? null ) ? $component['type'] : '',
