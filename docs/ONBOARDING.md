@@ -332,7 +332,7 @@ The runtime acceptance proved atomic option-only setup application, exact rollba
 
 ## Phase 9F — Onboarding acceptance
 
-Status: **active**
+Status: **implementation candidate**
 
 9F is the final onboarding acceptance pass. It does not introduce a new product owner or persistence boundary; it consolidates clean-install and migrated-site proof across the existing Phase 9 setup flow.
 
@@ -346,3 +346,17 @@ Acceptance must prove:
 - WPCS, PHPStan level 6, security and static mutation-boundary contracts;
 - no operator copy instructs installation of an SEO/GEO plugin;
 - the final generated setup report remains non-sensitive and reproducible for an unchanged configuration.
+
+
+### 9F implementation candidate
+
+The acceptance surface now exercises the production onboarding shape rather than the transitional standalone Core plugin:
+
+- Playwright runs against the built self-contained theme with zero active plugins;
+- the browser harness verifies the embedded Core runtime originates from the active theme;
+- one desktop acceptance applies a clean EN setup, proves an unchanged second Apply, then confirms the same persisted configuration through the ES UI;
+- self-contained smoke runs a clean Corporate setup with no migration handoff and requires `site_mode=clean`;
+- the migrated LocalBusiness scenario still consumes the bounded Phase 8 handoff and requires `site_mode=migrated` without loading Migration Bridge;
+- both clean and migrated setup paths preserve zero active plugins and stable page counts;
+- setup copy explicitly states in EN/ES that no SEO/GEO plugin is required for baseline setup;
+- the static setup contract rejects common operator guidance that would instruct installation of an SEO/GEO plugin.

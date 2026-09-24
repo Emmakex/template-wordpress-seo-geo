@@ -29,11 +29,12 @@ async function gotoWizard(page, language = 'en') {
   await expect(page.locator('.seo-geo-setup-wizard')).toBeVisible();
 }
 
-test.describe('Phase 9D theme setup wizard', () => {
+test.describe('Phase 9 onboarding wizard', () => {
   test('renders EN/ES with scoped WCAG acceptance and responsive reflow', async ({ page }, testInfo) => {
     await gotoWizard(page, 'en');
 
     await expect(page.getByRole('heading', { level: 1, name: 'SEO/GEO Setup' })).toBeVisible();
+    await expect(page.locator('.notice-info.inline')).toContainText('No SEO/GEO plugin is required for baseline setup.');
     await expect(page.locator('.seo-geo-setup-wizard__step')).toHaveCount(4);
     await expect(page.locator('form')).toHaveCount(1);
     await expect(page.getByLabel('Preset')).toBeVisible();
@@ -73,6 +74,7 @@ test.describe('Phase 9D theme setup wizard', () => {
     });
 
     await expect(page.getByRole('heading', { level: 1, name: 'Configuración SEO/GEO' })).toBeVisible();
+    await expect(page.locator('.notice-info.inline')).toContainText('No se requiere ningún plugin SEO/GEO para la configuración base.');
     await expect(page.getByLabel('Preset')).toBeVisible();
     await expect(page.getByLabel('Mapa de idiomas')).toBeVisible();
     await expect(page.getByLabel('Entidad del sitio')).toBeVisible();
@@ -149,5 +151,75 @@ test.describe('Phase 9D theme setup wizard', () => {
     await expect(results.getByRole('alert')).toBeVisible();
     await expect(results).toContainText('identity-confirmation-required');
     await expect(results).toContainText('prefix-routing-requires-multiple-languages');
+  });
+
+  test('applies a clean zero-plugin setup, reruns idempotently and reports the same state in Spanish', async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'desktop-1440',
+      'Persistent Phase 9F apply acceptance runs once against the clean browser fixture.',
+    );
+
+    await gotoWizard(page, 'en');
+
+    await page.getByLabel('Preset').selectOption('corporate');
+    await page.getByLabel('Primary language code').fill('en');
+    await page.getByLabel('Language map').fill('en=en_US\nes=es_ES');
+    await page.getByLabel('Native routing').selectOption('prefix');
+    await page.getByLabel('x-default language code').fill('en');
+    await page.getByLabel('Site entity').selectOption('organization');
+    await page.getByLabel('I confirm this identity describes the real public site.').check();
+    await page.getByLabel('OAI-SearchBot').selectOption('allow');
+    await page.getByLabel('GPTBot').selectOption('disallow');
+    await page.getByLabel('Enable llms.txt').check();
+    await page.getByLabel('Enable Markdown alternates').check();
+    await page.getByLabel('I confirm these validated settings should be applied to this site.').check();
+
+    await page.getByRole('button', { name: 'Apply setup' }).click();
+
+    const results = page.locator('#seo-geo-setup-results');
+    await expect(results).toBeVisible();
+    await expect(results).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'Setup was applied successfully.' })).toBeVisible();
+    await expect(results).toContainText('Configuration fingerprint');
+    await expect(results).toContainText('Setup report fingerprint');
+    await expect(results).toContainText('corporate');
+    await expect(results).toContainText('en=en_US');
+    await expect(results).toContainText('es=es_ES');
+
+    const appliedScan = await new AxeBuilder({ page })
+      .include('.seo-geo-setup-wizard')
+      .withTags(wcagTags)
+      .analyze();
+    expect(appliedScan.violations).toEqual([]);
+
+    await page.getByLabel('I confirm these validated settings should be applied to this site.').check();
+    await page.getByRole('button', { name: 'Apply setup' }).click();
+    await expect(page.getByRole('heading', { name: 'Setup already matches these validated settings.' })).toBeVisible();
+
+    await page.goto('/wp-admin/themes.php?page=seo-geo-setup&fixture_lang=es', {
+      waitUntil: 'networkidle',
+    });
+
+    await expect(page.getByLabel('Preset')).toHaveValue('corporate');
+    await expect(page.getByLabel('Mapa de idiomas')).toHaveValue(/en=en_US[\s\S]*es=es_ES/);
+    await page.getByLabel('Confirmo que esta identidad describe el sitio público real.').check();
+    await page.getByLabel('Confirmo que estos ajustes validados deben aplicarse a este sitio.').check();
+
+    await page.locator('form').evaluate((form) => {
+      const action = new URL(form.action);
+      action.searchParams.set('fixture_lang', 'es');
+      form.action = action.toString();
+    });
+
+    await page.getByRole('button', { name: 'Aplicar configuración' }).click();
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Configuración SEO/GEO' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'El sitio ya coincide con estos ajustes validados.' })).toBeVisible();
+
+    const spanishAppliedScan = await new AxeBuilder({ page })
+      .include('.seo-geo-setup-wizard')
+      .withTags(wcagTags)
+      .analyze();
+    expect(spanishAppliedScan.violations).toEqual([]);
   });
 });

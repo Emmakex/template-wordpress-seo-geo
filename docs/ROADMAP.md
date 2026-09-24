@@ -1949,7 +1949,7 @@ Evidence:
 
 ### Microphase 9F — Onboarding acceptance
 
-Status: **active**
+Status: **implementation candidate**
 
 Deliverables:
 
@@ -1959,6 +1959,16 @@ Deliverables:
 - performance baseline;
 - security/PHP quality/static contracts;
 - proof that onboarding never instructs installation of an SEO/GEO plugin.
+
+Current implementation scope:
+
+- browser acceptance now builds and activates only the self-contained theme; the standalone Core plugin is neither copied nor activated;
+- browser acceptance asserts zero active plugins before and after Playwright and verifies the embedded Core runtime path;
+- the persistent wizard flow applies a clean Corporate EN/ES setup once, proves idempotent re-Apply, then proves the same persisted state through the Spanish operator UI;
+- self-contained runtime acceptance applies and re-applies a clean setup with `site_mode=clean`, stable page counts and zero active plugins;
+- the existing migrated LocalBusiness handoff acceptance remains in the same zero-plugin runtime and proves `site_mode=migrated`, rollback and privacy-bounded reporting;
+- EN/ES wizard copy explicitly states that no SEO/GEO plugin is required for baseline setup;
+- static CI requires that zero-plugin statement in both languages and rejects common install-plugin guidance phrases.
 
 The onboarding flow must not install or require an SEO/GEO plugin to complete the baseline setup.
 

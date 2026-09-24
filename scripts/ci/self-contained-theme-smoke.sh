@@ -816,7 +816,167 @@ UNAUTHORIZED_TEXT="$(cat "$UNAUTHORIZED_STDOUT" "$UNAUTHORIZED_STDERR" | tr -d '
 
 printf '[self-contained] Phase 9D/9E wizard surface OK: Appearance screen registered; EN/ES preview/apply controls are nonce/capability-gated, focus-managed and credential-free.\n'
 
-printf '[self-contained] Checking Phase 9E atomic setup execution and report.\n'
+printf '[self-contained] Checking Phase 9F clean-install onboarding with zero active plugins.\n'
+PHASE9F_CLEAN_RUNNER="$TMP_DIR/phase9f-clean-onboarding-runner.php"
+cat >"$PHASE9F_CLEAN_RUNNER" <<'PHP'
+<?php
+
+wp_set_current_user( 1 );
+
+$reset_options = array(
+	'seo_geo_theme_setup_report_v1',
+	'seo_geo_theme_setup_v1',
+	'seo_geo_theme_setup_rewrite_flush_v1',
+	'seo_geo_active_preset',
+	'seo_geo_native_languages',
+	'seo_geo_schema_identity',
+	'seo_geo_schema_local_business',
+	'seo_geo_crawler_policy',
+	'seo_geo_llms_txt',
+	'seo_geo_markdown_alternates',
+	'seo_geo_migration_report_v1',
+);
+
+foreach ( $reset_options as $option_name ) {
+	delete_option( $option_name );
+}
+
+$candidate = array(
+	'preset'           => 'corporate',
+	'default_language' => 'en',
+	'languages'        => array(
+		'en' => 'en_US',
+		'es' => 'es_ES',
+	),
+	'routing'          => 'prefix',
+	'x_default'        => 'en',
+	'site_entity_type' => 'organization',
+	'confirm_identity' => true,
+	'local_business'   => array(),
+	'crawler_policy'   => array(
+		'oai_searchbot' => 'allow',
+		'gptbot'        => 'disallow',
+	),
+	'llms_txt_enabled'            => true,
+	'markdown_alternates_enabled' => true,
+);
+
+$plugins_before = get_option( 'active_plugins', array() );
+$pages_before   = (int) wp_count_posts( 'page' )->publish;
+
+$first      = seo_geo_theme_apply_setup( $candidate, true );
+$report_one = seo_geo_theme_setup_report();
+$second     = seo_geo_theme_apply_setup( $candidate, true );
+$report_two = seo_geo_theme_setup_report();
+
+$plugins_after = get_option( 'active_plugins', array() );
+$pages_after   = (int) wp_count_posts( 'page' )->publish;
+
+echo wp_json_encode(
+	array(
+		'first'          => $first,
+		'second'         => $second,
+		'report_one'     => $report_one,
+		'report_two'     => $report_two,
+		'plugins_before' => $plugins_before,
+		'plugins_after'  => $plugins_after,
+		'pages_before'   => $pages_before,
+		'pages_after'    => $pages_after,
+		'options'        => array(
+			'preset'    => get_option( 'seo_geo_active_preset', null ),
+			'languages' => get_option( 'seo_geo_native_languages', null ),
+			'identity'  => get_option( 'seo_geo_schema_identity', null ),
+			'setup'     => get_option( 'seo_geo_theme_setup_v1', null ),
+		),
+	),
+	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+);
+PHP
+
+docker cp "$PHASE9F_CLEAN_RUNNER" "$WP_CONTAINER":/var/www/html/wp-content/phase9f-clean-onboarding-runner.php \
+  || fail_smoke "phase9f-clean-runner-copy" "Could not copy Phase 9F clean onboarding runner" "runner copied" "docker cp failed"
+
+if ! PHASE9F_CLEAN_JSON="$(wp_cli eval-file /var/www/html/wp-content/phase9f-clean-onboarding-runner.php 2>"$TMP_DIR/phase9f-clean-onboarding.stderr")"; then
+  PHASE9F_CLEAN_ERROR="$(tr -d '\r' <"$TMP_DIR/phase9f-clean-onboarding.stderr" | head -c 1200)"
+  fail_smoke "phase9f-clean-runner" "Phase 9F clean onboarding runner failed" "JSON clean-install acceptance" "${PHASE9F_CLEAN_ERROR:-wp eval-file failed}"
+fi
+
+printf '%s' "$PHASE9F_CLEAN_JSON" >"$TMP_DIR/phase9f-clean-onboarding.json"
+
+if ! PHASE9F_CLEAN_ASSERTION="$(python3 - "$TMP_DIR/phase9f-clean-onboarding.json" <<'PY'
+import json, sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    payload = json.load(handle)
+
+assert payload["plugins_before"] == []
+assert payload["plugins_after"] == []
+assert payload["pages_before"] == payload["pages_after"]
+
+first = payload["first"]
+second = payload["second"]
+assert first["valid"] is True
+assert first["applied"] is True
+assert first["idempotent"] is False
+assert first["rollback_attempted"] is False
+assert second["valid"] is True
+assert second["applied"] is True
+assert second["idempotent"] is True
+assert second["changed_options"] == []
+
+report_one = payload["report_one"]
+report_two = payload["report_two"]
+assert report_one == report_two
+assert report_one["mode"] == "theme-setup-report"
+assert report_one["site_mode"] == "clean"
+assert report_one["preset"] == "corporate"
+assert report_one["entity"]["type"] == "organization"
+assert report_one["migration_handoff"] is None
+assert report_one["compatibility"]["providers"] == {"seo": "native", "language": "native"}
+assert all(value is False for value in report_one["safety"].values())
+
+options = payload["options"]
+assert options["preset"] == "corporate"
+assert options["languages"] == {
+    "default": "en",
+    "languages": {"en": "en_US", "es": "es_ES"},
+    "routing": "prefix",
+    "x_default": "en",
+}
+assert options["identity"] == {"site_entity_type": "organization"}
+assert options["setup"]["mode"] == "theme-setup-applied"
+assert options["setup"]["configuration_sha256"] == report_one["configuration_sha256"]
+
+print("ok")
+PY
+)"; then
+  fail_smoke "phase9f-clean-contract" "Phase 9F clean onboarding contract is invalid" "clean atomic/idempotent setup with zero active plugins" "${PHASE9F_CLEAN_ASSERTION:-python assertion failed}"
+fi
+
+wp_cli eval '
+foreach (
+	array(
+		"seo_geo_theme_setup_report_v1",
+		"seo_geo_theme_setup_v1",
+		"seo_geo_theme_setup_rewrite_flush_v1",
+		"seo_geo_active_preset",
+		"seo_geo_native_languages",
+		"seo_geo_schema_identity",
+		"seo_geo_schema_local_business",
+		"seo_geo_crawler_policy",
+		"seo_geo_llms_txt",
+		"seo_geo_markdown_alternates",
+		"seo_geo_migration_report_v1"
+	) as $option_name
+) {
+	delete_option( $option_name );
+}
+' >/dev/null \
+  || fail_smoke "phase9f-clean-reset" "Could not restore clean state after Phase 9F clean-install acceptance" "Phase 9F setup options removed" "cleanup failed"
+
+printf '[self-contained] Phase 9F clean onboarding OK: first apply persisted native authorities, rerun was idempotent, report mode stayed clean, page count stayed stable and active plugins remained empty.\n'
+
+printf '[self-contained] Checking Phase 9E atomic setup execution and migrated report.\n'
 PHASE9E_RUNNER="$TMP_DIR/phase9e-execution-runner.php"
 cat >"$PHASE9E_RUNNER" <<'PHP'
 <?php
@@ -1158,7 +1318,7 @@ PY
   fail_smoke "phase9e-contract" "Phase 9E atomic setup execution contract is invalid" "validated atomic/idempotent setup with rollback and privacy-bounded report" "${PHASE9E_ASSERTION:-python assertion failed}"
 fi
 
-printf '[self-contained] Phase 9E setup execution OK: validated options applied atomically; rerun idempotent; injected mid-write failure rolled back; migrated handoff/report remained bridge-independent and privacy-bounded.\n'
+printf '[self-contained] Phase 9E/9F migrated onboarding OK: validated options applied atomically; rerun idempotent; injected mid-write failure rolled back; migrated handoff/report remained bridge-independent, privacy-bounded and zero-plugin.\n'
 
 wp_cli eval '
 foreach (

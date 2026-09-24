@@ -164,27 +164,23 @@ HOST_PORT="$(docker port "$WP_CONTAINER" 80/tcp | awk -F: 'NR == 1 {print $NF}')
   || fail_acceptance "wordpress-port" "Could not resolve published WordPress port" "non-empty host port" "empty" "docker port"
 BASE_URL="http://127.0.0.1:${HOST_PORT}"
 
-printf '[browser] Installing repository packages and acceptance fixtures.\n'
+printf '[browser] Building self-contained theme and installing acceptance fixtures.\n'
+bash scripts/build-theme-package.sh "$TMP_DIR/seo-geo-theme-build" \
+  || fail_acceptance "theme-build" "Could not build self-contained SEO/GEO theme" "theme build succeeds" "build-theme-package failed" "bash scripts/build-theme-package.sh"
+
 docker exec "$WP_CONTAINER" mkdir -p \
-  /var/www/html/wp-content/plugins/seo-geo-core \
   /var/www/html/wp-content/themes/seo-geo-theme \
-  /var/www/html/wp-content/themes/seo-geo-theme/presets \
   /var/www/html/wp-content/mu-plugins \
   || fail_acceptance "package-dirs" "Could not create WordPress package directories" "package directories created" "mkdir failed" "docker exec mkdir"
 
-docker cp packages/seo-geo-core/. "$WP_CONTAINER":/var/www/html/wp-content/plugins/seo-geo-core/ \
-  || fail_acceptance "plugin-copy" "Could not copy SEO GEO Core into WordPress" "plugin copied" "docker cp failed" "docker cp plugin"
-docker cp packages/seo-geo-theme/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
-  || fail_acceptance "theme-copy" "Could not copy SEO GEO Starter into WordPress" "theme copied" "docker cp failed" "docker cp theme"
-docker cp presets/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/presets/ \
-  || fail_acceptance "preset-copy" "Could not copy the bundled preset catalog into the browser theme fixture" "preset catalog copied" "docker cp failed" "docker cp presets"
+docker cp "$TMP_DIR/seo-geo-theme-build/." "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
+  || fail_acceptance "theme-copy" "Could not copy self-contained SEO GEO Starter into WordPress" "theme copied" "docker cp failed" "docker cp built theme"
 docker cp tests/fixtures/acceptance-language.php "$WP_CONTAINER":/var/www/html/wp-content/mu-plugins/seo-geo-acceptance-language.php \
   || fail_acceptance "locale-fixture-copy" "Could not copy acceptance locale MU-plugin" "locale fixture copied" "docker cp failed" "docker cp locale fixture"
 docker cp tests/fixtures/seed-acceptance.php "$WP_CONTAINER":/var/www/html/wp-content/seed-acceptance.php \
   || fail_acceptance "seed-copy" "Could not copy acceptance seed script" "seed fixture copied" "docker cp failed" "docker cp seed fixture"
 
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
-  /var/www/html/wp-content/plugins/seo-geo-core \
   /var/www/html/wp-content/themes/seo-geo-theme \
   /var/www/html/wp-content/mu-plugins \
   /var/www/html/wp-content/seed-acceptance.php \
@@ -200,10 +196,18 @@ wp_cli core install \
   --skip-email >/dev/null \
   || fail_acceptance "core-install" "WP-CLI could not install WordPress" "core install succeeds" "wp core install failed" "wp core install"
 
-wp_cli plugin activate seo-geo-core >/dev/null \
-  || fail_acceptance "plugin-activate" "SEO GEO Core could not be activated" "plugin active" "activation failed" "wp plugin activate seo-geo-core"
 wp_cli theme activate seo-geo-theme >/dev/null \
   || fail_acceptance "theme-activate" "SEO GEO Starter could not be activated" "theme active" "activation failed" "wp theme activate seo-geo-theme"
+
+ACTIVE_PLUGINS="$(wp_cli plugin list --status=active --field=name 2>/dev/null | tr -d '\r')"
+[[ -z "$ACTIVE_PLUGINS" ]] \
+  || fail_acceptance "zero-plugins-before-browser" "Phase 9F browser acceptance must start with zero active plugins" "empty active-plugin list" "$ACTIVE_PLUGINS" "wp plugin list --status=active"
+
+RUNTIME_FILE="$(wp_cli eval '$reflection = new ReflectionClass( \SeoGeo\Core\Runtime::class ); echo (string) $reflection->getFileName();' 2>/dev/null | tr -d '\r\n')"
+case "$RUNTIME_FILE" in
+  */wp-content/themes/seo-geo-theme/inc/seo-geo-core/src/Runtime.php) ;;
+  *) fail_acceptance "embedded-runtime" "Browser acceptance did not load SEO/GEO Core from the self-contained theme" "theme/inc/seo-geo-core/src/Runtime.php" "$RUNTIME_FILE" "ReflectionClass Runtime" ;;
+esac
 
 wp_cli eval 'if ( ! is_array( seo_geo_theme_preset_document( "corporate", "preset.json" ) ) ) { exit( 1 ); }' >/dev/null \
   || fail_acceptance "preset-fixture" "Browser fixture cannot resolve the Corporate preset" "corporate preset available to the theme" "preset unavailable" "wp eval preset fixture"
@@ -240,4 +244,8 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_acceptance "runtime-php" "WordPress emitted a PHP runtime diagnostic during browser acceptance" "no PHP fatal/warning/notice/uncaught error" "runtime diagnostics detected" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'Browser acceptance OK: EN/ES representative pages plus the Phase 9D admin wizard passed Chromium at 320/768/1440 with axe WCAG A/AA, responsive reflow and keyboard/focus assertions.\n'
+ACTIVE_PLUGINS_AFTER="$(wp_cli plugin list --status=active --field=name 2>/dev/null | tr -d '\r')"
+[[ -z "$ACTIVE_PLUGINS_AFTER" ]] \
+  || fail_acceptance "zero-plugins-after-browser" "Phase 9F onboarding must finish with zero active plugins" "empty active-plugin list" "$ACTIVE_PLUGINS_AFTER" "wp plugin list --status=active"
+
+printf 'Browser acceptance OK: Phase 9F ran the self-contained theme with zero active plugins; EN/ES pages and onboarding passed Chromium at 320/768/1440 with axe WCAG A/AA, responsive reflow, keyboard/focus and persistent Apply acceptance.\n'
