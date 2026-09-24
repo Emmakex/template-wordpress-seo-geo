@@ -48,7 +48,7 @@ Implemented presets: `corporate`, `local-business`, `publisher`, `ecommerce` and
 
 **Phase 8 — Existing-site adoption and safe migration is complete.** The temporary Migration Bridge now covers read-only analysis, public SEO/GEO baseline capture, dependency classification, isolated sandbox migration, controlled Elementor/Divi conversion, strict parity, reversible production cutover, a privacy-bounded final handoff report and a capability-gated EN/ES operator screen. The bridge remains outside the final self-contained theme and is not a runtime dependency.
 
-**Phase 9 — Theme onboarding and operator experience is complete.** The active roadmap step is **Phase 10C — Client installation and cloning documentation**, covering real-client installation/migration, controlled per-client customization and safe upstream updates.
+**Phase 9 — Theme onboarding and operator experience is complete.** **Phase 10C — Client installation and cloning documentation is complete.** The active roadmap step is **Phase 10D — Production verification and recovery**, covering sandbox exit, production go/no-go, rollback and data recovery.
 
 ## Engineering workflow
 
@@ -85,6 +85,10 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/RELEASE_VERSIONING.md`
 - `docs/CLIENT_INSTALLATION.md`
 - `docs/CLIENT_CLONING.md`
+- `docs/SANDBOX_TO_PRODUCTION.md`
+- `docs/PRODUCTION_VERIFICATION.md`
+- `docs/ROLLBACK_RECOVERY.md`
+- `docs/templates/PRODUCTION_ACCEPTANCE_RECORD.example.json`
 - `docs/CI_QUALITY_GATES.md`
 - `docs/ROADMAP.md`
 - `docs/engineering/GLOBAL_ENGINEERING_RULES.md`
