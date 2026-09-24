@@ -20,6 +20,7 @@ use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
 use SeoGeo\MigrationBridge\Report\MigrationReportEngine;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
+use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
 
@@ -126,6 +127,13 @@ final class Plugin {
 	private static ?AdminSandboxHandoffController $sandbox_handoff_controller = null;
 
 	/**
+	 * Planning-only dependency-review controller singleton.
+	 *
+	 * @var AdminDependencyReviewController|null
+	 */
+	private static ?AdminDependencyReviewController $dependency_review_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -162,12 +170,14 @@ final class Plugin {
 		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$incremental_baseline_capture );
 
 		self::$sandbox_handoff_controller ??= new AdminSandboxHandoffController();
+		self::$dependency_review_controller ??= new AdminDependencyReviewController();
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
 		self::$cutover_controller->boot();
 		self::$baseline_capture_controller->boot();
 		self::$sandbox_handoff_controller->boot();
+		self::$dependency_review_controller->boot();
 		self::$operator_screen->register();
 	}
 
