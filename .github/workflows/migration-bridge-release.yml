@@ -1,0 +1,67 @@
+name: Migration Bridge Release CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-migration-bridge/**'
+      - 'scripts/build-migration-bridge-release.py'
+      - 'scripts/ci/migration-bridge-release-acceptance.py'
+      - '.github/workflows/migration-bridge-release.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-migration-bridge/**'
+      - 'scripts/build-migration-bridge-release.py'
+      - 'scripts/ci/migration-bridge-release-acceptance.py'
+      - '.github/workflows/migration-bridge-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-bridge-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Deterministic installable plugin ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          python3 --version
+          php --version | head -n 1
+
+      - name: Validate scripts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m py_compile scripts/build-migration-bridge-release.py scripts/ci/migration-bridge-release-acceptance.py
+
+      - name: PHP syntax
+        run: |
+          find packages/seo-geo-migration-bridge -type f -name '*.php' -print0 | sort -z | xargs -0 -n1 php -l
+
+      - name: Reproducibility and package acceptance
+        run: python3 scripts/ci/migration-bridge-release-acceptance.py
+
+      - name: Build installable candidate
+        run: python3 scripts/build-migration-bridge-release.py --output dist-migration-bridge/seo-geo-migration-bridge.zip
+
+      - name: Preserve installable candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-geo-migration-bridge-0.8.1
+          path: |
+            dist-migration-bridge/seo-geo-migration-bridge.zip
+            dist-migration-bridge/seo-geo-migration-bridge.zip.sha256
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
