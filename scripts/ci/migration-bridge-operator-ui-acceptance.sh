@@ -203,7 +203,11 @@ assert status["sandbox"]["active"] is True
 assert status["sandbox"]["ready"] is True
 assert status["sandbox"]["blockers"] == []
 assert status["sandbox"]["environment"]["sandbox_marker"] is True
+assert status["sandbox"]["environment"]["sandbox_mode"] == "origin"
 assert status["sandbox"]["environment"]["distinct_origin"] is True
+assert status["sandbox"]["environment"]["location_isolated"] is True
+assert status["sandbox"]["environment"]["source_base_path"] == "/"
+assert status["sandbox"]["environment"]["current_base_path"] == "/"
 assert status["sandbox"]["environment"]["outbound_safety_confirmed"] is True
 assert status["sandbox"]["environment"]["fresh_backups_confirmed"] is True
 assert status["sandbox"]["environment"]["dependency_review_complete"] is True
@@ -257,8 +261,12 @@ assert "Descargar JSON de sandbox" in es
 assert "Reviewed UNKNOWN items" in en
 assert "UNKNOWN revisados" in es
 assert "Production baseline origin" in en
+assert "Sandbox mode" in en
+assert "Sandbox location isolated" in en
 assert "Outbound transactions safe" in en
 assert "Origen de la línea base de producción" in es
+assert "Modo del sandbox" in es
+assert "Ubicación del sandbox aislada" in es
 assert "Transacciones salientes seguras" in es
 if status["dependency_plan"]["summary"]["UNKNOWN"] > 0:
     assert 'value="seo_geo_migration_review_dependency"' in en
