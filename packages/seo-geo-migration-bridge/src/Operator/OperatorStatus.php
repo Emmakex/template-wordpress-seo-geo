@@ -132,8 +132,9 @@ final class OperatorStatus {
 	 * @return array<string,mixed>
 	 */
 	private function dependency_status( ?array $baseline, ?array $report ): array {
-		$summary = null;
-		$source  = 'live-read-only';
+		$summary    = null;
+		$components = array();
+		$source     = 'live-read-only';
 
 		if (
 			is_array( $report )
@@ -151,9 +152,13 @@ final class OperatorStatus {
 					$analysis,
 					is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null
 				);
-				$summary  = isset( $graph['summary'] ) && is_array( $graph['summary'] ) ? $graph['summary'] : array();
+				$summary    = isset( $graph['summary'] ) && is_array( $graph['summary'] ) ? $graph['summary'] : array();
+				$components = isset( $graph['components'] ) && is_array( $graph['components'] )
+					? $this->bounded_component_rows( $graph['components'] )
+					: array();
 			} catch ( Throwable ) {
-				$summary = array();
+				$summary    = array();
+				$components = array();
 			}
 		}
 
@@ -166,9 +171,62 @@ final class OperatorStatus {
 			'available'      => array_sum( $normalized ) > 0,
 			'source'         => $source,
 			'summary'        => $normalized,
+			'components'     => $components,
 			'blocking_count' => $normalized['MIGRATE'] + $normalized['UNKNOWN'],
 			'advisory_count' => $normalized['OPTIONAL'] + $normalized['REMOVE-CANDIDATE'],
 		);
+	}
+
+	/**
+	 * Keep only bounded dependency-planning fields for the operator UI.
+	 *
+	 * @param list<array<string,mixed>> $components Dependency components.
+	 * @return list<array<string,mixed>>
+	 */
+	private function bounded_component_rows( array $components ): array {
+		$priority = array(
+			'UNKNOWN'          => 0,
+			'MIGRATE'          => 1,
+			'REPLACE'          => 2,
+			'KEEP'             => 3,
+			'OPTIONAL'         => 4,
+			'REMOVE-CANDIDATE' => 5,
+		);
+
+		$rows = array();
+		foreach ( $components as $component ) {
+			if ( ! is_array( $component ) ) {
+				continue;
+			}
+
+			$rows[] = array(
+				'component_id'   => is_string( $component['component_id'] ?? null ) ? $component['component_id'] : '',
+				'type'           => is_string( $component['type'] ?? null ) ? $component['type'] : '',
+				'id'             => is_string( $component['id'] ?? null ) ? $component['id'] : '',
+				'category'       => is_string( $component['category'] ?? null ) ? $component['category'] : null,
+				'active'         => true === ( $component['active'] ?? false ),
+				'classification' => is_string( $component['classification'] ?? null ) ? $component['classification'] : 'UNKNOWN',
+				'reason'         => is_string( $component['reason'] ?? null ) ? $component['reason'] : 'insufficient-evidence',
+				'resource_count' => isset( $component['resource_count'] ) ? max( 0, (int) $component['resource_count'] ) : null,
+				'manual_review'  => true === ( $component['manual_review'] ?? false ),
+			);
+		}
+
+		usort(
+			$rows,
+			static function ( array $left, array $right ) use ( $priority ): int {
+				$left_class  = is_string( $left['classification'] ?? null ) ? $left['classification'] : 'UNKNOWN';
+				$right_class = is_string( $right['classification'] ?? null ) ? $right['classification'] : 'UNKNOWN';
+				$left_rank   = $priority[ $left_class ] ?? 99;
+				$right_rank  = $priority[ $right_class ] ?? 99;
+
+				return $left_rank === $right_rank
+					? strcmp( (string) ( $left['component_id'] ?? '' ), (string) ( $right['component_id'] ?? '' ) )
+					: $left_rank <=> $right_rank;
+			}
+		);
+
+		return $rows;
 	}
 
 	/**
