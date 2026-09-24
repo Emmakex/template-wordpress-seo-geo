@@ -63,7 +63,7 @@ CHECKSUM_A="$(awk '{print $1}' "$BUILD_A.sha256")"
 CHECKSUM_B="$(awk '{print $1}' "$BUILD_B.sha256")"
 [[ "$CHECKSUM_A" == "$SHA_A" && "$CHECKSUM_B" == "$SHA_B" ]]   || fail_release "checksum-files" "Generated checksum files do not match ZIP bytes" "$SHA_A / $SHA_B" "$CHECKSUM_A / $CHECKSUM_B"
 
-if ! python3 - "$BUILD_A" "packages/seo-geo-core/src/Runtime.php" <<'PY'
+if ! python3 - "$BUILD_A" "packages/seo-geo-core/src/Runtime.php" "release/version.json" <<'PY'
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -73,6 +73,8 @@ import zipfile
 
 zip_path = Path(sys.argv[1])
 source_runtime = Path(sys.argv[2])
+version_file = Path(sys.argv[3])
+version_metadata = json.loads(version_file.read_text(encoding="utf-8"))
 root = "seo-geo-theme/"
 manifest_name = root + "release-integrity.json"
 runtime_path = "inc/seo-geo-core/src/Runtime.php"
@@ -123,6 +125,17 @@ with zipfile.ZipFile(zip_path, "r") as archive:
     assert manifest["schema_version"] == 1
     assert manifest["mode"] == "seo-geo-theme-release-integrity"
     assert manifest["runtime_root"] == "inc/seo-geo-core"
+    assert manifest["theme_slug"] == version_metadata["theme_slug"]
+    assert manifest["theme_version"] == version_metadata["version"]
+    assert manifest["release_channel"] == version_metadata["release_channel"]
+
+    style = archive.read(root + "style.css").decode("utf-8")
+    version_lines = [
+        line.split(":", 1)[1].strip()
+        for line in style.splitlines()
+        if line.strip().startswith("Version:")
+    ]
+    assert version_lines == [version_metadata["version"]], "ZIP style.css version differs from release source"
 
     actual_runtime = {}
     runtime_prefix = root + "inc/seo-geo-core/"
