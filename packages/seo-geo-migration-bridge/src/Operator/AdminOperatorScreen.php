@@ -386,7 +386,23 @@ final class AdminOperatorScreen {
 					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_current_origin' ) ); ?></th>
 					<td><code><?php echo esc_html( (string) ( $environment['current_origin'] ?? '' ) ); ?></code></td>
 				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_sandbox_mode' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $environment['sandbox_mode'] ?? '' ) ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_source_path' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $environment['source_base_path'] ?? '' ) ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_current_path' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $environment['current_base_path'] ?? '' ) ); ?></code></td>
+				</tr>
+				<?php $this->render_sandbox_boolean_row( 'label_location_isolated', true === ( $environment['location_isolated'] ?? false ) ); ?>
 				<?php $this->render_sandbox_boolean_row( 'label_distinct_origin', true === ( $environment['distinct_origin'] ?? false ) ); ?>
+				<?php if ( 'subdirectory' === ( $environment['sandbox_mode'] ?? null ) ) : ?>
+					<?php $this->render_sandbox_boolean_row( 'label_storage_isolated', true === ( $environment['storage_isolation_confirmed'] ?? false ) ); ?>
+				<?php endif; ?>
 				<?php $this->render_sandbox_boolean_row( 'label_search_disabled', 'discouraged' === ( $environment['search_engine_visibility'] ?? null ) ); ?>
 				<?php $this->render_sandbox_boolean_row( 'label_outbound_safe', true === ( $environment['outbound_safety_confirmed'] ?? false ) ); ?>
 				<?php $this->render_sandbox_boolean_row( 'label_backups_ready', true === ( $environment['fresh_backups_confirmed'] ?? false ) ); ?>
@@ -524,7 +540,7 @@ final class AdminOperatorScreen {
 	private function next_step_text( array $status ): string {
 		$key = match ( $status['next_step'] ?? null ) {
 			'capture-baseline'          => 'next_capture_baseline',
-			'complete-sandbox-preflight' => 'next_sandbox_preflight',
+			'sandbox-preflight'          => 'next_sandbox_preflight',
 			'continue-migration'        => 'next_continue_migration',
 			'complete-cutover'   => 'next_complete_cutover',
 			'generate-report'    => 'next_generate_report',
