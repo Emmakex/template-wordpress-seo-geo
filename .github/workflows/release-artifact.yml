@@ -31,6 +31,8 @@ on:
       - 'scripts/ci/release-artifact-acceptance.sh'
       - 'scripts/ci/release-version-acceptance.py'
       - 'scripts/ci/release-upgrade-acceptance.sh'
+      - 'scripts/ci/validate-stable-release-decision.py'
+      - 'docs/STABLE_RELEASE_DECISION.md'
       - '.github/workflows/release-artifact.yml'
       - 'docs/RELEASE_ARTIFACT.md'
 
