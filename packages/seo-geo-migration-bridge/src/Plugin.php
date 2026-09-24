@@ -18,6 +18,10 @@ use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
 use SeoGeo\MigrationBridge\Operator\AdminSandboxHandoffController;
 use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
+use SeoGeo\MigrationBridge\Portable\AdminPortableCloneController;
+use SeoGeo\MigrationBridge\Portable\PortableCloneJobStore;
+use SeoGeo\MigrationBridge\Portable\PortableClonePlanner;
+use SeoGeo\MigrationBridge\Portable\PortablePackageManifest;
 use SeoGeo\MigrationBridge\Report\MigrationReportEngine;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
@@ -134,6 +138,34 @@ final class Plugin {
 	private static ?AdminDependencyReviewController $dependency_review_controller = null;
 
 	/**
+	 * Portable clone planner singleton.
+	 *
+	 * @var PortableClonePlanner|null
+	 */
+	private static ?PortableClonePlanner $portable_clone_planner = null;
+
+	/**
+	 * Portable clone resumable job store singleton.
+	 *
+	 * @var PortableCloneJobStore|null
+	 */
+	private static ?PortableCloneJobStore $portable_clone_store = null;
+
+	/**
+	 * Portable package manifest singleton.
+	 *
+	 * @var PortablePackageManifest|null
+	 */
+	private static ?PortablePackageManifest $portable_package_manifest = null;
+
+	/**
+	 * Portable clone administrator controller singleton.
+	 *
+	 * @var AdminPortableCloneController|null
+	 */
+	private static ?AdminPortableCloneController $portable_clone_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -169,8 +201,12 @@ final class Plugin {
 
 		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$incremental_baseline_capture );
 
-		self::$sandbox_handoff_controller   ??= new AdminSandboxHandoffController();
-		self::$dependency_review_controller ??= new AdminDependencyReviewController();
+		self::$sandbox_handoff_controller    ??= new AdminSandboxHandoffController();
+		self::$dependency_review_controller  ??= new AdminDependencyReviewController();
+		self::$portable_clone_planner        ??= new PortableClonePlanner();
+		self::$portable_clone_store          ??= new PortableCloneJobStore();
+		self::$portable_package_manifest     ??= new PortablePackageManifest();
+		self::$portable_clone_controller     ??= new AdminPortableCloneController( self::$portable_clone_planner, self::$portable_clone_store );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -178,6 +214,7 @@ final class Plugin {
 		self::$baseline_capture_controller->boot();
 		self::$sandbox_handoff_controller->boot();
 		self::$dependency_review_controller->boot();
+		self::$portable_clone_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -242,6 +279,27 @@ final class Plugin {
 	 */
 	public static function operator_status(): ?OperatorStatus {
 		return self::$operator_status;
+	}
+
+	/**
+	 * Return the portable clone planner.
+	 */
+	public static function portable_clone_planner(): ?PortableClonePlanner {
+		return self::$portable_clone_planner;
+	}
+
+	/**
+	 * Return the portable clone resumable job store.
+	 */
+	public static function portable_clone_store(): ?PortableCloneJobStore {
+		return self::$portable_clone_store;
+	}
+
+	/**
+	 * Return the portable package manifest builder.
+	 */
+	public static function portable_package_manifest(): ?PortablePackageManifest {
+		return self::$portable_package_manifest;
 	}
 
 	/**
