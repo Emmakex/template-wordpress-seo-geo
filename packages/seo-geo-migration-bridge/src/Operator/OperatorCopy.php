@@ -51,7 +51,7 @@ final class OperatorCopy {
 				'dependency_review_cleared'      => 'Dependency review decision cleared.',
 				'sandbox_handoff_heading'        => 'Sandbox handoff',
 				'sandbox_preflight_heading'      => 'Sandbox readiness',
-				'sandbox_preflight_help'         => 'Migration can run only after every isolation and recovery guard below is satisfied. A sandbox may use a distinct origin or an explicitly isolated same-origin subdirectory.'
+				'sandbox_preflight_help'         => 'Migration can run only after every isolation and recovery guard below is satisfied. A sandbox may use a distinct origin or an explicitly isolated same-origin subdirectory.',
 				'sandbox_handoff_help'           => 'Download a privacy-bounded JSON manifest with baseline identity, runtime metadata, raw dependency classifications and bounded operator review decisions. It does not contain post bodies, builder payloads, credentials, database dumps or uploads.',
 				'sandbox_handoff_button'         => 'Download sandbox handoff JSON',
 				'next_step_heading'              => 'Recommended next step',
@@ -140,7 +140,7 @@ final class OperatorCopy {
 				'dependency_review_cleared'      => 'La decisión de revisión de la dependencia se eliminó.',
 				'sandbox_handoff_heading'        => 'Entrega al sandbox',
 				'sandbox_preflight_heading'      => 'Preparación del sandbox',
-				'sandbox_preflight_help'         => 'La migración solo puede ejecutarse cuando se cumplan todas las protecciones de aislamiento y recuperación. El sandbox puede usar un origen distinto o una subcarpeta del mismo origen aislada explícitamente.'
+				'sandbox_preflight_help'         => 'La migración solo puede ejecutarse cuando se cumplan todas las protecciones de aislamiento y recuperación. El sandbox puede usar un origen distinto o una subcarpeta del mismo origen aislada explícitamente.',
 				'sandbox_handoff_help'           => 'Descarga un manifiesto JSON acotado por privacidad con la identidad de la línea base, metadatos del runtime, clasificaciones originales de dependencias y decisiones acotadas de revisión. No incluye cuerpos de entradas, cargas de constructores, credenciales, volcados de base de datos ni uploads.',
 				'sandbox_handoff_button'         => 'Descargar JSON de sandbox',
 				'next_step_heading'              => 'Siguiente paso recomendado',
