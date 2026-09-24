@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 INSTALL = ROOT / "docs/CLIENT_INSTALLATION.md"
 CLONING = ROOT / "docs/CLIENT_CLONING.md"
 README = ROOT / "README.md"
+ROADMAP = ROOT / "docs/ROADMAP.md"
 
 
 def require(source: str, required: tuple[str, ...], label: str) -> None:
@@ -23,13 +24,14 @@ def forbid(source: str, forbidden: tuple[str, ...], label: str) -> None:
 
 
 def main() -> int:
-    for path in (INSTALL, CLONING, README):
+    for path in (INSTALL, CLONING, README, ROADMAP):
         if not path.is_file():
             raise SystemExit(f"Required Phase 10C document is missing: {path.relative_to(ROOT)}")
 
     install = INSTALL.read_text(encoding="utf-8")
     cloning = CLONING.read_text(encoding="utf-8")
     readme = README.read_text(encoding="utf-8")
+    roadmap = ROADMAP.read_text(encoding="utf-8")
 
     require(
         install,
@@ -77,11 +79,19 @@ def main() -> int:
     require(
         readme,
         (
-            "Phase 10C — Client installation and cloning documentation",
             "docs/CLIENT_INSTALLATION.md",
             "docs/CLIENT_CLONING.md",
         ),
         "README.md",
+    )
+
+    require(
+        roadmap,
+        (
+            "### Microphase 10C — Client installation and cloning documentation",
+            "10C is closed.",
+        ),
+        "ROADMAP.md",
     )
 
     forbid(
