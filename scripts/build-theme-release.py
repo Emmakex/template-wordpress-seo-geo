@@ -45,7 +45,7 @@ def release_metadata(build_dir: Path) -> dict[str, object]:
     if metadata["schema_version"] != 1 or metadata["theme_slug"] != THEME_ROOT:
         raise RuntimeError("release/version.json theme identity is invalid")
     if not isinstance(metadata["version"], str) or not re.fullmatch(
-        r"(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?",
+        r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?",
         metadata["version"],
     ):
         raise RuntimeError("release/version.json version is not valid SemVer")
@@ -54,7 +54,7 @@ def release_metadata(build_dir: Path) -> dict[str, object]:
 
     style_file = build_dir / "style.css"
     style = style_file.read_text(encoding="utf-8")
-    versions = re.findall(r"^\\s*Version:\\s*(.+?)\\s*$", style, re.MULTILINE)
+    versions = re.findall(r"^\s*Version:\s*(.+?)\s*$", style, re.MULTILINE)
     if versions != [metadata["version"]]:
         raise RuntimeError(
             f"Built style.css version {versions!r} does not match release version {metadata['version']!r}"
