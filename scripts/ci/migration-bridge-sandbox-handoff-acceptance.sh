@@ -48,6 +48,15 @@ assert len(components) > 0
 assert all("component_id" in row for row in components)
 assert all("classification" in row for row in components)
 assert all("reason" in row for row in components)
+assert all("reviewed" in row for row in components)
+assert all("review_decision" in row for row in components)
+assert all("review_reason" in row for row in components)
+assert all("reviewed_at" in row for row in components)
+
+review = manifest["dependencies"]["review"]
+assert isinstance(review["reviewed_unknown"], int)
+assert isinstance(review["unreviewed_unknown"], int)
+assert review["complete"] == (review["unreviewed_unknown"] == 0)
 
 assert manifest["mode"] == "seo-geo-sandbox-handoff"
 assert manifest["baseline"]["available"] is True
@@ -67,6 +76,7 @@ for key in [
     "raw_uploads_exported",
     "customer_data_exported",
     "baseline_body_content",
+    "review_decisions_execute_mutations",
 ]:
     assert safety[key] is False
 
@@ -80,4 +90,4 @@ PY
   fail_smoke "sandbox-handoff-contract" "Sandbox handoff contract is invalid" "bounded dependency detail + privacy-safe manifest" "${HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Sandbox handoff OK: dependency detail bounded; manifest excludes private content/credentials and requires isolated sandbox.\n'
+printf '[smoke] Sandbox handoff OK: dependency detail + operator review evidence bounded; manifest excludes private content/credentials and requires isolated sandbox.\n'
