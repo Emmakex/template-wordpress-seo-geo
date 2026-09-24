@@ -90,6 +90,8 @@ final class AdminDependencyReviewController {
 
 	/**
 	 * Confirm the submitted identifier still belongs to one live UNKNOWN component.
+	 *
+	 * @param string $component_id Dependency component identifier.
 	 */
 	private function is_current_unknown_component( string $component_id ): bool {
 		if ( '' === $component_id ) {
@@ -106,7 +108,7 @@ final class AdminDependencyReviewController {
 			foreach ( $components as $component ) {
 				if (
 					is_array( $component )
-					&& $component_id === ( $component['component_id'] ?? null )
+					&& ( $component['component_id'] ?? null ) === $component_id
 					&& 'UNKNOWN' === ( $component['classification'] ?? null )
 					&& true === ( $component['manual_review'] ?? false )
 				) {
