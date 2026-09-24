@@ -758,7 +758,7 @@ foreach (
 		"public const ACTION = 'seo_geo_migration_capture_baseline';",
 		"current_user_can( 'manage_options' )",
 		'check_admin_referer( self::NONCE_ACTION )',
-		"isset( $_POST['batch_size'] )",
+		'isset( $_POST[\'batch_size\'] )',
 		'IncrementalBaselineCapture::DEFAULT_BATCH_SIZE',
 		'$result = $this->capture->advance( $batch_size );',
 		"'progress'",
