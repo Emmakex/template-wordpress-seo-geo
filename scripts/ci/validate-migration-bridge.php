@@ -777,6 +777,73 @@ foreach (
 	}
 }
 
+$handoff_manifest = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxHandoffManifest.php' );
+foreach (
+	array(
+		"'mode'           => 'seo-geo-sandbox-handoff'",
+		"'post_bodies_exported'        => false",
+		"'builder_payloads_exported'   => false",
+		"'credentials_exported'        => false",
+		"'option_values_exported'      => false",
+		"'raw_database_exported'       => false",
+		"'raw_uploads_exported'        => false",
+		"'customer_data_exported'      => false",
+		"'requires_distinct_origin'       => true",
+		"'requires_marker'                => SandboxGuard::MARKER",
+		"'production_mutation_allowed'    => false",
+	) as $handoff_guard
+) {
+	if ( ! str_contains( $handoff_manifest, $handoff_guard ) ) {
+		fail_migration_bridge(
+			'sandbox-handoff-contract',
+			'Sandbox handoff manifest is missing a required privacy or isolation guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Sandbox/SandboxHandoffManifest.php',
+			$handoff_guard,
+			'missing'
+		);
+	}
+}
+
+$handoff_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminSandboxHandoffController.php' );
+foreach (
+	array(
+		"public const ACTION = 'seo_geo_migration_sandbox_handoff';",
+		"current_user_can( 'manage_options' )",
+		'check_admin_referer( self::NONCE_ACTION )',
+		"Content-Type: application/json",
+		"Content-Disposition: attachment;",
+	) as $handoff_controller_guard
+) {
+	if ( ! str_contains( $handoff_controller, $handoff_controller_guard ) ) {
+		fail_migration_bridge(
+			'sandbox-handoff-entrypoint',
+			'Sandbox handoff download must remain capability/nonce gated and JSON-only.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminSandboxHandoffController.php',
+			$handoff_controller_guard,
+			'missing'
+		);
+	}
+}
+
+foreach (
+	array(
+		'AdminSandboxHandoffController::ACTION',
+		'wp_nonce_field( AdminSandboxHandoffController::NONCE_ACTION )',
+		"'dependency_detail_heading'",
+		"'sandbox_handoff_heading'",
+	) as $handoff_ui_guard
+) {
+	if ( ! str_contains( $operator_screen, $handoff_ui_guard ) && ! str_contains( (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' ), $handoff_ui_guard ) ) {
+		fail_migration_bridge(
+			'sandbox-handoff-operator-ui',
+			'Operator UI must expose bounded dependency detail and authenticated sandbox handoff.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+			$handoff_ui_guard,
+			'missing'
+		);
+	}
+}
+
 $operator_copy = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' );
 foreach ( array( "'en' => array(", "'es' => array(", "'next_remove_bridge'", "'privacy_text'" ) as $operator_copy_guard ) {
 	if ( ! str_contains( $operator_copy, $operator_copy_guard ) ) {
