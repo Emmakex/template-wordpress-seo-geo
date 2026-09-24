@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "mode": "seo-geo-production-acceptance",
+  "site_id": "example-client",
+  "production_origin": "https://www.example.test",
+  "release": {
+    "version": "0.1.0",
+    "zip_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "upstream_commit": "0000000000000000000000000000000000000000"
+  },
+  "sandbox": {
+    "origin": "https://staging.example.test",
+    "migration_marker": true,
+    "search_visibility": false,
+    "parity_reference": "example://parity/run",
+    "accessibility_reference": "example://accessibility/run",
+    "performance_reference": "example://performance/run"
+  },
+  "backups": {
+    "database_reference": "example://backup/database",
+    "uploads_reference": "example://backup/uploads",
+    "captured_at": "2026-09-24T00:00:00Z"
+  },
+  "rollback": {
+    "previous_version": "0.0.9",
+    "previous_zip_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact_reference": "example://release/previous"
+  },
+  "production_checks": {
+    "runtime": false,
+    "seo_geo": false,
+    "functionality": false,
+    "accessibility": false,
+    "performance": false,
+    "logs": false
+  },
+  "decision": "pending",
+  "operator": "example-operator",
+  "notes": []
+}
