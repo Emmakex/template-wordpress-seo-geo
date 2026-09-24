@@ -204,8 +204,16 @@ test.describe('Phase 9 onboarding wizard', () => {
     await expect(page.getByLabel('Mapa de idiomas')).toHaveValue(/en=en_US[\s\S]*es=es_ES/);
     await page.getByLabel('Confirmo que esta identidad describe el sitio público real.').check();
     await page.getByLabel('Confirmo que estos ajustes validados deben aplicarse a este sitio.').check();
+
+    await page.locator('form').evaluate((form) => {
+      const action = new URL(form.action);
+      action.searchParams.set('fixture_lang', 'es');
+      form.action = action.toString();
+    });
+
     await page.getByRole('button', { name: 'Aplicar configuración' }).click();
 
+    await expect(page.getByRole('heading', { level: 1, name: 'Configuración SEO/GEO' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'El sitio ya coincide con estos ajustes validados.' })).toBeVisible();
 
     const spanishAppliedScan = await new AxeBuilder({ page })
