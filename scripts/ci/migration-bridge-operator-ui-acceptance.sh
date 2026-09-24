@@ -224,6 +224,13 @@ assert 'value="seo_geo_migration_capture_baseline"' in missing_es
 assert 'name="_wpnonce"' in missing_es
 assert "Iniciar captura segura de línea base SEO/GEO" in missing_es
 assert "No cambia el tema, plugins, contenido" in missing_es
+assert 'name="batch_size"' in missing_es
+assert 'id="seo-geo-baseline-batch-size"' in missing_es
+assert 'value="1"' in missing_es
+assert 'value="20"' in missing_es
+assert "Tamaño de lote (1-20)" in missing_es
+assert "Recomendado: 10 en hosting compartido." in missing_es
+assert "window.setTimeout" not in missing_es
 
 print("ok")
 PY
