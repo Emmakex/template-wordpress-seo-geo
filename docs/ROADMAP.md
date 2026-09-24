@@ -1988,7 +1988,7 @@ Status: **active**
 
 ### Microphase 10A — Reproducible release ZIP and runtime integrity
 
-Status: **implementation candidate**
+Status: **complete**
 
 10A establishes the distributable artifact before versioning, upgrade and real-site release work.
 
@@ -2011,9 +2011,19 @@ Current implementation scope:
 - acceptance rejects multiple roots, path traversal, repository-only paths, duplicate entries, unstable timestamps/modes and runtime/source hash drift;
 - `Release Artifact CI` preserves the ZIP and checksum as a short-lived workflow artifact and does not publish a release.
 
+10A is closed.
+
+Evidence:
+
+- final candidate `6fc2d5a490529f3c194800f28da0a927b0190e01` passed Foundation `35940973500` and Release Artifact CI `35940973445`;
+- two candidate builds produced byte-identical ZIP SHA-256 `b560e8be3a1e7e1666842be28b19743e184a5119c58dfdb1f9f21bb3890b3838`;
+- PR #103 was squash-merged as `342d0806e0778a0d83a91e526456396df2042d35`;
+- post-merge `main` repeated Foundation `35941055453` and Release Artifact CI `35941055386` successfully;
+- post-merge release builds reproduced the exact same ZIP SHA-256 `b560e8be3a1e7e1666842be28b19743e184a5119c58dfdb1f9f21bb3890b3838`.
+
 ### Microphase 10B — Versioning, changelog and upgrade acceptance
 
-Status: **planned**
+Status: **active**
 
 Deliverables:
 
