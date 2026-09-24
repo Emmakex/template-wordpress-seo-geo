@@ -2133,7 +2133,7 @@ Current implementation scope:
 
 ### Microphase 10E.1 — Migration Bridge delivery artifact
 
-Status: **implementation candidate**
+Status: **complete**
 
 Purpose:
 
@@ -2158,7 +2158,41 @@ Boundary:
 - it is used first for read-only analysis/baseline on emmake.com;
 - production Theme activation remains forbidden until sandbox/parity/quality acceptance passes.
 
-10E remains the active stable-release phase; 10E.1 only removes the delivery-artifact gap required to execute that acceptance.
+10E remains the active stable-release phase; 10E.1 removed the delivery-artifact gap required to execute that acceptance.
+
+Evidence:
+
+- deterministic Migration Bridge release packaging was merged and repeatedly verified on main;
+- the real Emmake pilot installed the Bridge and completed the resumable public baseline successfully;
+- the Bridge evolved through real-site feedback to bounded resumable capture and configurable 1–20 page batches without changing production content/theme/plugins.
+
+### Microphase 10E.2 — Emmake baseline review and sandbox handoff
+
+Status: **active — production baseline complete; sandbox acceptance pending**
+
+Purpose:
+
+Turn the accepted production baseline into explicit dependency review and a privacy-bounded sandbox handoff before any destination-theme migration.
+
+Current real-site evidence:
+
+- emmake.com baseline reported `Ready` on 2026-09-24;
+- dependency summary: KEEP=4, REPLACE=2, MIGRATE=1, OPTIONAL=0, REMOVE-CANDIDATE=0, UNKNOWN=13;
+- production cutover remains missing/not authorized;
+- final migration report remains missing;
+- no production theme switch has occurred.
+
+Deliverables:
+
+- expose bounded dependency component rows, with UNKNOWN items first for review;
+- export authenticated nonce/capability-gated sandbox handoff JSON;
+- include runtime identity, baseline identity/counts, dependency classifications and sandbox requirements;
+- exclude post bodies, builder payloads, credentials, arbitrary option values, database dumps, uploads and customer data;
+- create a distinct sandbox clone using fresh backup references;
+- mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
+- execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
+
+10E.2 closes only after the sandbox is actually created and accepted. Production remains unchanged until then.
 
 Phase 10 overall deliverables:
 
