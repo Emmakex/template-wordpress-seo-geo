@@ -75,8 +75,8 @@ final class AdminBaselineCaptureController {
 			$this->redirect( 'error' );
 		}
 
-		if ( true !== ( $storage['saved'] ?? false ) ) {
-			$status = 'baseline-exists' === ( $storage['reason'] ?? null ) ? 'exists' : 'error';
+		if ( ! $storage['saved'] ) {
+			$status = 'baseline-exists' === $storage['reason'] ? 'exists' : 'error';
 			$this->redirect( $status );
 		}
 
