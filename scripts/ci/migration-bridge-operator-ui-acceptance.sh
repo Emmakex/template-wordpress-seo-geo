@@ -191,6 +191,14 @@ assert status["cutover"]["accepted"] is True
 assert status["final_report"]["available"] is True
 assert status["final_report"]["ready_for_handoff"] is True
 assert status["final_report"]["runtime_dependency_required"] is False
+assert status["sandbox"]["active"] is True
+assert status["sandbox"]["ready"] is True
+assert status["sandbox"]["blockers"] == []
+assert status["sandbox"]["environment"]["sandbox_marker"] is True
+assert status["sandbox"]["environment"]["distinct_origin"] is True
+assert status["sandbox"]["environment"]["outbound_safety_confirmed"] is True
+assert status["sandbox"]["environment"]["fresh_backups_confirmed"] is True
+assert status["sandbox"]["environment"]["dependency_review_complete"] is True
 assert status["next_step"] in ("resolve-blockers", "review-advisories", "remove-bridge")
 assert status["safety"] == {
     "mutations_performed": False,
@@ -209,6 +217,7 @@ for required in (
     "<h2>Migration status</h2>",
     "<h2>Dependency classifications</h2>",
     "<h2>Review status</h2>",
+    "<h2>Sandbox readiness</h2>",
     "<h2>Recommended next step</h2>",
     "<h2>Safety and privacy</h2>",
     "<code>KEEP</code>",
@@ -223,6 +232,7 @@ for required in (
     "<h2>Estado de la migración</h2>",
     "<h2>Clasificaciones de dependencias</h2>",
     "<h2>Estado de revisión</h2>",
+    "<h2>Preparación del sandbox</h2>",
     "<h2>Siguiente paso recomendado</h2>",
     "<h2>Seguridad y privacidad</h2>",
 ):
@@ -238,6 +248,10 @@ assert "Download sandbox handoff JSON" in en
 assert "Descargar JSON de sandbox" in es
 assert "Reviewed UNKNOWN items" in en
 assert "UNKNOWN revisados" in es
+assert "Production baseline origin" in en
+assert "Outbound transactions safe" in en
+assert "Origen de la línea base de producción" in es
+assert "Transacciones salientes seguras" in es
 if status["dependency_plan"]["summary"]["UNKNOWN"] > 0:
     assert 'value="seo_geo_migration_review_dependency"' in en
     assert 'name="component_id"' in en
