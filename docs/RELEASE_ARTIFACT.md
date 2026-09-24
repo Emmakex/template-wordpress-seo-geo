@@ -59,3 +59,16 @@ The manifest contains no secrets, credentials, environment paths or build timest
 5. uploads only the release ZIP and checksum as a short-lived workflow artifact.
 
 Publishing tags, GitHub Releases, semantic versioning and upgrade acceptance are intentionally deferred to Phase 10B.
+
+
+## Phase 10A acceptance evidence
+
+Final candidate `6fc2d5a490529f3c194800f28da0a927b0190e01` passed Foundation CI `35940973500` and Release Artifact CI `35940973445`.
+
+Both independent candidate builds and the preserved release candidate produced:
+
+`b560e8be3a1e7e1666842be28b19743e184a5119c58dfdb1f9f21bb3890b3838`
+
+PR #103 was squash-merged as `342d0806e0778a0d83a91e526456396df2042d35`.
+
+Post-merge `main` repeated Foundation CI `35941055453` and Release Artifact CI `35941055386`, reproducing the exact same ZIP SHA-256. This proves that commit metadata and workflow context do not alter the release artifact when theme/Core/preset source content is unchanged.
