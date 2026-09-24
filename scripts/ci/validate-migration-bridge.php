@@ -728,7 +728,9 @@ foreach (
 		'<form id="seo-geo-baseline-capture-form" method="post"',
 		"true !== ( \$status['baseline']['available'] ?? false )",
 		"render_baseline_capture_form( \$status )",
-		"window.setTimeout(function ()",
+		'name="batch_size"',
+		'IncrementalBaselineCapture::MIN_BATCH_SIZE',
+		'IncrementalBaselineCapture::MAX_BATCH_SIZE',
 	) as $baseline_form_guard
 ) {
 	if ( ! str_contains( $operator_screen, $baseline_form_guard ) ) {
