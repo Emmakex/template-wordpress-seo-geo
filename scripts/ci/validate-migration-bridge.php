@@ -288,7 +288,11 @@ foreach (
 $incremental_capture = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/IncrementalBaselineCapture.php' );
 foreach (
 	array(
-		'private const PAGE_BATCH_SIZE = 2;',
+		'public const MIN_BATCH_SIZE = 1;',
+		'public const MAX_BATCH_SIZE = 20;',
+		'public const DEFAULT_BATCH_SIZE = 10;',
+		"'batch_size'       =>",
+		'$this->normalize_batch_size(',
 		'$this->progress_store->save( $state );',
 		'$this->baseline_store->save( $snapshot, false );',
 		"'incremental_capture'        => true",
@@ -738,13 +742,25 @@ foreach (
 	}
 }
 
+if ( str_contains( $operator_screen, 'window.setTimeout(function ()' ) ) {
+	fail_migration_bridge(
+		'operator-baseline-autosubmit',
+		'Operator batch selector must remain user-controlled and must not auto-submit before the operator can change the batch size.',
+		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+		'no automatic baseline form submission',
+		'window.setTimeout auto-submit found'
+	);
+}
+
 $baseline_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminBaselineCaptureController.php' );
 foreach (
 	array(
 		"public const ACTION = 'seo_geo_migration_capture_baseline';",
 		"current_user_can( 'manage_options' )",
 		'check_admin_referer( self::NONCE_ACTION )',
-		'$result = $this->capture->advance();',
+		"isset( $_POST['batch_size'] )",
+		'IncrementalBaselineCapture::DEFAULT_BATCH_SIZE',
+		'$result = $this->capture->advance( $batch_size );',
 		"'progress'",
 	) as $baseline_controller_guard
 ) {
