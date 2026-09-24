@@ -38,7 +38,7 @@ final class SandboxHandoffManifest {
 		$bounded_components = $this->bounded_components( $components, $review_store );
 
 		return array(
-			'schema_version' => 1,
+			'schema_version' => 2,
 			'mode'           => 'seo-geo-sandbox-handoff',
 			'generated_at'   => gmdate( DATE_ATOM ),
 			'source'         => array(
@@ -59,15 +59,24 @@ final class SandboxHandoffManifest {
 				'release_version'  => '0.1.0',
 			),
 			'sandbox'        => array(
-				'requires_distinct_origin'       => true,
-				'requires_marker'                => SandboxGuard::MARKER,
-				'requires_marker_value'          => true,
-				'requires_search_visibility_off' => true,
-				'requires_outbound_safety'       => true,
-				'requires_outbound_marker'       => SandboxGuard::OUTBOUND_SAFE_MARKER,
-				'requires_fresh_backups'         => true,
-				'requires_backup_marker'         => SandboxGuard::BACKUPS_READY_MARKER,
-				'production_mutation_allowed'    => false,
+				'accepted_modes'                         => array( 'origin', 'subdirectory' ),
+				'default_mode'                           => 'origin',
+				'mode_marker'                            => SandboxGuard::MODE_MARKER,
+				'origin_mode_requires_distinct_origin'   => true,
+				'subdirectory_mode_value'                => 'subdirectory',
+				'subdirectory_requires_same_origin'      => true,
+				'subdirectory_requires_distinct_path'    => true,
+				'subdirectory_requires_non_root_path'    => true,
+				'subdirectory_requires_storage_isolation'=> true,
+				'subdirectory_storage_marker'            => SandboxGuard::STORAGE_ISOLATED_MARKER,
+				'requires_marker'                        => SandboxGuard::MARKER,
+				'requires_marker_value'                  => true,
+				'requires_search_visibility_off'         => true,
+				'requires_outbound_safety'               => true,
+				'requires_outbound_marker'               => SandboxGuard::OUTBOUND_SAFE_MARKER,
+				'requires_fresh_backups'                 => true,
+				'requires_backup_marker'                 => SandboxGuard::BACKUPS_READY_MARKER,
+				'production_mutation_allowed'            => false,
 			),
 			'safety'         => array(
 				'read_only_generation'               => true,
