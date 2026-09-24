@@ -22,7 +22,7 @@ El objetivo de distribución es **un único theme instalable**:
 - `packages/seo-geo-core/src`: fuente reutilizable de la lógica SEO/GEO que se **empaqueta dentro del theme** durante el build; no es un plugin obligatorio.
 - `scripts/build-theme-package.sh`: construye el paquete autosuficiente y embebe el runtime en `inc/seo-geo-core/src`.
 
-Presets implementados: `corporate`, `local-business`, `publisher`, `ecommerce` y `saas-digital-product`. La capa de presets está cerrada y el siguiente bloque del roadmap es la migración segura de sitios WordPress existentes.
+Presets implementados: `corporate`, `local-business`, `publisher`, `ecommerce` y `saas-digital-product`. Las fases de migración segura y onboarding están cerradas; la distribución está en su tramo final de documentación operativa para clientes.
 
 ## EN
 
@@ -42,13 +42,13 @@ The distribution target is **one installable theme**:
 - `packages/seo-geo-core/src`: reusable SEO/GEO source that is **bundled into the theme** during the build; it is not a required plugin.
 - `scripts/build-theme-package.sh`: assembles the self-contained theme and embeds the runtime under `inc/seo-geo-core/src`.
 
-Implemented presets: `corporate`, `local-business`, `publisher`, `ecommerce` and `saas-digital-product`. The preset layer is closed and the next roadmap block is safe adoption of existing WordPress sites.
+Implemented presets: `corporate`, `local-business`, `publisher`, `ecommerce` and `saas-digital-product`. Safe migration and onboarding are complete; distribution is in its final client-operations documentation stage.
 
 ## Existing-site adoption
 
 **Phase 8 — Existing-site adoption and safe migration is complete.** The temporary Migration Bridge now covers read-only analysis, public SEO/GEO baseline capture, dependency classification, isolated sandbox migration, controlled Elementor/Divi conversion, strict parity, reversible production cutover, a privacy-bounded final handoff report and a capability-gated EN/ES operator screen. The bridge remains outside the final self-contained theme and is not a runtime dependency.
 
-**Phase 9A — Setup foundation and migration handoff**, **9B — Preset and language configuration**, **9C — Entity and GEO configuration** and **9D — Theme-owned wizard UI** are complete. The active roadmap step is **Phase 9E — Setup execution and generated report**.
+**Phase 9 — Theme onboarding and operator experience is complete.** The active roadmap step is **Phase 10C — Client installation and cloning documentation**, covering real-client installation/migration, controlled per-client customization and safe upstream updates.
 
 ## Engineering workflow
 
@@ -81,6 +81,10 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/COMPATIBILITY.md`
 - `docs/MIGRATION_BRIDGE.md`
 - `docs/ONBOARDING.md`
+- `docs/RELEASE_ARTIFACT.md`
+- `docs/RELEASE_VERSIONING.md`
+- `docs/CLIENT_INSTALLATION.md`
+- `docs/CLIENT_CLONING.md`
 - `docs/CI_QUALITY_GATES.md`
 - `docs/ROADMAP.md`
 - `docs/engineering/GLOBAL_ENGINEERING_RULES.md`
