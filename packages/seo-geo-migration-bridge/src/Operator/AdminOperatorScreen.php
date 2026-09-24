@@ -94,6 +94,9 @@ final class AdminOperatorScreen {
 					<?php $this->render_overview_row( 'label_dependency_plan', $this->dependency_label_key( $status ) ); ?>
 					<?php $this->render_overview_row( 'label_cutover', $this->cutover_label_key( $status ) ); ?>
 					<?php $this->render_overview_row( 'label_final_report', $this->report_label_key( $status ) ); ?>
+					<?php if ( true === ( $status['sandbox']['active'] ?? false ) ) : ?>
+						<?php $this->render_overview_row( 'label_sandbox_readiness', $this->sandbox_label_key( $status ) ); ?>
+					<?php endif; ?>
 				</tbody>
 			</table>
 
@@ -192,6 +195,10 @@ final class AdminOperatorScreen {
 				<dt><?php echo esc_html( $this->copy->text( 'label_bridge_disposition' ) ); ?></dt>
 				<dd><?php echo esc_html( $this->disposition_label( $status ) ); ?></dd>
 			</dl>
+
+			<?php if ( true === ( $status['sandbox']['active'] ?? false ) ) : ?>
+				<?php $this->render_sandbox_preflight( $status ); ?>
+			<?php endif; ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'next_step_heading' ) ); ?></h2>
 			<p class="notice notice-info inline">
@@ -358,6 +365,64 @@ final class AdminOperatorScreen {
 	}
 
 	/**
+	 * Render bounded sandbox preflight evidence.
+	 *
+	 * @param array<string,mixed> $status Operator snapshot.
+	 */
+	private function render_sandbox_preflight( array $status ): void {
+		$sandbox     = is_array( $status['sandbox'] ?? null ) ? $status['sandbox'] : array();
+		$environment = is_array( $sandbox['environment'] ?? null ) ? $sandbox['environment'] : array();
+		$blockers    = is_array( $sandbox['blockers'] ?? null ) ? array_values( array_filter( $sandbox['blockers'], 'is_string' ) ) : array();
+		?>
+		<h2><?php echo esc_html( $this->copy->text( 'sandbox_preflight_heading' ) ); ?></h2>
+		<p><?php echo esc_html( $this->copy->text( 'sandbox_preflight_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_source_origin' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $environment['source_origin'] ?? '' ) ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_current_origin' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $environment['current_origin'] ?? '' ) ); ?></code></td>
+				</tr>
+				<?php $this->render_sandbox_boolean_row( 'label_distinct_origin', true === ( $environment['distinct_origin'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'label_search_disabled', 'discouraged' === ( $environment['search_engine_visibility'] ?? null ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'label_outbound_safe', true === ( $environment['outbound_safety_confirmed'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'label_backups_ready', true === ( $environment['fresh_backups_confirmed'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'label_destination_theme', true === ( $environment['destination_theme_active'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'label_review_complete', true === ( $environment['dependency_review_complete'] ?? false ) ); ?>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_sandbox_blockers' ) ); ?></th>
+					<td>
+						<?php if ( array() === $blockers ) : ?>
+							<?php echo esc_html( $this->copy->text( 'sandbox_no_blockers' ) ); ?>
+						<?php else : ?>
+							<code><?php echo esc_html( implode( ', ', $blockers ) ); ?></code>
+						<?php endif; ?>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<?php
+	}
+
+	/**
+	 * Render one yes/no sandbox evidence row.
+	 *
+	 * @param string $label_key Localized label key.
+	 * @param bool   $value     Evidence state.
+	 */
+	private function render_sandbox_boolean_row( string $label_key, bool $value ): void {
+		?>
+		<tr>
+			<th scope="row"><?php echo esc_html( $this->copy->text( $label_key ) ); ?></th>
+			<td><?php echo esc_html( $this->copy->text( $value ? 'yes' : 'no' ) ); ?></td>
+		</tr>
+		<?php
+	}
+
+	/**
 	 * Render one two-column overview row.
 	 *
 	 * @param string $label_key Localized label key.
@@ -425,6 +490,17 @@ final class AdminOperatorScreen {
 	}
 
 	/**
+	 * Resolve sandbox preflight status label.
+	 *
+	 * @param array<string,mixed> $status Operator snapshot.
+	 */
+	private function sandbox_label_key( array $status ): string {
+		return true === ( $status['sandbox']['ready'] ?? false )
+			? 'status_ready'
+			: 'status_needs_attention';
+	}
+
+	/**
 	 * Resolve bridge disposition label.
 	 *
 	 * @param array<string,mixed> $status Operator snapshot.
@@ -447,8 +523,9 @@ final class AdminOperatorScreen {
 	 */
 	private function next_step_text( array $status ): string {
 		$key = match ( $status['next_step'] ?? null ) {
-			'capture-baseline'   => 'next_capture_baseline',
-			'continue-migration' => 'next_continue_migration',
+			'capture-baseline'          => 'next_capture_baseline',
+			'complete-sandbox-preflight' => 'next_complete_sandbox_preflight',
+			'continue-migration'        => 'next_continue_migration',
 			'complete-cutover'   => 'next_complete_cutover',
 			'generate-report'    => 'next_generate_report',
 			'resolve-blockers'   => 'next_resolve_blockers',
