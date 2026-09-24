@@ -160,7 +160,8 @@ final class Plugin {
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
 		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$incremental_baseline_capture );
-		self::$sandbox_handoff_controller   ??= new AdminSandboxHandoffController();
+
+		self::$sandbox_handoff_controller ??= new AdminSandboxHandoffController();
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
