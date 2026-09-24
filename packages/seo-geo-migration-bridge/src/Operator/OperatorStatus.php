@@ -278,22 +278,22 @@ final class OperatorStatus {
 	private function sandbox_status( ?array $baseline ): array {
 		if ( ! SandboxGuard::enabled() ) {
 			return array(
-				'active'       => false,
-				'ready'        => false,
-				'blockers'     => array(),
-				'environment'  => array(
+				'active'      => false,
+				'ready'       => false,
+				'blockers'    => array(),
+				'environment' => array(
 					'sandbox_marker' => false,
 				),
 			);
 		}
 
 		try {
-			$analysis = $this->analyzer->analyze();
-			$graph    = $this->graph->build(
+			$analysis         = $this->analyzer->analyze();
+			$graph            = $this->graph->build(
 				$analysis,
 				is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null
 			);
-			$report   = ( new SandboxMigrationLab( $this->review_store ) )->report( $analysis, $graph );
+			$report           = ( new SandboxMigrationLab( $this->review_store ) )->report( $analysis, $graph );
 			$report['active'] = true;
 
 			return $report;
@@ -365,7 +365,7 @@ final class OperatorStatus {
 			return 'capture-baseline';
 		}
 		if ( true === ( $sandbox['active'] ?? false ) && true !== ( $sandbox['ready'] ?? false ) ) {
-			return 'complete-sandbox-preflight';
+			return 'sandbox-preflight';
 		}
 		if ( true !== ( $cutover['available'] ?? false ) ) {
 			return 'continue-migration';
