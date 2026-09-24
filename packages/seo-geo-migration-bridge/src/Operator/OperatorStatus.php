@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\BaselineSnapshotStore;
 use SeoGeo\MigrationBridge\Cutover\CutoverSnapshotStore;
 use SeoGeo\MigrationBridge\DependencyGraphBuilder;
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
+use SeoGeo\MigrationBridge\Portable\PortableCloneJobStore;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
 use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
@@ -67,6 +68,13 @@ final class OperatorStatus {
 	private DependencyReviewStore $review_store;
 
 	/**
+	 * Portable clone job store.
+	 *
+	 * @var PortableCloneJobStore
+	 */
+	private PortableCloneJobStore $portable_clone_store;
+
+	/**
 	 * Construct the status service.
 	 *
 	 * @param BaselineSnapshotStore|null  $baseline_store Optional baseline store.
@@ -75,6 +83,7 @@ final class OperatorStatus {
 	 * @param SiteAnalyzer|null           $analyzer       Optional site analyzer.
 	 * @param DependencyGraphBuilder|null $graph          Optional dependency graph.
 	 * @param DependencyReviewStore|null  $review_store   Optional planning review store.
+	 * @param PortableCloneJobStore|null  $portable_clone_store Optional portable clone job store.
 	 */
 	public function __construct(
 		?BaselineSnapshotStore $baseline_store = null,
@@ -82,14 +91,16 @@ final class OperatorStatus {
 		?MigrationReportStore $report_store = null,
 		?SiteAnalyzer $analyzer = null,
 		?DependencyGraphBuilder $graph = null,
-		?DependencyReviewStore $review_store = null
+		?DependencyReviewStore $review_store = null,
+		?PortableCloneJobStore $portable_clone_store = null
 	) {
 		$this->baseline_store = $baseline_store ?? new BaselineSnapshotStore();
 		$this->cutover_store  = $cutover_store ?? new CutoverSnapshotStore();
 		$this->report_store   = $report_store ?? new MigrationReportStore();
 		$this->analyzer       = $analyzer ?? new SiteAnalyzer();
 		$this->graph          = $graph ?? new DependencyGraphBuilder();
-		$this->review_store   = $review_store ?? new DependencyReviewStore();
+		$this->review_store         = $review_store ?? new DependencyReviewStore();
+		$this->portable_clone_store = $portable_clone_store ?? new PortableCloneJobStore();
 	}
 
 	/**
@@ -122,6 +133,7 @@ final class OperatorStatus {
 			'dependency_plan' => $dependency,
 			'cutover'         => $cutover_status,
 			'final_report'    => $final_report,
+			'portable_clone'  => $this->portable_clone_status(),
 			'sandbox'         => $sandbox,
 			'next_step'       => $this->next_step(
 				is_array( $baseline ),
@@ -267,6 +279,46 @@ final class OperatorStatus {
 		);
 
 		return $rows;
+	}
+
+	/**
+	 * Return bounded portable clone planning/job status.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function portable_clone_status(): array {
+		$job = $this->portable_clone_store->latest();
+
+		if ( null === $job ) {
+			return array(
+				'available' => false,
+				'status'    => 'none',
+			);
+		}
+
+		$plan     = is_array( $job['plan'] ?? null ) ? $job['plan'] : array();
+		$target   = is_array( $plan['target'] ?? null ) ? $plan['target'] : array();
+		$progress = is_array( $job['progress'] ?? null ) ? $job['progress'] : array();
+
+		return array(
+			'available'        => true,
+			'job_id'           => is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '',
+			'mode'             => is_string( $job['mode'] ?? null ) ? $job['mode'] : '',
+			'status'           => is_string( $job['status'] ?? null ) ? $job['status'] : 'unknown',
+			'stage'            => is_string( $job['stage'] ?? null ) ? $job['stage'] : 'unknown',
+			'target_directory' => is_string( $target['directory'] ?? null ) ? $target['directory'] : '',
+			'target_home_url'  => is_string( $target['home_url'] ?? null ) ? $target['home_url'] : '',
+			'progress'         => array(
+				'files_discovered' => max( 0, (int) ( $progress['files_discovered'] ?? 0 ) ),
+				'files_copied'     => max( 0, (int) ( $progress['files_copied'] ?? 0 ) ),
+				'bytes_copied'     => max( 0, (int) ( $progress['bytes_copied'] ?? 0 ) ),
+				'tables_total'     => max( 0, (int) ( $progress['tables_total'] ?? 0 ) ),
+				'tables_copied'    => max( 0, (int) ( $progress['tables_copied'] ?? 0 ) ),
+				'rows_copied'      => max( 0, (int) ( $progress['rows_copied'] ?? 0 ) ),
+			),
+			'created_at'       => is_string( $job['created_at'] ?? null ) ? $job['created_at'] : null,
+			'updated_at'       => is_string( $job['updated_at'] ?? null ) ? $job['updated_at'] : null,
+		);
 	}
 
 	/**
