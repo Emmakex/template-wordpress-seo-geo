@@ -2106,7 +2106,7 @@ Evidence:
 
 ### Microphase 10E — Stable release decision
 
-Status: **implementation candidate — stable NO-GO pending real-site acceptance**
+Status: **active — stable NO-GO; emmake.com sandbox/production acceptance pending**
 
 Deliverables:
 
@@ -2123,7 +2123,12 @@ Current implementation scope:
 - `scripts/ci/validate-stable-release-decision.py` prevents `stable` promotion unless real-site acceptance is marked accepted with a bounded evidence reference and no blockers;
 - Foundation CI and Release Artifact CI both enforce the decision gate;
 - the changelog remains Unreleased while the decision is no-go;
-- Phase 10E cannot close and no stable release may be published until the selected real site completes the Phase 10C/10D sandbox-to-production acceptance.
+- Phase 10E cannot close and no stable release may be published until the selected real site completes the Phase 10C/10D sandbox-to-production acceptance;
+- PR #111 final candidate `27a353593af57d099d7172fe592a181138e20bdf` passed Foundation `35946063269`, Package `35946063174`, WordPress Smoke `35946063208`, Self-contained Theme `35946062983`, Accessibility/Responsive `35946063107`, Performance `35946063050` and Release Artifact `35946063090`;
+- PR #111 was squash-merged as `d3ff8353c08cfce6c796837a74e372ba7daf0073`;
+- post-merge `main` repeated all seven triggered gates successfully: Foundation `35946388953`, Package `35946389089`, WordPress Smoke `35946388965`, Self-contained Theme `35946389064`, Accessibility/Responsive `35946388958`, Performance `35946388935` and Release Artifact `35946388985`;
+- the deterministic post-merge candidate ZIP reproduces SHA-256 `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`;
+- `docs/REAL_SITE_PILOT.md` fixes `https://emmake.com` as the first real-site acceptance target without changing the stable decision until sandbox + production acceptance is actually completed.
 
 Phase 10 overall deliverables:
 
