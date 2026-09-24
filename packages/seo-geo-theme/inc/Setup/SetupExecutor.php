@@ -314,9 +314,9 @@ final class SetupExecutor {
 	/**
 	 * Build deterministic persisted setup state without duplicating public facts.
 	 *
-	 * @param array<string,mixed> $normalized      Complete normalized setup.
+	 * @param array<string,mixed>      $normalized      Complete normalized setup.
 	 * @param array<string,mixed>|null $handoff_summary Bounded migration handoff, or null for a clean site.
-	 * @param string              $config_sha256   Configuration fingerprint.
+	 * @param string                   $config_sha256   Configuration fingerprint.
 	 * @return array<string,mixed>
 	 */
 	private function setup_state( array $normalized, ?array $handoff_summary, string $config_sha256 ): array {
