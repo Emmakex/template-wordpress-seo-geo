@@ -1,6 +1,16 @@
 # Sandbox-to-production acceptance
 
-Phase 10D defines the handoff between a non-production candidate and the real client production origin.
+Phase 10D defines the handoff between a non-production candidate and the real client production origin. The non-production environment may be client-provided staging or a portable sandbox created through the provider-neutral strategy in `docs/PORTABLE_SANDBOX.md`.
+
+## Sandbox source
+
+Clients are not required to have a pre-existing staging product. The accepted non-production origin may come from:
+
+- client/hosting staging;
+- agency-managed VPS/container or local isolated environment;
+- another supported temporary provisioner.
+
+Regardless of origin, the same indexing isolation, artifact identity, parity, quality and backup gates apply. Production is never the first migration test environment.
 
 ## Sandbox exit criteria
 
@@ -36,7 +46,7 @@ Before the production window starts, record:
 - operator and approver;
 - planned theme/plugin changes;
 - cache/CDN ownership;
-- maintenance/traffic plan for dynamic sites;
+- maintenance/traffic/data-sync plan for dynamic sites, explicitly preventing stale sandbox databases from overwriting newer production orders/submissions/users;
 - client-critical functional checks.
 
 For an existing-site cutover, use the Phase 8 accepted cutover/handoff evidence as an input rather than recreating legacy state from memory.
