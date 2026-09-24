@@ -63,8 +63,16 @@ final class AdminBaselineCaptureController {
 
 		check_admin_referer( self::NONCE_ACTION );
 
+		$batch_size = isset( $_POST['batch_size'] )
+			? absint( wp_unslash( $_POST['batch_size'] ) )
+			: IncrementalBaselineCapture::DEFAULT_BATCH_SIZE;
+
+		if ( 0 === $batch_size ) {
+			$batch_size = IncrementalBaselineCapture::DEFAULT_BATCH_SIZE;
+		}
+
 		try {
-			$result = $this->capture->advance();
+			$result = $this->capture->advance( $batch_size );
 		} catch ( Throwable ) {
 			$this->redirect( 'error' );
 		}
