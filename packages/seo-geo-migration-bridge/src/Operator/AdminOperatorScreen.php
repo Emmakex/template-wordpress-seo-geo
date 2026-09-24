@@ -143,7 +143,9 @@ final class AdminOperatorScreen {
 	 * Render a bounded result notice after an explicit baseline action.
 	 */
 	private function render_baseline_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after the nonce-verified admin action.
 		$status = isset( $_GET['seo_geo_baseline'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
 			? sanitize_key( wp_unslash( $_GET['seo_geo_baseline'] ) )
 			: '';
 
