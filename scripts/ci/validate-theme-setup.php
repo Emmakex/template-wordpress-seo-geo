@@ -238,12 +238,16 @@ foreach (
 	array(
 		'Install an SEO plugin',
 		'Install a GEO plugin',
-		'SEO plugin is required',
-		'GEO plugin is required',
+		'You must install an SEO plugin',
+		'You must install a GEO plugin',
+		'An SEO plugin is required to continue',
+		'A GEO plugin is required to continue',
 		'Instala un plugin SEO',
 		'Instala un plugin GEO',
-		'plugin SEO obligatorio',
-		'plugin GEO obligatorio',
+		'Debes instalar un plugin SEO',
+		'Debes instalar un plugin GEO',
+		'plugin SEO obligatorio para continuar',
+		'plugin GEO obligatorio para continuar',
 	) as $forbidden_guidance
 ) {
 	if ( str_contains( $wizard_copy, $forbidden_guidance ) ) {
