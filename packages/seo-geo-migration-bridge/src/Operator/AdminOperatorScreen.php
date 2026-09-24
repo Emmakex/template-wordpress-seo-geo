@@ -524,7 +524,7 @@ final class AdminOperatorScreen {
 	private function next_step_text( array $status ): string {
 		$key = match ( $status['next_step'] ?? null ) {
 			'capture-baseline'          => 'next_capture_baseline',
-			'complete-sandbox-preflight' => 'next_complete_sandbox_preflight',
+			'complete-sandbox-preflight' => 'next_sandbox_preflight',
 			'continue-migration'        => 'next_continue_migration',
 			'complete-cutover'   => 'next_complete_cutover',
 			'generate-report'    => 'next_generate_report',
