@@ -55,14 +55,14 @@ final class SandboxMigrationLab {
 			$graph = ( new DependencyGraphBuilder() )->build( $analysis, $baseline );
 		}
 
-		$sandbox_marked      = SandboxGuard::enabled();
-		$search_discouraged  = '0' === (string) get_option( 'blog_public', '1' );
-		$outbound_safe       = SandboxGuard::outbound_safe();
-		$backups_ready       = SandboxGuard::backups_ready();
-		$active_stylesheet   = (string) get_option( 'stylesheet', '' );
-		$destination_active  = self::DESTINATION_THEME === $active_stylesheet;
-		$baseline_available  = null !== $baseline;
-		$dependency_complete = 1 === ( $graph['schema_version'] ?? null ) && 'read-only-planning' === ( $graph['mode'] ?? null );
+		$sandbox_marked        = SandboxGuard::enabled();
+		$search_discouraged    = '0' === (string) get_option( 'blog_public', '1' );
+		$outbound_safe         = SandboxGuard::outbound_safe();
+		$backups_ready         = SandboxGuard::backups_ready();
+		$active_stylesheet     = (string) get_option( 'stylesheet', '' );
+		$destination_active    = self::DESTINATION_THEME === $active_stylesheet;
+		$baseline_available    = null !== $baseline;
+		$dependency_complete   = 1 === ( $graph['schema_version'] ?? null ) && 'read-only-planning' === ( $graph['mode'] ?? null );
 		$current_home_url      = home_url( '/' );
 		$source_home_url       = $this->baseline_home_url( $baseline );
 		$current_origin        = $this->origin_key( $current_home_url );
@@ -127,29 +127,29 @@ final class SandboxMigrationLab {
 			'mode'           => 'sandbox-migration-lab',
 			'ready'          => array() === $blockers,
 			'environment'    => array(
-				'sandbox_marker'             => $sandbox_marked,
-				'sandbox_mode'               => $sandbox_mode,
-				'source_origin'              => $source_origin,
-				'current_origin'             => $current_origin,
-				'source_base_path'           => $source_base_path,
-				'current_base_path'          => $current_base_path,
-				'distinct_origin'            => $distinct_origin,
-				'distinct_subdirectory'      => $subdirectory_distinct,
+				'sandbox_marker'              => $sandbox_marked,
+				'sandbox_mode'                => $sandbox_mode,
+				'source_origin'               => $source_origin,
+				'current_origin'              => $current_origin,
+				'source_base_path'            => $source_base_path,
+				'current_base_path'           => $current_base_path,
+				'distinct_origin'             => $distinct_origin,
+				'distinct_subdirectory'       => $subdirectory_distinct,
 				'storage_isolation_confirmed' => $storage_isolated,
-				'location_isolated'          => $location_isolated,
-				'search_engine_visibility'   => $search_discouraged ? 'discouraged' : 'public',
-				'outbound_safety_confirmed'  => $outbound_safe,
-				'fresh_backups_confirmed'    => $backups_ready,
-				'destination_theme'          => $active_stylesheet,
-				'destination_theme_active'   => $destination_active,
-				'baseline_available'         => $baseline_available,
-				'dependency_graph_ready'     => $dependency_complete,
-				'dependency_review_complete' => $review['complete'],
-				'reviewed_unknown'           => $review['reviewed_unknown'],
-				'unreviewed_unknown'         => $review['unreviewed_unknown'],
+				'location_isolated'           => $location_isolated,
+				'search_engine_visibility'    => $search_discouraged ? 'discouraged' : 'public',
+				'outbound_safety_confirmed'   => $outbound_safe,
+				'fresh_backups_confirmed'     => $backups_ready,
+				'destination_theme'           => $active_stylesheet,
+				'destination_theme_active'    => $destination_active,
+				'baseline_available'          => $baseline_available,
+				'dependency_graph_ready'      => $dependency_complete,
+				'dependency_review_complete'  => $review['complete'],
+				'reviewed_unknown'            => $review['reviewed_unknown'],
+				'unreviewed_unknown'          => $review['unreviewed_unknown'],
 			),
-			'blockers'       => $blockers,
-			'migration'      => array(
+			'blockers'  => $blockers,
+			'migration' => array(
 				'states'  => $states,
 				'summary' => $this->state_summary( $states ),
 			),
