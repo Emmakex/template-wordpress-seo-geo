@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.1`;
+- current plugin version: `0.8.2`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -57,9 +57,11 @@ For the first Phase 10E pilot:
 
 1. install the accepted Migration Bridge ZIP from **Plugins → Add New Plugin → Upload Plugin**;
 2. activate it;
-3. use the read-only analysis/baseline path before any migration mutation;
+3. use the read-only analysis path and explicitly capture the public SEO/GEO baseline before any migration mutation;
 4. do not activate the destination Theme directly in production;
 5. create/use an isolated sandbox before transformation;
 6. retain current production backups/recovery references.
+
+The operator screen only shows the baseline capture action when no baseline exists. The action is capability/nonce protected, performs anonymous same-origin public requests, stores only the dedicated non-autoloaded Migration Bridge baseline option, and never replaces an existing baseline automatically.
 
 The plugin is transitional for the Theme 0.1.0 migration path. Its accepted capabilities later become the migration module inside SEO/GEO Manager.
