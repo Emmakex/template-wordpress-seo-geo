@@ -69,7 +69,7 @@ final class AdminBaselineCaptureController {
 			$this->redirect( 'error' );
 		}
 
-		$status = is_string( $result['status'] ?? null ) ? $result['status'] : 'error';
+		$status = $result['status'];
 
 		if ( 'complete' === $status ) {
 			$this->redirect( 'success' );
