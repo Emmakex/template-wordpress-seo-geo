@@ -181,10 +181,10 @@ final class AdminOperatorScreen {
 	 * @param array<string,mixed> $status Operator snapshot.
 	 */
 	private function render_baseline_capture_form( array $status ): void {
-		$capture   = is_array( $status['capture'] ?? null ) ? $status['capture'] : array();
-		$running   = 'running' === ( $capture['status'] ?? null );
-		$processed = (int) ( $capture['processed'] ?? 0 );
-		$total     = (int) ( $capture['total'] ?? 0 );
+		$capture    = is_array( $status['capture'] ?? null ) ? $status['capture'] : array();
+		$running    = 'running' === ( $capture['status'] ?? null );
+		$processed  = (int) ( $capture['processed'] ?? 0 );
+		$total      = (int) ( $capture['total'] ?? 0 );
 		$percent    = (int) ( $capture['percent'] ?? 0 );
 		$batch_size = (int) ( $capture['batch_size'] ?? IncrementalBaselineCapture::DEFAULT_BATCH_SIZE );
 		$button     = $running ? 'baseline_continue' : 'baseline_capture_button';
