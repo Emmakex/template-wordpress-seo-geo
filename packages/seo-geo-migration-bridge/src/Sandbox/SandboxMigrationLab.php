@@ -63,18 +63,18 @@ final class SandboxMigrationLab {
 		$destination_active  = self::DESTINATION_THEME === $active_stylesheet;
 		$baseline_available  = null !== $baseline;
 		$dependency_complete = 1 === ( $graph['schema_version'] ?? null ) && 'read-only-planning' === ( $graph['mode'] ?? null );
-		$current_home_url       = home_url( '/' );
-		$source_home_url        = $this->baseline_home_url( $baseline );
-		$current_origin         = $this->origin_key( $current_home_url );
-		$source_origin          = $this->origin_key( $source_home_url );
-		$current_base_path      = $this->base_path( $current_home_url );
-		$source_base_path       = $this->base_path( $source_home_url );
-		$distinct_origin        = '' !== $source_origin && '' !== $current_origin && $source_origin !== $current_origin;
-		$same_origin            = '' !== $source_origin && $source_origin === $current_origin;
-		$subdirectory_distinct  = $same_origin && '/' !== $current_base_path && $source_base_path !== $current_base_path;
-		$sandbox_mode           = SandboxGuard::mode();
-		$storage_isolated       = SandboxGuard::storage_isolated();
-		$location_isolated      = 'origin' === $sandbox_mode
+		$current_home_url      = home_url( '/' );
+		$source_home_url       = $this->baseline_home_url( $baseline );
+		$current_origin        = $this->origin_key( $current_home_url );
+		$source_origin         = $this->origin_key( $source_home_url );
+		$current_base_path     = $this->base_path( $current_home_url );
+		$source_base_path      = $this->base_path( $source_home_url );
+		$distinct_origin       = '' !== $source_origin && '' !== $current_origin && $source_origin !== $current_origin;
+		$same_origin           = '' !== $source_origin && $source_origin === $current_origin;
+		$subdirectory_distinct = $same_origin && '/' !== $current_base_path && $source_base_path !== $current_base_path;
+		$sandbox_mode          = SandboxGuard::mode();
+		$storage_isolated      = SandboxGuard::storage_isolated();
+		$location_isolated     = 'origin' === $sandbox_mode
 			? $distinct_origin
 			: ( 'subdirectory' === $sandbox_mode && $subdirectory_distinct && $storage_isolated );
 		$review                 = $this->review_status( $graph );
@@ -135,7 +135,7 @@ final class SandboxMigrationLab {
 				'current_base_path'          => $current_base_path,
 				'distinct_origin'            => $distinct_origin,
 				'distinct_subdirectory'      => $subdirectory_distinct,
-				'storage_isolation_confirmed'=> $storage_isolated,
+				'storage_isolation_confirmed' => $storage_isolated,
 				'location_isolated'          => $location_isolated,
 				'search_engine_visibility'   => $search_discouraged ? 'discouraged' : 'public',
 				'outbound_safety_confirmed'  => $outbound_safe,
