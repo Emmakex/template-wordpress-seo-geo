@@ -169,7 +169,7 @@ final class Plugin {
 
 		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$incremental_baseline_capture );
 
-		self::$sandbox_handoff_controller ??= new AdminSandboxHandoffController();
+		self::$sandbox_handoff_controller   ??= new AdminSandboxHandoffController();
 		self::$dependency_review_controller ??= new AdminDependencyReviewController();
 
 		SandboxGuard::boot();
