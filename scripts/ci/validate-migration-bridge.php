@@ -856,9 +856,9 @@ foreach (
 		"'subdirectory_requires_storage_isolation' => true",
 		"'subdirectory_storage_marker'            => SandboxGuard::STORAGE_ISOLATED_MARKER",
 		"'requires_marker'                        => SandboxGuard::MARKER",
-		"'requires_outbound_marker'       => SandboxGuard::OUTBOUND_SAFE_MARKER",
-		"'requires_backup_marker'         => SandboxGuard::BACKUPS_READY_MARKER",
-		"'production_mutation_allowed'    => false",
+		"'requires_outbound_marker'               => SandboxGuard::OUTBOUND_SAFE_MARKER",
+		"'requires_backup_marker'                 => SandboxGuard::BACKUPS_READY_MARKER",
+		"'production_mutation_allowed'            => false",
 		"'review_decisions_execute_mutations' => false",
 	) as $handoff_guard
 ) {
