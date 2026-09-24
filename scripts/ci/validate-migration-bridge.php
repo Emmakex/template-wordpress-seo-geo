@@ -721,7 +721,7 @@ foreach (
 	array(
 		'AdminBaselineCaptureController::ACTION',
 		'wp_nonce_field( AdminBaselineCaptureController::NONCE_ACTION )',
-		'<form method="post"',
+		'<form id="seo-geo-baseline-capture-form" method="post"',
 		"true !== ( \$status['baseline']['available'] ?? false )",
 		"render_baseline_capture_form( \$status )",
 		"window.setTimeout(function ()",
