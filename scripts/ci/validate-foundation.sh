@@ -162,6 +162,7 @@ required_paths=(
   "packages/seo-geo-migration-bridge/src/Builders/DiviDetector.php"
   "docs/MIGRATION_BRIDGE.md"
   "docs/ONBOARDING.md"
+  "docs/RELEASE_ARTIFACT.md"
   "scripts/build-theme-package.sh"
   "scripts/build-theme-release.py"
   "scripts/ci/self-contained-theme-smoke.sh"
