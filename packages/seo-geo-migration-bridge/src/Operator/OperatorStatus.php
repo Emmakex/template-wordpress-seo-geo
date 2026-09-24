@@ -57,36 +57,26 @@ final class OperatorStatus {
 	private DependencyGraphBuilder $graph;
 
 	/**
-	 * Resumable baseline capture status source.
-	 *
-	 * @var IncrementalBaselineCapture
-	 */
-	private IncrementalBaselineCapture $baseline_capture;
-
-	/**
 	 * Construct the status service.
 	 *
 	 * @param BaselineSnapshotStore|null  $baseline_store Optional baseline store.
 	 * @param CutoverSnapshotStore|null   $cutover_store  Optional cutover store.
 	 * @param MigrationReportStore|null   $report_store   Optional final-report store.
 	 * @param SiteAnalyzer|null           $analyzer       Optional site analyzer.
-	 * @param DependencyGraphBuilder|null   $graph            Optional dependency graph.
-	 * @param IncrementalBaselineCapture|null $baseline_capture Optional incremental capture status.
+	 * @param DependencyGraphBuilder|null $graph          Optional dependency graph.
 	 */
 	public function __construct(
 		?BaselineSnapshotStore $baseline_store = null,
 		?CutoverSnapshotStore $cutover_store = null,
 		?MigrationReportStore $report_store = null,
 		?SiteAnalyzer $analyzer = null,
-		?DependencyGraphBuilder $graph = null,
-		?IncrementalBaselineCapture $baseline_capture = null
+		?DependencyGraphBuilder $graph = null
 	) {
 		$this->baseline_store = $baseline_store ?? new BaselineSnapshotStore();
 		$this->cutover_store  = $cutover_store ?? new CutoverSnapshotStore();
 		$this->report_store   = $report_store ?? new MigrationReportStore();
 		$this->analyzer       = $analyzer ?? new SiteAnalyzer();
-		$this->graph            = $graph ?? new DependencyGraphBuilder();
-		$this->baseline_capture = $baseline_capture ?? new IncrementalBaselineCapture();
+		$this->graph          = $graph ?? new DependencyGraphBuilder();
 	}
 
 	/**
@@ -103,6 +93,7 @@ final class OperatorStatus {
 		$dependency     = $this->dependency_status( $baseline, $report_payload );
 		$final_report   = $this->report_status( $report, $report_payload );
 		$cutover_status = $this->cutover_status( $cutover );
+		$capture        = ( new IncrementalBaselineCapture() )->status();
 
 		return array(
 			'schema_version'  => 1,
@@ -113,7 +104,7 @@ final class OperatorStatus {
 				'id'        => is_array( $baseline ) && is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256'    => is_array( $baseline ) && is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
 			),
-			'baseline_capture' => $this->baseline_capture->status(),
+			'capture'         => $capture,
 			'dependency_plan' => $dependency,
 			'cutover'         => $cutover_status,
 			'final_report'    => $final_report,
