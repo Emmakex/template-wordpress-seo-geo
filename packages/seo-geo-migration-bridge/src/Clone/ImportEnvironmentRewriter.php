@@ -844,13 +844,13 @@ final class ImportEnvironmentRewriter {
 	/**
 	 * Read one stable bounded row page.
 	 *
-	 * @param string       $table   Staging table.
+	 * @param string $table   Staging table.
 	 * @param array  $columns Selected columns.
 	 * @param array  $primary Primary columns.
+	 * @param int    $offset  Offset.
+	 * @param int    $limit   Limit.
 	 * @phpstan-param list<string> $columns
 	 * @phpstan-param list<string> $primary
-	 * @param int          $offset  Offset.
-	 * @param int          $limit   Limit.
 	 * @return list<array<string,mixed>>|null
 	 */
 	private function read_rows( string $table, array $columns, array $primary, int $offset, int $limit ): ?array {
