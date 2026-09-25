@@ -126,27 +126,28 @@ final class CloneInventoryStore {
 			return null;
 		}
 
-		$roots = is_array( $state['roots'] ?? null ) ? $state['roots'] : array();
+		$roots       = is_array( $state['roots'] ?? null ) ? $state['roots'] : array();
+		$fingerprint = is_string( $state['fingerprint'] ?? null )
+			&& 1 === preg_match( '/^[a-f0-9]{64}$/', $state['fingerprint'] )
+			? $state['fingerprint']
+			: hash( 'sha256', 'seo-geo-portable-clone-inventory-v1' );
 
 		return array(
-			'schema_version'   => self::SCHEMA_VERSION,
-			'job_id'           => $job_id,
-			'status'           => $status,
-			'database'         => is_array( $state['database'] ?? null ) ? $state['database'] : array(),
-			'roots'            => $roots,
-			'root_index'       => max( 0, (int) ( $state['root_index'] ?? 0 ) ),
-			'pending_dirs'     => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
-			'current_dir'      => is_string( $state['current_dir'] ?? null ) ? $this->bounded_path( $state['current_dir'] ) : '',
-			'after_name'       => is_string( $state['after_name'] ?? null ) ? $this->bounded_name( $state['after_name'] ) : '',
-			'file_count'       => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
-			'byte_count'       => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
-			'excluded_count'   => max( 0, (int) ( $state['excluded_count'] ?? 0 ) ),
-			'symlink_count'    => max( 0, (int) ( $state['symlink_count'] ?? 0 ) ),
-			'unreadable_count' => max( 0, (int) ( $state['unreadable_count'] ?? 0 ) ),
-			'fingerprint'      => is_string( $state['fingerprint'] ?? null )
-				&& 1 === preg_match( '/^[a-f0-9]{64}$/', $state['fingerprint'] )
-				? $state['fingerprint']
-				: hash( 'sha256', 'seo-geo-portable-clone-inventory-v1' ),
+			'schema_version'    => self::SCHEMA_VERSION,
+			'job_id'            => $job_id,
+			'status'            => $status,
+			'database'          => is_array( $state['database'] ?? null ) ? $state['database'] : array(),
+			'roots'             => $roots,
+			'root_index'        => max( 0, (int) ( $state['root_index'] ?? 0 ) ),
+			'pending_dirs'      => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
+			'current_dir'       => is_string( $state['current_dir'] ?? null ) ? $this->bounded_path( $state['current_dir'] ) : '',
+			'after_name'        => is_string( $state['after_name'] ?? null ) ? $this->bounded_name( $state['after_name'] ) : '',
+			'file_count'        => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
+			'byte_count'        => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
+			'excluded_count'    => max( 0, (int) ( $state['excluded_count'] ?? 0 ) ),
+			'symlink_count'     => max( 0, (int) ( $state['symlink_count'] ?? 0 ) ),
+			'unreadable_count'  => max( 0, (int) ( $state['unreadable_count'] ?? 0 ) ),
+			'fingerprint'       => $fingerprint,
 			'fingerprint_scope' => 'database-structure-estimates+file-content',
 			'blockers'          => $this->normalize_codes( $state['blockers'] ?? array() ),
 			'started_at'        => is_string( $state['started_at'] ?? null ) ? substr( $state['started_at'], 0, 40 ) : '',
