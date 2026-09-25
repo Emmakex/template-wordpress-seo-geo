@@ -231,7 +231,7 @@ final class FileExporter {
 				$path     = $this->join_path( $base, $relative );
 
 				if ( $this->excluded( $relative, is_dir( $path ) ) ) {
-					$state['after_name']          = $entry;
+					$state['after_name'] = $entry;
 					if ( $operations >= self::MAX_ENTRY_OPERATIONS ) {
 						$dir_finished = false;
 						break;
@@ -290,9 +290,9 @@ final class FileExporter {
 					(string) $state['export_fingerprint'],
 					'file|' . $root_id . '|' . wp_normalize_path( $relative ) . '|' . (string) (int) $copied['bytes'] . '|' . (string) $copied['sha256']
 				);
-				$state['file_count']          = (int) ( $state['file_count'] ?? 0 ) + 1;
-				$state['byte_count']          = (int) ( $state['byte_count'] ?? 0 ) + (int) $copied['bytes'];
-				$state['after_name'] = $entry;
+				$state['file_count']         = (int) ( $state['file_count'] ?? 0 ) + 1;
+				$state['byte_count']         = (int) ( $state['byte_count'] ?? 0 ) + (int) $copied['bytes'];
+				$state['after_name']         = $entry;
 				++$accepted_files;
 				$accepted_bytes += (int) $copied['bytes'];
 
