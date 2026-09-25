@@ -1404,8 +1404,8 @@ foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(',
 	}
 }
 
-foreach ( array( '->insert(', '->update(', '->delete(', '->query(', 'INSERT INTO ', 'UPDATE ', 'DELETE FROM ', 'REPLACE INTO ', 'CREATE TABLE ', 'DROP TABLE ', 'ALTER TABLE ', 'RENAME TABLE ', 'TRUNCATE TABLE ' ) as $finalize_database_mutation ) {
-	if ( str_contains( strtoupper( $import_finalizer ), strtoupper( $finalize_database_mutation ) ) ) {
+foreach ( array( '->insert(', '->update(', '->delete(', '->query(' ) as $finalize_database_mutation ) {
+	if ( str_contains( strtolower( $import_finalizer ), strtolower( $finalize_database_mutation ) ) ) {
 		fail_migration_bridge(
 			'portable-clone-import-finalize-no-database-mutation',
 			'10E.2A.4.6.1 must remain read-only against staging and active database tables.',
@@ -1414,6 +1414,15 @@ foreach ( array( '->insert(', '->update(', '->delete(', '->query(', 'INSERT INTO
 			$finalize_database_mutation
 		);
 	}
+}
+if ( 1 === preg_match( '/[\"\']\\s*(?:INSERT|UPDATE|DELETE|REPLACE|CREATE|DROP|ALTER|RENAME|TRUNCATE)\\b/i', $import_finalizer, $finalize_sql_match ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-finalize-no-database-mutation',
+		'10E.2A.4.6.1 must remain read-only against staging and active database tables.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php',
+		'no mutating SQL literal',
+		(string) ( $finalize_sql_match[0] ?? 'mutating SQL' )
+	);
 }
 
 $import_finalize_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFinalizeController.php' );
