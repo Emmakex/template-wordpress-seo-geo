@@ -848,9 +848,6 @@ foreach (
 		ImportRewriteStateStore::OPTION_NAME,
 		ImportFinalizeStateStore::OPTION_NAME,
 		'blog_public',
-		'active_plugins',
-		'template',
-		'stylesheet',
 	) as $overlay_option
 ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Test-only cleanup of staging overlay rows.
