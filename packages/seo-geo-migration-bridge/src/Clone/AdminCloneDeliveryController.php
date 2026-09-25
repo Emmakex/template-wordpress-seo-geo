@@ -169,9 +169,13 @@ final class AdminCloneDeliveryController {
 	 * Return the bounded posted clone job identifier.
 	 */
 	private function posted_job_id(): string {
-		return isset( $_POST['clone_job_id'] )
-			? sanitize_text_field( wp_unslash( $_POST['clone_job_id'] ) )
-			: '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The value scopes the job-specific nonce checked immediately by each calling handler.
+		if ( ! isset( $_POST['clone_job_id'] ) ) {
+			return '';
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The value scopes the job-specific nonce checked immediately by each calling handler.
+		return sanitize_text_field( wp_unslash( $_POST['clone_job_id'] ) );
 	}
 
 	/**
