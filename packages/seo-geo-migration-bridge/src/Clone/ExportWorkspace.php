@@ -577,6 +577,151 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Return/create the private extracted import payload root for one job.
+	 *
+	 * The payload root itself is not populated with generated guard files because
+	 * package checksum replay must see exactly the archive payload bytes/paths.
+	 * Its parent remains protected by the job workspace guards.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @param bool   $create Ensure the payload root exists.
+	 */
+	public function import_payload_root( string $job_id, bool $create = false ): ?string {
+		$root = $create ? $this->ensure( $job_id ) : $this->root_path( $job_id );
+		if ( null === $root ) {
+			return null;
+		}
+
+		$import_dir = trailingslashit( $root ) . 'import';
+		$payload    = trailingslashit( $import_dir ) . 'payload';
+
+		if ( $create ) {
+			if ( ! is_dir( $import_dir ) && ! wp_mkdir_p( $import_dir ) ) {
+				return null;
+			}
+			$this->protect_directory( $import_dir );
+
+			if ( ! is_dir( $payload ) && ! wp_mkdir_p( $payload ) ) {
+				return null;
+			}
+
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive private payload permissions.
+			@chmod( $payload, 0700 );
+		}
+
+		if ( ! is_dir( $payload ) ) {
+			return null;
+		}
+
+		$payload = trailingslashit( wp_normalize_path( $payload ) );
+		return str_starts_with( $payload, trailingslashit( wp_normalize_path( $root ) ) ) ? $payload : null;
+	}
+
+	/**
+	 * Extract a bounded list of verified archive file paths into the private import payload root.
+	 *
+	 * @param string       $job_id         Clone job identifier.
+	 * @param list<string> $relative_paths Exact archive file paths.
+	 * @return array<string,array{bytes:int,sha256:string}>|null
+	 */
+	public function extract_import_archive_files( string $job_id, array $relative_paths ): ?array {
+		$archive_info = $this->import_archive_info( $job_id );
+		$payload_root = $this->import_payload_root( $job_id, true );
+		if ( null === $archive_info || null === $payload_root || array() === $relative_paths ) {
+			return null;
+		}
+
+		$names = array();
+		foreach ( array_values( array_unique( $relative_paths ) ) as $relative ) {
+			$relative = $this->normalize_archive_relative( $relative );
+			if ( '' === $relative || ! $this->allowed_import_archive_relative( $relative ) ) {
+				return null;
+			}
+
+			$target = $payload_root . $relative;
+			if ( ! str_starts_with( $target, $payload_root ) ) {
+				return null;
+			}
+			if ( is_link( $target ) ) {
+				return null;
+			}
+			if ( is_file( $target ) ) {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Replaces only a bounded job-owned extracted payload file after an interrupted batch.
+				if ( ! @unlink( $target ) ) {
+					return null;
+				}
+			}
+
+			$names[] = $relative;
+		}
+
+		if ( ! $this->load_pclzip() ) {
+			return null;
+		}
+
+		$by_name = defined( 'PCLZIP_OPT_BY_NAME' ) ? constant( 'PCLZIP_OPT_BY_NAME' ) : null;
+		$to_path = defined( 'PCLZIP_OPT_PATH' ) ? constant( 'PCLZIP_OPT_PATH' ) : null;
+		if ( ! is_int( $by_name ) || ! is_int( $to_path ) ) {
+			return null;
+		}
+
+		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip is loaded explicitly above.
+		$archive = new \PclZip( (string) $archive_info['path'] );
+		$result  = $archive->extract( $by_name, $names, $to_path, untrailingslashit( $payload_root ) ); // @phpstan-ignore arguments.count
+		if ( ! is_array( $result ) ) {
+			return null;
+		}
+
+		$verified = array();
+		foreach ( $names as $relative ) {
+			$target = $payload_root . $relative;
+			if (
+				! str_starts_with( $target, $payload_root )
+				|| ! is_file( $target )
+				|| ! is_readable( $target )
+				|| is_link( $target )
+			) {
+				return null;
+			}
+
+			$bytes = filesize( $target );
+			$hash  = hash_file( 'sha256', $target );
+			if ( false === $bytes || false === $hash ) {
+				return null;
+			}
+
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive job-owned extracted payload permissions.
+			@chmod( $target, 0600 );
+			$verified[ $relative ] = array(
+				'bytes'  => (int) $bytes,
+				'sha256' => $hash,
+			);
+		}
+
+		return $verified;
+	}
+
+	/**
+	 * Limit extracted import entries to the Portable Clone package roots already
+	 * accepted by the preflight contract.
+	 *
+	 * @param string $relative Archive-relative path.
+	 */
+	private function allowed_import_archive_relative( string $relative ): bool {
+		if ( in_array( $relative, array( '.htaccess', 'index.php' ), true ) ) {
+			return true;
+		}
+
+		foreach ( array( 'database/', 'database-meta/', 'files/', 'files-meta/', 'package/' ) as $prefix ) {
+			if ( str_starts_with( $relative, $prefix ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Delete only the private workspace owned by one clone job.
 	 *
 	 * @param string $job_id Clone job identifier.
