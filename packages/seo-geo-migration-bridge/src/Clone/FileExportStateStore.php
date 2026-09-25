@@ -4,6 +4,7 @@
  *
  * @package SeoGeoMigrationBridge
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Clone;
