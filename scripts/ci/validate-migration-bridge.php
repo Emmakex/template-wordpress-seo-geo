@@ -392,7 +392,7 @@ foreach (
 	array(
 		"public const ACTION = 'seo_geo_migration_clone_inventory';",
 		"current_user_can( 'manage_options' )",
-		'check_admin_referer( self::NONCE_ACTION . ':' . $job_id )',
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
 		'$this->inventory->advance( $job_id, $batch_size )',
 	) as $clone_inventory_controller_guard
 ) {
