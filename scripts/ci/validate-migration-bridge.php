@@ -299,8 +299,12 @@ foreach (
 }
 
 $clone_paths = glob( MIGRATION_BRIDGE_DIR . '/src/Clone/*.php' ) ?: array();
+$filesystem_authorities = array(
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageArchive.php',
+);
 foreach ( $clone_paths as $clone_path ) {
-	if ( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php' === $clone_path ) {
+	if ( in_array( $clone_path, $filesystem_authorities, true ) ) {
 		continue;
 	}
 	$clone_source = (string) file_get_contents( $clone_path );
@@ -308,9 +312,9 @@ foreach ( $clone_paths as $clone_path ) {
 		if ( str_contains( $clone_source, $filesystem_mutation ) ) {
 			fail_migration_bridge(
 				'portable-clone-filesystem-boundary',
-				'Portable Clone filesystem writes must remain isolated behind ExportWorkspace.',
+				'Portable Clone filesystem writes must remain isolated behind dedicated private filesystem authorities.',
 				$clone_path,
-				'filesystem mutations only in ExportWorkspace.php',
+				'filesystem mutations only in ExportWorkspace.php or PackageArchive.php',
 				$filesystem_mutation
 			);
 		}
