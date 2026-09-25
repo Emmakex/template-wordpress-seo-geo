@@ -8,6 +8,7 @@ cat >"$IMPORT_REWRITE_RUNNER" <<'PHP'
 <?php
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\ExportWorkspace;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseRestorer;
@@ -19,6 +20,8 @@ use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadVerifier;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Plugin;
 
@@ -30,6 +33,7 @@ foreach (
 		ImportDatabaseStateStore::OPTION_NAME,
 		ImportFileStateStore::OPTION_NAME,
 		ImportRewriteStateStore::OPTION_NAME,
+		ImportFinalizeStateStore::OPTION_NAME,
 	) as $option_name
 ) {
 	delete_option( $option_name );
@@ -55,6 +59,7 @@ $verifier     = Plugin::clone_import_payload_verifier();
 $db_restore   = Plugin::clone_import_database_restorer();
 $file_restore = Plugin::clone_import_file_restorer();
 $rewriter     = Plugin::clone_import_environment_rewriter();
+$finalizer    = Plugin::clone_import_finalization_planner();
 $workspace    = new ExportWorkspace();
 
 if (
@@ -64,8 +69,9 @@ if (
 	|| ! $db_restore instanceof ImportDatabaseRestorer
 	|| ! $file_restore instanceof ImportFileRestorer
 	|| ! $rewriter instanceof ImportEnvironmentRewriter
+	|| ! $finalizer instanceof ImportFinalizationPlanner
 ) {
-	throw new RuntimeException( 'Portable Import environment rewrite services are unavailable.' );
+	throw new RuntimeException( 'Portable Import environment rewrite/finalization services are unavailable.' );
 }
 
 global $wpdb;
@@ -627,6 +633,23 @@ $json_after = isset( $options['json_payload'] ) ? json_decode( $options['json_pa
 $staged_file_after = $workspace->import_staged_file_info( $job_id, 'uploads', '2026/file.txt' );
 $active_after      = get_option( $active_sentinel_name );
 
+$finalize = null;
+for ( $iteration = 0; $iteration < 160; ++$iteration ) {
+	$finalize = $finalizer->advance( $job_id, 2, 1, 1048576 );
+	if ( ! is_array( $finalize ) ) {
+		throw new RuntimeException( 'Finalization preflight returned no state.' );
+	}
+	if ( in_array( $finalize['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+}
+if ( ! is_array( $finalize ) || 'ready' !== ( $finalize['status'] ?? null ) ) {
+	throw new RuntimeException( 'Finalization preflight did not reach ready: ' . wp_json_encode( $finalize ) );
+}
+
+$staged_file_after_finalize = $workspace->import_staged_file_info( $job_id, 'uploads', '2026/file.txt' );
+$active_after_finalize      = get_option( $active_sentinel_name );
+
 // Negative safety case: rerun from source core URLs but inject opaque serialized bytes containing the source environment.
 $rewrite_store = new ImportRewriteStateStore();
 $rewrite_store->delete( $job_id );
@@ -662,6 +685,7 @@ $autoload = $wpdb->get_var(
 echo wp_json_encode(
 	array(
 		'good'                     => $good,
+		'finalize'                 => $finalize,
 		'bad'                      => $bad,
 		'options'                  => $options,
 		'posts'                    => $posts_rows,
@@ -673,13 +697,17 @@ echo wp_json_encode(
 		'source_site'              => $source_site,
 		'active_before'            => $active_before,
 		'active_after'             => $active_after,
+		'active_after_finalize'    => $active_after_finalize,
 		'active_after_bad'         => $active_after_bad,
 		'staged_file_before'       => $staged_file_before,
 		'staged_file_after'        => $staged_file_after,
+		'staged_file_after_finalize' => $staged_file_after_finalize,
 		'staged_file_after_bad'    => $staged_file_after_bad,
 		'rewrite_state_autoload'   => $autoload,
-		'controller_registered'    => false !== has_action( 'admin_post_' . AdminCloneImportRewriteController::ACTION ),
-		'public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportRewriteController::ACTION ),
+		'controller_registered'          => false !== has_action( 'admin_post_' . AdminCloneImportRewriteController::ACTION ),
+		'public_controller_absent'       => false === has_action( 'admin_post_nopriv_' . AdminCloneImportRewriteController::ACTION ),
+		'finalize_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportFinalizeController::ACTION ),
+		'finalize_public_absent'         => false === has_action( 'admin_post_nopriv_' . AdminCloneImportFinalizeController::ACTION ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 );
@@ -752,6 +780,24 @@ assert good["blockers"] == []
 assert "credential-values-kept-opaque" in good["advisories"]
 assert "opaque-serialized-values-reviewed" in good["advisories"]
 
+finalize = payload["finalize"]
+assert finalize["schema_version"] == 1
+assert finalize["status"] == "ready"
+assert finalize["stage"] == "ready"
+assert finalize["database_rows_hashed"] >= 8
+assert re.fullmatch(r"[a-f0-9]{64}", finalize["database_fingerprint"])
+assert finalize["files_hashed"] == finalize["expected_file_count"] == 1
+assert finalize["file_bytes_hashed"] == finalize["expected_file_bytes"]
+assert re.fullmatch(r"[a-f0-9]{64}", finalize["file_fingerprint"])
+assert re.fullmatch(r"[a-f0-9]{64}", finalize["activation_plan_hash"])
+assert finalize["sandbox_hardening_ready"] is True
+assert finalize["rollback_plan_ready"] is True
+assert finalize["activation_allowed"] is True
+assert finalize["handoff_ready"] is False
+assert finalize["active_tables_untouched"] is True
+assert finalize["active_roots_untouched"] is True
+assert finalize["blockers"] == []
+
 options = payload["options"]
 dest_home = payload["destination_home"].rstrip("/") + "/"
 dest_site = payload["destination_site"].rstrip("/") + "/"
@@ -783,11 +829,11 @@ assert dest_home + "about" in posts[0]["post_content"]
 assert "https://external.example.test/reference" in posts[0]["post_content"]
 assert dest_home + "wp-content/uploads/2026/file.txt" in posts[0]["post_excerpt"]
 
-assert payload["active_before"] == payload["active_after"] == payload["active_after_bad"]
-for key in ("staged_file_before", "staged_file_after", "staged_file_after_bad"):
+assert payload["active_before"] == payload["active_after"] == payload["active_after_finalize"] == payload["active_after_bad"]
+for key in ("staged_file_before", "staged_file_after", "staged_file_after_finalize", "staged_file_after_bad"):
     assert isinstance(payload[key], dict)
     assert re.fullmatch(r"[a-f0-9]{64}", payload[key]["sha256"])
-assert payload["staged_file_before"] == payload["staged_file_after"] == payload["staged_file_after_bad"]
+assert payload["staged_file_before"] == payload["staged_file_after"] == payload["staged_file_after_finalize"] == payload["staged_file_after_bad"]
 
 bad = payload["bad"]
 assert bad["status"] == "blocked"
@@ -798,10 +844,12 @@ assert bad["active_roots_untouched"] is True
 assert payload["rewrite_state_autoload"] in ("off", "no", "auto-off")
 assert payload["controller_registered"] is True
 assert payload["public_controller_absent"] is True
+assert payload["finalize_controller_registered"] is True
+assert payload["finalize_public_absent"] is True
 print("ok")
 PY
 )"; then
   fail_smoke "clone-import-rewrite-contract" "Portable Import environment rewrite contract is invalid" "structured serialized/JSON rewrite + credential opacity + idempotence + active/staged immutability + opaque-source blocker" "${IMPORT_REWRITE_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Import environment rewrite OK: supported staging URLs rewritten transactionally; serialized/JSON structures stayed valid; credentials and staged files stayed opaque/unchanged; second pass was idempotent; opaque source URL was blocked.\n'
+printf '[smoke] Portable Import environment rewrite + finalization preflight OK: staging rewrite stayed structured/idempotent; DB/files fingerprints and rollback plan reached ready without active mutation; opaque source URL was blocked.\n'

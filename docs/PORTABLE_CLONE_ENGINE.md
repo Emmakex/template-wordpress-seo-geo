@@ -482,7 +482,7 @@ Deliver:
 
 ### 10E.2A.4 — Portable import
 
-Status: **active — 10E.2A.4.1 through 10E.2A.4.4 are accepted; 10E.2A.4.5 serialization-safe environment rewrite is the Migration Bridge 0.8.19 candidate**
+Status: **active — 10E.2A.4.1 through 10E.2A.4.5 are accepted; 10E.2A.4.6.1 read-only finalization preflight is the Migration Bridge 0.8.20 candidate**
 
 Internal sequence:
 

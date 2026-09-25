@@ -16,6 +16,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -35,6 +36,8 @@ use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -128,6 +131,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_import_database_result_notice(); ?>
 			<?php $this->render_clone_import_file_result_notice(); ?>
 			<?php $this->render_clone_import_rewrite_result_notice(); ?>
+			<?php $this->render_clone_import_finalize_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -1443,6 +1447,106 @@ final class AdminOperatorScreen {
 					</select>
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_rewrite_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+		<?php if ( 'complete' === $status ) : ?>
+			<?php $this->render_clone_import_finalize_section( $job_id ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after sandbox finalization preflight.
+	 */
+	private function render_clone_import_finalize_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified finalization action.
+		$status = isset( $_GET['seo_geo_clone_finalize_preflight'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_finalize_preflight'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running' => 'clone_import_finalize_running',
+			'ready'   => 'clone_import_finalize_ready',
+			'blocked' => 'clone_import_finalize_blocked',
+			default   => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status
+			? 'notice notice-error'
+			: ( 'running' === $status ? 'notice notice-info' : 'notice notice-success' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render read-only finalization-preflight fingerprint/rollback controls.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function render_clone_import_finalize_section( string $job_id ): void {
+		$state      = ( new ImportFinalizeStateStore() )->get( $job_id );
+		$status     = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$stage      = is_array( $state ) ? (string) ( $state['stage'] ?? 'database-fingerprint' ) : 'database-fingerprint';
+		$blockers   = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$advisories = is_array( $state['advisories'] ?? null ) ? array_values( array_filter( $state['advisories'], 'is_string' ) ) : array();
+		$button     = 'pending' === $status ? 'clone_import_finalize_start' : 'clone_import_finalize_continue';
+		?>
+		<h4><?php echo esc_html( $this->copy->text( 'clone_import_finalize_heading' ) ); ?></h4>
+		<p><?php echo esc_html( $this->copy->text( 'clone_import_finalize_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_stage' ) ); ?></th><td><code><?php echo esc_html( $stage ); ?></code></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_db_rows' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['database_rows_hashed'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_db_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['database_fingerprint'] ?? '' ) ); ?></code></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['files_hashed'] ?? 0 ) . ' / ' . (string) (int) ( $state['expected_file_count'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_bytes' ) ); ?></th><td><?php echo esc_html( size_format( (int) ( $state['file_bytes_hashed'] ?? 0 ) ) . ' / ' . size_format( (int) ( $state['expected_file_bytes'] ?? 0 ) ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_file_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['file_fingerprint'] ?? '' ) ); ?></code></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_plan_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['activation_plan_hash'] ?? '' ) ); ?></code></td></tr>
+				<?php $this->render_sandbox_boolean_row( 'clone_import_finalize_hardening', true === ( $state['sandbox_hardening_ready'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_import_finalize_rollback', true === ( $state['rollback_plan_ready'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_import_finalize_activation', true === ( $state['activation_allowed'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_import_finalize_handoff', true === ( $state['handoff_ready'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_import_finalize_active_tables', true === ( $state['active_tables_untouched'] ?? true ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_import_finalize_active_files', true === ( $state['active_roots_untouched'] ?? true ) ); ?>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === $blockers ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $blockers ) ); ?></code></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_advisories' ) ); ?></th><td><code><?php echo esc_html( array() === $advisories ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $advisories ) ); ?></code></td></tr>
+			</tbody>
+		</table>
+
+		<?php if ( ! in_array( $status, array( 'ready', 'blocked' ), true ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportFinalizeController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneImportFinalizeController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p>
+					<label for="seo-geo-clone-finalize-rows"><strong><?php echo esc_html( $this->copy->text( 'clone_import_finalize_rows_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-finalize-rows" name="finalize_batch_rows">
+						<?php foreach ( array( 25, 50, 100, 200, 500, 1000 ) as $rows ) : ?>
+							<option value="<?php echo esc_attr( (string) $rows ); ?>" <?php selected( ImportFinalizationPlanner::DEFAULT_BATCH_ROWS, $rows ); ?>><?php echo esc_html( (string) $rows ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<label for="seo-geo-clone-finalize-files"><strong><?php echo esc_html( $this->copy->text( 'clone_import_finalize_files_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-finalize-files" name="finalize_batch_files">
+						<?php foreach ( array( 25, 50, 100, 200, 500 ) as $files ) : ?>
+							<option value="<?php echo esc_attr( (string) $files ); ?>" <?php selected( ImportFinalizationPlanner::DEFAULT_BATCH_FILES, $files ); ?>><?php echo esc_html( (string) $files ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<label for="seo-geo-clone-finalize-mb"><strong><?php echo esc_html( $this->copy->text( 'clone_import_finalize_mb_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-finalize-mb" name="finalize_batch_megabytes">
+						<?php foreach ( array( 4, 8, 16, 32, 64, 128 ) as $megabytes ) : ?>
+							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 16, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>

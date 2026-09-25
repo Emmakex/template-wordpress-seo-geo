@@ -287,3 +287,6 @@ Migration Bridge 0.8.18 adds phase 10E.2A.4.4: verified file restoration into a 
 
 
 Migration Bridge 0.8.19 adds serialization-safe environment rewriting over verified job-owned staging tables. Supported PHP serialized values and JSON containers are decoded structurally, same-origin URLs are mapped to the destination, credential/token values remain opaque, and a second read-only pass must prove idempotence. Active destination tables and staged/active file bytes remain untouched; opaque serialized bytes containing source URLs block completion rather than being raw-replaced.
+
+
+Migration Bridge 0.8.20 starts phase 10E.2A.4.6.1 with a read-only sandbox finalization preflight. After database/file staging and serialization-safe environment rewrite are complete, the Bridge re-hashes deterministic staging-table rows and manifest-backed staged files in bounded resumable batches, rechecks sandbox hardening, and derives an immutable activation/rollback plan hash. This version deliberately does not rename/swap active tables or wp-content roots: `activation_allowed` may become true only after reconciliation, while `handoff_ready` remains false until the later controlled promotion/verification step.
