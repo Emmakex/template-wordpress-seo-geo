@@ -26,7 +26,7 @@ A hosting provider saying staging is not sufficient evidence by itself.
 
 ### Mode B — No staging, but WordPress/hosting access exists
 
-Manager coordinates a **portable sandbox**.
+The migration product coordinates a **portable sandbox**. During the Theme 0.1.0 pilot this is implemented first by the Migration Bridge Portable Clone Engine; the accepted behavior later moves into Manager.
 
 The environment may be created by:
 
@@ -48,6 +48,17 @@ Minimum useful access may include:
 - a client-supplied WordPress/database/uploads copy.
 
 With no WordPress/hosting/export access at all, the system may perform public external auditing only; it cannot claim a safe migration.
+
+## Portable Clone Engine relationship
+
+`docs/PORTABLE_CLONE_ENGINE.md` is the implementation contract for creating/transporting the site copy itself.
+
+The distinction is deliberate:
+
+- **Portable Clone Engine** = inventory, clone/export/import, resumability, integrity, URL/environment rewrite and sandbox hardening;
+- **Portable Sandbox** = provider-neutral environment strategy, isolation acceptance, dynamic-data rules and later migration/cutover evidence.
+
+The clone package may contain private database/files and is protected migration material. The bounded sandbox handoff/repository evidence remains metadata-only.
 
 ## Portable sandbox package
 
