@@ -411,9 +411,9 @@ final class ImportDatabaseActivator {
 		$state['activated_at']           = '' !== (string) ( $state['activated_at'] ?? '' )
 			? (string) $state['activated_at']
 			: $now;
-		$state['verified_at']            = $now;
-		$state['updated_at']             = $now;
-		$state['blockers']               = array();
+		$state['verified_at'] = $now;
+		$state['updated_at']  = $now;
+		$state['blockers']    = array();
 
 		return $this->store->save( $job_id, $state ) ? $this->store->get( $job_id ) : null;
 	}
@@ -481,8 +481,8 @@ final class ImportDatabaseActivator {
 			}
 		}
 
-		$options  = (string) ( $state['options_target'] ?? '' );
-		$columns  = $this->table_columns( $options );
+		$options = (string) ( $state['options_target'] ?? '' );
+		$columns = $this->table_columns( $options );
 		if ( array() === $columns ) {
 			return false;
 		}
@@ -884,12 +884,12 @@ final class ImportDatabaseActivator {
 	private function block( string $job_id, array $state, string $code, bool $database_swapped ): ?array {
 		$blockers = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[]                    = $code;
-		$state['status']               = 'blocked';
-		$state['database_swapped']     = $database_swapped;
-		$state['handoff_ready']        = false;
+		$state['status']                 = 'blocked';
+		$state['database_swapped']       = $database_swapped;
+		$state['handoff_ready']          = false;
 		$state['active_files_untouched'] = true;
-		$state['blockers']             = array_values( array_unique( $blockers ) );
-		$state['updated_at']           = gmdate( DATE_ATOM );
+		$state['blockers']               = array_values( array_unique( $blockers ) );
+		$state['updated_at']             = gmdate( DATE_ATOM );
 
 		return $this->store->save( $job_id, $state ) ? $this->store->get( $job_id ) : null;
 	}
