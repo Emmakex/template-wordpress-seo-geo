@@ -1537,6 +1537,19 @@ foreach (
 }
 
 if (
+	! str_contains( $database_activator, "array( 'prepared', 'copying', 'candidate-ready', 'promoting', 'verifying', 'verified' )" )
+	|| ! str_contains( $database_activator, '$this->file_promotion->get( $job_id )' )
+) {
+	fail_migration_bridge(
+		'portable-clone-database-rollback-file-promotion-lock',
+		'Database rollback must remain locked while the external file-promotion recovery journal owns active filesystem/runtime state.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseActivator.php',
+		'file-promotion status lock before database rollback',
+		'missing'
+	);
+}
+
+if (
 	! str_contains( $database_activator, "SandboxGuard::outbound_safe()" )
 	|| ! str_contains( $database_activator, "SandboxGuard::backups_ready()" )
 	|| ! str_contains( $database_activator, 'ImportPreflight::TARGET_AUTHORIZED_MARKER' )
