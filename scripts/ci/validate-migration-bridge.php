@@ -98,11 +98,14 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/FileExporter.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageBuilder.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/DeliveryStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneFileExportController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminClonePackageController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDeliveryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -337,7 +340,7 @@ foreach (
 $export_workspace = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php' );
 foreach (
 	array(
-		"public const DIRECTORY_NAME = 'seo-geo-migration-bridge';",
+		"'seo-geo-migration-bridge'",
 		'get_temp_dir()',
 		'file_put_contents(',
 		'copy_file( string $job_id, string $relative, string $source )',
@@ -346,6 +349,15 @@ foreach (
 		'rename(',
 		"hash_file( 'sha256'",
 		'cleanup( string $job_id )',
+		"public const DELIVERY_DIRECTORY_NAME = 'seo-geo-migration-bridge-delivery';",
+		'reset_delivery_archive( string $job_id )',
+		'append_delivery_archive_files( string $job_id, array $relative_paths )',
+		'finalize_delivery_archive( string $job_id )',
+		'delivery_archive_info( string $job_id )',
+		'delete_delivery_archive( string $job_id )',
+		'delivery_download_name( string $job_id )',
+		"'wp-admin/includes/class-pclzip.php'",
+		'PCLZIP_OPT_REMOVE_PATH',
 	) as $export_workspace_guard
 ) {
 	if ( ! str_contains( $export_workspace, $export_workspace_guard ) ) {
@@ -583,6 +595,101 @@ foreach (
 			'missing'
 		);
 	}
+}
+
+
+$delivery_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/DeliveryStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_delivery_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'ready', 'blocked', 'expired', 'cleaning', 'cleaned'",
+		"'archive_sha256'",
+		"'expires_at'",
+		"'cleanup_deleted_count'",
+	) as $delivery_state_guard
+) {
+	if ( ! str_contains( $delivery_state_store, $delivery_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-delivery-state',
+			'Portable Clone delivery state must remain bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/DeliveryStateStore.php',
+			$delivery_state_guard,
+			'missing'
+		);
+	}
+}
+
+$package_delivery = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php' );
+if (
+	1 !== preg_match( '/public const\\s+RETENTION_HOURS\\s*=\\s*24;/', $package_delivery )
+	|| 1 !== preg_match( '/public const\\s+DEFAULT_CLEANUP_BATCH\\s*=\\s*250;/', $package_delivery )
+	|| 1 !== preg_match( "/'authenticated_only'\\s*=>\\s*true/", $package_delivery )
+	|| 1 !== preg_match( "/'public_url'\\s*=>\\s*false/", $package_delivery )
+) {
+	fail_migration_bridge(
+		'portable-clone-delivery-policy',
+		'Portable Clone delivery must keep its fixed auth-only and 24-hour bounded retention policy.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php',
+		'auth-only ZIP delivery with 24-hour retention and bounded cleanup',
+		'policy mismatch'
+	);
+}
+foreach (
+	array(
+		"'delivery-package-integrity-mismatch'",
+		'$this->workspace->cleanup_batch( $job_id, $limit )',
+		'$this->workspace->append_delivery_archive_files( $job_id, $relative_paths )',
+		'$this->workspace->finalize_delivery_archive( $job_id )',
+		'$this->workspace->delete_delivery_archive( $job_id )',
+		'$this->jobs->transition( $job_id, \'completed\' )',
+	) as $package_delivery_guard
+) {
+	if ( ! str_contains( $package_delivery, $package_delivery_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-authenticated-delivery',
+			'Portable Clone package delivery is missing a required integrity/retention boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php',
+			$package_delivery_guard,
+			'missing'
+		);
+	}
+}
+
+$delivery_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDeliveryController.php' );
+foreach (
+	array(
+		"public const BUILD_ACTION    = 'seo_geo_migration_clone_delivery_build';",
+		"public const DOWNLOAD_ACTION = 'seo_geo_migration_clone_delivery_download';",
+		"public const CLEANUP_ACTION  = 'seo_geo_migration_clone_delivery_cleanup';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':build:' . \$job_id )",
+		"check_admin_referer( self::NONCE_ACTION . ':download:' . \$job_id )",
+		"check_admin_referer( self::NONCE_ACTION . ':cleanup:' . \$job_id )",
+		"header( 'Content-Type: application/zip' )",
+		"'cleanup' !== \$confirmation",
+	) as $delivery_controller_guard
+) {
+	if ( ! str_contains( $delivery_controller, $delivery_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-delivery-entrypoint',
+			'Portable Clone delivery endpoints must remain administrator/nonce gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDeliveryController.php',
+			$delivery_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $delivery_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-public-download',
+		'Portable Clone packages must never expose an unauthenticated download endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDeliveryController.php',
+		'authenticated admin_post actions only',
+		'admin_post_nopriv_'
+	);
 }
 
 $clone_inventory_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php' );

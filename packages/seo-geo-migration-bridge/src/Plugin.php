@@ -14,6 +14,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneDeliveryController;
 use SeoGeo\MigrationBridge\Clone\CloneInventory;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
@@ -24,6 +25,8 @@ use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
+use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
+use SeoGeo\MigrationBridge\Clone\PackageDelivery;
 use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
@@ -254,6 +257,27 @@ final class Plugin {
 	private static ?AdminClonePackageController $clone_package_controller = null;
 
 	/**
+	 * Portable Clone delivery-state store singleton.
+	 *
+	 * @var DeliveryStateStore|null
+	 */
+	private static ?DeliveryStateStore $clone_delivery_state_store = null;
+
+	/**
+	 * Portable Clone authenticated delivery service singleton.
+	 *
+	 * @var PackageDelivery|null
+	 */
+	private static ?PackageDelivery $clone_package_delivery = null;
+
+	/**
+	 * Portable Clone delivery controller singleton.
+	 *
+	 * @var AdminCloneDeliveryController|null
+	 */
+	private static ?AdminCloneDeliveryController $clone_delivery_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -300,6 +324,9 @@ final class Plugin {
 		self::$clone_package_state_store        ??= new PackageStateStore();
 		self::$clone_package_builder            ??= new PackageBuilder( self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
 		self::$clone_package_controller         ??= new AdminClonePackageController( self::$clone_package_builder );
+		self::$clone_delivery_state_store       ??= new DeliveryStateStore();
+		self::$clone_package_delivery           ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
+		self::$clone_delivery_controller        ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -319,6 +346,7 @@ final class Plugin {
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
+		self::$clone_delivery_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -425,6 +453,13 @@ final class Plugin {
 	 */
 	public static function clone_package_builder(): ?PackageBuilder {
 		return self::$clone_package_builder;
+	}
+
+	/**
+	 * Return the authenticated Portable Clone package delivery service.
+	 */
+	public static function clone_package_delivery(): ?PackageDelivery {
+		return self::$clone_package_delivery;
 	}
 
 	/**

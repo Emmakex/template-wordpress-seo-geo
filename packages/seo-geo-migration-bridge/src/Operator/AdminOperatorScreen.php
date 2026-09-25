@@ -14,6 +14,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneDeliveryController;
 use SeoGeo\MigrationBridge\Clone\CloneInventory;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
@@ -23,6 +24,8 @@ use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
+use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
+use SeoGeo\MigrationBridge\Clone\PackageDelivery;
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
@@ -105,6 +108,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_database_export_result_notice(); ?>
 			<?php $this->render_clone_file_export_result_notice(); ?>
 			<?php $this->render_clone_package_result_notice(); ?>
+			<?php $this->render_clone_delivery_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -790,7 +794,151 @@ final class AdminOperatorScreen {
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_package_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 			</form>
+		<?php elseif ( 'complete' === $status && 'export' === ( $job['operation'] ?? null ) ) : ?>
+			<?php $this->render_clone_delivery_section( $job ); ?>
 		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after authenticated delivery/cleanup actions.
+	 */
+	private function render_clone_delivery_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified delivery action.
+		$status = isset( $_GET['seo_geo_clone_delivery'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_delivery'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'building' => 'clone_delivery_building',
+			'ready'    => 'clone_delivery_ready',
+			'expired'  => 'clone_delivery_expired',
+			'cleaning' => 'clone_delivery_cleaning',
+			'cleaned'  => 'clone_delivery_cleaned',
+			'blocked'  => 'clone_delivery_blocked',
+			default    => null,
+		};
+
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = in_array( $status, array( 'blocked', 'expired' ), true )
+			? 'notice notice-error'
+			: ( 'building' === $status || 'cleaning' === $status ? 'notice notice-info' : 'notice notice-success' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render authenticated package-delivery and retention controls.
+	 *
+	 * @param array<string,mixed> $job Clone job.
+	 */
+	private function render_clone_delivery_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$delivery = ( new DeliveryStateStore() )->get( $job_id );
+		$status   = is_array( $delivery ) ? (string) ( $delivery['status'] ?? 'pending' ) : 'pending';
+		$button   = 'pending' === $status ? 'clone_delivery_start' : 'clone_delivery_continue';
+		$expires  = is_array( $delivery ) ? (int) ( $delivery['expires_at'] ?? 0 ) : 0;
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_delivery_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_delivery_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th>
+					<td><code><?php echo esc_html( $status ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_delivery_files' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $delivery['archive_file_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_delivery_source_bytes' ) ); ?></th>
+					<td><?php echo esc_html( size_format( (int) ( $delivery['archive_source_bytes'] ?? 0 ) ) ); ?></td>
+				</tr>
+				<?php if ( 'ready' === $status ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_delivery_archive_bytes' ) ); ?></th>
+						<td><?php echo esc_html( size_format( (int) ( $delivery['archive_bytes'] ?? 0 ) ) ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_delivery_archive_hash' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $delivery['archive_sha256'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_delivery_expires' ) ); ?></th>
+						<td><?php echo esc_html( 0 < $expires ? wp_date( 'Y-m-d H:i:s T', $expires ) : '—' ); ?></td>
+					</tr>
+				<?php endif; ?>
+				<?php if ( 'cleaned' === $status ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_delivery_cleanup_count' ) ); ?></th>
+						<td><?php echo esc_html( (string) (int) ( $delivery['cleanup_deleted_count'] ?? 0 ) ); ?></td>
+					</tr>
+				<?php endif; ?>
+			</tbody>
+		</table>
+
+		<?php if ( in_array( $status, array( 'pending', 'building' ), true ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneDeliveryController::BUILD_ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneDeliveryController::NONCE_ACTION . ':build:' . $job_id ); ?>
+				<p>
+					<label for="seo-geo-clone-delivery-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_delivery_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-delivery-batch" name="delivery_batch_size">
+						<?php foreach ( array( 25, 50, 100, 200, 500 ) as $size ) : ?>
+							<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( PackageDelivery::DEFAULT_BATCH_FILES, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<label for="seo-geo-clone-delivery-megabytes"><strong><?php echo esc_html( $this->copy->text( 'clone_delivery_mb_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-delivery-megabytes" name="delivery_batch_megabytes">
+						<?php foreach ( array( 4, 8, 16, 32, 64, 128 ) as $megabytes ) : ?>
+							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 16, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_delivery_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'ready' === $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline-block;margin-right:1rem">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneDeliveryController::DOWNLOAD_ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneDeliveryController::NONCE_ACTION . ':download:' . $job_id ); ?>
+				<?php submit_button( $this->copy->text( 'clone_delivery_download' ), 'primary', 'submit', false ); ?>
+			</form>
+			<?php $this->render_clone_delivery_cleanup_form( $job_id ); ?>
+		<?php elseif ( in_array( $status, array( 'expired', 'cleaning', 'blocked' ), true ) ) : ?>
+			<?php $this->render_clone_delivery_cleanup_form( $job_id ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render one explicit destructive private-artifact cleanup form.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function render_clone_delivery_cleanup_form( string $job_id ): void {
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline-block">
+			<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneDeliveryController::CLEANUP_ACTION ); ?>">
+			<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+			<input type="hidden" name="cleanup_confirmation" value="cleanup">
+			<?php wp_nonce_field( AdminCloneDeliveryController::NONCE_ACTION . ':cleanup:' . $job_id ); ?>
+			<?php submit_button( $this->copy->text( 'clone_delivery_cleanup' ), 'secondary', 'submit', false ); ?>
+		</form>
 		<?php
 	}
 
