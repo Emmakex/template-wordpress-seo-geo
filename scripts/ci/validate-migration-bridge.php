@@ -530,7 +530,9 @@ foreach (
 	array(
 		'public const DEFAULT_BATCH_FILES = 100;',
 		'public const DEFAULT_BATCH_BYTES = 16777216;',
-		"'build', 'verify', 'complete'",
+		'private function start_verification_pass(',
+		"\$state['stage']                 = 'verify';",
+		"\$state['stage']                 = 'complete';",
 		"'package-exported-payload-mismatch'",
 		"'package-integrity-verification-failed'",
 		"'workspace-excluding-package-metadata'",
