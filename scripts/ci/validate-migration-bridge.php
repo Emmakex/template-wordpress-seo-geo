@@ -1095,32 +1095,64 @@ foreach (
 $import_file_staging = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStagingWorkspace.php' );
 foreach (
 	array(
-		"private const DIRECTORY_NAME = 'seo-geo-migration-stage';",
-		"private const ROOT_IDS       = array( 'uploads', 'plugins', 'themes' );",
-		'WP_CONTENT_DIR',
-		'stage_file(',
-		"'.seo-geo-part'",
-		"hash_file( 'sha256', \$temp )",
-		'@rename( $temp, $destination )',
-		'payload_summary( string $job_id )',
+		'private ExportWorkspace $workspace;',
+		'$this->workspace->destination_staging_ensure( $job_id )',
+		'$this->workspace->destination_stage_file(',
+		'$this->workspace->destination_staged_file_info( $job_id, $root_id, $relative )',
+		'$this->workspace->destination_staging_payload_summary( $job_id )',
+		'$this->workspace->destination_staging_cleanup( $job_id )',
 	) as $import_file_staging_guard
 ) {
 	if ( ! str_contains( $import_file_staging, $import_file_staging_guard ) ) {
 		fail_migration_bridge(
 			'portable-clone-import-file-staging-workspace',
-			'Portable Import file staging must remain deterministic, protected, atomic and job-owned.',
+			'Portable Import file staging facade must delegate every filesystem operation to ExportWorkspace.',
 			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStagingWorkspace.php',
 			$import_file_staging_guard,
 			'missing'
 		);
 	}
 }
+foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(' ) as $file_staging_mutation ) {
+	if ( str_contains( $import_file_staging, $file_staging_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-file-staging-facade',
+			'ImportFileStagingWorkspace must not bypass ExportWorkspace for filesystem writes.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStagingWorkspace.php',
+			'filesystem mutation through ExportWorkspace only',
+			$file_staging_mutation
+		);
+	}
+}
+
+foreach (
+	array(
+		"public const DESTINATION_STAGE_DIRECTORY_NAME = 'seo-geo-migration-stage';",
+		"private const DESTINATION_STAGE_ROOT_IDS = array( 'uploads', 'plugins', 'themes' );",
+		'WP_CONTENT_DIR',
+		'destination_stage_file(',
+		"'.seo-geo-part'",
+		"hash_file( 'sha256', \$temp )",
+		'@rename( $temp, $destination )',
+		'destination_staging_payload_summary( string $job_id )',
+	) as $destination_staging_guard
+) {
+	if ( ! str_contains( $export_workspace, $destination_staging_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-file-staging-authority',
+			'ExportWorkspace is missing a required destination-staging atomic/integrity boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
+			$destination_staging_guard,
+			'missing'
+		);
+	}
+}
 foreach ( array( 'WP_PLUGIN_DIR', 'get_theme_root(', 'wp_upload_dir(' ) as $active_root_primitive ) {
-	if ( str_contains( $import_file_staging, $active_root_primitive ) ) {
+	if ( str_contains( $export_workspace, $active_root_primitive ) ) {
 		fail_migration_bridge(
 			'portable-clone-import-file-no-active-target',
-			'10E.2A.4.4 staging workspace must not resolve or write active WordPress file roots.',
-			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStagingWorkspace.php',
+			'10E.2A.4.4 filesystem authority must not resolve active WordPress file roots.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
 			'job-owned wp-content staging only',
 			$active_root_primitive
 		);
