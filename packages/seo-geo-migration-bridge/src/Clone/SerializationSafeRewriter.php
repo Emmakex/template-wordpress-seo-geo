@@ -390,7 +390,7 @@ final class SerializationSafeRewriter {
 	private function normalize_replacements( array $replacements ): array {
 		$normalized = array();
 		foreach ( $replacements as $search => $replace ) {
-			if ( ! is_string( $search ) || ! is_string( $replace ) || '' === $search || $search === $replace ) {
+			if ( '' === $search || $search === $replace ) {
 				continue;
 			}
 			$normalized[ $search ] = $replace;
