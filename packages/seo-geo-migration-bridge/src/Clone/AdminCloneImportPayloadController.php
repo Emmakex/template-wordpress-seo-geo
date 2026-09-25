@@ -75,7 +75,7 @@ final class AdminCloneImportPayloadController {
 			);
 		}
 
-		$status = (string) ( $result['status'] ?? 'running' );
+		$status   = (string) ( $result['status'] ?? 'running' );
 		$redirect = add_query_arg(
 			array(
 				'seo_geo_clone_import_payload' => sanitize_key( $status ),
