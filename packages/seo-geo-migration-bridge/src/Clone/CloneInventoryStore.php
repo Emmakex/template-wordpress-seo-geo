@@ -129,29 +129,29 @@ final class CloneInventoryStore {
 		$roots = is_array( $state['roots'] ?? null ) ? $state['roots'] : array();
 
 		return array(
-			'schema_version' => self::SCHEMA_VERSION,
-			'job_id'         => $job_id,
-			'status'         => $status,
-			'database'       => is_array( $state['database'] ?? null ) ? $state['database'] : array(),
-			'roots'          => $roots,
-			'root_index'     => max( 0, (int) ( $state['root_index'] ?? 0 ) ),
-			'pending_dirs'   => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
-			'current_dir'    => is_string( $state['current_dir'] ?? null ) ? $this->bounded_path( $state['current_dir'] ) : '',
-			'after_name'     => is_string( $state['after_name'] ?? null ) ? $this->bounded_name( $state['after_name'] ) : '',
-			'file_count'     => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
-			'byte_count'     => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
-			'excluded_count' => max( 0, (int) ( $state['excluded_count'] ?? 0 ) ),
-			'symlink_count'  => max( 0, (int) ( $state['symlink_count'] ?? 0 ) ),
+			'schema_version'   => self::SCHEMA_VERSION,
+			'job_id'           => $job_id,
+			'status'           => $status,
+			'database'         => is_array( $state['database'] ?? null ) ? $state['database'] : array(),
+			'roots'            => $roots,
+			'root_index'       => max( 0, (int) ( $state['root_index'] ?? 0 ) ),
+			'pending_dirs'     => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
+			'current_dir'      => is_string( $state['current_dir'] ?? null ) ? $this->bounded_path( $state['current_dir'] ) : '',
+			'after_name'       => is_string( $state['after_name'] ?? null ) ? $this->bounded_name( $state['after_name'] ) : '',
+			'file_count'       => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
+			'byte_count'       => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
+			'excluded_count'   => max( 0, (int) ( $state['excluded_count'] ?? 0 ) ),
+			'symlink_count'    => max( 0, (int) ( $state['symlink_count'] ?? 0 ) ),
 			'unreadable_count' => max( 0, (int) ( $state['unreadable_count'] ?? 0 ) ),
-			'fingerprint'    => is_string( $state['fingerprint'] ?? null )
+			'fingerprint'      => is_string( $state['fingerprint'] ?? null )
 				&& 1 === preg_match( '/^[a-f0-9]{64}$/', $state['fingerprint'] )
 				? $state['fingerprint']
 				: hash( 'sha256', 'seo-geo-portable-clone-inventory-v1' ),
 			'fingerprint_scope' => 'database-structure-estimates+file-content',
-			'blockers'       => $this->normalize_codes( $state['blockers'] ?? array() ),
-			'started_at'     => is_string( $state['started_at'] ?? null ) ? substr( $state['started_at'], 0, 40 ) : '',
-			'updated_at'     => is_string( $state['updated_at'] ?? null ) ? substr( $state['updated_at'], 0, 40 ) : '',
-			'completed_at'   => is_string( $state['completed_at'] ?? null ) ? substr( $state['completed_at'], 0, 40 ) : '',
+			'blockers'          => $this->normalize_codes( $state['blockers'] ?? array() ),
+			'started_at'        => is_string( $state['started_at'] ?? null ) ? substr( $state['started_at'], 0, 40 ) : '',
+			'updated_at'        => is_string( $state['updated_at'] ?? null ) ? substr( $state['updated_at'], 0, 40 ) : '',
+			'completed_at'      => is_string( $state['completed_at'] ?? null ) ? substr( $state['completed_at'], 0, 40 ) : '',
 		);
 	}
 
@@ -208,6 +208,8 @@ final class CloneInventoryStore {
 
 	/**
 	 * Bound one relative directory path.
+	 *
+	 * @param string $path Relative directory path.
 	 */
 	private function bounded_path( string $path ): string {
 		$path = wp_normalize_path( $path );
@@ -221,6 +223,8 @@ final class CloneInventoryStore {
 
 	/**
 	 * Bound one directory entry name.
+	 *
+	 * @param string $name Directory entry name.
 	 */
 	private function bounded_name( string $name ): string {
 		if ( 255 < strlen( $name ) || str_contains( $name, '/' ) || str_contains( $name, '\\' ) ) {
@@ -254,6 +258,8 @@ final class CloneInventoryStore {
 
 	/**
 	 * Validate a clone job identifier.
+	 *
+	 * @param string $job_id Clone job identifier.
 	 */
 	private function valid_job_id( string $job_id ): bool {
 		return 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/', $job_id );
