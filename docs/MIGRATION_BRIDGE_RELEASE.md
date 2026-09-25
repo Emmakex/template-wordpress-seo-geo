@@ -136,3 +136,12 @@ Schema/chunk files are reread from the verified private extraction and checked a
 Phase 10E.2A.4.4 starts only after 0.8.17 database staging restore is complete and the current destination still passes the verified-payload runtime guard. The Bridge copies manifest-backed `uploads`, `plugins` and `themes` files from the private extracted package into the job-owned `import/staged-files` tree. It never resolves or writes the active WordPress uploads/plugins/themes roots in this phase.
 
 Every copied file is checked against its `files-meta` record and extracted SHA-256. After the copy traversal reconciles exact file/byte totals, a second resumable traversal re-hashes staged files and rejects missing, extra, symlinked or modified payload. Administrator controls use a 1–20 files/request selector plus a bounded byte budget. Environment rewrite, activation/promotion of staged files and final sandbox hardening remain later phases.
+
+
+### Version 0.8.19 — serialization-safe environment rewrite
+
+Phase 10E.2A.4.5 starts only after verified database and file staging have completed. It derives a fresh deterministic staging-table plan from the accepted database manifest and rewrites only supported WordPress environment surfaces (`options`, posts/content and core meta/comment/taxonomy text columns) inside job-owned staging tables. Active destination tables and active/staged file payloads are not activation targets in this phase.
+
+`home` and `siteurl` are rewritten only when they still equal package source evidence. Other same-origin absolute URLs are mapped to the current destination while preserving path/query/fragment. Supported PHP serialized values are decoded with classes disabled and re-serialized after recursive changes so length metadata remains valid; JSON object/array containers are decoded/re-encoded structurally. Raw search/replace over serialized bytes is forbidden. Serialized-looking values that cannot be safely decoded are left untouched only when they contain no source-environment URL; otherwise the batch blocks. Credential/token-like option/meta keys are never rewritten and are reported as advisories.
+
+Every mutating batch is transactional together with its resumable cursor state. After the rewrite pass, a second read-only pass runs the same transformation logic and must find zero remaining supported source-environment rewrites before completion. Sandbox promotion/activation remains outside 0.8.19 and belongs to 10E.2A.4.6.
