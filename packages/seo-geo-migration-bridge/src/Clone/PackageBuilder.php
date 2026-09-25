@@ -20,7 +20,7 @@ final class PackageBuilder {
 	public const MAX_BATCH_BYTES     = 134217728;
 	public const DEFAULT_BATCH_BYTES = 16777216;
 
-	private const CHECKSUM_SEED          = 'seo-geo-portable-clone-package-v1';
+	private const CHECKSUM_SEED           = 'seo-geo-portable-clone-package-v1';
 	private const MAX_PENDING_DIRECTORIES = 50000;
 	private const MAX_ENTRY_OPERATIONS    = 8000;
 
@@ -143,8 +143,8 @@ final class PackageBuilder {
 			return null;
 		}
 
-		$seed = hash( 'sha256', self::CHECKSUM_SEED );
-		$now  = gmdate( DATE_ATOM );
+		$seed  = hash( 'sha256', self::CHECKSUM_SEED );
+		$now   = gmdate( DATE_ATOM );
 		$state = array(
 			'schema_version'         => PackageStateStore::SCHEMA_VERSION,
 			'job_id'                 => $job_id,
@@ -540,8 +540,8 @@ final class PackageBuilder {
 
 			$record = json_decode( $record_json, true );
 			return is_array( $record )
-				&& $relative === (string) ( $record['payload_path'] ?? '' )
-				&& $bytes === (int) ( $record['byte_count'] ?? -1 )
+				&& (string) ( $record['payload_path'] ?? '' ) === $relative
+				&& (int) ( $record['byte_count'] ?? -1 ) === $bytes
 				&& hash_equals( (string) ( $record['sha256'] ?? '' ), $hash );
 		}
 
@@ -607,9 +607,9 @@ final class PackageBuilder {
 	 * Add one validated expected database payload record.
 	 *
 	 * @param array<string,array{bytes:int,sha256:string}> $expected Expected records.
-	 * @param mixed                                         $path     Raw relative path.
-	 * @param mixed                                         $bytes    Raw bytes.
-	 * @param mixed                                         $hash     Raw SHA-256.
+	 * @param mixed                                        $path     Raw relative path.
+	 * @param mixed                                        $bytes    Raw bytes.
+	 * @param mixed                                        $hash     Raw SHA-256.
 	 */
 	private function add_expected_record( array &$expected, mixed $path, mixed $bytes, mixed $hash ): void {
 		if (
