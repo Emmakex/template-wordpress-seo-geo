@@ -307,6 +307,23 @@ $good_mid = $verifier->advance( 'clone-import-payload-good-0001', 1, 1048576 );
 $good_payload = $run_until_terminal( 'clone-import-payload-good-0001' );
 $good_import = ( new ImportStateStore() )->get( 'clone-import-payload-good-0001' );
 
+$drift_archive = $build_archive( 'clone-import-payload-source-drift-0001', false );
+$drift_job = $jobs->create( 'import', 'clone-import-payload-drift-0001' );
+if (
+	! is_array( $drift_job )
+	|| ! is_array( $preflight->stage( 'clone-import-payload-drift-0001', $drift_archive['path'] ) )
+) {
+	throw new RuntimeException( 'Could not stage destination-drift payload fixture.' );
+}
+$drift_preflight = $preflight->validate( 'clone-import-payload-drift-0001' );
+if ( ! is_array( $drift_preflight ) || 'preflight-ready' !== ( $drift_preflight['status'] ?? null ) ) {
+	throw new RuntimeException( 'Destination-drift fixture did not pass initial preflight.' );
+}
+update_option( 'blog_public', '1' );
+$drift_payload = $run_until_terminal( 'clone-import-payload-drift-0001' );
+$drift_import = ( new ImportStateStore() )->get( 'clone-import-payload-drift-0001' );
+update_option( 'blog_public', '0' );
+
 $bad_archive = $build_archive( 'clone-import-payload-source-bad-0001', true );
 $bad_job = $jobs->create( 'import', 'clone-import-payload-bad-0001' );
 if (
@@ -341,6 +358,8 @@ echo wp_json_encode(
 		'good_checksum'             => $good_archive['checksum'],
 		'good_private_root'         => is_string( $good_root ) && str_contains( $good_root, '/import/extracted/' ),
 		'good_extracted_file'       => $good_file,
+		'drift_payload'             => $drift_payload,
+		'drift_import'              => $drift_import,
 		'bad_payload'               => $bad_payload,
 		'bad_import'                => $bad_import,
 		'payload_state_autoload'    => $autoload,
@@ -353,8 +372,10 @@ echo wp_json_encode(
 foreach (
 	array(
 		'clone-import-payload-good-0001',
+		'clone-import-payload-drift-0001',
 		'clone-import-payload-bad-0001',
 		'clone-import-payload-source-good-0001',
+		'clone-import-payload-source-drift-0001',
 		'clone-import-payload-source-bad-0001',
 	) as $cleanup_job
 ) {
@@ -406,6 +427,15 @@ assert "restore-runtime-guard-required" in good_import["advisories"]
 assert payload["good_private_root"] is True
 assert payload["good_extracted_file"]["bytes"] > 0
 
+drift = payload["drift_payload"]
+assert drift["status"] == "complete"
+assert drift["stage"] == "complete"
+drift_import = payload["drift_import"]
+assert drift_import["status"] == "blocked"
+assert drift_import["full_payload_verified"] is False
+assert drift_import["restore_allowed"] is False
+assert "import-search-visibility-not-disabled" in drift_import["blockers"]
+
 bad = payload["bad_payload"]
 assert bad["status"] == "blocked"
 assert "import-payload-checksum-mismatch" in bad["blockers"]
@@ -424,4 +454,4 @@ PY
   fail_smoke "clone-import-payload-contract" "Portable Import full payload verification contract is invalid" "resumable private extraction + exact checksum replay + mismatch blocker" "${IMPORT_PAYLOAD_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Import payload verification OK: bounded private extraction resumed, exact checksum unlocked restore eligibility, checksum mismatch kept restore blocked.\n'
+printf '[smoke] Portable Import payload verification OK: bounded private extraction resumed, exact checksum unlocked restore eligibility only after fresh destination preflight, destination drift and checksum mismatch kept restore blocked.\n'
