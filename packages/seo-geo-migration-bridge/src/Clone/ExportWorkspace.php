@@ -783,6 +783,155 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Prepare the job-owned staging file tree without generated guard files inside it.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	public function prepare_import_file_staging( string $job_id ): ?string {
+		$root = $this->ensure( $job_id );
+		if ( null === $root ) {
+			return null;
+		}
+
+		$path = trailingslashit( $root ) . 'import/staged-files';
+		if ( is_link( $path ) ) {
+			return null;
+		}
+		if ( ! is_dir( $path ) && ! wp_mkdir_p( $path ) ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restricts only the job-owned staging tree.
+		@chmod( $path, 0700 );
+
+		return trailingslashit( wp_normalize_path( $path ) );
+	}
+
+	/**
+	 * Return the existing job-owned staging file tree.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	public function import_file_staging_root( string $job_id ): ?string {
+		$root = $this->root_path( $job_id );
+		if ( null === $root ) {
+			return null;
+		}
+
+		$path = trailingslashit( $root ) . 'import/staged-files/';
+		return is_dir( $path ) && ! is_link( $path ) && str_starts_with( $path, trailingslashit( $root ) )
+			? wp_normalize_path( $path )
+			: null;
+	}
+
+	/**
+	 * Atomically copy one already-verified extracted file into job-owned staging.
+	 *
+	 * @param string $job_id   Clone job identifier.
+	 * @param string $root_id  Portable file root.
+	 * @param string $relative Root-relative path.
+	 * @return array{path:string,bytes:int,sha256:string}|null
+	 */
+	public function stage_import_payload_file( string $job_id, string $root_id, string $relative ): ?array {
+		if ( ! in_array( $root_id, array( 'uploads', 'plugins', 'themes' ), true ) ) {
+			return null;
+		}
+
+		$relative = $this->normalize_archive_relative( $relative );
+		$source   = $this->import_extracted_file_info( $job_id, 'files/' . $root_id . '/' . $relative );
+		$staging  = $this->prepare_import_file_staging( $job_id );
+		if ( '' === $relative || null === $source || null === $staging ) {
+			return null;
+		}
+
+		$target = wp_normalize_path( $staging . $root_id . '/' . $relative );
+		if ( ! str_starts_with( $target, trailingslashit( wp_normalize_path( $staging ) ) ) ) {
+			return null;
+		}
+
+		$parent = dirname( $target );
+		if ( ! is_dir( $parent ) && ! wp_mkdir_p( $parent ) ) {
+			return null;
+		}
+
+		$temp = $target . '.tmp-' . wp_generate_password( 12, false, false );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_copy -- Copies only from verified job-owned extraction into job-owned staging.
+		if ( ! copy( $source['path'], $temp ) ) {
+			return null;
+		}
+
+		$bytes = filesize( $temp );
+		$hash  = hash_file( 'sha256', $temp );
+		if (
+			false === $bytes
+			|| false === $hash
+			|| (int) $source['bytes'] !== (int) $bytes
+			|| ! hash_equals( (string) $source['sha256'], $hash )
+		) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only failed job-owned staging temp file.
+			@unlink( $temp );
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restricts only job-owned staging temp file.
+		@chmod( $temp, 0600 );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic move remains inside job-owned staging.
+		if ( ! rename( $temp, $target ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only failed job-owned staging temp file.
+			@unlink( $temp );
+			return null;
+		}
+
+		return array(
+			'path'   => $root_id . '/' . $relative,
+			'bytes'  => (int) $bytes,
+			'sha256' => $hash,
+		);
+	}
+
+	/**
+	 * Return one staged file identity.
+	 *
+	 * @param string $job_id   Clone job identifier.
+	 * @param string $root_id  Portable file root.
+	 * @param string $relative Root-relative path.
+	 * @return array{path:string,bytes:int,sha256:string}|null
+	 */
+	public function import_staged_file_info( string $job_id, string $root_id, string $relative ): ?array {
+		if ( ! in_array( $root_id, array( 'uploads', 'plugins', 'themes' ), true ) ) {
+			return null;
+		}
+
+		$relative = $this->normalize_archive_relative( $relative );
+		$staging  = $this->import_file_staging_root( $job_id );
+		if ( '' === $relative || null === $staging ) {
+			return null;
+		}
+
+		$path = wp_normalize_path( $staging . $root_id . '/' . $relative );
+		if (
+			! str_starts_with( $path, trailingslashit( wp_normalize_path( $staging ) ) )
+			|| ! is_file( $path )
+			|| ! is_readable( $path )
+			|| is_link( $path )
+		) {
+			return null;
+		}
+
+		$bytes = filesize( $path );
+		$hash  = hash_file( 'sha256', $path );
+		if ( false === $bytes || false === $hash ) {
+			return null;
+		}
+
+		return array(
+			'path'   => $path,
+			'bytes'  => (int) $bytes,
+			'sha256' => $hash,
+		);
+	}
+
+	/**
 	 * Delete only the private workspace owned by one clone job.
 	 *
 	 * @param string $job_id Clone job identifier.
