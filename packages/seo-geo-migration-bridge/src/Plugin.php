@@ -12,12 +12,15 @@ namespace SeoGeo\MigrationBridge;
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\CloneInventory;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DestinationSafetyPlanner;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
+use SeoGeo\MigrationBridge\Clone\FileExporter;
+use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
 use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
@@ -206,6 +209,27 @@ final class Plugin {
 	private static ?AdminCloneDatabaseExportController $clone_database_export_controller = null;
 
 	/**
+	 * Portable Clone file export-state store singleton.
+	 *
+	 * @var FileExportStateStore|null
+	 */
+	private static ?FileExportStateStore $clone_file_export_state_store = null;
+
+	/**
+	 * Portable Clone file exporter singleton.
+	 *
+	 * @var FileExporter|null
+	 */
+	private static ?FileExporter $clone_file_exporter = null;
+
+	/**
+	 * Portable Clone file export controller singleton.
+	 *
+	 * @var AdminCloneFileExportController|null
+	 */
+	private static ?AdminCloneFileExportController $clone_file_export_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -246,6 +270,9 @@ final class Plugin {
 		self::$clone_export_state_store         ??= new ExportStateStore();
 		self::$clone_database_exporter          ??= new DatabaseExporter( self::$clone_export_state_store, self::$clone_inventory_store, self::$clone_job_store );
 		self::$clone_database_export_controller ??= new AdminCloneDatabaseExportController( self::$clone_database_exporter );
+		self::$clone_file_export_state_store     ??= new FileExportStateStore();
+		self::$clone_file_exporter               ??= new FileExporter( self::$clone_file_export_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_job_store );
+		self::$clone_file_export_controller      ??= new AdminCloneFileExportController( self::$clone_file_exporter );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -263,6 +290,7 @@ final class Plugin {
 		self::$clone_controller->boot();
 		self::$clone_inventory_controller->boot();
 		self::$clone_database_export_controller->boot();
+		self::$clone_file_export_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -355,6 +383,13 @@ final class Plugin {
 	 */
 	public static function clone_database_exporter(): ?DatabaseExporter {
 		return self::$clone_database_exporter;
+	}
+
+	/**
+	 * Return the resumable Portable Clone file exporter.
+	 */
+	public static function clone_file_exporter(): ?FileExporter {
+		return self::$clone_file_exporter;
 	}
 
 	/**
