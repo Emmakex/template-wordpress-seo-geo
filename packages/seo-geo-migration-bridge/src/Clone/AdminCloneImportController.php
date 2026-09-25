@@ -98,10 +98,11 @@ final class AdminCloneImportController {
 	 * Validate the HTTP-uploaded ZIP and return its temporary path.
 	 */
 	private function validated_upload_path(): ?string {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Caller validates the job-scoped nonce before this helper is invoked.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Caller already verified the job-scoped nonce; raw upload metadata is validated field-by-field below.
 		$upload = isset( $_FILES['clone_package'] ) && is_array( $_FILES['clone_package'] )
 			? $_FILES['clone_package']
 			: null;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! is_array( $upload ) ) {
 			return null;
 		}
