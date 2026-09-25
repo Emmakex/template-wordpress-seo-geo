@@ -160,8 +160,8 @@ final class PackageDelivery {
 			return null;
 		}
 
-		$now = gmdate( DATE_ATOM );
-		$manifest['delivery'] = array(
+		$now                                  = gmdate( DATE_ATOM );
+		$manifest['delivery']                 = array(
 			'format'             => 'zip',
 			'authenticated_only' => true,
 			'public_url'         => false,
@@ -336,7 +336,7 @@ final class PackageDelivery {
 					return $this->block( $job_id, $state, 'delivery-source-hash-failed', true );
 				}
 
-				$batch[] = array(
+				$batch[]             = array(
 					'relative' => $relative,
 					'path'     => $path,
 					'bytes'    => (int) $bytes,
@@ -395,7 +395,7 @@ final class PackageDelivery {
 					continue;
 				}
 
-				$canonical = 'payload|' . wp_normalize_path( (string) $record['relative'] )
+				$canonical                      = 'payload|' . wp_normalize_path( (string) $record['relative'] )
 					. '|' . (string) (int) $record['bytes']
 					. '|' . (string) $record['sha256'];
 				$state['verification_checksum'] = $this->chain_hash( (string) $state['verification_checksum'], $canonical );
@@ -630,8 +630,8 @@ final class PackageDelivery {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code, bool $retryable ): ?array {
-		$blockers          = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
-		$blockers[]        = $code;
+		$blockers            = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers[]          = $code;
 		$state['blockers']   = array_values( array_unique( $blockers ) );
 		$state['status']     = 'blocked';
 		$state['updated_at'] = gmdate( DATE_ATOM );
