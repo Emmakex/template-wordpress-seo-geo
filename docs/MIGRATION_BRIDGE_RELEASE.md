@@ -145,3 +145,12 @@ Phase 10E.2A.4.5 starts only after verified database and file staging have compl
 `home` and `siteurl` are rewritten only when they still equal package source evidence. Other same-origin absolute URLs are mapped to the current destination while preserving path/query/fragment. Supported PHP serialized values are decoded with classes disabled and re-serialized after recursive changes so length metadata remains valid; JSON object/array containers are decoded/re-encoded structurally. Raw search/replace over serialized bytes is forbidden. Serialized-looking values that cannot be safely decoded are left untouched only when they contain no source-environment URL; otherwise the batch blocks. Credential/token-like option/meta keys are never rewritten and are reported as advisories.
 
 Every mutating batch is transactional together with its resumable cursor state. After the rewrite pass, a second read-only pass runs the same transformation logic and must find zero remaining supported source-environment rewrites before completion. Sandbox promotion/activation remains outside 0.8.19 and belongs to 10E.2A.4.6.
+
+
+### Version 0.8.20 — sandbox activation plan + recovery contract
+
+Phase 10E.2A.4.6.1 is intentionally non-mutating. After the 0.8.19 environment rewrite completes, Migration Bridge re-runs the fresh import preflight, requires payload/database/file/rewrite states to remain complete and identity-consistent, rescans the private staged file tree, and derives the exact database staging → target → deterministic rollback-table map.
+
+Activation planning requires the sandbox marker, noindex state, outbound safety, backup-ready marker, explicit import-target authorization and subdirectory storage isolation when applicable. In addition, the operator must supply fresh external recovery evidence (reference, SHA-256, timestamp, scope and size) for a full database backup and the full wp-content tree. Recovery evidence older than 24 hours blocks the plan.
+
+The planner performs no SQL/file activation and persists `database_activation_allowed=false`, `file_activation_allowed=false` and `mutations_performed=false` even when the plan is ready. Database swaps, file-root promotion and final activated-target verification are separate 10E.2A.4.6 subphases so each destructive boundary can have its own nonce, runtime guard and rollback evidence.
