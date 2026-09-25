@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.1 — local-clone destination plan + ownership contract in Migration Bridge 0.8.23.** Migration Bridge 0.8.22 is accepted on `main` at `d985cf362d1b569ee4324c48a508facb32b8cb1b`: reversible database activation, same-filesystem file promotion, final active-root verification and rollback are complete. 0.8.23 now starts the direct same-server path by freezing a verified-package-bound destination contract for `/nuevaweb/` before any target mutation: absolute path, same-origin URL, isolated table prefix, capacity estimate, package/source fingerprints and target ownership state are all explicit. Production/self targets, live prefixes, payload overlap and non-empty unowned targets remain blocked.
+Current execution pointer: **10E.2A.5.2.1 — isolated target ownership/recovery bootstrap in Migration Bridge 0.8.24.** Migration Bridge 0.8.23 is accepted on `main` at `0da6ec5ed055ada635ad750cd684b7e76982205c`: the verified `local-clone` package can now be bound to an immutable isolated `/nuevaweb/` destination contract. 0.8.24 performs the first controlled target mutation only after revalidating that contract: it claims the exact empty destination with a deterministic job marker and external bounded state, records whether the directory was created by the job, and allows safe release only while that marker remains the sole target entry. WordPress runtime files and database tables are still untouched; bounded runtime copy is the next execution pointer.
+
+Migration Bridge v0.8.23 / 10E.2A.5.1 acceptance evidence:
+
+- PR #147 merged to `main` as `0da6ec5ed055ada635ad750cd684b7e76982205c`;
+- Foundation CI `36176018343` passed;
+- Phase 1 Package CI `36176018420` passed;
+- PHP Quality CI `36176018314` passed;
+- WordPress Smoke CI `36176018333` passed, including ready `/nuevaweb/` planning plus production/live-prefix/non-empty-target rejection;
+- Accessibility & Responsive CI `36176018349` passed;
+- Performance Baseline CI `36176018337` passed;
+- Migration Bridge Release CI `36176018389` passed.
 
 Migration Bridge v0.8.22 / 10E.2A.4.6.3 acceptance evidence:
 
@@ -2318,7 +2329,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 through 10E.2A.4.6.3 accepted; 10E.2A.5.1 local-clone destination plan + ownership contract is the 0.8.23 candidate**
+Status: **active — 10E.2A.1 through 10E.2A.5.1 accepted; 10E.2A.5.2.1 target ownership/recovery bootstrap is the 0.8.24 candidate**
 
 Purpose:
 
@@ -2348,8 +2359,10 @@ Implementation sequence:
 - **10E.2A.4.6.2 — Reversible database activation**: complete in 0.8.21 with external recovery journal, noindex/control-plane preservation and atomic reverse rename;
 - **10E.2A.4.6.3 — Reversible file promotion + final target verification**: complete in 0.8.22; PR #146 merged as `d985cf362d1b569ee4324c48a508facb32b8cb1b`;
 - **10E.2A.4 — Portable import**: complete through guarded database/file activation and final integrity verification;
-- **10E.2A.5.1 — Local clone destination plan + ownership contract**: active in 0.8.23; bind a completed verified package to an explicit isolated same-server path/URL/table-prefix/capacity contract, allow same-origin `/nuevaweb/`, reject production/payload overlap/non-empty unowned targets and perform zero target mutation;
-- **10E.2A.5.2 — Isolated target bootstrap**: planned; provision only from an accepted 5.1 contract, establish job ownership/recovery markers and an independent WordPress runtime without duplicating export/import logic;
+- **10E.2A.5.1 — Local clone destination plan + ownership contract**: complete in 0.8.23; PR #147 merged as `0da6ec5ed055ada635ad750cd684b7e76982205c`, binding a verified package to an immutable isolated same-server path/URL/table-prefix/capacity contract with zero target mutation;
+- **10E.2A.5.2.1 — Target ownership + recovery marker**: active in 0.8.24; revalidate the immutable 5.1 plan/package immediately before the first filesystem mutation, claim only an empty exact target with a deterministic job marker, reject drift/symlinks/tamper and allow release only while no runtime entries exist;
+- **10E.2A.5.2.2 — Bounded independent WordPress runtime copy + sandbox config/hardening**: planned; copy only core runtime + Migration Bridge in resumable verified batches, create isolated target config/control markers, and keep database/content import delegated to existing 10E.2A.4 primitives;
+- **10E.2A.5.2 — Isolated target bootstrap**: active through 5.2.1;
 - **10E.2A.5.3 — Local package handoff + sandbox preflight**: planned; hand the verified package to the existing import pipeline in the target runtime and require sandbox hardening/readiness before completion;
 - **10E.2A.5 — Local clone orchestration**: active; direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
 - **10E.2A.6 — Emmake real clone acceptance**: create/verify the actual `emmake.com/nuevaweb/` clone, preserve baseline/dependency/review evidence and require sandbox `ready=true`.

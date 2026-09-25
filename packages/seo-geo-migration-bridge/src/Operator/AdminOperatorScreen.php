@@ -11,6 +11,7 @@ namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPlanController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBootstrapController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -28,6 +29,7 @@ use SeoGeo\MigrationBridge\Clone\CloneInventory;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -133,6 +135,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_file_export_result_notice(); ?>
 			<?php $this->render_clone_package_result_notice(); ?>
 			<?php $this->render_clone_local_plan_result_notice(); ?>
+			<?php $this->render_clone_local_bootstrap_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -918,6 +921,88 @@ final class AdminOperatorScreen {
 			</form>
 		<?php else : ?>
 			<p class="notice notice-info inline"><?php echo esc_html( $this->copy->text( 'clone_local_plan_next' ) ); ?></p>
+			<?php $this->render_clone_local_bootstrap_section( $job ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after local-clone target ownership actions.
+	 */
+	private function render_clone_local_bootstrap_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_bootstrap'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_bootstrap'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'claimed'  => 'clone_local_bootstrap_claimed',
+			'blocked'  => 'clone_local_bootstrap_blocked',
+			'released' => 'clone_local_bootstrap_released',
+			default    => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : 'notice notice-success';
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the local-clone target ownership/recovery contract.
+	 *
+	 * @param array<string,mixed> $job Clone job.
+	 */
+	private function render_clone_local_bootstrap_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneBootstrapStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_owned' ) ); ?></th><td><?php echo esc_html( true === ( $state['target_owned'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_created' ) ); ?></th><td><?php echo esc_html( true === ( $state['target_created'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_marker' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['marker_relative_path'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_marker_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['marker_sha256'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_source_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['production_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_db_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['database_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php if ( 'claimed' !== $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalBootstrapController::CLAIM_ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalBootstrapController::NONCE_ACTION . ':' . AdminCloneLocalBootstrapController::CLAIM_ACTION . ':' . $job_id ); ?>
+				<p><label><input type="checkbox" name="local_clone_bootstrap_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_confirm' ) ); ?></label></p>
+				<?php submit_button( $this->copy->text( 'clone_local_bootstrap_claim' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php else : ?>
+			<p class="notice notice-info inline"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_next' ) ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalBootstrapController::RELEASE_ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalBootstrapController::NONCE_ACTION . ':' . AdminCloneLocalBootstrapController::RELEASE_ACTION . ':' . $job_id ); ?>
+				<p><label><input type="checkbox" name="local_clone_bootstrap_release_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_release_confirm' ) ); ?></label></p>
+				<?php submit_button( $this->copy->text( 'clone_local_bootstrap_release' ), 'secondary', 'submit', false ); ?>
+			</form>
 		<?php endif; ?>
 		<?php
 	}

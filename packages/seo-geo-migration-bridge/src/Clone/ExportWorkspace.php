@@ -239,6 +239,139 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Prepare one exact empty local-clone target directory.
+	 *
+	 * @param string $target Absolute target directory.
+	 * @return array{path:string,created:bool}|null
+	 */
+	public function prepare_local_clone_target( string $target ): ?array {
+		$target = untrailingslashit( wp_normalize_path( $target ) );
+		if ( '' === $target || is_link( $target ) ) {
+			return null;
+		}
+
+		$created = false;
+		if ( file_exists( $target ) ) {
+			if ( ! is_dir( $target ) || ! $this->directory_empty( $target ) ) {
+				return null;
+			}
+		} else {
+			$parent = dirname( $target );
+			if ( ! is_dir( $parent ) || is_link( $parent ) || ! wp_mkdir_p( $target ) ) {
+				return null;
+			}
+			$created = true;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive local clone target permissions.
+		@chmod( $target, 0750 );
+
+		return array(
+			'path'    => $target,
+			'created' => $created,
+		);
+	}
+
+	/**
+	 * Atomically write one deterministic local-clone ownership marker.
+	 *
+	 * @param string $target   Absolute owned target directory.
+	 * @param string $relative Marker basename.
+	 * @param string $content  Marker bytes.
+	 * @return array{path:string,bytes:int,sha256:string}|null
+	 */
+	public function write_local_clone_marker( string $target, string $relative, string $content ): ?array {
+		$target   = untrailingslashit( wp_normalize_path( $target ) );
+		$relative = basename( wp_normalize_path( $relative ) );
+		if ( '' === $target || '' === $relative || ! is_dir( $target ) || is_link( $target ) ) {
+			return null;
+		}
+
+		$path = trailingslashit( $target ) . $relative;
+		if ( file_exists( $path ) || is_link( $path ) ) {
+			return null;
+		}
+
+		$temp = $path . '.tmp-' . wp_generate_password( 12, false, false );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Atomic write is bounded to the exact prevalidated local clone target.
+		$written = file_put_contents( $temp, $content, LOCK_EX );
+		if ( false === $written || strlen( $content ) !== $written ) {
+			if ( is_file( $temp ) ) {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed target-owned temp marker.
+				@unlink( $temp );
+			}
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive target marker permissions.
+		@chmod( $temp, 0600 );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic rename stays inside the exact prevalidated local clone target.
+		if ( ! rename( $temp, $path ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed target-owned temp marker.
+			@unlink( $temp );
+			return null;
+		}
+
+		$hash = hash_file( 'sha256', $path );
+		if ( false === $hash ) {
+			return null;
+		}
+
+		return array(
+			'path'   => $path,
+			'bytes'  => $written,
+			'sha256' => $hash,
+		);
+	}
+
+	/**
+	 * Delete one exact verified local-clone ownership marker.
+	 *
+	 * @param string $target          Absolute owned target directory.
+	 * @param string $relative        Marker basename.
+	 * @param string $expected_sha256 Accepted marker hash.
+	 */
+	public function delete_local_clone_marker( string $target, string $relative, string $expected_sha256 ): bool {
+		$target   = untrailingslashit( wp_normalize_path( $target ) );
+		$relative = basename( wp_normalize_path( $relative ) );
+		$path     = trailingslashit( $target ) . $relative;
+		if (
+			'' === $target
+			|| '' === $relative
+			|| ! is_dir( $target )
+			|| is_link( $target )
+			|| ! is_file( $path )
+			|| is_link( $path )
+			|| 1 !== preg_match( '/^[a-f0-9]{64}$/', $expected_sha256 )
+		) {
+			return false;
+		}
+
+		$hash = hash_file( 'sha256', $path );
+		if ( false === $hash || ! hash_equals( $expected_sha256, $hash ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Deletes only the exact verified job ownership marker.
+		return @unlink( $path );
+	}
+
+	/**
+	 * Remove one exact local-clone target only when it is empty.
+	 *
+	 * @param string $target Absolute target directory.
+	 */
+	public function remove_empty_local_clone_target( string $target ): bool {
+		$target = untrailingslashit( wp_normalize_path( $target ) );
+		if ( '' === $target || ! is_dir( $target ) || is_link( $target ) || ! $this->directory_empty( $target ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Removes only a prevalidated empty local clone target.
+		return @rmdir( $target );
+	}
+
+	/**
 	 * Prepare one empty same-filesystem candidate directory for file promotion.
 	 *
 	 * @param string $candidate Absolute candidate directory.
@@ -1182,6 +1315,17 @@ final class ExportWorkspace {
 			return '';
 		}
 		return $relative;
+	}
+
+	/**
+	 * Whether one directory is empty.
+	 *
+	 * @param string $path Absolute directory path.
+	 */
+	private function directory_empty( string $path ): bool {
+		$entries = scandir( $path, SCANDIR_SORT_ASCENDING );
+
+		return is_array( $entries ) && array() === array_values( array_diff( $entries, array( '.', '..' ) ) );
 	}
 
 	/**

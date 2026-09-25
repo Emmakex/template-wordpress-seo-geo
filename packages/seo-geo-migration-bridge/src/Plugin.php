@@ -11,6 +11,7 @@ namespace SeoGeo\MigrationBridge;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPlanController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBootstrapController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -30,6 +31,8 @@ use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DestinationSafetyPlanner;
 use SeoGeo\MigrationBridge\Clone\LocalCloneOrchestrator;
 use SeoGeo\MigrationBridge\Clone\LocalCloneStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapper;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -241,6 +244,27 @@ final class Plugin {
 	 * @var AdminCloneLocalPlanController|null
 	 */
 	private static ?AdminCloneLocalPlanController $local_clone_plan_controller = null;
+
+	/**
+	 * Local-clone target ownership state store singleton.
+	 *
+	 * @var LocalCloneBootstrapStateStore|null
+	 */
+	private static ?LocalCloneBootstrapStateStore $local_clone_bootstrap_state_store = null;
+
+	/**
+	 * Local-clone target ownership bootstrapper singleton.
+	 *
+	 * @var LocalCloneBootstrapper|null
+	 */
+	private static ?LocalCloneBootstrapper $local_clone_bootstrapper = null;
+
+	/**
+	 * Local-clone target ownership controller singleton.
+	 *
+	 * @var AdminCloneLocalBootstrapController|null
+	 */
+	private static ?AdminCloneLocalBootstrapController $local_clone_bootstrap_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -557,6 +581,16 @@ final class Plugin {
 			self::$clone_job_store
 		);
 		self::$local_clone_plan_controller                  ??= new AdminCloneLocalPlanController( self::$local_clone_orchestrator );
+		self::$local_clone_bootstrap_state_store            ??= new LocalCloneBootstrapStateStore();
+		self::$local_clone_bootstrapper                     ??= new LocalCloneBootstrapper(
+			self::$local_clone_bootstrap_state_store,
+			self::$local_clone_state_store,
+			self::$destination_safety_planner,
+			self::$clone_package_state_store,
+			self::$clone_inventory_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_bootstrap_controller             ??= new AdminCloneLocalBootstrapController( self::$local_clone_bootstrapper );
 		self::$clone_delivery_state_store                   ??= new DeliveryStateStore();
 		self::$clone_package_delivery                       ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
 		self::$clone_delivery_controller                    ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
@@ -626,6 +660,7 @@ final class Plugin {
 		self::$clone_controller->boot();
 		self::$clone_inventory_controller->boot();
 		self::$local_clone_plan_controller->boot();
+		self::$local_clone_bootstrap_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -737,6 +772,20 @@ final class Plugin {
 	 */
 	public static function local_clone_orchestrator(): ?LocalCloneOrchestrator {
 		return self::$local_clone_orchestrator;
+	}
+
+	/**
+	 * Return the local-clone target ownership state store.
+	 */
+	public static function local_clone_bootstrap_state_store(): ?LocalCloneBootstrapStateStore {
+		return self::$local_clone_bootstrap_state_store;
+	}
+
+	/**
+	 * Return the local-clone target ownership bootstrapper.
+	 */
+	public static function local_clone_bootstrapper(): ?LocalCloneBootstrapper {
+		return self::$local_clone_bootstrapper;
 	}
 
 	/**
