@@ -618,10 +618,7 @@ final class ImportPreflight {
 		}
 
 		// WordPress Core PclZip exposes variadic extraction options not represented by the static stub.
-		$result = call_user_func_array( // @phpstan-ignore arguments.count
-			array( $archive, 'extract' ),
-			array( $by_name, $name, $as_string )
-		);
+		$result = $archive->extract( $by_name, $name, $as_string ); // @phpstan-ignore arguments.count
 		if ( ! is_array( $result ) ) {
 			return null;
 		}
