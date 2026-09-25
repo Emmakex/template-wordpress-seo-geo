@@ -149,7 +149,7 @@ final class ImportFilePromoter {
 				if ( ! $this->prepare_candidate_directory( $root ) ) {
 					return $this->block( $job_id, $state, 'file-promotion-candidate-create-failed' );
 				}
-				$root['status'] = 'copying';
+				$root['status']                 = 'copying';
 				$state['roots'][ $root_index ] = $root;
 			}
 
@@ -164,7 +164,7 @@ final class ImportFilePromoter {
 
 				$state['roots'][ $root_index ]['status']          = 'candidate-ready';
 				$state['roots'][ $root_index ]['candidate_ready'] = true;
-				$state = $this->advance_root_cursor( $state );
+				$state                                   = $this->advance_root_cursor( $state );
 				continue;
 			}
 
@@ -218,14 +218,14 @@ final class ImportFilePromoter {
 					return $this->block( $job_id, $state, 'file-promotion-candidate-copy-failed' );
 				}
 
-				$canonical = 'file|' . (string) $root['id'] . '|' . wp_normalize_path( $relative ) . '|'
+				$canonical                           = 'file|' . (string) $root['id'] . '|' . wp_normalize_path( $relative ) . '|'
 					. (string) $result['bytes'] . '|' . $result['sha256'];
 				$state['copy_fingerprint'] = $this->chain_hash( (string) $state['copy_fingerprint'], $canonical );
 				++$state['file_count'];
 				$state['byte_count'] = (int) $state['byte_count'] + $result['bytes'];
 				++$state['roots'][ $root_index ]['copied_files'];
 				$state['roots'][ $root_index ]['copied_bytes'] = (int) $state['roots'][ $root_index ]['copied_bytes'] + $result['bytes'];
-				$state['after_name'] = $entry;
+				$state['after_name']             = $entry;
 				++$processed_files;
 				$processed_bytes += $result['bytes'];
 
@@ -314,16 +314,16 @@ final class ImportFilePromoter {
 			return $this->rollback_internal( $job_id, $state, 'file-promotion-source-runtime-activate-failed' );
 		}
 
-		$state['status']              = 'verifying';
-		$state['root_index']          = 0;
-		$state['pending_dirs']        = array( '' );
-		$state['current_dir']         = '';
-		$state['after_name']          = '';
-		$state['verify_file_count']   = 0;
-		$state['verify_byte_count']   = 0;
-		$state['active_fingerprint']  = hash( 'sha256', self::FILE_SEED );
-		$state['promoted_at']         = gmdate( DATE_ATOM );
-		$state['updated_at']          = $state['promoted_at'];
+		$state['status']             = 'verifying';
+		$state['root_index']         = 0;
+		$state['pending_dirs']       = array( '' );
+		$state['current_dir']        = '';
+		$state['after_name']         = '';
+		$state['verify_file_count']  = 0;
+		$state['verify_byte_count']  = 0;
+		$state['active_fingerprint'] = hash( 'sha256', self::FILE_SEED );
+		$state['promoted_at']        = gmdate( DATE_ATOM );
+		$state['updated_at']         = $state['promoted_at'];
 
 		return $this->store->save( $job_id, $state ) ? $this->store->get( $job_id ) : null;
 	}
@@ -436,14 +436,14 @@ final class ImportFilePromoter {
 					return $this->rollback_internal( $job_id, $state, 'file-promotion-active-integrity-mismatch' );
 				}
 
-				$canonical = 'file|' . (string) $root['id'] . '|' . wp_normalize_path( $relative ) . '|'
+				$canonical                   = 'file|' . (string) $root['id'] . '|' . wp_normalize_path( $relative ) . '|'
 					. (string) $active_info['bytes'] . '|' . $active_info['sha256'];
 				$state['active_fingerprint'] = $this->chain_hash( (string) $state['active_fingerprint'], $canonical );
 				++$state['verify_file_count'];
 				$state['verify_byte_count'] = (int) $state['verify_byte_count'] + $active_info['bytes'];
 				++$state['roots'][ $root_index ]['verified_files'];
 				$state['roots'][ $root_index ]['verified_bytes'] = (int) $state['roots'][ $root_index ]['verified_bytes'] + $active_info['bytes'];
-				$state['after_name'] = $entry;
+				$state['after_name']                             = $entry;
 				++$processed_files;
 				$processed_bytes += $active_info['bytes'];
 
@@ -769,7 +769,7 @@ final class ImportFilePromoter {
 		$active_plugins   = get_option( 'active_plugins', array() );
 
 		return is_array( $active_plugins )
-			&& $expected_plugins === array_values( $active_plugins )
+			&& array_values( $active_plugins ) === $expected_plugins
 			&& (string) ( $runtime['template'] ?? '' ) === (string) get_option( 'template', '' )
 			&& (string) ( $runtime['stylesheet'] ?? '' ) === (string) get_option( 'stylesheet', '' );
 	}
@@ -836,9 +836,9 @@ final class ImportFilePromoter {
 	 * @param array<string,mixed> $root Root plan.
 	 */
 	private function root_layout( array $root ): string {
-		$active    = file_exists( untrailingslashit( (string) $root['active_path'] ) );
-		$candidate = file_exists( untrailingslashit( (string) $root['candidate_path'] ) );
-		$rollback  = file_exists( untrailingslashit( (string) $root['rollback_path'] ) );
+		$active     = file_exists( untrailingslashit( (string) $root['active_path'] ) );
+		$candidate  = file_exists( untrailingslashit( (string) $root['candidate_path'] ) );
+		$rollback   = file_exists( untrailingslashit( (string) $root['rollback_path'] ) );
 		$had_active = true === ( $root['active_existed'] ?? false );
 
 		if ( $candidate && $active === $had_active && ! $rollback ) {
@@ -918,12 +918,12 @@ final class ImportFilePromoter {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code ): ?array {
-		$blockers              = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers               = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[]            = $code;
-		$state['status']       = 'blocked';
-		$state['handoff_ready']= false;
-		$state['blockers']     = array_values( array_unique( $blockers ) );
-		$state['updated_at']   = gmdate( DATE_ATOM );
+		$state['status']        = 'blocked';
+		$state['handoff_ready'] = false;
+		$state['blockers']      = array_values( array_unique( $blockers ) );
+		$state['updated_at']    = gmdate( DATE_ATOM );
 
 		$this->store->save( $job_id, $state );
 		$this->jobs->transition( $job_id, 'failed-terminal', $code );
