@@ -1600,10 +1600,17 @@ final class AdminOperatorScreen {
 	 * @param string $job_id Clone job identifier.
 	 */
 	private function render_clone_database_activation_section( string $job_id ): void {
-		$state    = ( new ImportDatabaseActivationStateStore() )->get( $job_id );
-		$status   = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
-		$tables   = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
-		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$state            = ( new ImportDatabaseActivationStateStore() )->get( $job_id );
+		$status           = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$tables           = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
+		$blockers         = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$promotion        = ( new ImportFilePromotionStateStore() )->get( $job_id );
+		$promotion_status = is_array( $promotion ) ? (string) ( $promotion['status'] ?? '' ) : '';
+		$rollback_locked  = in_array(
+			$promotion_status,
+			array( 'prepared', 'copying', 'candidate-ready', 'promoting', 'verifying', 'verified' ),
+			true
+		);
 		?>
 		<h4><?php echo esc_html( $this->copy->text( 'clone_database_activation_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_database_activation_help' ) ); ?></p>
@@ -1638,7 +1645,7 @@ final class AdminOperatorScreen {
 				<?php wp_nonce_field( AdminCloneImportDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
 				<?php submit_button( $this->copy->text( 'clone_database_activation_activate' ), 'primary', 'submit', false ); ?>
 			</form>
-		<?php elseif ( in_array( $status, array( 'activated', 'activating' ), true ) ) : ?>
+		<?php elseif ( in_array( $status, array( 'activated', 'activating' ), true ) && ! $rollback_locked ) : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportDatabaseActivationController::ACTION ); ?>">
 				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
@@ -1647,6 +1654,8 @@ final class AdminOperatorScreen {
 				<?php wp_nonce_field( AdminCloneImportDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
 				<?php submit_button( $this->copy->text( 'clone_database_activation_rollback' ), 'secondary', 'submit', false ); ?>
 			</form>
+		<?php elseif ( in_array( $status, array( 'activated', 'activating' ), true ) && $rollback_locked ) : ?>
+			<p class="description"><strong><?php echo esc_html( $this->copy->text( 'clone_database_activation_rollback_locked' ) ); ?></strong></p>
 		<?php endif; ?>
 		<?php if ( 'activated' === $status ) : ?>
 			<?php $this->render_clone_file_promotion_section( $job_id ); ?>
