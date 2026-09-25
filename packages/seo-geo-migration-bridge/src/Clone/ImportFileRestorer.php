@@ -23,14 +23,66 @@ final class ImportFileRestorer {
 	private const MAX_PENDING_DIRECTORIES = 50000;
 	private const MAX_ENTRY_OPERATIONS    = 8000;
 
+	/**
+	 * File-restore state store.
+	 *
+	 * @var ImportFileStateStore
+	 */
 	private ImportFileStateStore $store;
+
+	/**
+	 * Import state store.
+	 *
+	 * @var ImportStateStore
+	 */
 	private ImportStateStore $import_state;
+
+	/**
+	 * Verified payload state store.
+	 *
+	 * @var ImportPayloadStateStore
+	 */
 	private ImportPayloadStateStore $payload_state;
+
+	/**
+	 * Database-staging state store.
+	 *
+	 * @var ImportDatabaseStateStore
+	 */
 	private ImportDatabaseStateStore $database_state;
+
+	/**
+	 * Clone job store.
+	 *
+	 * @var CloneJobStore
+	 */
 	private CloneJobStore $jobs;
+
+	/**
+	 * Fresh destination preflight service.
+	 *
+	 * @var ImportPreflight
+	 */
 	private ImportPreflight $preflight;
+
+	/**
+	 * Private workspace authority.
+	 *
+	 * @var ExportWorkspace
+	 */
 	private ExportWorkspace $workspace;
 
+	/**
+	 * Construct the resumable staging-file restorer.
+	 *
+	 * @param ImportFileStateStore|null     $store          Optional file-restore state store.
+	 * @param ImportStateStore|null         $import_state   Optional import state store.
+	 * @param ImportPayloadStateStore|null  $payload_state  Optional verified payload state store.
+	 * @param ImportDatabaseStateStore|null $database_state Optional database-staging state store.
+	 * @param CloneJobStore|null            $jobs           Optional clone job store.
+	 * @param ImportPreflight|null          $preflight      Optional fresh destination preflight.
+	 * @param ExportWorkspace|null          $workspace      Optional private workspace authority.
+	 */
 	public function __construct(
 		?ImportFileStateStore $store = null,
 		?ImportStateStore $import_state = null,
@@ -508,7 +560,7 @@ final class ImportFileRestorer {
 	 * @return list<array{id:string,file_count:int,byte_count:int}>|null
 	 */
 	private function manifest_roots( array $manifest ): ?array {
-		$roots = is_array( $manifest['roots'] ?? null ) ? array_values( $manifest['roots'] ) : array();
+		$roots  = is_array( $manifest['roots'] ?? null ) ? array_values( $manifest['roots'] ) : array();
 		$record = is_array( $manifest['file_records'] ?? null ) ? $manifest['file_records'] : array();
 		if (
 			1 !== ( $manifest['schema_version'] ?? null )
@@ -533,21 +585,21 @@ final class ImportFileRestorer {
 			if ( ! in_array( $id, array( 'uploads', 'plugins', 'themes' ), true ) || isset( $seen[ $id ] ) ) {
 				return null;
 			}
-			$files = max( 0, (int) ( $root['file_count'] ?? 0 ) );
-			$bytes = max( 0, (int) ( $root['byte_count'] ?? 0 ) );
+			$files      = max( 0, (int) ( $root['file_count'] ?? 0 ) );
+			$bytes      = max( 0, (int) ( $root['byte_count'] ?? 0 ) );
 			$normalized[] = array(
 				'id'         => $id,
 				'file_count' => $files,
 				'byte_count' => $bytes,
 			);
-			$seen[ $id ] = true;
-			$file_sum   += $files;
-			$byte_sum   += $bytes;
+			$seen[ $id ]  = true;
+			$file_sum    += $files;
+			$byte_sum    += $bytes;
 		}
 
 		if (
-			$file_sum !== (int) ( $manifest['file_count'] ?? -1 )
-			|| $byte_sum !== (int) ( $manifest['payload_bytes'] ?? -1 )
+			(int) ( $manifest['file_count'] ?? -1 ) !== $file_sum
+			|| (int) ( $manifest['payload_bytes'] ?? -1 ) !== $byte_sum
 		) {
 			return null;
 		}
@@ -575,9 +627,9 @@ final class ImportFileRestorer {
 		$hash        = is_array( $record ) && is_string( $record['sha256'] ?? null ) ? $record['sha256'] : '';
 		if (
 			! is_array( $record )
-			|| $root_id !== ( $record['root'] ?? null )
-			|| $relative !== ( $record['relative_path'] ?? null )
-			|| 'files/' . $root_id . '/' . $relative !== ( $record['payload_path'] ?? null )
+			|| ( $record['root'] ?? null ) !== $root_id
+			|| ( $record['relative_path'] ?? null ) !== $relative
+			|| ( $record['payload_path'] ?? null ) !== 'files/' . $root_id . '/' . $relative
 			|| 'copied' !== ( $record['export_status'] ?? null )
 			|| 0 > (int) ( $record['byte_count'] ?? -1 )
 			|| 1 !== preg_match( '/^[a-f0-9]{64}$/', $hash )
@@ -679,7 +731,7 @@ final class ImportFileRestorer {
 		$completed = 'copy' === $stage
 			? (int) ( $state['file_count'] ?? 0 )
 			: (int) ( $state['verify_file_count'] ?? 0 );
-		$cursor = $stage . ':' . (string) (int) ( $state['root_index'] ?? 0 )
+		$cursor    = $stage . ':' . (string) (int) ( $state['root_index'] ?? 0 )
 			. ':' . (string) ( $state['current_dir'] ?? '' )
 			. ':' . (string) ( $state['after_name'] ?? '' );
 
