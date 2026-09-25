@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge;
 
+use SeoGeo\MigrationBridge\Clone\AdminCloneController;
+use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
@@ -134,6 +136,20 @@ final class Plugin {
 	private static ?AdminDependencyReviewController $dependency_review_controller = null;
 
 	/**
+	 * Portable Clone resumable job store singleton.
+	 *
+	 * @var CloneJobStore|null
+	 */
+	private static ?CloneJobStore $clone_job_store = null;
+
+	/**
+	 * Portable Clone planning controller singleton.
+	 *
+	 * @var AdminCloneController|null
+	 */
+	private static ?AdminCloneController $clone_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -164,6 +180,8 @@ final class Plugin {
 		self::$operator_screen        ??= new AdminOperatorScreen( self::$operator_status );
 		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
+		self::$clone_job_store        ??= new CloneJobStore();
+		self::$clone_controller       ??= new AdminCloneController( self::$clone_job_store );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -178,6 +196,7 @@ final class Plugin {
 		self::$baseline_capture_controller->boot();
 		self::$sandbox_handoff_controller->boot();
 		self::$dependency_review_controller->boot();
+		self::$clone_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -242,6 +261,13 @@ final class Plugin {
 	 */
 	public static function operator_status(): ?OperatorStatus {
 		return self::$operator_status;
+	}
+
+	/**
+	 * Return the Portable Clone resumable job store.
+	 */
+	public static function clone_job_store(): ?CloneJobStore {
+		return self::$clone_job_store;
 	}
 
 	/**

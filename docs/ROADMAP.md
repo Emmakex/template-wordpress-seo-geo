@@ -2215,7 +2215,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — documentation contract complete; implementation starts at 10E.2A.1**
+Status: **active — documentation merged; 10E.2A.1 implementation candidate in progress**
 
 Purpose:
 
@@ -2229,7 +2229,7 @@ Authoritative contract:
 
 Implementation sequence:
 
-- **10E.2A.1 — Clone contract + persistent resumable jobs**: versioned manifest/job schemas, job state machine, non-autoloaded persistence, capability/nonce controller skeleton, no payload copying yet;
+- **10E.2A.1 — Clone contract + persistent resumable jobs**: versioned manifest/job schemas, job state machine, non-autoloaded persistence, capability/nonce planning controller and EN/ES operator controls; implementation candidate is Migration Bridge 0.8.9 and still performs no payload copying;
 - **10E.2A.2 — Read-only source inventory**: database/table inventory, file inventory, exclusions, estimates and destination-safety planning;
 - **10E.2A.3 — Resumable export**: chunked database/files export, manifest/checksums, authenticated download and cleanup;
 - **10E.2A.4 — Portable import**: package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;

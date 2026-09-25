@@ -86,6 +86,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminSandboxHandoffController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Review/DependencyReviewStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -138,7 +141,8 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Cutover/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Report/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Operator/*.php' ) ?: array(),
-	glob( MIGRATION_BRIDGE_DIR . '/src/Review/*.php' ) ?: array()
+	glob( MIGRATION_BRIDGE_DIR . '/src/Review/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Clone/*.php' ) ?: array()
 );
 
 $destructive_calls = array(
@@ -222,6 +226,91 @@ foreach ( $read_only_files as $path ) {
 
 	if ( str_contains( $source, '->query(' ) || str_contains( $source, '->insert(' ) || str_contains( $source, '->update(' ) || str_contains( $source, '->delete(' ) ) {
 		fail_migration_bridge( 'analyzer-database-mutation', 'Phase 8A analyzer contains a direct database mutation/query primitive.', $path, 'no direct database writes/queries', 'database method found' );
+	}
+}
+
+$clone_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_migration_clone_jobs_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"return array( 'local-clone', 'export', 'import' );",
+		"add_option( self::OPTION_NAME, \$jobs, '', false )",
+		'update_option( self::OPTION_NAME, $jobs, false )',
+		"'failed-retryable'",
+		"'failed-terminal'",
+		"'rewrite-environment'",
+		"'harden-sandbox'",
+	) as $clone_store_guard
+) {
+	if ( ! str_contains( $clone_store, $clone_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-job-store',
+			'Portable Clone job persistence must remain versioned, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
+			$clone_store_guard,
+			'missing'
+		);
+	}
+}
+
+$clone_manifest = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php' );
+foreach (
+	array(
+		"'mode'           => 'portable-clone-planning'",
+		"'algorithm'        => 'sha256'",
+		"'production_source_mutation_allowed'",
+		"'production_database_restore_allowed'",
+		"'third_party_clone_plugin_required'",
+		"'payload_created_in_this_phase'",
+		"'credentials_in_manifest'",
+		"'private_payload_repository_safe'",
+	) as $clone_manifest_guard
+) {
+	if ( ! str_contains( $clone_manifest, $clone_manifest_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-manifest',
+			'Portable Clone planning manifest is missing a required privacy/safety boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
+			$clone_manifest_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'copy(', 'file_put_contents(', 'fwrite(', '->query(', '->insert(', '->update(', '->delete(' ) as $copy_primitive ) {
+	foreach ( glob( MIGRATION_BRIDGE_DIR . '/src/Clone/*.php' ) ?: array() as $clone_path ) {
+		$clone_source = (string) file_get_contents( $clone_path );
+		if ( str_contains( $clone_source, $copy_primitive ) ) {
+			fail_migration_bridge(
+				'portable-clone-phase-boundary',
+				'10E.2A.1 must define job/manifest contracts without copying database rows or files.',
+				$clone_path,
+				'no payload copy/restore primitive in 10E.2A.1',
+				$copy_primitive
+			);
+		}
+	}
+}
+
+$clone_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php' );
+foreach (
+	array(
+		"public const ACTION = 'seo_geo_migration_clone_create_job';",
+		"current_user_can( 'manage_options' )",
+		'check_admin_referer( self::NONCE_ACTION )',
+		'CloneJobStore::allowed_operations()',
+		'$this->store->create( $operation )',
+	) as $clone_controller_guard
+) {
+	if ( ! str_contains( $clone_controller, $clone_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-entrypoint',
+			'Portable Clone planning endpoint must remain capability/nonce gated and create bounded jobs only.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
+			$clone_controller_guard,
+			'missing'
+		);
 	}
 }
 
