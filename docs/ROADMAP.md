@@ -2199,7 +2199,19 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.4.1 — Portable Import intake + destination preflight in Migration Bridge 0.8.15.** Migration Bridge 0.8.14 completed the export side through authenticated private ZIP delivery, 24-hour retention and bounded cleanup. 10E.2A.4.1 may stage and inspect a ZIP but must keep `restore_allowed=false` until full payload verification is implemented in 10E.2A.4.2.
+Current execution pointer: **10E.2A.4.2 — full payload verification + resumable extraction in Migration Bridge 0.8.16.** Migration Bridge 0.8.15 accepted private ZIP intake and destination preflight. 10E.2A.4.2 may extract only into job-owned private storage and may unlock `restore_allowed=true` only after replaying the exact accepted package checksum; destination database/files remain untouched until 10E.2A.4.3.
+
+Migration Bridge v0.8.15 / 10E.2A.4.1 acceptance evidence:
+
+- PR #135 squash-merged as `744384bfad7ec12f8c9445b53ac362746679ff88`;
+- post-merge Foundation CI `36141521870` passed;
+- post-merge Phase 1 Package CI `36141521962` passed;
+- post-merge PHP Quality CI `36141521960` passed;
+- post-merge WordPress Smoke CI `36141521891` passed, including private staging, destination authorization blocker, valid preflight and child-manifest tamper rejection;
+- post-merge Accessibility & Responsive CI `36141521964` passed;
+- post-merge Performance Baseline CI `36141521877` passed;
+- post-merge Migration Bridge Release CI `36141521885` passed;
+- deterministic installable v0.8.15 ZIP SHA-256: `a678b8bee7644a0162860c82b751c600443db6a2ebff6bbf9f8c51276fece9d0`.
 
 Migration Bridge v0.8.14 / 10E.2A.3.4 acceptance evidence:
 
@@ -2239,7 +2251,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 through 10E.2A.3.4 accepted; 10E.2A.4.1 Portable Import intake + destination preflight is the 0.8.15 candidate**
+Status: **active — 10E.2A.1 through 10E.2A.4.1 accepted; 10E.2A.4.2 full payload verification + resumable extraction is the 0.8.16 candidate**
 
 Purpose:
 
@@ -2260,8 +2272,8 @@ Implementation sequence:
 - **10E.2A.3.3 — Package manifest + integrity**: complete in Migration Bridge 0.8.13; PR #131 squash-merged as `896c449116980238e4163da6b15ee4caec20b67c`, with exported-record revalidation, resumable full-workspace SHA-256 chaining, a second exact verification pass before `verified=true`, and tamper rejection;
 - **10E.2A.3.4 — Authenticated package delivery + retention cleanup**: complete in Migration Bridge 0.8.14; PR #133 merged as `2f7249e820a9e36c0d75fc95f43f695db017dbda`, with resumable private ZIP assembly, replayed package checksum, archive SHA-256, administrator/job-nonce download only, 24-hour expiry and bounded cleanup; all seven post-merge gates passed;
 - **10E.2A.3 — Resumable export**: complete through 10E.2A.3.4;
-- **10E.2A.4.1 — Import intake + destination preflight**: active in Migration Bridge 0.8.15; stage ZIP privately, reject unsafe archive topology, validate package/child manifests and destination isolation, but perform no restore;
-- **10E.2A.4.2 — Full payload verification + resumable extraction**: planned; replay the package checksum before any restore mutation;
+- **10E.2A.4.1 — Import intake + destination preflight**: complete in Migration Bridge 0.8.15; PR #135 squash-merged as `744384bfad7ec12f8c9445b53ac362746679ff88`, with private ZIP intake, archive/manifest validation, isolated-target preflight and restore disabled; all seven post-merge gates passed;
+- **10E.2A.4.2 — Full payload verification + resumable extraction**: active in Migration Bridge 0.8.16; extract only into the private import workspace in bounded resumable batches, replay `lexicographic-bfs-path+bytes+sha256-v1`, reject archive/package drift and unlock restore only after exact file/byte/checksum parity;
 - **10E.2A.4.3 — Database restore**: planned; bounded destination-only table restore;
 - **10E.2A.4.4 — File restore**: planned; bounded destination-only uploads/plugins/themes restore;
 - **10E.2A.4.5 — Serialization-safe environment rewrite**: planned;
