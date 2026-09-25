@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
+use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
 use SeoGeo\MigrationBridge\Clone\CloneInventory;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
@@ -21,6 +22,8 @@ use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
+use SeoGeo\MigrationBridge\Clone\PackageBuilder;
+use SeoGeo\MigrationBridge\Clone\PackageStateStore;
 use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
@@ -230,6 +233,27 @@ final class Plugin {
 	private static ?AdminCloneFileExportController $clone_file_export_controller = null;
 
 	/**
+	 * Portable Clone package-state store singleton.
+	 *
+	 * @var PackageStateStore|null
+	 */
+	private static ?PackageStateStore $clone_package_state_store = null;
+
+	/**
+	 * Portable Clone package builder singleton.
+	 *
+	 * @var PackageBuilder|null
+	 */
+	private static ?PackageBuilder $clone_package_builder = null;
+
+	/**
+	 * Portable Clone package controller singleton.
+	 *
+	 * @var AdminClonePackageController|null
+	 */
+	private static ?AdminClonePackageController $clone_package_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -273,6 +297,9 @@ final class Plugin {
 		self::$clone_file_export_state_store    ??= new FileExportStateStore();
 		self::$clone_file_exporter              ??= new FileExporter( self::$clone_file_export_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_job_store );
 		self::$clone_file_export_controller     ??= new AdminCloneFileExportController( self::$clone_file_exporter );
+		self::$clone_package_state_store         ??= new PackageStateStore();
+		self::$clone_package_builder             ??= new PackageBuilder( self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
+		self::$clone_package_controller          ??= new AdminClonePackageController( self::$clone_package_builder );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -291,6 +318,7 @@ final class Plugin {
 		self::$clone_inventory_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
+		self::$clone_package_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -390,6 +418,13 @@ final class Plugin {
 	 */
 	public static function clone_file_exporter(): ?FileExporter {
 		return self::$clone_file_exporter;
+	}
+
+	/**
+	 * Return the resumable Portable Clone package builder.
+	 */
+	public static function clone_package_builder(): ?PackageBuilder {
+		return self::$clone_package_builder;
 	}
 
 	/**
