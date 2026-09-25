@@ -91,6 +91,8 @@ $options_table = $source_prefix . 'options';
 $posts_table   = $source_prefix . 'posts';
 $destination_home = home_url( '/' );
 $destination_site = site_url( '/' );
+$destination_template   = (string) get_option( 'template', '' );
+$destination_stylesheet = (string) get_option( 'stylesheet', '' );
 
 $active_sentinel_name  = 'seo_geo_rewrite_active_sentinel';
 $active_sentinel_value = $source_home . 'must-stay-active';
@@ -670,6 +672,10 @@ if ( ! is_array( $activation ) || 'activated' !== ( $activation['status'] ?? nul
 $q_active_options = $quote( $wpdb->options );
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 $activation_blog_public = $wpdb->get_var( "SELECT option_value FROM {$q_active_options} WHERE option_name = 'blog_public' LIMIT 1" );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+$activation_template = $wpdb->get_var( "SELECT option_value FROM {$q_active_options} WHERE option_name = 'template' LIMIT 1" );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+$activation_stylesheet = $wpdb->get_var( "SELECT option_value FROM {$q_active_options} WHERE option_name = 'stylesheet' LIMIT 1" );
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 $activation_control_plane = $wpdb->get_var(
 	$wpdb->prepare(
@@ -706,6 +712,8 @@ foreach (
 		ImportFinalizeStateStore::OPTION_NAME,
 		'blog_public',
 		'active_plugins',
+		'template',
+		'stylesheet',
 	) as $overlay_option
 ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Test-only cleanup of staging overlay rows.
@@ -765,6 +773,10 @@ echo wp_json_encode(
 		'activation'                => $activation,
 		'activation_rollback'       => $activation_rollback,
 		'activation_blog_public'    => $activation_blog_public,
+		'destination_template'      => $destination_template,
+		'destination_stylesheet'    => $destination_stylesheet,
+		'activation_template'       => $activation_template,
+		'activation_stylesheet'     => $activation_stylesheet,
 		'activation_control_plane_present' => is_string( $activation_control_plane ) && '' !== $activation_control_plane,
 		'activation_bridge_active'  => $activation_bridge_active,
 		'active_after_bad'         => $active_after_bad,
@@ -888,6 +900,8 @@ assert activation["active_files_untouched"] is True
 assert activation["handoff_ready"] is False
 assert activation["blockers"] == []
 assert payload["activation_blog_public"] == "0"
+assert payload["activation_template"] == payload["destination_template"]
+assert payload["activation_stylesheet"] == payload["destination_stylesheet"]
 assert payload["activation_control_plane_present"] is True
 assert payload["activation_bridge_active"] is True
 
