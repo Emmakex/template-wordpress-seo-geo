@@ -9,10 +9,13 @@ cat >"$IMPORT_REWRITE_RUNNER" <<'PHP'
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\ExportWorkspace;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivator;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
@@ -60,6 +63,7 @@ $db_restore   = Plugin::clone_import_database_restorer();
 $file_restore = Plugin::clone_import_file_restorer();
 $rewriter     = Plugin::clone_import_environment_rewriter();
 $finalizer    = Plugin::clone_import_finalization_planner();
+$activator    = Plugin::clone_import_database_activator();
 $workspace    = new ExportWorkspace();
 
 if (
@@ -70,6 +74,7 @@ if (
 	|| ! $file_restore instanceof ImportFileRestorer
 	|| ! $rewriter instanceof ImportEnvironmentRewriter
 	|| ! $finalizer instanceof ImportFinalizationPlanner
+	|| ! $activator instanceof ImportDatabaseActivator
 ) {
 	throw new RuntimeException( 'Portable Import environment rewrite/finalization services are unavailable.' );
 }
@@ -650,6 +655,63 @@ if ( ! is_array( $finalize ) || 'ready' !== ( $finalize['status'] ?? null ) ) {
 $staged_file_after_finalize = $workspace->import_staged_file_info( $job_id, 'uploads', '2026/file.txt' );
 $active_after_finalize      = get_option( $active_sentinel_name );
 
+// 10E.2A.4.6.2: prepare, atomically activate, verify and explicitly roll back
+// the sandbox database while active wp-content remains untouched.
+$activation_prepared = $activator->prepare( $job_id );
+if ( ! is_array( $activation_prepared ) || 'prepared' !== ( $activation_prepared['status'] ?? null ) ) {
+	throw new RuntimeException( 'Database activation preparation failed: ' . wp_json_encode( $activation_prepared ) );
+}
+
+$activation = $activator->activate( $job_id );
+if ( ! is_array( $activation ) || 'activated' !== ( $activation['status'] ?? null ) ) {
+	throw new RuntimeException( 'Database activation failed: ' . wp_json_encode( $activation ) );
+}
+
+$q_active_options = $quote( $wpdb->options );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+$activation_blog_public = $wpdb->get_var( "SELECT option_value FROM {$q_active_options} WHERE option_name = 'blog_public' LIMIT 1" );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+$activation_control_plane = $wpdb->get_var(
+	$wpdb->prepare(
+		"SELECT option_value FROM {$q_active_options} WHERE option_name = %s LIMIT 1",
+		CloneJobStore::OPTION_NAME
+	)
+);
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+$activation_plugins_raw = $wpdb->get_var( "SELECT option_value FROM {$q_active_options} WHERE option_name = 'active_plugins' LIMIT 1" );
+$activation_plugins = is_string( $activation_plugins_raw ) && is_serialized( $activation_plugins_raw, false )
+	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Test-only verification with classes disabled.
+	? @unserialize( $activation_plugins_raw, array( 'allowed_classes' => false ) )
+	: null;
+$bridge_plugin = plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' );
+$activation_bridge_active = is_array( $activation_plugins ) && in_array( $bridge_plugin, $activation_plugins, true );
+
+$activation_rollback = $activator->rollback( $job_id );
+if ( ! is_array( $activation_rollback ) || 'rolled-back' !== ( $activation_rollback['status'] ?? null ) ) {
+	throw new RuntimeException( 'Database activation rollback failed: ' . wp_json_encode( $activation_rollback ) );
+}
+$active_after_activation_rollback = get_option( $active_sentinel_name );
+
+// The fixture source options table did not originally contain these activation
+// overlay rows. Remove them after rollback so the later negative rewrite case
+// still exercises the original source fixture and not the control-plane overlay.
+foreach (
+	array(
+		CloneJobStore::OPTION_NAME,
+		ImportStateStore::OPTION_NAME,
+		ImportPayloadStateStore::OPTION_NAME,
+		ImportDatabaseStateStore::OPTION_NAME,
+		ImportFileStateStore::OPTION_NAME,
+		ImportRewriteStateStore::OPTION_NAME,
+		ImportFinalizeStateStore::OPTION_NAME,
+		'blog_public',
+		'active_plugins',
+	) as $overlay_option
+) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Test-only cleanup of staging overlay rows.
+	$wpdb->delete( $options_staging, array( 'option_name' => $overlay_option ), array( '%s' ) );
+}
+
 // Negative safety case: rerun from source core URLs but inject opaque serialized bytes containing the source environment.
 $rewrite_store = new ImportRewriteStateStore();
 $rewrite_store->delete( $job_id );
@@ -698,6 +760,13 @@ echo wp_json_encode(
 		'active_before'            => $active_before,
 		'active_after'             => $active_after,
 		'active_after_finalize'    => $active_after_finalize,
+		'active_after_activation_rollback' => $active_after_activation_rollback,
+		'activation_prepared'       => $activation_prepared,
+		'activation'                => $activation,
+		'activation_rollback'       => $activation_rollback,
+		'activation_blog_public'    => $activation_blog_public,
+		'activation_control_plane_present' => is_string( $activation_control_plane ) && '' !== $activation_control_plane,
+		'activation_bridge_active'  => $activation_bridge_active,
 		'active_after_bad'         => $active_after_bad,
 		'staged_file_before'       => $staged_file_before,
 		'staged_file_after'        => $staged_file_after,
@@ -708,6 +777,8 @@ echo wp_json_encode(
 		'public_controller_absent'       => false === has_action( 'admin_post_nopriv_' . AdminCloneImportRewriteController::ACTION ),
 		'finalize_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportFinalizeController::ACTION ),
 		'finalize_public_absent'         => false === has_action( 'admin_post_nopriv_' . AdminCloneImportFinalizeController::ACTION ),
+		'database_activation_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportDatabaseActivationController::ACTION ),
+		'database_activation_public_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportDatabaseActivationController::ACTION ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 );
@@ -798,6 +869,35 @@ assert finalize["active_tables_untouched"] is True
 assert finalize["active_roots_untouched"] is True
 assert finalize["blockers"] == []
 
+prepared = payload["activation_prepared"]
+assert prepared["schema_version"] == 1
+assert prepared["status"] == "prepared"
+assert prepared["database_swapped"] is False
+assert prepared["rollback_available"] is True
+assert prepared["active_files_untouched"] is True
+assert prepared["handoff_ready"] is False
+assert len(prepared["tables"]) == 2
+assert len(prepared["control_options"]) >= 9
+assert re.fullmatch(r"[a-f0-9]{64}", prepared["activation_plan_hash"])
+
+activation = payload["activation"]
+assert activation["status"] == "activated"
+assert activation["database_swapped"] is True
+assert activation["rollback_available"] is True
+assert activation["active_files_untouched"] is True
+assert activation["handoff_ready"] is False
+assert activation["blockers"] == []
+assert payload["activation_blog_public"] == "0"
+assert payload["activation_control_plane_present"] is True
+assert payload["activation_bridge_active"] is True
+
+rollback = payload["activation_rollback"]
+assert rollback["status"] == "rolled-back"
+assert rollback["database_swapped"] is False
+assert rollback["active_files_untouched"] is True
+assert rollback["handoff_ready"] is False
+assert "operator-database-rollback" in rollback["blockers"]
+
 options = payload["options"]
 dest_home = payload["destination_home"].rstrip("/") + "/"
 dest_site = payload["destination_site"].rstrip("/") + "/"
@@ -829,7 +929,7 @@ assert dest_home + "about" in posts[0]["post_content"]
 assert "https://external.example.test/reference" in posts[0]["post_content"]
 assert dest_home + "wp-content/uploads/2026/file.txt" in posts[0]["post_excerpt"]
 
-assert payload["active_before"] == payload["active_after"] == payload["active_after_finalize"] == payload["active_after_bad"]
+assert payload["active_before"] == payload["active_after"] == payload["active_after_finalize"] == payload["active_after_activation_rollback"] == payload["active_after_bad"]
 for key in ("staged_file_before", "staged_file_after", "staged_file_after_finalize", "staged_file_after_bad"):
     assert isinstance(payload[key], dict)
     assert re.fullmatch(r"[a-f0-9]{64}", payload[key]["sha256"])
@@ -846,10 +946,12 @@ assert payload["controller_registered"] is True
 assert payload["public_controller_absent"] is True
 assert payload["finalize_controller_registered"] is True
 assert payload["finalize_public_absent"] is True
+assert payload["database_activation_controller_registered"] is True
+assert payload["database_activation_public_absent"] is True
 print("ok")
 PY
 )"; then
   fail_smoke "clone-import-rewrite-contract" "Portable Import environment rewrite contract is invalid" "structured serialized/JSON rewrite + credential opacity + idempotence + active/staged immutability + opaque-source blocker" "${IMPORT_REWRITE_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Import environment rewrite + finalization preflight OK: staging rewrite stayed structured/idempotent; DB/files fingerprints and rollback plan reached ready without active mutation; opaque source URL was blocked.\n'
+printf '[smoke] Portable Import environment rewrite + finalization + DB activation OK: staging rewrite stayed structured/idempotent; fingerprints reached ready; DB swap preserved noindex/control plane/Bridge and rolled back atomically; opaque source URL was blocked.\n'
