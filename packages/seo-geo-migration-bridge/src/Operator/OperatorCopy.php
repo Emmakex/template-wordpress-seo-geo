@@ -55,7 +55,7 @@ final class OperatorCopy {
 				'sandbox_handoff_help'           => 'Download a privacy-bounded JSON manifest with baseline identity, runtime metadata, raw dependency classifications and bounded operator review decisions. It does not contain post bodies, builder payloads, credentials, database dumps or uploads.',
 				'sandbox_handoff_button'         => 'Download sandbox handoff JSON',
 				'clone_heading'                  => 'Portable Clone Engine',
-				'clone_help'                     => 'Portable Clone inventories the source, exports the database and then copies accepted files in bounded resumable batches before package assembly or import.'
+				'clone_help'                     => 'Portable Clone inventories the source, exports the database and then copies accepted files in bounded resumable batches before package assembly or import.',
 				'clone_job_created'              => 'Portable Clone planning job created.',
 				'clone_inventory_heading'        => 'Read-only source inventory',
 				'clone_inventory_help'           => 'Inventory reads WordPress-prefix table metadata and hashes accepted uploads/plugin/theme files in bounded batches. It never copies or changes production data.',
@@ -202,7 +202,7 @@ final class OperatorCopy {
 				'sandbox_handoff_help'           => 'Descarga un manifiesto JSON acotado por privacidad con la identidad de la línea base, metadatos del runtime, clasificaciones originales de dependencias y decisiones acotadas de revisión. No incluye cuerpos de entradas, cargas de constructores, credenciales, volcados de base de datos ni uploads.',
 				'sandbox_handoff_button'         => 'Descargar JSON de sandbox',
 				'clone_heading'                  => 'Motor de clon portátil',
-				'clone_help'                     => 'El clon portátil inventaría el origen, exporta la base de datos y después copia los archivos aceptados en lotes acotados y reanudables antes de ensamblar o importar el paquete.'
+				'clone_help'                     => 'El clon portátil inventaría el origen, exporta la base de datos y después copia los archivos aceptados en lotes acotados y reanudables antes de ensamblar o importar el paquete.',
 				'clone_job_created'              => 'Se creó el trabajo de planificación del clon portátil.',
 				'clone_inventory_heading'        => 'Inventario del origen de solo lectura',
 				'clone_inventory_help'           => 'El inventario lee metadatos de las tablas del prefijo WordPress y calcula hashes de archivos aceptados de uploads/plugins/temas en lotes acotados. Nunca copia ni modifica datos de producción.',
