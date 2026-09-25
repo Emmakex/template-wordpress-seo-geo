@@ -553,15 +553,17 @@ final class Plugin {
 			self::$clone_import_database_restorer,
 			self::$clone_job_store
 		);
-		self::$clone_import_finalize_controller             ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
-		self::$clone_import_database_activation_state_store ??= new ImportDatabaseActivationStateStore();
-		self::$clone_import_database_activator              ??= new ImportDatabaseActivator(
+		self::$clone_import_finalize_controller              ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
+		self::$clone_import_database_activation_state_store  ??= new ImportDatabaseActivationStateStore();
+		self::$clone_import_file_promotion_state_store       ??= new ImportFilePromotionStateStore();
+		self::$clone_import_database_activator               ??= new ImportDatabaseActivator(
 			self::$clone_import_database_activation_state_store,
-			self::$clone_import_finalization_planner
+			self::$clone_import_finalization_planner,
+			self::$clone_import_file_promotion_state_store
 		);
-		self::$clone_import_database_activation_controller  ??= new AdminCloneImportDatabaseActivationController( self::$clone_import_database_activator );
+		self::$clone_import_database_activation_controller   ??= new AdminCloneImportDatabaseActivationController( self::$clone_import_database_activator );
 
-		self::$clone_import_file_promotion_state_store        ??= new ImportFilePromotionStateStore();
+
 		self::$clone_import_file_promotion_planner            ??= new ImportFilePromotionPlanner(
 			self::$clone_import_file_promotion_state_store,
 			self::$clone_import_database_activation_state_store,
