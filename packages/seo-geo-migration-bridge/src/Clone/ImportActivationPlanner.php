@@ -19,19 +19,89 @@ use wpdb;
  * Builds a non-mutating activation + rollback plan for verified import staging.
  */
 final class ImportActivationPlanner {
+	/**
+	 * Activation-plan persistence.
+	 *
+	 * @var ImportActivationPlanStore
+	 */
 	private ImportActivationPlanStore $store;
+
+	/**
+	 * Fresh import preflight service.
+	 *
+	 * @var ImportPreflight
+	 */
 	private ImportPreflight $preflight;
+
+	/**
+	 * Verified payload state.
+	 *
+	 * @var ImportPayloadStateStore
+	 */
 	private ImportPayloadStateStore $payload_state;
+
+	/**
+	 * Database staging state.
+	 *
+	 * @var ImportDatabaseStateStore
+	 */
 	private ImportDatabaseStateStore $database_state;
+
+	/**
+	 * File staging state.
+	 *
+	 * @var ImportFileStateStore
+	 */
 	private ImportFileStateStore $file_state;
+
+	/**
+	 * Environment rewrite state.
+	 *
+	 * @var ImportRewriteStateStore
+	 */
 	private ImportRewriteStateStore $rewrite_state;
+
+	/**
+	 * Database staging-plan source.
+	 *
+	 * @var ImportDatabaseRestorer
+	 */
 	private ImportDatabaseRestorer $database_restorer;
+
+	/**
+	 * Private import workspace.
+	 *
+	 * @var ExportWorkspace
+	 */
 	private ExportWorkspace $workspace;
+
+	/**
+	 * External recovery evidence validator.
+	 *
+	 * @var ImportRecoveryEvidenceValidator
+	 */
 	private ImportRecoveryEvidenceValidator $recovery_validator;
+
+	/**
+	 * Clone job persistence.
+	 *
+	 * @var CloneJobStore
+	 */
 	private CloneJobStore $jobs;
 
 	/**
 	 * Construct activation planner.
+	 *
+	 * @param ImportActivationPlanStore|null         $store              Optional activation-plan store.
+	 * @param ImportPreflight|null                   $preflight          Optional fresh import preflight.
+	 * @param ImportPayloadStateStore|null           $payload_state      Optional payload state store.
+	 * @param ImportDatabaseStateStore|null          $database_state     Optional database staging state.
+	 * @param ImportFileStateStore|null              $file_state         Optional file staging state.
+	 * @param ImportRewriteStateStore|null           $rewrite_state      Optional environment rewrite state.
+	 * @param ImportDatabaseRestorer|null            $database_restorer  Optional database staging planner.
+	 * @param ExportWorkspace|null                   $workspace          Optional private import workspace.
+	 * @param ImportRecoveryEvidenceValidator|null   $recovery_validator Optional recovery validator.
+	 * @param CloneJobStore|null                     $jobs               Optional clone job store.
 	 */
 	public function __construct(
 		?ImportActivationPlanStore $store = null,
@@ -388,10 +458,10 @@ final class ImportActivationPlanner {
 		}
 
 		if (
-			$file_total !== (int) ( $state['verify_file_count'] ?? -1 )
-			|| $byte_total !== (int) ( $state['verify_byte_count'] ?? -1 )
-			|| $file_total !== (int) ( $state['expected_file_count'] ?? -2 )
-			|| $byte_total !== (int) ( $state['expected_byte_count'] ?? -2 )
+			(int) ( $state['verify_file_count'] ?? -1 ) !== $file_total
+			|| (int) ( $state['verify_byte_count'] ?? -1 ) !== $byte_total
+			|| (int) ( $state['expected_file_count'] ?? -2 ) !== $file_total
+			|| (int) ( $state['expected_byte_count'] ?? -2 ) !== $byte_total
 		) {
 			$blockers[] = 'activation-file-staging-totals-drift';
 		}
