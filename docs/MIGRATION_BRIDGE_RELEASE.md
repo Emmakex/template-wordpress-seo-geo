@@ -129,3 +129,10 @@ The phase requires exact archive identity, package-manifest identity, payload fi
 Phase 10E.2A.4.3 begins database restoration only after the complete payload has reproduced the accepted package checksum and a fresh destination preflight still reports `payload-verified` + `restore_allowed=true`. The Bridge maps source tables to deterministic job-owned staging tables and never mutates active destination WordPress tables in this version.
 
 Schema/chunk files are reread from the verified private extraction and checked against database-manifest hashes before use. This first restore contract accepts only transactional InnoDB schemas without foreign keys/references. Rows are restored in bounded batches, and each batch commits both the staging-table writes and resumable cursor state in the same database transaction. Destination drift, manifest drift, archive drift, unexpected staging tables, nontransactional storage or schema incompatibility block further mutation. Final-table activation/swap remains a later phase.
+
+
+### Version 0.8.18 — destination file staging restore
+
+Phase 10E.2A.4.4 begins file restoration only after the Portable Clone payload has reproduced the accepted package checksum, fresh destination preflight still reports guarded restore eligibility, and the 0.8.17 database staging restore is complete with active tables untouched. The Bridge reads only the verified private extraction and validates every `files-meta/<root>/<sha256(relative)>.json` record against its corresponding `files/<root>/<relative>` payload before mutation.
+
+Accepted `uploads`, `plugins` and `themes` files are copied in resumable file/byte batches into a protected deterministic job-owned tree under `wp-content/seo-geo-migration-stage/`. Copies are atomic through a job-owned partial file and are accepted only when bytes and SHA-256 match the exported metadata. Every mutating batch reruns the fresh destination/payload/database guard. Root and global file/byte totals must reconcile exactly before completion. Active WordPress uploads, plugin and theme roots are not activation targets in 0.8.18; swap/activation remains outside this subphase.
