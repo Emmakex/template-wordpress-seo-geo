@@ -394,7 +394,7 @@ foreach ( array( 'INSERT INTO ', 'UPDATE ', 'DELETE FROM ', 'REPLACE INTO ', 'DR
 $database_export_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php' );
 foreach (
 	array(
-		"public const ACTION = 'seo_geo_migration_clone_database_export';",
+		"public const ACTION       = 'seo_geo_migration_clone_database_export';",
 		"current_user_can( 'manage_options' )",
 		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
 		'$this->exporter->advance( $job_id, $batch_rows )',

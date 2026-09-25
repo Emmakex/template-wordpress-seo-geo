@@ -228,7 +228,7 @@ final class DatabaseExporter {
 		if ( 'primary-key' === ( $meta['strategy'] ?? null ) ) {
 			$column = is_string( $meta['cursor_column'] ?? null ) ? $meta['cursor_column'] : '';
 			$last   = end( $rows );
-			if ( '' === $column || ! is_array( $last ) || ! array_key_exists( $column, $last ) || null === $last[ $column ] ) {
+			if ( '' === $column || ! array_key_exists( $column, $last ) || null === $last[ $column ] ) {
 				return $this->block( $job_id, $state, 'database-primary-cursor-missing', false );
 			}
 			$state['cursor_value_b64'] = $this->encode_cursor( (string) $last[ $column ] );
@@ -279,10 +279,6 @@ final class DatabaseExporter {
 		$column_rows = $wpdb->get_results( "SHOW COLUMNS FROM {$quoted}", ARRAY_A );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only SHOW against inventoried table.
 		$key_rows = $wpdb->get_results( "SHOW KEYS FROM {$quoted} WHERE Key_name = 'PRIMARY'", ARRAY_A );
-
-		if ( ! is_array( $create_row ) || ! is_array( $column_rows ) || ! is_array( $key_rows ) ) {
-			return null;
-		}
 
 		$create_sql = is_string( $create_row['Create Table'] ?? null ) ? $create_row['Create Table'] : '';
 		if ( '' === $create_sql ) {
@@ -418,7 +414,7 @@ final class DatabaseExporter {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Source exporter is SHOW/SELECT-only with prepared values and inventoried identifiers.
 		$rows = $wpdb->get_results( $sql, ARRAY_A );
-		return is_array( $rows ) ? array_values( $rows ) : null;
+		return $rows;
 	}
 
 	/**
@@ -500,7 +496,7 @@ final class DatabaseExporter {
 	private function complete_database( string $job_id, array $state, array $database, array $tables ): ?array {
 		$table_manifests = array();
 		foreach ( $tables as $entry ) {
-			if ( ! is_array( $entry ) || ! is_string( $entry['name'] ?? null ) ) {
+			if ( ! is_string( $entry['name'] ?? null ) ) {
 				continue;
 			}
 			$meta = $this->load_table_metadata( $job_id, $entry['name'] );
