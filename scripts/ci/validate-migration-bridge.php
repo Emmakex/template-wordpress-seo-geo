@@ -103,6 +103,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -817,6 +820,127 @@ if ( str_contains( $import_controller, 'admin_post_nopriv_' ) ) {
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
+}
+
+$import_payload_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_payload_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'extract'",
+		"'verify'",
+		"'verified'",
+		"'verification_checksum'",
+	) as $import_payload_state_guard
+) {
+	if ( ! str_contains( $import_payload_state_store, $import_payload_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-state',
+			'Portable Import payload verification state must remain versioned, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadStateStore.php',
+			$import_payload_state_guard,
+			'missing'
+		);
+	}
+}
+
+$import_payload_verifier = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php' );
+foreach (
+	array(
+		"'seo-geo-portable-clone-package-v1'",
+		'$this->workspace->extract_import_archive_files( $job_id, array_keys( $batch ) )',
+		"'package' === \$relative || str_starts_with( \$relative, 'package/' )",
+		"'payload|' . wp_normalize_path( \$relative )",
+		"'import-payload-integrity-mismatch'",
+		'$this->preflight->validate( $job_id )',
+		"\$preflight['full_payload_verified'] = true",
+		"\$preflight['restore_allowed']       = true",
+		"'prepare-target'",
+	) as $import_payload_guard
+) {
+	if ( ! str_contains( $import_payload_verifier, $import_payload_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-verifier',
+			'Portable Import full payload verification is missing a required checksum/extraction/restore-gate boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
+			$import_payload_guard,
+			'missing'
+		);
+	}
+}
+
+foreach (
+	array(
+		'wp_insert_post(',
+		'wp_update_post(',
+		'update_post_meta(',
+		'delete_post_meta(',
+		'->query(',
+		'->insert(',
+		'->update(',
+		'->delete(',
+	) as $import_restore_mutation
+) {
+	if ( str_contains( $import_payload_verifier, $import_restore_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-no-restore',
+			'10E.2A.4.2 must not restore database rows or WordPress content before the checksum gate is accepted.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
+			'private extraction + checksum verification only',
+			$import_restore_mutation
+		);
+	}
+}
+
+$import_payload_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_payload';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->verifier->advance(',
+	) as $import_payload_controller_guard
+) {
+	if ( ! str_contains( $import_payload_controller, $import_payload_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-entrypoint',
+			'Portable Import payload verification endpoint must remain administrator/job-nonce gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php',
+			$import_payload_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $import_payload_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-payload-public-endpoint',
+		'Portable Import payload verification must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+$export_workspace_import = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php' );
+foreach (
+	array(
+		'import_payload_root( string $job_id, bool $create = false )',
+		'extract_import_archive_files( string $job_id, array $relative_paths )',
+		"'import/payload/'",
+		'allowed_import_archive_relative( string $relative )',
+	) as $workspace_import_guard
+) {
+	if ( ! str_contains( $export_workspace_import, $workspace_import_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-private-extraction',
+			'Portable Import extraction must remain isolated inside ExportWorkspace private job storage.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
+			$workspace_import_guard,
+			'missing'
+		);
+	}
 }
 
 
