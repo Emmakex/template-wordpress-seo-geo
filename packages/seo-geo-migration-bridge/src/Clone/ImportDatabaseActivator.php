@@ -40,7 +40,7 @@ final class ImportDatabaseActivator {
 	 * Construct the reversible database activator.
 	 *
 	 * @param ImportDatabaseActivationStateStore|null $store     Optional workspace journal.
-	 * @param ImportFinalizationPlanner|null           $finalizer Optional finalization-plan authority.
+	 * @param ImportFinalizationPlanner|null          $finalizer Optional finalization-plan authority.
 	 */
 	public function __construct(
 		?ImportDatabaseActivationStateStore $store = null,
@@ -123,7 +123,7 @@ final class ImportDatabaseActivator {
 			}
 
 			$count = $this->row_count( $staging );
-			if ( null === $count || $count !== max( 0, (int) ( $table['row_count'] ?? 0 ) ) ) {
+			if ( null === $count || max( 0, (int) ( $table['row_count'] ?? 0 ) ) !== $count ) {
 				return null;
 			}
 
@@ -411,9 +411,9 @@ final class ImportDatabaseActivator {
 		$state['activated_at']           = '' !== (string) ( $state['activated_at'] ?? '' )
 			? (string) $state['activated_at']
 			: $now;
-		$state['verified_at'] = $now;
-		$state['updated_at']  = $now;
-		$state['blockers']    = array();
+		$state['verified_at']            = $now;
+		$state['updated_at']             = $now;
+		$state['blockers']               = array();
 
 		return $this->store->save( $job_id, $state ) ? $this->store->get( $job_id ) : null;
 	}
@@ -564,7 +564,7 @@ final class ImportDatabaseActivator {
 	private function staging_counts_match( array $state ): bool {
 		foreach ( is_array( $state['tables'] ?? null ) ? $state['tables'] : array() as $table ) {
 			$count = is_array( $table ) ? $this->row_count( (string) $table['staging_table'] ) : null;
-			if ( null === $count || $count !== (int) ( $table['row_count'] ?? -1 ) ) {
+			if ( null === $count || (int) ( $table['row_count'] ?? -1 ) !== $count ) {
 				return false;
 			}
 		}
@@ -675,15 +675,15 @@ final class ImportDatabaseActivator {
 			return false;
 		}
 
-		$data    = array(
+		$data             = array(
 			'option_id'    => $next_id,
 			'option_name'  => $name,
 			'option_value' => $value,
 		);
-		$formats = array( '%d', '%s', '%s' );
+		$formats          = array( '%d', '%s', '%s' );
 		if ( in_array( 'autoload', $columns, true ) ) {
 			$data['autoload'] = '' !== $autoload ? $autoload : 'no';
-			$formats[]         = '%s';
+			$formats[]        = '%s';
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Inserts only into the verified staging options table.
@@ -703,7 +703,7 @@ final class ImportDatabaseActivator {
 
 		$quoted = $this->quote_identifier( $table );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Validated staging table identifier.
-		$max = $wpdb->get_var( "SELECT MAX(option_id) FROM {$quoted}" );
+		$max    = $wpdb->get_var( "SELECT MAX(option_id) FROM {$quoted}" );
 
 		return null === $max ? 1 : max( 1, (int) $max + 1 );
 	}
@@ -732,7 +732,7 @@ final class ImportDatabaseActivator {
 		$select = in_array( 'autoload', $columns, true )
 			? 'option_value, autoload'
 			: "option_value, '' AS autoload";
-		$sql = $wpdb->prepare(
+		$sql    = $wpdb->prepare(
 			"SELECT {$select} FROM {$quoted} WHERE option_name = %s LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table identifier and select list are locally validated.
 			$name
 		);
@@ -748,9 +748,6 @@ final class ImportDatabaseActivator {
 		);
 	}
 
-	/**
-	 * @return list<string>
-	 */
 	/**
 	 * Return validated column names for one activation table.
 	 *
@@ -882,7 +879,7 @@ final class ImportDatabaseActivator {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code, bool $database_swapped ): ?array {
-		$blockers = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers                        = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[]                    = $code;
 		$state['status']                 = 'blocked';
 		$state['database_swapped']       = $database_swapped;
