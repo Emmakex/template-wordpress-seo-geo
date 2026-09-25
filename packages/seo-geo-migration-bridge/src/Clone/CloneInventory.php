@@ -268,8 +268,8 @@ final class CloneInventory {
 					(string) $state['fingerprint'],
 					'file|' . $root_id . '|' . wp_normalize_path( $relative ) . '|' . (string) $size . '|' . $hash
 				);
-				$state['file_count'] = (int) ( $state['file_count'] ?? 0 ) + 1;
-				$state['byte_count'] = (int) ( $state['byte_count'] ?? 0 ) + $size;
+				$state['file_count']  = (int) ( $state['file_count'] ?? 0 ) + 1;
+				$state['byte_count']  = (int) ( $state['byte_count'] ?? 0 ) + $size;
 
 				if ( isset( $roots[ $root_index ] ) && is_array( $roots[ $root_index ] ) ) {
 					$roots[ $root_index ]['file_count'] = (int) ( $roots[ $root_index ]['file_count'] ?? 0 ) + 1;
@@ -346,15 +346,15 @@ final class CloneInventory {
 				continue;
 			}
 
-			$table_rows  = max( 0, (int) ( $row['Rows'] ?? 0 ) );
-			$table_bytes = max( 0, (int) ( $row['Data_length'] ?? 0 ) ) + max( 0, (int) ( $row['Index_length'] ?? 0 ) );
-			$tables[]    = array(
+			$table_rows       = max( 0, (int) ( $row['Rows'] ?? 0 ) );
+			$table_bytes      = max( 0, (int) ( $row['Data_length'] ?? 0 ) ) + max( 0, (int) ( $row['Index_length'] ?? 0 ) );
+			$tables[]         = array(
 				'name'            => (string) $row['Name'],
 				'engine'          => is_string( $row['Engine'] ?? null ) ? substr( $row['Engine'], 0, 40 ) : '',
 				'estimated_rows'  => $table_rows,
 				'estimated_bytes' => $table_bytes,
 			);
-			$estimated_rows += $table_rows;
+			$estimated_rows  += $table_rows;
 			$estimated_bytes += $table_bytes;
 		}
 
