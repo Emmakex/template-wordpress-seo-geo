@@ -99,7 +99,6 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageBuilder.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DeliveryStateStore.php',
-	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageArchive.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
@@ -354,6 +353,15 @@ foreach (
 		'rename(',
 		"hash_file( 'sha256'",
 		'cleanup( string $job_id )',
+		"public const DELIVERY_DIRECTORY_NAME = 'seo-geo-migration-bridge-delivery';",
+		'reset_delivery_archive( string $job_id )',
+		'append_delivery_archive_files( string $job_id, array $relative_paths )',
+		'finalize_delivery_archive( string $job_id )',
+		'delivery_archive_info( string $job_id )',
+		'delete_delivery_archive( string $job_id )',
+		'delivery_download_name( string $job_id )',
+		"'wp-admin/includes/class-pclzip.php'",
+		'PCLZIP_OPT_REMOVE_PATH',
 	) as $export_workspace_guard
 ) {
 	if ( ! str_contains( $export_workspace, $export_workspace_guard ) ) {
@@ -618,29 +626,6 @@ foreach (
 	}
 }
 
-$package_archive = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/PackageArchive.php' );
-foreach (
-	array(
-		"public const DIRECTORY_NAME = 'seo-geo-migration-bridge-delivery';",
-		"'wp-admin/includes/class-pclzip.php'",
-		'PCLZIP_OPT_REMOVE_PATH',
-		"'Deny from all\\n'",
-		'@chmod( $partial, 0600 )',
-		'@chmod( $final, 0600 )',
-		"return 'seo-geo-portable-clone-'",
-	) as $package_archive_guard
-) {
-	if ( ! str_contains( $package_archive, $package_archive_guard ) ) {
-		fail_migration_bridge(
-			'portable-clone-private-archive',
-			'Portable Clone delivery archive must remain private, job-scoped and WordPress-Core compatible.',
-			MIGRATION_BRIDGE_DIR . '/src/Clone/PackageArchive.php',
-			$package_archive_guard,
-			'missing'
-		);
-	}
-}
-
 $package_delivery = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php' );
 foreach (
 	array(
@@ -650,8 +635,9 @@ foreach (
 		"'public_url'         => false",
 		"'delivery-package-integrity-mismatch'",
 		'$this->workspace->cleanup_batch( $job_id, $limit )',
-		'$this->archive->append_files( $job_id, $root, $relative_paths )',
-		'$this->archive->finalize( $job_id )',
+		'$this->workspace->append_delivery_archive_files( $job_id, $relative_paths )',
+		'$this->workspace->finalize_delivery_archive( $job_id )',
+		'$this->workspace->delete_delivery_archive( $job_id )',
 		'$this->jobs->transition( $job_id, \'completed\' )',
 	) as $package_delivery_guard
 ) {
