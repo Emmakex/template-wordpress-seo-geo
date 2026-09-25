@@ -109,10 +109,10 @@ final class SerializationSafeRewriter {
 			$offset += 2;
 
 			return array(
-			'value'       => 'N;',
-			'changed'     => false,
-			'unsupported' => false,
-		);
+				'value'       => 'N;',
+				'changed'     => false,
+				'unsupported' => false,
+			);
 		}
 
 		if ( in_array( $type, array( 'b', 'i', 'd', 'r', 'R' ), true ) ) {
@@ -124,10 +124,10 @@ final class SerializationSafeRewriter {
 			$offset += strlen( $token );
 
 			return array(
-			'value'       => $token,
-			'changed'     => false,
-			'unsupported' => false,
-		);
+				'value'       => $token,
+				'changed'     => false,
+				'unsupported' => false,
+			);
 		}
 
 		if ( 's' === $type ) {
