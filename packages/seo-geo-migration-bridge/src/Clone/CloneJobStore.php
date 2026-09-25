@@ -191,10 +191,10 @@ final class CloneJobStore {
 	/**
 	 * Persist resumable phase/cursor/counter progress.
 	 *
-	 * @param string               $job_id    Job identifier.
-	 * @param string               $phase     Current phase.
-	 * @param string|int|null      $cursor    Bounded resumable cursor.
-	 * @param array<string,mixed>  $counters  Completed/total counters.
+	 * @param string              $job_id    Job identifier.
+	 * @param string              $phase     Current phase.
+	 * @param string|int|null     $cursor    Bounded resumable cursor.
+	 * @param array<string,mixed> $counters  Completed/total counters.
 	 * @return array<string,mixed>|null
 	 */
 	public function update_progress( string $job_id, string $phase, string|int|null $cursor, array $counters ): ?array {
