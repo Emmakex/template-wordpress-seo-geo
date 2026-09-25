@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.8`;
+- current plugin version: `0.8.9`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -71,5 +71,7 @@ Version 0.8.6 adds an explicit operator-review workflow for `UNKNOWN` components
 Version 0.8.7 hardens the real sandbox preflight. A clone is not ready until its origin differs from the production baseline origin, `SEO_GEO_MIGRATION_SANDBOX=true`, WordPress search visibility is disabled, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true`, `SEO_GEO_MIGRATION_BACKUPS_READY=true`, the destination Theme is active, the baseline/dependency graph are present and every raw `UNKNOWN` component has an explicit operator review. Reviewed `UNKNOWN` decisions affect sandbox planning only: `KEEP` becomes `unchanged`; `MIGRATE`/`REPLACE` become `migrate`; `OPTIONAL`/`REMOVE-CANDIDATE` remain `manual-review`. Raw graph classifications are preserved.
 
 Version 0.8.8 adds a second accepted sandbox topology for shared-hosting clients: an explicitly isolated same-origin subdirectory. The default remains `origin`. Subdirectory mode requires `SEO_GEO_MIGRATION_SANDBOX_MODE='subdirectory'`, a non-root base path different from the production baseline path and `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true`, in addition to all v0.8.7 guards. The operator UI exposes mode, production/sandbox paths and location/storage isolation. The Bridge never assumes that a folder is isolated merely because its URL path differs.
+
+Version 0.8.9 adds the first **Portable Clone Engine** implementation slice (10E.2A.1): versioned package/job contracts, non-autoloaded resumable job persistence, non-destructive local-target planning, explicit non-production confirmation, capability/nonce-gated prepare/cancel actions and a privacy-bounded package manifest. This release does **not** copy files or database tables yet; payload execution starts in later 10E.2A slices.
 
 The plugin is transitional for the Theme 0.1.0 migration path. Its accepted capabilities later become the migration module inside SEO/GEO Manager.
