@@ -15,19 +15,35 @@ use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
  * Advances one bounded private database-export batch.
  */
 final class AdminCloneDatabaseExportController {
-	public const ACTION = 'seo_geo_migration_clone_database_export';
+	public const ACTION        = 'seo_geo_migration_clone_database_export';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_database_export';
 
+	/**
+	 * Database exporter service.
+	 *
+	 * @var DatabaseExporter
+	 */
 	private DatabaseExporter $exporter;
 
+	/**
+	 * Construct the authenticated export controller.
+	 *
+	 * @param DatabaseExporter|null $exporter Optional exporter service.
+	 */
 	public function __construct( ?DatabaseExporter $exporter = null ) {
 		$this->exporter = $exporter ?? new DatabaseExporter();
 	}
 
+	/**
+	 * Register the authenticated admin-post endpoint.
+	 */
 	public function boot(): void {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle' ) );
 	}
 
+	/**
+	 * Advance one bounded database export batch and redirect to the operator screen.
+	 */
 	public function handle(): never {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die(

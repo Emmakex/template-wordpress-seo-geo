@@ -15,15 +15,30 @@ use wpdb;
  * Exports selected WordPress-prefix tables into private deterministic chunks.
  */
 final class DatabaseExporter {
-	public const MIN_BATCH_ROWS = 10;
-	public const MAX_BATCH_ROWS = 500;
+	public const MIN_BATCH_ROWS     = 10;
+	public const MAX_BATCH_ROWS     = 500;
 	public const DEFAULT_BATCH_ROWS = 100;
 
+	/** @var ExportStateStore Export-state persistence. */
 	private ExportStateStore $store;
+
+	/** @var CloneInventoryStore Source inventory persistence. */
 	private CloneInventoryStore $inventory;
+
+	/** @var CloneJobStore Clone job persistence. */
 	private CloneJobStore $jobs;
+
+	/** @var ExportWorkspace Private export workspace. */
 	private ExportWorkspace $workspace;
 
+	/**
+	 * Construct the resumable database exporter.
+	 *
+	 * @param ExportStateStore|null    $store     Optional export-state store.
+	 * @param CloneInventoryStore|null $inventory Optional source inventory store.
+	 * @param CloneJobStore|null       $jobs      Optional clone job store.
+	 * @param ExportWorkspace|null     $workspace Optional private workspace.
+	 */
 	public function __construct(
 		?ExportStateStore $store = null,
 		?CloneInventoryStore $inventory = null,
@@ -37,6 +52,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Return one normalized database export state.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
 	 */
@@ -45,6 +62,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Initialize database export after a completed source inventory.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
 	 */
@@ -102,13 +121,18 @@ final class DatabaseExporter {
 			$job_id,
 			'database',
 			'0:0',
-			array( 'completed' => 0, 'total' => null )
+			array(
+				'completed' => 0,
+				'total'     => null,
+			)
 		);
 
 		return $this->store->get( $job_id );
 	}
 
 	/**
+	 * Advance one bounded database export batch.
+	 *
 	 * @param string $job_id    Clone job identifier.
 	 * @param int    $batch_rows Maximum rows exported this request.
 	 * @return array<string,mixed>|null
@@ -211,6 +235,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Delete this job's private export workspace and export state.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 */
 	public function cleanup( string $job_id ): bool {
@@ -218,6 +244,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Initialize schema and cursor metadata for one inventoried table.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 * @param string $table  Source table.
 	 * @return array<string,mixed>|null
@@ -229,7 +257,7 @@ final class DatabaseExporter {
 		}
 
 		$quoted = $this->quote_identifier( $table );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only SHOW against inventoried table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only SHOW CREATE against inventoried table.
 		$create_row = $wpdb->get_row( "SHOW CREATE TABLE {$quoted}", ARRAY_A );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only SHOW against inventoried table.
 		$column_rows = $wpdb->get_results( "SHOW COLUMNS FROM {$quoted}", ARRAY_A );
@@ -324,6 +352,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Fetch one deterministic bounded row batch.
+	 *
 	 * @param string              $table      Source table.
 	 * @param array<string,mixed> $meta       Table export metadata.
 	 * @param array<string,mixed> $state      Export state.
@@ -344,9 +374,11 @@ final class DatabaseExporter {
 			}
 			$quoted_column = $this->quote_identifier( $column );
 			$cursor        = $this->decode_cursor( (string) ( $state['cursor_value_b64'] ?? '' ) );
-			$sql           = null === $cursor
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Identifiers are quoted and come only from the accepted inventory.
+			$sql = null === $cursor
 				? $wpdb->prepare( "SELECT * FROM {$quoted} ORDER BY {$quoted_column} ASC LIMIT %d", $batch_rows )
 				: $wpdb->prepare( "SELECT * FROM {$quoted} WHERE {$quoted_column} > %s ORDER BY {$quoted_column} ASC LIMIT %d", $cursor, $batch_rows );
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		} else {
 			$order_columns = is_array( $meta['order_columns'] ?? null ) ? $meta['order_columns'] : array();
 			$order_parts   = array();
@@ -359,11 +391,13 @@ final class DatabaseExporter {
 				return null;
 			}
 			$offset = max( 0, (int) ( $state['offset'] ?? 0 ) );
-			$sql    = $wpdb->prepare(
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- ORDER identifiers are quoted and derived only from inventoried table metadata.
+			$sql = $wpdb->prepare(
 				"SELECT * FROM {$quoted} ORDER BY " . implode( ', ', $order_parts ) . ' LIMIT %d, %d',
 				$offset,
 				$batch_rows
 			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Source exporter is SHOW/SELECT-only with prepared values and inventoried identifiers.
@@ -372,6 +406,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Build one binary-safe private row-chunk payload.
+	 *
 	 * @param string                    $table       Source table.
 	 * @param array<string,mixed>       $meta        Table metadata.
 	 * @param array<string,mixed>       $state       Export state.
@@ -385,9 +421,13 @@ final class DatabaseExporter {
 		foreach ( $rows as $row ) {
 			$encoded_row = array();
 			foreach ( $columns as $column ) {
-				$encoded_row[] = ! array_key_exists( $column, $row ) || null === $row[ $column ]
-					? null
-					: base64_encode( (string) $row[ $column ] );
+				if ( ! array_key_exists( $column, $row ) || null === $row[ $column ] ) {
+					$encoded_row[] = null;
+					continue;
+				}
+
+				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Binary-safe migration transport encoding, not code obfuscation.
+				$encoded_row[] = base64_encode( (string) $row[ $column ] );
 			}
 			$encoded[] = $encoded_row;
 		}
@@ -408,6 +448,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Mark one table export complete and advance the cursor.
+	 *
 	 * @param string              $job_id Clone job identifier.
 	 * @param array<string,mixed> $state  Export state.
 	 * @param array<string,mixed> $meta   Table metadata.
@@ -431,6 +473,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Write the final private database manifest and complete export state.
+	 *
 	 * @param string                    $job_id   Clone job identifier.
 	 * @param array<string,mixed>       $state    Export state.
 	 * @param array<string,mixed>       $database Inventory database metadata.
@@ -503,6 +547,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Persist bounded export progress and the resumable job cursor.
+	 *
 	 * @param string              $job_id Clone job identifier.
 	 * @param array<string,mixed> $state  Export state.
 	 * @return array<string,mixed>|null
@@ -526,6 +572,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Persist one bounded export blocker and job failure state.
+	 *
 	 * @param string              $job_id   Clone job identifier.
 	 * @param array<string,mixed> $state    Export state.
 	 * @param string              $code     Blocker code.
@@ -544,6 +592,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Load one private table metadata file.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 * @param string $table  Source table.
 	 * @return array<string,mixed>|null
@@ -558,6 +608,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Persist one private table metadata file.
+	 *
 	 * @param string              $job_id Clone job identifier.
 	 * @param string              $table  Source table.
 	 * @param array<string,mixed> $meta   Metadata.
@@ -569,6 +621,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Build one deterministic private table directory.
+	 *
 	 * @param string $table Source table.
 	 */
 	private function table_directory( string $table ): string {
@@ -576,6 +630,8 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Build one deterministic table slug.
+	 *
 	 * @param string $table Source table.
 	 */
 	private function table_slug( string $table ): string {
@@ -583,14 +639,19 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Quote one already-inventoried MySQL identifier.
+	 *
 	 * @param string $identifier Identifier.
 	 */
 	private function quote_identifier( string $identifier ): string {
 		$tick = chr( 96 );
+
 		return $tick . str_replace( $tick, $tick . $tick, $identifier ) . $tick;
 	}
 
 	/**
+	 * Validate that one table remains inside the inventoried WordPress prefix.
+	 *
 	 * @param string $table  Table name.
 	 * @param string $prefix Inventoried prefix.
 	 */
@@ -602,13 +663,18 @@ final class DatabaseExporter {
 	}
 
 	/**
+	 * Encode a primary-key cursor for bounded persistence.
+	 *
 	 * @param string $value Raw cursor.
 	 */
 	private function encode_cursor( string $value ): string {
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Cursor transport encoding, not code obfuscation.
 		return rtrim( strtr( base64_encode( $value ), '+/', '-_' ), '=' );
 	}
 
 	/**
+	 * Decode one bounded primary-key cursor.
+	 *
 	 * @param string $value Base64url cursor.
 	 */
 	private function decode_cursor( string $value ): ?string {

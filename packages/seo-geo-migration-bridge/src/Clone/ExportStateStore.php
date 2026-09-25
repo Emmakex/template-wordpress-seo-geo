@@ -13,11 +13,13 @@ namespace SeoGeo\MigrationBridge\Clone;
  * Stores bounded export progress separately from private payload files.
  */
 final class ExportStateStore {
-	public const OPTION_NAME = 'seo_geo_migration_clone_export_state_v1';
+	public const OPTION_NAME    = 'seo_geo_migration_clone_export_state_v1';
 	public const SCHEMA_VERSION = 1;
-	private const MAX_STATES = 20;
+	private const MAX_STATES    = 20;
 
 	/**
+	 * Return one normalized export state.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
 	 */
@@ -27,6 +29,8 @@ final class ExportStateStore {
 	}
 
 	/**
+	 * Persist one bounded export state.
+	 *
 	 * @param string              $job_id Clone job identifier.
 	 * @param array<string,mixed> $state  Export state.
 	 */
@@ -52,6 +56,8 @@ final class ExportStateStore {
 	}
 
 	/**
+	 * Delete one export state.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 */
 	public function delete( string $job_id ): bool {
@@ -64,6 +70,8 @@ final class ExportStateStore {
 	}
 
 	/**
+	 * Return all normalized export states.
+	 *
 	 * @return array<string,array<string,mixed>>
 	 */
 	private function all(): array {
@@ -86,6 +94,8 @@ final class ExportStateStore {
 	}
 
 	/**
+	 * Normalize one stored export state.
+	 *
 	 * @param string              $job_id Clone job identifier.
 	 * @param array<string,mixed> $state  Raw state.
 	 * @return array<string,mixed>|null
@@ -139,6 +149,8 @@ final class ExportStateStore {
 	}
 
 	/**
+	 * Normalize bounded blocker codes.
+	 *
 	 * @param mixed $codes Raw codes.
 	 * @return list<string>
 	 */
@@ -157,6 +169,8 @@ final class ExportStateStore {
 	}
 
 	/**
+	 * Keep only the newest bounded export states.
+	 *
 	 * @param array<string,array<string,mixed>> $states Export states.
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -175,6 +189,8 @@ final class ExportStateStore {
 	}
 
 	/**
+	 * Validate one clone job identifier.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 */
 	private function valid_job_id( string $job_id ): bool {

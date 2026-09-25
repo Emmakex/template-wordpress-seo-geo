@@ -20,6 +20,8 @@ final class ExportWorkspace {
 	public const DIRECTORY_NAME = 'seo-geo-migration-bridge';
 
 	/**
+	 * Ensure one private job workspace exists.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 * @return string|null
 	 */
@@ -48,6 +50,8 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Atomically write one workspace-relative payload file.
+	 *
 	 * @param string $job_id   Clone job identifier.
 	 * @param string $relative Workspace-relative path.
 	 * @param string $content  Payload bytes.
@@ -79,6 +83,7 @@ final class ExportWorkspace {
 		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive private payload permissions.
 		@chmod( $temp, 0600 );
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic move stays inside the bounded private export workspace.
 		if ( ! rename( $temp, $absolute ) ) {
 			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only a failed job-owned temp file.
 			@unlink( $temp );
@@ -98,6 +103,8 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Read one workspace-relative payload file.
+	 *
 	 * @param string $job_id   Clone job identifier.
 	 * @param string $relative Workspace-relative path.
 	 */
@@ -112,6 +119,8 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Delete only the private workspace owned by one clone job.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 */
 	public function cleanup( string $job_id ): bool {
@@ -144,11 +153,16 @@ final class ExportWorkspace {
 		return @rmdir( untrailingslashit( $root ) );
 	}
 
+	/**
+	 * Return the normalized private export workspace base path.
+	 */
 	public function base_path(): string {
 		return trailingslashit( wp_normalize_path( get_temp_dir() ) ) . self::DIRECTORY_NAME;
 	}
 
 	/**
+	 * Resolve one bounded workspace path.
+	 *
 	 * @param string $job_id      Clone job identifier.
 	 * @param string $relative    Workspace-relative path.
 	 * @param bool   $create_root Ensure job root first.
@@ -170,6 +184,8 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Normalize one workspace-relative path.
+	 *
 	 * @param string $relative Relative path.
 	 */
 	private function normalize_relative( string $relative ): string {
@@ -187,6 +203,8 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Write defense-in-depth access guards for a generated directory.
+	 *
 	 * @param string $directory Directory to protect.
 	 */
 	private function protect_directory( string $directory ): void {
@@ -203,6 +221,8 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Validate one clone job identifier.
+	 *
 	 * @param string $job_id Clone job identifier.
 	 */
 	private function valid_job_id( string $job_id ): bool {

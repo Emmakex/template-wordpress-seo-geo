@@ -237,10 +237,10 @@ final class Plugin {
 		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
 
-		self::$clone_job_store            ??= new CloneJobStore();
-		self::$clone_controller           ??= new AdminCloneController( self::$clone_job_store );
-		self::$clone_inventory_store      ??= new CloneInventoryStore();
-		self::$clone_inventory            ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
+		self::$clone_job_store                  ??= new CloneJobStore();
+		self::$clone_controller                 ??= new AdminCloneController( self::$clone_job_store );
+		self::$clone_inventory_store            ??= new CloneInventoryStore();
+		self::$clone_inventory                  ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
 		self::$clone_inventory_controller       ??= new AdminCloneInventoryController( self::$clone_inventory );
 		self::$destination_safety_planner       ??= new DestinationSafetyPlanner();
 		self::$clone_export_state_store         ??= new ExportStateStore();
