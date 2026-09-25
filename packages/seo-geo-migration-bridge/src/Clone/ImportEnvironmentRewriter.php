@@ -21,14 +21,59 @@ final class ImportEnvironmentRewriter {
 
 	private const MAX_TABLES = 1000;
 
+	/**
+	 * Resumable environment rewrite state store.
+	 *
+	 * @var ImportEnvironmentStateStore
+	 */
 	private ImportEnvironmentStateStore $store;
+	/**
+	 * Portable Import state store.
+	 *
+	 * @var ImportStateStore
+	 */
 	private ImportStateStore $import_state;
+	/**
+	 * Verified payload state store.
+	 *
+	 * @var ImportPayloadStateStore
+	 */
 	private ImportPayloadStateStore $payload_state;
+	/**
+	 * Staging database restore state store.
+	 *
+	 * @var ImportDatabaseStateStore
+	 */
 	private ImportDatabaseStateStore $database_state;
+	/**
+	 * Staging file restore state store.
+	 *
+	 * @var ImportFileStateStore
+	 */
 	private ImportFileStateStore $file_state;
+	/**
+	 * Portable Clone job store.
+	 *
+	 * @var CloneJobStore
+	 */
 	private CloneJobStore $jobs;
+	/**
+	 * Fresh destination preflight service.
+	 *
+	 * @var ImportPreflight
+	 */
 	private ImportPreflight $preflight;
+	/**
+	 * Private import workspace authority.
+	 *
+	 * @var ExportWorkspace
+	 */
 	private ExportWorkspace $workspace;
+	/**
+	 * Non-instantiating serialized value rewriter.
+	 *
+	 * @var SerializationSafeRewriter
+	 */
 	private SerializationSafeRewriter $rewriter;
 
 	/**
@@ -303,8 +348,10 @@ final class ImportEnvironmentRewriter {
 	 * @param array<string,mixed>       $state        Rewrite state.
 	 * @param string                    $source_table Source table name.
 	 * @param string                    $staging_table Staging table name.
-	 * @param list<string>              $text_columns Text columns.
-	 * @param list<string>              $primary      Primary-key columns.
+	 * @param array                     $text_columns Text columns.
+	 * @param array                     $primary      Primary-key columns.
+	 * @phpstan-param list<string> $text_columns
+	 * @phpstan-param list<string> $primary
 	 * @param list<array<string,mixed>> $rows         Selected rows.
 	 * @return array<string,mixed>|null
 	 */
@@ -345,7 +392,7 @@ final class ImportEnvironmentRewriter {
 					continue;
 				}
 
-				$prefix_value = $this->rewrite_prefix_key(
+				$prefix_value   = $this->rewrite_prefix_key(
 					$source_table,
 					$column,
 					$value,
@@ -451,8 +498,9 @@ final class ImportEnvironmentRewriter {
 	 * @param string                    $job_id       Clone job identifier.
 	 * @param array<string,mixed>       $state        Rewrite state.
 	 * @param string                    $source_table Source table.
-	 * @param list<string>              $text_columns Text columns.
+	 * @param array                     $text_columns Text columns.
 	 * @param list<array<string,mixed>> $rows         Selected rows.
+	 * @phpstan-param list<string> $text_columns
 	 * @return array<string,mixed>|null
 	 */
 	private function verify_rows(
@@ -498,9 +546,9 @@ final class ImportEnvironmentRewriter {
 			return $this->block( $job_id, $state, 'import-environment-verification-source-value-remains', false );
 		}
 
-		$state['row_offset']           = (int) $state['row_offset'] + count( $rows );
+		$state['row_offset']          = (int) $state['row_offset'] + count( $rows );
 		$state['verify_rows_scanned'] = (int) $state['verify_rows_scanned'] + count( $rows );
-		$state['updated_at']           = gmdate( DATE_ATOM );
+		$state['updated_at']          = gmdate( DATE_ATOM );
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
@@ -637,7 +685,7 @@ final class ImportEnvironmentRewriter {
 			|| (string) ( $db['staging_namespace'] ?? '' ) !== (string) ( $state['staging_namespace'] ?? '' )
 			|| (string) ( $db['source_prefix'] ?? '' ) !== (string) ( $state['source_prefix'] ?? '' )
 			|| (string) ( $db['destination_prefix'] ?? '' ) !== (string) ( $state['destination_prefix'] ?? '' )
-			|| $wpdb->prefix !== (string) ( $state['destination_prefix'] ?? '' )
+			|| (string) ( $state['destination_prefix'] ?? '' ) !== $wpdb->prefix
 			|| (string) ( $fresh['source_home_url'] ?? '' ) !== (string) ( $state['source_home_url'] ?? '' )
 			|| (string) ( $fresh['source_site_url'] ?? '' ) !== (string) ( $state['source_site_url'] ?? '' )
 			|| (string) ( $fresh['destination_home_url'] ?? '' ) !== (string) ( $state['destination_home_url'] ?? '' )
@@ -797,8 +845,10 @@ final class ImportEnvironmentRewriter {
 	 * Read one stable bounded row page.
 	 *
 	 * @param string       $table   Staging table.
-	 * @param list<string> $columns Selected columns.
-	 * @param list<string> $primary Primary columns.
+	 * @param array  $columns Selected columns.
+	 * @param array  $primary Primary columns.
+	 * @phpstan-param list<string> $columns
+	 * @phpstan-param list<string> $primary
 	 * @param int          $offset  Offset.
 	 * @param int          $limit   Limit.
 	 * @return list<array<string,mixed>>|null
@@ -829,7 +879,11 @@ final class ImportEnvironmentRewriter {
 			return null;
 		}
 
-		/** @var list<array<string,mixed>> $rows */
+		/**
+		 * Selected staging rows.
+		 *
+		 * @var list<array<string,mixed>> $rows
+		 */
 		return array_values( $rows );
 	}
 
@@ -870,6 +924,12 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Rewrite WordPress role/capability keys that embed the table prefix.
+	 *
+	 * @param string $source_table  Source table name.
+	 * @param string $column        Column name.
+	 * @param string $value         Current value.
+	 * @param string $source_prefix Source WordPress table prefix.
+	 * @param string $dest_prefix   Destination WordPress table prefix.
 	 */
 	private function rewrite_prefix_key(
 		string $source_table,
@@ -901,6 +961,12 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Whether a prefix-sensitive key still requires rewrite.
+	 *
+	 * @param string $source_table  Source table name.
+	 * @param string $column        Column name.
+	 * @param string $value         Current value.
+	 * @param string $source_prefix Source WordPress table prefix.
+	 * @param string $dest_prefix   Destination WordPress table prefix.
 	 */
 	private function prefix_key_needs_rewrite(
 		string $source_table,
@@ -915,8 +981,10 @@ final class ImportEnvironmentRewriter {
 	/**
 	 * Verify core home/siteurl rows use exact destination URLs.
 	 *
-	 * @param array<string,mixed> $row   Selected row.
-	 * @param array<string,mixed> $state Rewrite state.
+	 * @param string              $source_table Source table name.
+	 * @param string              $column       Column name.
+	 * @param array<string,mixed> $row          Selected row.
+	 * @param array<string,mixed> $state        Rewrite state.
 	 */
 	private function core_environment_value_invalid(
 		string $source_table,
@@ -946,6 +1014,10 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Preserve canonical WordPress GUID columns.
+	 *
+	 * @param string $source_table  Source table name.
+	 * @param string $column        Column name.
+	 * @param string $source_prefix Source WordPress table prefix.
 	 */
 	private function preserve_column( string $source_table, string $column, string $source_prefix ): bool {
 		if ( 'guid' !== $column || ! str_starts_with( $source_table, $source_prefix ) ) {
@@ -959,6 +1031,9 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Return a site-specific prefix for an options table.
+	 *
+	 * @param string $source_table  Source table name.
+	 * @param string $source_prefix Source WordPress table prefix.
 	 */
 	private function site_prefix_for_options_table( string $source_table, string $source_prefix ): ?string {
 		if ( ! str_starts_with( $source_table, $source_prefix ) ) {
@@ -1012,13 +1087,16 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Return deterministic staging table name.
+	 *
+	 * @param string $staging_namespace Deterministic staging namespace.
+	 * @param string $source_table      Source table name.
 	 */
-	private function staging_table( string $namespace, string $source_table ): string {
-		if ( ! $this->valid_identifier( $namespace ) || ! $this->valid_source_table( $source_table ) ) {
+	private function staging_table( string $staging_namespace, string $source_table ): string {
+		if ( ! $this->valid_identifier( $staging_namespace ) || ! $this->valid_source_table( $source_table ) ) {
 			return '';
 		}
 
-		$table = $namespace . substr( hash( 'sha256', $source_table ), 0, 16 );
+		$table = $staging_namespace . substr( hash( 'sha256', $source_table ), 0, 16 );
 
 		return $this->valid_identifier( $table ) ? $table : '';
 	}
@@ -1026,16 +1104,17 @@ final class ImportEnvironmentRewriter {
 	/**
 	 * Return all tables in one job-owned staging namespace.
 	 *
+	 * @param string $staging_namespace Deterministic staging namespace.
 	 * @return list<string>
 	 */
-	private function staging_tables( string $namespace ): array {
+	private function staging_tables( string $staging_namespace ): array {
 		global $wpdb;
 
-		if ( ! $wpdb instanceof wpdb || ! $this->valid_identifier( $namespace ) || '' === $namespace ) {
+		if ( ! $wpdb instanceof wpdb || ! $this->valid_identifier( $staging_namespace ) || '' === $staging_namespace ) {
 			return array();
 		}
 
-		$pattern = $wpdb->esc_like( $namespace ) . '%';
+		$pattern = $wpdb->esc_like( $staging_namespace ) . '%';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only metadata scoped to one deterministic job-owned namespace.
 		$tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $pattern ) );
@@ -1045,6 +1124,8 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Whether one exact table exists.
+	 *
+	 * @param string $table Exact staging table name.
 	 */
 	private function table_exists( string $table ): bool {
 		global $wpdb;
@@ -1063,6 +1144,8 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Quote one validated MySQL identifier.
+	 *
+	 * @param string $identifier Validated MySQL identifier.
 	 */
 	private function quote_identifier( string $identifier ): string {
 		$quote = chr( 96 );
@@ -1072,6 +1155,8 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Validate deterministic staging identifiers.
+	 *
+	 * @param string $identifier Candidate staging identifier.
 	 */
 	private function valid_identifier( string $identifier ): bool {
 		return '' !== $identifier
@@ -1081,6 +1166,8 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Validate source table names.
+	 *
+	 * @param string $table Candidate source table name.
 	 */
 	private function valid_source_table( string $table ): bool {
 		return '' !== $table
@@ -1090,6 +1177,9 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Compare SHA-256 values.
+	 *
+	 * @param mixed $left  First candidate hash.
+	 * @param mixed $right Second candidate hash.
 	 */
 	private function same_hash( mixed $left, mixed $right ): bool {
 		return is_string( $left )
@@ -1100,6 +1190,8 @@ final class ImportEnvironmentRewriter {
 
 	/**
 	 * Validate one HTTP(S) URL.
+	 *
+	 * @param string $url Candidate URL.
 	 */
 	private function valid_http_url( string $url ): bool {
 		return in_array( wp_parse_url( $url, PHP_URL_SCHEME ), array( 'http', 'https' ), true )
