@@ -112,13 +112,13 @@ final class PortableClonePlanner {
 				'exists'       => $target_exists,
 				'empty'        => $target_empty,
 			),
-			'review'         => $review,
-			'safety'         => array(
-				'production_mutation_allowed' => false,
-				'destructive_overwrite_allowed'=> false,
-				'target_must_be_empty'         => true,
-				'separate_table_prefix'        => $table_prefix !== $this->db->prefix,
-				'credentials_exported'         => false,
+			'review' => $review,
+			'safety' => array(
+				'production_mutation_allowed'   => false,
+				'destructive_overwrite_allowed' => false,
+				'target_must_be_empty'          => true,
+				'separate_table_prefix'         => $table_prefix !== $this->db->prefix,
+				'credentials_exported'          => false,
 			),
 		);
 	}
