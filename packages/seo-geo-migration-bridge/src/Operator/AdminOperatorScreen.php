@@ -16,6 +16,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportActivationPlanController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -35,6 +36,7 @@ use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportActivationPlanStore;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -128,6 +130,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_import_database_result_notice(); ?>
 			<?php $this->render_clone_import_file_result_notice(); ?>
 			<?php $this->render_clone_import_rewrite_result_notice(); ?>
+			<?php $this->render_clone_import_activation_plan_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -1445,7 +1448,109 @@ final class AdminOperatorScreen {
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_rewrite_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 			</form>
+		<?php elseif ( 'complete' === $status ) : ?>
+			<?php $this->render_clone_import_activation_plan_section( $job_id ); ?>
 		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render activation-plan result notice.
+	 */
+	private function render_clone_import_activation_plan_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified activation planning.
+		$status = isset( $_GET['seo_geo_clone_activation_plan'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_activation_plan'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'ready'   => 'clone_import_activation_ready',
+			'blocked' => 'clone_import_activation_blocked',
+			default   => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'ready' === $status ? 'notice notice-success' : 'notice notice-error';
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render non-mutating sandbox activation planning controls.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function render_clone_import_activation_plan_section( string $job_id ): void {
+		$plan       = ( new ImportActivationPlanStore() )->get( $job_id );
+		$status     = is_array( $plan ) ? (string) ( $plan['status'] ?? 'pending' ) : 'pending';
+		$blockers   = is_array( $plan['blockers'] ?? null ) ? array_values( array_filter( $plan['blockers'], 'is_string' ) ) : array();
+		$advisories = is_array( $plan['advisories'] ?? null ) ? array_values( array_filter( $plan['advisories'], 'is_string' ) ) : array();
+		$recovery   = is_array( $plan['recovery'] ?? null ) ? $plan['recovery'] : array();
+		$db          = is_array( $recovery['database'] ?? null ) ? $recovery['database'] : array();
+		$content     = is_array( $recovery['wp_content'] ?? null ) ? $recovery['wp_content'] : array();
+		?>
+		<h4><?php echo esc_html( $this->copy->text( 'clone_import_activation_heading' ) ); ?></h4>
+		<p><?php echo esc_html( $this->copy->text( 'clone_import_activation_help' ) ); ?></p>
+		<?php if ( is_array( $plan ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_activation_plan_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $plan['plan_sha256'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_activation_tables' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $plan['table_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_activation_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $plan['staging_file_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_activation_bytes' ) ); ?></th><td><?php echo esc_html( size_format( (int) ( $plan['staging_file_bytes'] ?? 0 ) ) ); ?></td></tr>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_activation_recovery', true === ( $plan['recovery_valid'] ?? false ) ); ?>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_activation_allowed_db', true === ( $plan['database_activation_allowed'] ?? false ) ); ?>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_activation_allowed_files', true === ( $plan['file_activation_allowed'] ?? false ) ); ?>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_activation_mutations', true === ( $plan['mutations_performed'] ?? false ) ); ?>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_activation_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === $blockers ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $blockers ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_activation_advisories' ) ); ?></th><td><code><?php echo esc_html( array() === $advisories ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $advisories ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportActivationPlanController::ACTION ); ?>">
+			<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+			<?php wp_nonce_field( AdminCloneImportActivationPlanController::NONCE_ACTION . ':' . $job_id ); ?>
+			<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_recovery_help' ) ); ?></p>
+			<table class="form-table" role="presentation">
+				<tbody>
+					<?php $this->render_activation_evidence_row( 'clone_import_recovery_db_ref', 'recovery_database_reference', (string) ( $db['reference'] ?? '' ) ); ?>
+					<?php $this->render_activation_evidence_row( 'clone_import_recovery_db_sha', 'recovery_database_sha256', (string) ( $db['sha256'] ?? '' ) ); ?>
+					<?php $this->render_activation_evidence_row( 'clone_import_recovery_db_at', 'recovery_database_created_at', (string) ( $db['created_at'] ?? '' ) ); ?>
+					<?php $this->render_activation_evidence_row( 'clone_import_recovery_db_size', 'recovery_database_size_bytes', (string) ( $db['size_bytes'] ?? '' ), 'number' ); ?>
+					<?php $this->render_activation_evidence_row( 'clone_import_recovery_content_ref', 'recovery_wp_content_reference', (string) ( $content['reference'] ?? '' ) ); ?>
+					<?php $this->render_activation_evidence_row( 'clone_import_recovery_content_sha', 'recovery_wp_content_sha256', (string) ( $content['sha256'] ?? '' ) ); ?>
+					<?php $this->render_activation_evidence_row( 'clone_import_recovery_content_at', 'recovery_wp_content_created_at', (string) ( $content['created_at'] ?? '' ) ); ?>
+					<?php $this->render_activation_evidence_row( 'clone_import_recovery_content_size', 'recovery_wp_content_size_bytes', (string) ( $content['size_bytes'] ?? '' ), 'number' ); ?>
+				</tbody>
+			</table>
+			<?php submit_button( $this->copy->text( 'clone_import_activation_button' ), 'secondary', 'submit', false ); ?>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Render one activation recovery evidence input.
+	 *
+	 * @param string $label_key Copy key.
+	 * @param string $name      Input name.
+	 * @param string $value     Current value.
+	 * @param string $type      Input type.
+	 */
+	private function render_activation_evidence_row( string $label_key, string $name, string $value, string $type = 'text' ): void {
+		?>
+		<tr>
+			<th scope="row"><label for="<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $this->copy->text( $label_key ) ); ?></label></th>
+			<td><input class="regular-text" type="<?php echo esc_attr( $type ); ?>" min="0" id="<?php echo esc_attr( $name ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>" required></td>
+		</tr>
 		<?php
 	}
 
