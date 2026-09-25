@@ -482,7 +482,7 @@ Deliver:
 
 ### 10E.2A.4 — Portable import
 
-Status: **active — 10E.2A.4.1 through 10E.2A.4.6.1 are accepted; 10E.2A.4.6.2 reversible database activation is the Migration Bridge 0.8.21 candidate**
+Status: **active — 10E.2A.4.1 through 10E.2A.4.6.2 are accepted; 10E.2A.4.6.3 reversible file promotion + final target verification is the Migration Bridge 0.8.22 candidate**
 
 Internal sequence:
 
@@ -491,8 +491,8 @@ Internal sequence:
 - **10E.2A.4.4 — file restore:** complete in 0.8.18; copy only manifest-backed uploads/plugins/themes from the checksum-verified private extraction into `import/staged-files`, never active `wp-content`; batches are resumable and a second independent SHA-256 traversal reconciles exact file/byte totals before completion.
 - **10E.2A.4.5 — serialization-safe environment rewrite:** active in 0.8.19; rewrite supported WordPress staging-table environment URLs only. PHP serialized arrays/scalars and JSON containers are decoded structurally and re-encoded only when changed; unsupported/opaque serialized bytes are never raw-replaced, and any such opaque value that still contains a source-environment URL blocks completion. Credential/token keys remain opaque and are surfaced as advisories. A second read-only pass must be idempotent. Active destination tables and staged file bytes remain untouched.
 - **10E.2A.4.6.1 — read-only finalization preflight:** complete in 0.8.20; re-hash rewritten staging database/files, re-run sandbox safety and lock the immutable activation/rollback plan while active targets remain untouched.
-- **10E.2A.4.6.2 — reversible database activation:** active in 0.8.21; preserve import control-plane options into staged `wp_options`, force noindex, keep Migration Bridge active and atomically swap all database tables with deterministic rollback names. Persist activation recovery state outside the database, verify counts/control-plane/noindex after the swap and immediately reverse the atomic rename on verification failure. Active `wp-content` remains untouched and final handoff stays disabled.
-- **10E.2A.4.6.3 — reversible file promotion + final target verification:** next; promote verified staged uploads/plugins/themes with rollback-safe filesystem boundaries, re-run final integrity/sandbox gates and only then permit handoff.
+- **10E.2A.4.6.2 — reversible database activation:** complete in 0.8.21; preserve import control-plane and current plugin/theme runtime options into staged `wp_options`, force noindex, keep Migration Bridge active and atomically swap all database tables with deterministic rollback names. Persist activation recovery state outside the database, verify counts/control-plane/noindex after the swap and immediately reverse the atomic rename on verification failure. Active `wp-content` remains untouched and final handoff stays disabled.
+- **10E.2A.4.6.3 — reversible file promotion + final target verification:** active in 0.8.22; freeze an external promotion journal, copy verified staging into same-filesystem sibling candidates in bounded resumable batches, replay the accepted staging fingerprint, require the currently active plugin/theme runtime to exist in the candidates, swap each uploads/plugins/themes root through deterministic rollback siblings, recover safely from interrupted renames and re-hash the promoted active roots. Integrity or sandbox-safety drift triggers rollback; only complete final verification may permit handoff.
 
 Deliver:
 
