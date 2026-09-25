@@ -870,7 +870,6 @@ final class ImportEnvironmentRewriter {
 			return null;
 		}
 
-		/** @var list<array<string,mixed>> $rows */
 		return $rows;
 	}
 
