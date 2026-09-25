@@ -451,7 +451,7 @@ final class ImportEnvironmentRewriter {
 		}
 
 		if ( is_serialized( $value, false ) ) {
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Import requires PHP serialization parsing with classes explicitly forbidden.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Import parses verified package serialization with classes explicitly forbidden; invalid bytes are handled immediately below.
 			$decoded = @unserialize( trim( $value ), array( 'allowed_classes' => false ) );
 			if ( false === $decoded && 'b:0;' !== trim( $value ) ) {
 				if ( $this->opaque_contains_source_environment( $value, $state ) ) {
@@ -593,8 +593,8 @@ final class ImportEnvironmentRewriter {
 	private function transform_plain_string( string $value, array $state, bool $verify ): array {
 		$rewritten = preg_replace_callback(
 			'~https?://[^\s\x00-\x1F"\'<>]+~i',
-			function ( array $match ) use ( &$state, $verify ): string {
-				$url = (string) ( $match[0] ?? '' );
+			function ( array $matches ) use ( &$state, $verify ): string {
+				$url = (string) ( $matches[0] ?? '' );
 				$end = '';
 				while ( '' !== $url && str_contains( '.,;:!?)]}', substr( $url, -1 ) ) ) {
 					$end = substr( $url, -1 ) . $end;
@@ -884,15 +884,47 @@ final class ImportEnvironmentRewriter {
 	private function supported_tables( array $plan ): ?array {
 		$source_prefix = is_string( $plan['source_prefix'] ?? null ) ? $plan['source_prefix'] : '';
 		$tables        = is_array( $plan['tables'] ?? null ) ? $plan['tables'] : array();
-		$definitions   = array(
-			'options'       => array( 'id' => 'option_id', 'key' => 'option_name', 'values' => array( 'option_value' ) ),
-			'posts'         => array( 'id' => 'ID', 'key' => '', 'values' => array( 'post_content', 'post_excerpt', 'post_content_filtered' ) ),
-			'postmeta'      => array( 'id' => 'meta_id', 'key' => 'meta_key', 'values' => array( 'meta_value' ) ),
-			'usermeta'      => array( 'id' => 'umeta_id', 'key' => 'meta_key', 'values' => array( 'meta_value' ) ),
-			'termmeta'      => array( 'id' => 'meta_id', 'key' => 'meta_key', 'values' => array( 'meta_value' ) ),
-			'commentmeta'   => array( 'id' => 'meta_id', 'key' => 'meta_key', 'values' => array( 'meta_value' ) ),
-			'comments'      => array( 'id' => 'comment_ID', 'key' => '', 'values' => array( 'comment_content' ) ),
-			'term_taxonomy' => array( 'id' => 'term_taxonomy_id', 'key' => '', 'values' => array( 'description' ) ),
+		$definitions = array(
+			'options'       => array(
+				'id'     => 'option_id',
+				'key'    => 'option_name',
+				'values' => array( 'option_value' ),
+			),
+			'posts'         => array(
+				'id'     => 'ID',
+				'key'    => '',
+				'values' => array( 'post_content', 'post_excerpt', 'post_content_filtered' ),
+			),
+			'postmeta'      => array(
+				'id'     => 'meta_id',
+				'key'    => 'meta_key',
+				'values' => array( 'meta_value' ),
+			),
+			'usermeta'      => array(
+				'id'     => 'umeta_id',
+				'key'    => 'meta_key',
+				'values' => array( 'meta_value' ),
+			),
+			'termmeta'      => array(
+				'id'     => 'meta_id',
+				'key'    => 'meta_key',
+				'values' => array( 'meta_value' ),
+			),
+			'commentmeta'   => array(
+				'id'     => 'meta_id',
+				'key'    => 'meta_key',
+				'values' => array( 'meta_value' ),
+			),
+			'comments'      => array(
+				'id'     => 'comment_ID',
+				'key'    => '',
+				'values' => array( 'comment_content' ),
+			),
+			'term_taxonomy' => array(
+				'id'     => 'term_taxonomy_id',
+				'key'    => '',
+				'values' => array( 'description' ),
+			),
 		);
 
 		$supported = array();
