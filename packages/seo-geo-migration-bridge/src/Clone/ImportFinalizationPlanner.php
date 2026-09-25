@@ -419,7 +419,7 @@ final class ImportFinalizationPlanner {
 					if ( count( $pending ) >= self::MAX_PENDING_DIRECTORIES ) {
 						return $this->block( $job_id, $state, 'import-finalize-file-directory-queue-limit', false );
 					}
-					$pending[]                       = $relative;
+					$pending[]                  = $relative;
 					$state['file_pending_dirs'] = $pending;
 					$state['file_after_name']   = $entry;
 
@@ -648,7 +648,7 @@ final class ImportFinalizationPlanner {
 
 		$authorized = defined( ImportPreflight::TARGET_AUTHORIZED_MARKER )
 			&& true === constant( ImportPreflight::TARGET_AUTHORIZED_MARKER );
-		$mode = SandboxGuard::mode();
+		$mode       = SandboxGuard::mode();
 
 		if (
 			! SandboxGuard::enabled()
@@ -705,7 +705,7 @@ final class ImportFinalizationPlanner {
 				return null;
 			}
 
-			$entry = array(
+			$entry        = array(
 				'id'         => $root['id'],
 				'file_count' => max( 0, (int) ( $root['file_count'] ?? 0 ) ),
 				'byte_count' => max( 0, (int) ( $root['byte_count'] ?? 0 ) ),
@@ -775,6 +775,7 @@ final class ImportFinalizationPlanner {
 			}
 
 			$parent = wp_normalize_path( dirname( untrailingslashit( $active ) ) );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Read-only local capability check; this phase performs no filesystem mutation.
 			if ( ! is_dir( $parent ) || ! is_writable( $parent ) || is_link( $parent ) ) {
 				return null;
 			}
@@ -1030,8 +1031,8 @@ final class ImportFinalizationPlanner {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code, bool $retryable ): ?array {
-		$blockers                     = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
-		$blockers[]                   = $code;
+		$blockers                    = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers[]                  = $code;
 		$state['status']             = 'blocked';
 		$state['activation_allowed'] = false;
 		$state['handoff_ready']      = false;
