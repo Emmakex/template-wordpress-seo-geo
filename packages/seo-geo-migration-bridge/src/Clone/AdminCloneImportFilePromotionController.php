@@ -118,12 +118,12 @@ final class AdminCloneImportFilePromotionController {
 	 * Return one bounded posted integer.
 	 *
 	 * @param string $key     POST key.
-	 * @param int    $default Default value.
+	 * @param int    $fallback Fallback value.
 	 */
-	private function posted_int( string $key, int $default ): int {
+	private function posted_int( string $key, int $fallback ): int {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified by the calling handler.
 		if ( ! isset( $_POST[ $key ] ) ) {
-			return $default;
+			return $fallback;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified by the calling handler.
