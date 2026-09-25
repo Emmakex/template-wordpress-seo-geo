@@ -59,6 +59,7 @@ $verifier     = Plugin::clone_import_payload_verifier();
 $db_restore   = Plugin::clone_import_database_restorer();
 $file_restore = Plugin::clone_import_file_restorer();
 $rewriter     = Plugin::clone_import_environment_rewriter();
+$finalizer    = Plugin::clone_import_finalization_planner();
 $workspace    = new ExportWorkspace();
 
 if (
