@@ -239,7 +239,7 @@ final class CloneInventory {
 					if ( count( $pending ) >= self::MAX_PENDING_DIRECTORIES ) {
 						return $this->block( $state, 'source-directory-queue-limit' );
 					}
-					$pending[]               = $relative;
+					$pending[]             = $relative;
 					$state['pending_dirs'] = $pending;
 					$state['after_name']   = $entry;
 					if ( $operations >= self::MAX_ENTRY_OPERATIONS ) {
@@ -337,9 +337,9 @@ final class CloneInventory {
 			$rows = array();
 		}
 
-		$tables         = array();
-		$estimated_rows = 0;
-		$estimated_bytes= 0;
+		$tables          = array();
+		$estimated_rows  = 0;
+		$estimated_bytes = 0;
 
 		foreach ( array_slice( $rows, 0, 1000 ) as $row ) {
 			if ( ! is_array( $row ) || ! is_string( $row['Name'] ?? null ) ) {
@@ -354,8 +354,8 @@ final class CloneInventory {
 				'estimated_rows'  => $table_rows,
 				'estimated_bytes' => $table_bytes,
 			);
-			$estimated_rows += $table_rows;
-			$estimated_bytes += $table_bytes;
+			$estimated_rows +  = $table_rows;
+			$estimated_bytes + = $table_bytes;
 		}
 
 		return array(
@@ -502,8 +502,8 @@ final class CloneInventory {
 			return null;
 		}
 
-		$blockers = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
-		$blockers[]             = $code;
+		$blockers            = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers[]          = $code;
 		$state['blockers']   = array_values( array_unique( $blockers ) );
 		$state['status']     = 'blocked';
 		$state['updated_at'] = gmdate( DATE_ATOM );
