@@ -2199,7 +2199,7 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.4.2 — full payload verification + resumable extraction in Migration Bridge 0.8.16.** Migration Bridge 0.8.15 accepted private ZIP intake and destination preflight. 10E.2A.4.2 may extract only into job-owned private storage and may unlock `restore_allowed=true` only after replaying the exact accepted package checksum; destination database/files remain untouched until 10E.2A.4.3.
+Current execution pointer: **10E.2A.4.2 — full payload verification + resumable extraction in Migration Bridge 0.8.16.** Migration Bridge 0.8.15 accepted private ZIP intake and destination preflight. 10E.2A.4.2 may extract only into job-owned private storage. After replaying the exact accepted package checksum it must run a fresh destination preflight; only a still-safe destination may unlock `restore_allowed=true`. Late noindex/isolation/outbound/backup/authorization drift keeps restore blocked without invalidating the completed private checksum. Destination database/files remain untouched until 10E.2A.4.3.
 
 Migration Bridge v0.8.15 / 10E.2A.4.1 acceptance evidence:
 
