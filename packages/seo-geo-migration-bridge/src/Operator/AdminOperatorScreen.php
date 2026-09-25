@@ -10,6 +10,9 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
+use SeoGeo\MigrationBridge\Clone\CloneInventory;
+use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
@@ -89,6 +92,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_baseline_result_notice(); ?>
 			<?php $this->render_dependency_review_result_notice(); ?>
 			<?php $this->render_clone_result_notice(); ?>
+			<?php $this->render_clone_inventory_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -352,6 +356,121 @@ final class AdminOperatorScreen {
 					</tr>
 				</tbody>
 			</table>
+			<?php if ( in_array( $latest['operation'] ?? null, array( 'local-clone', 'export' ), true ) ) : ?>
+				<?php $this->render_clone_inventory_section( $latest ); ?>
+			<?php endif; ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after a source-inventory step.
+	 */
+	private function render_clone_inventory_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified inventory action.
+		$status = isset( $_GET['seo_geo_clone_inventory'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_inventory'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'complete' => 'clone_inventory_complete',
+			'running'  => 'clone_inventory_running',
+			'blocked'  => 'clone_inventory_blocked',
+			default    => null,
+		};
+
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : 'notice notice-success';
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render read-only source inventory progress and explicit bounded action.
+	 *
+	 * @param array<string,mixed> $job Latest clone job.
+	 */
+	private function render_clone_inventory_section( array $job ): void {
+		$job_id    = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		$inventory = '' === $job_id ? null : ( new CloneInventoryStore() )->get( $job_id );
+		$status    = is_array( $inventory ) ? (string) ( $inventory['status'] ?? 'pending' ) : 'pending';
+		$database  = is_array( $inventory['database'] ?? null ) ? $inventory['database'] : array();
+		$button    = 'pending' === $status ? 'clone_inventory_start' : 'clone_inventory_continue';
+
+		if ( '' === $job_id ) {
+			return;
+		}
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_inventory_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_inventory_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_inventory_status' ) ); ?></th>
+					<td><code><?php echo esc_html( $status ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_db_tables' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $database['table_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_db_rows' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $database['estimated_rows'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_db_bytes' ) ); ?></th>
+					<td><?php echo esc_html( size_format( (int) ( $database['estimated_bytes'] ?? 0 ) ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_files' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $inventory['file_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_bytes' ) ); ?></th>
+					<td><?php echo esc_html( size_format( (int) ( $inventory['byte_count'] ?? 0 ) ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_excluded' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $inventory['excluded_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_symlinks' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $inventory['symlink_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_unreadable' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $inventory['unreadable_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_fingerprint' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $inventory['fingerprint'] ?? '' ) ); ?></code></td>
+				</tr>
+			</tbody>
+		</table>
+
+		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneInventoryController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneInventoryController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p>
+					<label for="seo-geo-clone-inventory-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_inventory_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-inventory-batch" name="inventory_batch_size">
+						<?php foreach ( array( 25, 50, 100, 200, 500 ) as $size ) : ?>
+							<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( CloneInventory::DEFAULT_BATCH_SIZE, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_inventory_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
 		<?php endif; ?>
 		<?php
 	}
