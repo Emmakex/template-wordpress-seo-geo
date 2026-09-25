@@ -1659,6 +1659,8 @@ foreach (
 		"'file-promotion-final-integrity-failed'",
 		"'runtime_target'",
 		"'runtime_before'",
+		'options_runtime_schema_ready',
+		"'option_id', 'option_name', 'option_value', 'autoload'",
 		'update_option( \'active_plugins\'',
 		"'handoff_ready']      = true",
 		'$this->rollback_internal(',
