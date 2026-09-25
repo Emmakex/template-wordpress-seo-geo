@@ -308,6 +308,7 @@ source scripts/ci/migration-bridge-portable-clone-inventory-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-db-export-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-file-export-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-package-integrity-acceptance.sh
+source scripts/ci/migration-bridge-portable-clone-delivery-retention-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-handoff-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-lab-acceptance.sh
 source scripts/ci/migration-bridge-migration-engine-acceptance.sh
