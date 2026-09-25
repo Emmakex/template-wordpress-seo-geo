@@ -16,6 +16,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportActivationPlanController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -35,6 +36,8 @@ use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
+use SeoGeo\MigrationBridge\Clone\ImportActivationPlanner;
+use SeoGeo\MigrationBridge\Clone\ImportActivationPlanStore;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
@@ -398,6 +401,27 @@ final class Plugin {
 	private static ?AdminCloneImportRewriteController $clone_import_rewrite_controller = null;
 
 	/**
+	 * Portable Clone sandbox activation-plan store singleton.
+	 *
+	 * @var ImportActivationPlanStore|null
+	 */
+	private static ?ImportActivationPlanStore $clone_import_activation_plan_store = null;
+
+	/**
+	 * Portable Clone non-mutating sandbox activation planner singleton.
+	 *
+	 * @var ImportActivationPlanner|null
+	 */
+	private static ?ImportActivationPlanner $clone_import_activation_planner = null;
+
+	/**
+	 * Portable Clone sandbox activation planning controller singleton.
+	 *
+	 * @var AdminCloneImportActivationPlanController|null
+	 */
+	private static ?AdminCloneImportActivationPlanController $clone_import_activation_plan_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -461,7 +485,10 @@ final class Plugin {
 		self::$clone_import_file_controller      ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
 		self::$clone_import_rewrite_state_store  ??= new ImportRewriteStateStore();
 		self::$clone_import_environment_rewriter ??= new ImportEnvironmentRewriter( self::$clone_import_rewrite_state_store, self::$clone_import_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_database_restorer, self::$clone_job_store );
-		self::$clone_import_rewrite_controller   ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
+		self::$clone_import_rewrite_controller        ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
+		self::$clone_import_activation_plan_store     ??= new ImportActivationPlanStore();
+		self::$clone_import_activation_planner       ??= new ImportActivationPlanner( self::$clone_import_activation_plan_store, self::$clone_import_preflight, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_rewrite_state_store, self::$clone_import_database_restorer, null, null, self::$clone_job_store );
+		self::$clone_import_activation_plan_controller ??= new AdminCloneImportActivationPlanController( self::$clone_import_activation_planner );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -487,6 +514,7 @@ final class Plugin {
 		self::$clone_import_database_controller->boot();
 		self::$clone_import_file_controller->boot();
 		self::$clone_import_rewrite_controller->boot();
+		self::$clone_import_activation_plan_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -635,6 +663,13 @@ final class Plugin {
 	 */
 	public static function clone_import_environment_rewriter(): ?ImportEnvironmentRewriter {
 		return self::$clone_import_environment_rewriter;
+	}
+
+	/**
+	 * Return the Portable Clone non-mutating sandbox activation planner.
+	 */
+	public static function clone_import_activation_planner(): ?ImportActivationPlanner {
+		return self::$clone_import_activation_planner;
 	}
 
 	/**
