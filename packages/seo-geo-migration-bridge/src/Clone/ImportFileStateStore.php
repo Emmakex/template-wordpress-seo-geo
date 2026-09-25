@@ -115,11 +115,16 @@ final class ImportFileStateStore {
 		if ( ! in_array( $status, array( 'running', 'complete', 'blocked' ), true ) ) {
 			return null;
 		}
+		$stage = is_string( $state['stage'] ?? null ) ? $state['stage'] : 'copy';
+		if ( ! in_array( $stage, array( 'copy', 'verify', 'complete' ), true ) ) {
+			return null;
+		}
 
 		return array(
 			'schema_version'          => self::SCHEMA_VERSION,
 			'job_id'                  => $job_id,
 			'status'                  => $status,
+			'stage'                   => $stage,
 			'root_index'              => max( 0, (int) ( $state['root_index'] ?? 0 ) ),
 			'root_count'              => max( 0, (int) ( $state['root_count'] ?? 0 ) ),
 			'pending_dirs'            => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
@@ -127,6 +132,8 @@ final class ImportFileStateStore {
 			'after_name'              => is_string( $state['after_name'] ?? null ) ? $this->bounded_name( $state['after_name'] ) : '',
 			'file_count'              => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
 			'byte_count'              => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
+			'verify_file_count'       => max( 0, (int) ( $state['verify_file_count'] ?? 0 ) ),
+			'verify_byte_count'       => max( 0, (int) ( $state['verify_byte_count'] ?? 0 ) ),
 			'expected_file_count'     => max( 0, (int) ( $state['expected_file_count'] ?? 0 ) ),
 			'expected_byte_count'     => max( 0, (int) ( $state['expected_byte_count'] ?? 0 ) ),
 			'files_manifest_sha256'   => $this->normalize_hash( $state['files_manifest_sha256'] ?? '' ),
