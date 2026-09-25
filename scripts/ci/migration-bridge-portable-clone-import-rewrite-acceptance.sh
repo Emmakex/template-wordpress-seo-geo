@@ -100,6 +100,20 @@ $destination_site = site_url( '/' );
 $destination_template   = (string) get_option( 'template', '' );
 $destination_stylesheet = (string) get_option( 'stylesheet', '' );
 
+$upload_dir = wp_upload_dir( null, false );
+if ( ! is_array( $upload_dir ) || ! empty( $upload_dir['error'] ) || ! is_string( $upload_dir['basedir'] ?? null ) ) {
+	throw new RuntimeException( 'Could not resolve active uploads directory for promotion smoke.' );
+}
+$promotion_upload_sentinel = trailingslashit( $upload_dir['basedir'] ) . 'seo-geo-promotion-active-sentinel.txt';
+if ( ! is_dir( dirname( $promotion_upload_sentinel ) ) && ! wp_mkdir_p( dirname( $promotion_upload_sentinel ) ) ) {
+	throw new RuntimeException( 'Could not prepare active uploads sentinel directory.' );
+}
+// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test-only active-root rollback sentinel.
+if ( false === file_put_contents( $promotion_upload_sentinel, 'active-root-before-promotion' ) ) {
+	throw new RuntimeException( 'Could not create active uploads rollback sentinel.' );
+}
+$promotion_upload_sentinel_hash = hash_file( 'sha256', $promotion_upload_sentinel );
+
 $active_sentinel_name  = 'seo_geo_rewrite_active_sentinel';
 $active_sentinel_value = $source_home . 'must-stay-active';
 delete_option( $active_sentinel_name );
@@ -745,6 +759,75 @@ $activation_plugins = is_string( $activation_plugins_raw ) && is_serialized( $ac
 $bridge_plugin = plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' );
 $activation_bridge_active = is_array( $activation_plugins ) && in_array( $bridge_plugin, $activation_plugins, true );
 
+// 10E.2A.4.6.3: build same-filesystem candidates, promote all active roots,
+// verify the final target, enable handoff, then prove explicit filesystem rollback.
+$promotion_prepared = $promoter->prepare( $job_id );
+if ( ! is_array( $promotion_prepared ) || 'prepared' !== ( $promotion_prepared['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion preparation failed: ' . wp_json_encode( $promotion_prepared ) );
+}
+
+$promotion_candidates = null;
+for ( $iteration = 0; $iteration < 160; ++$iteration ) {
+	$promotion_candidates = $promoter->advance_candidates( $job_id, 1, 1048576 );
+	if ( ! is_array( $promotion_candidates ) ) {
+		throw new RuntimeException( 'File promotion candidate build returned no state.' );
+	}
+	if ( in_array( $promotion_candidates['status'] ?? null, array( 'candidate-ready', 'blocked' ), true ) ) {
+		break;
+	}
+}
+if ( ! is_array( $promotion_candidates ) || 'candidate-ready' !== ( $promotion_candidates['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion candidates did not reach ready: ' . wp_json_encode( $promotion_candidates ) );
+}
+
+$promotion = $promoter->promote( $job_id );
+if ( ! is_array( $promotion ) || 'verifying' !== ( $promotion['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion swap failed: ' . wp_json_encode( $promotion ) );
+}
+
+$promotion_verified = null;
+for ( $iteration = 0; $iteration < 160; ++$iteration ) {
+	$promotion_verified = $promoter->advance_verification( $job_id, 1, 1048576 );
+	if ( ! is_array( $promotion_verified ) ) {
+		throw new RuntimeException( 'File promotion verification returned no state.' );
+	}
+	if ( in_array( $promotion_verified['status'] ?? null, array( 'verified', 'rolled-back', 'blocked' ), true ) ) {
+		break;
+	}
+}
+if ( ! is_array( $promotion_verified ) || 'verified' !== ( $promotion_verified['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion did not verify final target: ' . wp_json_encode( $promotion_verified ) );
+}
+
+$promotion_database_state = Plugin::clone_import_database_activation_state_store()?->get( $job_id );
+$promotion_upload_active  = trailingslashit( $upload_dir['basedir'] ) . '2026/file.txt';
+$promotion_bridge_active  = trailingslashit( WP_PLUGIN_DIR ) . $source_bridge_plugin;
+$promotion_theme_active   = trailingslashit( get_theme_root() ) . $source_theme . '/style.css';
+$promotion_runtime = array(
+	'active_plugins' => get_option( 'active_plugins', array() ),
+	'template'       => get_option( 'template', '' ),
+	'stylesheet'     => get_option( 'stylesheet', '' ),
+);
+$promotion_upload_sentinel_absent = ! file_exists( $promotion_upload_sentinel );
+$promotion_payload_files_present  = is_file( $promotion_upload_active )
+	&& is_file( $promotion_bridge_active )
+	&& is_file( $promotion_theme_active );
+
+$promotion_rollback = $promoter->rollback( $job_id );
+if ( ! is_array( $promotion_rollback ) || 'rolled-back' !== ( $promotion_rollback['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion rollback failed: ' . wp_json_encode( $promotion_rollback ) );
+}
+$promotion_runtime_after_rollback = array(
+	'active_plugins' => get_option( 'active_plugins', array() ),
+	'template'       => get_option( 'template', '' ),
+	'stylesheet'     => get_option( 'stylesheet', '' ),
+);
+$promotion_upload_sentinel_after_hash = is_file( $promotion_upload_sentinel )
+	? hash_file( 'sha256', $promotion_upload_sentinel )
+	: false;
+$promotion_bridge_restored = is_file( trailingslashit( WP_PLUGIN_DIR ) . $bridge_plugin );
+$promotion_theme_restored  = is_dir( trailingslashit( get_theme_root() ) . $destination_stylesheet );
+
 $activation_rollback = $activator->rollback( $job_id );
 if ( ! is_array( $activation_rollback ) || 'rolled-back' !== ( $activation_rollback['status'] ?? null ) ) {
 	throw new RuntimeException( 'Database activation rollback failed: ' . wp_json_encode( $activation_rollback ) );
@@ -832,6 +915,22 @@ echo wp_json_encode(
 		'activation_stylesheet'     => $activation_stylesheet,
 		'activation_control_plane_present' => is_string( $activation_control_plane ) && '' !== $activation_control_plane,
 		'activation_bridge_active'  => $activation_bridge_active,
+		'promotion_prepared'       => $promotion_prepared,
+		'promotion_candidates'     => $promotion_candidates,
+		'promotion'                => $promotion,
+		'promotion_verified'       => $promotion_verified,
+		'promotion_database_state' => $promotion_database_state,
+		'promotion_runtime'        => $promotion_runtime,
+		'promotion_runtime_after_rollback' => $promotion_runtime_after_rollback,
+		'promotion_upload_sentinel_absent' => $promotion_upload_sentinel_absent,
+		'promotion_upload_sentinel_hash' => $promotion_upload_sentinel_hash,
+		'promotion_upload_sentinel_after_hash' => $promotion_upload_sentinel_after_hash,
+		'promotion_payload_files_present' => $promotion_payload_files_present,
+		'promotion_bridge_restored' => $promotion_bridge_restored,
+		'promotion_theme_restored'  => $promotion_theme_restored,
+		'promotion_rollback'        => $promotion_rollback,
+		'source_theme'              => $source_theme,
+		'source_bridge_plugin'      => $source_bridge_plugin,
 		'active_after_bad'         => $active_after_bad,
 		'staged_file_before'       => $staged_file_before,
 		'staged_file_after'        => $staged_file_after,
@@ -844,6 +943,8 @@ echo wp_json_encode(
 		'finalize_public_absent'         => false === has_action( 'admin_post_nopriv_' . AdminCloneImportFinalizeController::ACTION ),
 		'database_activation_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportDatabaseActivationController::ACTION ),
 		'database_activation_public_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportDatabaseActivationController::ACTION ),
+		'file_promotion_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportFilePromotionController::ACTION ),
+		'file_promotion_public_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportFilePromotionController::ACTION ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 );
@@ -859,6 +960,36 @@ foreach ( $plan['tables'] as $table ) {
 }
 
 delete_option( $active_sentinel_name );
+if ( is_file( $promotion_upload_sentinel ) ) {
+	// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Test-only active uploads sentinel cleanup.
+	@unlink( $promotion_upload_sentinel );
+}
+if ( is_array( $promotion_rollback['roots'] ?? null ) ) {
+	foreach ( $promotion_rollback['roots'] as $promotion_root ) {
+		if ( ! is_array( $promotion_root ) || ! is_string( $promotion_root['candidate_path'] ?? null ) ) {
+			continue;
+		}
+		$candidate = untrailingslashit( $promotion_root['candidate_path'] );
+		if ( ! is_dir( $candidate ) || is_link( $candidate ) ) {
+			continue;
+		}
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator( $candidate, FilesystemIterator::SKIP_DOTS ),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
+		foreach ( $iterator as $item ) {
+			if ( $item->isDir() && ! $item->isLink() ) {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test-only deterministic candidate cleanup.
+				@rmdir( $item->getPathname() );
+			} else {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Test-only deterministic candidate cleanup.
+				@unlink( $item->getPathname() );
+			}
+		}
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test-only deterministic candidate cleanup.
+		@rmdir( $candidate );
+	}
+}
 foreach ( array( $job_id, $source_job ) as $cleanup_job ) {
 	$workspace->cleanup( $cleanup_job );
 	$workspace->delete_delivery_archive( $cleanup_job );
