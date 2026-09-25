@@ -507,6 +507,72 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Stage one uploaded/imported Portable Clone ZIP inside the job-owned private workspace.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @param string $source Absolute readable source ZIP path.
+	 * @return array{path:string,bytes:int,sha256:string}|null
+	 */
+	public function stage_import_archive( string $job_id, string $source ): ?array {
+		$written = $this->copy_file( $job_id, 'import/package.zip', $source );
+		if ( null === $written ) {
+			return null;
+		}
+
+		$info = $this->import_archive_info( $job_id );
+		if (
+			null === $info
+			|| (int) $written['bytes'] !== (int) $info['bytes']
+			|| ! hash_equals( (string) $written['sha256'], (string) $info['sha256'] )
+		) {
+			$this->delete_import_archive( $job_id );
+			return null;
+		}
+
+		return $info;
+	}
+
+	/**
+	 * Return the staged private import archive identity.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @return array{path:string,bytes:int,sha256:string}|null
+	 */
+	public function import_archive_info( string $job_id ): ?array {
+		$path = $this->absolute_path( $job_id, 'import/package.zip', false );
+		if ( null === $path || ! is_file( $path ) || ! is_readable( $path ) || is_link( $path ) ) {
+			return null;
+		}
+
+		$bytes = filesize( $path );
+		$hash  = hash_file( 'sha256', $path );
+		if ( false === $bytes || false === $hash ) {
+			return null;
+		}
+
+		return array(
+			'path'   => $path,
+			'bytes'  => (int) $bytes,
+			'sha256' => $hash,
+		);
+	}
+
+	/**
+	 * Remove only the staged import ZIP for one clone job.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	public function delete_import_archive( string $job_id ): bool {
+		$path = $this->absolute_path( $job_id, 'import/package.zip', false );
+		if ( null === $path || ! is_file( $path ) ) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only the job-owned private staged import ZIP.
+		return @unlink( $path );
+	}
+
+	/**
 	 * Delete only the private workspace owned by one clone job.
 	 *
 	 * @param string $job_id Clone job identifier.
