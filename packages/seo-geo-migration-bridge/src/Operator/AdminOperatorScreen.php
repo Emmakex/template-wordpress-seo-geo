@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPlanController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -26,6 +27,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneDeliveryController;
 use SeoGeo\MigrationBridge\Clone\CloneInventory;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -130,6 +132,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_database_export_result_notice(); ?>
 			<?php $this->render_clone_file_export_result_notice(); ?>
 			<?php $this->render_clone_package_result_notice(); ?>
+			<?php $this->render_clone_local_plan_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -828,6 +831,93 @@ final class AdminOperatorScreen {
 			</form>
 		<?php elseif ( 'complete' === $status && 'export' === ( $job['operation'] ?? null ) ) : ?>
 			<?php $this->render_clone_delivery_section( $job ); ?>
+		<?php elseif ( 'complete' === $status && 'local-clone' === ( $job['operation'] ?? null ) ) : ?>
+			<?php $this->render_clone_local_plan_section( $job ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render the result of a local-clone destination-plan action.
+	 */
+	private function render_clone_local_plan_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_plan'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_plan'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'ready'   => 'clone_local_plan_ready',
+			'blocked' => 'clone_local_plan_blocked',
+			default   => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+		$class = 'blocked' === $status ? 'notice notice-error' : 'notice notice-success';
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the frozen read-only local-clone destination contract.
+	 *
+	 * @param array<string,mixed> $job Clone job.
+	 */
+	private function render_clone_local_plan_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		global $wpdb;
+		$default_path   = trailingslashit( wp_normalize_path( ABSPATH ) ) . 'nuevaweb';
+		$default_url    = trailingslashit( home_url( '/nuevaweb/' ) );
+		$source_prefix  = $wpdb instanceof \wpdb ? $wpdb->prefix : 'wp_';
+		$default_prefix = $source_prefix . 'sg' . substr( hash( 'sha256', $job_id ), 0, 6 ) . '_';
+		$target_path    = is_array( $state ) && '' !== (string) ( $state['target_path'] ?? '' ) ? (string) $state['target_path'] : $default_path;
+		$target_url     = is_array( $state ) && '' !== (string) ( $state['target_url'] ?? '' ) ? (string) $state['target_url'] : $default_url;
+		$target_prefix  = is_array( $state ) && '' !== (string) ( $state['target_table_prefix'] ?? '' ) ? (string) $state['target_table_prefix'] : $default_prefix;
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_plan_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_plan_help' ) ); ?></p>
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_path' ) ); ?></th><td><code><?php echo esc_html( $target_path ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_url' ) ); ?></th><td><code><?php echo esc_html( $target_url ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_prefix' ) ); ?></th><td><code><?php echo esc_html( $target_prefix ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_same_origin' ) ); ?></th><td><?php echo esc_html( true === ( $state['same_origin'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_required_bytes' ) ); ?></th><td><?php echo esc_html( size_format( (int) ( $state['required_bytes'] ?? 0 ) ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_free_bytes' ) ); ?></th><td><?php echo esc_html( null === ( $state['free_bytes'] ?? null ) ? '—' : size_format( (int) $state['free_bytes'] ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_plan_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['plan_hash'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_advisories' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['advisories'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['advisories'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php if ( 'ready' !== $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalPlanController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalPlanController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p><label><strong><?php echo esc_html( $this->copy->text( 'clone_local_target_path' ) ); ?></strong><br><input class="regular-text code" type="text" name="local_clone_target_path" value="<?php echo esc_attr( $target_path ); ?>" required></label></p>
+				<p><label><strong><?php echo esc_html( $this->copy->text( 'clone_local_target_url' ) ); ?></strong><br><input class="regular-text code" type="url" name="local_clone_target_url" value="<?php echo esc_attr( $target_url ); ?>" required></label></p>
+				<p><label><strong><?php echo esc_html( $this->copy->text( 'clone_local_target_prefix' ) ); ?></strong><br><input class="regular-text code" type="text" name="local_clone_target_prefix" value="<?php echo esc_attr( $target_prefix ); ?>" pattern="[A-Za-z0-9_]+" required></label></p>
+				<p><label><input type="checkbox" name="local_clone_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_confirm' ) ); ?></label></p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_plan_readonly' ) ); ?></p>
+				<?php submit_button( $this->copy->text( 'clone_local_plan_button' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php else : ?>
+			<p class="notice notice-info inline"><?php echo esc_html( $this->copy->text( 'clone_local_plan_next' ) ); ?></p>
 		<?php endif; ?>
 		<?php
 	}

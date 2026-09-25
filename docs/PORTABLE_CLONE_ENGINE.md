@@ -505,12 +505,20 @@ Deliver:
 
 ### 10E.2A.5 — Local clone orchestration
 
+Implementation sequence:
+
+- **10E.2A.5.1 — destination plan + ownership contract (0.8.23 candidate):** require a completed verified `local-clone` package, freeze the absolute destination path, same-origin/subdirectory URL, isolated table prefix, capacity estimate and package/source fingerprints, reject production/payload overlap and non-empty unowned targets, and perform zero target mutation;
+- **10E.2A.5.2 — isolated target bootstrap:** provision only from the accepted immutable 5.1 contract, write explicit job ownership/recovery markers and establish an independent WordPress runtime;
+- **10E.2A.5.3 — local package handoff + sandbox preflight:** hand the already verified package to the accepted import primitives in the target runtime, then require sandbox hardening/preflight before local-clone completion.
+
 Deliver:
 
 - direct production → isolated folder clone using the same export/import primitives;
 - no duplicate clone implementation;
 - `/nuevaweb/` same-origin support;
 - automatic handoff to sandbox hardening/preflight.
+
+The 5.1 ready plan is intentionally immutable. Every later mutating step must independently revalidate the frozen path/URL/table-prefix/package hashes and target ownership before writing; a ready planning record is never itself authority to mutate production or a changed destination.
 
 ### 10E.2A.6 — Emmake real clone acceptance
 
