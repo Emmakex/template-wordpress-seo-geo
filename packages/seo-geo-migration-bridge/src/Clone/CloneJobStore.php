@@ -208,7 +208,7 @@ final class CloneJobStore {
 		}
 
 		$completed = isset( $counters['completed'] ) ? max( 0, (int) $counters['completed'] ) : 0;
-		$total     = isset( $counters['total'] ) && null !== $counters['total'] ? max( 0, (int) $counters['total'] ) : null;
+		$total     = isset( $counters['total'] ) ? max( 0, (int) $counters['total'] ) : null;
 		if ( null !== $total && $completed > $total ) {
 			return null;
 		}
