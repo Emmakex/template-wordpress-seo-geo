@@ -994,7 +994,8 @@ foreach (
 		"'import-database-staging-engine-not-transactional'",
 		"'import-database-runtime-guard-failed'",
 		"'import-database-manifest-changed'",
-		"'FOREIGN\\s+KEY|REFERENCES'",
+		'FOREIGN\\s+KEY',
+		'REFERENCES',
 		'$this->options_table_transactional()',
 	) as $import_database_restore_guard
 ) {
