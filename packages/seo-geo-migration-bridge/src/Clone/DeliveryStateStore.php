@@ -43,6 +43,27 @@ final class DeliveryStateStore {
 	}
 
 	/**
+	 * Return whether a new delivery may be created without evicting live private-artifact state.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	public function can_create( string $job_id ): bool {
+		$states = $this->all();
+		if ( isset( $states[ $job_id ] ) ) {
+			return true;
+		}
+
+		$live = 0;
+		foreach ( $states as $state ) {
+			if ( 'cleaned' !== ( $state['status'] ?? null ) ) {
+				++$live;
+			}
+		}
+
+		return $live < self::MAX_STATES;
+	}
+
+	/**
 	 * Return one normalized delivery state.
 	 *
 	 * @param string $job_id Clone job identifier.
@@ -235,12 +256,25 @@ final class DeliveryStateStore {
 		uasort(
 			$states,
 			static fn( array $left, array $right ): int => strcmp(
-				(string) ( $right['updated_at'] ?? '' ),
-				(string) ( $left['updated_at'] ?? '' )
+				(string) ( $left['updated_at'] ?? '' ),
+				(string) ( $right['updated_at'] ?? '' )
 			)
 		);
 
-		return array_slice( $states, 0, self::MAX_STATES, true );
+		foreach ( array_keys( $states ) as $job_id ) {
+			if ( count( $states ) <= self::MAX_STATES ) {
+				break;
+			}
+			if ( 'cleaned' === ( $states[ $job_id ]['status'] ?? null ) ) {
+				unset( $states[ $job_id ] );
+			}
+		}
+
+		if ( count( $states ) <= self::MAX_STATES ) {
+			return $states;
+		}
+
+		return array_slice( array_reverse( $states, true ), 0, self::MAX_STATES, true );
 	}
 
 	/**
