@@ -497,7 +497,7 @@ final class Plugin {
 			self::$clone_import_database_restorer,
 			self::$clone_job_store
 		);
-		self::$clone_import_finalize_controller   ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
+		self::$clone_import_finalize_controller  ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
