@@ -351,10 +351,6 @@ final class ExportWorkspace {
 
 		$sources = array();
 		foreach ( array_values( array_unique( $relative_paths ) ) as $relative ) {
-			if ( ! is_string( $relative ) ) {
-				return false;
-			}
-
 			$relative = $this->normalize_archive_relative( $relative );
 			if ( '' === $relative ) {
 				return false;
