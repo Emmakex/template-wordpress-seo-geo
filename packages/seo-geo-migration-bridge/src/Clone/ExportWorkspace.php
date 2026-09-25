@@ -372,6 +372,34 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Ensure one directory exists inside an already owned local-clone target.
+	 *
+	 * @param string $target_root Exact job-owned local-clone root.
+	 * @param string $relative    Relative directory path.
+	 */
+	public function ensure_local_clone_directory( string $target_root, string $relative ): bool {
+		$target_root = untrailingslashit( wp_normalize_path( $target_root ) );
+		$relative    = $this->normalize_local_clone_relative( $relative );
+		if ( '' === $target_root || '' === $relative || ! is_dir( $target_root ) || is_link( $target_root ) ) {
+			return false;
+		}
+
+		$root   = trailingslashit( $target_root );
+		$target = untrailingslashit( $root . $relative );
+		if ( ! str_starts_with( trailingslashit( $target ), $root ) || is_link( $target ) ) {
+			return false;
+		}
+		if ( is_dir( $target ) ) {
+			return true;
+		}
+		if ( file_exists( $target ) ) {
+			return false;
+		}
+
+		return wp_mkdir_p( $target ) && is_dir( $target ) && ! is_link( $target );
+	}
+
+	/**
 	 * Copy one WordPress core file into an already owned local-clone target.
 	 *
 	 * Existing identical files are accepted to make interrupted batches idempotent.
