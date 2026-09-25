@@ -106,6 +106,21 @@ final class LocalCloneBootstrapper {
 	}
 
 	/**
+	 * Return the claimed ownership state only when its deterministic marker still matches.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @return array<string,mixed>|null
+	 */
+	public function verified_snapshot( string $job_id ): ?array {
+		$state = $this->store->get( $job_id );
+		if ( ! is_array( $state ) || 'claimed' !== ( $state['status'] ?? null ) || true !== ( $state['target_owned'] ?? false ) ) {
+			return null;
+		}
+
+		return $this->marker_matches_state( $state ) ? $state : null;
+	}
+
+	/**
 	 * Claim the exact accepted destination with a deterministic recovery marker.
 	 *
 	 * This is the only filesystem mutation in 10E.2A.5.2.1. No WordPress runtime
