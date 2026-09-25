@@ -142,17 +142,17 @@ final class ImportFilePromotionPlanner {
 		$key  = substr( hash( 'sha256', $job_id ), 0, 16 );
 		$plan = array();
 		foreach ( $roots as $root ) {
-			$id      = $root['id'];
-			$active  = $active_roots[ $id ];
-			$parent  = trailingslashit( wp_normalize_path( dirname( untrailingslashit( $active ) ) ) );
-			$base    = basename( untrailingslashit( $active ) );
-			$staging = trailingslashit( wp_normalize_path( $staging_base . $id ) );
+			$id        = $root['id'];
+			$active    = $active_roots[ $id ];
+			$parent    = trailingslashit( wp_normalize_path( dirname( untrailingslashit( $active ) ) ) );
+			$base      = basename( untrailingslashit( $active ) );
+			$staging   = trailingslashit( wp_normalize_path( $staging_base . $id ) );
 			$candidate = $parent . '.seo-geo-' . $key . '-candidate-' . $base;
 			$rollback  = $parent . '.seo-geo-' . $key . '-rollback-' . $base;
 
 			if (
 				! is_dir( $parent )
-				|| ! is_writable( $parent )
+				|| ! wp_is_writable( $parent )
 				|| is_link( untrailingslashit( $active ) )
 				|| is_link( untrailingslashit( $staging ) )
 				|| file_exists( $candidate )
@@ -255,9 +255,9 @@ final class ImportFilePromotionPlanner {
 				return null;
 			}
 
-			$files = max( 0, (int) ( $root['file_count'] ?? 0 ) );
-			$bytes = max( 0, (int) ( $root['byte_count'] ?? 0 ) );
-			$out[] = array(
+			$files       = max( 0, (int) ( $root['file_count'] ?? 0 ) );
+			$bytes       = max( 0, (int) ( $root['byte_count'] ?? 0 ) );
+			$out[]       = array(
 				'id'         => $id,
 				'file_count' => $files,
 				'byte_count' => $bytes,
@@ -347,7 +347,7 @@ final class ImportFilePromotionPlanner {
 
 		$options_meta = null;
 		foreach ( $tables as $table ) {
-			if ( is_array( $table ) && $prefix . 'options' === ( $table['name'] ?? null ) ) {
+			if ( is_array( $table ) && 0 === strcmp( $prefix . 'options', (string) ( $table['name'] ?? '' ) ) ) {
 				$options_meta = $table;
 				break;
 			}
@@ -396,7 +396,7 @@ final class ImportFilePromotionPlanner {
 				|| 1 !== ( $chunk['schema_version'] ?? null )
 				|| (int) ( $chunk['chunk_index'] ?? -1 ) !== $index
 				|| 'base64-or-null' !== ( $chunk['value_encoding'] ?? null )
-				|| $columns !== array_values( is_array( $chunk['columns'] ?? null ) ? $chunk['columns'] : array() )
+				|| array_values( is_array( $chunk['columns'] ?? null ) ? $chunk['columns'] : array() ) !== $columns
 			) {
 				return null;
 			}
@@ -453,7 +453,7 @@ final class ImportFilePromotionPlanner {
 			$normalized[] = wp_normalize_path( $plugin );
 		}
 
-		$bridge = defined( 'SEO_GEO_MIGRATION_BRIDGE_DIR' )
+		$bridge       = defined( 'SEO_GEO_MIGRATION_BRIDGE_DIR' )
 			? plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' )
 			: 'seo-geo-migration-bridge/seo-geo-migration-bridge.php';
 		$normalized[] = $bridge;
