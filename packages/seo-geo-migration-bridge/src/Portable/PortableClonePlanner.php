@@ -76,7 +76,7 @@ final class PortableClonePlanner {
 			$blockers[] = 'target-directory-not-empty';
 		}
 
-		if ( ! is_writable( $source_root ) ) {
+		if ( ! wp_is_writable( $source_root ) ) {
 			$blockers[] = 'source-root-not-writable';
 		}
 
