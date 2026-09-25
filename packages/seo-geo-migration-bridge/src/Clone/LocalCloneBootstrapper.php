@@ -130,7 +130,8 @@ final class LocalCloneBootstrapper {
 			}
 			if ( 'blocked' === ( $existing['status'] ?? null ) ) {
 				$target = untrailingslashit( wp_normalize_path( (string) ( $existing['target_path'] ?? '' ) ) );
-						if ( true === ( $existing['target_owned'] ?? false ) || is_file( $marker ) ) {
+				$marker = $this->join_path( $target, self::OWNER_MARKER );
+				if ( true === ( $existing['target_owned'] ?? false ) || is_file( $marker ) ) {
 					return $existing;
 				}
 				if ( true === ( $existing['target_created'] ?? false ) && is_dir( $target ) && $this->directory_empty( $target ) ) {
@@ -252,10 +253,10 @@ final class LocalCloneBootstrapper {
 			return $this->block( $job_id, $state, 'bootstrap-release-target-delete-failed' );
 		}
 
-		$state['status']        = 'released';
-		$state['target_owned']  = false;
-		$state['released_at']   = gmdate( DATE_ATOM );
-		$state['updated_at']    = $state['released_at'];
+		$state['status']       = 'released';
+		$state['target_owned'] = false;
+		$state['released_at']  = gmdate( DATE_ATOM );
+		$state['updated_at']   = $state['released_at'];
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
