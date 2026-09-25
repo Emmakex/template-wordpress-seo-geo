@@ -1360,8 +1360,8 @@ foreach (
 		"'active_mutation_in_this_phase' => false",
 		"'rollback_required_before_swap' => true",
 		"'final_handoff_ready'           => false",
-		"'activation_allowed'      = true",
-		"'handoff_ready'            = false",
+		"'activation_allowed'",
+		"'handoff_ready'",
 		"'active_tables_untouched'",
 		"'active_roots_untouched'",
 		"'import-finalize-staged-file-integrity-mismatch'",
@@ -1377,6 +1377,22 @@ foreach (
 			'missing'
 		);
 	}
+}
+
+if (
+	1 !== preg_match( "/\\['activation_allowed'\\]\\s*=\\s*true;/", $import_finalizer )
+	|| 1 !== preg_match( "/\\['handoff_ready'\\]\\s*=\\s*false;/", $import_finalizer )
+	|| 1 !== preg_match( "/'active_mutation_in_this_phase'\\s*=>\\s*false/", $import_finalizer )
+	|| 1 !== preg_match( "/'rollback_required_before_swap'\\s*=>\\s*true/", $import_finalizer )
+	|| 1 !== preg_match( "/'final_handoff_ready'\\s*=>\\s*false/", $import_finalizer )
+) {
+	fail_migration_bridge(
+		'portable-clone-import-finalize-promotion-gate',
+		'10E.2A.4.6.1 must authorize a later promotion only after planning, while keeping current-phase mutation and final handoff disabled.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php',
+		'activation_allowed=true; handoff_ready=false; read-only activation plan',
+		'promotion gate mismatch'
+	);
 }
 
 foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(', 'wp_mkdir_p(' ) as $finalize_file_mutation ) {
