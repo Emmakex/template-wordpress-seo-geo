@@ -874,7 +874,7 @@ final class AdminOperatorScreen {
 			return;
 		}
 
-		$state = ( new LocalCloneStateStore() )->get( $job_id );
+		$state  = ( new LocalCloneStateStore() )->get( $job_id );
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		global $wpdb;
 		$default_path   = trailingslashit( wp_normalize_path( ABSPATH ) ) . 'nuevaweb';
