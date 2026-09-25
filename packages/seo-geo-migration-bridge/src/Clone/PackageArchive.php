@@ -287,7 +287,7 @@ final class PackageArchive {
 			|| 2048 < strlen( $relative )
 			|| str_contains( $relative, '../' )
 			|| str_contains( $relative, '/..' )
-			|| str_starts_with( $relative, '.' )
+			|| ( str_starts_with( $relative, '.' ) && '.htaccess' !== $relative )
 		) {
 			return '';
 		}
