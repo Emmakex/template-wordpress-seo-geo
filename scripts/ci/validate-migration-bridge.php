@@ -340,7 +340,7 @@ foreach (
 $export_workspace = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php' );
 foreach (
 	array(
-		"public const DIRECTORY_NAME = 'seo-geo-migration-bridge';",
+		"'seo-geo-migration-bridge'",
 		'get_temp_dir()',
 		'file_put_contents(',
 		'copy_file( string $job_id, string $relative, string $source )',
