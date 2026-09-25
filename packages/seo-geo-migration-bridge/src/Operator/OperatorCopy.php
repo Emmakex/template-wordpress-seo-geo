@@ -193,7 +193,7 @@ final class OperatorCopy {
 				'clone_import_database_active_untouched' => 'Active destination tables untouched',
 				'clone_import_database_blockers'         => 'Database restore blockers',
 				'clone_import_database_batch_label'      => 'Rows per staging batch',
-				'clone_import_database_batch_help'       => 'Recommended: 100 rows. Inserts and resumable state commit in the same transaction; this first restore contract requires transactional InnoDB staging/options tables and blocks foreign-key schemas.'
+				'clone_import_database_batch_help'       => 'Recommended: 100 rows. Inserts and resumable state commit in the same transaction; this first restore contract requires transactional InnoDB staging/options tables and blocks foreign-key schemas.',
 				'clone_local_button'                     => 'Plan local sandbox clone',
 				'clone_export_button'                    => 'Plan portable export',
 				'clone_import_button'                    => 'Plan portable import',
@@ -431,7 +431,7 @@ final class OperatorCopy {
 				'clone_import_database_active_untouched' => 'Tablas activas del destino intactas',
 				'clone_import_database_blockers'         => 'Bloqueos de restauración de base de datos',
 				'clone_import_database_batch_label'      => 'Filas por lote de staging',
-				'clone_import_database_batch_help'       => 'Recomendado: 100 filas. Las inserciones y el estado reanudable se confirman en la misma transacción; este primer contrato exige InnoDB transaccional para staging/options y bloquea esquemas con claves foráneas.'
+				'clone_import_database_batch_help'       => 'Recomendado: 100 filas. Las inserciones y el estado reanudable se confirman en la misma transacción; este primer contrato exige InnoDB transaccional para staging/options y bloquea esquemas con claves foráneas.',
 				'clone_local_button'                     => 'Planificar clon local del sandbox',
 				'clone_export_button'                    => 'Planificar exportación portátil',
 				'clone_import_button'                    => 'Planificar importación portátil',
