@@ -239,6 +239,94 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Prepare one empty same-filesystem candidate directory for file promotion.
+	 *
+	 * @param string $candidate Absolute candidate directory.
+	 */
+	public function prepare_file_promotion_candidate( string $candidate ): bool {
+		$candidate = untrailingslashit( wp_normalize_path( $candidate ) );
+		if ( '' === $candidate || file_exists( $candidate ) || is_link( $candidate ) ) {
+			return false;
+		}
+
+		return wp_mkdir_p( $candidate ) && is_dir( $candidate );
+	}
+
+	/**
+	 * Copy one verified staging file into a same-filesystem promotion candidate.
+	 *
+	 * @param string $source Source staging file.
+	 * @param string $target Candidate file.
+	 * @return array{bytes:int,sha256:string}|null
+	 */
+	public function copy_file_to_promotion_candidate( string $source, string $target ): ?array {
+		$source = wp_normalize_path( $source );
+		$target = wp_normalize_path( $target );
+		if ( ! is_file( $source ) || ! is_readable( $source ) || is_link( $source ) || file_exists( $target ) ) {
+			return null;
+		}
+
+		$source_bytes = filesize( $source );
+		$source_hash  = hash_file( 'sha256', $source );
+		if ( false === $source_bytes || false === $source_hash ) {
+			return null;
+		}
+
+		$parent = dirname( $target );
+		if ( ! is_dir( $parent ) && ! wp_mkdir_p( $parent ) ) {
+			return null;
+		}
+
+		$temp = $target . '.tmp-' . wp_generate_password( 12, false, false );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_copy -- Centralized migration copy into a verified candidate.
+		if ( ! copy( $source, $temp ) ) {
+			return null;
+		}
+
+		$target_bytes = filesize( $temp );
+		$target_hash  = hash_file( 'sha256', $temp );
+		if (
+			false === $target_bytes
+			|| false === $target_hash
+			|| (int) $source_bytes !== (int) $target_bytes
+			|| ! hash_equals( $source_hash, $target_hash )
+		) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only a failed candidate temp file.
+			@unlink( $temp );
+			return null;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic move stays inside the candidate filesystem.
+		if ( ! rename( $temp, $target ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only a failed candidate temp file.
+			@unlink( $temp );
+			return null;
+		}
+
+		return array(
+			'bytes'  => (int) $target_bytes,
+			'sha256' => $target_hash,
+		);
+	}
+
+	/**
+	 * Rename one deterministic same-filesystem promotion path.
+	 *
+	 * @param string $from Existing source path.
+	 * @param string $to   Absent destination path.
+	 */
+	public function rename_file_promotion_path( string $from, string $to ): bool {
+		$from = untrailingslashit( wp_normalize_path( $from ) );
+		$to   = untrailingslashit( wp_normalize_path( $to ) );
+		if ( '' === $from || '' === $to || ! file_exists( $from ) || file_exists( $to ) || is_link( $from ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Centralized deterministic promotion/rollback rename.
+		return rename( $from, $to );
+	}
+
+	/**
 	 * Return one existing job-owned workspace root.
 	 *
 	 * @param string $job_id Clone job identifier.

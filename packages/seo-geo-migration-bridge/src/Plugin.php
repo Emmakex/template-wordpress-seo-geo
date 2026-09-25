@@ -18,6 +18,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseActivationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportFilePromotionController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -42,6 +43,9 @@ use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivator;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromotionStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromotionPlanner;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromoter;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
@@ -446,6 +450,34 @@ final class Plugin {
 	private static ?AdminCloneImportDatabaseActivationController $clone_import_database_activation_controller = null;
 
 	/**
+	 * Workspace-backed Portable Clone file-promotion journal singleton.
+	 *
+	 * @var ImportFilePromotionStateStore|null
+	 */
+	private static ?ImportFilePromotionStateStore $clone_import_file_promotion_state_store = null;
+
+	/**
+	 * Read-only Portable Clone file-promotion planner singleton.
+	 *
+	 * @var ImportFilePromotionPlanner|null
+	 */
+	private static ?ImportFilePromotionPlanner $clone_import_file_promotion_planner = null;
+
+	/**
+	 * Reversible Portable Clone file promoter singleton.
+	 *
+	 * @var ImportFilePromoter|null
+	 */
+	private static ?ImportFilePromoter $clone_import_file_promoter = null;
+
+	/**
+	 * Administrator reversible file-promotion controller singleton.
+	 *
+	 * @var AdminCloneImportFilePromotionController|null
+	 */
+	private static ?AdminCloneImportFilePromotionController $clone_import_file_promotion_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -523,11 +555,27 @@ final class Plugin {
 		);
 		self::$clone_import_finalize_controller             ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
 		self::$clone_import_database_activation_state_store ??= new ImportDatabaseActivationStateStore();
+		self::$clone_import_file_promotion_state_store      ??= new ImportFilePromotionStateStore();
 		self::$clone_import_database_activator              ??= new ImportDatabaseActivator(
 			self::$clone_import_database_activation_state_store,
-			self::$clone_import_finalization_planner
+			self::$clone_import_finalization_planner,
+			self::$clone_import_file_promotion_state_store
 		);
 		self::$clone_import_database_activation_controller  ??= new AdminCloneImportDatabaseActivationController( self::$clone_import_database_activator );
+
+		self::$clone_import_file_promotion_planner    ??= new ImportFilePromotionPlanner(
+			self::$clone_import_file_promotion_state_store,
+			self::$clone_import_database_activation_state_store,
+			self::$clone_import_file_state_store,
+			self::$clone_import_finalize_state_store
+		);
+		self::$clone_import_file_promoter             ??= new ImportFilePromoter(
+			self::$clone_import_file_promotion_state_store,
+			self::$clone_import_file_promotion_planner,
+			self::$clone_import_database_activation_state_store,
+			self::$clone_job_store
+		);
+		self::$clone_import_file_promotion_controller ??= new AdminCloneImportFilePromotionController( self::$clone_import_file_promoter );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -555,6 +603,7 @@ final class Plugin {
 		self::$clone_import_rewrite_controller->boot();
 		self::$clone_import_finalize_controller->boot();
 		self::$clone_import_database_activation_controller->boot();
+		self::$clone_import_file_promotion_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -724,6 +773,27 @@ final class Plugin {
 	 */
 	public static function clone_import_database_activator(): ?ImportDatabaseActivator {
 		return self::$clone_import_database_activator;
+	}
+
+	/**
+	 * Return the workspace-backed Portable Clone file-promotion journal.
+	 */
+	public static function clone_import_file_promotion_state_store(): ?ImportFilePromotionStateStore {
+		return self::$clone_import_file_promotion_state_store;
+	}
+
+	/**
+	 * Return the read-only Portable Clone file-promotion planner.
+	 */
+	public static function clone_import_file_promotion_planner(): ?ImportFilePromotionPlanner {
+		return self::$clone_import_file_promotion_planner;
+	}
+
+	/**
+	 * Return the reversible Portable Clone file promoter.
+	 */
+	public static function clone_import_file_promoter(): ?ImportFilePromoter {
+		return self::$clone_import_file_promoter;
 	}
 
 	/**

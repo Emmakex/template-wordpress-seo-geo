@@ -18,6 +18,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseActivationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportFilePromotionController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -40,6 +41,8 @@ use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromotionStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromoter;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -135,6 +138,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_import_rewrite_result_notice(); ?>
 			<?php $this->render_clone_import_finalize_result_notice(); ?>
 			<?php $this->render_clone_database_activation_result_notice(); ?>
+			<?php $this->render_clone_file_promotion_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -1596,10 +1600,17 @@ final class AdminOperatorScreen {
 	 * @param string $job_id Clone job identifier.
 	 */
 	private function render_clone_database_activation_section( string $job_id ): void {
-		$state    = ( new ImportDatabaseActivationStateStore() )->get( $job_id );
-		$status   = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
-		$tables   = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
-		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$state            = ( new ImportDatabaseActivationStateStore() )->get( $job_id );
+		$status           = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$tables           = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
+		$blockers         = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$promotion        = ( new ImportFilePromotionStateStore() )->get( $job_id );
+		$promotion_status = is_array( $promotion ) ? (string) ( $promotion['status'] ?? '' ) : '';
+		$rollback_locked  = in_array(
+			$promotion_status,
+			array( 'prepared', 'copying', 'candidate-ready', 'promoting', 'verifying', 'verified' ),
+			true
+		);
 		?>
 		<h4><?php echo esc_html( $this->copy->text( 'clone_database_activation_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_database_activation_help' ) ); ?></p>
@@ -1634,7 +1645,7 @@ final class AdminOperatorScreen {
 				<?php wp_nonce_field( AdminCloneImportDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
 				<?php submit_button( $this->copy->text( 'clone_database_activation_activate' ), 'primary', 'submit', false ); ?>
 			</form>
-		<?php elseif ( in_array( $status, array( 'activated', 'activating' ), true ) ) : ?>
+		<?php elseif ( in_array( $status, array( 'activated', 'activating' ), true ) && ! $rollback_locked ) : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportDatabaseActivationController::ACTION ); ?>">
 				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
@@ -1643,7 +1654,139 @@ final class AdminOperatorScreen {
 				<?php wp_nonce_field( AdminCloneImportDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
 				<?php submit_button( $this->copy->text( 'clone_database_activation_rollback' ), 'secondary', 'submit', false ); ?>
 			</form>
+		<?php elseif ( in_array( $status, array( 'activated', 'activating' ), true ) && $rollback_locked ) : ?>
+			<p class="description"><strong><?php echo esc_html( $this->copy->text( 'clone_database_activation_rollback_locked' ) ); ?></strong></p>
 		<?php endif; ?>
+		<?php if ( 'activated' === $status ) : ?>
+			<?php $this->render_clone_file_promotion_section( $job_id ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after reversible file-promotion actions.
+	 */
+	private function render_clone_file_promotion_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified promotion action.
+		$status = isset( $_GET['seo_geo_clone_file_promotion'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_file_promotion'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'prepared'        => 'clone_file_promotion_prepared',
+			'copying'         => 'clone_file_promotion_copying',
+			'candidate-ready' => 'clone_file_promotion_candidate_ready',
+			'promoting'       => 'clone_file_promotion_promoting',
+			'verifying'       => 'clone_file_promotion_verifying',
+			'verified'        => 'clone_file_promotion_verified',
+			'rolled-back'     => 'clone_file_promotion_rolled_back',
+			'blocked'         => 'clone_file_promotion_blocked',
+			default           => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status
+			? 'notice notice-error'
+			: ( 'verified' === $status ? 'notice notice-success' : 'notice notice-info' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the workspace-backed file-promotion journal and controls.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function render_clone_file_promotion_section( string $job_id ): void {
+		$state    = ( new ImportFilePromotionStateStore() )->get( $job_id );
+		$status   = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$roots    = is_array( $state['roots'] ?? null ) ? $state['roots'] : array();
+		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		?>
+		<h4><?php echo esc_html( $this->copy->text( 'clone_file_promotion_heading' ) ); ?></h4>
+		<p><?php echo esc_html( $this->copy->text( 'clone_file_promotion_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_promotion_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_promotion_roots' ) ); ?></th><td><?php echo esc_html( (string) count( $roots ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_promotion_copied' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['file_count'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_promotion_verified_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['verify_file_count'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_promotion_fingerprint' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['file_fingerprint'] ?? '' ) ); ?></code></td></tr>
+				<?php $this->render_sandbox_boolean_row( 'clone_file_promotion_database', true === ( $state['database_activated'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_file_promotion_rollback_ready', true === ( $state['rollback_available'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_file_promotion_handoff', true === ( $state['handoff_ready'] ?? false ) ); ?>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_promotion_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === $blockers ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $blockers ) ); ?></code></td></tr>
+			</tbody>
+		</table>
+		<p class="description"><strong><?php echo esc_html( $this->copy->text( 'clone_file_promotion_warning' ) ); ?></strong></p>
+
+		<?php if ( 'pending' === $status ) : ?>
+			<?php $this->render_clone_file_promotion_form( $job_id, 'prepare', 'clone_file_promotion_prepare', false, false ); ?>
+		<?php elseif ( in_array( $status, array( 'prepared', 'copying' ), true ) ) : ?>
+			<?php $this->render_clone_file_promotion_form( $job_id, 'copy', 'clone_file_promotion_copy', true, false ); ?>
+		<?php elseif ( 'candidate-ready' === $status ) : ?>
+			<?php $this->render_clone_file_promotion_form( $job_id, 'promote', 'clone_file_promotion_promote', false, true ); ?>
+		<?php elseif ( 'promoting' === $status ) : ?>
+			<?php $this->render_clone_file_promotion_form( $job_id, 'promote', 'clone_file_promotion_resume_promote', false, true ); ?>
+		<?php elseif ( 'verifying' === $status ) : ?>
+			<?php $this->render_clone_file_promotion_form( $job_id, 'verify', 'clone_file_promotion_verify', true, false ); ?>
+			<?php $this->render_clone_file_promotion_form( $job_id, 'rollback', 'clone_file_promotion_rollback', false, true ); ?>
+		<?php elseif ( 'verified' === $status ) : ?>
+			<?php $this->render_clone_file_promotion_form( $job_id, 'rollback', 'clone_file_promotion_rollback', false, true ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render one file-promotion action form.
+	 *
+	 * @param string $job_id       Clone job identifier.
+	 * @param string $step         Promotion step.
+	 * @param string $button_key   Localized button key.
+	 * @param bool   $show_batches Whether to show bounded batch controls.
+	 * @param bool   $destructive  Whether explicit confirmation is required.
+	 */
+	private function render_clone_file_promotion_form(
+		string $job_id,
+		string $step,
+		string $button_key,
+		bool $show_batches,
+		bool $destructive
+	): void {
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:1rem">
+			<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportFilePromotionController::ACTION ); ?>">
+			<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+			<input type="hidden" name="file_promotion_step" value="<?php echo esc_attr( $step ); ?>">
+			<?php if ( $destructive ) : ?>
+				<input type="hidden" name="file_promotion_confirmation" value="<?php echo esc_attr( 'rollback' === $step ? 'ROLLBACK_FILES' : 'PROMOTE_FILES' ); ?>">
+			<?php endif; ?>
+			<?php wp_nonce_field( AdminCloneImportFilePromotionController::NONCE_ACTION . ':' . $job_id ); ?>
+			<?php if ( $show_batches ) : ?>
+				<p>
+					<label for="seo-geo-file-promotion-files-<?php echo esc_attr( $step ); ?>"><strong><?php echo esc_html( $this->copy->text( 'clone_file_promotion_files_label' ) ); ?></strong></label>
+					<select id="seo-geo-file-promotion-files-<?php echo esc_attr( $step ); ?>" name="file_promotion_batch_files">
+						<?php for ( $files = 1; $files <= 20; ++$files ) : ?>
+							<option value="<?php echo esc_attr( (string) $files ); ?>" <?php selected( ImportFilePromoter::DEFAULT_BATCH_FILES, $files ); ?>><?php echo esc_html( (string) $files ); ?></option>
+						<?php endfor; ?>
+					</select>
+					<label for="seo-geo-file-promotion-mb-<?php echo esc_attr( $step ); ?>"><strong><?php echo esc_html( $this->copy->text( 'clone_file_promotion_mb_label' ) ); ?></strong></label>
+					<select id="seo-geo-file-promotion-mb-<?php echo esc_attr( $step ); ?>" name="file_promotion_batch_megabytes">
+						<?php foreach ( array( 4, 8, 16, 32, 64, 128 ) as $megabytes ) : ?>
+							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 16, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_file_promotion_batch_help' ) ); ?></p>
+			<?php endif; ?>
+			<?php submit_button( $this->copy->text( $button_key ), 'rollback' === $step ? 'secondary' : 'primary', 'submit', false ); ?>
+		</form>
 		<?php
 	}
 

@@ -10,12 +10,14 @@ cat >"$IMPORT_REWRITE_RUNNER" <<'PHP'
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseActivationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportFilePromotionController;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\ExportWorkspace;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromoter;
 use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
@@ -64,6 +66,7 @@ $file_restore = Plugin::clone_import_file_restorer();
 $rewriter     = Plugin::clone_import_environment_rewriter();
 $finalizer    = Plugin::clone_import_finalization_planner();
 $activator    = Plugin::clone_import_database_activator();
+$promoter     = Plugin::clone_import_file_promoter();
 $workspace    = new ExportWorkspace();
 
 if (
@@ -75,6 +78,7 @@ if (
 	|| ! $rewriter instanceof ImportEnvironmentRewriter
 	|| ! $finalizer instanceof ImportFinalizationPlanner
 	|| ! $activator instanceof ImportDatabaseActivator
+	|| ! $promoter instanceof ImportFilePromoter
 ) {
 	throw new RuntimeException( 'Portable Import environment rewrite/finalization services are unavailable.' );
 }
@@ -87,12 +91,28 @@ if ( ! $wpdb instanceof wpdb ) {
 $source_home   = 'https://source.example.test/';
 $source_site   = 'https://source.example.test/wordpress/';
 $source_prefix = 'src_';
+$source_theme = 'seo-geo-fixture-theme';
+$source_bridge_plugin = 'seo-geo-migration-bridge/seo-geo-migration-bridge.php';
 $options_table = $source_prefix . 'options';
 $posts_table   = $source_prefix . 'posts';
 $destination_home = home_url( '/' );
 $destination_site = site_url( '/' );
 $destination_template   = (string) get_option( 'template', '' );
 $destination_stylesheet = (string) get_option( 'stylesheet', '' );
+
+$upload_dir = wp_upload_dir( null, false );
+if ( ! is_array( $upload_dir ) || ! empty( $upload_dir['error'] ) || ! is_string( $upload_dir['basedir'] ?? null ) ) {
+	throw new RuntimeException( 'Could not resolve active uploads directory for promotion smoke.' );
+}
+$promotion_upload_sentinel = trailingslashit( $upload_dir['basedir'] ) . 'seo-geo-promotion-active-sentinel.txt';
+if ( ! is_dir( dirname( $promotion_upload_sentinel ) ) && ! wp_mkdir_p( dirname( $promotion_upload_sentinel ) ) ) {
+	throw new RuntimeException( 'Could not prepare active uploads sentinel directory.' );
+}
+// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test-only active-root rollback sentinel.
+if ( false === file_put_contents( $promotion_upload_sentinel, 'active-root-before-promotion' ) ) {
+	throw new RuntimeException( 'Could not create active uploads rollback sentinel.' );
+}
+$promotion_upload_sentinel_hash = hash_file( 'sha256', $promotion_upload_sentinel );
 
 $active_sentinel_name  = 'seo_geo_rewrite_active_sentinel';
 $active_sentinel_value = $source_home . 'must-stay-active';
@@ -268,7 +288,9 @@ $build_archive = static function ( string $source_job_id ) use (
 	$source_site,
 	$source_prefix,
 	$options_table,
-	$posts_table
+	$posts_table,
+	$source_theme,
+	$source_bridge_plugin
 ): array {
 	$workspace->cleanup( $source_job_id );
 	$workspace->delete_delivery_archive( $source_job_id );
@@ -292,13 +314,16 @@ $build_archive = static function ( string $source_job_id ) use (
 	}
 
 	$options_rows = array(
-		array( '1', 'home', $source_home ),
-		array( '2', 'siteurl', $source_site ),
-		array( '3', 'plain_url', $source_home . 'catalog/item?x=1#top' ),
-		array( '4', 'serialized_payload', $serialized ),
-		array( '5', 'json_payload', $json_value ),
-		array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context' ),
-		array( '7', 'opaque_safe', 'a:1:{s:3:"bad";s:4:"nope"' ),
+		array( '1', 'home', $source_home, 'yes' ),
+		array( '2', 'siteurl', $source_site, 'yes' ),
+		array( '3', 'plain_url', $source_home . 'catalog/item?x=1#top', 'yes' ),
+		array( '4', 'serialized_payload', $serialized, 'yes' ),
+		array( '5', 'json_payload', $json_value, 'yes' ),
+		array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context', 'yes' ),
+		array( '7', 'opaque_safe', 'a:1:{s:3:"bad";s:4:"nope"', 'yes' ),
+		array( '8', 'active_plugins', serialize( array( $source_bridge_plugin ) ), 'yes' ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WordPress option fixture.
+		array( '9', 'template', $source_theme, 'yes' ),
+		array( '10', 'stylesheet', $source_theme, 'yes' ),
 	);
 	$posts_rows = array(
 		array(
@@ -313,6 +338,7 @@ $build_archive = static function ( string $source_job_id ) use (
 		. 'option_id bigint unsigned NOT NULL, '
 		. 'option_name varchar(191) NOT NULL, '
 		. 'option_value longtext NOT NULL, '
+		. 'autoload varchar(20) NOT NULL DEFAULT \'yes\', '
 		. 'PRIMARY KEY (option_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
 	$posts_schema = 'CREATE TABLE ' . $posts_table . ' ('
 		. 'ID bigint unsigned NOT NULL, '
@@ -324,7 +350,7 @@ $build_archive = static function ( string $source_job_id ) use (
 	$options_meta = $write_table(
 		$source_job_id,
 		$options_table,
-		array( 'option_id', 'option_name', 'option_value' ),
+		array( 'option_id', 'option_name', 'option_value', 'autoload' ),
 		'option_id',
 		$options_rows,
 		$options_schema
@@ -366,36 +392,78 @@ $build_archive = static function ( string $source_job_id ) use (
 		throw new RuntimeException( 'Could not write rewrite database manifest.' );
 	}
 
-	$file_relative = '2026/file.txt';
-	$file_content  = 'staged-file-with-source-url::' . $source_home . 'must-remain-byte-identical';
-	$file_written  = $workspace->write( $source_job_id, 'files/uploads/' . $file_relative, $file_content );
-	if ( ! is_array( $file_written ) ) {
-		throw new RuntimeException( 'Could not write rewrite file payload.' );
-	}
-
-	$file_record = array(
-		'root'          => 'uploads',
-		'relative_path' => $file_relative,
-		'payload_path'  => 'files/uploads/' . $file_relative,
-		'byte_count'    => (int) $file_written['bytes'],
-		'sha256'        => (string) $file_written['sha256'],
-		'export_status' => 'copied',
+	$file_specs = array(
+		array(
+			'root'     => 'uploads',
+			'relative' => '2026/file.txt',
+			'content'  => 'staged-file-with-source-url::' . $source_home . 'must-remain-byte-identical',
+		),
+		array(
+			'root'     => 'plugins',
+			'relative' => $source_bridge_plugin,
+			'content'  => "<?php\n/* Plugin Name: SEO GEO Migration Bridge smoke fixture */\n",
+		),
+		array(
+			'root'     => 'themes',
+			'relative' => $source_theme . '/style.css',
+			'content'  => "/*\nTheme Name: SEO GEO Fixture Theme\n*/\n",
+		),
 	);
-	$record_path = 'files-meta/uploads/' . hash( 'sha256', $file_relative ) . '.json';
-	if ( ! is_array( $workspace->write( $source_job_id, $record_path, wp_json_encode( $file_record ) . "\n" ) ) ) {
-		throw new RuntimeException( 'Could not write rewrite file record.' );
+
+	$root_summaries = array(
+		'uploads' => array( 'file_count' => 0, 'byte_count' => 0 ),
+		'plugins' => array( 'file_count' => 0, 'byte_count' => 0 ),
+		'themes'  => array( 'file_count' => 0, 'byte_count' => 0 ),
+	);
+	$file_count_total = 0;
+	$file_bytes_total = 0;
+	foreach ( $file_specs as $spec ) {
+		$root_id  = (string) $spec['root'];
+		$relative = (string) $spec['relative'];
+		$written  = $workspace->write( $source_job_id, 'files/' . $root_id . '/' . $relative, (string) $spec['content'] );
+		if ( ! is_array( $written ) ) {
+			throw new RuntimeException( 'Could not write rewrite file payload: ' . $root_id . '/' . $relative );
+		}
+
+		$record = array(
+			'root'          => $root_id,
+			'relative_path' => $relative,
+			'payload_path'  => 'files/' . $root_id . '/' . $relative,
+			'byte_count'    => (int) $written['bytes'],
+			'sha256'        => (string) $written['sha256'],
+			'export_status' => 'copied',
+		);
+		$record_path = 'files-meta/' . $root_id . '/' . hash( 'sha256', $relative ) . '.json';
+		if ( ! is_array( $workspace->write( $source_job_id, $record_path, wp_json_encode( $record ) . "\n" ) ) ) {
+			throw new RuntimeException( 'Could not write rewrite file record.' );
+		}
+
+		++$root_summaries[ $root_id ]['file_count'];
+		$root_summaries[ $root_id ]['byte_count'] += (int) $written['bytes'];
+		++$file_count_total;
+		$file_bytes_total += (int) $written['bytes'];
 	}
 
 	$files_manifest = array(
 		'schema_version'              => 1,
 		'payload_class'               => 'files',
-		'file_count'                  => 1,
-		'payload_bytes'               => (int) $file_written['bytes'],
+		'file_count'                  => $file_count_total,
+		'payload_bytes'               => $file_bytes_total,
 		'roots'                       => array(
 			array(
 				'id'         => 'uploads',
-				'file_count' => 1,
-				'byte_count' => (int) $file_written['bytes'],
+				'file_count' => $root_summaries['uploads']['file_count'],
+				'byte_count' => $root_summaries['uploads']['byte_count'],
+			),
+			array(
+				'id'         => 'plugins',
+				'file_count' => $root_summaries['plugins']['file_count'],
+				'byte_count' => $root_summaries['plugins']['byte_count'],
+			),
+			array(
+				'id'         => 'themes',
+				'file_count' => $root_summaries['themes']['file_count'],
+				'byte_count' => $root_summaries['themes']['byte_count'],
 			),
 		),
 		'source_fingerprint'          => hash( 'sha256', 'rewrite-fixture-' . $source_job_id ),
@@ -444,8 +512,8 @@ $build_archive = static function ( string $source_job_id ) use (
 			'files'    => array(
 				'manifest_path'   => 'files/manifest.json',
 				'manifest_sha256' => (string) $files['sha256'],
-				'file_count'      => 1,
-				'payload_bytes'   => (int) $file_written['bytes'],
+				'file_count'      => $file_count_total,
+				'payload_bytes'   => $file_bytes_total,
 			),
 		),
 		'integrity'      => array(
@@ -692,6 +760,75 @@ $activation_plugins = is_string( $activation_plugins_raw ) && is_serialized( $ac
 $bridge_plugin = plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' );
 $activation_bridge_active = is_array( $activation_plugins ) && in_array( $bridge_plugin, $activation_plugins, true );
 
+// 10E.2A.4.6.3: build same-filesystem candidates, promote all active roots,
+// verify the final target, enable handoff, then prove explicit filesystem rollback.
+$promotion_prepared = $promoter->prepare( $job_id );
+if ( ! is_array( $promotion_prepared ) || 'prepared' !== ( $promotion_prepared['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion preparation failed: ' . wp_json_encode( $promotion_prepared ) );
+}
+
+$promotion_candidates = null;
+for ( $iteration = 0; $iteration < 160; ++$iteration ) {
+	$promotion_candidates = $promoter->advance_candidates( $job_id, 1, 1048576 );
+	if ( ! is_array( $promotion_candidates ) ) {
+		throw new RuntimeException( 'File promotion candidate build returned no state.' );
+	}
+	if ( in_array( $promotion_candidates['status'] ?? null, array( 'candidate-ready', 'blocked' ), true ) ) {
+		break;
+	}
+}
+if ( ! is_array( $promotion_candidates ) || 'candidate-ready' !== ( $promotion_candidates['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion candidates did not reach ready: ' . wp_json_encode( $promotion_candidates ) );
+}
+
+$promotion = $promoter->promote( $job_id );
+if ( ! is_array( $promotion ) || 'verifying' !== ( $promotion['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion swap failed: ' . wp_json_encode( $promotion ) );
+}
+
+$promotion_verified = null;
+for ( $iteration = 0; $iteration < 160; ++$iteration ) {
+	$promotion_verified = $promoter->advance_verification( $job_id, 1, 1048576 );
+	if ( ! is_array( $promotion_verified ) ) {
+		throw new RuntimeException( 'File promotion verification returned no state.' );
+	}
+	if ( in_array( $promotion_verified['status'] ?? null, array( 'verified', 'rolled-back', 'blocked' ), true ) ) {
+		break;
+	}
+}
+if ( ! is_array( $promotion_verified ) || 'verified' !== ( $promotion_verified['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion did not verify final target: ' . wp_json_encode( $promotion_verified ) );
+}
+
+$promotion_database_state = Plugin::clone_import_database_activation_state_store()?->get( $job_id );
+$promotion_upload_active  = trailingslashit( $upload_dir['basedir'] ) . '2026/file.txt';
+$promotion_bridge_active  = trailingslashit( WP_PLUGIN_DIR ) . $source_bridge_plugin;
+$promotion_theme_active   = trailingslashit( get_theme_root() ) . $source_theme . '/style.css';
+$promotion_runtime = array(
+	'active_plugins' => get_option( 'active_plugins', array() ),
+	'template'       => get_option( 'template', '' ),
+	'stylesheet'     => get_option( 'stylesheet', '' ),
+);
+$promotion_upload_sentinel_absent = ! file_exists( $promotion_upload_sentinel );
+$promotion_payload_files_present  = is_file( $promotion_upload_active )
+	&& is_file( $promotion_bridge_active )
+	&& is_file( $promotion_theme_active );
+
+$promotion_rollback = $promoter->rollback( $job_id );
+if ( ! is_array( $promotion_rollback ) || 'rolled-back' !== ( $promotion_rollback['status'] ?? null ) ) {
+	throw new RuntimeException( 'File promotion rollback failed: ' . wp_json_encode( $promotion_rollback ) );
+}
+$promotion_runtime_after_rollback = array(
+	'active_plugins' => get_option( 'active_plugins', array() ),
+	'template'       => get_option( 'template', '' ),
+	'stylesheet'     => get_option( 'stylesheet', '' ),
+);
+$promotion_upload_sentinel_after_hash = is_file( $promotion_upload_sentinel )
+	? hash_file( 'sha256', $promotion_upload_sentinel )
+	: false;
+$promotion_bridge_restored = is_file( trailingslashit( WP_PLUGIN_DIR ) . $bridge_plugin );
+$promotion_theme_restored  = is_dir( trailingslashit( get_theme_root() ) . $destination_stylesheet );
+
 $activation_rollback = $activator->rollback( $job_id );
 if ( ! is_array( $activation_rollback ) || 'rolled-back' !== ( $activation_rollback['status'] ?? null ) ) {
 	throw new RuntimeException( 'Database activation rollback failed: ' . wp_json_encode( $activation_rollback ) );
@@ -711,9 +848,6 @@ foreach (
 		ImportRewriteStateStore::OPTION_NAME,
 		ImportFinalizeStateStore::OPTION_NAME,
 		'blog_public',
-		'active_plugins',
-		'template',
-		'stylesheet',
 	) as $overlay_option
 ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Test-only cleanup of staging overlay rows.
@@ -779,6 +913,22 @@ echo wp_json_encode(
 		'activation_stylesheet'     => $activation_stylesheet,
 		'activation_control_plane_present' => is_string( $activation_control_plane ) && '' !== $activation_control_plane,
 		'activation_bridge_active'  => $activation_bridge_active,
+		'promotion_prepared'       => $promotion_prepared,
+		'promotion_candidates'     => $promotion_candidates,
+		'promotion'                => $promotion,
+		'promotion_verified'       => $promotion_verified,
+		'promotion_database_state' => $promotion_database_state,
+		'promotion_runtime'        => $promotion_runtime,
+		'promotion_runtime_after_rollback' => $promotion_runtime_after_rollback,
+		'promotion_upload_sentinel_absent' => $promotion_upload_sentinel_absent,
+		'promotion_upload_sentinel_hash' => $promotion_upload_sentinel_hash,
+		'promotion_upload_sentinel_after_hash' => $promotion_upload_sentinel_after_hash,
+		'promotion_payload_files_present' => $promotion_payload_files_present,
+		'promotion_bridge_restored' => $promotion_bridge_restored,
+		'promotion_theme_restored'  => $promotion_theme_restored,
+		'promotion_rollback'        => $promotion_rollback,
+		'source_theme'              => $source_theme,
+		'source_bridge_plugin'      => $source_bridge_plugin,
 		'active_after_bad'         => $active_after_bad,
 		'staged_file_before'       => $staged_file_before,
 		'staged_file_after'        => $staged_file_after,
@@ -791,6 +941,8 @@ echo wp_json_encode(
 		'finalize_public_absent'         => false === has_action( 'admin_post_nopriv_' . AdminCloneImportFinalizeController::ACTION ),
 		'database_activation_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportDatabaseActivationController::ACTION ),
 		'database_activation_public_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportDatabaseActivationController::ACTION ),
+		'file_promotion_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportFilePromotionController::ACTION ),
+		'file_promotion_public_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportFilePromotionController::ACTION ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 );
@@ -806,6 +958,36 @@ foreach ( $plan['tables'] as $table ) {
 }
 
 delete_option( $active_sentinel_name );
+if ( is_file( $promotion_upload_sentinel ) ) {
+	// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Test-only active uploads sentinel cleanup.
+	@unlink( $promotion_upload_sentinel );
+}
+if ( is_array( $promotion_rollback['roots'] ?? null ) ) {
+	foreach ( $promotion_rollback['roots'] as $promotion_root ) {
+		if ( ! is_array( $promotion_root ) || ! is_string( $promotion_root['candidate_path'] ?? null ) ) {
+			continue;
+		}
+		$candidate = untrailingslashit( $promotion_root['candidate_path'] );
+		if ( ! is_dir( $candidate ) || is_link( $candidate ) ) {
+			continue;
+		}
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator( $candidate, FilesystemIterator::SKIP_DOTS ),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
+		foreach ( $iterator as $item ) {
+			if ( $item->isDir() && ! $item->isLink() ) {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test-only deterministic candidate cleanup.
+				@rmdir( $item->getPathname() );
+			} else {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Test-only deterministic candidate cleanup.
+				@unlink( $item->getPathname() );
+			}
+		}
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test-only deterministic candidate cleanup.
+		@rmdir( $candidate );
+	}
+}
 foreach ( array( $job_id, $source_job ) as $cleanup_job ) {
 	$workspace->cleanup( $cleanup_job );
 	$workspace->delete_delivery_archive( $cleanup_job );
@@ -869,7 +1051,7 @@ assert finalize["status"] == "ready"
 assert finalize["stage"] == "ready"
 assert finalize["database_rows_hashed"] >= 8
 assert re.fullmatch(r"[a-f0-9]{64}", finalize["database_fingerprint"])
-assert finalize["files_hashed"] == finalize["expected_file_count"] == 1
+assert finalize["files_hashed"] == finalize["expected_file_count"] == 3
 assert finalize["file_bytes_hashed"] == finalize["expected_file_bytes"]
 assert re.fullmatch(r"[a-f0-9]{64}", finalize["file_fingerprint"])
 assert re.fullmatch(r"[a-f0-9]{64}", finalize["activation_plan_hash"])
@@ -905,6 +1087,63 @@ assert payload["activation_template"] == payload["destination_template"]
 assert payload["activation_stylesheet"] == payload["destination_stylesheet"]
 assert payload["activation_control_plane_present"] is True
 assert payload["activation_bridge_active"] is True
+
+promotion_prepared = payload["promotion_prepared"]
+assert promotion_prepared["schema_version"] == 1
+assert promotion_prepared["status"] == "prepared"
+assert promotion_prepared["database_activated"] is True
+assert promotion_prepared["rollback_available"] is True
+assert promotion_prepared["handoff_ready"] is False
+assert len(promotion_prepared["roots"]) == 3
+assert re.fullmatch(r"[a-f0-9]{64}", promotion_prepared["activation_plan_hash"])
+assert re.fullmatch(r"[a-f0-9]{64}", promotion_prepared["file_fingerprint"])
+
+promotion_candidates = payload["promotion_candidates"]
+assert promotion_candidates["status"] == "candidate-ready"
+assert promotion_candidates["file_count"] == 3
+assert promotion_candidates["verify_file_count"] == 0
+assert promotion_candidates["handoff_ready"] is False
+assert all(root["candidate_ready"] is True for root in promotion_candidates["roots"])
+
+promotion = payload["promotion"]
+assert promotion["status"] == "verifying"
+assert promotion["handoff_ready"] is False
+assert promotion["rollback_available"] is True
+
+verified = payload["promotion_verified"]
+assert verified["status"] == "verified"
+assert verified["file_count"] == verified["verify_file_count"] == 3
+assert verified["byte_count"] == verified["verify_byte_count"]
+assert verified["handoff_ready"] is True
+assert verified["rollback_available"] is True
+assert verified["blockers"] == []
+assert re.fullmatch(r"[a-f0-9]{64}", verified["active_fingerprint"])
+assert verified["active_fingerprint"] == verified["file_fingerprint"]
+
+promotion_db = payload["promotion_database_state"]
+assert promotion_db["status"] == "activated"
+assert promotion_db["database_swapped"] is True
+assert promotion_db["handoff_ready"] is True
+assert promotion_db["active_files_untouched"] is False
+
+promotion_runtime = payload["promotion_runtime"]
+assert payload["source_bridge_plugin"] in promotion_runtime["active_plugins"]
+assert promotion_runtime["template"] == payload["source_theme"]
+assert promotion_runtime["stylesheet"] == payload["source_theme"]
+assert payload["promotion_upload_sentinel_absent"] is True
+assert payload["promotion_payload_files_present"] is True
+
+promotion_rollback = payload["promotion_rollback"]
+assert promotion_rollback["status"] == "rolled-back"
+assert promotion_rollback["handoff_ready"] is False
+assert promotion_rollback["rollback_available"] is False
+assert "operator-file-promotion-rollback" in promotion_rollback["blockers"]
+assert payload["promotion_upload_sentinel_hash"] == payload["promotion_upload_sentinel_after_hash"]
+assert payload["promotion_bridge_restored"] is True
+assert payload["promotion_theme_restored"] is True
+runtime_after_rollback = payload["promotion_runtime_after_rollback"]
+assert runtime_after_rollback["template"] == payload["destination_template"]
+assert runtime_after_rollback["stylesheet"] == payload["destination_stylesheet"]
 
 rollback = payload["activation_rollback"]
 assert rollback["status"] == "rolled-back"
@@ -963,6 +1202,8 @@ assert payload["finalize_controller_registered"] is True
 assert payload["finalize_public_absent"] is True
 assert payload["database_activation_controller_registered"] is True
 assert payload["database_activation_public_absent"] is True
+assert payload["file_promotion_controller_registered"] is True
+assert payload["file_promotion_public_absent"] is True
 print("ok")
 PY
 )"; then
