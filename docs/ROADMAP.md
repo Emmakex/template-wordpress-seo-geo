@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.4.6.3 — reversible file promotion + final target verification in Migration Bridge 0.8.22.** Migration Bridge 0.8.21 is accepted on `main` at `090e46c63b0818ed81d706c57aaa636bf3cf1ec8`: the sandbox database is promoted atomically with an external recovery journal, preserved control-plane/runtime options, forced noindex and automatic reverse rename on verification failure. 0.8.22 now builds resumable same-filesystem candidates for uploads/plugins/themes, replays the accepted staged-file SHA-256 fingerprint, requires current plugin/theme runtime assets before promotion, swaps each root through deterministic rollback siblings and performs a second bounded active-root integrity pass. Final handoff remains disabled until that post-promotion verification succeeds.
+Current execution pointer: **10E.2A.5.1 — local-clone destination plan + ownership contract in Migration Bridge 0.8.23.** Migration Bridge 0.8.22 is accepted on `main` at `d985cf362d1b569ee4324c48a508facb32b8cb1b`: reversible database activation, same-filesystem file promotion, final active-root verification and rollback are complete. 0.8.23 now starts the direct same-server path by freezing a verified-package-bound destination contract for `/nuevaweb/` before any target mutation: absolute path, same-origin URL, isolated table prefix, capacity estimate, package/source fingerprints and target ownership state are all explicit. Production/self targets, live prefixes, payload overlap and non-empty unowned targets remain blocked.
+
+Migration Bridge v0.8.22 / 10E.2A.4.6.3 acceptance evidence:
+
+- PR #146 squash-merged to `main` as `d985cf362d1b569ee4324c48a508facb32b8cb1b` after the source-runtime fixture cleanup was corrected;
+- Foundation CI `36174452529` passed;
+- Phase 1 Package CI `36174452619` passed;
+- PHP Quality CI `36174452721` passed;
+- WordPress Smoke CI `36174452415` passed, including reversible file promotion/final verification/rollback plus the retained negative rewrite safety case;
+- Accessibility & Responsive CI `36174452327` passed;
+- Performance Baseline CI `36174452245` passed;
+- Migration Bridge Release CI `36174452520` passed.
 
 Migration Bridge v0.8.21 / 10E.2A.4.6.2 acceptance evidence:
 
@@ -2307,7 +2318,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 through 10E.2A.4.6.2 accepted; 10E.2A.4.6.3 reversible file promotion + final target verification is the 0.8.22 candidate**
+Status: **active — 10E.2A.1 through 10E.2A.4.6.3 accepted; 10E.2A.5.1 local-clone destination plan + ownership contract is the 0.8.23 candidate**
 
 Purpose:
 
@@ -2332,10 +2343,15 @@ Implementation sequence:
 - **10E.2A.4.2 — Full payload verification + resumable extraction**: complete in Migration Bridge 0.8.16; exact extracted payload checksum replay + fresh destination revalidation accepted;\n- **10E.2A.4.3 — Database restore**: active in 0.8.17; restore only to deterministic job-owned transactional staging tables, transactionally persisting rows + resumable cursor while active destination tables remain untouched; extract only into the private import workspace in bounded resumable batches, replay `lexicographic-bfs-path+bytes+sha256-v1`, reject archive/package drift and unlock restore only after exact file/byte/checksum parity;
 - **10E.2A.4.3 — Database restore**: complete in 0.8.17; verified rows restore only into deterministic job-owned transactional staging tables while active WordPress tables remain untouched;
 - **10E.2A.4.4 — File restore**: complete in 0.8.18; copy verified uploads/plugins/themes only into job-owned private staging, then perform a second bounded SHA-256 pass before completion;
-- **10E.2A.4.5 — Serialization-safe environment rewrite**: active in 0.8.19; rewrite only supported WordPress staging-table values, decode/re-encode supported PHP serialization and JSON structurally, block undecodable serialized payloads that still contain source-environment URLs, keep credential/token values opaque, and prove idempotence in a second read-only pass;
-- **10E.2A.4.6 — Sandbox hardening + final integrity verification**: planned;
-- **10E.2A.4 — Portable import**: active; package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
-- **10E.2A.5 — Local clone orchestration**: direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
+- **10E.2A.4.5 — Serialization-safe environment rewrite**: complete in 0.8.19 with structural PHP serialization/JSON rewrite, credential opacity and a second idempotence pass;
+- **10E.2A.4.6.1 — Finalization preflight**: complete in 0.8.20 with bounded staging fingerprints and immutable activation/rollback plan;
+- **10E.2A.4.6.2 — Reversible database activation**: complete in 0.8.21 with external recovery journal, noindex/control-plane preservation and atomic reverse rename;
+- **10E.2A.4.6.3 — Reversible file promotion + final target verification**: complete in 0.8.22; PR #146 merged as `d985cf362d1b569ee4324c48a508facb32b8cb1b`;
+- **10E.2A.4 — Portable import**: complete through guarded database/file activation and final integrity verification;
+- **10E.2A.5.1 — Local clone destination plan + ownership contract**: active in 0.8.23; bind a completed verified package to an explicit isolated same-server path/URL/table-prefix/capacity contract, allow same-origin `/nuevaweb/`, reject production/payload overlap/non-empty unowned targets and perform zero target mutation;
+- **10E.2A.5.2 — Isolated target bootstrap**: planned; provision only from an accepted 5.1 contract, establish job ownership/recovery markers and an independent WordPress runtime without duplicating export/import logic;
+- **10E.2A.5.3 — Local package handoff + sandbox preflight**: planned; hand the verified package to the existing import pipeline in the target runtime and require sandbox hardening/readiness before completion;
+- **10E.2A.5 — Local clone orchestration**: active; direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
 - **10E.2A.6 — Emmake real clone acceptance**: create/verify the actual `emmake.com/nuevaweb/` clone, preserve baseline/dependency/review evidence and require sandbox `ready=true`.
 
 Non-negotiables:
