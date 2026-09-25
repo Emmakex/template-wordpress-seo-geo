@@ -383,7 +383,7 @@ final class ImportDatabaseRestorer {
 			return $this->block( $job_id, $state, 'import-database-chunk-cursor-invalid', false );
 		}
 
-		if ( $row_offset === count( $rows ) ) {
+		if ( count( $rows ) === $row_offset ) {
 			$state['chunk_index']      = $chunk_index + 1;
 			$state['chunk_row_offset'] = 0;
 			$state['chunks_completed'] = (int) ( $state['chunks_completed'] ?? 0 ) + 1;
@@ -892,8 +892,8 @@ final class ImportDatabaseRestorer {
 	/**
 	 * Build one deterministic job-owned staging table.
 	 *
-	 * @param string $staging_namespace    Staging namespace.
-	 * @param string $source_table Source table.
+	 * @param string $staging_namespace Staging namespace.
+	 * @param string $source_table      Source table.
 	 */
 	private function staging_table( string $staging_namespace, string $source_table ): string {
 		$table = $staging_namespace . substr( hash( 'sha256', $source_table ), 0, 16 );
@@ -905,7 +905,7 @@ final class ImportDatabaseRestorer {
 	 * Return all deterministic staging tables expected by this package.
 	 *
 	 * @param array<string,mixed> $manifest  Database manifest.
-	 * @param string              $namespace Staging namespace.
+	 * @param string              $staging_namespace Staging namespace.
 	 * @return list<string>
 	 */
 	private function expected_staging_tables( array $manifest, string $staging_namespace ): array {
