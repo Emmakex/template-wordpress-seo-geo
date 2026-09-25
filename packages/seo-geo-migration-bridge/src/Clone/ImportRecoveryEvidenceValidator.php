@@ -40,16 +40,16 @@ final class ImportRecoveryEvidenceValidator {
 			$size_bytes = max( 0, (int) ( $row['size_bytes'] ?? 0 ) );
 
 			if ( '' === $reference || 200 < strlen( $reference ) ) {
-				$errors[] = 'recovery-reference-invalid:' . $key;
+				$errors[] = 'recovery-reference-invalid-' . str_replace( '_', '-', $key );
 			}
 			if ( 1 !== preg_match( '/^[a-f0-9]{64}$/', $sha256 ) ) {
-				$errors[] = 'recovery-sha256-invalid:' . $key;
+				$errors[] = 'recovery-sha256-invalid-' . str_replace( '_', '-', $key );
 			}
 			if ( $scope !== $row_scope ) {
-				$errors[] = 'recovery-scope-invalid:' . $key;
+				$errors[] = 'recovery-scope-invalid-' . str_replace( '_', '-', $key );
 			}
 			if ( 0 >= $size_bytes ) {
-				$errors[] = 'recovery-size-invalid:' . $key;
+				$errors[] = 'recovery-size-invalid-' . str_replace( '_', '-', $key );
 			}
 
 			$timestamp = '' === $created_at ? false : strtotime( $created_at );
@@ -59,7 +59,7 @@ final class ImportRecoveryEvidenceValidator {
 				|| $timestamp > ( $now + 300 )
 				|| $timestamp < ( $now - self::MAX_AGE_SECONDS )
 			) {
-				$errors[] = 'recovery-created-at-invalid-or-stale:' . $key;
+				$errors[] = 'recovery-created-at-invalid-or-stale-' . str_replace( '_', '-', $key );
 			}
 
 			$normalized[ $key ] = array(
