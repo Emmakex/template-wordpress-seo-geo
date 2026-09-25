@@ -133,6 +133,9 @@ final class PackageDelivery {
 		if ( is_array( $existing ) && 'cleaned' !== ( $existing['status'] ?? null ) ) {
 			return $existing;
 		}
+		if ( ! $this->store->can_create( $job_id ) ) {
+			return null;
+		}
 
 		$job     = $this->jobs->get( $job_id );
 		$package = $this->package_store->get( $job_id );
