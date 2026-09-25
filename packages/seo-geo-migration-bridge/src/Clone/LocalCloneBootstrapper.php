@@ -60,6 +60,13 @@ final class LocalCloneBootstrapper {
 	private CloneJobStore $jobs;
 
 	/**
+	 * Portable Clone filesystem mutation authority.
+	 *
+	 * @var ExportWorkspace
+	 */
+	private ExportWorkspace $workspace;
+
+	/**
 	 * Construct the ownership bootstrapper.
 	 *
 	 * @param LocalCloneBootstrapStateStore|null $store     Optional bootstrap state store.
@@ -68,6 +75,7 @@ final class LocalCloneBootstrapper {
 	 * @param PackageStateStore|null             $packages  Optional package state store.
 	 * @param CloneInventoryStore|null           $inventory Optional inventory state store.
 	 * @param CloneJobStore|null                 $jobs      Optional clone job store.
+	 * @param ExportWorkspace|null               $workspace Optional filesystem mutation authority.
 	 */
 	public function __construct(
 		?LocalCloneBootstrapStateStore $store = null,
@@ -75,7 +83,8 @@ final class LocalCloneBootstrapper {
 		?DestinationSafetyPlanner $planner = null,
 		?PackageStateStore $packages = null,
 		?CloneInventoryStore $inventory = null,
-		?CloneJobStore $jobs = null
+		?CloneJobStore $jobs = null,
+		?ExportWorkspace $workspace = null
 	) {
 		$this->store     = $store ?? new LocalCloneBootstrapStateStore();
 		$this->plans     = $plans ?? new LocalCloneStateStore();
@@ -83,6 +92,7 @@ final class LocalCloneBootstrapper {
 		$this->packages  = $packages ?? new PackageStateStore();
 		$this->inventory = $inventory ?? new CloneInventoryStore();
 		$this->jobs      = $jobs ?? new CloneJobStore();
+		$this->workspace = $workspace ?? new ExportWorkspace();
 	}
 
 	/**
@@ -236,16 +246,12 @@ final class LocalCloneBootstrapper {
 			return $this->block( $job_id, $state, 'bootstrap-release-target-has-unowned-entries' );
 		}
 
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Deletes only the exact verified job ownership marker.
-		if ( ! @unlink( $marker ) ) {
+		if ( ! $this->workspace->delete_local_clone_marker( $target, self::OWNER_MARKER, (string) $state['marker_sha256'] ) ) {
 			return $this->block( $job_id, $state, 'bootstrap-release-marker-delete-failed' );
 		}
 
-		if ( true === ( $state['target_created'] ?? false ) ) {
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Removes only a now-empty directory created by this job.
-			if ( ! @rmdir( $target ) ) {
-				return $this->block( $job_id, $state, 'bootstrap-release-target-delete-failed' );
-			}
+		if ( true === ( $state['target_created'] ?? false ) && ! $this->workspace->remove_empty_local_clone_target( $target ) ) {
+			return $this->block( $job_id, $state, 'bootstrap-release-target-delete-failed' );
 		}
 
 		$state['status']       = 'released';
@@ -289,8 +295,8 @@ final class LocalCloneBootstrapper {
 
 		$target = untrailingslashit( wp_normalize_path( (string) $state['target_path'] ) );
 		if ( true === ( $state['target_created'] ?? false ) && ! file_exists( $target ) ) {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Creates exactly the accepted isolated target after its parent was prevalidated.
-			if ( ! mkdir( $target, 0750 ) ) {
+			$prepared = $this->workspace->prepare_local_clone_target( $target );
+			if ( ! is_array( $prepared ) || true !== ( $prepared['created'] ?? false ) ) {
 				return $this->block( $job_id, $state, 'bootstrap-target-create-failed' );
 			}
 		}
@@ -310,10 +316,11 @@ final class LocalCloneBootstrapper {
 			}
 
 			$content = $this->marker_content( $state );
-			if ( ! $this->atomic_write( $marker, $content, 0600 ) ) {
+			$written = $this->workspace->write_local_clone_marker( $target, self::OWNER_MARKER, $content );
+			if ( ! is_array( $written ) ) {
 				return $this->block( $job_id, $state, 'bootstrap-owner-marker-write-failed' );
 			}
-			$state['marker_sha256'] = hash( 'sha256', $content );
+			$state['marker_sha256'] = (string) $written['sha256'];
 		}
 
 		if ( '' === (string) ( $state['marker_sha256'] ?? '' ) ) {
@@ -556,42 +563,6 @@ final class LocalCloneBootstrapper {
 		}
 
 		return "<?php\n/** SEO/GEO Migration Bridge local-clone ownership marker. */\n/* " . base64_encode( $json ) . " */\n";
-	}
-
-	/**
-	 * Atomically write one target-owned file.
-	 *
-	 * @param string $path    Absolute path.
-	 * @param string $content File bytes.
-	 * @param int    $mode    File mode.
-	 */
-	private function atomic_write( string $path, string $content, int $mode ): bool {
-		$parent = dirname( $path );
-		if ( ! is_dir( $parent ) || is_link( $parent ) ) {
-			return false;
-		}
-
-		$temp = $path . '.tmp-' . wp_generate_password( 12, false, false );
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Atomic local target ownership marker write.
-		$written = file_put_contents( $temp, $content, LOCK_EX );
-		if ( false === $written || strlen( $content ) !== $written ) {
-			if ( is_file( $temp ) ) {
-				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed temporary ownership marker.
-				@unlink( $temp );
-			}
-			return false;
-		}
-
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive marker permission.
-		@chmod( $temp, $mode );
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic rename remains in the accepted target directory.
-		if ( ! rename( $temp, $path ) ) {
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed temporary ownership marker.
-			@unlink( $temp );
-			return false;
-		}
-
-		return true;
 	}
 
 	/**
