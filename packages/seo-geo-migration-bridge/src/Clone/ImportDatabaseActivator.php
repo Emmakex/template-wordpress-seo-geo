@@ -37,17 +37,27 @@ final class ImportDatabaseActivator {
 	private ImportFinalizationPlanner $finalizer;
 
 	/**
+	 * External file-promotion recovery journal.
+	 *
+	 * @var ImportFilePromotionStateStore
+	 */
+	private ImportFilePromotionStateStore $file_promotion;
+
+	/**
 	 * Construct the reversible database activator.
 	 *
-	 * @param ImportDatabaseActivationStateStore|null $store     Optional workspace journal.
-	 * @param ImportFinalizationPlanner|null          $finalizer Optional finalization-plan authority.
+	 * @param ImportDatabaseActivationStateStore|null $store          Optional workspace journal.
+	 * @param ImportFinalizationPlanner|null          $finalizer      Optional finalization-plan authority.
+	 * @param ImportFilePromotionStateStore|null      $file_promotion Optional file-promotion journal.
 	 */
 	public function __construct(
 		?ImportDatabaseActivationStateStore $store = null,
-		?ImportFinalizationPlanner $finalizer = null
+		?ImportFinalizationPlanner $finalizer = null,
+		?ImportFilePromotionStateStore $file_promotion = null
 	) {
-		$this->store     = $store ?? new ImportDatabaseActivationStateStore();
-		$this->finalizer = $finalizer ?? new ImportFinalizationPlanner();
+		$this->store          = $store ?? new ImportDatabaseActivationStateStore();
+		$this->finalizer      = $finalizer ?? new ImportFinalizationPlanner();
+		$this->file_promotion = $file_promotion ?? new ImportFilePromotionStateStore();
 	}
 
 	/**
@@ -265,6 +275,18 @@ final class ImportDatabaseActivator {
 		if ( ! is_array( $state ) || ! in_array( $state['status'] ?? null, array( 'activated', 'activating' ), true ) ) {
 			return $state;
 		}
+		$promotion = $this->file_promotion->get( $job_id );
+		if (
+			is_array( $promotion )
+			&& in_array(
+				$promotion['status'] ?? null,
+				array( 'prepared', 'copying', 'candidate-ready', 'promoting', 'verifying', 'verified' ),
+				true
+			)
+		) {
+			return $state;
+		}
+
 		if ( ! $this->sandbox_ready() ) {
 			return $this->block( $job_id, $state, 'database-rollback-sandbox-guard-failed', true );
 		}
