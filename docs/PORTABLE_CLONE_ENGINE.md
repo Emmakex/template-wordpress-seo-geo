@@ -462,13 +462,13 @@ No payload is created yet.
 
 ### 10E.2A.3 — Resumable export
 
-Status: **active — 10E.2A.3.1 database export and 10E.2A.3.2 file export are complete; 10E.2A.3.3 package manifest + integrity implementation candidate is Migration Bridge 0.8.13**
+Status: **active — 10E.2A.3.1 database export, 10E.2A.3.2 file export and 10E.2A.3.3 package manifest + integrity are complete; 10E.2A.3.4 authenticated delivery + retention cleanup is next**
 
 Internal sequence:
 
 - **10E.2A.3.1 — database export:** complete in 0.8.11; private workspace, schema + deterministic row chunks, resumable state and per-chunk/database-manifest SHA-256;
 - **10E.2A.3.2 — file export:** complete in 0.8.12; accepted uploads/plugins/themes streamed into the private workspace in bounded file/byte batches with per-file SHA-256 and exact inventory fingerprint/count/byte reconciliation;
-- **10E.2A.3.3 — package manifest + integrity:** 0.8.13 candidate; revalidate exported records, compute a resumable full-workspace checksum and require a second matching verification pass before `verified=true`;
+- **10E.2A.3.3 — package manifest + integrity:** complete in 0.8.13; revalidate exported records, compute a resumable full-workspace checksum, require a second matching verification pass before `verified=true`, and block deliberate payload drift/tampering;
 - **10E.2A.3.4 — authenticated package delivery + retention cleanup:** capability/nonce download, explicit cleanup and bounded retention.
 
 Deliver:

@@ -2199,7 +2199,19 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.3.3 — implement/accept resumable package manifest + integrity in Migration Bridge 0.8.13.** 10E.2A.3.2 file export is accepted on main in 0.8.12. After 10E.2A.3.3, continue with authenticated package delivery + retention cleanup before import work.
+Current execution pointer: **10E.2A.3.4 — authenticated package delivery + retention cleanup.** 10E.2A.3.3 package manifest + integrity is accepted on `main` in Migration Bridge 0.8.13. Complete authenticated delivery/cleanup before Portable Import work.
+
+Migration Bridge v0.8.13 / 10E.2A.3.3 acceptance evidence:
+
+- PR #131 squash-merged as `896c449116980238e4163da6b15ee4caec20b67c`;
+- post-merge Foundation CI `36133942803` passed;
+- post-merge Phase 1 Package CI `36133942785` passed;
+- post-merge PHP Quality CI `36133942874` passed;
+- post-merge WordPress Smoke CI `36133942852` passed, including the positive two-pass checksum case and deliberate payload-tamper blocker;
+- post-merge Accessibility & Responsive CI `36133942801` passed;
+- post-merge Performance Baseline CI `36133942970` passed;
+- post-merge Migration Bridge Release CI `36133942826` passed;
+- deterministic installable v0.8.13 ZIP SHA-256: `d7bb4225712274b8fb5538addf053f5a6c2b635174f4b9cb17bbd08059d10954`.
 
 Migration Bridge v0.8.7 acceptance evidence:
 
@@ -2215,7 +2227,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1, 10E.2A.2, 10E.2A.3.1 and 10E.2A.3.2 accepted; 10E.2A.3.3 implementation candidate in progress**
+Status: **active — 10E.2A.1, 10E.2A.2, 10E.2A.3.1, 10E.2A.3.2 and 10E.2A.3.3 accepted; 10E.2A.3.4 next**
 
 Purpose:
 
@@ -2233,7 +2245,7 @@ Implementation sequence:
 - **10E.2A.2 — Read-only source inventory**: complete in Migration Bridge 0.8.10; PR #128 squash-merged as `2aec389db8cefb0a3e42e99751857a497c1b2ab8` and all seven post-merge gates passed;
 - **10E.2A.3.1 — Database export**: complete in Migration Bridge 0.8.11 with a private temporary workspace, resumable schema/row chunks, primary-key or deterministic fallback cursors and per-chunk/database-manifest SHA-256;
 - **10E.2A.3.2 — File export**: complete in Migration Bridge 0.8.12 with deterministic uploads/plugins/themes traversal, bounded file/byte batches, atomic private copies, per-file SHA-256 and exact source-inventory reconciliation;
-- **10E.2A.3.3 — Package manifest + integrity**: implementation candidate is Migration Bridge 0.8.13 with exported-record revalidation, resumable full-workspace SHA-256 chaining and a second exact verification pass before `verified=true`;
+- **10E.2A.3.3 — Package manifest + integrity**: complete in Migration Bridge 0.8.13; PR #131 squash-merged as `896c449116980238e4163da6b15ee4caec20b67c`, with exported-record revalidation, resumable full-workspace SHA-256 chaining, a second exact verification pass before `verified=true`, and tamper rejection;
 - **10E.2A.3 — Resumable export**: chunked database/files export, manifest/checksums, authenticated download and cleanup;
 - **10E.2A.4 — Portable import**: package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
 - **10E.2A.5 — Local clone orchestration**: direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
