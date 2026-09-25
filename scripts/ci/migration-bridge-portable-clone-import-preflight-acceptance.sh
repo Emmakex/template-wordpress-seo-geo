@@ -238,7 +238,7 @@ $tampered_job = $jobs->create( 'import', 'clone-import-badhash-0001' );
 if ( ! is_array( $tampered_job ) ) {
 	throw new RuntimeException( 'Could not create tampered import job.' );
 }
-if ( ! is_array( $preflight->stage( 'clone-import-badhash-0001', $tampered_archive['path'] ) ) {
+if ( ! is_array( $preflight->stage( 'clone-import-badhash-0001', $tampered_archive['path'] ) ) ) {
 	throw new RuntimeException( 'Could not stage tampered import ZIP.' );
 }
 $tampered = $preflight->validate( 'clone-import-badhash-0001' );
