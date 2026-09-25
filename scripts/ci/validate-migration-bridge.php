@@ -100,6 +100,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageBuilder.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DeliveryStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -356,6 +359,9 @@ foreach (
 		'delivery_archive_info( string $job_id )',
 		'delete_delivery_archive( string $job_id )',
 		'delivery_download_name( string $job_id )',
+		'stage_import_archive( string $job_id, string $source )',
+		'import_archive_info( string $job_id )',
+		'delete_import_archive( string $job_id )',
 		"'wp-admin/includes/class-pclzip.php'",
 		'PCLZIP_OPT_REMOVE_PATH',
 	) as $export_workspace_guard
@@ -691,6 +697,115 @@ if ( str_contains( $delivery_controller, 'admin_post_nopriv_' ) ) {
 		'admin_post_nopriv_'
 	);
 }
+
+$import_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'preflight-ready'",
+		"'full_payload_verified'",
+		"'restore_allowed'",
+	) as $import_state_guard
+) {
+	if ( ! str_contains( $import_state_store, $import_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-state',
+			'Portable Import preflight state must remain bounded, versioned and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportStateStore.php',
+			$import_state_guard,
+			'missing'
+		);
+	}
+}
+
+$import_preflight = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php' );
+foreach (
+	array(
+		"public const TARGET_AUTHORIZED_MARKER = 'SEO_GEO_MIGRATION_IMPORT_TARGET_AUTHORIZED';",
+		"'lexicographic-bfs-path+bytes+sha256-v1'",
+		"'import-archive-path-unsafe'",
+		"'import-database-manifest-hash-mismatch'",
+		"'import-files-manifest-hash-mismatch'",
+		'SandboxGuard::enabled()',
+		'SandboxGuard::storage_isolated()',
+		'SandboxGuard::outbound_safe()',
+		'SandboxGuard::backups_ready()',
+		"get_option( 'blog_public', '1' )",
+		'disk_free_space(',
+		"'full_payload_verified']        = false",
+		"'restore_allowed']              = false",
+		'$this->workspace->stage_import_archive( $job_id, $source )',
+	) as $import_preflight_guard
+) {
+	if ( ! str_contains( $import_preflight, $import_preflight_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-preflight',
+			'Portable Import preflight is missing a required archive/integrity/destination safety boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php',
+			$import_preflight_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(', 'move_uploaded_file(' ) as $import_mutation ) {
+	if ( str_contains( $import_preflight, $import_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-filesystem-boundary',
+			'ImportPreflight must delegate every filesystem mutation to ExportWorkspace.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php',
+			'read/inspect only; staged ZIP writes through ExportWorkspace',
+			$import_mutation
+		);
+	}
+}
+
+foreach ( array( 'INSERT INTO ', 'UPDATE ', 'DELETE FROM ', 'REPLACE INTO ', 'DROP TABLE ', 'ALTER TABLE ', 'TRUNCATE TABLE ', 'CREATE TABLE ' ) as $import_sql_mutation ) {
+	if ( str_contains( strtoupper( $import_preflight ), $import_sql_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-no-restore-yet',
+			'10E.2A.4.1 import preflight must not restore or mutate destination database state.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php',
+			'no destination restore SQL in preflight',
+			$import_sql_mutation
+		);
+	}
+}
+
+$import_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_preflight';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		"is_uploaded_file( \$tmp_name )",
+		'$this->preflight->stage( $job_id, $source )',
+		'$this->preflight->validate( $job_id )',
+	) as $import_controller_guard
+) {
+	if ( ! str_contains( $import_controller, $import_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-entrypoint',
+			'Portable Import preflight endpoint must remain administrator/job-nonce gated with validated upload intake.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportController.php',
+			$import_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $import_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-public-endpoint',
+		'Portable Import must never expose an unauthenticated upload/preflight endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
 
 $clone_inventory_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php' );
 foreach (
