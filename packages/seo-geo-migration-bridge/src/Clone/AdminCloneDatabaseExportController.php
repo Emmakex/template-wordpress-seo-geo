@@ -15,7 +15,7 @@ use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
  * Advances one bounded private database-export batch.
  */
 final class AdminCloneDatabaseExportController {
-	public const ACTION        = 'seo_geo_migration_clone_database_export';
+	public const ACTION       = 'seo_geo_migration_clone_database_export';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_database_export';
 
 	/**

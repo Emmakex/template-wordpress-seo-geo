@@ -310,7 +310,7 @@ foreach ( $clone_paths as $clone_path ) {
 $export_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php' );
 foreach (
 	array(
-		"public const OPTION_NAME = 'seo_geo_migration_clone_export_state_v1';",
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_export_state_v1';",
 		'public const SCHEMA_VERSION = 1;',
 		"add_option( self::OPTION_NAME, \$states, '', false )",
 		'update_option( self::OPTION_NAME, $states, false )',

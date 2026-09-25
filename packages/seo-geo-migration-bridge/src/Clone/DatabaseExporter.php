@@ -19,16 +19,32 @@ final class DatabaseExporter {
 	public const MAX_BATCH_ROWS     = 500;
 	public const DEFAULT_BATCH_ROWS = 100;
 
-	/** @var ExportStateStore Export-state persistence. */
+	/**
+	 * Export-state persistence.
+	 *
+	 * @var ExportStateStore
+	 */
 	private ExportStateStore $store;
 
-	/** @var CloneInventoryStore Source inventory persistence. */
+	/**
+	 * Source inventory persistence.
+	 *
+	 * @var CloneInventoryStore
+	 */
 	private CloneInventoryStore $inventory;
 
-	/** @var CloneJobStore Clone job persistence. */
+	/**
+	 * Clone job persistence.
+	 *
+	 * @var CloneJobStore
+	 */
 	private CloneJobStore $jobs;
 
-	/** @var ExportWorkspace Private export workspace. */
+	/**
+	 * Private export workspace.
+	 *
+	 * @var ExportWorkspace
+	 */
 	private ExportWorkspace $workspace;
 
 	/**
@@ -581,7 +597,7 @@ final class DatabaseExporter {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code, bool $retryable ): ?array {
-		$blockers = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers            = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[]          = $code;
 		$state['blockers']   = array_values( array_unique( $blockers ) );
 		$state['status']     = 'blocked';
@@ -685,6 +701,7 @@ final class DatabaseExporter {
 		if ( 0 !== $padding ) {
 			$value .= str_repeat( '=', 4 - $padding );
 		}
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Cursor transport decoding, not code obfuscation.
 		$decoded = base64_decode( strtr( $value, '-_', '+/' ), true );
 		return false === $decoded ? null : $decoded;
 	}
