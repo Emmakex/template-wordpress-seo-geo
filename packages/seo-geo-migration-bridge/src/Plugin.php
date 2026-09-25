@@ -539,15 +539,6 @@ final class Plugin {
 		self::$clone_inventory                              ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
 		self::$clone_inventory_controller                   ??= new AdminCloneInventoryController( self::$clone_inventory );
 		self::$destination_safety_planner                   ??= new DestinationSafetyPlanner();
-		self::$local_clone_state_store                     ??= new LocalCloneStateStore();
-		self::$local_clone_orchestrator                    ??= new LocalCloneOrchestrator(
-			self::$local_clone_state_store,
-			self::$destination_safety_planner,
-			self::$clone_package_state_store,
-			self::$clone_inventory_store,
-			self::$clone_job_store
-		);
-		self::$local_clone_plan_controller                 ??= new AdminCloneLocalPlanController( self::$local_clone_orchestrator );
 		self::$clone_export_state_store                     ??= new ExportStateStore();
 		self::$clone_database_exporter                      ??= new DatabaseExporter( self::$clone_export_state_store, self::$clone_inventory_store, self::$clone_job_store );
 		self::$clone_database_export_controller             ??= new AdminCloneDatabaseExportController( self::$clone_database_exporter );
@@ -557,6 +548,15 @@ final class Plugin {
 		self::$clone_package_state_store                    ??= new PackageStateStore();
 		self::$clone_package_builder                        ??= new PackageBuilder( self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
 		self::$clone_package_controller                     ??= new AdminClonePackageController( self::$clone_package_builder );
+		self::$local_clone_state_store                      ??= new LocalCloneStateStore();
+		self::$local_clone_orchestrator                     ??= new LocalCloneOrchestrator(
+			self::$local_clone_state_store,
+			self::$destination_safety_planner,
+			self::$clone_package_state_store,
+			self::$clone_inventory_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_plan_controller                  ??= new AdminCloneLocalPlanController( self::$local_clone_orchestrator );
 		self::$clone_delivery_state_store                   ??= new DeliveryStateStore();
 		self::$clone_package_delivery                       ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
 		self::$clone_delivery_controller                    ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
