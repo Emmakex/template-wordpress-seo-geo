@@ -157,12 +157,12 @@ final class DestinationSafetyPlanner {
 			return trailingslashit( wp_normalize_path( $real ) );
 		}
 
-		$parent = realpath( dirname( $path ) );
-		if ( false === $parent ) {
+		$parent_path = realpath( dirname( $path ) );
+		if ( false === $parent_path ) {
 			return trailingslashit( $path );
 		}
 
-		return trailingslashit( wp_normalize_path( $parent ) . '/' . basename( $path ) );
+		return trailingslashit( wp_normalize_path( $parent_path ) . '/' . basename( $path ) );
 	}
 
 	/**
