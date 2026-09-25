@@ -156,6 +156,7 @@ final class ImportFinalizationPlanner {
 	 * then bound to the accepted activation-plan hash. Consumers may mutate only
 	 * after this method succeeds.
 	 *
+	 * @param string $job_id Clone job identifier.
 	 * @return array{plan:array<string,mixed>,hash:string,database_fingerprint:string,file_fingerprint:string}|null
 	 */
 	public function activation_plan_snapshot( string $job_id ): ?array {
