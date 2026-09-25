@@ -135,8 +135,8 @@ final class ImportDatabaseRestorer {
 		$namespace          = $this->staging_namespace( $job_id, $destination_prefix );
 		if (
 			'' === $source_prefix
-			|| $source_prefix !== (string) ( $fresh['source_table_prefix'] ?? '' )
-			|| $destination_prefix !== (string) ( $fresh['destination_table_prefix'] ?? '' )
+			|| (string) ( $fresh['source_table_prefix'] ?? '' ) !== $source_prefix
+			|| (string) ( $fresh['destination_table_prefix'] ?? '' ) !== $destination_prefix
 			|| '' === $namespace
 			|| ! $this->options_table_transactional()
 			|| ! $this->manifest_valid( $manifest, $source_prefix )
@@ -322,8 +322,10 @@ final class ImportDatabaseRestorer {
 				return $this->block( $job_id, $state, 'import-database-runtime-unavailable', true );
 			}
 
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Creates only a deterministic job-owned staging table after explicit sandbox authorization.
-			if ( false === $wpdb->query( $create_sql ) || ! $this->table_exists( $staging_table ) ) {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Creates only a deterministic job-owned staging table after explicit sandbox authorization.
+			$created = $wpdb->query( $create_sql );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+			if ( false === $created || ! $this->table_exists( $staging_table ) ) {
 				return $this->block( $job_id, $state, 'import-database-staging-schema-create-failed', true );
 			}
 		}
@@ -377,15 +379,15 @@ final class ImportDatabaseRestorer {
 		$rows       = $chunk['rows'];
 		$columns    = $chunk['columns'];
 		$row_offset = max( 0, (int) ( $state['chunk_row_offset'] ?? 0 ) );
-		if ( $row_offset > count( $rows ) ) {
+		if ( count( $rows ) < $row_offset ) {
 			return $this->block( $job_id, $state, 'import-database-chunk-cursor-invalid', false );
 		}
 
 		if ( $row_offset === count( $rows ) ) {
-			$state['chunk_index']          = $chunk_index + 1;
-			$state['chunk_row_offset']     = 0;
-			$state['chunks_completed']     = (int) ( $state['chunks_completed'] ?? 0 ) + 1;
-			$state['updated_at']           = gmdate( DATE_ATOM );
+			$state['chunk_index']      = $chunk_index + 1;
+			$state['chunk_row_offset'] = 0;
+			$state['chunks_completed'] = (int) ( $state['chunks_completed'] ?? 0 ) + 1;
+			$state['updated_at']       = gmdate( DATE_ATOM );
 			if ( ! $this->store->save( $job_id, $state ) ) {
 				return null;
 			}
@@ -393,14 +395,15 @@ final class ImportDatabaseRestorer {
 			return $this->store->get( $job_id );
 		}
 
-		$end        = min( count( $rows ), $row_offset + $batch_rows );
-		$slice      = array_slice( $rows, $row_offset, $end - $row_offset );
-		$decoded    = $this->decode_rows( $columns, $slice );
+		$end     = min( count( $rows ), $row_offset + $batch_rows );
+		$slice   = array_slice( $rows, $row_offset, $end - $row_offset );
+		$decoded = $this->decode_rows( $columns, $slice );
 		if ( null === $decoded ) {
 			return $this->block( $job_id, $state, 'import-database-row-decode-failed', false );
 		}
 
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Begins a bounded staging-row transaction; active destination tables are not mutation targets.
 		if ( ! $wpdb instanceof wpdb || false === $wpdb->query( 'START TRANSACTION' ) ) {
 			return $this->block( $job_id, $state, 'import-database-transaction-start-failed', true );
 		}
@@ -416,12 +419,12 @@ final class ImportDatabaseRestorer {
 			}
 		}
 
-		$inserted                         = count( $decoded );
-		$next                            = $state;
-		$next['chunk_row_offset']        = $end;
-		$next['rows_restored']           = (int) ( $state['rows_restored'] ?? 0 ) + $inserted;
-		$next['table_rows_restored']     = (int) ( $state['table_rows_restored'] ?? 0 ) + $inserted;
-		$next['updated_at']              = gmdate( DATE_ATOM );
+		$inserted                    = count( $decoded );
+		$next                        = $state;
+		$next['chunk_row_offset']    = $end;
+		$next['rows_restored']       = (int) ( $state['rows_restored'] ?? 0 ) + $inserted;
+		$next['table_rows_restored'] = (int) ( $state['table_rows_restored'] ?? 0 ) + $inserted;
+		$next['updated_at']          = gmdate( DATE_ATOM );
 
 		if ( $end >= count( $rows ) ) {
 			$next['chunk_index']      = $chunk_index + 1;
@@ -469,7 +472,7 @@ final class ImportDatabaseRestorer {
 	private function verify_table( string $job_id, array $state, array $meta, string $staging_table ): ?array {
 		$expected = max( 0, (int) ( $meta['row_count'] ?? 0 ) );
 		$actual   = $this->table_row_count( $staging_table );
-		if ( null === $actual || $expected !== $actual || $expected !== (int) ( $state['table_rows_restored'] ?? -1 ) ) {
+		if ( null === $actual || $actual !== $expected || (int) ( $state['table_rows_restored'] ?? -1 ) !== $expected ) {
 			return $this->block( $job_id, $state, 'import-database-table-row-count-mismatch', false );
 		}
 
@@ -548,7 +551,7 @@ final class ImportDatabaseRestorer {
 		global $wpdb;
 		if (
 			! $wpdb instanceof wpdb
-			|| $wpdb->prefix !== (string) ( $state['destination_prefix'] ?? '' )
+			|| (string) ( $state['destination_prefix'] ?? '' ) !== $wpdb->prefix
 			|| (string) ( $fresh['source_table_prefix'] ?? '' ) !== (string) ( $state['source_prefix'] ?? '' )
 			|| (string) ( $fresh['destination_table_prefix'] ?? '' ) !== (string) ( $state['destination_prefix'] ?? '' )
 			|| ! $this->options_table_transactional()
@@ -635,8 +638,8 @@ final class ImportDatabaseRestorer {
 			return null;
 		}
 
-		$package = json_decode( $package_json, true );
-		$manifest = json_decode( $db_json, true );
+		$package     = json_decode( $package_json, true );
+		$manifest    = json_decode( $db_json, true );
 		$payload_ref = is_array( $package['payload']['database'] ?? null ) ? $package['payload']['database'] : array();
 		if (
 			! is_array( $package )
@@ -700,7 +703,7 @@ final class ImportDatabaseRestorer {
 			|| ! str_starts_with( $table, $source_prefix )
 			|| array() === $columns
 			|| array_values( array_filter( $columns, 'is_string' ) ) !== $columns
-			|| $dir . '/schema.sql' !== ( $schema['path'] ?? null )
+			|| ( $schema['path'] ?? null ) !== $dir . '/schema.sql'
 			|| ! $this->valid_hash( $schema['sha256'] ?? null )
 			|| 0 > (int) ( $schema['bytes'] ?? -1 )
 			|| true !== ( $meta['complete'] ?? false )
@@ -713,8 +716,8 @@ final class ImportDatabaseRestorer {
 			$expected_path = $dir . '/chunks/' . sprintf( '%06d.json', $index );
 			if (
 				! is_array( $chunk )
-				|| $index !== (int) ( $chunk['index'] ?? -1 )
-				|| $expected_path !== ( $chunk['path'] ?? null )
+				|| (int) ( $chunk['index'] ?? -1 ) !== $index
+				|| ( $chunk['path'] ?? null ) !== $expected_path
 				|| ! $this->valid_hash( $chunk['sha256'] ?? null )
 				|| 0 > (int) ( $chunk['row_count'] ?? -1 )
 				|| 0 > (int) ( $chunk['byte_count'] ?? -1 )
@@ -749,15 +752,15 @@ final class ImportDatabaseRestorer {
 			return null;
 		}
 
-		$chunk = json_decode( $json, true );
-		$columns = is_array( $chunk['columns'] ?? null ) ? array_values( $chunk['columns'] ) : array();
-		$rows = is_array( $chunk['rows'] ?? null ) ? array_values( $chunk['rows'] ) : array();
+		$chunk            = json_decode( $json, true );
+		$columns          = is_array( $chunk['columns'] ?? null ) ? array_values( $chunk['columns'] ) : array();
+		$rows             = is_array( $chunk['rows'] ?? null ) ? array_values( $chunk['rows'] ) : array();
 		$expected_columns = is_array( $meta['columns'] ?? null ) ? array_values( $meta['columns'] ) : array();
 		if (
 			! is_array( $chunk )
 			|| 1 !== ( $chunk['schema_version'] ?? null )
-			|| (string) ( $meta['name'] ?? '' ) !== ( $chunk['table'] ?? null )
-			|| $index !== (int) ( $chunk['chunk_index'] ?? -1 )
+			|| ( $chunk['table'] ?? null ) !== (string) ( $meta['name'] ?? '' )
+			|| (int) ( $chunk['chunk_index'] ?? -1 ) !== $index
 			|| 'base64-or-null' !== ( $chunk['value_encoding'] ?? null )
 			|| $expected_columns !== $columns
 			|| (int) ( $chunk_meta['row_count'] ?? -1 ) !== count( $rows )
@@ -772,8 +775,10 @@ final class ImportDatabaseRestorer {
 			}
 		}
 
+		// phpcs:disable Generic.Commenting.DocComment.MissingShort -- Local PHPStan type refinements, not API documentation.
 		/** @var list<string> $columns */
 		/** @var list<array<int,mixed>> $rows */
+		// phpcs:enable Generic.Commenting.DocComment.MissingShort
 		return array(
 			'columns' => $columns,
 			'rows'    => $rows,
@@ -783,8 +788,10 @@ final class ImportDatabaseRestorer {
 	/**
 	 * Decode binary-safe chunk rows into associative inserts.
 	 *
-	 * @param list<string>           $columns Columns.
-	 * @param list<array<int,mixed>> $rows    Encoded rows.
+	 * @param array $columns Columns.
+	 * @param array $rows    Encoded rows.
+	 * @phpstan-param list<string> $columns
+	 * @phpstan-param list<array<int,mixed>> $rows
 	 * @return list<array<string,mixed>>|null
 	 */
 	private function decode_rows( array $columns, array $rows ): ?array {
@@ -885,11 +892,11 @@ final class ImportDatabaseRestorer {
 	/**
 	 * Build one deterministic job-owned staging table.
 	 *
-	 * @param string $namespace    Staging namespace.
+	 * @param string $staging_namespace    Staging namespace.
 	 * @param string $source_table Source table.
 	 */
-	private function staging_table( string $namespace, string $source_table ): string {
-		$table = $namespace . substr( hash( 'sha256', $source_table ), 0, 16 );
+	private function staging_table( string $staging_namespace, string $source_table ): string {
+		$table = $staging_namespace . substr( hash( 'sha256', $source_table ), 0, 16 );
 
 		return $this->valid_staging_table( $table ) ? $table : '';
 	}
@@ -901,15 +908,15 @@ final class ImportDatabaseRestorer {
 	 * @param string              $namespace Staging namespace.
 	 * @return list<string>
 	 */
-	private function expected_staging_tables( array $manifest, string $namespace ): array {
-		$tables = is_array( $manifest['tables'] ?? null ) ? $manifest['tables'] : array();
+	private function expected_staging_tables( array $manifest, string $staging_namespace ): array {
+		$tables   = is_array( $manifest['tables'] ?? null ) ? $manifest['tables'] : array();
 		$expected = array();
 
 		foreach ( $tables as $meta ) {
 			if ( ! is_array( $meta ) || ! is_string( $meta['name'] ?? null ) ) {
 				continue;
 			}
-			$table = $this->staging_table( $namespace, $meta['name'] );
+			$table = $this->staging_table( $staging_namespace, $meta['name'] );
 			if ( '' !== $table ) {
 				$expected[] = $table;
 			}
@@ -921,16 +928,16 @@ final class ImportDatabaseRestorer {
 	/**
 	 * Return staging tables currently present in the destination DB.
 	 *
-	 * @param string $namespace Staging namespace.
+	 * @param string $staging_namespace Staging namespace.
 	 * @return list<string>
 	 */
-	private function staging_tables( string $namespace ): array {
+	private function staging_tables( string $staging_namespace ): array {
 		global $wpdb;
-		if ( ! $wpdb instanceof wpdb || '' === $namespace ) {
+		if ( ! $wpdb instanceof wpdb || '' === $staging_namespace ) {
 			return array();
 		}
 
-		$pattern = $wpdb->esc_like( $namespace ) . '%';
+		$pattern = $wpdb->esc_like( $staging_namespace ) . '%';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only metadata query scoped to the deterministic job-owned staging namespace.
 		$tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $pattern ) );
 
@@ -940,10 +947,10 @@ final class ImportDatabaseRestorer {
 	/**
 	 * Whether no table currently exists in this job-owned staging namespace.
 	 *
-	 * @param string $namespace Staging namespace.
+	 * @param string $staging_namespace Staging namespace.
 	 */
-	private function staging_namespace_empty( string $namespace ): bool {
-		return array() === $this->staging_tables( $namespace );
+	private function staging_namespace_empty( string $staging_namespace ): bool {
+		return array() === $this->staging_tables( $staging_namespace );
 	}
 
 	/**
