@@ -13,8 +13,8 @@ namespace SeoGeo\MigrationBridge\Clone;
  * Rewrites strings inside PHP serialized payloads without instantiating objects.
  */
 final class SerializationSafeRewriter {
-	private const MAX_DEPTH      = 128;
-	private const MAX_ITEMS      = 200000;
+	private const MAX_DEPTH       = 128;
+	private const MAX_ITEMS       = 200000;
 	private const MAX_VALUE_BYTES = 67108864;
 
 	/**
@@ -26,7 +26,7 @@ final class SerializationSafeRewriter {
 	 */
 	public function rewrite( string $value, array $replacements ): array {
 		$replacements = $this->normalize_replacements( $replacements );
-		$serialized    = ( function_exists( 'is_serialized' ) && is_serialized( $value, true ) )
+		$serialized   = ( function_exists( 'is_serialized' ) && is_serialized( $value, true ) )
 			|| $this->looks_serialized( $value );
 
 		if ( array() === $replacements || ! $this->contains_search( $value, $replacements ) ) {
@@ -60,7 +60,7 @@ final class SerializationSafeRewriter {
 
 		$offset = 0;
 		$parsed = $this->rewrite_token( $value, $offset, $replacements, 0 );
-		if ( null === $parsed || $offset !== strlen( $value ) || true === $parsed['unsupported'] ) {
+		if ( null === $parsed || strlen( $value ) !== $offset || true === $parsed['unsupported'] ) {
 			return array(
 				'value'       => $value,
 				'changed'     => false,
@@ -108,7 +108,11 @@ final class SerializationSafeRewriter {
 			}
 			$offset += 2;
 
-			return array( 'value' => 'N;', 'changed' => false, 'unsupported' => false );
+			return array(
+			'value'       => 'N;',
+			'changed'     => false,
+			'unsupported' => false,
+		);
 		}
 
 		if ( in_array( $type, array( 'b', 'i', 'd', 'r', 'R' ), true ) ) {
@@ -119,7 +123,11 @@ final class SerializationSafeRewriter {
 			$token   = $match[0];
 			$offset += strlen( $token );
 
-			return array( 'value' => $token, 'changed' => false, 'unsupported' => false );
+			return array(
+			'value'       => $token,
+			'changed'     => false,
+			'unsupported' => false,
+		);
 		}
 
 		if ( 's' === $type ) {
@@ -200,10 +208,14 @@ final class SerializationSafeRewriter {
 			return null;
 		}
 
-		$token   = substr( $input, $offset, ( $data_end + 2 ) - $offset );
-		$offset  = $data_end + 2;
+		$token  = substr( $input, $offset, ( $data_end + 2 ) - $offset );
+		$offset = $data_end + 2;
 
-		return array( 'value' => $token, 'changed' => false, 'unsupported' => false );
+		return array(
+			'value'       => $token,
+			'changed'     => false,
+			'unsupported' => false,
+		);
 	}
 
 	/**
@@ -244,7 +256,11 @@ final class SerializationSafeRewriter {
 		}
 		++$offset;
 
-		return array( 'value' => $output . '}', 'changed' => $changed, 'unsupported' => false );
+		return array(
+			'value'       => $output . '}',
+			'changed'     => $changed,
+			'unsupported' => false,
+		);
 	}
 
 	/**
@@ -298,7 +314,11 @@ final class SerializationSafeRewriter {
 		}
 		++$offset;
 
-		return array( 'value' => $output . '}', 'changed' => $changed, 'unsupported' => false );
+		return array(
+			'value'       => $output . '}',
+			'changed'     => $changed,
+			'unsupported' => false,
+		);
 	}
 
 	/**
@@ -350,6 +370,8 @@ final class SerializationSafeRewriter {
 	 * may not classify consistently across versions (notably custom Serializable objects).
 	 *
 	 * Full structural validity is still proven by rewrite_token() consuming all bytes.
+	 *
+	 * @param string $value Raw candidate value.
 	 */
 	private function looks_serialized( string $value ): bool {
 		if ( 'N;' === $value ) {
