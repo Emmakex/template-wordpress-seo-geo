@@ -740,6 +740,7 @@ foreach (
 		'disk_free_space(',
 		"'full_payload_verified'",
 		"'restore_allowed'",
+		"'restore-runtime-guard-required'",
 		'$this->workspace->stage_import_archive( $job_id, $source )',
 	) as $import_preflight_guard
 ) {
@@ -858,8 +859,6 @@ foreach (
 		'$this->workspace->extract_import_archive_entry( $job_id, $name )',
 		"'import-payload-archive-identity-changed'",
 		"'import-payload-checksum-mismatch'",
-		"'payload-verified'",
-		"'restore-runtime-guard-required'",
 		'$this->preflight->validate( $job_id )',
 		"'payload-verified'",
 		"'restore_allowed'",
