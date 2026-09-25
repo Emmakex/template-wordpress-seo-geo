@@ -65,7 +65,7 @@ final class ImportPayloadVerifier {
 	 * @param ImportPayloadStateStore|null $store        Optional payload-state store.
 	 * @param ImportStateStore|null        $import_state Optional import state store.
 	 * @param CloneJobStore|null           $jobs         Optional clone-job store.
-	 * @param ImportPreflight|null          $preflight    Optional fresh preflight service.
+	 * @param ImportPreflight|null         $preflight    Optional fresh preflight service.
 	 * @param ExportWorkspace|null         $workspace    Optional private workspace.
 	 */
 	public function __construct(
