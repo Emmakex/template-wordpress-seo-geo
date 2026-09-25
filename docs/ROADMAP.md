@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.4.6.2 — reversible sandbox database activation in Migration Bridge 0.8.21.** Migration Bridge 0.8.20 is accepted on `main` at `20f44f7c43956c37abe52d2922c90f1e48d5bb44`: the finalization preflight fingerprints the fully rewritten staging database/files, rechecks sandbox hardening and locks an immutable activation/rollback plan without mutating active targets. 0.8.21 now adds a workspace-backed recovery journal, preserves the import control plane across `wp_options` replacement, forces `blog_public=0`, keeps Migration Bridge active, performs a single atomic multi-table `RENAME TABLE`, verifies the activated database and automatically reverses the swap if verification fails. Active `wp-content` remains untouched and final handoff remains disabled.
+Current execution pointer: **10E.2A.4.6.3 — reversible file promotion + final target verification in Migration Bridge 0.8.22.** Migration Bridge 0.8.21 is accepted on `main` at `090e46c63b0818ed81d706c57aaa636bf3cf1ec8`: the sandbox database is promoted atomically with an external recovery journal, preserved control-plane/runtime options, forced noindex and automatic reverse rename on verification failure. 0.8.22 now builds resumable same-filesystem candidates for uploads/plugins/themes, replays the accepted staged-file SHA-256 fingerprint, requires current plugin/theme runtime assets before promotion, swaps each root through deterministic rollback siblings and performs a second bounded active-root integrity pass. Final handoff remains disabled until that post-promotion verification succeeds.
+
+Migration Bridge v0.8.21 / 10E.2A.4.6.2 acceptance evidence:
+
+- accepted `main` commit `090e46c63b0818ed81d706c57aaa636bf3cf1ec8`;
+- post-merge Foundation CI `36169680629` passed;
+- post-merge Phase 1 Package CI `36169680581` passed;
+- post-merge PHP Quality CI `36169680562` passed;
+- post-merge WordPress Smoke CI `36169680502` passed, including prepare → activate → verify → rollback with noindex/control-plane/runtime preservation;
+- post-merge Accessibility & Responsive CI `36169680518` passed;
+- post-merge Performance Baseline CI `36169680579` passed;
+- post-merge Migration Bridge Release CI `36169680611` passed.
 
 Migration Bridge v0.8.19 / 10E.2A.4.5 acceptance evidence:
 
@@ -2296,7 +2307,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 through 10E.2A.4.2 accepted; 10E.2A.4.3 staging database restore is the 0.8.17 candidate**
+Status: **active — 10E.2A.1 through 10E.2A.4.6.2 accepted; 10E.2A.4.6.3 reversible file promotion + final target verification is the 0.8.22 candidate**
 
 Purpose:
 
