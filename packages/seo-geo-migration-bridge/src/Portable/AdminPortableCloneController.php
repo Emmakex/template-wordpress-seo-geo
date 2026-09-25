@@ -78,6 +78,12 @@ final class AdminPortableCloneController {
 		$directory = isset( $_POST['target_directory'] )
 			? sanitize_text_field( wp_unslash( $_POST['target_directory'] ) )
 			: '';
+		$confirmed = isset( $_POST['non_production_confirmed'] )
+			&& '1' === sanitize_text_field( wp_unslash( $_POST['non_production_confirmed'] ) );
+
+		if ( ! $confirmed ) {
+			$this->redirect( 'confirmation-required' );
+		}
 
 		$plan = $this->planner->local_subdirectory( $directory );
 		if ( true !== ( $plan['ready'] ?? false ) ) {
