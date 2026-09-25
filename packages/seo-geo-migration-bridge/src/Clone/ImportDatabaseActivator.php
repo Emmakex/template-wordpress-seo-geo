@@ -22,9 +22,26 @@ use wpdb;
 final class ImportDatabaseActivator {
 	private const MAX_CONTROL_PLANE_BYTES = 2097152;
 
+	/**
+	 * Workspace-backed activation journal.
+	 *
+	 * @var ImportDatabaseActivationStateStore
+	 */
 	private ImportDatabaseActivationStateStore $store;
+
+	/**
+	 * Accepted finalization-plan authority.
+	 *
+	 * @var ImportFinalizationPlanner
+	 */
 	private ImportFinalizationPlanner $finalizer;
 
+	/**
+	 * Construct the reversible database activator.
+	 *
+	 * @param ImportDatabaseActivationStateStore|null $store     Optional workspace journal.
+	 * @param ImportFinalizationPlanner|null           $finalizer Optional finalization-plan authority.
+	 */
 	public function __construct(
 		?ImportDatabaseActivationStateStore $store = null,
 		?ImportFinalizationPlanner $finalizer = null
@@ -36,6 +53,7 @@ final class ImportDatabaseActivator {
 	/**
 	 * Return the workspace-backed activation journal.
 	 *
+	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
 	 */
 	public function snapshot( string $job_id ): ?array {
@@ -43,8 +61,14 @@ final class ImportDatabaseActivator {
 	}
 
 	/**
-	 * Prepare the staging options table and freeze an exact reversible table map.
+	 * Freeze an exact reversible table map without mutating staging.
 	 *
+	 * The finalization plan is rebound through a fresh read-only gate here. The
+	 * protected wp_options overlay is intentionally deferred until activate(), so
+	 * the accepted finalization plan remains valid while the operator reviews the
+	 * prepared recovery journal.
+	 *
+	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
 	 */
 	public function prepare( string $job_id ): ?array {
@@ -65,7 +89,7 @@ final class ImportDatabaseActivator {
 		$database = is_array( $snapshot['plan']['database'] ?? null )
 			? $snapshot['plan']['database']
 			: array();
-		$tables = is_array( $database['tables'] ?? null )
+		$tables   = is_array( $database['tables'] ?? null )
 			? array_values( $database['tables'] )
 			: array();
 		if ( array() === $tables ) {
@@ -98,12 +122,17 @@ final class ImportDatabaseActivator {
 				return null;
 			}
 
+			$count = $this->row_count( $staging );
+			if ( null === $count || $count !== max( 0, (int) ( $table['row_count'] ?? 0 ) ) ) {
+				return null;
+			}
+
 			$entry = array(
 				'staging_table'  => $staging,
 				'target_table'   => $target,
 				'rollback_table' => $rollback,
 				'target_exists'  => true === ( $table['target_exists'] ?? false ),
-				'row_count'      => max( 0, (int) ( $table['row_count'] ?? 0 ) ),
+				'row_count'      => $count,
 			);
 			$normalized[] = $entry;
 
@@ -116,23 +145,6 @@ final class ImportDatabaseActivator {
 			return null;
 		}
 
-		$controls = $this->prepare_options_overlay(
-			(string) $options['staging_table'],
-			(string) $options['target_table']
-		);
-		if ( null === $controls ) {
-			return null;
-		}
-
-		foreach ( $normalized as &$entry ) {
-			$count = $this->row_count( (string) $entry['staging_table'] );
-			if ( null === $count ) {
-				return null;
-			}
-			$entry['row_count'] = $count;
-		}
-		unset( $entry );
-
 		$now   = gmdate( DATE_ATOM );
 		$state = array(
 			'schema_version'         => ImportDatabaseActivationStateStore::SCHEMA_VERSION,
@@ -141,7 +153,7 @@ final class ImportDatabaseActivator {
 			'activation_plan_hash'   => (string) ( $snapshot['hash'] ?? '' ),
 			'finalize_db_hash'       => (string) ( $snapshot['database_fingerprint'] ?? '' ),
 			'tables'                 => $normalized,
-			'control_options'        => $controls,
+			'control_options'        => array(),
 			'options_target'         => (string) $options['target_table'],
 			'options_staging'        => (string) $options['staging_table'],
 			'database_swapped'       => false,
@@ -163,7 +175,11 @@ final class ImportDatabaseActivator {
 	 * Atomically activate every staging table and verify the new active database.
 	 *
 	 * Any post-rename verification failure triggers an immediate atomic rollback.
+	 * The last fresh finalization gate runs before the controlled options overlay;
+	 * after that gate the journal switches to activating so an interrupted request
+	 * can safely replay the idempotent overlay and complete the atomic swap.
 	 *
+	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
 	 */
 	public function activate( string $job_id ): ?array {
@@ -177,26 +193,55 @@ final class ImportDatabaseActivator {
 
 		$layout = $this->layout( $state );
 		if ( 'activated' === $layout ) {
-			// Crash-recovery path: the atomic rename completed but the workspace
-			// journal was not yet advanced. Verification uses only the frozen
-			// external journal because rollback table existence intentionally makes
-			// the pre-activation planner unavailable after the swap.
 			return $this->finish_activation_verification( $job_id, $state );
 		}
-		if ( 'prepared' !== $layout || ! $this->staging_counts_match( $state ) ) {
+		if ( 'prepared' !== $layout ) {
 			return $this->block( $job_id, $state, 'database-activation-layout-drift', false );
 		}
 
-		$snapshot = $this->finalizer->activation_plan_snapshot( $job_id );
-		if (
-			! is_array( $snapshot )
-			|| ! $this->same_hash( $state['activation_plan_hash'] ?? '', $snapshot['hash'] ?? '' )
-		) {
-			return $this->block( $job_id, $state, 'database-activation-plan-drift', false );
+		if ( 'prepared' === ( $state['status'] ?? null ) ) {
+			if ( ! $this->staging_counts_match( $state ) ) {
+				return $this->block( $job_id, $state, 'database-activation-layout-drift', false );
+			}
+
+			$snapshot = $this->finalizer->activation_plan_snapshot( $job_id );
+			if (
+				! is_array( $snapshot )
+				|| ! $this->same_hash( $state['activation_plan_hash'] ?? '', $snapshot['hash'] ?? '' )
+			) {
+				return $this->block( $job_id, $state, 'database-activation-plan-drift', false );
+			}
+
+			$state['status']     = 'activating';
+			$state['updated_at'] = gmdate( DATE_ATOM );
+			if ( ! $this->store->save( $job_id, $state ) ) {
+				return null;
+			}
 		}
 
-		$state['status']     = 'activating';
-		$state['updated_at'] = gmdate( DATE_ATOM );
+		$controls = $this->prepare_options_overlay(
+			(string) ( $state['options_staging'] ?? '' ),
+			(string) ( $state['options_target'] ?? '' )
+		);
+		if ( null === $controls ) {
+			return $this->block( $job_id, $state, 'database-activation-options-overlay-failed', false );
+		}
+
+		$tables = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
+		foreach ( $tables as $index => $table ) {
+			if ( ! is_array( $table ) ) {
+				return $this->block( $job_id, $state, 'database-activation-table-map-invalid', false );
+			}
+			$count = $this->row_count( (string) ( $table['staging_table'] ?? '' ) );
+			if ( null === $count ) {
+				return $this->block( $job_id, $state, 'database-activation-staging-count-failed', false );
+			}
+			$tables[ $index ]['row_count'] = $count;
+		}
+
+		$state['tables']          = $tables;
+		$state['control_options'] = $controls;
+		$state['updated_at']      = gmdate( DATE_ATOM );
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
@@ -212,6 +257,7 @@ final class ImportDatabaseActivator {
 	/**
 	 * Explicitly roll an activated database back to the pre-activation layout.
 	 *
+	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
 	 */
 	public function rollback( string $job_id ): ?array {
@@ -229,6 +275,8 @@ final class ImportDatabaseActivator {
 	/**
 	 * Apply the wp_options control-plane overlay transactionally to staging.
 	 *
+	 * @param string $staging Staging options table.
+	 * @param string $active  Active destination options table.
 	 * @return list<array{name:string,sha256:string,byte_count:int}>|null
 	 */
 	private function prepare_options_overlay( string $staging, string $active ): ?array {
@@ -345,7 +393,8 @@ final class ImportDatabaseActivator {
 	/**
 	 * Verify the activated database, or automatically reverse the atomic rename.
 	 *
-	 * @param array<string,mixed> $state State.
+	 * @param string              $job_id Clone job identifier.
+	 * @param array<string,mixed> $state  State.
 	 * @return array<string,mixed>|null
 	 */
 	private function finish_activation_verification( string $job_id, array $state ): ?array {
@@ -372,7 +421,9 @@ final class ImportDatabaseActivator {
 	/**
 	 * Reverse the table swap atomically and prove the pre-activation layout returned.
 	 *
-	 * @param array<string,mixed> $state State.
+	 * @param string              $job_id Clone job identifier.
+	 * @param array<string,mixed> $state  State.
+	 * @param string              $reason Rollback reason code.
 	 * @return array<string,mixed>|null
 	 */
 	private function rollback_internal( string $job_id, array $state, string $reason ): ?array {
@@ -506,6 +557,8 @@ final class ImportDatabaseActivator {
 	}
 
 	/**
+	 * Verify every staging-table row count against the frozen journal.
+	 *
 	 * @param array<string,mixed> $state State.
 	 */
 	private function staging_counts_match( array $state ): bool {
@@ -558,7 +611,10 @@ final class ImportDatabaseActivator {
 	}
 
 	/**
-	 * @param list<string> $pairs Fully quoted rename pairs.
+	 * Execute one validated atomic multi-table rename statement.
+	 *
+	 * @param array $pairs Fully quoted rename pairs.
+	 * @phpstan-param list<string> $pairs
 	 */
 	private function rename_tables( array $pairs ): bool {
 		global $wpdb;
@@ -583,7 +639,12 @@ final class ImportDatabaseActivator {
 	/**
 	 * Upsert one option in the staging options table only.
 	 *
-	 * @param list<string> $columns Table columns.
+	 * @param string $table    Staging options table.
+	 * @param array  $columns  Table columns.
+	 * @param string $name     Option name.
+	 * @param string $value    Option value.
+	 * @param string $autoload Autoload value.
+	 * @phpstan-param list<string> $columns
 	 */
 	private function upsert_option(
 		string $table,
@@ -629,6 +690,11 @@ final class ImportDatabaseActivator {
 		return false !== $wpdb->insert( $table, $data, $formats );
 	}
 
+	/**
+	 * Return the next deterministic option_id for a staging options table.
+	 *
+	 * @param string $table Staging options table.
+	 */
 	private function next_option_id( string $table ): ?int {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb || ! $this->valid_table_name( $table ) ) {
@@ -636,14 +702,19 @@ final class ImportDatabaseActivator {
 		}
 
 		$quoted = $this->quote_identifier( $table );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Validated staging table identifier.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Validated staging table identifier.
 		$max = $wpdb->get_var( "SELECT MAX(option_id) FROM {$quoted}" );
 
 		return null === $max ? 1 : max( 1, (int) $max + 1 );
 	}
 
 	/**
-	 * @param list<string> $columns Table columns.
+	 * Return one exact option row without using the WordPress object cache.
+	 *
+	 * @param string $table   Options table.
+	 * @param string $name    Option name.
+	 * @param array  $columns Table columns.
+	 * @phpstan-param list<string> $columns
 	 * @return array{option_value:string,autoload:string}|null
 	 */
 	private function option_row( string $table, string $name, array $columns ): ?array {
@@ -680,6 +751,12 @@ final class ImportDatabaseActivator {
 	/**
 	 * @return list<string>
 	 */
+	/**
+	 * Return validated column names for one activation table.
+	 *
+	 * @param string $table Table name.
+	 * @return list<string>
+	 */
 	private function table_columns( string $table ): array {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb || ! $this->valid_table_name( $table ) ) {
@@ -687,7 +764,7 @@ final class ImportDatabaseActivator {
 		}
 
 		$quoted = $this->quote_identifier( $table );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Read-only schema inspection of an exact validated table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only schema inspection of an exact validated table.
 		$rows = $wpdb->get_results( "SHOW COLUMNS FROM {$quoted}", ARRAY_A );
 		$out  = array();
 		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
@@ -699,6 +776,11 @@ final class ImportDatabaseActivator {
 		return $out;
 	}
 
+	/**
+	 * Return the exact row count for one activation table.
+	 *
+	 * @param string $table Table name.
+	 */
 	private function row_count( string $table ): ?int {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb || ! $this->valid_table_name( $table ) || ! $this->table_exists( $table ) ) {
@@ -706,12 +788,17 @@ final class ImportDatabaseActivator {
 		}
 
 		$quoted = $this->quote_identifier( $table );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Read-only exact count over validated activation table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only exact count over validated activation table.
 		$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$quoted}" );
 
 		return null === $count ? null : max( 0, (int) $count );
 	}
 
+	/**
+	 * Whether one activation table exists exactly.
+	 *
+	 * @param string $table Table name.
+	 */
 	private function table_exists( string $table ): bool {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb || ! $this->valid_table_name( $table ) ) {
@@ -727,6 +814,9 @@ final class ImportDatabaseActivator {
 	}
 
 	/**
+	 * Decode a WordPress active_plugins value with classes disabled.
+	 *
+	 * @param string $raw Serialized plugin list.
 	 * @return list<string>|null
 	 */
 	private function plugin_list( string $raw ): ?array {
@@ -737,7 +827,7 @@ final class ImportDatabaseActivator {
 			return null;
 		}
 
-		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Plugin list is decoded with class instantiation disabled.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Plugin list is decoded with class instantiation disabled.
 		$value = @unserialize( $raw, array( 'allowed_classes' => false ) );
 		if ( ! is_array( $value ) ) {
 			return null;
@@ -753,6 +843,9 @@ final class ImportDatabaseActivator {
 		return array_values( array_unique( $out ) );
 	}
 
+	/**
+	 * Revalidate the sandbox safety boundary against the currently active DB.
+	 */
 	private function sandbox_ready(): bool {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb ) {
@@ -782,7 +875,10 @@ final class ImportDatabaseActivator {
 	/**
 	 * Persist one blocker in the external journal.
 	 *
-	 * @param array<string,mixed> $state State.
+	 * @param string              $job_id           Clone job identifier.
+	 * @param array<string,mixed> $state            State.
+	 * @param string              $code             Blocker code.
+	 * @param bool                $database_swapped Whether the database is currently swapped.
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code, bool $database_swapped ): ?array {
@@ -798,22 +894,43 @@ final class ImportDatabaseActivator {
 		return $this->store->save( $job_id, $state ) ? $this->store->get( $job_id ) : null;
 	}
 
+	/**
+	 * Normalize one activation table-name candidate.
+	 *
+	 * @param mixed $name Table-name candidate.
+	 */
 	private function table_name( mixed $name ): string {
 		return is_string( $name ) && $this->valid_table_name( $name ) ? $name : '';
 	}
 
+	/**
+	 * Validate one activation table identifier.
+	 *
+	 * @param string $table Table name.
+	 */
 	private function valid_table_name( string $table ): bool {
 		return '' !== $table
 			&& 64 >= strlen( $table )
 			&& 1 === preg_match( '/^[A-Za-z0-9_$-]+$/', $table );
 	}
 
+	/**
+	 * Quote one already validated SQL identifier.
+	 *
+	 * @param string $identifier Validated identifier.
+	 */
 	private function quote_identifier( string $identifier ): string {
 		$tick = chr( 96 );
 
 		return $tick . str_replace( $tick, $tick . $tick, $identifier ) . $tick;
 	}
 
+	/**
+	 * Constant-time compare two SHA-256 values.
+	 *
+	 * @param mixed $left  First candidate hash.
+	 * @param mixed $right Second candidate hash.
+	 */
 	private function same_hash( mixed $left, mixed $right ): bool {
 		return is_string( $left )
 			&& is_string( $right )
