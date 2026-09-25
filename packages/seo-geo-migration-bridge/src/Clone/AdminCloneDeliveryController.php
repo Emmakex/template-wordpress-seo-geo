@@ -66,7 +66,7 @@ final class AdminCloneDeliveryController {
 		$job_id = $this->posted_job_id();
 		check_admin_referer( self::NONCE_ACTION . ':build:' . $job_id );
 
-		$batch_files = isset( $_POST['delivery_batch_size'] )
+		$batch_files     = isset( $_POST['delivery_batch_size'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['delivery_batch_size'] ) ) )
 			: PackageDelivery::DEFAULT_BATCH_FILES;
 		$batch_megabytes = isset( $_POST['delivery_batch_megabytes'] )
