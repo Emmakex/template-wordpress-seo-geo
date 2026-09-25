@@ -2199,7 +2199,19 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.4.5 — serialization-safe environment rewrite in Migration Bridge 0.8.19.** Migration Bridge 0.8.18 is accepted on `main`: verified uploads/plugins/themes are restored only into `import/staged-files`, independently re-hashed, and active `wp-content` roots remain untouched. 10E.2A.4.5 rewrites supported WordPress environment URLs only inside deterministic job-owned staging tables, preserves supported serialized/JSON structures, keeps credential/token values opaque, and performs a second read-only idempotence pass before completion.
+Current execution pointer: **10E.2A.4.6.1 — sandbox activation plan + recovery contract in Migration Bridge 0.8.20.** Migration Bridge 0.8.19 is accepted on `main`: staging database URLs are rewritten serialization-safely and a second read-only pass proves idempotence while active destination tables/files remain untouched. 10E.2A.4.6.1 is deliberately non-mutating: it revalidates the full import chain, requires fresh external database + wp-content recovery evidence, and freezes the exact staging → target → rollback map before any activation is permitted.
+
+Migration Bridge v0.8.19 / 10E.2A.4.5 acceptance evidence:
+
+- PR #142 squash-merged as `47e2d5718372c2b9217916503fbc77a6179893d0`;
+- post-merge Foundation CI `36160169424` passed;
+- post-merge Phase 1 Package CI `36160169445` passed;
+- post-merge PHP Quality CI `36160169454` passed;
+- post-merge WordPress Smoke CI `36160169450` passed, including transactional staging-only URL rewrite, serialization/JSON preservation, credential opacity, idempotence and opaque-source blocker coverage;
+- post-merge Accessibility & Responsive CI `36160169326` passed;
+- post-merge Performance Baseline CI `36160169477` passed;
+- post-merge Migration Bridge Release CI `36160169468` passed;
+- deterministic installable v0.8.19 ZIP SHA-256: `c61c9e64372965febbbe411d0b46e165950e4f6426327e2a078dc523fd36b5c0`.
 
 Migration Bridge v0.8.18 / 10E.2A.4.4 acceptance evidence:
 
@@ -2309,8 +2321,11 @@ Implementation sequence:
 - **10E.2A.4.2 — Full payload verification + resumable extraction**: complete in Migration Bridge 0.8.16; exact extracted payload checksum replay + fresh destination revalidation accepted;\n- **10E.2A.4.3 — Database restore**: active in 0.8.17; restore only to deterministic job-owned transactional staging tables, transactionally persisting rows + resumable cursor while active destination tables remain untouched; extract only into the private import workspace in bounded resumable batches, replay `lexicographic-bfs-path+bytes+sha256-v1`, reject archive/package drift and unlock restore only after exact file/byte/checksum parity;
 - **10E.2A.4.3 — Database restore**: complete in 0.8.17; verified rows restore only into deterministic job-owned transactional staging tables while active WordPress tables remain untouched;
 - **10E.2A.4.4 — File restore**: complete in 0.8.18; copy verified uploads/plugins/themes only into job-owned private staging, then perform a second bounded SHA-256 pass before completion;
-- **10E.2A.4.5 — Serialization-safe environment rewrite**: active in 0.8.19; rewrite only supported WordPress staging-table values, decode/re-encode supported PHP serialization and JSON structurally, block undecodable serialized payloads that still contain source-environment URLs, keep credential/token values opaque, and prove idempotence in a second read-only pass;
-- **10E.2A.4.6 — Sandbox hardening + final integrity verification**: planned;
+- **10E.2A.4.5 — Serialization-safe environment rewrite**: complete in 0.8.19; rewrite only supported WordPress staging-table values, decode/re-encode supported PHP serialization and JSON structurally, block undecodable serialized payloads that still contain source-environment URLs, keep credential/token values opaque, and prove idempotence in a second read-only pass;
+- **10E.2A.4.6.1 — Activation plan + recovery contract**: active in 0.8.20; non-mutating final staging audit, fresh external database/wp-content recovery evidence, deterministic staging → target → rollback table mapping and active-root collision checks;
+- **10E.2A.4.6.2 — Database activation**: planned; sandbox-only atomic table swaps with rollback tables preserved;
+- **10E.2A.4.6.3 — File-root promotion**: planned; bounded sandbox-only promotion with rollback roots preserved;
+- **10E.2A.4.6.4 — Final sandbox hardening + integrity**: planned; final target verification, sandbox hardening and readiness handoff;
 - **10E.2A.4 — Portable import**: active; package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
 - **10E.2A.5 — Local clone orchestration**: direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
 - **10E.2A.6 — Emmake real clone acceptance**: create/verify the actual `emmake.com/nuevaweb/` clone, preserve baseline/dependency/review evidence and require sandbox `ready=true`.
