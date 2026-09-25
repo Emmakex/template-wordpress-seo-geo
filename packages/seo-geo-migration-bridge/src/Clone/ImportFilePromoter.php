@@ -149,7 +149,7 @@ final class ImportFilePromoter {
 				if ( ! $this->prepare_candidate_directory( $root ) ) {
 					return $this->block( $job_id, $state, 'file-promotion-candidate-create-failed' );
 				}
-				$root['status']                 = 'copying';
+				$root['status']                = 'copying';
 				$state['roots'][ $root_index ] = $root;
 			}
 
@@ -164,7 +164,7 @@ final class ImportFilePromoter {
 
 				$state['roots'][ $root_index ]['status']          = 'candidate-ready';
 				$state['roots'][ $root_index ]['candidate_ready'] = true;
-				$state                                   = $this->advance_root_cursor( $state );
+				$state = $this->advance_root_cursor( $state );
 				continue;
 			}
 
@@ -218,14 +218,14 @@ final class ImportFilePromoter {
 					return $this->block( $job_id, $state, 'file-promotion-candidate-copy-failed' );
 				}
 
-				$canonical                           = 'file|' . (string) $root['id'] . '|' . wp_normalize_path( $relative ) . '|'
+				$canonical                 = 'file|' . (string) $root['id'] . '|' . wp_normalize_path( $relative ) . '|'
 					. (string) $result['bytes'] . '|' . $result['sha256'];
 				$state['copy_fingerprint'] = $this->chain_hash( (string) $state['copy_fingerprint'], $canonical );
 				++$state['file_count'];
 				$state['byte_count'] = (int) $state['byte_count'] + $result['bytes'];
 				++$state['roots'][ $root_index ]['copied_files'];
 				$state['roots'][ $root_index ]['copied_bytes'] = (int) $state['roots'][ $root_index ]['copied_bytes'] + $result['bytes'];
-				$state['after_name']             = $entry;
+				$state['after_name']                           = $entry;
 				++$processed_files;
 				$processed_bytes += $result['bytes'];
 
