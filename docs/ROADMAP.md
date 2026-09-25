@@ -2168,7 +2168,7 @@ Evidence:
 
 ### Microphase 10E.2 — Emmake baseline review and sandbox handoff
 
-Status: **active — production baseline + UNKNOWN review complete; sandbox clone/acceptance pending**
+Status: **active — production baseline + UNKNOWN review complete; Portable Clone Engine now precedes sandbox acceptance**
 
 Purpose:
 
@@ -2199,7 +2199,7 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: replace `https://emmake.com/nuevaweb/` with a complete isolated clone of production, install Migration Bridge v0.8.8, set `SEO_GEO_MIGRATION_SANDBOX=true`, `SEO_GEO_MIGRATION_SANDBOX_MODE='subdirectory'`, `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true`, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true` and `SEO_GEO_MIGRATION_BACKUPS_READY=true`, disable WordPress search visibility, install/activate the exact Theme candidate, require the operator preflight to report `ready=true`, then execute migration + parity + accessibility/performance acceptance in sandbox.
+Current execution pointer: **10E.2A.1 — implement the versioned Portable Clone Engine job/manifest contract and resumable persistence before copying any database or files.** After 10E.2A is accepted, use the Engine to build `https://emmake.com/nuevaweb/`, then continue with 10E.2B migration/parity acceptance.
 
 Migration Bridge v0.8.7 acceptance evidence:
 
@@ -2212,6 +2212,52 @@ Migration Bridge v0.8.7 acceptance evidence:
 - post-merge Performance Baseline CI `36054164515` passed;
 - post-merge Migration Bridge Release CI `36054164341` passed;
 - deterministic installable v0.8.7 ZIP SHA-256: `683d5a78c56b6c073963703153d2969f71f5b8f17e16dab7da4b05878133ebc9`.
+
+### Microphase 10E.2A — Portable Clone Engine
+
+Status: **active — documentation contract complete; implementation starts at 10E.2A.1**
+
+Purpose:
+
+Remove the external migration/staging-plugin dependency from the supported migration path. Migration Bridge must be able to create or transport the sandbox itself while preserving all existing baseline/dependency/privacy/cutover boundaries.
+
+Authoritative contract:
+
+- `docs/PORTABLE_CLONE_ENGINE.md`;
+- `docs/PORTABLE_SANDBOX.md`;
+- existing Phase 8 sandbox/migration/parity/cutover contracts.
+
+Implementation sequence:
+
+- **10E.2A.1 — Clone contract + persistent resumable jobs**: versioned manifest/job schemas, job state machine, non-autoloaded persistence, capability/nonce controller skeleton, no payload copying yet;
+- **10E.2A.2 — Read-only source inventory**: database/table inventory, file inventory, exclusions, estimates and destination-safety planning;
+- **10E.2A.3 — Resumable export**: chunked database/files export, manifest/checksums, authenticated download and cleanup;
+- **10E.2A.4 — Portable import**: package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
+- **10E.2A.5 — Local clone orchestration**: direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
+- **10E.2A.6 — Emmake real clone acceptance**: create/verify the actual `emmake.com/nuevaweb/` clone, preserve baseline/dependency/review evidence and require sandbox `ready=true`.
+
+Non-negotiables:
+
+- production export/source stages are read-only;
+- clone/import packages never enter Git/repository evidence;
+- no generic stale sandbox → production database overwrite operation exists;
+- subdirectory URL difference alone is not storage isolation;
+- all long-running work is resumable/batched;
+- package integrity is verified before restore;
+- import cannot target production accidentally;
+- sandbox hardening/preflight remains mandatory before migration.
+
+The existing manual/hosting clone path remains a fallback while the engine is being implemented, but the target product path must not require a third-party cloning plugin.
+
+### Microphase 10E.2B — Emmake sandbox migration/parity acceptance
+
+Status: **blocked by 10E.2A.6**
+
+Purpose:
+
+Run the already-accepted content/theme migration, SEO/GEO parity, accessibility/responsive, performance and client-critical functionality gates on the Engine-created `/nuevaweb/` sandbox.
+
+10E.2B may start only after the Portable Clone Engine proves the clone is isolated, integrity-verified and sandbox-ready.
 
 10E.2 closes only after the sandbox is actually created and accepted. Production remains unchanged until then.
 
