@@ -295,7 +295,7 @@ final class LocalCloneBootstrapper {
 		$target = untrailingslashit( wp_normalize_path( (string) $state['target_path'] ) );
 		if ( true === ( $state['target_created'] ?? false ) && ! file_exists( $target ) ) {
 			$prepared = $this->workspace->prepare_local_clone_target( $target );
-			if ( ! is_array( $prepared ) || true !== ( $prepared['created'] ?? false ) ) {
+			if ( ! is_array( $prepared ) || true !== $prepared['created'] ) {
 				return $this->block( $job_id, $state, 'bootstrap-target-create-failed' );
 			}
 		}
