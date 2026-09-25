@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.4.4 — verified staging-file restore in Migration Bridge 0.8.18.** Migration Bridge 0.8.17 accepted transactional database restore into job-owned staging tables while leaving active destination tables untouched. 10E.2A.4.4 copies only verified uploads/plugins/themes into `import/staged-files`, repeats SHA-256 verification in a second bounded pass, and must not write active `wp-content` roots.
+Current execution pointer: **10E.2A.4.5 — serialization-safe environment rewrite in Migration Bridge 0.8.19.** Migration Bridge 0.8.18 is accepted on `main`: verified uploads/plugins/themes are restored only into `import/staged-files`, independently re-hashed, and active `wp-content` roots remain untouched. 10E.2A.4.5 rewrites supported WordPress environment URLs only inside deterministic job-owned staging tables, preserves supported serialized/JSON structures, keeps credential/token values opaque, and performs a second read-only idempotence pass before completion.
+
+Migration Bridge v0.8.18 / 10E.2A.4.4 acceptance evidence:
+
+- accepted `main` commit `b06a5f6ff424ca030f4fd78d092a6aa0670f85b9`;
+- post-merge Foundation CI `36153619058` passed;
+- post-merge Phase 1 Package CI `36153618823` passed;
+- post-merge PHP Quality CI `36153618954` passed;
+- post-merge WordPress Smoke CI `36153618941` passed, including private verified file staging, second SHA-256 pass, active-root preservation and staged-file tamper rejection;
+- post-merge Accessibility & Responsive CI `36153618803` passed;
+- post-merge Performance Baseline CI `36153618925` passed;
+- post-merge Migration Bridge Release CI `36153618804` passed.
 
 Migration Bridge v0.8.17 / 10E.2A.4.3 acceptance evidence:
 
@@ -2297,8 +2308,8 @@ Implementation sequence:
 - **10E.2A.4.1 — Import intake + destination preflight**: complete in Migration Bridge 0.8.15; PR #135 squash-merged as `744384bfad7ec12f8c9445b53ac362746679ff88`, with private ZIP intake, archive/manifest validation, isolated-target preflight and restore disabled; all seven post-merge gates passed;
 - **10E.2A.4.2 — Full payload verification + resumable extraction**: complete in Migration Bridge 0.8.16; exact extracted payload checksum replay + fresh destination revalidation accepted;\n- **10E.2A.4.3 — Database restore**: active in 0.8.17; restore only to deterministic job-owned transactional staging tables, transactionally persisting rows + resumable cursor while active destination tables remain untouched; extract only into the private import workspace in bounded resumable batches, replay `lexicographic-bfs-path+bytes+sha256-v1`, reject archive/package drift and unlock restore only after exact file/byte/checksum parity;
 - **10E.2A.4.3 — Database restore**: complete in 0.8.17; verified rows restore only into deterministic job-owned transactional staging tables while active WordPress tables remain untouched;
-- **10E.2A.4.4 — File restore**: active in 0.8.18; copy verified uploads/plugins/themes only into job-owned private staging, then perform a second bounded SHA-256 pass before completion;
-- **10E.2A.4.5 — Serialization-safe environment rewrite**: planned;
+- **10E.2A.4.4 — File restore**: complete in 0.8.18; copy verified uploads/plugins/themes only into job-owned private staging, then perform a second bounded SHA-256 pass before completion;
+- **10E.2A.4.5 — Serialization-safe environment rewrite**: active in 0.8.19; rewrite only supported WordPress staging-table values, decode/re-encode supported PHP serialization and JSON structurally, block undecodable serialized payloads that still contain source-environment URLs, keep credential/token values opaque, and prove idempotence in a second read-only pass;
 - **10E.2A.4.6 — Sandbox hardening + final integrity verification**: planned;
 - **10E.2A.4 — Portable import**: active; package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
 - **10E.2A.5 — Local clone orchestration**: direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
