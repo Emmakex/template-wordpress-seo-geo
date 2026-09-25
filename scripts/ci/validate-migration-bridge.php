@@ -362,7 +362,7 @@ foreach (
 		'rename(',
 		"hash_file( 'sha256'",
 		'cleanup( string $job_id )',
-		"public const DELIVERY_DIRECTORY_NAME = 'seo-geo-migration-bridge-delivery';",
+		"'seo-geo-migration-bridge-delivery'",
 		'reset_delivery_archive( string $job_id )',
 		'append_delivery_archive_files( string $job_id, array $relative_paths )',
 		'finalize_delivery_archive( string $job_id )',
@@ -1127,8 +1127,8 @@ foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(',
 
 foreach (
 	array(
-		"public const DESTINATION_STAGE_DIRECTORY_NAME = 'seo-geo-migration-stage';",
-		"private const DESTINATION_STAGE_ROOT_IDS = array( 'uploads', 'plugins', 'themes' );",
+		"'seo-geo-migration-stage'",
+		"'uploads', 'plugins', 'themes'",
 		'WP_CONTENT_DIR',
 		'destination_stage_file(',
 		"'.seo-geo-part'",
