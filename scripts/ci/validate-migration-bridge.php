@@ -112,6 +112,10 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileRestorer.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFileController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/SerializationSafeRewriter.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportEnvironmentController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -1178,6 +1182,144 @@ if ( str_contains( $import_file_controller, 'admin_post_nopriv_' ) ) {
 		'portable-clone-import-file-public-endpoint',
 		'Portable Import file restore must never expose an unauthenticated endpoint.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFileController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+
+$serialization_rewriter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/SerializationSafeRewriter.php' );
+foreach (
+	array(
+		'public function rewrite( string $value, array $replacements ): array',
+		"'s:' . strlen( \$rewritten ) . ':"' . \$rewritten . '";'",
+		"'O' === \$type",
+		"'C' === \$type",
+		"'unsupported' => \$this->contains_search( \$payload, \$replacements )",
+		'private const MAX_DEPTH',
+		'private const MAX_ITEMS',
+	) as $serialization_guard
+) {
+	if ( ! str_contains( $serialization_rewriter, $serialization_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-serialization-safe-rewrite',
+			'Serialization-safe environment rewrite is missing a bounded/non-instantiating serialization contract.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/SerializationSafeRewriter.php',
+			$serialization_guard,
+			'missing'
+		);
+	}
+}
+foreach ( array( 'unserialize(', 'maybe_unserialize(', 'eval(', 'assert(' ) as $unsafe_serialization_primitive ) {
+	if ( str_contains( $serialization_rewriter, $unsafe_serialization_primitive ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-serialization-no-instantiation',
+			'Serialization rewrite must never execute or instantiate imported serialized payloads.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/SerializationSafeRewriter.php',
+			'length-aware parser only',
+			$unsafe_serialization_primitive
+		);
+	}
+}
+
+$import_environment_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_environment_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'rewrite', 'verify', 'complete'",
+		"'active_tables_untouched'",
+		"'remaining_source_values'",
+		"'serialized_values_changed'",
+	) as $import_environment_state_guard
+) {
+	if ( ! str_contains( $import_environment_state_store, $import_environment_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-environment-state',
+			'Portable Import environment rewrite state must remain bounded, two-pass and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentStateStore.php',
+			$import_environment_state_guard,
+			'missing'
+		);
+	}
+}
+
+$import_environment_rewriter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_ROWS = 10;',
+		'$this->file_state->get( $job_id )',
+		'$this->database_state->get( $job_id )',
+		'$this->payload_state->get( $job_id )',
+		'$this->preflight->validate( $job_id )',
+		"'payload-verified'",
+		"'restore_allowed'",
+		'$wpdb->update( $staging_table, $updates, $where )',
+		"'START TRANSACTION'",
+		"'COMMIT'",
+		"'ROLLBACK'",
+		'$this->rewriter->rewrite( $prefix_value, $replacements )',
+		"'guid' !== \$column",
+		"'user_roles'",
+		"'capabilities|user_level'",
+		"'rewrite' === ( \$state['stage'] ?? null )",
+		"'verify'",
+		"'active_tables_untouched'",
+		"'import-environment-serialized-value-unsupported'",
+		"'import-environment-primary-key-rewrite-unsupported'",
+		"'import-environment-verification-source-value-remains'",
+		"'rewrite-environment'",
+	) as $import_environment_guard
+) {
+	if ( ! str_contains( $import_environment_rewriter, $import_environment_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-environment-rewrite',
+			'10E.2A.4.5 staging environment rewrite is missing a required serialization/integrity/runtime boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
+			$import_environment_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'DROP TABLE', 'TRUNCATE TABLE', 'RENAME TABLE', 'ALTER TABLE', 'CREATE TABLE', 'INSERT INTO' ) as $environment_forbidden_sql ) {
+	if ( str_contains( strtoupper( $import_environment_rewriter ), $environment_forbidden_sql ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-environment-no-active-restore',
+			'10E.2A.4.5 must mutate only existing deterministic staging rows and must not perform schema/cutover operations.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
+			'staging-only UPDATE via wpdb update helper',
+			$environment_forbidden_sql
+		);
+	}
+}
+
+$import_environment_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportEnvironmentController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_environment';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->rewriter->advance( $job_id, $batch_rows )',
+	) as $import_environment_controller_guard
+) {
+	if ( ! str_contains( $import_environment_controller, $import_environment_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-environment-entrypoint',
+			'Portable Import environment rewrite endpoint must remain administrator/job-nonce gated and bounded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportEnvironmentController.php',
+			$import_environment_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $import_environment_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-environment-public-endpoint',
+		'Portable Import environment rewrite must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportEnvironmentController.php',
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
