@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.4.3 — resumable database restore into job-owned staging tables in Migration Bridge 0.8.17.** Migration Bridge 0.8.16 accepted full private extraction/checksum replay and fresh destination revalidation. 10E.2A.4.3 may create and populate only deterministic job-owned InnoDB staging tables; active destination WordPress tables must remain untouched. Each mutating batch repeats the fresh destination/payload guard, and rows plus resumable state commit in the same transaction. Foreign-key/nontransactional schemas are blocked in this first restore contract.
+Current execution pointer: **10E.2A.4.4 — resumable destination file staging in Migration Bridge 0.8.18.** Migration Bridge 0.8.17 accepted transactional database restore into deterministic job-owned InnoDB staging tables while active destination tables remained untouched. 10E.2A.4.4 stages verified uploads/plugins/themes into a protected job-owned destination tree in bounded file/byte batches; active WordPress file roots must remain untouched and activation/swap stays outside this subphase.
+
+Migration Bridge v0.8.17 / 10E.2A.4.3 acceptance evidence:
+
+- main commit `d17cea4b7dfac8df78a0e99da92a15712aef8fc9`;
+- post-merge Foundation CI `36149027263` passed;
+- post-merge Phase 1 Package CI `36149027343` passed;
+- post-merge PHP Quality CI `36149027419` passed;
+- post-merge WordPress Smoke CI `36149027292` passed, including transactional row restore into job-owned staging, active-table preservation, destination-drift rejection and nontransactional schema rejection;
+- post-merge Accessibility & Responsive CI `36149027107` passed;
+- post-merge Performance Baseline CI `36149027370` passed;
+- post-merge Migration Bridge Release CI `36149027307` passed.
 
 Migration Bridge v0.8.16 / 10E.2A.4.2 acceptance evidence:
 
@@ -2262,7 +2273,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 through 10E.2A.4.2 accepted; 10E.2A.4.3 staging database restore is the 0.8.17 candidate**
+Status: **active — 10E.2A.1 through 10E.2A.4.3 accepted; 10E.2A.4.4 destination file staging is the 0.8.18 candidate**
 
 Purpose:
 
@@ -2284,9 +2295,9 @@ Implementation sequence:
 - **10E.2A.3.4 — Authenticated package delivery + retention cleanup**: complete in Migration Bridge 0.8.14; PR #133 merged as `2f7249e820a9e36c0d75fc95f43f695db017dbda`, with resumable private ZIP assembly, replayed package checksum, archive SHA-256, administrator/job-nonce download only, 24-hour expiry and bounded cleanup; all seven post-merge gates passed;
 - **10E.2A.3 — Resumable export**: complete through 10E.2A.3.4;
 - **10E.2A.4.1 — Import intake + destination preflight**: complete in Migration Bridge 0.8.15; PR #135 squash-merged as `744384bfad7ec12f8c9445b53ac362746679ff88`, with private ZIP intake, archive/manifest validation, isolated-target preflight and restore disabled; all seven post-merge gates passed;
-- **10E.2A.4.2 — Full payload verification + resumable extraction**: complete in Migration Bridge 0.8.16; exact extracted payload checksum replay + fresh destination revalidation accepted;\n- **10E.2A.4.3 — Database restore**: active in 0.8.17; restore only to deterministic job-owned transactional staging tables, transactionally persisting rows + resumable cursor while active destination tables remain untouched; extract only into the private import workspace in bounded resumable batches, replay `lexicographic-bfs-path+bytes+sha256-v1`, reject archive/package drift and unlock restore only after exact file/byte/checksum parity;
-- **10E.2A.4.3 — Database restore**: planned; bounded destination-only table restore;
-- **10E.2A.4.4 — File restore**: planned; bounded destination-only uploads/plugins/themes restore;
+- **10E.2A.4.2 — Full payload verification + resumable extraction**: complete in Migration Bridge 0.8.16; exact extracted payload checksum replay + fresh destination revalidation accepted;
+- **10E.2A.4.3 — Database restore**: complete in Migration Bridge 0.8.17; verified rows restore only into deterministic job-owned transactional staging tables with active destination tables untouched and fresh runtime guards before every mutating batch;
+- **10E.2A.4.4 — File restore**: active in Migration Bridge 0.8.18; stage verified uploads/plugins/themes only into a protected job-owned destination tree in bounded file/byte batches, reconcile every file against exported metadata and keep active WordPress file roots untouched;
 - **10E.2A.4.5 — Serialization-safe environment rewrite**: planned;
 - **10E.2A.4.6 — Sandbox hardening + final integrity verification**: planned;
 - **10E.2A.4 — Portable import**: active; package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
