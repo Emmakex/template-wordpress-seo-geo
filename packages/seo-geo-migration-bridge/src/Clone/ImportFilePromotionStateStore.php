@@ -156,11 +156,6 @@ final class ImportFilePromotionStateStore {
 	}
 
 	/**
-	 * Normalize one root status.
-	 *
-	 * @param mixed $status Status candidate.
-	 */
-	/**
 	 * Normalize bounded relative directory queue entries.
 	 *
 	 * @param mixed $paths Path candidates.
@@ -208,6 +203,11 @@ final class ImportFilePromotionStateStore {
 		return is_string( $name ) && 255 >= strlen( $name ) && ! str_contains( $name, '/' ) ? $name : '';
 	}
 
+	/**
+	 * Normalize one root status.
+	 *
+	 * @param mixed $status Status candidate.
+	 */
 	private function root_status( mixed $status ): string {
 		return is_string( $status )
 			&& in_array( $status, array( 'pending', 'copying', 'candidate-ready', 'promoted', 'verified', 'rolled-back', 'blocked' ), true )
