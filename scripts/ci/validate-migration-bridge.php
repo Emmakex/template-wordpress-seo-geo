@@ -735,8 +735,8 @@ foreach (
 		'SandboxGuard::backups_ready()',
 		"get_option( 'blog_public', '1' )",
 		'disk_free_space(',
-		"'full_payload_verified']        = false",
-		"'restore_allowed']              = false",
+		"'full_payload_verified'",
+		"'restore_allowed'",
 		'$this->workspace->stage_import_archive( $job_id, $source )',
 	) as $import_preflight_guard
 ) {
@@ -749,6 +749,19 @@ foreach (
 			'missing'
 		);
 	}
+}
+
+if (
+	1 !== preg_match( "/\\['full_payload_verified'\\]\\s*=\\s*false;/", $import_preflight )
+	|| 1 !== preg_match( "/\\['restore_allowed'\\]\\s*=\\s*false;/", $import_preflight )
+) {
+	fail_migration_bridge(
+		'portable-clone-import-restore-gate',
+		'10E.2A.4.1 must keep full payload verification and restore authorization disabled.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php',
+		'full_payload_verified=false and restore_allowed=false',
+		'restore gate mismatch'
+	);
 }
 
 foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(', 'move_uploaded_file(' ) as $import_mutation ) {
