@@ -1609,8 +1609,8 @@ $file_promotion_planner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/s
 foreach (
 	array(
 		'public function prepare( string $job_id ): ?array',
-		"'.seo-geo-' . $key . '-candidate-'",
-		"'.seo-geo-' . $key . '-rollback-'",
+		"'.seo-geo-' . \$key . '-candidate-'",
+		"'.seo-geo-' . \$key . '-rollback-'",
 		"'database/manifest.json'",
 		"'active_plugins'",
 		"'template'",
