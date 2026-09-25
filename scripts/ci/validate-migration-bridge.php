@@ -623,12 +623,22 @@ foreach (
 }
 
 $package_delivery = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php' );
+if (
+	1 !== preg_match( '/public const\\s+RETENTION_HOURS\\s*=\\s*24;/', $package_delivery )
+	|| 1 !== preg_match( '/public const\\s+DEFAULT_CLEANUP_BATCH\\s*=\\s*250;/', $package_delivery )
+	|| 1 !== preg_match( "/'authenticated_only'\\s*=>\\s*true/", $package_delivery )
+	|| 1 !== preg_match( "/'public_url'\\s*=>\\s*false/", $package_delivery )
+) {
+	fail_migration_bridge(
+		'portable-clone-delivery-policy',
+		'Portable Clone delivery must keep its fixed auth-only and 24-hour bounded retention policy.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php',
+		'auth-only ZIP delivery with 24-hour retention and bounded cleanup',
+		'policy mismatch'
+	);
+}
 foreach (
 	array(
-		'public const RETENTION_HOURS      = 24;',
-		'public const DEFAULT_CLEANUP_BATCH = 250;',
-		"'authenticated_only' => true",
-		"'public_url'         => false",
 		"'delivery-package-integrity-mismatch'",
 		'$this->workspace->cleanup_batch( $job_id, $limit )',
 		'$this->workspace->append_delivery_archive_files( $job_id, $relative_paths )',
