@@ -889,7 +889,7 @@ assert prepared["rollback_available"] is True
 assert prepared["active_files_untouched"] is True
 assert prepared["handoff_ready"] is False
 assert len(prepared["tables"]) == 2
-assert len(prepared["control_options"]) >= 9
+assert prepared["control_options"] == []
 assert re.fullmatch(r"[a-f0-9]{64}", prepared["activation_plan_hash"])
 
 activation = payload["activation"]
@@ -899,6 +899,7 @@ assert activation["rollback_available"] is True
 assert activation["active_files_untouched"] is True
 assert activation["handoff_ready"] is False
 assert activation["blockers"] == []
+assert len(activation["control_options"]) >= 11
 assert payload["activation_blog_public"] == "0"
 assert payload["activation_template"] == payload["destination_template"]
 assert payload["activation_stylesheet"] == payload["destination_stylesheet"]
