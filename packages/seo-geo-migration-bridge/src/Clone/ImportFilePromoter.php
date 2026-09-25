@@ -707,11 +707,10 @@ final class ImportFilePromoter {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Read-only schema verification of the trusted active WordPress options table.
 		$columns = $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`", 0 );
 
-		return is_array( $columns )
-			&& array() === array_diff(
-				array( 'option_id', 'option_name', 'option_value', 'autoload' ),
-				array_filter( $columns, 'is_string' )
-			);
+		return array() === array_diff(
+			array( 'option_id', 'option_name', 'option_value', 'autoload' ),
+			array_filter( $columns, 'is_string' )
+		);
 	}
 
 	/**
