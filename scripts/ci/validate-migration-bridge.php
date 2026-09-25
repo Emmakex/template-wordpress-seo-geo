@@ -1678,7 +1678,7 @@ foreach (
 	array(
 		"public const ACTION       = 'seo_geo_migration_clone_import_file_promotion';",
 		"current_user_can( 'manage_options' )",
-		"check_admin_referer( self::NONCE_ACTION . ':' . $job_id )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
 		"'PROMOTE_FILES'",
 		"'ROLLBACK_FILES'",
 		'$this->promoter->advance_candidates(',
