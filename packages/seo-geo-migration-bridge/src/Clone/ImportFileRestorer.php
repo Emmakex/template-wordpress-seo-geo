@@ -633,8 +633,8 @@ final class ImportFileRestorer {
 				return false;
 			}
 			$seen[ $id ] = true;
-			$files += max( 0, (int) ( $root['file_count'] ?? 0 ) );
-			$bytes += max( 0, (int) ( $root['byte_count'] ?? 0 ) );
+			$files      += max( 0, (int) ( $root['file_count'] ?? 0 ) );
+			$bytes      += max( 0, (int) ( $root['byte_count'] ?? 0 ) );
 		}
 
 		return max( 0, (int) ( $manifest['file_count'] ?? -1 ) ) === $files
