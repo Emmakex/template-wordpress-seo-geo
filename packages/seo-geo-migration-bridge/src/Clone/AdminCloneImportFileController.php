@@ -18,16 +18,32 @@ final class AdminCloneImportFileController {
 	public const ACTION       = 'seo_geo_migration_clone_import_file_restore';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_import_file_restore';
 
+	/**
+	 * Staging-file restore service.
+	 *
+	 * @var ImportFileRestorer
+	 */
 	private ImportFileRestorer $restorer;
 
+	/**
+	 * Construct the controller.
+	 *
+	 * @param ImportFileRestorer|null $restorer Optional staging-file restorer.
+	 */
 	public function __construct( ?ImportFileRestorer $restorer = null ) {
 		$this->restorer = $restorer ?? new ImportFileRestorer();
 	}
 
+	/**
+	 * Register the authenticated staging-file restore endpoint.
+	 */
 	public function boot(): void {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle' ) );
 	}
 
+	/**
+	 * Advance one bounded staging-file restore batch.
+	 */
 	public function handle(): never {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die(
@@ -45,7 +61,7 @@ final class AdminCloneImportFileController {
 
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
-		$batch_files = isset( $_POST['file_restore_batch_files'] )
+		$batch_files     = isset( $_POST['file_restore_batch_files'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['file_restore_batch_files'] ) ) )
 			: ImportFileRestorer::DEFAULT_BATCH_FILES;
 		$batch_megabytes = isset( $_POST['file_restore_batch_megabytes'] )
