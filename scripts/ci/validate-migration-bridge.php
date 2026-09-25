@@ -1263,7 +1263,7 @@ foreach (
 		'$this->rewriter->rewrite( $prefix_value, $replacements )',
 		"'guid' !== \$column",
 		"'user_roles'",
-		"'capabilities|user_level'",
+		'capabilities|user_level',
 		"'rewrite' === ( \$state['stage'] ?? null )",
 		"'verify'",
 		"'active_tables_untouched'",
