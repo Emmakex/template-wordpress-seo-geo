@@ -129,3 +129,10 @@ The phase requires exact archive identity, package-manifest identity, payload fi
 Phase 10E.2A.4.3 begins database restoration only after the complete payload has reproduced the accepted package checksum and a fresh destination preflight still reports `payload-verified` + `restore_allowed=true`. The Bridge maps source tables to deterministic job-owned staging tables and never mutates active destination WordPress tables in this version.
 
 Schema/chunk files are reread from the verified private extraction and checked against database-manifest hashes before use. This first restore contract accepts only transactional InnoDB schemas without foreign keys/references. Rows are restored in bounded batches, and each batch commits both the staging-table writes and resumable cursor state in the same database transaction. Destination drift, manifest drift, archive drift, unexpected staging tables, nontransactional storage or schema incompatibility block further mutation. Final-table activation/swap remains a later phase.
+
+
+### Version 0.8.18 — verified staging-file restore
+
+Phase 10E.2A.4.4 starts only after 0.8.17 database staging restore is complete and the current destination still passes the verified-payload runtime guard. The Bridge copies manifest-backed `uploads`, `plugins` and `themes` files from the private extracted package into the job-owned `import/staged-files` tree. It never resolves or writes the active WordPress uploads/plugins/themes roots in this phase.
+
+Every copied file is checked against its `files-meta` record and extracted SHA-256. After the copy traversal reconciles exact file/byte totals, a second resumable traversal re-hashes staged files and rejects missing, extra, symlinked or modified payload. Administrator controls use a 1–20 files/request selector plus a bounded byte budget. Environment rewrite, activation/promotion of staged files and final sandbox hardening remain later phases.

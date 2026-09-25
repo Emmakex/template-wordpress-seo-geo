@@ -312,6 +312,7 @@ source scripts/ci/migration-bridge-portable-clone-delivery-retention-acceptance.
 source scripts/ci/migration-bridge-portable-clone-import-preflight-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-import-payload-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-import-database-acceptance.sh
+source scripts/ci/migration-bridge-portable-clone-import-file-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-handoff-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-lab-acceptance.sh
 source scripts/ci/migration-bridge-migration-engine-acceptance.sh
