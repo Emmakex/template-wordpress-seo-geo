@@ -469,7 +469,7 @@ final class Plugin {
 			self::$clone_job_store,
 			self::$clone_import_preflight
 		);
-		self::$clone_import_environment_controller ??= new AdminCloneImportEnvironmentController( self::$clone_import_environment_rewriter );
+		self::$clone_import_environment_controller  ??= new AdminCloneImportEnvironmentController( self::$clone_import_environment_rewriter );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
