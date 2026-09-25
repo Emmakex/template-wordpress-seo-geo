@@ -102,6 +102,121 @@ final class ExportWorkspace {
 		);
 	}
 
+
+	/**
+	 * Atomically copy one source file into the private workspace while hashing it.
+	 *
+	 * @param string $job_id   Clone job identifier.
+	 * @param string $relative Workspace-relative destination.
+	 * @param string $source   Absolute readable source file.
+	 * @return array{path:string,bytes:int,sha256:string}|null
+	 */
+	public function copy_file( string $job_id, string $relative, string $source ): ?array {
+		$source = wp_normalize_path( $source );
+		if ( ! is_file( $source ) || ! is_readable( $source ) || is_link( $source ) ) {
+			return null;
+		}
+
+		$absolute = $this->absolute_path( $job_id, $relative, true );
+		if ( null === $absolute ) {
+			return null;
+		}
+
+		$parent = dirname( $absolute );
+		if ( ! is_dir( $parent ) && ! wp_mkdir_p( $parent ) ) {
+			return null;
+		}
+		$this->protect_directory( $parent );
+
+		$size_before = filesize( $source );
+		if ( false === $size_before ) {
+			return null;
+		}
+
+		$temp = $absolute . '.tmp-' . wp_generate_password( 12, false, false );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Streams a bounded server-local source into a private workspace.
+		$input = fopen( $source, 'rb' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Writes only to a job-owned private temporary file.
+		$output = fopen( $temp, 'wb' );
+		if ( false === $input || false === $output ) {
+			if ( is_resource( $input ) ) {
+				fclose( $input );
+			}
+			if ( is_resource( $output ) ) {
+				fclose( $output );
+			}
+			if ( is_file( $temp ) ) {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed job-owned temp file.
+				@unlink( $temp );
+			}
+			return null;
+		}
+
+		$hash_context = hash_init( 'sha256' );
+		$written      = 0;
+		$success      = true;
+
+		while ( ! feof( $input ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Bounded local stream copy.
+			$chunk = fread( $input, 1048576 );
+			if ( false === $chunk ) {
+				$success = false;
+				break;
+			}
+			if ( '' === $chunk ) {
+				continue;
+			}
+
+			hash_update( $hash_context, $chunk );
+			$chunk_length = strlen( $chunk );
+			$offset       = 0;
+			while ( $offset < $chunk_length ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Writes only to a job-owned private temporary file.
+				$result = fwrite( $output, substr( $chunk, $offset ) );
+				if ( false === $result || 0 === $result ) {
+					$success = false;
+					break 2;
+				}
+				$offset  += $result;
+				$written += $result;
+			}
+		}
+
+		fflush( $output );
+		fclose( $input );
+		fclose( $output );
+
+		$size_after = filesize( $source );
+		if ( ! $success || false === $size_after || $size_before !== $size_after || $written !== $size_before ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this inconsistent job-owned temp file.
+			@unlink( $temp );
+			return null;
+		}
+
+		$stream_hash = hash_final( $hash_context );
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive private payload permissions.
+		@chmod( $temp, 0600 );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic move stays inside the bounded private export workspace.
+		if ( ! rename( $temp, $absolute ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed job-owned temp file.
+			@unlink( $temp );
+			return null;
+		}
+
+		$target_hash = hash_file( 'sha256', $absolute );
+		if ( false === $target_hash || ! hash_equals( $stream_hash, $target_hash ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only a job-owned copy that failed integrity verification.
+			@unlink( $absolute );
+			return null;
+		}
+
+		return array(
+			'path'   => $this->normalize_relative( $relative ),
+			'bytes'  => $written,
+			'sha256' => $target_hash,
+		);
+	}
+
 	/**
 	 * Read one workspace-relative payload file.
 	 *
