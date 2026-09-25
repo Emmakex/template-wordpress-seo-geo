@@ -13,11 +13,11 @@ namespace SeoGeo\MigrationBridge\Clone;
  * Builds private ZIP delivery artifacts in bounded resumable batches.
  */
 final class PackageDelivery {
-	public const DEFAULT_BATCH_FILES  = 100;
-	public const MAX_BATCH_FILES      = 500;
-	public const DEFAULT_BATCH_BYTES  = 16777216;
-	public const MAX_BATCH_BYTES      = 134217728;
-	public const RETENTION_HOURS      = 24;
+	public const DEFAULT_BATCH_FILES   = 100;
+	public const MAX_BATCH_FILES       = 500;
+	public const DEFAULT_BATCH_BYTES   = 16777216;
+	public const MAX_BATCH_BYTES       = 134217728;
+	public const RETENTION_HOURS       = 24;
 	public const DEFAULT_CLEANUP_BATCH = 250;
 
 	private const CHECKSUM_SEED           = 'seo-geo-portable-clone-package-v1';
@@ -186,32 +186,32 @@ final class PackageDelivery {
 		}
 
 		$state = array(
-			'schema_version'         => DeliveryStateStore::SCHEMA_VERSION,
-			'job_id'                 => $job_id,
-			'status'                 => 'building',
-			'directory_active'       => false,
-			'pending_dirs'           => array( '' ),
-			'current_dir'            => '',
-			'after_name'             => '',
-			'archive_file_count'     => 0,
-			'archive_source_bytes'   => 0,
-			'verified_file_count'    => 0,
-			'verified_byte_count'    => 0,
-			'verification_checksum'  => hash( 'sha256', self::CHECKSUM_SEED ),
-			'package_checksum'       => (string) ( $package['package_checksum'] ?? '' ),
-			'package_manifest_hash'  => (string) $written['sha256'],
-			'archive_sha256'         => '',
-			'archive_bytes'          => 0,
-			'retention_hours'        => self::RETENTION_HOURS,
-			'expires_at'             => time() + ( self::RETENTION_HOURS * HOUR_IN_SECONDS ),
-			'download_count'         => 0,
-			'cleanup_deleted_count'  => 0,
-			'blockers'               => array(),
-			'started_at'             => $now,
-			'updated_at'             => $now,
-			'ready_at'               => '',
-			'downloaded_at'          => '',
-			'cleaned_at'             => '',
+			'schema_version'        => DeliveryStateStore::SCHEMA_VERSION,
+			'job_id'                => $job_id,
+			'status'                => 'building',
+			'directory_active'      => false,
+			'pending_dirs'          => array( '' ),
+			'current_dir'           => '',
+			'after_name'            => '',
+			'archive_file_count'    => 0,
+			'archive_source_bytes'  => 0,
+			'verified_file_count'   => 0,
+			'verified_byte_count'   => 0,
+			'verification_checksum' => hash( 'sha256', self::CHECKSUM_SEED ),
+			'package_checksum'      => (string) ( $package['package_checksum'] ?? '' ),
+			'package_manifest_hash' => (string) $written['sha256'],
+			'archive_sha256'        => '',
+			'archive_bytes'         => 0,
+			'retention_hours'       => self::RETENTION_HOURS,
+			'expires_at'            => time() + ( self::RETENTION_HOURS * HOUR_IN_SECONDS ),
+			'download_count'        => 0,
+			'cleanup_deleted_count' => 0,
+			'blockers'              => array(),
+			'started_at'            => $now,
+			'updated_at'            => $now,
+			'ready_at'              => '',
+			'downloaded_at'         => '',
+			'cleaned_at'            => '',
 		);
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
@@ -265,10 +265,10 @@ final class PackageDelivery {
 			return $this->block( $job_id, $state, 'delivery-workspace-unavailable', false );
 		}
 
-		$batch          = array();
-		$processed      = 0;
-		$processed_bytes= 0;
-		$operations     = 0;
+		$batch           = array();
+		$processed       = 0;
+		$processed_bytes = 0;
+		$operations      = 0;
 
 		while ( $processed < $batch_files && $operations < self::MAX_ENTRY_OPERATIONS ) {
 			$pending = is_array( $state['pending_dirs'] ?? null ) ? $state['pending_dirs'] : array();
@@ -488,7 +488,7 @@ final class PackageDelivery {
 			return $this->block( $job_id, $state, 'delivery-archive-cleanup-failed', true );
 		}
 
-		$result = $this->workspace->cleanup_batch( $job_id, $limit );
+		$result                         = $this->workspace->cleanup_batch( $job_id, $limit );
 		$state['cleanup_deleted_count'] = (int) ( $state['cleanup_deleted_count'] ?? 0 ) + (int) $result['deleted'];
 		$state['updated_at']            = gmdate( DATE_ATOM );
 
@@ -504,14 +504,14 @@ final class PackageDelivery {
 		$this->file_store->delete( $job_id );
 		$this->package_store->delete( $job_id );
 
-		$state['status']           = 'cleaned';
-		$state['pending_dirs']     = array();
-		$state['current_dir']      = '';
-		$state['after_name']       = '';
-		$state['archive_sha256']   = '';
-		$state['archive_bytes']    = 0;
-		$state['updated_at']       = gmdate( DATE_ATOM );
-		$state['cleaned_at']       = $state['updated_at'];
+		$state['status']         = 'cleaned';
+		$state['pending_dirs']   = array();
+		$state['current_dir']    = '';
+		$state['after_name']     = '';
+		$state['archive_sha256'] = '';
+		$state['archive_bytes']  = 0;
+		$state['updated_at']     = gmdate( DATE_ATOM );
+		$state['cleaned_at']     = $state['updated_at'];
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
@@ -576,7 +576,7 @@ final class PackageDelivery {
 			return $this->block( $job_id, $state, 'delivery-archive-finalize-failed', true );
 		}
 
-		$now = gmdate( DATE_ATOM );
+		$now                     = gmdate( DATE_ATOM );
 		$state['status']         = 'ready';
 		$state['archive_sha256'] = (string) $archive['sha256'];
 		$state['archive_bytes']  = (int) $archive['bytes'];
@@ -632,8 +632,8 @@ final class PackageDelivery {
 	private function block( string $job_id, array $state, string $code, bool $retryable ): ?array {
 		$blockers          = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[]        = $code;
-		$state['blockers'] = array_values( array_unique( $blockers ) );
-		$state['status']   = 'blocked';
+		$state['blockers']   = array_values( array_unique( $blockers ) );
+		$state['status']     = 'blocked';
 		$state['updated_at'] = gmdate( DATE_ATOM );
 
 		$this->store->save( $job_id, $state );
