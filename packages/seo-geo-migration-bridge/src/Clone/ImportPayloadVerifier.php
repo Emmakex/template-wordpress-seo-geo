@@ -46,6 +46,13 @@ final class ImportPayloadVerifier {
 	private CloneJobStore $jobs;
 
 	/**
+	 * Fresh destination/package preflight.
+	 *
+	 * @var ImportPreflight
+	 */
+	private ImportPreflight $preflight;
+
+	/**
 	 * Private workspace authority.
 	 *
 	 * @var ExportWorkspace
@@ -58,18 +65,21 @@ final class ImportPayloadVerifier {
 	 * @param ImportPayloadStateStore|null $store        Optional payload-state store.
 	 * @param ImportStateStore|null        $import_state Optional import state store.
 	 * @param CloneJobStore|null           $jobs         Optional clone-job store.
+	 * @param ImportPreflight|null          $preflight    Optional fresh preflight service.
 	 * @param ExportWorkspace|null         $workspace    Optional private workspace.
 	 */
 	public function __construct(
 		?ImportPayloadStateStore $store = null,
 		?ImportStateStore $import_state = null,
 		?CloneJobStore $jobs = null,
+		?ImportPreflight $preflight = null,
 		?ExportWorkspace $workspace = null
 	) {
 		$this->store        = $store ?? new ImportPayloadStateStore();
 		$this->import_state = $import_state ?? new ImportStateStore();
 		$this->jobs         = $jobs ?? new CloneJobStore();
 		$this->workspace    = $workspace ?? new ExportWorkspace();
+		$this->preflight    = $preflight ?? new ImportPreflight( $this->import_state, $this->jobs, $this->workspace );
 	}
 
 	/**
@@ -442,22 +452,14 @@ final class ImportPayloadVerifier {
 			return null;
 		}
 
-		$advisories                      = is_array( $import['advisories'] ?? null ) ? $import['advisories'] : array();
-		$advisories                      = array_values(
-			array_filter(
-				$advisories,
-				static fn( mixed $code ): bool => is_string( $code ) && 'full-payload-checksum-pending' !== $code
-			)
-		);
-		$advisories[]                    = 'restore-runtime-guard-required';
-		$import['status']                = 'payload-verified';
-		$import['full_payload_verified'] = true;
-		$import['restore_allowed']       = true;
-		$import['advisories']            = array_values( array_unique( $advisories ) );
-		$import['updated_at']            = $now;
-
-		if ( ! $this->import_state->save( $job_id, $import ) ) {
-			return null;
+		$fresh = $this->preflight->validate( $job_id );
+		if (
+			! is_array( $fresh )
+			|| 'payload-verified' !== ( $fresh['status'] ?? null )
+			|| true !== ( $fresh['full_payload_verified'] ?? false )
+			|| true !== ( $fresh['restore_allowed'] ?? false )
+		) {
+			return $this->store->get( $job_id );
 		}
 
 		$this->jobs->transition( $job_id, 'active' );
