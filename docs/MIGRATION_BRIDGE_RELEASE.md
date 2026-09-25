@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.13`;
+- current plugin version: `0.8.14`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -99,3 +99,8 @@ Phase 10E.2A.3.2 adds the file-payload stage after database export. Accepted upl
 Phase 10E.2A.3.3 builds the first complete Portable Clone package manifest. After database and file exports complete, Migration Bridge scans the private workspace in bounded file/byte batches, revalidates database schema/chunk hashes and file-payload hashes against their exporter evidence, and computes a deterministic SHA-256 checksum over normalized path + byte count + file hash records. A second resumable verification pass must reproduce the same file count, byte count and checksum before the package manifest records `verified=true`. Deliberate payload drift/tampering blocks completion. The package remains private/non-repository-safe and `delivery_ready=false`; authenticated archive delivery and retention cleanup remain 10E.2A.3.4.
 
 Acceptance evidence for 0.8.13: PR #131 squash-merged as `896c449116980238e4163da6b15ee4caec20b67c`; all seven post-merge gates passed (Foundation `36133942803`, Package `36133942785`, PHP Quality `36133942874`, WordPress Smoke `36133942852`, Accessibility/Responsive `36133942801`, Performance `36133942970`, Release `36133942826`). Deterministic installable ZIP SHA-256: `d7bb4225712274b8fb5538addf053f5a6c2b635174f4b9cb17bbd08059d10954`.
+
+
+### Version 0.8.14 — authenticated package delivery + retention cleanup
+
+Phase 10E.2A.3.4 turns a verified private package workspace into a downloadable portable ZIP without exposing a public archive URL. ZIP construction is resumable and bounded by file count/bytes, uses WordPress Core PclZip for broad hosting compatibility, and replays the package checksum contract while archiving so payload drift blocks delivery. The finalized ZIP receives its own SHA-256 and is streamed only through authenticated `admin_post` with `manage_options` + job-scoped nonce. Ready packages have a 24-hour private retention deadline; expired downloads are refused, explicit cleanup is capability/nonce gated, and opportunistic admin maintenance advances bounded job-scoped cleanup batches without touching unrelated temp files. Portable Import remains 10E.2A.4.
