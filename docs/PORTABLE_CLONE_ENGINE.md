@@ -482,12 +482,12 @@ Deliver:
 
 ### 10E.2A.4 — Portable import
 
-Status: **active — 10E.2A.4.1 intake + destination preflight is the Migration Bridge 0.8.15 candidate**
+Status: **active — 10E.2A.4.1 is accepted in Migration Bridge 0.8.15; 10E.2A.4.2 full payload verification + resumable private extraction is the 0.8.16 candidate**
 
 Internal sequence:
 
-- **10E.2A.4.1 — intake + destination preflight:** stage the ZIP only in job-owned private storage; reject traversal/unknown roots/duplicate paths; validate package + child-manifest contracts and hashes; require an explicitly authorized isolated sandbox destination, noindex, outbound safety, recovery references and sufficient disk space. This subphase performs no restore and keeps `restore_allowed=false`.
-- **10E.2A.4.2 — full payload verification + resumable extraction:** replay the accepted package checksum while extracting into a private import workspace before restore is enabled.
+- **10E.2A.4.1 — intake + destination preflight:** complete in 0.8.15; stage the ZIP only in job-owned private storage; reject traversal/unknown roots/duplicate paths; validate package + child-manifest contracts and hashes; require an explicitly authorized isolated sandbox destination, noindex, outbound safety, recovery references and sufficient disk space. This subphase performs no restore and keeps `restore_allowed=false`.
+- **10E.2A.4.2 — full payload verification + resumable extraction:** active in 0.8.16; extract only accepted files into the job-owned private `import/payload/` root in bounded batches, then replay the exact export checksum contract in a second resumable pass. `restore_allowed=true` is written only when checksum + payload file count + payload byte count match and a fresh destination preflight remains clean. No database/file restore occurs in this subphase.
 - **10E.2A.4.3 — database restore:** bounded destination-only schema/row restore with resumable state.
 - **10E.2A.4.4 — file restore:** bounded destination-only uploads/plugins/themes restore.
 - **10E.2A.4.5 — serialization-safe environment rewrite:** rewrite WordPress environment values without raw serialized-string replacement.
