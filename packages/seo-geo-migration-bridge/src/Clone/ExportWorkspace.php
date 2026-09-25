@@ -372,6 +372,107 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Copy one WordPress core file into an already owned local-clone target.
+	 *
+	 * Existing identical files are accepted to make interrupted batches idempotent.
+	 *
+	 * @param string $source      Absolute readable source file.
+	 * @param string $target_root Exact job-owned local-clone root.
+	 * @param string $relative    Relative target path.
+	 * @return array{bytes:int,sha256:string,existing:bool}|null
+	 */
+	public function copy_file_to_local_clone_target( string $source, string $target_root, string $relative ): ?array {
+		$source      = wp_normalize_path( $source );
+		$target_root = untrailingslashit( wp_normalize_path( $target_root ) );
+		$relative    = $this->normalize_local_clone_relative( $relative );
+		if (
+			'' === $target_root
+			|| '' === $relative
+			|| ! is_dir( $target_root )
+			|| is_link( $target_root )
+			|| ! is_file( $source )
+			|| ! is_readable( $source )
+			|| is_link( $source )
+		) {
+			return null;
+		}
+
+		$root   = trailingslashit( $target_root );
+		$target = $root . $relative;
+		if ( ! str_starts_with( $target, $root ) ) {
+			return null;
+		}
+
+		$source_bytes = filesize( $source );
+		$source_hash  = hash_file( 'sha256', $source );
+		if ( false === $source_bytes || false === $source_hash ) {
+			return null;
+		}
+
+		if ( file_exists( $target ) ) {
+			if ( ! is_file( $target ) || ! is_readable( $target ) || is_link( $target ) ) {
+				return null;
+			}
+			$target_bytes = filesize( $target );
+			$target_hash  = hash_file( 'sha256', $target );
+			if (
+				false === $target_bytes
+				|| false === $target_hash
+				|| (int) $source_bytes !== (int) $target_bytes
+				|| ! hash_equals( $source_hash, $target_hash )
+			) {
+				return null;
+			}
+
+			return array(
+				'bytes'    => (int) $target_bytes,
+				'sha256'   => $target_hash,
+				'existing' => true,
+			);
+		}
+
+		$parent = dirname( $target );
+		if ( ! is_dir( $parent ) && ! wp_mkdir_p( $parent ) ) {
+			return null;
+		}
+		if ( is_link( $parent ) ) {
+			return null;
+		}
+
+		$temp = $target . '.tmp-' . wp_generate_password( 12, false, false );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_copy -- Centralized verified local-clone core copy.
+		if ( ! copy( $source, $temp ) ) {
+			return null;
+		}
+
+		$temp_bytes = filesize( $temp );
+		$temp_hash  = hash_file( 'sha256', $temp );
+		if (
+			false === $temp_bytes
+			|| false === $temp_hash
+			|| (int) $source_bytes !== (int) $temp_bytes
+			|| ! hash_equals( $source_hash, $temp_hash )
+		) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed target-owned temporary copy.
+			@unlink( $temp );
+			return null;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic rename stays inside the exact owned local-clone root.
+		if ( ! rename( $temp, $target ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed target-owned temporary copy.
+			@unlink( $temp );
+			return null;
+		}
+
+		return array(
+			'bytes'    => (int) $temp_bytes,
+			'sha256'   => $temp_hash,
+			'existing' => false,
+		);
+	}
+
+	/**
 	 * Prepare one empty same-filesystem candidate directory for file promotion.
 	 *
 	 * @param string $candidate Absolute candidate directory.
@@ -1326,6 +1427,26 @@ final class ExportWorkspace {
 		$entries = scandir( $path, SCANDIR_SORT_ASCENDING );
 
 		return is_array( $entries ) && array() === array_values( array_diff( $entries, array( '.', '..' ) ) );
+	}
+
+	/**
+	 * Normalize one local-clone target-relative path.
+	 *
+	 * @param string $relative Relative path.
+	 */
+	private function normalize_local_clone_relative( string $relative ): string {
+		$relative = ltrim( wp_normalize_path( trim( $relative ) ), '/' );
+		if (
+			'' === $relative
+			|| 2048 < strlen( $relative )
+			|| str_contains( $relative, '../' )
+			|| str_contains( $relative, '/..' )
+			|| str_contains( $relative, "\\0" )
+		) {
+			return '';
+		}
+
+		return $relative;
 	}
 
 	/**
