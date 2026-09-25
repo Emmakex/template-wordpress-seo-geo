@@ -58,13 +58,13 @@ final class AdminCloneImportPayloadController {
 			: '';
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
-		$batch_files = isset( $_POST['import_payload_batch_size'] )
+		$batch_files     = isset( $_POST['import_payload_batch_size'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['import_payload_batch_size'] ) ) )
 			: ImportPayloadVerifier::DEFAULT_BATCH_FILES;
 		$batch_megabytes = isset( $_POST['import_payload_batch_megabytes'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['import_payload_batch_megabytes'] ) ) )
 			: 8;
-		$batch_bytes = $batch_megabytes * 1024 * 1024;
+		$batch_bytes     = $batch_megabytes * 1024 * 1024;
 
 		$result = $this->verifier->advance( $job_id, $batch_files, $batch_bytes );
 		if ( ! is_array( $result ) ) {
