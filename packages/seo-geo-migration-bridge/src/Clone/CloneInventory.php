@@ -342,7 +342,7 @@ final class CloneInventory {
 		$estimated_bytes = 0;
 
 		foreach ( array_slice( $rows, 0, 1000 ) as $row ) {
-			if ( ! is_array( $row ) || ! is_string( $row['Name'] ?? null ) ) {
+			if ( ! is_string( $row['Name'] ?? null ) ) {
 				continue;
 			}
 
@@ -380,7 +380,7 @@ final class CloneInventory {
 		$roots   = array(
 			array(
 				'id'   => 'uploads',
-				'path' => is_string( $uploads['basedir'] ?? null ) ? wp_normalize_path( $uploads['basedir'] ) : '',
+				'path' => wp_normalize_path( $uploads['basedir'] ),
 			),
 			array(
 				'id'   => 'plugins',
@@ -410,7 +410,12 @@ final class CloneInventory {
 	 */
 	private function excluded( string $relative, bool $is_dir ): bool {
 		$normalized    = strtolower( wp_normalize_path( $relative ) );
-		$segments      = array_values( array_filter( explode( '/', $normalized ), 'strlen' ) );
+		$segments      = array_values(
+			array_filter(
+				explode( '/', $normalized ),
+				static fn( string $segment ): bool => '' !== $segment
+			)
+		);
 		$excluded_dirs = array(
 			'.git',
 			'.svn',
