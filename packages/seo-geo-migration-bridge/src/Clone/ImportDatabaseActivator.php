@@ -249,7 +249,7 @@ final class ImportDatabaseActivator {
 			return null;
 		}
 
-		$names = array(
+		$control_names = array(
 			CloneJobStore::OPTION_NAME,
 			ImportStateStore::OPTION_NAME,
 			ImportPayloadStateStore::OPTION_NAME,
@@ -258,10 +258,15 @@ final class ImportDatabaseActivator {
 			ImportRewriteStateStore::OPTION_NAME,
 			ImportFinalizeStateStore::OPTION_NAME,
 		);
+		$runtime_names = array(
+			'active_plugins',
+			'template',
+			'stylesheet',
+		);
 
 		$preserved = array();
 		$total     = 0;
-		foreach ( $names as $name ) {
+		foreach ( array_merge( $control_names, $runtime_names ) as $name ) {
 			$row = $this->option_row( $active, $name, $active_columns );
 			if ( null === $row ) {
 				return null;
@@ -273,10 +278,10 @@ final class ImportDatabaseActivator {
 			$preserved[ $name ] = $row;
 		}
 
-		$active_plugins = $this->option_row( $staging, 'active_plugins', $staging_columns );
-		$plugin_list    = null === $active_plugins
-			? array()
-			: $this->plugin_list( $active_plugins['option_value'] );
+		// File promotion is intentionally deferred to 10E.2A.4.6.3. Keep the
+		// destination's currently runnable plugin/theme state until those files
+		// are promoted, while guaranteeing that Migration Bridge remains active.
+		$plugin_list = $this->plugin_list( $preserved['active_plugins']['option_value'] );
 		if ( null === $plugin_list ) {
 			return null;
 		}
@@ -290,7 +295,7 @@ final class ImportDatabaseActivator {
 		$plugin_list = array_values( array_unique( array_filter( $plugin_list, 'is_string' ) ) );
 
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WordPress active_plugins is a serialized list by contract.
-		$plugins_value = serialize( $plugin_list );
+		$preserved['active_plugins']['option_value'] = serialize( $plugin_list );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Transaction is limited to the verified job-owned staging options table.
 		if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
@@ -308,13 +313,6 @@ final class ImportDatabaseActivator {
 			);
 		}
 		$ok = $ok && $this->upsert_option( $staging, $staging_columns, 'blog_public', '0', 'no' );
-		$ok = $ok && $this->upsert_option(
-			$staging,
-			$staging_columns,
-			'active_plugins',
-			$plugins_value,
-			is_array( $active_plugins ) ? $active_plugins['autoload'] : 'yes'
-		);
 
 		if ( ! $ok ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Rolls back only the staging-options overlay transaction.
@@ -329,7 +327,7 @@ final class ImportDatabaseActivator {
 		}
 
 		$controls = array();
-		foreach ( array_merge( $names, array( 'blog_public', 'active_plugins' ) ) as $name ) {
+		foreach ( array_merge( $control_names, $runtime_names, array( 'blog_public' ) ) as $name ) {
 			$row = $this->option_row( $staging, $name, $staging_columns );
 			if ( null === $row ) {
 				return null;
@@ -382,6 +380,7 @@ final class ImportDatabaseActivator {
 		if ( 'prepared' === $layout ) {
 			$state['status']             = 'rolled-back';
 			$state['database_swapped']   = false;
+			$state['rollback_available'] = false;
 			$state['blockers']           = array( $reason );
 			$state['rolled_back_at']     = gmdate( DATE_ATOM );
 			$state['updated_at']         = $state['rolled_back_at'];
@@ -569,7 +568,16 @@ final class ImportDatabaseActivator {
 
 		$sql = 'RENAME TABLE ' . implode( ', ', $pairs );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.NotPrepared -- Exact validated/quoted activation map; one atomic MySQL/MariaDB RENAME TABLE statement.
-		return false !== $wpdb->query( $sql );
+		if ( false === $wpdb->query( $sql ) ) {
+			return false;
+		}
+
+		// Swapping wp_options invalidates alloptions/individual option cache keys.
+		// Flush immediately so the rest of this request cannot observe the
+		// pre-swap option table through a persistent object cache.
+		wp_cache_flush();
+
+		return true;
 	}
 
 	/**
