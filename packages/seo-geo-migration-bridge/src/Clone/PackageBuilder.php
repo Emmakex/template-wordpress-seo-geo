@@ -512,6 +512,10 @@ final class PackageBuilder {
 	 * @param string $hash     Current SHA-256.
 	 */
 	private function payload_record_valid( string $job_id, string $relative, int $bytes, string $hash ): bool {
+		if ( in_array( basename( $relative ), array( '.htaccess', 'index.php' ), true ) ) {
+			return $this->workspace_guard_valid( $relative, $bytes, $hash );
+		}
+
 		if ( 'database/manifest.json' === $relative ) {
 			$state = $this->database_export->get( $job_id );
 
