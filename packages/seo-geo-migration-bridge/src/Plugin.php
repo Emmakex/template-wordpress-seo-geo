@@ -10,7 +10,11 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
+use SeoGeo\MigrationBridge\Clone\CloneInventory;
+use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
+use SeoGeo\MigrationBridge\Clone\DestinationSafetyPlanner;
 use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
@@ -150,6 +154,34 @@ final class Plugin {
 	private static ?AdminCloneController $clone_controller = null;
 
 	/**
+	 * Portable Clone inventory store singleton.
+	 *
+	 * @var CloneInventoryStore|null
+	 */
+	private static ?CloneInventoryStore $clone_inventory_store = null;
+
+	/**
+	 * Portable Clone read-only inventory singleton.
+	 *
+	 * @var CloneInventory|null
+	 */
+	private static ?CloneInventory $clone_inventory = null;
+
+	/**
+	 * Portable Clone inventory controller singleton.
+	 *
+	 * @var AdminCloneInventoryController|null
+	 */
+	private static ?AdminCloneInventoryController $clone_inventory_controller = null;
+
+	/**
+	 * Local-clone destination safety planner singleton.
+	 *
+	 * @var DestinationSafetyPlanner|null
+	 */
+	private static ?DestinationSafetyPlanner $destination_safety_planner = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -180,8 +212,12 @@ final class Plugin {
 		self::$operator_screen        ??= new AdminOperatorScreen( self::$operator_status );
 		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
-		self::$clone_job_store        ??= new CloneJobStore();
-		self::$clone_controller       ??= new AdminCloneController( self::$clone_job_store );
+		self::$clone_job_store              ??= new CloneJobStore();
+		self::$clone_controller             ??= new AdminCloneController( self::$clone_job_store );
+		self::$clone_inventory_store        ??= new CloneInventoryStore();
+		self::$clone_inventory              ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
+		self::$clone_inventory_controller   ??= new AdminCloneInventoryController( self::$clone_inventory );
+		self::$destination_safety_planner   ??= new DestinationSafetyPlanner();
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -197,6 +233,7 @@ final class Plugin {
 		self::$sandbox_handoff_controller->boot();
 		self::$dependency_review_controller->boot();
 		self::$clone_controller->boot();
+		self::$clone_inventory_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -268,6 +305,20 @@ final class Plugin {
 	 */
 	public static function clone_job_store(): ?CloneJobStore {
 		return self::$clone_job_store;
+	}
+
+	/**
+	 * Return the Portable Clone read-only source inventory service.
+	 */
+	public static function clone_inventory(): ?CloneInventory {
+		return self::$clone_inventory;
+	}
+
+	/**
+	 * Return the local-clone destination safety planner.
+	 */
+	public static function destination_safety_planner(): ?DestinationSafetyPlanner {
+		return self::$destination_safety_planner;
 	}
 
 	/**
