@@ -385,8 +385,8 @@ $portable_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Porta
 foreach (
 	array(
 		"/public const OPTION_NAME = 'seo_geo_migration_portable_clone_job_v1';/",
-		"/add_option\\( self::OPTION_NAME, \\$job, '', false \\)/",
-		"/update_option\\( self::OPTION_NAME, \\$job, false \\)/",
+		"/add_option\\( self::OPTION_NAME, \\x24job, '', false \\)/",
+		"/update_option\\( self::OPTION_NAME, \\x24job, false \\)/",
 		"/'status'\\s*=>\\s*'planned'/",
 		"/'stage'\\s*=>\\s*'inventory'/",
 	) as $portable_store_guard
