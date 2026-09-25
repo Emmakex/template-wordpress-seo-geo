@@ -941,7 +941,7 @@ final class ImportDatabaseRestorer {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only metadata query scoped to the deterministic job-owned staging namespace.
 		$tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $pattern ) );
 
-		return is_array( $tables ) ? array_values( array_filter( $tables, 'is_string' ) ) : array();
+		return array_values( array_filter( $tables, 'is_string' ) );
 	}
 
 	/**
