@@ -292,7 +292,7 @@ final class CloneJobStore {
 
 		$counters  = is_array( $job['counters'] ?? null ) ? $job['counters'] : array();
 		$completed = isset( $counters['completed'] ) ? max( 0, (int) $counters['completed'] ) : 0;
-		$total     = isset( $counters['total'] ) && null !== $counters['total'] ? max( 0, (int) $counters['total'] ) : null;
+		$total     = isset( $counters['total'] ) ? max( 0, (int) $counters['total'] ) : null;
 
 		return array(
 			'schema_version' => self::SCHEMA_VERSION,
