@@ -140,7 +140,7 @@ final class ImportActivationPlanner {
 	/**
 	 * Build and persist a non-mutating sandbox activation plan.
 	 *
-	 * @param string            $job_id            Clone job identifier.
+	 * @param string              $job_id            Clone job identifier.
 	 * @param array<string,mixed> $recovery_evidence External recovery evidence.
 	 * @return array<string,mixed>|null
 	 */
@@ -407,7 +407,7 @@ final class ImportActivationPlanner {
 	/**
 	 * Verify staged file tree still matches accepted 0.8.18 totals and active roots remain distinct.
 	 *
-	 * @param string            $job_id Clone job identifier.
+	 * @param string              $job_id Clone job identifier.
 	 * @param array<string,mixed> $state  File-staging state.
 	 * @return array{file_count:int,byte_count:int,roots:list<array<string,mixed>>,blockers:list<string>,advisories:list<string>}
 	 */
