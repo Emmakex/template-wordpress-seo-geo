@@ -259,7 +259,7 @@ foreach (
 	array(
 		"'mode'           => 'portable-clone-planning'",
 		"'algorithm'        => 'sha256'",
-		"'production_source_mutation_allowed' => false",
+		"'production_source_mutation_allowed'",
 		"'production_database_restore_allowed'",
 		"'third_party_clone_plugin_required'",
 		"'payload_created_in_this_phase'",
