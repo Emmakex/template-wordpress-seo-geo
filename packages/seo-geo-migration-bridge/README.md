@@ -281,3 +281,6 @@ The bridge follows these rules:
 - production transformation/cutover remains a later explicitly authorized phase.
 
 This bridge package is never required by the final self-contained Theme. It may be retired only after SEO/GEO Manager has absorbed its accepted contracts and regression acceptance proves parity. The future Manager plugin remains optional for the Theme and may stay active for ongoing publishing after migration mode is disabled.
+
+
+Migration Bridge 0.8.18 adds phase 10E.2A.4.4: verified file restoration into a private job-owned staging tree. It requires completed database staging, never writes active uploads/plugins/themes, validates every copied file against `files-meta`, and completes only after a second bounded SHA-256 pass exactly reconciles file and byte totals.
