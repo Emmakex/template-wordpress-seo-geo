@@ -17,6 +17,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -39,6 +40,8 @@ use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizationPlanner;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
@@ -422,6 +425,27 @@ final class Plugin {
 	private static ?AdminCloneImportFinalizeController $clone_import_finalize_controller = null;
 
 	/**
+	 * Workspace-backed Portable Clone database activation journal singleton.
+	 *
+	 * @var ImportDatabaseActivationStateStore|null
+	 */
+	private static ?ImportDatabaseActivationStateStore $clone_import_database_activation_state_store = null;
+
+	/**
+	 * Reversible Portable Clone database activator singleton.
+	 *
+	 * @var ImportDatabaseActivator|null
+	 */
+	private static ?ImportDatabaseActivator $clone_import_database_activator = null;
+
+	/**
+	 * Administrator reversible database activation controller singleton.
+	 *
+	 * @var AdminCloneImportDatabaseActivationController|null
+	 */
+	private static ?AdminCloneImportDatabaseActivationController $clone_import_database_activation_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -453,41 +477,41 @@ final class Plugin {
 		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
 
-		self::$clone_job_store                   ??= new CloneJobStore();
-		self::$clone_controller                  ??= new AdminCloneController( self::$clone_job_store );
-		self::$clone_inventory_store             ??= new CloneInventoryStore();
-		self::$clone_inventory                   ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
-		self::$clone_inventory_controller        ??= new AdminCloneInventoryController( self::$clone_inventory );
-		self::$destination_safety_planner        ??= new DestinationSafetyPlanner();
-		self::$clone_export_state_store          ??= new ExportStateStore();
-		self::$clone_database_exporter           ??= new DatabaseExporter( self::$clone_export_state_store, self::$clone_inventory_store, self::$clone_job_store );
-		self::$clone_database_export_controller  ??= new AdminCloneDatabaseExportController( self::$clone_database_exporter );
-		self::$clone_file_export_state_store     ??= new FileExportStateStore();
-		self::$clone_file_exporter               ??= new FileExporter( self::$clone_file_export_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_job_store );
-		self::$clone_file_export_controller      ??= new AdminCloneFileExportController( self::$clone_file_exporter );
-		self::$clone_package_state_store         ??= new PackageStateStore();
-		self::$clone_package_builder             ??= new PackageBuilder( self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
-		self::$clone_package_controller          ??= new AdminClonePackageController( self::$clone_package_builder );
-		self::$clone_delivery_state_store        ??= new DeliveryStateStore();
-		self::$clone_package_delivery            ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
-		self::$clone_delivery_controller         ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
-		self::$clone_import_state_store          ??= new ImportStateStore();
-		self::$clone_import_preflight            ??= new ImportPreflight( self::$clone_import_state_store, self::$clone_job_store );
-		self::$clone_import_controller           ??= new AdminCloneImportController( self::$clone_import_preflight );
-		self::$clone_import_payload_state_store  ??= new ImportPayloadStateStore();
-		self::$clone_import_payload_verifier     ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
-		self::$clone_import_payload_controller   ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
-		self::$clone_import_database_state_store ??= new ImportDatabaseStateStore();
-		self::$clone_import_database_restorer    ??= new ImportDatabaseRestorer( self::$clone_import_database_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
-		self::$clone_import_database_controller  ??= new AdminCloneImportDatabaseController( self::$clone_import_database_restorer );
-		self::$clone_import_file_state_store     ??= new ImportFileStateStore();
-		self::$clone_import_file_restorer        ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
-		self::$clone_import_file_controller      ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
-		self::$clone_import_rewrite_state_store  ??= new ImportRewriteStateStore();
-		self::$clone_import_environment_rewriter ??= new ImportEnvironmentRewriter( self::$clone_import_rewrite_state_store, self::$clone_import_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_database_restorer, self::$clone_job_store );
-		self::$clone_import_rewrite_controller   ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
-		self::$clone_import_finalize_state_store ??= new ImportFinalizeStateStore();
-		self::$clone_import_finalization_planner ??= new ImportFinalizationPlanner(
+		self::$clone_job_store                              ??= new CloneJobStore();
+		self::$clone_controller                             ??= new AdminCloneController( self::$clone_job_store );
+		self::$clone_inventory_store                        ??= new CloneInventoryStore();
+		self::$clone_inventory                              ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
+		self::$clone_inventory_controller                   ??= new AdminCloneInventoryController( self::$clone_inventory );
+		self::$destination_safety_planner                   ??= new DestinationSafetyPlanner();
+		self::$clone_export_state_store                     ??= new ExportStateStore();
+		self::$clone_database_exporter                      ??= new DatabaseExporter( self::$clone_export_state_store, self::$clone_inventory_store, self::$clone_job_store );
+		self::$clone_database_export_controller             ??= new AdminCloneDatabaseExportController( self::$clone_database_exporter );
+		self::$clone_file_export_state_store                ??= new FileExportStateStore();
+		self::$clone_file_exporter                          ??= new FileExporter( self::$clone_file_export_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_job_store );
+		self::$clone_file_export_controller                 ??= new AdminCloneFileExportController( self::$clone_file_exporter );
+		self::$clone_package_state_store                    ??= new PackageStateStore();
+		self::$clone_package_builder                        ??= new PackageBuilder( self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
+		self::$clone_package_controller                     ??= new AdminClonePackageController( self::$clone_package_builder );
+		self::$clone_delivery_state_store                   ??= new DeliveryStateStore();
+		self::$clone_package_delivery                       ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
+		self::$clone_delivery_controller                    ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
+		self::$clone_import_state_store                     ??= new ImportStateStore();
+		self::$clone_import_preflight                       ??= new ImportPreflight( self::$clone_import_state_store, self::$clone_job_store );
+		self::$clone_import_controller                      ??= new AdminCloneImportController( self::$clone_import_preflight );
+		self::$clone_import_payload_state_store             ??= new ImportPayloadStateStore();
+		self::$clone_import_payload_verifier                ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$clone_import_payload_controller              ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
+		self::$clone_import_database_state_store            ??= new ImportDatabaseStateStore();
+		self::$clone_import_database_restorer               ??= new ImportDatabaseRestorer( self::$clone_import_database_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$clone_import_database_controller             ??= new AdminCloneImportDatabaseController( self::$clone_import_database_restorer );
+		self::$clone_import_file_state_store                ??= new ImportFileStateStore();
+		self::$clone_import_file_restorer                   ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$clone_import_file_controller                 ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
+		self::$clone_import_rewrite_state_store             ??= new ImportRewriteStateStore();
+		self::$clone_import_environment_rewriter            ??= new ImportEnvironmentRewriter( self::$clone_import_rewrite_state_store, self::$clone_import_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_database_restorer, self::$clone_job_store );
+		self::$clone_import_rewrite_controller              ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
+		self::$clone_import_finalize_state_store            ??= new ImportFinalizeStateStore();
+		self::$clone_import_finalization_planner            ??= new ImportFinalizationPlanner(
 			self::$clone_import_finalize_state_store,
 			self::$clone_import_state_store,
 			self::$clone_import_payload_state_store,
@@ -497,7 +521,13 @@ final class Plugin {
 			self::$clone_import_database_restorer,
 			self::$clone_job_store
 		);
-		self::$clone_import_finalize_controller  ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
+		self::$clone_import_finalize_controller             ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
+		self::$clone_import_database_activation_state_store ??= new ImportDatabaseActivationStateStore();
+		self::$clone_import_database_activator              ??= new ImportDatabaseActivator(
+			self::$clone_import_database_activation_state_store,
+			self::$clone_import_finalization_planner
+		);
+		self::$clone_import_database_activation_controller  ??= new AdminCloneImportDatabaseActivationController( self::$clone_import_database_activator );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -524,6 +554,7 @@ final class Plugin {
 		self::$clone_import_file_controller->boot();
 		self::$clone_import_rewrite_controller->boot();
 		self::$clone_import_finalize_controller->boot();
+		self::$clone_import_database_activation_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -679,6 +710,20 @@ final class Plugin {
 	 */
 	public static function clone_import_finalization_planner(): ?ImportFinalizationPlanner {
 		return self::$clone_import_finalization_planner;
+	}
+
+	/**
+	 * Return the workspace-backed Portable Clone database activation state store.
+	 */
+	public static function clone_import_database_activation_state_store(): ?ImportDatabaseActivationStateStore {
+		return self::$clone_import_database_activation_state_store;
+	}
+
+	/**
+	 * Return the reversible Portable Clone database activator.
+	 */
+	public static function clone_import_database_activator(): ?ImportDatabaseActivator {
+		return self::$clone_import_database_activator;
 	}
 
 	/**

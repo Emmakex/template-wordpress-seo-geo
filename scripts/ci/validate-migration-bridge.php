@@ -1455,6 +1455,131 @@ if ( str_contains( $import_finalize_controller, 'admin_post_nopriv_' ) ) {
 }
 
 
+$import_finalizer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php' );
+foreach (
+	array(
+		'public function activation_plan_snapshot( string $job_id ): ?array',
+		"'ready' !== ( \$state['status'] ?? null )",
+		"'activation_allowed'",
+		"'handoff_ready'",
+		'$this->runtime_gate( $job_id, $state )',
+		"'activation_plan_hash'",
+	) as $activation_plan_snapshot_guard
+) {
+	if ( ! str_contains( $import_finalizer, $activation_plan_snapshot_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-database-activation-plan-authority',
+			'10E.2A.4.6.2 must consume only the accepted fresh finalization activation plan.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php',
+			$activation_plan_snapshot_guard,
+			'missing'
+		);
+	}
+}
+
+$database_activation_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseActivationStateStore.php' );
+foreach (
+	array(
+		"public const RELATIVE_PATH  = 'import/activation/database-state.json';",
+		'private ExportWorkspace $workspace;',
+		'$this->workspace->read( $job_id, self::RELATIVE_PATH )',
+		'$this->workspace->write( $job_id, self::RELATIVE_PATH',
+		"'database_swapped'",
+		"'rollback_available'",
+		"'handoff_ready'",
+	) as $database_activation_store_guard
+) {
+	if ( ! str_contains( $database_activation_store, $database_activation_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-database-activation-external-journal',
+			'Database activation recovery state must live outside wp_options in the private job workspace.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseActivationStateStore.php',
+			$database_activation_store_guard,
+			'missing'
+		);
+	}
+}
+
+$database_activator = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseActivator.php' );
+foreach (
+	array(
+		'public function prepare( string $job_id ): ?array',
+		'public function activate( string $job_id ): ?array',
+		'public function rollback( string $job_id ): ?array',
+		'$this->finalizer->activation_plan_snapshot( $job_id )',
+		'CloneJobStore::OPTION_NAME',
+		'ImportFinalizeStateStore::OPTION_NAME',
+		"'blog_public', '0'",
+		"'active_plugins'",
+		"'template'",
+		"'stylesheet'",
+		'plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR',
+		"'RENAME TABLE '",
+		'wp_cache_flush()',
+		'$this->rename_reverse( $state )',
+		"'database-activation-verification-failed'",
+		"'database-rollback-verification-failed'",
+		"'handoff_ready'          => false",
+	) as $database_activator_guard
+) {
+	if ( ! str_contains( $database_activator, $database_activator_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-database-activation-contract',
+			'10E.2A.4.6.2 reversible database activation is missing a required control-plane/noindex/atomic-rollback guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseActivator.php',
+			$database_activator_guard,
+			'missing'
+		);
+	}
+}
+
+if (
+	! str_contains( $database_activator, "SandboxGuard::outbound_safe()" )
+	|| ! str_contains( $database_activator, "SandboxGuard::backups_ready()" )
+	|| ! str_contains( $database_activator, 'ImportPreflight::TARGET_AUTHORIZED_MARKER' )
+) {
+	fail_migration_bridge(
+		'portable-clone-database-activation-sandbox-guard',
+		'Database activation must rerun sandbox, outbound, backup and explicit-target authorization guards.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseActivator.php',
+		'fresh sandbox safety gate before activation/rollback',
+		'missing sandbox activation guard'
+	);
+}
+
+$database_activation_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseActivationController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_database_activation';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		"'ACTIVATE_DATABASE'",
+		"'ROLLBACK_DATABASE'",
+		'$this->activator->activate( $job_id )',
+		'$this->activator->rollback( $job_id )',
+	) as $database_activation_controller_guard
+) {
+	if ( ! str_contains( $database_activation_controller, $database_activation_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-database-activation-entrypoint',
+			'Database activation endpoint must remain administrator/job-nonce/explicit-confirmation gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseActivationController.php',
+			$database_activation_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $database_activation_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-database-activation-public-endpoint',
+		'Reversible database activation must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseActivationController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+
 $clone_inventory_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php' );
 foreach (
 	array(

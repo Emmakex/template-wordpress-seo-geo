@@ -17,6 +17,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -38,6 +39,7 @@ use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizationPlanner;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -132,6 +134,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_import_file_result_notice(); ?>
 			<?php $this->render_clone_import_rewrite_result_notice(); ?>
 			<?php $this->render_clone_import_finalize_result_notice(); ?>
+			<?php $this->render_clone_database_activation_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -1548,6 +1551,97 @@ final class AdminOperatorScreen {
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+		<?php if ( 'ready' === $status ) : ?>
+			<?php $this->render_clone_database_activation_section( $job_id ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after reversible database activation actions.
+	 */
+	private function render_clone_database_activation_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified activation action.
+		$status = isset( $_GET['seo_geo_clone_database_activation'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_database_activation'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'prepared'    => 'clone_database_activation_prepared',
+			'activated'   => 'clone_database_activation_activated',
+			'rolled-back' => 'clone_database_activation_rolled_back',
+			'blocked'     => 'clone_database_activation_blocked',
+			default       => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status
+			? 'notice notice-error'
+			: ( 'activated' === $status ? 'notice notice-success' : 'notice notice-info' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the workspace-backed database activation journal and controls.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function render_clone_database_activation_section( string $job_id ): void {
+		$state    = ( new ImportDatabaseActivationStateStore() )->get( $job_id );
+		$status   = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$tables   = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
+		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		?>
+		<h4><?php echo esc_html( $this->copy->text( 'clone_database_activation_heading' ) ); ?></h4>
+		<p><?php echo esc_html( $this->copy->text( 'clone_database_activation_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_database_activation_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_database_activation_tables' ) ); ?></th><td><?php echo esc_html( (string) count( $tables ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_database_activation_plan_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['activation_plan_hash'] ?? '' ) ); ?></code></td></tr>
+				<?php $this->render_sandbox_boolean_row( 'clone_database_activation_swapped', true === ( $state['database_swapped'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_database_activation_rollback_ready', true === ( $state['rollback_available'] ?? false ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_database_activation_files', true === ( $state['active_files_untouched'] ?? true ) ); ?>
+				<?php $this->render_sandbox_boolean_row( 'clone_database_activation_handoff', true === ( $state['handoff_ready'] ?? false ) ); ?>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_database_activation_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === $blockers ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $blockers ) ); ?></code></td></tr>
+			</tbody>
+		</table>
+		<p class="description"><strong><?php echo esc_html( $this->copy->text( 'clone_database_activation_warning' ) ); ?></strong></p>
+
+		<?php if ( 'pending' === $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportDatabaseActivationController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<input type="hidden" name="database_activation_step" value="prepare">
+				<?php wp_nonce_field( AdminCloneImportDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php submit_button( $this->copy->text( 'clone_database_activation_prepare' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'prepared' === $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportDatabaseActivationController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<input type="hidden" name="database_activation_step" value="activate">
+				<input type="hidden" name="database_activation_confirmation" value="ACTIVATE_DATABASE">
+				<?php wp_nonce_field( AdminCloneImportDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php submit_button( $this->copy->text( 'clone_database_activation_activate' ), 'primary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( in_array( $status, array( 'activated', 'activating' ), true ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportDatabaseActivationController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<input type="hidden" name="database_activation_step" value="rollback">
+				<input type="hidden" name="database_activation_confirmation" value="ROLLBACK_DATABASE">
+				<?php wp_nonce_field( AdminCloneImportDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php submit_button( $this->copy->text( 'clone_database_activation_rollback' ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
 		<?php
