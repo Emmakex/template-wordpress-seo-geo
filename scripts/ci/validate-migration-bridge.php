@@ -360,17 +360,17 @@ foreach (
 $portable_planner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Portable/PortableClonePlanner.php' );
 foreach (
 	array(
-		"'mode'           => 'local-subdirectory'",
-		"'production_mutation_allowed' => false",
-		"'destructive_overwrite_allowed'=> false",
-		"'target_must_be_empty'         => true",
-		"'credentials_exported'         => false",
-		"'target-directory-not-empty'",
-		"'target-table-prefix-exists'",
-		"'dependency-review-incomplete'",
+		"/'mode'\\s*=>\\s*'local-subdirectory'/",
+		"/'production_mutation_allowed'\\s*=>\\s*false/",
+		"/'destructive_overwrite_allowed'\\s*=>\\s*false/",
+		"/'target_must_be_empty'\\s*=>\\s*true/",
+		"/'credentials_exported'\\s*=>\\s*false/",
+		"/'target-directory-not-empty'/",
+		"/'target-table-prefix-exists'/",
+		"/'dependency-review-incomplete'/",
 	) as $portable_plan_guard
 ) {
-	if ( ! str_contains( $portable_planner, $portable_plan_guard ) ) {
+	if ( 1 !== preg_match( $portable_plan_guard, $portable_planner ) ) {
 		fail_migration_bridge(
 			'portable-clone-plan',
 			'Portable clone planning is missing a required non-destructive target guard.',
@@ -384,14 +384,14 @@ foreach (
 $portable_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Portable/PortableCloneJobStore.php' );
 foreach (
 	array(
-		"public const OPTION_NAME = 'seo_geo_migration_portable_clone_job_v1';",
-		"add_option( self::OPTION_NAME, \$job, '', false )",
-		"update_option( self::OPTION_NAME, \$job, false )",
-		"'status'         => 'planned'",
-		"'stage'          => 'inventory'",
+		"/public const OPTION_NAME = 'seo_geo_migration_portable_clone_job_v1';/",
+		"/add_option\\( self::OPTION_NAME, \\$job, '', false \\)/",
+		"/update_option\\( self::OPTION_NAME, \\$job, false \\)/",
+		"/'status'\\s*=>\\s*'planned'/",
+		"/'stage'\\s*=>\\s*'inventory'/",
 	) as $portable_store_guard
 ) {
-	if ( ! str_contains( $portable_store, $portable_store_guard ) ) {
+	if ( 1 !== preg_match( $portable_store_guard, $portable_store ) ) {
 		fail_migration_bridge(
 			'portable-clone-job-store',
 			'Portable clone job state must remain dedicated, non-autoloaded and resumable.',
@@ -405,17 +405,17 @@ foreach (
 $portable_manifest = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Portable/PortablePackageManifest.php' );
 foreach (
 	array(
-		"'kind'           => 'seo-geo-portable-site-package'",
-		"'contains_private_site_data' => true",
-		"'repository_safe'            => false",
-		"'wp_config_included'         => false",
-		"'credentials_included'       => false",
-		"'auth_salts_included'        => false",
-		"'production_restore_allowed' => false",
-		"'blind_dynamic_data_restore_allowed' => false",
+		"/'kind'\\s*=>\\s*'seo-geo-portable-site-package'/",
+		"/'contains_private_site_data'\\s*=>\\s*true/",
+		"/'repository_safe'\\s*=>\\s*false/",
+		"/'wp_config_included'\\s*=>\\s*false/",
+		"/'credentials_included'\\s*=>\\s*false/",
+		"/'auth_salts_included'\\s*=>\\s*false/",
+		"/'production_restore_allowed'\\s*=>\\s*false/",
+		"/'blind_dynamic_data_restore_allowed'\\s*=>\\s*false/",
 	) as $portable_manifest_guard
 ) {
-	if ( ! str_contains( $portable_manifest, $portable_manifest_guard ) ) {
+	if ( 1 !== preg_match( $portable_manifest_guard, $portable_manifest ) ) {
 		fail_migration_bridge(
 			'portable-package-privacy',
 			'Portable package manifest is missing a required privacy or restore-safety guard.',
