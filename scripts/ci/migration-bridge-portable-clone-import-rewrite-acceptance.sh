@@ -314,16 +314,16 @@ $build_archive = static function ( string $source_job_id ) use (
 	}
 
 	$options_rows = array(
-		array( '1', 'home', $source_home ),
-		array( '2', 'siteurl', $source_site ),
-		array( '3', 'plain_url', $source_home . 'catalog/item?x=1#top' ),
-		array( '4', 'serialized_payload', $serialized ),
-		array( '5', 'json_payload', $json_value ),
-		array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context' ),
-		array( '7', 'opaque_safe', 'a:1:{s:3:"bad";s:4:"nope"' ),
-		array( '8', 'active_plugins', serialize( array( $source_bridge_plugin ) ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WordPress option fixture.
-		array( '9', 'template', $source_theme ),
-		array( '10', 'stylesheet', $source_theme ),
+		array( '1', 'home', $source_home, 'yes' ),
+		array( '2', 'siteurl', $source_site, 'yes' ),
+		array( '3', 'plain_url', $source_home . 'catalog/item?x=1#top', 'yes' ),
+		array( '4', 'serialized_payload', $serialized, 'yes' ),
+		array( '5', 'json_payload', $json_value, 'yes' ),
+		array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context', 'yes' ),
+		array( '7', 'opaque_safe', 'a:1:{s:3:"bad";s:4:"nope"', 'yes' ),
+		array( '8', 'active_plugins', serialize( array( $source_bridge_plugin ) ), 'yes' ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WordPress option fixture.
+		array( '9', 'template', $source_theme, 'yes' ),
+		array( '10', 'stylesheet', $source_theme, 'yes' ),
 	);
 	$posts_rows = array(
 		array(
@@ -338,6 +338,7 @@ $build_archive = static function ( string $source_job_id ) use (
 		. 'option_id bigint unsigned NOT NULL, '
 		. 'option_name varchar(191) NOT NULL, '
 		. 'option_value longtext NOT NULL, '
+		. 'autoload varchar(20) NOT NULL DEFAULT \'yes\', '
 		. 'PRIMARY KEY (option_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
 	$posts_schema = 'CREATE TABLE ' . $posts_table . ' ('
 		. 'ID bigint unsigned NOT NULL, '
@@ -349,7 +350,7 @@ $build_archive = static function ( string $source_job_id ) use (
 	$options_meta = $write_table(
 		$source_job_id,
 		$options_table,
-		array( 'option_id', 'option_name', 'option_value' ),
+		array( 'option_id', 'option_name', 'option_value', 'autoload' ),
 		'option_id',
 		$options_rows,
 		$options_schema
