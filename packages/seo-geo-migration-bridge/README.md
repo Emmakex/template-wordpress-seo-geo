@@ -112,7 +112,7 @@ Migration Bridge 0.8.9 introduced resumable local-clone/export/import job contra
 - deterministic source fingerprint;
 - read-only local destination planning for path/URL/table-prefix/free-space isolation.
 
-The inventory writes only its own bounded non-autoloaded progress state. It does not copy database rows, create clone payload archives, restore files, switch themes or mutate client content. Payload export begins only in the later 10E.2A.3 gate.
+The inventory writes only its own bounded non-autoloaded progress state. It does not copy database rows, create clone payload archives, restore files, switch themes or mutate client content. Migration Bridge 0.8.11 begins 10E.2A.3 with a private resumable database-export stage: inventoried tables are exported as deterministic schema + binary-safe JSON chunks, every chunk is SHA-256 hashed, progress is resumable, and production database access stays read-only. File export/package assembly/download remain subsequent 10E.2A.3 substeps.
 
 ## Phase 8E — Migration Engine
 

@@ -11,9 +11,12 @@ namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\CloneInventory;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
+use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
+use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
@@ -93,6 +96,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_dependency_review_result_notice(); ?>
 			<?php $this->render_clone_result_notice(); ?>
 			<?php $this->render_clone_inventory_result_notice(); ?>
+			<?php $this->render_clone_database_export_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -469,6 +473,105 @@ final class AdminOperatorScreen {
 					</select>
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_inventory_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'complete' === $status ) : ?>
+			<?php $this->render_clone_database_export_section( $job ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after a database-export batch.
+	 */
+	private function render_clone_database_export_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified export action.
+		$status = isset( $_GET['seo_geo_clone_database_export'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_database_export'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'complete' => 'clone_database_export_complete',
+			'running'  => 'clone_database_export_running',
+			'blocked'  => 'clone_database_export_blocked',
+			default    => null,
+		};
+
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : 'notice notice-success';
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render resumable private database export progress.
+	 *
+	 * @param array<string,mixed> $job Clone job.
+	 */
+	private function render_clone_database_export_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$export = ( new ExportStateStore() )->get( $job_id );
+		$status = is_array( $export ) ? (string) ( $export['status'] ?? 'pending' ) : 'pending';
+		$button = 'pending' === $status ? 'clone_database_export_start' : 'clone_database_export_continue';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_database_export_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_database_export_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th>
+					<td><code><?php echo esc_html( $status ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_export_tables_done' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $export['tables_completed'] ?? 0 ) . ' / ' . (string) (int) ( $export['table_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_export_rows' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $export['row_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_export_chunks' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $export['chunk_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_export_bytes' ) ); ?></th>
+					<td><?php echo esc_html( size_format( (int) ( $export['byte_count'] ?? 0 ) ) ); ?></td>
+				</tr>
+				<?php if ( 'complete' === $status ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_export_manifest' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $export['database_manifest_hash'] ?? '' ) ); ?></code></td>
+					</tr>
+				<?php endif; ?>
+			</tbody>
+		</table>
+
+		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneDatabaseExportController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneDatabaseExportController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p>
+					<label for="seo-geo-clone-db-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_database_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-db-batch" name="database_batch_rows">
+						<?php foreach ( array( 25, 50, 100, 200, 500 ) as $size ) : ?>
+							<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( DatabaseExporter::DEFAULT_BATCH_ROWS, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_database_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
