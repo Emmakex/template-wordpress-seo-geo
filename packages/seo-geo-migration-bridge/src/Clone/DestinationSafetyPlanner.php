@@ -36,9 +36,9 @@ final class DestinationSafetyPlanner {
 
 		$source_path = wp_normalize_path( ABSPATH );
 		$target_path = $this->normalize_target_path( $target_path );
-		$source_url = home_url( '/' );
-		$target_url = esc_url_raw( $target_url );
-		$blockers   = array();
+		$source_url  = home_url( '/' );
+		$target_url  = esc_url_raw( $target_url );
+		$blockers    = array();
 		$advisories  = array();
 
 		if ( '' === $target_path || ! $this->absolute_path( $target_path ) ) {
