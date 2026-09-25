@@ -2207,10 +2207,11 @@ Migration Bridge v0.8.14 / 10E.2A.3.4 acceptance evidence:
 - post-merge Foundation CI `36137249879` passed;
 - post-merge Phase 1 Package CI `36137249445` passed;
 - post-merge PHP Quality CI `36137249424` passed;
-- post-merge WordPress Smoke CI `36137249674` passed;
+- post-merge WordPress Smoke CI `36137249674` passed, including private resumable ZIP build, auth-only download boundary, archive hash verification, 24-hour expiry denial and bounded cleanup preserving unrelated files;
 - post-merge Accessibility & Responsive CI `36137249673` passed;
 - post-merge Performance Baseline CI `36137249588` passed;
-- post-merge Migration Bridge Release CI `36137249573` passed.
+- post-merge Migration Bridge Release CI `36137249573` passed;
+- deterministic installable v0.8.14 ZIP SHA-256: `e81a412bafff42f1c8c5a41370313373a5b83ec5ac73b8ad454973c7e2d9bab0`.
 
 Migration Bridge v0.8.13 / 10E.2A.3.3 acceptance evidence:
 
