@@ -82,7 +82,7 @@ final class ImportDatabaseActivator {
 		}
 
 		$snapshot = $this->finalizer->activation_plan_snapshot( $job_id );
-		if ( ! is_array( $snapshot ) || ! is_array( $snapshot['plan'] ?? null ) ) {
+		if ( null === $snapshot ) {
 			return null;
 		}
 
@@ -150,8 +150,8 @@ final class ImportDatabaseActivator {
 			'schema_version'         => ImportDatabaseActivationStateStore::SCHEMA_VERSION,
 			'job_id'                 => $job_id,
 			'status'                 => 'prepared',
-			'activation_plan_hash'   => (string) ( $snapshot['hash'] ?? '' ),
-			'finalize_db_hash'       => (string) ( $snapshot['database_fingerprint'] ?? '' ),
+			'activation_plan_hash'   => $snapshot['hash'],
+			'finalize_db_hash'       => $snapshot['database_fingerprint'],
 			'tables'                 => $normalized,
 			'control_options'        => array(),
 			'options_target'         => (string) $options['target_table'],
@@ -199,15 +199,15 @@ final class ImportDatabaseActivator {
 			return $this->block( $job_id, $state, 'database-activation-layout-drift', false );
 		}
 
-		if ( 'prepared' === ( $state['status'] ?? null ) ) {
+		if ( 'prepared' === $state['status'] ) {
 			if ( ! $this->staging_counts_match( $state ) ) {
 				return $this->block( $job_id, $state, 'database-activation-layout-drift', false );
 			}
 
 			$snapshot = $this->finalizer->activation_plan_snapshot( $job_id );
 			if (
-				! is_array( $snapshot )
-				|| ! $this->same_hash( $state['activation_plan_hash'] ?? '', $snapshot['hash'] ?? '' )
+				null === $snapshot
+				|| ! $this->same_hash( $state['activation_plan_hash'] ?? '', $snapshot['hash'] )
 			) {
 				return $this->block( $job_id, $state, 'database-activation-plan-drift', false );
 			}
@@ -764,8 +764,8 @@ final class ImportDatabaseActivator {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only schema inspection of an exact validated table.
 		$rows = $wpdb->get_results( "SHOW COLUMNS FROM {$quoted}", ARRAY_A );
 		$out  = array();
-		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
-			if ( is_array( $row ) && is_string( $row['Field'] ?? null ) ) {
+		foreach ( $rows as $row ) {
+			if ( is_string( $row['Field'] ?? null ) ) {
 				$out[] = $row['Field'];
 			}
 		}
