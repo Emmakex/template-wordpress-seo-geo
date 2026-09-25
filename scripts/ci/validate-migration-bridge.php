@@ -109,6 +109,10 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStagingWorkspace.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileRestorer.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFileController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -1059,6 +1063,134 @@ if ( str_contains( $import_database_controller, 'admin_post_nopriv_' ) ) {
 		'portable-clone-import-database-public-endpoint',
 		'Portable Import database restore must never expose an unauthenticated endpoint.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+
+$import_file_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_file_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'current_root_files'",
+		"'current_root_bytes'",
+		"'active_files_untouched'",
+	) as $import_file_state_guard
+) {
+	if ( ! str_contains( $import_file_state_store, $import_file_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-file-state',
+			'Portable Import file restore state must remain bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStateStore.php',
+			$import_file_state_guard,
+			'missing'
+		);
+	}
+}
+
+$import_file_staging = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStagingWorkspace.php' );
+foreach (
+	array(
+		"private const DIRECTORY_NAME = 'seo-geo-migration-stage';",
+		"private const ROOT_IDS       = array( 'uploads', 'plugins', 'themes' );",
+		'WP_CONTENT_DIR',
+		'stage_file(',
+		"'.seo-geo-part'",
+		"hash_file( 'sha256', \$temp )",
+		'@rename( $temp, $destination )',
+		'payload_summary( string $job_id )',
+	) as $import_file_staging_guard
+) {
+	if ( ! str_contains( $import_file_staging, $import_file_staging_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-file-staging-workspace',
+			'Portable Import file staging must remain deterministic, protected, atomic and job-owned.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStagingWorkspace.php',
+			$import_file_staging_guard,
+			'missing'
+		);
+	}
+}
+foreach ( array( 'WP_PLUGIN_DIR', 'get_theme_root(', 'wp_upload_dir(' ) as $active_root_primitive ) {
+	if ( str_contains( $import_file_staging, $active_root_primitive ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-file-no-active-target',
+			'10E.2A.4.4 staging workspace must not resolve or write active WordPress file roots.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStagingWorkspace.php',
+			'job-owned wp-content staging only',
+			$active_root_primitive
+		);
+	}
+}
+
+$import_file_restorer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileRestorer.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_FILES = 25;',
+		'public const DEFAULT_BATCH_BYTES = 8388608;',
+		'$this->preflight->validate( $job_id )',
+		"'payload-verified'",
+		"'restore_allowed'",
+		"'active_tables_untouched'",
+		"'files-meta/'",
+		'$this->staging->stage_file(',
+		"'restore-files'",
+		"'active_files_untouched'",
+		"'import-files-runtime-guard-failed'",
+		"'import-files-source-integrity-failed'",
+		"'import-files-staging-reconciliation-failed'",
+	) as $import_file_restore_guard
+) {
+	if ( ! str_contains( $import_file_restorer, $import_file_restore_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-file-restore',
+			'10E.2A.4.4 destination file staging is missing an integrity/runtime/active-file safety boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileRestorer.php',
+			$import_file_restore_guard,
+			'missing'
+		);
+	}
+}
+foreach ( array( 'copy(', 'file_put_contents(', 'fwrite(', 'rename(', 'unlink(' ) as $file_restore_mutation ) {
+	if ( str_contains( $import_file_restorer, $file_restore_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-file-mutation-boundary',
+			'ImportFileRestorer must delegate all filesystem mutation to ImportFileStagingWorkspace.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileRestorer.php',
+			'filesystem mutation through staging workspace only',
+			$file_restore_mutation
+		);
+	}
+}
+
+$import_file_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFileController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_file_restore';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->restorer->advance( $job_id, $batch_files, $batch_bytes )',
+	) as $import_file_controller_guard
+) {
+	if ( ! str_contains( $import_file_controller, $import_file_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-file-entrypoint',
+			'Portable Import file staging endpoint must remain administrator/job-nonce gated and bounded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFileController.php',
+			$import_file_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $import_file_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-file-public-endpoint',
+		'Portable Import file staging must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFileController.php',
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
