@@ -11,6 +11,7 @@ namespace SeoGeo\MigrationBridge;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -23,6 +24,8 @@ use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportPreflight;
+use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -278,6 +281,27 @@ final class Plugin {
 	private static ?AdminCloneDeliveryController $clone_delivery_controller = null;
 
 	/**
+	 * Portable Clone import-preflight state store singleton.
+	 *
+	 * @var ImportStateStore|null
+	 */
+	private static ?ImportStateStore $clone_import_state_store = null;
+
+	/**
+	 * Portable Clone import intake/preflight singleton.
+	 *
+	 * @var ImportPreflight|null
+	 */
+	private static ?ImportPreflight $clone_import_preflight = null;
+
+	/**
+	 * Portable Clone import preflight controller singleton.
+	 *
+	 * @var AdminCloneImportController|null
+	 */
+	private static ?AdminCloneImportController $clone_import_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -327,6 +351,9 @@ final class Plugin {
 		self::$clone_delivery_state_store       ??= new DeliveryStateStore();
 		self::$clone_package_delivery           ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
 		self::$clone_delivery_controller        ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
+		self::$clone_import_state_store         ??= new ImportStateStore();
+		self::$clone_import_preflight           ??= new ImportPreflight( self::$clone_import_state_store, self::$clone_job_store );
+		self::$clone_import_controller          ??= new AdminCloneImportController( self::$clone_import_preflight );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -347,6 +374,7 @@ final class Plugin {
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
 		self::$clone_delivery_controller->boot();
+		self::$clone_import_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -460,6 +488,13 @@ final class Plugin {
 	 */
 	public static function clone_package_delivery(): ?PackageDelivery {
 		return self::$clone_package_delivery;
+	}
+
+	/**
+	 * Return the Portable Clone import preflight service.
+	 */
+	public static function clone_import_preflight(): ?ImportPreflight {
+		return self::$clone_import_preflight;
 	}
 
 	/**
