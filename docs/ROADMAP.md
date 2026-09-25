@@ -2215,7 +2215,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 accepted; 10E.2A.2 implementation candidate in progress**
+Status: **active — 10E.2A.1 and 10E.2A.2 accepted; 10E.2A.3 resumable export in progress**
 
 Purpose:
 
