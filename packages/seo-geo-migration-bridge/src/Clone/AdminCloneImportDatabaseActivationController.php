@@ -18,16 +18,32 @@ final class AdminCloneImportDatabaseActivationController {
 	public const ACTION       = 'seo_geo_migration_clone_import_database_activation';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_import_database_activation';
 
+	/**
+	 * Reversible database activator.
+	 *
+	 * @var ImportDatabaseActivator
+	 */
 	private ImportDatabaseActivator $activator;
 
+	/**
+	 * Construct the authenticated database-activation controller.
+	 *
+	 * @param ImportDatabaseActivator|null $activator Optional activator.
+	 */
 	public function __construct( ?ImportDatabaseActivator $activator = null ) {
 		$this->activator = $activator ?? new ImportDatabaseActivator();
 	}
 
+	/**
+	 * Register the authenticated admin-post endpoint.
+	 */
 	public function boot(): void {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle' ) );
 	}
 
+	/**
+	 * Handle one explicitly confirmed prepare, activate or rollback action.
+	 */
 	public function handle(): never {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die(
@@ -87,6 +103,9 @@ final class AdminCloneImportDatabaseActivationController {
 		exit;
 	}
 
+	/**
+	 * Return the posted clone job identifier.
+	 */
 	private function posted_job_id(): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Job ID scopes the nonce checked by the calling handler.
 		if ( ! isset( $_POST['clone_job_id'] ) ) {
