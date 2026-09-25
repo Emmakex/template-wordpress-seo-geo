@@ -109,27 +109,27 @@ final class CloneInventory {
 			);
 		}
 
-		$now = gmdate( DATE_ATOM );
+		$now   = gmdate( DATE_ATOM );
 		$state = array(
-			'schema_version' => CloneInventoryStore::SCHEMA_VERSION,
-			'job_id'         => $job_id,
-			'status'         => 'running',
-			'database'       => $database,
-			'roots'          => $roots,
-			'root_index'     => 0,
-			'pending_dirs'   => array( '' ),
-			'current_dir'    => '',
-			'after_name'     => '',
-			'file_count'     => 0,
-			'byte_count'     => 0,
-			'excluded_count' => 0,
-			'symlink_count'  => 0,
+			'schema_version'   => CloneInventoryStore::SCHEMA_VERSION,
+			'job_id'           => $job_id,
+			'status'           => 'running',
+			'database'         => $database,
+			'roots'            => $roots,
+			'root_index'       => 0,
+			'pending_dirs'     => array( '' ),
+			'current_dir'      => '',
+			'after_name'       => '',
+			'file_count'       => 0,
+			'byte_count'       => 0,
+			'excluded_count'   => 0,
+			'symlink_count'    => 0,
 			'unreadable_count' => 0,
-			'fingerprint'    => $fingerprint,
-			'blockers'       => array(),
-			'started_at'     => $now,
-			'updated_at'     => $now,
-			'completed_at'   => '',
+			'fingerprint'      => $fingerprint,
+			'blockers'         => array(),
+			'started_at'       => $now,
+			'updated_at'       => $now,
+			'completed_at'     => '',
 		);
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
@@ -198,7 +198,7 @@ final class CloneInventory {
 
 			$current_dir = (string) ( $state['current_dir'] ?? '' );
 			$absolute    = $this->join_path( $base, $current_dir );
-			$entries     = @scandir( $absolute, SCANDIR_SORT_ASCENDING );
+			$entries     = scandir( $absolute, SCANDIR_SORT_ASCENDING );
 			if ( false === $entries ) {
 				$state['unreadable_count'] = (int) ( $state['unreadable_count'] ?? 0 ) + 1;
 				$state['current_dir']       = '';
@@ -320,13 +320,13 @@ final class CloneInventory {
 
 		if ( ! $wpdb instanceof wpdb ) {
 			return array(
-				'table_prefix'   => '',
-				'table_count'    => 0,
-				'estimated_rows' => 0,
-				'estimated_bytes'=> 0,
-				'tables'         => array(),
-				'read_only'      => true,
-				'available'      => false,
+				'table_prefix'    => '',
+				'table_count'     => 0,
+				'estimated_rows'  => 0,
+				'estimated_bytes' => 0,
+				'tables'          => array(),
+				'read_only'       => true,
+				'available'       => false,
 			);
 		}
 
@@ -404,10 +404,13 @@ final class CloneInventory {
 
 	/**
 	 * Determine whether a source path is excluded from the clone payload.
+	 *
+	 * @param string $relative Relative path.
+	 * @param bool   $is_dir   Whether the path is a directory.
 	 */
 	private function excluded( string $relative, bool $is_dir ): bool {
-		$normalized = strtolower( wp_normalize_path( $relative ) );
-		$segments   = array_values( array_filter( explode( '/', $normalized ), 'strlen' ) );
+		$normalized    = strtolower( wp_normalize_path( $relative ) );
+		$segments      = array_values( array_filter( explode( '/', $normalized ), 'strlen' ) );
 		$excluded_dirs = array(
 			'.git',
 			'.svn',
@@ -513,6 +516,9 @@ final class CloneInventory {
 
 	/**
 	 * Chain one deterministic fingerprint record.
+	 *
+	 * @param string $previous Previous chain hash.
+	 * @param string $record   Deterministic record.
 	 */
 	private function chain_hash( string $previous, string $record ): string {
 		return hash( 'sha256', $previous . "\n" . $record );
@@ -520,6 +526,9 @@ final class CloneInventory {
 
 	/**
 	 * Join normalized filesystem paths.
+	 *
+	 * @param string $base     Absolute base path.
+	 * @param string $relative Relative path.
 	 */
 	private function join_path( string $base, string $relative ): string {
 		return rtrim( wp_normalize_path( $base ), '/' )
