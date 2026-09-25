@@ -556,12 +556,7 @@ final class ImportEnvironmentRewriter {
 		}
 
 		if ( is_string( $value ) ) {
-			$result = $this->transform_plain_string( $value, $state, $verify );
-
-			return array(
-				'value' => $result['value'],
-				'state' => $result['state'],
-			);
+			return $this->transform_value( $value, $state, $depth, $verify );
 		}
 
 		if ( ! is_array( $value ) ) {
@@ -754,6 +749,14 @@ final class ImportEnvironmentRewriter {
 			return $this->block( $job_id, $state, 'import-rewrite-final-verification-failed', false );
 		}
 
+		$advisories = is_array( $state['advisories'] ?? null ) ? $state['advisories'] : array();
+		if ( 0 < (int) ( $state['credential_skips'] ?? 0 ) ) {
+			$advisories[] = 'credential-values-kept-opaque';
+		}
+		if ( 0 < (int) ( $state['opaque_serialized_skips'] ?? 0 ) ) {
+			$advisories[] = 'opaque-serialized-values-reviewed';
+		}
+		$state['advisories']   = array_values( array_unique( $advisories ) );
 		$state['status']       = 'complete';
 		$state['stage']        = 'complete';
 		$state['updated_at']   = gmdate( DATE_ATOM );
