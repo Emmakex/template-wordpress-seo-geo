@@ -228,8 +228,7 @@ final class LocalCloneBootstrapper {
 			return $this->block( $job_id, $state, 'bootstrap-release-owner-marker-changed' );
 		}
 
-		$target = untrailingslashit( wp_normalize_path( (string) $state['target_path'] ) );
-		$marker = $this->join_path( $target, self::OWNER_MARKER );
+		$target  = untrailingslashit( wp_normalize_path( (string) $state['target_path'] ) );
 		$entries = scandir( $target, SCANDIR_SORT_ASCENDING );
 		if ( false === $entries ) {
 			return $this->block( $job_id, $state, 'bootstrap-release-directory-read-failed' );
@@ -557,7 +556,7 @@ final class LocalCloneBootstrapper {
 			'package_manifest_hash' => (string) ( $state['package_manifest_hash'] ?? '' ),
 			'source_fingerprint'    => (string) ( $state['source_fingerprint'] ?? '' ),
 		);
-		$json = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$json    = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		if ( ! is_string( $json ) ) {
 			$json = '{}';
 		}
