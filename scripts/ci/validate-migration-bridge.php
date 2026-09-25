@@ -860,8 +860,9 @@ foreach (
 		"'import-payload-checksum-mismatch'",
 		"'payload-verified'",
 		"'restore-runtime-guard-required'",
-		"\$import['full_payload_verified'] = true;",
-		"\$import['restore_allowed']       = true;",
+		'$this->preflight->validate( $job_id )',
+		"'payload-verified'",
+		"'restore_allowed'",
 		"'verify'",
 	) as $import_payload_guard
 ) {
