@@ -17,8 +17,8 @@ use RecursiveIteratorIterator;
  * Owns all export payload filesystem writes and cleanup.
  */
 final class ExportWorkspace {
-	public const DIRECTORY_NAME          = 'seo-geo-migration-bridge';
-	public const DELIVERY_DIRECTORY_NAME = 'seo-geo-migration-bridge-delivery';
+	public const DIRECTORY_NAME                   = 'seo-geo-migration-bridge';
+	public const DELIVERY_DIRECTORY_NAME          = 'seo-geo-migration-bridge-delivery';
 	public const DESTINATION_STAGE_DIRECTORY_NAME = 'seo-geo-migration-stage';
 
 	private const DESTINATION_STAGE_ROOT_IDS = array( 'uploads', 'plugins', 'themes' );
@@ -919,7 +919,7 @@ final class ExportWorkspace {
 			return null;
 		}
 
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rename -- Atomic promotion remains inside one job-owned destination staging directory.
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- Atomic promotion remains inside one job-owned destination staging directory.
 		if ( ! @rename( $temp, $destination ) ) {
 			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only failed job-owned partial destination staging file.
 			@unlink( $temp );
