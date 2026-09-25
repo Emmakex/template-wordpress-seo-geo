@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Operator;
 
+use SeoGeo\MigrationBridge\Clone\AdminCloneController;
+use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\IncrementalBaselineCapture;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
@@ -86,6 +88,7 @@ final class AdminOperatorScreen {
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
 			<?php $this->render_baseline_result_notice(); ?>
 			<?php $this->render_dependency_review_result_notice(); ?>
+			<?php $this->render_clone_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -214,6 +217,7 @@ final class AdminOperatorScreen {
 					<?php wp_nonce_field( AdminSandboxHandoffController::NONCE_ACTION ); ?>
 					<?php submit_button( $this->copy->text( 'sandbox_handoff_button' ), 'secondary', 'submit', false ); ?>
 				</form>
+				<?php $this->render_clone_planning_section(); ?>
 			<?php endif; ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'privacy_heading' ) ); ?></h2>
@@ -279,6 +283,93 @@ final class AdminOperatorScreen {
 		<div class="notice notice-success is-dismissible">
 			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after creating a Portable Clone planning job.
+	 */
+	private function render_clone_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified admin action.
+		$status = isset( $_GET['seo_geo_clone_job'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_job'] ) )
+			: '';
+
+		if ( 'created' !== $status ) {
+			return;
+		}
+		?>
+		<div class="notice notice-success is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( 'clone_job_created' ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render Phase 10E.2A.1 planning-only Portable Clone controls.
+	 */
+	private function render_clone_planning_section(): void {
+		$latest = ( new CloneJobStore() )->latest();
+		?>
+		<h2><?php echo esc_html( $this->copy->text( 'clone_heading' ) ); ?></h2>
+		<p><?php echo esc_html( $this->copy->text( 'clone_help' ) ); ?></p>
+		<div style="display:flex;gap:8px;flex-wrap:wrap">
+			<?php $this->render_clone_job_form( 'local-clone', 'clone_local_button' ); ?>
+			<?php $this->render_clone_job_form( 'export', 'clone_export_button' ); ?>
+			<?php $this->render_clone_job_form( 'import', 'clone_import_button' ); ?>
+		</div>
+		<?php if ( is_array( $latest ) ) : ?>
+			<h3><?php echo esc_html( $this->copy->text( 'clone_latest_heading' ) ); ?></h3>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_job_id' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $latest['job_id'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_operation' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $latest['operation'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_phase' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $latest['phase'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $latest['status'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_progress' ) ); ?></th>
+						<td>
+							<?php
+							$counters = is_array( $latest['counters'] ?? null ) ? $latest['counters'] : array();
+							$done     = (int) ( $counters['completed'] ?? 0 );
+							$total    = $counters['total'] ?? null;
+							echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total );
+							?>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render one Portable Clone planning-job form.
+	 *
+	 * @param string $operation Operation identifier.
+	 * @param string $button_key Localized button key.
+	 */
+	private function render_clone_job_form( string $operation, string $button_key ): void {
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneController::ACTION ); ?>">
+			<input type="hidden" name="clone_operation" value="<?php echo esc_attr( $operation ); ?>">
+			<?php wp_nonce_field( AdminCloneController::NONCE_ACTION ); ?>
+			<?php submit_button( $this->copy->text( $button_key ), 'secondary', 'submit', false ); ?>
+		</form>
 		<?php
 	}
 
