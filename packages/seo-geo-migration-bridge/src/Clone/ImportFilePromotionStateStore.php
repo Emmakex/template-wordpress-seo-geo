@@ -120,33 +120,33 @@ final class ImportFilePromotionStateStore {
 		}
 
 		return array(
-			'schema_version'      => self::SCHEMA_VERSION,
-			'job_id'              => $job_id,
-			'status'              => $status,
-			'activation_plan_hash'=> $this->hash( $state['activation_plan_hash'] ?? '' ),
-			'file_fingerprint'    => $this->hash( $state['file_fingerprint'] ?? '' ),
-			'copy_fingerprint'    => $this->hash( $state['copy_fingerprint'] ?? '' ),
-			'active_fingerprint'  => $this->hash( $state['active_fingerprint'] ?? '' ),
-			'runtime_before'      => $this->runtime( $state['runtime_before'] ?? array() ),
-			'runtime_target'      => $this->runtime( $state['runtime_target'] ?? array() ),
-			'roots'               => $roots,
-			'root_index'          => max( 0, min( 3, (int) ( $state['root_index'] ?? 0 ) ) ),
-			'pending_dirs'        => $this->paths( $state['pending_dirs'] ?? array() ),
-			'current_dir'         => $this->relative( $state['current_dir'] ?? '' ),
-			'after_name'          => $this->name( $state['after_name'] ?? '' ),
-			'file_count'          => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
-			'byte_count'          => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
-			'verify_file_count'   => max( 0, (int) ( $state['verify_file_count'] ?? 0 ) ),
-			'verify_byte_count'   => max( 0, (int) ( $state['verify_byte_count'] ?? 0 ) ),
-			'database_activated'  => true === ( $state['database_activated'] ?? false ),
-			'rollback_available'  => true === ( $state['rollback_available'] ?? false ),
-			'handoff_ready'       => true === ( $state['handoff_ready'] ?? false ),
-			'blockers'            => $this->codes( $state['blockers'] ?? array() ),
-			'prepared_at'         => $this->timestamp( $state['prepared_at'] ?? '' ),
-			'promoted_at'         => $this->timestamp( $state['promoted_at'] ?? '' ),
-			'verified_at'         => $this->timestamp( $state['verified_at'] ?? '' ),
-			'rolled_back_at'      => $this->timestamp( $state['rolled_back_at'] ?? '' ),
-			'updated_at'          => $this->timestamp( $state['updated_at'] ?? '' ),
+			'schema_version'       => self::SCHEMA_VERSION,
+			'job_id'               => $job_id,
+			'status'               => $status,
+			'activation_plan_hash' => $this->hash( $state['activation_plan_hash'] ?? '' ),
+			'file_fingerprint'     => $this->hash( $state['file_fingerprint'] ?? '' ),
+			'copy_fingerprint'     => $this->hash( $state['copy_fingerprint'] ?? '' ),
+			'active_fingerprint'   => $this->hash( $state['active_fingerprint'] ?? '' ),
+			'runtime_before'       => $this->runtime( $state['runtime_before'] ?? array() ),
+			'runtime_target'       => $this->runtime( $state['runtime_target'] ?? array() ),
+			'roots'                => $roots,
+			'root_index'           => max( 0, min( 3, (int) ( $state['root_index'] ?? 0 ) ) ),
+			'pending_dirs'         => $this->paths( $state['pending_dirs'] ?? array() ),
+			'current_dir'          => $this->relative( $state['current_dir'] ?? '' ),
+			'after_name'           => $this->name( $state['after_name'] ?? '' ),
+			'file_count'           => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
+			'byte_count'           => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
+			'verify_file_count'    => max( 0, (int) ( $state['verify_file_count'] ?? 0 ) ),
+			'verify_byte_count'    => max( 0, (int) ( $state['verify_byte_count'] ?? 0 ) ),
+			'database_activated'   => true === ( $state['database_activated'] ?? false ),
+			'rollback_available'   => true === ( $state['rollback_available'] ?? false ),
+			'handoff_ready'        => true === ( $state['handoff_ready'] ?? false ),
+			'blockers'             => $this->codes( $state['blockers'] ?? array() ),
+			'prepared_at'          => $this->timestamp( $state['prepared_at'] ?? '' ),
+			'promoted_at'          => $this->timestamp( $state['promoted_at'] ?? '' ),
+			'verified_at'          => $this->timestamp( $state['verified_at'] ?? '' ),
+			'rolled_back_at'       => $this->timestamp( $state['rolled_back_at'] ?? '' ),
+			'updated_at'           => $this->timestamp( $state['updated_at'] ?? '' ),
 		);
 	}
 
@@ -187,10 +187,8 @@ final class ImportFilePromotionStateStore {
 
 		$template   = is_array( $runtime ) && is_string( $runtime['template'] ?? null ) ? $runtime['template'] : '';
 		$stylesheet = is_array( $runtime ) && is_string( $runtime['stylesheet'] ?? null ) ? $runtime['stylesheet'] : '';
-		foreach ( array( 'template' => &$template, 'stylesheet' => &$stylesheet ) as &$theme ) {
-			$theme = 191 >= strlen( $theme ) && 1 === preg_match( '/^[A-Za-z0-9._-]+$/', $theme ) ? $theme : '';
-		}
-		unset( $theme );
+		$template   = 191 >= strlen( $template ) && 1 === preg_match( '/^[A-Za-z0-9._-]+$/', $template ) ? $template : '';
+		$stylesheet = 191 >= strlen( $stylesheet ) && 1 === preg_match( '/^[A-Za-z0-9._-]+$/', $stylesheet ) ? $stylesheet : '';
 
 		return array(
 			'active_plugins' => array_values( array_unique( $plugins ) ),
