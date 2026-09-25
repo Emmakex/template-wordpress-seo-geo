@@ -187,8 +187,8 @@ final class ImportFileRestorer {
 			'expected_file_count'    => max( 0, (int) ( $manifest['file_count'] ?? 0 ) ),
 			'expected_byte_count'    => max( 0, (int) ( $manifest['payload_bytes'] ?? 0 ) ),
 			'roots_completed'        => 0,
-			'current_root_files'      => 0,
-			'current_root_bytes'      => 0,
+			'current_root_files'     => 0,
+			'current_root_bytes'     => 0,
 			'active_files_untouched' => true,
 			'blockers'               => array(),
 			'started_at'             => $now,
@@ -277,12 +277,12 @@ final class ImportFileRestorer {
 						return $this->block( $job_id, $state, 'import-files-root-count-mismatch', false );
 					}
 
-					$state['root_index']          = $root_index + 1;
-					$state['roots_completed']     = (int) ( $state['roots_completed'] ?? 0 ) + 1;
-					$state['pending_dirs']        = array( '' );
-					$state['current_root_files']  = 0;
-					$state['current_root_bytes']  = 0;
-					$state['updated_at']          = gmdate( DATE_ATOM );
+					$state['root_index']         = $root_index + 1;
+					$state['roots_completed']    = (int) ( $state['roots_completed'] ?? 0 ) + 1;
+					$state['pending_dirs']       = array( '' );
+					$state['current_root_files'] = 0;
+					$state['current_root_bytes'] = 0;
+					$state['updated_at']         = gmdate( DATE_ATOM );
 					continue;
 				}
 
@@ -304,7 +304,7 @@ final class ImportFileRestorer {
 
 			$current_dir = (string) ( $state['current_dir'] ?? '' );
 			$absolute    = $this->join_path( $source_base, $current_dir );
-			if ( ! str_starts_with( $absolute, trailingslashit( wp_normalize_path( $source_base ) ) ) && $absolute !== untrailingslashit( wp_normalize_path( $source_base ) ) ) {
+			if ( ! str_starts_with( $absolute, trailingslashit( wp_normalize_path( $source_base ) ) ) && untrailingslashit( wp_normalize_path( $source_base ) ) !== $absolute ) {
 				return $this->block( $job_id, $state, 'import-files-source-path-unsafe', false );
 			}
 
@@ -421,8 +421,8 @@ final class ImportFileRestorer {
 			! is_array( $summary )
 			|| (int) ( $state['file_count'] ?? -1 ) !== (int) ( $manifest['file_count'] ?? -2 )
 			|| (int) ( $state['byte_count'] ?? -1 ) !== (int) ( $manifest['payload_bytes'] ?? -2 )
-			|| (int) $summary['files'] !== (int) ( $manifest['file_count'] ?? -2 )
-			|| (int) $summary['bytes'] !== (int) ( $manifest['payload_bytes'] ?? -2 )
+			|| (int) ( $manifest['file_count'] ?? -2 ) !== (int) $summary['files']
+			|| (int) ( $manifest['payload_bytes'] ?? -2 ) !== (int) $summary['bytes']
 			|| (int) ( $state['roots_completed'] ?? -1 ) !== (int) ( $state['root_count'] ?? -2 )
 		) {
 			return $this->block( $job_id, $state, 'import-files-staging-reconciliation-failed', false );
@@ -633,12 +633,12 @@ final class ImportFileRestorer {
 				return false;
 			}
 			$seen[ $id ] = true;
-			$files      += max( 0, (int) ( $root['file_count'] ?? 0 ) );
-			$bytes      += max( 0, (int) ( $root['byte_count'] ?? 0 ) );
+			$files += max( 0, (int) ( $root['file_count'] ?? 0 ) );
+			$bytes += max( 0, (int) ( $root['byte_count'] ?? 0 ) );
 		}
 
-		return $files === max( 0, (int) ( $manifest['file_count'] ?? -1 ) )
-			&& $bytes === max( 0, (int) ( $manifest['payload_bytes'] ?? -1 ) );
+		return max( 0, (int) ( $manifest['file_count'] ?? -1 ) ) === $files
+			&& max( 0, (int) ( $manifest['payload_bytes'] ?? -1 ) ) === $bytes;
 	}
 
 	/**
@@ -679,9 +679,9 @@ final class ImportFileRestorer {
 		$payload_path = 'files/' . $root_id . '/' . $relative;
 		if (
 			! is_array( $record )
-			|| $root_id !== ( $record['root'] ?? null )
-			|| $relative !== ( $record['relative_path'] ?? null )
-			|| $payload_path !== ( $record['payload_path'] ?? null )
+			|| ( $record['root'] ?? null ) !== $root_id
+			|| ( $record['relative_path'] ?? null ) !== $relative
+			|| ( $record['payload_path'] ?? null ) !== $payload_path
 			|| 'copied' !== ( $record['export_status'] ?? null )
 			|| 0 > (int) ( $record['byte_count'] ?? -1 )
 			|| ! is_string( $record['sha256'] ?? null )
