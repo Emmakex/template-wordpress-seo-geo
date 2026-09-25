@@ -19,8 +19,18 @@ final class ImportDatabaseActivationStateStore {
 	public const SCHEMA_VERSION = 1;
 	public const RELATIVE_PATH  = 'import/activation/database-state.json';
 
+	/**
+	 * Private job workspace.
+	 *
+	 * @var ExportWorkspace
+	 */
 	private ExportWorkspace $workspace;
 
+	/**
+	 * Construct the external activation-state store.
+	 *
+	 * @param ExportWorkspace|null $workspace Optional private workspace.
+	 */
 	public function __construct( ?ExportWorkspace $workspace = null ) {
 		$this->workspace = $workspace ?? new ExportWorkspace();
 	}
@@ -28,6 +38,7 @@ final class ImportDatabaseActivationStateStore {
 	/**
 	 * Return one normalized database-activation state.
 	 *
+	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
 	 */
 	public function get( string $job_id ): ?array {
@@ -44,7 +55,8 @@ final class ImportDatabaseActivationStateStore {
 	/**
 	 * Atomically persist one normalized state outside the database.
 	 *
-	 * @param array<string,mixed> $state State.
+	 * @param string              $job_id Clone job identifier.
+	 * @param array<string,mixed> $state  State.
 	 */
 	public function save( string $job_id, array $state ): bool {
 		$normalized = $this->normalize( $job_id, $state );
@@ -64,7 +76,10 @@ final class ImportDatabaseActivationStateStore {
 	}
 
 	/**
-	 * @param array<string,mixed> $state Raw state.
+	 * Normalize one external activation journal.
+	 *
+	 * @param string              $job_id Clone job identifier.
+	 * @param array<string,mixed> $state  Raw state.
 	 * @return array<string,mixed>|null
 	 */
 	private function normalize( string $job_id, array $state ): ?array {
@@ -115,28 +130,33 @@ final class ImportDatabaseActivationStateStore {
 		}
 
 		return array(
-			'schema_version'       => self::SCHEMA_VERSION,
-			'job_id'               => $job_id,
-			'status'               => $status,
-			'activation_plan_hash' => $this->hash( $state['activation_plan_hash'] ?? '' ),
-			'finalize_db_hash'     => $this->hash( $state['finalize_db_hash'] ?? '' ),
-			'tables'               => $tables,
-			'control_options'      => $controls,
-			'options_target'       => $this->table_name( $state['options_target'] ?? '' ),
-			'options_staging'      => $this->table_name( $state['options_staging'] ?? '' ),
-			'database_swapped'     => true === ( $state['database_swapped'] ?? false ),
-			'rollback_available'   => true === ( $state['rollback_available'] ?? false ),
+			'schema_version'         => self::SCHEMA_VERSION,
+			'job_id'                 => $job_id,
+			'status'                 => $status,
+			'activation_plan_hash'   => $this->hash( $state['activation_plan_hash'] ?? '' ),
+			'finalize_db_hash'       => $this->hash( $state['finalize_db_hash'] ?? '' ),
+			'tables'                 => $tables,
+			'control_options'        => $controls,
+			'options_target'         => $this->table_name( $state['options_target'] ?? '' ),
+			'options_staging'        => $this->table_name( $state['options_staging'] ?? '' ),
+			'database_swapped'       => true === ( $state['database_swapped'] ?? false ),
+			'rollback_available'     => true === ( $state['rollback_available'] ?? false ),
 			'active_files_untouched' => true === ( $state['active_files_untouched'] ?? true ),
-			'handoff_ready'        => true === ( $state['handoff_ready'] ?? false ),
-			'blockers'             => $this->codes( $state['blockers'] ?? array() ),
-			'prepared_at'          => $this->timestamp( $state['prepared_at'] ?? '' ),
-			'activated_at'         => $this->timestamp( $state['activated_at'] ?? '' ),
-			'verified_at'          => $this->timestamp( $state['verified_at'] ?? '' ),
-			'rolled_back_at'       => $this->timestamp( $state['rolled_back_at'] ?? '' ),
-			'updated_at'           => $this->timestamp( $state['updated_at'] ?? '' ),
+			'handoff_ready'          => true === ( $state['handoff_ready'] ?? false ),
+			'blockers'               => $this->codes( $state['blockers'] ?? array() ),
+			'prepared_at'            => $this->timestamp( $state['prepared_at'] ?? '' ),
+			'activated_at'           => $this->timestamp( $state['activated_at'] ?? '' ),
+			'verified_at'            => $this->timestamp( $state['verified_at'] ?? '' ),
+			'rolled_back_at'         => $this->timestamp( $state['rolled_back_at'] ?? '' ),
+			'updated_at'             => $this->timestamp( $state['updated_at'] ?? '' ),
 		);
 	}
 
+	/**
+	 * Normalize one table-name candidate.
+	 *
+	 * @param mixed $name Table-name candidate.
+	 */
 	private function table_name( mixed $name ): string {
 		return is_string( $name )
 			&& '' !== $name
@@ -146,11 +166,19 @@ final class ImportDatabaseActivationStateStore {
 			: '';
 	}
 
+	/**
+	 * Normalize one SHA-256 candidate.
+	 *
+	 * @param mixed $hash Hash candidate.
+	 */
 	private function hash( mixed $hash ): string {
 		return is_string( $hash ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $hash ) ? $hash : '';
 	}
 
 	/**
+	 * Normalize bounded blocker codes.
+	 *
+	 * @param mixed $codes Blocker-code candidates.
 	 * @return list<string>
 	 */
 	private function codes( mixed $codes ): array {
@@ -168,6 +196,11 @@ final class ImportDatabaseActivationStateStore {
 		return array_values( array_unique( $out ) );
 	}
 
+	/**
+	 * Normalize one bounded timestamp string.
+	 *
+	 * @param mixed $value Timestamp candidate.
+	 */
 	private function timestamp( mixed $value ): string {
 		return is_string( $value ) ? substr( $value, 0, 40 ) : '';
 	}
