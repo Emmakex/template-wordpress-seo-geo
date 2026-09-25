@@ -307,6 +307,7 @@ source scripts/ci/migration-bridge-portable-clone-contract-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-inventory-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-db-export-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-file-export-acceptance.sh
+source scripts/ci/migration-bridge-portable-clone-package-integrity-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-handoff-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-lab-acceptance.sh
 source scripts/ci/migration-bridge-migration-engine-acceptance.sh
@@ -324,4 +325,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted a fatal, warning, notice or uncaught error" "no PHP runtime diagnostics" "$MATCH" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; Phase 8B public baseline capture/persistence passed; Phase 8C dependency graph passed; bounded dependency review planning passed; Portable Clone 10E.2A.1 contract passed; 10E.2A.2 read-only source inventory/destination planning passed; 10E.2A.3.1 resumable private database export passed; Phase 8D sandbox lab passed; Phase 8E Migration Engine passed; Phase 8F SEO/GEO parity engine passed; Phase 8G safe cutover/rollback passed; Phase 8H migration report passed; Phase 8I operator UI passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"
+printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; Phase 8B public baseline capture/persistence passed; Phase 8C dependency graph passed; bounded dependency review planning passed; Portable Clone 10E.2A.1 contract passed; 10E.2A.2 read-only source inventory/destination planning passed; 10E.2A.3.1 resumable private database export passed; 10E.2A.3.2 resumable private file export passed; 10E.2A.3.3 package manifest/integrity passed; Phase 8D sandbox lab passed; Phase 8E Migration Engine passed; Phase 8F SEO/GEO parity engine passed; Phase 8G safe cutover/rollback passed; Phase 8H migration report passed; Phase 8I operator UI passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"

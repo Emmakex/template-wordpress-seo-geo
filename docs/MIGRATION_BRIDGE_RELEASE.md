@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.12`;
+- current plugin version: `0.8.13`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -92,3 +92,8 @@ Phase 10E.2A.3.1 begins real Portable Clone payload creation. After a completed 
 ### Version 0.8.12 — resumable private file export
 
 Phase 10E.2A.3.2 adds the file-payload stage after database export. Accepted uploads/plugins/themes are traversed deterministically with the same exclusion policy as the source inventory and streamed into the private job workspace in bounded file-count/byte batches. Each copied file is SHA-256 verified and receives a bounded metadata record. Completion is refused if exported file count, total bytes or the chained source fingerprint differ from the completed inventory, protecting package assembly from source drift. Symlinks and excluded cache/backup/temp/log paths remain outside the payload. Production source files are read only; package assembly, authenticated delivery and retention cleanup remain 10E.2A.3.3/10E.2A.3.4.
+
+
+### Version 0.8.13 — package manifest + integrity
+
+Phase 10E.2A.3.3 builds the first complete Portable Clone package manifest. After database and file exports complete, Migration Bridge scans the private workspace in bounded file/byte batches, revalidates database schema/chunk hashes and file-payload hashes against their exporter evidence, and computes a deterministic SHA-256 checksum over normalized path + byte count + file hash records. A second resumable verification pass must reproduce the same file count, byte count and checksum before the package manifest records `verified=true`. Deliberate payload drift/tampering blocks completion. The package remains private/non-repository-safe and `delivery_ready=false`; authenticated archive delivery and retention cleanup remain 10E.2A.3.4.

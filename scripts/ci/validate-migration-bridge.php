@@ -96,10 +96,13 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/FileExportStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/FileExporter.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/PackageBuilder.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneFileExportController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminClonePackageController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -493,6 +496,90 @@ foreach (
 			'Portable Clone file export endpoint must remain capability/nonce gated and advance one bounded batch.',
 			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneFileExportController.php',
 			$file_export_controller_guard,
+			'missing'
+		);
+	}
+}
+
+
+$package_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/PackageStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_package_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'package_checksum'",
+		"'verification_checksum'",
+		"'package_manifest_hash'",
+	) as $package_state_guard
+) {
+	if ( ! str_contains( $package_state_store, $package_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-package-state',
+			'Portable Clone package integrity progress must remain bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/PackageStateStore.php',
+			$package_state_guard,
+			'missing'
+		);
+	}
+}
+
+$package_builder = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/PackageBuilder.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_FILES = 100;',
+		'public const DEFAULT_BATCH_BYTES = 16777216;',
+		'private function start_verification_pass(',
+		"\$state['stage']                 = 'verify';",
+		"\$state['stage']                 = 'complete';",
+		"'package-exported-payload-mismatch'",
+		"'package-integrity-verification-failed'",
+		"'workspace-excluding-package-metadata'",
+		"'verification_pass'  => true",
+		"'verified'           => true",
+		"'delivery_ready'              => false",
+		"'package/manifest.json'",
+	) as $package_builder_guard
+) {
+	if ( ! str_contains( $package_builder, $package_builder_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-package-integrity',
+			'Portable Clone package builder is missing a required resumability/tamper/integrity boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/PackageBuilder.php',
+			$package_builder_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(' ) as $package_mutation ) {
+	if ( str_contains( $package_builder, $package_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-package-workspace-boundary',
+			'PackageBuilder must delegate every payload filesystem mutation to ExportWorkspace.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/PackageBuilder.php',
+			'read/hash payload directly; writes only through ExportWorkspace',
+			$package_mutation
+		);
+	}
+}
+
+$package_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminClonePackageController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_package_integrity';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->builder->advance( $job_id, $batch_files, $batch_bytes )',
+	) as $package_controller_guard
+) {
+	if ( ! str_contains( $package_controller, $package_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-package-entrypoint',
+			'Portable Clone package endpoint must remain capability/nonce gated and advance one bounded batch.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminClonePackageController.php',
+			$package_controller_guard,
 			'missing'
 		);
 	}
