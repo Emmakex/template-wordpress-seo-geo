@@ -19,6 +19,8 @@ final class AdminCloneLocalPlanController {
 	public const NONCE_ACTION = 'seo_geo_migration_clone_local_plan';
 
 	/**
+	 * Local-clone destination-plan orchestrator.
+	 *
 	 * @var LocalCloneOrchestrator
 	 */
 	private LocalCloneOrchestrator $orchestrator;
@@ -66,10 +68,10 @@ final class AdminCloneLocalPlanController {
 			);
 		}
 
-		$target_path = isset( $_POST['local_clone_target_path'] )
+		$target_path   = isset( $_POST['local_clone_target_path'] )
 			? sanitize_text_field( wp_unslash( $_POST['local_clone_target_path'] ) )
 			: '';
-		$target_url = isset( $_POST['local_clone_target_url'] )
+		$target_url    = isset( $_POST['local_clone_target_url'] )
 			? esc_url_raw( wp_unslash( $_POST['local_clone_target_url'] ) )
 			: '';
 		$target_prefix = isset( $_POST['local_clone_target_prefix'] )
