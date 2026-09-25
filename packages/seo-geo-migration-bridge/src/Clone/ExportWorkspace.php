@@ -765,6 +765,24 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Read one already-verified extracted import payload file.
+	 *
+	 * @param string $job_id   Clone job identifier.
+	 * @param string $relative Package-relative file path.
+	 */
+	public function read_import_extracted_file( string $job_id, string $relative ): ?string {
+		$info = $this->import_extracted_file_info( $job_id, $relative );
+		if ( null === $info ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads only a preflighted, job-owned private extracted payload path.
+		$content = file_get_contents( $info['path'] );
+
+		return false === $content ? null : $content;
+	}
+
+	/**
 	 * Delete only the private workspace owned by one clone job.
 	 *
 	 * @param string $job_id Clone job identifier.

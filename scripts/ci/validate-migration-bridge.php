@@ -106,6 +106,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -937,6 +940,7 @@ foreach (
 		'import_archive_entries( string $job_id )',
 		'extract_import_archive_entry( string $job_id, string $name )',
 		'import_extracted_file_info( string $job_id, string $relative )',
+		'read_import_extracted_file( string $job_id, string $relative )',
 	) as $import_workspace_guard
 ) {
 	if ( ! str_contains( $export_workspace, $import_workspace_guard ) ) {
@@ -949,6 +953,117 @@ foreach (
 		);
 	}
 }
+
+$import_database_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_database_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'chunk_row_offset'",
+		"'active_tables_untouched'",
+		"'table-verify'",
+	) as $import_database_state_guard
+) {
+	if ( ! str_contains( $import_database_state_store, $import_database_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-database-state',
+			'Portable Import database restore state must remain bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseStateStore.php',
+			$import_database_state_guard,
+			'missing'
+		);
+	}
+}
+
+$import_database_restorer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_ROWS = 100;',
+		'$this->preflight->validate( $job_id )',
+		"'payload-verified'",
+		"'restore_allowed'",
+		'$this->workspace->read_import_extracted_file( $job_id, $path )',
+		"'START TRANSACTION'",
+		"'COMMIT'",
+		"'ROLLBACK'",
+		'$wpdb->insert( $staging_table, $row, $formats )',
+		"'restore-database'",
+		"'active_tables_untouched'",
+		"'import-database-staging-engine-not-transactional'",
+		"'import-database-runtime-guard-failed'",
+		"'import-database-manifest-changed'",
+		'FOREIGN\\s+KEY',
+		'REFERENCES',
+		'$this->options_table_transactional()',
+	) as $import_database_restore_guard
+) {
+	if ( ! str_contains( $import_database_restorer, $import_database_restore_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-database-restore',
+			'10E.2A.4.3 staging database restore is missing a required transaction/integrity/runtime safety boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
+			$import_database_restore_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'DROP TABLE', 'TRUNCATE TABLE', 'RENAME TABLE', 'ALTER TABLE' ) as $import_database_destructive_sql ) {
+	if ( str_contains( strtoupper( $import_database_restorer ), $import_database_destructive_sql ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-database-no-active-cutover',
+			'10E.2A.4.3 must not drop, truncate, rename or alter active destination tables.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
+			'job-owned staging CREATE/INSERT only',
+			$import_database_destructive_sql
+		);
+	}
+}
+
+if (
+	! str_contains( $import_database_restorer, "'sgm_' . substr( hash( 'sha256', \$job_id ), 0, 10 ) . '_'" )
+	|| ! str_contains( $import_database_restorer, "return 'CREATE TABLE ' . \$this->quote_identifier( \$staging_table )" )
+) {
+	fail_migration_bridge(
+		'portable-clone-import-database-staging-boundary',
+		'Database restore must create only deterministic job-owned staging tables.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
+		'deterministic sgm namespace + staging CREATE TABLE only',
+		'staging boundary mismatch'
+	);
+}
+
+$import_database_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_database_restore';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->restorer->advance( $job_id, $batch_rows )',
+	) as $import_database_controller_guard
+) {
+	if ( ! str_contains( $import_database_controller, $import_database_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-database-entrypoint',
+			'Portable Import database staging restore endpoint must remain administrator/job-nonce gated and bounded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseController.php',
+			$import_database_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $import_database_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-database-public-endpoint',
+		'Portable Import database restore must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
 
 $clone_inventory_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php' );
 foreach (

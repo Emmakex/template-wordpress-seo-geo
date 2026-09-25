@@ -482,13 +482,12 @@ Deliver:
 
 ### 10E.2A.4 — Portable import
 
-Status: **active — 10E.2A.4.1 is accepted in Migration Bridge 0.8.15; 10E.2A.4.2 full payload verification + resumable extraction is the 0.8.16 candidate**
+Status: **active — 10E.2A.4.1 and 10E.2A.4.2 are accepted; 10E.2A.4.3 transactional staging database restore is the Migration Bridge 0.8.17 candidate**
 
 Internal sequence:
 
 - **10E.2A.4.1 — intake + destination preflight:** complete in 0.8.15; stage the ZIP only in job-owned private storage; reject traversal/unknown roots/duplicate paths; validate package + child-manifest contracts and hashes; require an explicitly authorized isolated sandbox destination, noindex, outbound safety, recovery references and sufficient disk space. This subphase performs no restore and keeps `restore_allowed=false`.
-- **10E.2A.4.2 — full payload verification + resumable extraction:** active in 0.8.16; extract the already-preflighted ZIP only into a job-owned private import workspace in bounded resumable batches, freeze archive identity once payload work starts, replay the exact `lexicographic-bfs-path+bytes+sha256-v1` checksum excluding package metadata, and require exact file count + byte count + checksum parity. After checksum completion, the Bridge must run a fresh destination preflight; only a still-isolated/noindex/outbound-safe/recoverable/authorized destination may expose `full_payload_verified=true` and `restore_allowed=true`. Late destination drift blocks restore eligibility without requiring the verified private payload to be extracted again. Destination database/files are still untouched.
-- **10E.2A.4.3 — database restore:** bounded destination-only schema/row restore with resumable state.
+- **10E.2A.4.2 — full payload verification + resumable extraction:** complete in 0.8.16; extract only into private job storage, replay the exact package checksum, then rerun destination preflight before exposing restore eligibility. Destination drift keeps restore locked.\n- **10E.2A.4.3 — database restore:** active in 0.8.17; create/populate deterministic job-owned InnoDB staging tables only. Active destination tables are not altered. Every mutating row batch reruns the fresh restore gate; row inserts and resumable state are committed in the same transaction. Schemas with foreign keys/references or nontransactional engines are blocked in this first restore implementation. Final-table activation/swap is explicitly outside this subphase.
 - **10E.2A.4.4 — file restore:** bounded destination-only uploads/plugins/themes restore.
 - **10E.2A.4.5 — serialization-safe environment rewrite:** rewrite WordPress environment values without raw serialized-string replacement.
 - **10E.2A.4.6 — sandbox hardening + final integrity verification:** prove the restored target remains isolated and hand off only after the existing sandbox safety contract is satisfied.
