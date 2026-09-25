@@ -869,7 +869,7 @@ foreach (
 	if ( ! str_contains( $import_payload_verifier, $import_payload_guard ) ) {
 		fail_migration_bridge(
 			'portable-clone-import-payload-verification',
-			'Portable Import payload verification is missing a required private extraction/checksum boundary.',
+			'Portable Import payload verification is missing a required private extraction/checksum/fresh-preflight boundary.',
 			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
 			$import_payload_guard,
 			'missing'
