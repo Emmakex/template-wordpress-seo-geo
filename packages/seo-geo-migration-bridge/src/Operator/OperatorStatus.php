@@ -94,11 +94,11 @@ final class OperatorStatus {
 		?DependencyReviewStore $review_store = null,
 		?PortableCloneJobStore $portable_clone_store = null
 	) {
-		$this->baseline_store = $baseline_store ?? new BaselineSnapshotStore();
-		$this->cutover_store  = $cutover_store ?? new CutoverSnapshotStore();
-		$this->report_store   = $report_store ?? new MigrationReportStore();
-		$this->analyzer       = $analyzer ?? new SiteAnalyzer();
-		$this->graph          = $graph ?? new DependencyGraphBuilder();
+		$this->baseline_store       = $baseline_store ?? new BaselineSnapshotStore();
+		$this->cutover_store        = $cutover_store ?? new CutoverSnapshotStore();
+		$this->report_store         = $report_store ?? new MigrationReportStore();
+		$this->analyzer             = $analyzer ?? new SiteAnalyzer();
+		$this->graph                = $graph ?? new DependencyGraphBuilder();
 		$this->review_store         = $review_store ?? new DependencyReviewStore();
 		$this->portable_clone_store = $portable_clone_store ?? new PortableCloneJobStore();
 	}
@@ -121,10 +121,10 @@ final class OperatorStatus {
 		$sandbox        = $this->sandbox_status( $baseline );
 
 		return array(
-			'schema_version'  => 1,
-			'mode'            => 'operator-status-read-only',
-			'generated_at'    => gmdate( DATE_ATOM ),
-			'baseline'        => array(
+			'schema_version' => 1,
+			'mode'           => 'operator-status-read-only',
+			'generated_at'   => gmdate( DATE_ATOM ),
+			'baseline'       => array(
 				'available' => is_array( $baseline ),
 				'id'        => is_array( $baseline ) && is_string( $baseline['id'] ?? null ) ? $baseline['id'] : null,
 				'sha256'    => is_array( $baseline ) && is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
@@ -166,8 +166,8 @@ final class OperatorStatus {
 		$source       = 'live-read-only';
 
 		try {
-			$analysis     = $this->analyzer->analyze();
-			$graph        = $this->graph->build(
+			$analysis = $this->analyzer->analyze();
+			$graph    = $this->graph->build(
 				$analysis,
 				is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null
 			);
@@ -316,8 +316,8 @@ final class OperatorStatus {
 				'tables_copied'    => max( 0, (int) ( $progress['tables_copied'] ?? 0 ) ),
 				'rows_copied'      => max( 0, (int) ( $progress['rows_copied'] ?? 0 ) ),
 			),
-			'created_at'       => is_string( $job['created_at'] ?? null ) ? $job['created_at'] : null,
-			'updated_at'       => is_string( $job['updated_at'] ?? null ) ? $job['updated_at'] : null,
+			'created_at' => is_string( $job['created_at'] ?? null ) ? $job['created_at'] : null,
+			'updated_at' => is_string( $job['updated_at'] ?? null ) ? $job['updated_at'] : null,
 		);
 	}
 
@@ -340,8 +340,8 @@ final class OperatorStatus {
 		}
 
 		try {
-			$analysis         = $this->analyzer->analyze();
-			$graph            = $this->graph->build(
+			$analysis = $this->analyzer->analyze();
+			$graph    = $this->graph->build(
 				$analysis,
 				is_array( $baseline['snapshot'] ?? null ) ? $baseline['snapshot'] : null
 			);
