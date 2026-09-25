@@ -184,6 +184,12 @@ final class ImportFilePromotionPlanner {
 			);
 		}
 
+		$runtime_before = $this->current_runtime();
+		$runtime_target = $this->source_runtime( $job_id );
+		if ( null === $runtime_before || null === $runtime_target ) {
+			return null;
+		}
+
 		$now   = gmdate( DATE_ATOM );
 		$state = array(
 			'schema_version'       => ImportFilePromotionStateStore::SCHEMA_VERSION,
@@ -193,6 +199,8 @@ final class ImportFilePromotionPlanner {
 			'file_fingerprint'     => (string) ( $finalize['file_fingerprint'] ?? '' ),
 			'copy_fingerprint'     => hash( 'sha256', 'seo-geo-import-finalize-files-v1' ),
 			'active_fingerprint'   => hash( 'sha256', 'seo-geo-import-finalize-files-v1' ),
+			'runtime_before'       => $runtime_before,
+			'runtime_target'       => $runtime_target,
 			'roots'                => $plan,
 			'root_index'           => 0,
 			'pending_dirs'         => array( '' ),
@@ -267,6 +275,210 @@ final class ImportFilePromotionPlanner {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Return the currently runnable sandbox plugin/theme runtime for rollback.
+	 *
+	 * @return array{active_plugins:list<string>,template:string,stylesheet:string}|null
+	 */
+	private function current_runtime(): ?array {
+		$plugins    = get_option( 'active_plugins', array() );
+		$template   = get_option( 'template', '' );
+		$stylesheet = get_option( 'stylesheet', '' );
+		if ( ! is_array( $plugins ) || ! is_string( $template ) || ! is_string( $stylesheet ) ) {
+			return null;
+		}
+
+		$normalized = array();
+		foreach ( $plugins as $plugin ) {
+			if (
+				! is_string( $plugin )
+				|| '' === $plugin
+				|| 512 < strlen( $plugin )
+				|| str_contains( $plugin, '../' )
+				|| str_starts_with( $plugin, '/' )
+			) {
+				return null;
+			}
+			$normalized[] = wp_normalize_path( $plugin );
+		}
+
+		if (
+			'' === $template
+			|| '' === $stylesheet
+			|| 1 !== preg_match( '/^[A-Za-z0-9._-]+$/', $template )
+			|| 1 !== preg_match( '/^[A-Za-z0-9._-]+$/', $stylesheet )
+		) {
+			return null;
+		}
+
+		return array(
+			'active_plugins' => array_values( array_unique( $normalized ) ),
+			'template'       => $template,
+			'stylesheet'     => $stylesheet,
+		);
+	}
+
+	/**
+	 * Recover the source plugin/theme runtime from the checksum-verified DB payload.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @return array{active_plugins:list<string>,template:string,stylesheet:string}|null
+	 */
+	private function source_runtime( string $job_id ): ?array {
+		$json = $this->workspace->read_import_extracted_file( $job_id, 'database/manifest.json' );
+		if ( ! is_string( $json ) ) {
+			return null;
+		}
+
+		$manifest = json_decode( $json, true );
+		$source   = is_array( $manifest['source'] ?? null ) ? $manifest['source'] : array();
+		$prefix   = is_string( $source['table_prefix'] ?? null ) ? $source['table_prefix'] : '';
+		$tables   = is_array( $manifest['tables'] ?? null ) ? $manifest['tables'] : array();
+		if (
+			! is_array( $manifest )
+			|| 1 !== ( $manifest['schema_version'] ?? null )
+			|| 'database' !== ( $manifest['payload_class'] ?? null )
+			|| '' === $prefix
+		) {
+			return null;
+		}
+
+		$options_meta = null;
+		foreach ( $tables as $table ) {
+			if ( is_array( $table ) && $prefix . 'options' === ( $table['name'] ?? null ) ) {
+				$options_meta = $table;
+				break;
+			}
+		}
+		if ( ! is_array( $options_meta ) ) {
+			return null;
+		}
+
+		$columns = is_array( $options_meta['columns'] ?? null ) ? array_values( $options_meta['columns'] ) : array();
+		$name_i  = array_search( 'option_name', $columns, true );
+		$value_i = array_search( 'option_value', $columns, true );
+		if ( false === $name_i || false === $value_i ) {
+			return null;
+		}
+
+		$wanted = array(
+			'active_plugins' => null,
+			'template'       => null,
+			'stylesheet'     => null,
+		);
+		$chunks = is_array( $options_meta['chunks'] ?? null ) ? array_values( $options_meta['chunks'] ) : array();
+		if ( 500 < count( $chunks ) ) {
+			return null;
+		}
+
+		foreach ( $chunks as $index => $chunk_meta ) {
+			if ( ! is_array( $chunk_meta ) || ! is_string( $chunk_meta['path'] ?? null ) ) {
+				return null;
+			}
+			$path       = $chunk_meta['path'];
+			$info       = $this->workspace->import_extracted_file_info( $job_id, $path );
+			$chunk_json = $this->workspace->read_import_extracted_file( $job_id, $path );
+			if (
+				! is_array( $info )
+				|| ! is_string( $chunk_json )
+				|| (int) ( $chunk_meta['byte_count'] ?? -1 ) !== (int) $info['bytes']
+				|| ! $this->same_hash( $chunk_meta['sha256'] ?? '', $info['sha256'] ?? '' )
+			) {
+				return null;
+			}
+
+			$chunk = json_decode( $chunk_json, true );
+			$rows  = is_array( $chunk['rows'] ?? null ) ? $chunk['rows'] : array();
+			if (
+				! is_array( $chunk )
+				|| 1 !== ( $chunk['schema_version'] ?? null )
+				|| (int) ( $chunk['chunk_index'] ?? -1 ) !== $index
+				|| 'base64-or-null' !== ( $chunk['value_encoding'] ?? null )
+				|| $columns !== array_values( is_array( $chunk['columns'] ?? null ) ? $chunk['columns'] : array() )
+			) {
+				return null;
+			}
+
+			foreach ( $rows as $row ) {
+				if ( ! is_array( $row ) || ! isset( $row[ $name_i ] ) || ! isset( $row[ $value_i ] ) ) {
+					continue;
+				}
+				$name  = $this->decode_transport_value( $row[ $name_i ] );
+				$value = $this->decode_transport_value( $row[ $value_i ] );
+				if ( ! is_string( $name ) || ! array_key_exists( $name, $wanted ) || ! is_string( $value ) ) {
+					continue;
+				}
+				if ( null !== $wanted[ $name ] ) {
+					return null;
+				}
+				$wanted[ $name ] = $value;
+			}
+			if ( ! in_array( null, $wanted, true ) ) {
+				break;
+			}
+		}
+
+		if (
+			! is_string( $wanted['active_plugins'] )
+			|| ! is_string( $wanted['template'] )
+			|| ! is_string( $wanted['stylesheet'] )
+			|| '' === $wanted['template']
+			|| '' === $wanted['stylesheet']
+			|| 1 !== preg_match( '/^[A-Za-z0-9._-]+$/', $wanted['template'] )
+			|| 1 !== preg_match( '/^[A-Za-z0-9._-]+$/', $wanted['stylesheet'] )
+			|| ! is_serialized( $wanted['active_plugins'], false )
+		) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Verified WordPress active_plugins payload; classes remain disabled.
+		$plugins = @unserialize( $wanted['active_plugins'], array( 'allowed_classes' => false ) );
+		if ( ! is_array( $plugins ) ) {
+			return null;
+		}
+
+		$normalized = array();
+		foreach ( $plugins as $plugin ) {
+			if (
+				! is_string( $plugin )
+				|| '' === $plugin
+				|| 512 < strlen( $plugin )
+				|| str_contains( $plugin, '../' )
+				|| str_starts_with( $plugin, '/' )
+			) {
+				return null;
+			}
+			$normalized[] = wp_normalize_path( $plugin );
+		}
+
+		$bridge = defined( 'SEO_GEO_MIGRATION_BRIDGE_DIR' )
+			? plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' )
+			: 'seo-geo-migration-bridge/seo-geo-migration-bridge.php';
+		$normalized[] = $bridge;
+
+		return array(
+			'active_plugins' => array_values( array_unique( $normalized ) ),
+			'template'       => $wanted['template'],
+			'stylesheet'     => $wanted['stylesheet'],
+		);
+	}
+
+	/**
+	 * Decode one base64-or-null transport value.
+	 *
+	 * @param mixed $value Encoded value.
+	 */
+	private function decode_transport_value( mixed $value ): ?string {
+		if ( ! is_string( $value ) ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Binary-safe migration transport decoding.
+		$decoded = base64_decode( $value, true );
+
+		return false === $decoded ? null : $decoded;
 	}
 
 	/**
