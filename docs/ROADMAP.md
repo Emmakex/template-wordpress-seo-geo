@@ -2199,7 +2199,19 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.4.5 — serialization-safe environment rewrite in Migration Bridge 0.8.19.** Migration Bridge 0.8.18 is accepted on `main`: verified uploads/plugins/themes are restored only into `import/staged-files`, independently re-hashed, and active `wp-content` roots remain untouched. 10E.2A.4.5 rewrites supported WordPress environment URLs only inside deterministic job-owned staging tables, preserves supported serialized/JSON structures, keeps credential/token values opaque, and performs a second read-only idempotence pass before completion.
+Current execution pointer: **10E.2A.4.6.1 — read-only sandbox finalization preflight in Migration Bridge 0.8.20.** Migration Bridge 0.8.19 is accepted on `main`: staging environment rewrite is serialization-safe and idempotent with active tables/files untouched. 0.8.20 now fingerprints the fully rewritten staging database/files, rechecks sandbox hardening and locks an activation/rollback plan hash without mutating active targets.n-safe environment rewrite in Migration Bridge 0.8.19.** Migration Bridge 0.8.18 is accepted on `main`: verified uploads/plugins/themes are restored only into `import/staged-files`, independently re-hashed, and active `wp-content` roots remain untouched. 10E.2A.4.5 rewrites supported WordPress environment URLs only inside deterministic job-owned staging tables, preserves supported serialized/JSON structures, keeps credential/token values opaque, and performs a second read-only idempotence pass before completion.
+
+Migration Bridge v0.8.19 / 10E.2A.4.5 acceptance evidence:
+
+- accepted `main` commit `47e2d5718372c2b9217916503fbc77a6179893d0`;
+- post-merge Foundation CI `36160169424` passed;
+- post-merge Phase 1 Package CI `36160169445` passed;
+- post-merge PHP Quality CI `36160169454` passed;
+- post-merge WordPress Smoke CI `36160169450` passed;
+- post-merge Accessibility & Responsive CI `36160169326` passed;
+- post-merge Performance Baseline CI `36160169477` passed;
+- post-merge Migration Bridge Release CI `36160169468` passed;
+- deterministic installable v0.8.19 ZIP SHA-256: `c61c9e64372965febbbe411d0b46e165950e4f6426327e2a078dc523fd36b5c0`.
 
 Migration Bridge v0.8.18 / 10E.2A.4.4 acceptance evidence:
 
