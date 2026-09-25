@@ -19,50 +19,96 @@ use wpdb;
  * and WordPress file roots. Promotion happens only after this planner reaches ready.
  */
 final class ImportFinalizationPlanner {
-	public const MIN_BATCH_ROWS       = 1;
-	public const MAX_BATCH_ROWS       = 1000;
-	public const DEFAULT_BATCH_ROWS   = 200;
-	public const MIN_BATCH_FILES      = 1;
-	public const MAX_BATCH_FILES      = 500;
-	public const DEFAULT_BATCH_FILES  = 100;
-	public const MIN_BATCH_BYTES      = 1048576;
-	public const MAX_BATCH_BYTES      = 134217728;
-	public const DEFAULT_BATCH_BYTES  = 16777216;
+	public const MIN_BATCH_ROWS      = 1;
+	public const MAX_BATCH_ROWS      = 1000;
+	public const DEFAULT_BATCH_ROWS  = 200;
+	public const MIN_BATCH_FILES     = 1;
+	public const MAX_BATCH_FILES     = 500;
+	public const DEFAULT_BATCH_FILES = 100;
+	public const MIN_BATCH_BYTES     = 1048576;
+	public const MAX_BATCH_BYTES     = 134217728;
+	public const DEFAULT_BATCH_BYTES = 16777216;
 
-	private const DB_SEED                  = 'seo-geo-import-finalize-db-v1';
-	private const FILE_SEED                = 'seo-geo-import-finalize-files-v1';
-	private const MAX_PENDING_DIRECTORIES  = 50000;
-	private const MAX_ENTRY_OPERATIONS     = 8000;
+	private const DB_SEED                 = 'seo-geo-import-finalize-db-v1';
+	private const FILE_SEED               = 'seo-geo-import-finalize-files-v1';
+	private const MAX_PENDING_DIRECTORIES = 50000;
+	private const MAX_ENTRY_OPERATIONS    = 8000;
 
-	/** @var ImportFinalizeStateStore */
+	/**
+	 * Finalization state store.
+	 *
+	 * @var ImportFinalizeStateStore
+	 */
 	private ImportFinalizeStateStore $store;
 
-	/** @var ImportStateStore */
+	/**
+	 * Portable Import state store.
+	 *
+	 * @var ImportStateStore
+	 */
 	private ImportStateStore $import_state;
 
-	/** @var ImportPayloadStateStore */
+	/**
+	 * Verified payload state store.
+	 *
+	 * @var ImportPayloadStateStore
+	 */
 	private ImportPayloadStateStore $payload_state;
 
-	/** @var ImportDatabaseStateStore */
+	/**
+	 * Staging database restore state store.
+	 *
+	 * @var ImportDatabaseStateStore
+	 */
 	private ImportDatabaseStateStore $database_state;
 
-	/** @var ImportFileStateStore */
+	/**
+	 * Staging file restore state store.
+	 *
+	 * @var ImportFileStateStore
+	 */
 	private ImportFileStateStore $file_state;
 
-	/** @var ImportRewriteStateStore */
+	/**
+	 * Environment rewrite state store.
+	 *
+	 * @var ImportRewriteStateStore
+	 */
 	private ImportRewriteStateStore $rewrite_state;
 
-	/** @var ImportDatabaseRestorer */
+	/**
+	 * Database staging-plan dependency.
+	 *
+	 * @var ImportDatabaseRestorer
+	 */
 	private ImportDatabaseRestorer $database_restorer;
 
-	/** @var CloneJobStore */
+	/**
+	 * Portable Clone job store.
+	 *
+	 * @var CloneJobStore
+	 */
 	private CloneJobStore $jobs;
 
-	/** @var ExportWorkspace */
+	/**
+	 * Private import workspace.
+	 *
+	 * @var ExportWorkspace
+	 */
 	private ExportWorkspace $workspace;
 
 	/**
 	 * Construct planner.
+	 *
+	 * @param ImportFinalizeStateStore|null $store             Optional finalization state store.
+	 * @param ImportStateStore|null         $import_state      Optional Portable Import state store.
+	 * @param ImportPayloadStateStore|null  $payload_state     Optional payload verification state store.
+	 * @param ImportDatabaseStateStore|null $database_state    Optional database staging state store.
+	 * @param ImportFileStateStore|null     $file_state        Optional file staging state store.
+	 * @param ImportRewriteStateStore|null  $rewrite_state     Optional environment rewrite state store.
+	 * @param ImportDatabaseRestorer|null   $database_restorer Optional database staging-plan dependency.
+	 * @param CloneJobStore|null            $jobs              Optional clone job store.
+	 * @param ExportWorkspace|null          $workspace         Optional private import workspace.
 	 */
 	public function __construct(
 		?ImportFinalizeStateStore $store = null,
@@ -229,12 +275,12 @@ final class ImportFinalizationPlanner {
 		$index  = (int) ( $state['database_table_index'] ?? 0 );
 
 		if ( $index >= count( $tables ) ) {
-			$state['stage']                = 'file-fingerprint';
-			$state['file_root_index']      = 0;
-			$state['file_pending_dirs']    = array( '' );
-			$state['file_current_dir']     = '';
-			$state['file_after_name']      = '';
-			$state['updated_at']           = gmdate( DATE_ATOM );
+			$state['stage']             = 'file-fingerprint';
+			$state['file_root_index']   = 0;
+			$state['file_pending_dirs'] = array( '' );
+			$state['file_current_dir']  = '';
+			$state['file_after_name']   = '';
+			$state['updated_at']        = gmdate( DATE_ATOM );
 
 			return $this->persist( $job_id, $state );
 		}
@@ -245,10 +291,10 @@ final class ImportFinalizationPlanner {
 			return $this->block( $job_id, $state, 'import-finalize-database-plan-invalid', false );
 		}
 
-		$columns = is_array( $spec['columns'] ?? null ) ? array_values( array_filter( $spec['columns'], 'is_string' ) ) : array();
-		$table   = is_string( $spec['staging_table'] ?? null ) ? $spec['staging_table'] : '';
-		$source  = is_string( $spec['source_table'] ?? null ) ? $spec['source_table'] : '';
-		$target  = is_string( $spec['target_table'] ?? null ) ? $spec['target_table'] : '';
+		$columns       = is_array( $spec['columns'] ?? null ) ? array_values( array_filter( $spec['columns'], 'is_string' ) ) : array();
+		$table         = is_string( $spec['staging_table'] ?? null ) ? $spec['staging_table'] : '';
+		$source        = is_string( $spec['source_table'] ?? null ) ? $spec['source_table'] : '';
+		$target        = is_string( $spec['target_table'] ?? null ) ? $spec['target_table'] : '';
 		$rows_expected = max( 0, (int) ( $spec['row_count'] ?? 0 ) );
 
 		if ( '' === $table || '' === $source || '' === $target || ( 0 < $rows_expected && array() === $columns ) ) {
@@ -256,7 +302,7 @@ final class ImportFinalizationPlanner {
 		}
 
 		if ( 0 === $offset ) {
-			$marker = 'table|' . $source . '|' . $target . '|' . $table . '|' . (string) $rows_expected;
+			$marker                        = 'table|' . $source . '|' . $target . '|' . $table . '|' . (string) $rows_expected;
 			$state['database_fingerprint'] = $this->chain_hash( (string) $state['database_fingerprint'], $marker );
 		}
 
@@ -374,8 +420,8 @@ final class ImportFinalizationPlanner {
 						return $this->block( $job_id, $state, 'import-finalize-file-directory-queue-limit', false );
 					}
 					$pending[]                       = $relative;
-					$state['file_pending_dirs']     = $pending;
-					$state['file_after_name']       = $entry;
+					$state['file_pending_dirs'] = $pending;
+					$state['file_after_name']   = $entry;
 
 					if ( $operations >= self::MAX_ENTRY_OPERATIONS ) {
 						$dir_finished = false;
@@ -647,7 +693,7 @@ final class ImportFinalizationPlanner {
 			return null;
 		}
 
-		$normalized = array();
+		$normalized  = array();
 		$total_files = 0;
 		$total_bytes = 0;
 		foreach ( $roots as $root ) {
@@ -670,8 +716,8 @@ final class ImportFinalizationPlanner {
 		}
 
 		if (
-			$total_files !== (int) ( $files['expected_file_count'] ?? -1 )
-			|| $total_bytes !== (int) ( $files['expected_byte_count'] ?? -1 )
+			(int) ( $files['expected_file_count'] ?? -1 ) !== $total_files
+			|| (int) ( $files['expected_byte_count'] ?? -1 ) !== $total_bytes
 		) {
 			return null;
 		}
@@ -682,9 +728,11 @@ final class ImportFinalizationPlanner {
 	/**
 	 * Build a deterministic activation + rollback plan without mutating active targets.
 	 *
-	 * @param string              $job_id Clone job identifier.
-	 * @param array<string,mixed> $database_plan Database staging plan.
-	 * @param list<array{id:string,file_count:int,byte_count:int}> $file_roots File roots.
+	 * @param string $job_id        Clone job identifier.
+	 * @param array  $database_plan Database staging plan.
+	 * @param array  $file_roots    File roots.
+	 * @phpstan-param array<string,mixed> $database_plan
+	 * @phpstan-param list<array{id:string,file_count:int,byte_count:int}> $file_roots
 	 * @return array{plan:array<string,mixed>,hash:string}|null
 	 */
 	private function activation_plan( string $job_id, array $database_plan, array $file_roots ): ?array {
@@ -708,12 +756,12 @@ final class ImportFinalizationPlanner {
 			}
 
 			$tables[] = array(
-				'source_table'  => (string) $table['source_table'],
-				'staging_table' => $staging,
-				'target_table'  => $target,
-				'target_exists' => $this->table_exists( $target ),
-				'rollback_table'=> $backup,
-				'row_count'     => max( 0, (int) ( $table['row_count'] ?? 0 ) ),
+				'source_table'   => (string) $table['source_table'],
+				'staging_table'  => $staging,
+				'target_table'   => $target,
+				'target_exists'  => $this->table_exists( $target ),
+				'rollback_table' => $backup,
+				'row_count'      => max( 0, (int) ( $table['row_count'] ?? 0 ) ),
 			);
 		}
 
@@ -739,13 +787,13 @@ final class ImportFinalizationPlanner {
 			}
 
 			$roots[] = array(
-				'id'            => $root_id,
-				'staged_root'   => $staged,
-				'active_root'   => trailingslashit( wp_normalize_path( $active ) ),
-				'candidate_root'=> trailingslashit( wp_normalize_path( $candidate ) ),
-				'rollback_root' => trailingslashit( wp_normalize_path( $rollback ) ),
-				'file_count'    => (int) $root['file_count'],
-				'byte_count'    => (int) $root['byte_count'],
+				'id'             => $root_id,
+				'staged_root'    => $staged,
+				'active_root'    => trailingslashit( wp_normalize_path( $active ) ),
+				'candidate_root' => trailingslashit( wp_normalize_path( $candidate ) ),
+				'rollback_root'  => trailingslashit( wp_normalize_path( $rollback ) ),
+				'file_count'     => (int) $root['file_count'],
+				'byte_count'     => (int) $root['byte_count'],
 			);
 		}
 
@@ -802,7 +850,7 @@ final class ImportFinalizationPlanner {
 			}
 		}
 
-		$order = $columns;
+		$order  = $columns;
 		$cursor = is_string( $spec['cursor_column'] ?? null ) ? $spec['cursor_column'] : '';
 		if ( '' !== $cursor && in_array( $cursor, $columns, true ) ) {
 			$order = array_merge( array( $cursor ), array_values( array_diff( $columns, array( $cursor ) ) ) );
@@ -825,8 +873,10 @@ final class ImportFinalizationPlanner {
 	/**
 	 * Encode one DB row in manifest column order using binary-safe base64 cells.
 	 *
-	 * @param list<string>        $columns Manifest column order.
-	 * @param array<string,mixed> $row     Database row.
+	 * @param array $columns Manifest column order.
+	 * @param array $row     Database row.
+	 * @phpstan-param list<string> $columns
+	 * @phpstan-param array<string,mixed> $row
 	 */
 	private function canonical_database_row( array $columns, array $row ): ?string {
 		$cells = array();
@@ -834,6 +884,7 @@ final class ImportFinalizationPlanner {
 			if ( ! array_key_exists( $column, $row ) ) {
 				return null;
 			}
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Binary-safe deterministic staging fingerprint encoding.
 			$cells[] = null === $row[ $column ] ? null : base64_encode( (string) $row[ $column ] );
 		}
 
@@ -981,11 +1032,11 @@ final class ImportFinalizationPlanner {
 	private function block( string $job_id, array $state, string $code, bool $retryable ): ?array {
 		$blockers                     = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[]                   = $code;
-		$state['status']              = 'blocked';
-		$state['activation_allowed']  = false;
-		$state['handoff_ready']       = false;
-		$state['blockers']            = array_values( array_unique( $blockers ) );
-		$state['updated_at']          = gmdate( DATE_ATOM );
+		$state['status']             = 'blocked';
+		$state['activation_allowed'] = false;
+		$state['handoff_ready']      = false;
+		$state['blockers']           = array_values( array_unique( $blockers ) );
+		$state['updated_at']         = gmdate( DATE_ATOM );
 
 		$this->store->save( $job_id, $state );
 		$this->jobs->transition( $job_id, $retryable ? 'failed-retryable' : 'failed-terminal', $code );
@@ -995,6 +1046,10 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Build deterministic rollback table name.
+	 *
+	 * @param string $prefix Destination table prefix.
+	 * @param string $token  Job-derived rollback token.
+	 * @param string $target Active target table name.
 	 */
 	private function rollback_table_name( string $prefix, string $token, string $target ): string {
 		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $prefix ) ) {
@@ -1008,6 +1063,8 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Whether one table exists exactly.
+	 *
+	 * @param string $table Table name.
 	 */
 	private function table_exists( string $table ): bool {
 		global $wpdb;
@@ -1015,8 +1072,9 @@ final class ImportFinalizationPlanner {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only exact table-existence guard.
 		$found = $wpdb->get_var(
-			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
 		);
 
 		return is_string( $found ) && $found === $table;
@@ -1024,6 +1082,9 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Chain one canonical record.
+	 *
+	 * @param string $previous Previous chain hash.
+	 * @param string $record   Canonical record.
 	 */
 	private function chain_hash( string $previous, string $record ): string {
 		return hash( 'sha256', $previous . "\n" . $record );
@@ -1031,6 +1092,8 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Validate table name.
+	 *
+	 * @param string $table Table name.
 	 */
 	private function valid_table_name( string $table ): bool {
 		return '' !== $table
@@ -1040,6 +1103,8 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Validate column identifier.
+	 *
+	 * @param string $column Column name.
 	 */
 	private function valid_column_name( string $column ): bool {
 		return '' !== $column
@@ -1049,6 +1114,8 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Quote validated identifier.
+	 *
+	 * @param string $identifier Validated identifier.
 	 */
 	private function quote_identifier( string $identifier ): string {
 		$tick = chr( 96 );
@@ -1058,6 +1125,8 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Validate one SHA-256.
+	 *
+	 * @param mixed $hash Candidate hash.
 	 */
 	private function valid_hash( mixed $hash ): bool {
 		return is_string( $hash ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $hash );
@@ -1065,6 +1134,9 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Constant-time hash compare.
+	 *
+	 * @param mixed $left  First candidate hash.
+	 * @param mixed $right Second candidate hash.
 	 */
 	private function same_hash( mixed $left, mixed $right ): bool {
 		return $this->valid_hash( $left )
@@ -1074,6 +1146,9 @@ final class ImportFinalizationPlanner {
 
 	/**
 	 * Join paths.
+	 *
+	 * @param string $base     Absolute base path.
+	 * @param string $relative Relative path.
 	 */
 	private function join_path( string $base, string $relative ): string {
 		return rtrim( wp_normalize_path( $base ), '/' )
