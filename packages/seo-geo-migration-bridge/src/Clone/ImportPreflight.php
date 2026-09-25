@@ -285,11 +285,11 @@ final class ImportPreflight {
 			)
 			&& hash_equals(
 				(string) $state['package_manifest_sha256'],
-				(string) ( $payload_state['package_manifest_sha256'] ?? '' )
+				(string) $payload_state['package_manifest_sha256']
 			)
 			&& hash_equals(
 				(string) $state['package_checksum'],
-				(string) ( $payload_state['expected_checksum'] ?? '' )
+				(string) $payload_state['expected_checksum']
 			);
 
 		if ( $payload_valid ) {
