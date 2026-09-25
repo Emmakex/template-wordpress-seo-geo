@@ -482,15 +482,18 @@ Deliver:
 
 ### 10E.2A.4 — Portable import
 
-Status: **active — 10E.2A.4.1 through 10E.2A.4.4 are accepted; 10E.2A.4.5 serialization-safe environment rewrite is the Migration Bridge 0.8.19 candidate**
+Status: **active — 10E.2A.4.1 through 10E.2A.4.5 are accepted; 10E.2A.4.6.1 sandbox activation plan + recovery contract is the Migration Bridge 0.8.20 candidate**
 
 Internal sequence:
 
 - **10E.2A.4.1 — intake + destination preflight:** complete in 0.8.15; stage the ZIP only in job-owned private storage; reject traversal/unknown roots/duplicate paths; validate package + child-manifest contracts and hashes; require an explicitly authorized isolated sandbox destination, noindex, outbound safety, recovery references and sufficient disk space. This subphase performs no restore and keeps `restore_allowed=false`.
 - **10E.2A.4.2 — full payload verification + resumable extraction:** complete in 0.8.16; extract only into private job storage, replay the exact package checksum, then rerun destination preflight before exposing restore eligibility. Destination drift keeps restore locked.\n- **10E.2A.4.3 — database restore:** complete in 0.8.17; create/populate deterministic job-owned InnoDB staging tables only. Active destination tables are not altered. Every mutating row batch reruns the fresh restore gate; row inserts and resumable state commit in the same transaction. Schemas with foreign keys/references or nontransactional engines are blocked in this first restore implementation. Final-table activation/swap is explicitly outside this subphase.
 - **10E.2A.4.4 — file restore:** complete in 0.8.18; copy only manifest-backed uploads/plugins/themes from the checksum-verified private extraction into `import/staged-files`, never active `wp-content`; batches are resumable and a second independent SHA-256 traversal reconciles exact file/byte totals before completion.
-- **10E.2A.4.5 — serialization-safe environment rewrite:** active in 0.8.19; rewrite supported WordPress staging-table environment URLs only. PHP serialized arrays/scalars and JSON containers are decoded structurally and re-encoded only when changed; unsupported/opaque serialized bytes are never raw-replaced, and any such opaque value that still contains a source-environment URL blocks completion. Credential/token keys remain opaque and are surfaced as advisories. A second read-only pass must be idempotent. Active destination tables and staged file bytes remain untouched.
-- **10E.2A.4.6 — sandbox hardening + final integrity verification:** prove the restored target remains isolated and hand off only after the existing sandbox safety contract is satisfied.
+- **10E.2A.4.5 — serialization-safe environment rewrite:** complete in 0.8.19; rewrite supported WordPress staging-table environment URLs only. PHP serialized arrays/scalars and JSON containers are decoded structurally and re-encoded only when changed; unsupported/opaque serialized bytes are never raw-replaced, and any such opaque value that still contains a source-environment URL blocks completion. Credential/token keys remain opaque and are surfaced as advisories. A second read-only pass is idempotent. Active destination tables and staged file bytes remain untouched.
+- **10E.2A.4.6.1 — activation plan + recovery contract:** 0.8.20 candidate; revalidate payload/database/file/rewrite identity, require fresh external database + wp-content recovery evidence, verify active/staging root separation and reserve deterministic rollback table names. Planner mutations are forbidden.
+- **10E.2A.4.6.2 — database activation:** planned; sandbox-only atomic swaps preserving rollback tables.
+- **10E.2A.4.6.3 — file-root promotion:** planned; sandbox-only bounded promotion preserving rollback roots.
+- **10E.2A.4.6.4 — final sandbox hardening + integrity:** planned; verify the activated clone and require the sandbox safety contract before handoff.
 
 Deliver:
 
