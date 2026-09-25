@@ -22,7 +22,7 @@ final class LocalCloneRuntimeBootstrapper {
 
 	private const MAX_PENDING_DIRECTORIES = 50000;
 	private const MAX_ENTRY_OPERATIONS    = 4000;
-	private const FINGERPRINT_SEED         = 'seo-geo-local-clone-runtime-core-v1';
+	private const FINGERPRINT_SEED        = 'seo-geo-local-clone-runtime-core-v1';
 
 	private const ROOT_DIRECTORIES = array(
 		'wp-admin',
@@ -48,30 +48,65 @@ final class LocalCloneRuntimeBootstrapper {
 		'xmlrpc.php',
 	);
 
+	/**
+	 * Resumable core runtime state persistence.
+	 *
+	 * @var LocalCloneRuntimeStateStore
+	 */
 	private LocalCloneRuntimeStateStore $store;
 
+	/**
+	 * Verified local-clone target ownership service.
+	 *
+	 * @var LocalCloneBootstrapper
+	 */
 	private LocalCloneBootstrapper $ownership;
 
+	/**
+	 * Accepted local-clone destination plans.
+	 *
+	 * @var LocalCloneStateStore
+	 */
 	private LocalCloneStateStore $plans;
 
+	/**
+	 * Verified package state.
+	 *
+	 * @var PackageStateStore
+	 */
 	private PackageStateStore $packages;
 
+	/**
+	 * Completed source inventory state.
+	 *
+	 * @var CloneInventoryStore
+	 */
 	private CloneInventoryStore $inventory;
 
+	/**
+	 * Portable Clone job state.
+	 *
+	 * @var CloneJobStore
+	 */
 	private CloneJobStore $jobs;
 
+	/**
+	 * Centralized Portable Clone filesystem mutation authority.
+	 *
+	 * @var ExportWorkspace
+	 */
 	private ExportWorkspace $workspace;
 
 	/**
 	 * Construct the core runtime bootstrapper.
 	 *
 	 * @param LocalCloneRuntimeStateStore|null $store     Optional runtime state store.
-	 * @param LocalCloneBootstrapper|null       $ownership Optional target ownership service.
-	 * @param LocalCloneStateStore|null         $plans     Optional destination plan store.
-	 * @param PackageStateStore|null            $packages  Optional verified package store.
-	 * @param CloneInventoryStore|null          $inventory Optional source inventory store.
-	 * @param CloneJobStore|null                $jobs      Optional clone job store.
-	 * @param ExportWorkspace|null              $workspace Optional filesystem mutation authority.
+	 * @param LocalCloneBootstrapper|null      $ownership Optional target ownership service.
+	 * @param LocalCloneStateStore|null        $plans     Optional destination plan store.
+	 * @param PackageStateStore|null           $packages  Optional verified package store.
+	 * @param CloneInventoryStore|null         $inventory Optional source inventory store.
+	 * @param CloneJobStore|null               $jobs      Optional clone job store.
+	 * @param ExportWorkspace|null             $workspace Optional filesystem mutation authority.
 	 */
 	public function __construct(
 		?LocalCloneRuntimeStateStore $store = null,
@@ -335,7 +370,7 @@ final class LocalCloneRuntimeBootstrapper {
 
 			if ( $dir_finished ) {
 				$state['current_dir'] = '';
-				$state['after_name']   = '';
+				$state['after_name']  = '';
 			}
 
 			if ( $accepted_files >= $batch_files || $accepted_bytes >= $batch_bytes || $operations >= self::MAX_ENTRY_OPERATIONS ) {
@@ -496,6 +531,7 @@ final class LocalCloneRuntimeBootstrapper {
 				}
 
 				$bytes = (int) $target_bytes;
+
 				$state['verify_file_count']  = (int) $state['verify_file_count'] + 1;
 				$state['verify_byte_count']  = (int) $state['verify_byte_count'] + $bytes;
 				$state['verify_fingerprint'] = $this->fingerprint_add(
@@ -504,6 +540,7 @@ final class LocalCloneRuntimeBootstrapper {
 					$bytes,
 					$target_hash
 				);
+
 				$state['after_name'] = $entry;
 				++$accepted_files;
 				$accepted_bytes += $bytes;
@@ -621,9 +658,9 @@ final class LocalCloneRuntimeBootstrapper {
 
 		if (
 			! hash_equals( (string) $ownership['plan_hash'], (string) ( $plan['plan_hash'] ?? '' ) )
-			|| (string) $ownership['target_path'] !== (string) ( $plan['target_path'] ?? '' )
-			|| (string) $ownership['target_url'] !== (string) ( $plan['target_url'] ?? '' )
-			|| (string) $ownership['target_table_prefix'] !== (string) ( $plan['target_table_prefix'] ?? '' )
+			|| ! hash_equals( (string) $ownership['target_path'], (string) ( $plan['target_path'] ?? '' ) )
+			|| ! hash_equals( (string) $ownership['target_url'], (string) ( $plan['target_url'] ?? '' ) )
+			|| ! hash_equals( (string) $ownership['target_table_prefix'], (string) ( $plan['target_table_prefix'] ?? '' ) )
 			|| ! hash_equals( (string) ( $ownership['package_checksum'] ?? '' ), (string) ( $package['package_checksum'] ?? '' ) )
 			|| ! hash_equals( (string) ( $ownership['package_manifest_hash'] ?? '' ), (string) ( $package['package_manifest_hash'] ?? '' ) )
 			|| ! hash_equals( (string) ( $ownership['source_fingerprint'] ?? '' ), (string) ( $package['source_fingerprint'] ?? '' ) )
@@ -654,9 +691,9 @@ final class LocalCloneRuntimeBootstrapper {
 
 		return hash_equals( (string) $state['plan_hash'], (string) $ownership['plan_hash'] )
 			&& hash_equals( (string) $state['ownership_marker_sha256'], (string) $ownership['marker_sha256'] )
-			&& (string) $state['target_path'] === (string) $ownership['target_path']
-			&& (string) $state['target_url'] === (string) $ownership['target_url']
-			&& (string) $state['target_table_prefix'] === (string) $ownership['target_table_prefix'];
+			&& hash_equals( (string) $state['target_path'], (string) $ownership['target_path'] )
+			&& hash_equals( (string) $state['target_url'], (string) $ownership['target_url'] )
+			&& hash_equals( (string) $state['target_table_prefix'], (string) $ownership['target_table_prefix'] );
 	}
 
 	/**
@@ -760,7 +797,7 @@ final class LocalCloneRuntimeBootstrapper {
 	private function target_overlaps_core( string $source, string $target ): bool {
 		foreach ( self::ROOT_DIRECTORIES as $directory ) {
 			$core = trailingslashit( $this->join_path( $source, $directory ) );
-			if ( $target === untrailingslashit( $core ) || str_starts_with( trailingslashit( $target ), $core ) ) {
+			if ( hash_equals( untrailingslashit( $core ), $target ) || str_starts_with( trailingslashit( $target ), $core ) ) {
 				return true;
 			}
 		}
