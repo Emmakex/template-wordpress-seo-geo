@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Clone;
 
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
+use wpdb;
 
 /**
  * Builds same-filesystem candidates, promotes them reversibly and verifies active roots.
@@ -685,7 +686,32 @@ final class ImportFilePromoter {
 			&& SandboxGuard::backups_ready()
 			&& $authorized
 			&& ( 'subdirectory' !== SandboxGuard::mode() || SandboxGuard::storage_isolated() )
-			&& '0' === (string) get_option( 'blog_public', '1' );
+			&& '0' === (string) get_option( 'blog_public', '1' )
+			&& $this->options_runtime_schema_ready();
+	}
+
+	/**
+	 * Require the minimum WordPress options schema needed by update_option().
+	 *
+	 * Database activation is intentionally source-faithful, but final file promotion
+	 * must not enable handoff if the activated options table cannot support the
+	 * WordPress runtime that will execute on the next request.
+	 */
+	private function options_runtime_schema_ready(): bool {
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb ) {
+			return false;
+		}
+
+		$table = str_replace( '`', '``', $wpdb->options );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Read-only schema verification of the trusted active WordPress options table.
+		$columns = $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`", 0 );
+
+		return is_array( $columns )
+			&& array() === array_diff(
+				array( 'option_id', 'option_name', 'option_value', 'autoload' ),
+				array_filter( $columns, 'is_string' )
+			);
 	}
 
 	/**
