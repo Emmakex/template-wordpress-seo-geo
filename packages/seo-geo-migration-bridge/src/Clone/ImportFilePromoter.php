@@ -375,7 +375,7 @@ final class ImportFilePromoter {
 					return $this->rollback_internal( $job_id, $state, 'file-promotion-active-root-reconciliation-failed' );
 				}
 				$state['roots'][ $root_index ]['status'] = 'verified';
-				$state = $this->advance_root_cursor( $state );
+				$state                                   = $this->advance_root_cursor( $state );
 				continue;
 			}
 			if ( '' === (string) $state['current_dir'] && '' === (string) $state['after_name'] ) {
@@ -919,7 +919,7 @@ final class ImportFilePromoter {
 	 */
 	private function block( string $job_id, array $state, string $code ): ?array {
 		$blockers               = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
-		$blockers[]            = $code;
+		$blockers[]             = $code;
 		$state['status']        = 'blocked';
 		$state['handoff_ready'] = false;
 		$state['blockers']      = array_values( array_unique( $blockers ) );
