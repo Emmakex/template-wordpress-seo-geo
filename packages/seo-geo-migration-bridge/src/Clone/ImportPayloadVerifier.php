@@ -94,8 +94,8 @@ final class ImportPayloadVerifier {
 			return $existing;
 		}
 
-		$job    = $this->jobs->get( $job_id );
-		$import = $this->import_state->get( $job_id );
+		$job     = $this->jobs->get( $job_id );
+		$import  = $this->import_state->get( $job_id );
 		$archive = $this->workspace->import_archive_info( $job_id );
 		$entries = $this->workspace->import_archive_entries( $job_id );
 
@@ -216,10 +216,11 @@ final class ImportPayloadVerifier {
 		}
 
 		$cursor          = max( 0, (int) ( $state['archive_cursor'] ?? 0 ) );
+		$entry_count     = count( $entries );
 		$processed_files = 0;
 		$processed_bytes = 0;
 
-		while ( $cursor < count( $entries ) && $processed_files < $batch_files ) {
+		while ( $cursor < $entry_count && $processed_files < $batch_files ) {
 			$entry = $entries[ $cursor ];
 			$name  = (string) $entry['name'];
 
@@ -254,7 +255,7 @@ final class ImportPayloadVerifier {
 
 		$state['archive_cursor'] = $cursor;
 
-		if ( $cursor >= count( $entries ) ) {
+		if ( $cursor >= $entry_count ) {
 			$manifest = $this->workspace->import_extracted_file_info( $job_id, 'package/manifest.json' );
 			if (
 				! is_array( $manifest )
@@ -533,11 +534,11 @@ final class ImportPayloadVerifier {
 		if ( is_array( $import ) ) {
 			$import_blockers                  = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
 			$import_blockers[]                = $code;
-			$import['status']                 = 'blocked';
-			$import['blockers']               = array_values( array_unique( $import_blockers ) );
-			$import['full_payload_verified']  = false;
-			$import['restore_allowed']        = false;
-			$import['updated_at']             = gmdate( DATE_ATOM );
+			$import['status']                = 'blocked';
+			$import['blockers']              = array_values( array_unique( $import_blockers ) );
+			$import['full_payload_verified'] = false;
+			$import['restore_allowed']       = false;
+			$import['updated_at']            = gmdate( DATE_ATOM );
 			$this->import_state->save( $job_id, $import );
 		}
 
