@@ -235,10 +235,10 @@ final class ImportPreflight {
 			$database_json,
 			$files_json
 		);
-		$blockers    = array_merge( $blockers, $contract_blockers );
-		$destination = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
-		$blockers    = array_merge( $blockers, $destination['blockers'] );
-		$advisories  = array_merge( $advisories, $destination['advisories'] );
+		$blockers          = array_merge( $blockers, $contract_blockers );
+		$destination       = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
+		$blockers          = array_merge( $blockers, $destination['blockers'] );
+		$advisories        = array_merge( $advisories, $destination['advisories'] );
 
 		$blockers   = array_values( array_unique( $blockers ) );
 		$advisories = array_values( array_unique( $advisories ) );
@@ -273,12 +273,12 @@ final class ImportPreflight {
 		$state['manifest_contract_valid']      = array() === $contract_blockers;
 		$state['child_manifest_hashes_valid']  = ! in_array( 'import-database-manifest-hash-mismatch', $contract_blockers, true )
 			&& ! in_array( 'import-files-manifest-hash-mismatch', $contract_blockers, true );
-		$state['full_payload_verified'] = false;
-		$state['restore_allowed']       = false;
-		$state['blockers']              = $blockers;
-		$state['advisories']            = $advisories;
-		$state['validated_at']          = $now;
-		$state['updated_at']            = $now;
+		$state['full_payload_verified']        = false;
+		$state['restore_allowed']              = false;
+		$state['blockers']                     = $blockers;
+		$state['advisories']                   = $advisories;
+		$state['validated_at']                 = $now;
+		$state['updated_at']                   = $now;
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
@@ -790,8 +790,8 @@ final class ImportPreflight {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code, bool $retryable ): ?array {
-		$blockers            = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
-		$blockers[]          = $code;
+		$blockers                       = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers[]                     = $code;
 		$state['schema_version']        = ImportStateStore::SCHEMA_VERSION;
 		$state['job_id']                = $job_id;
 		$state['status']                = 'blocked';
