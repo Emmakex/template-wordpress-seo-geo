@@ -56,11 +56,11 @@ final class CloneManifest {
 				'single_request_job' => false,
 			),
 			'safety'         => array(
-				'production_source_mutation_allowed' => false,
-				'production_database_restore_allowed'=> false,
-				'third_party_clone_plugin_required'  => false,
-				'payload_created_in_this_phase'      => false,
-				'credentials_in_manifest'            => false,
+				'production_source_mutation_allowed'  => false,
+				'production_database_restore_allowed' => false,
+				'third_party_clone_plugin_required'   => false,
+				'payload_created_in_this_phase'       => false,
+				'credentials_in_manifest'             => false,
 				'private_payload_repository_safe'     => false,
 			),
 		);
