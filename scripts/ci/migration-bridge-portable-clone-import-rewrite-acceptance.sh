@@ -1053,7 +1053,7 @@ assert finalize["status"] == "ready"
 assert finalize["stage"] == "ready"
 assert finalize["database_rows_hashed"] >= 8
 assert re.fullmatch(r"[a-f0-9]{64}", finalize["database_fingerprint"])
-assert finalize["files_hashed"] == finalize["expected_file_count"] == 1
+assert finalize["files_hashed"] == finalize["expected_file_count"] == 3
 assert finalize["file_bytes_hashed"] == finalize["expected_file_bytes"]
 assert re.fullmatch(r"[a-f0-9]{64}", finalize["file_fingerprint"])
 assert re.fullmatch(r"[a-f0-9]{64}", finalize["activation_plan_hash"])
@@ -1089,6 +1089,63 @@ assert payload["activation_template"] == payload["destination_template"]
 assert payload["activation_stylesheet"] == payload["destination_stylesheet"]
 assert payload["activation_control_plane_present"] is True
 assert payload["activation_bridge_active"] is True
+
+promotion_prepared = payload["promotion_prepared"]
+assert promotion_prepared["schema_version"] == 1
+assert promotion_prepared["status"] == "prepared"
+assert promotion_prepared["database_activated"] is True
+assert promotion_prepared["rollback_available"] is True
+assert promotion_prepared["handoff_ready"] is False
+assert len(promotion_prepared["roots"]) == 3
+assert re.fullmatch(r"[a-f0-9]{64}", promotion_prepared["activation_plan_hash"])
+assert re.fullmatch(r"[a-f0-9]{64}", promotion_prepared["file_fingerprint"])
+
+promotion_candidates = payload["promotion_candidates"]
+assert promotion_candidates["status"] == "candidate-ready"
+assert promotion_candidates["file_count"] == 3
+assert promotion_candidates["verify_file_count"] == 0
+assert promotion_candidates["handoff_ready"] is False
+assert all(root["candidate_ready"] is True for root in promotion_candidates["roots"])
+
+promotion = payload["promotion"]
+assert promotion["status"] == "verifying"
+assert promotion["handoff_ready"] is False
+assert promotion["rollback_available"] is True
+
+verified = payload["promotion_verified"]
+assert verified["status"] == "verified"
+assert verified["file_count"] == verified["verify_file_count"] == 3
+assert verified["byte_count"] == verified["verify_byte_count"]
+assert verified["handoff_ready"] is True
+assert verified["rollback_available"] is True
+assert verified["blockers"] == []
+assert re.fullmatch(r"[a-f0-9]{64}", verified["active_fingerprint"])
+assert verified["active_fingerprint"] == verified["file_fingerprint"]
+
+promotion_db = payload["promotion_database_state"]
+assert promotion_db["status"] == "activated"
+assert promotion_db["database_swapped"] is True
+assert promotion_db["handoff_ready"] is True
+assert promotion_db["active_files_untouched"] is False
+
+promotion_runtime = payload["promotion_runtime"]
+assert payload["source_bridge_plugin"] in promotion_runtime["active_plugins"]
+assert promotion_runtime["template"] == payload["source_theme"]
+assert promotion_runtime["stylesheet"] == payload["source_theme"]
+assert payload["promotion_upload_sentinel_absent"] is True
+assert payload["promotion_payload_files_present"] is True
+
+promotion_rollback = payload["promotion_rollback"]
+assert promotion_rollback["status"] == "rolled-back"
+assert promotion_rollback["handoff_ready"] is False
+assert promotion_rollback["rollback_available"] is False
+assert "operator-file-promotion-rollback" in promotion_rollback["blockers"]
+assert payload["promotion_upload_sentinel_hash"] == payload["promotion_upload_sentinel_after_hash"]
+assert payload["promotion_bridge_restored"] is True
+assert payload["promotion_theme_restored"] is True
+runtime_after_rollback = payload["promotion_runtime_after_rollback"]
+assert runtime_after_rollback["template"] == payload["destination_template"]
+assert runtime_after_rollback["stylesheet"] == payload["destination_stylesheet"]
 
 rollback = payload["activation_rollback"]
 assert rollback["status"] == "rolled-back"
@@ -1147,6 +1204,8 @@ assert payload["finalize_controller_registered"] is True
 assert payload["finalize_public_absent"] is True
 assert payload["database_activation_controller_registered"] is True
 assert payload["database_activation_public_absent"] is True
+assert payload["file_promotion_controller_registered"] is True
+assert payload["file_promotion_public_absent"] is True
 print("ok")
 PY
 )"; then
