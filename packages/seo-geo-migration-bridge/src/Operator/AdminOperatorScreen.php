@@ -1230,11 +1230,11 @@ final class AdminOperatorScreen {
 	 * @param string $job_id Clone job identifier.
 	 */
 	private function render_clone_import_database_section( string $job_id ): void {
-		$state     = ( new ImportDatabaseStateStore() )->get( $job_id );
-		$status    = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
-		$stage     = is_array( $state ) ? (string) ( $state['stage'] ?? 'prepare' ) : 'prepare';
-		$blockers  = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
-		$button    = 'pending' === $status ? 'clone_import_database_start' : 'clone_import_database_continue';
+		$state    = ( new ImportDatabaseStateStore() )->get( $job_id );
+		$status   = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$stage    = is_array( $state ) ? (string) ( $state['stage'] ?? 'prepare' ) : 'prepare';
+		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$button   = 'pending' === $status ? 'clone_import_database_start' : 'clone_import_database_continue';
 		?>
 		<h4><?php echo esc_html( $this->copy->text( 'clone_import_database_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_database_help' ) ); ?></p>
