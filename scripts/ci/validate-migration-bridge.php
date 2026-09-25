@@ -115,6 +115,10 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportRewriteStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportRewriteController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportRecoveryEvidenceValidator.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanner.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportActivationPlanController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -1313,6 +1317,139 @@ if ( str_contains( $import_rewrite_controller, 'admin_post_nopriv_' ) ) {
 		'Portable Import environment rewrite must never expose an unauthenticated endpoint.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportRewriteController.php',
 		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+
+$activation_recovery = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportRecoveryEvidenceValidator.php' );
+foreach (
+	array(
+		"'database'   => 'full-database'",
+		"'wp_content' => 'wp-content-tree'",
+		'DAY_IN_SECONDS',
+		"'recovery-created-at-invalid-or-stale:'",
+		"'recovery-sha256-invalid:'",
+	) as $activation_recovery_guard
+) {
+	if ( ! str_contains( $activation_recovery, $activation_recovery_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-activation-recovery',
+			'Sandbox activation planning must require fresh database + wp-content recovery evidence.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportRecoveryEvidenceValidator.php',
+			$activation_recovery_guard,
+			'missing'
+		);
+	}
+}
+
+$activation_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_activation_plan_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		"'database_activation_allowed'=> false",
+		"'file_activation_allowed'    => false",
+		"'mutations_performed'        => false",
+	) as $activation_store_guard
+) {
+	if ( ! str_contains( $activation_store, $activation_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-activation-plan-store',
+			'10E.2A.4.6.1 planning state must remain non-autoloaded and explicitly non-mutating.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanStore.php',
+			$activation_store_guard,
+			'missing'
+		);
+	}
+}
+
+$activation_planner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanner.php' );
+foreach (
+	array(
+		'$this->preflight->validate( $job_id )',
+		"'activation-preflight-not-ready'",
+		"'activation-environment-rewrite-not-ready'",
+		'SandboxGuard::enabled()',
+		'SandboxGuard::outbound_safe()',
+		'SandboxGuard::backups_ready()',
+		'ImportPreflight::TARGET_AUTHORIZED_MARKER',
+		'$this->database_restorer->staging_plan( $job_id )',
+		"'activation-file-staging-totals-drift'",
+		"'activation-active-root-overlaps-staging:'",
+		"'activation-active-root-symlink-unsupported:'",
+		"'database_activation_allowed' => false",
+		"'file_activation_allowed'     => false",
+		"'mutations_performed'         => false",
+	) as $activation_planner_guard
+) {
+	if ( ! str_contains( $activation_planner, $activation_planner_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-activation-planner',
+			'10E.2A.4.6.1 is missing a required sandbox/recovery/non-mutation boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanner.php',
+			$activation_planner_guard,
+			'missing'
+		);
+	}
+}
+
+foreach (
+	array(
+		'->query(',
+		'->insert(',
+		'->update(',
+		'->delete(',
+		'RENAME TABLE',
+		'DROP TABLE',
+		'ALTER TABLE',
+		'CREATE TABLE',
+		'file_put_contents(',
+		'fwrite(',
+		'copy(',
+		'rename(',
+		'unlink(',
+		'mkdir(',
+		'rmdir(',
+	) as $activation_mutation
+) {
+	if ( str_contains( $activation_planner, $activation_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-activation-plan-read-only',
+			'10E.2A.4.6.1 planner must not activate database tables or file roots.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanner.php',
+			'read-only staging/target/recovery plan',
+			$activation_mutation
+		);
+	}
+}
+
+$activation_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportActivationPlanController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_activation_plan';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->planner->plan( $job_id, $evidence )',
+	) as $activation_controller_guard
+) {
+	if ( ! str_contains( $activation_controller, $activation_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-activation-plan-entrypoint',
+			'Activation planning endpoint must remain administrator/job-nonce gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportActivationPlanController.php',
+			$activation_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $activation_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-activation-plan-public-endpoint',
+		'Activation planning must never expose a public endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportActivationPlanController.php',
+		'authenticated admin_post only',
 		'admin_post_nopriv_'
 	);
 }
