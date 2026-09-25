@@ -310,6 +310,10 @@ final class ImportFilePromoter {
 			}
 		}
 
+		if ( ! $this->apply_runtime( $state['runtime_target'] ?? array() ) ) {
+			return $this->rollback_internal( $job_id, $state, 'file-promotion-source-runtime-activate-failed' );
+		}
+
 		$state['status']              = 'verifying';
 		$state['root_index']          = 0;
 		$state['pending_dirs']        = array( '' );
@@ -540,6 +544,7 @@ final class ImportFilePromoter {
 			|| (int) $state['verify_byte_count'] !== $expected_bytes
 			|| ! $this->same_hash( $state['active_fingerprint'] ?? '', $state['file_fingerprint'] ?? '' )
 			|| ! $this->runtime_ready( $job_id, $state )
+			|| ! $this->runtime_matches( $state['runtime_target'] ?? array() )
 		) {
 			return $this->rollback_internal( $job_id, $state, 'file-promotion-final-integrity-failed' );
 		}
@@ -626,6 +631,10 @@ final class ImportFilePromoter {
 			$state['roots'][ $index ]['rollback_ready'] = false;
 		}
 
+		if ( ! $this->apply_runtime( $state['runtime_before'] ?? array() ) ) {
+			return $this->block( $job_id, $state, 'file-promotion-rollback-runtime-restore-failed' );
+		}
+
 		$now                         = gmdate( DATE_ATOM );
 		$state['status']             = 'rolled-back';
 		$state['handoff_ready']      = false;
@@ -685,7 +694,8 @@ final class ImportFilePromoter {
 	 * @param array<string,mixed> $state Promotion state.
 	 */
 	private function runtime_assets_ready( array $state ): bool {
-		$roots = array();
+		$roots   = array();
+		$runtime = is_array( $state['runtime_target'] ?? null ) ? $state['runtime_target'] : array();
 		foreach ( $state['roots'] as $root ) {
 			if ( is_array( $root ) && is_string( $root['id'] ?? null ) ) {
 				$roots[ $root['id'] ] = $root;
@@ -695,10 +705,7 @@ final class ImportFilePromoter {
 			return false;
 		}
 
-		$plugins = get_option( 'active_plugins', array() );
-		if ( ! is_array( $plugins ) ) {
-			return false;
-		}
+		$plugins = is_array( $runtime['active_plugins'] ?? null ) ? $runtime['active_plugins'] : array();
 		foreach ( $plugins as $plugin ) {
 			if ( ! is_string( $plugin ) || '' === $plugin || str_contains( $plugin, '../' ) ) {
 				return false;
@@ -710,8 +717,8 @@ final class ImportFilePromoter {
 		}
 
 		foreach ( array( 'template', 'stylesheet' ) as $option ) {
-			$theme = get_option( $option, '' );
-			if ( ! is_string( $theme ) || '' === $theme || str_contains( $theme, '../' ) || str_contains( $theme, '/' ) ) {
+			$theme = is_string( $runtime[ $option ] ?? null ) ? $runtime[ $option ] : '';
+			if ( '' === $theme || str_contains( $theme, '../' ) || str_contains( $theme, '/' ) ) {
 				return false;
 			}
 			$path = $this->join_path( (string) $roots['themes']['candidate_path'], $theme );
@@ -721,6 +728,50 @@ final class ImportFilePromoter {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Apply one bounded WordPress plugin/theme runtime after a root swap.
+	 *
+	 * @param mixed $runtime Runtime snapshot.
+	 */
+	private function apply_runtime( mixed $runtime ): bool {
+		if ( ! is_array( $runtime ) ) {
+			return false;
+		}
+
+		$plugins    = is_array( $runtime['active_plugins'] ?? null ) ? array_values( $runtime['active_plugins'] ) : array();
+		$template   = is_string( $runtime['template'] ?? null ) ? $runtime['template'] : '';
+		$stylesheet = is_string( $runtime['stylesheet'] ?? null ) ? $runtime['stylesheet'] : '';
+		if ( '' === $template || '' === $stylesheet ) {
+			return false;
+		}
+
+		update_option( 'active_plugins', $plugins, false );
+		update_option( 'template', $template, false );
+		update_option( 'stylesheet', $stylesheet, false );
+		wp_cache_flush();
+
+		return $this->runtime_matches( $runtime );
+	}
+
+	/**
+	 * Verify the active WordPress plugin/theme runtime exactly.
+	 *
+	 * @param mixed $runtime Expected runtime snapshot.
+	 */
+	private function runtime_matches( mixed $runtime ): bool {
+		if ( ! is_array( $runtime ) ) {
+			return false;
+		}
+
+		$expected_plugins = is_array( $runtime['active_plugins'] ?? null ) ? array_values( $runtime['active_plugins'] ) : array();
+		$active_plugins   = get_option( 'active_plugins', array() );
+
+		return is_array( $active_plugins )
+			&& $expected_plugins === array_values( $active_plugins )
+			&& (string) ( $runtime['template'] ?? '' ) === (string) get_option( 'template', '' )
+			&& (string) ( $runtime['stylesheet'] ?? '' ) === (string) get_option( 'stylesheet', '' );
 	}
 
 	/**
