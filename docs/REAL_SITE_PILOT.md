@@ -11,7 +11,7 @@ This document fixes the first real-site acceptance target for the self-contained
 - Candidate main commit: `d3ff8353c08cfce6c796837a74e372ba7daf0073`
 - Candidate ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`
 - Stable decision: `no-go`
-- Pilot status: **production baseline + UNKNOWN review complete; same-origin subdirectory sandbox support in Migration Bridge 0.8.8 — clone/acceptance pending**
+- Pilot status: **production baseline + UNKNOWN review complete; Portable Clone Engine implementation now precedes `/nuevaweb/` sandbox acceptance**
 
 The production Migration Bridge baseline was completed on 2026-09-24 and the operator screen reported `SEO/GEO baseline = Ready`. This is operator-confirmed real-site evidence; no private baseline payload or production credentials are committed to the repository. The dependency summary at that point was `KEEP=4`, `REPLACE=2`, `MIGRATE=1`, `OPTIONAL=0`, `REMOVE-CANDIDATE=0`, `UNKNOWN=13`. The v0.8.5 handoff generated on 2026-09-24 reported 4,311 discovered public resources, 500 captured resources, zero request failures and a truncated baseline by the configured cap. A second v0.8.6 handoff generated at `2026-09-24T19:56:28Z` recorded all 13 UNKNOWN items as explicitly reviewed: 10 operator decisions `KEEP` and 3 `MIGRATE`, with zero unreviewed UNKNOWN items. The bounded handoff file SHA-256 is `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`. These review decisions are planning evidence only and do not authorize production mutation.
 
@@ -28,6 +28,24 @@ Production baseline capture and UNKNOWN dependency review are complete. The rege
 Migration Bridge **0.8.7** established the strict preflight baseline. Migration Bridge **0.8.8** extends that contract so the emmake.com pilot may use the existing same-origin path `https://emmake.com/nuevaweb/` after it is replaced with a complete isolated clone of production. The folder itself is not sufficient evidence of isolation.
 
 For this pilot, the selected topology is `subdirectory`. Before migration actions, the clone must preserve the production baseline/dependency/review evidence and satisfy `SEO_GEO_MIGRATION_SANDBOX=true`, `SEO_GEO_MIGRATION_SANDBOX_MODE='subdirectory'`, `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true`, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true`, `SEO_GEO_MIGRATION_BACKUPS_READY=true`, WordPress search visibility disabled, a non-root `/nuevaweb/` home path distinct from the production `/` path, destination Theme active and complete UNKNOWN review. The storage marker is an explicit operator confirmation that the clone does not share mutable database/table state with production.
+
+## Portable Clone Engine decision
+
+The pilot exposed that requiring a separate cloning/migration plugin would weaken the product boundary. The accepted target is now for Migration Bridge itself to create or transport the sandbox.
+
+The implementation contract is `docs/PORTABLE_CLONE_ENGINE.md`.
+
+For emmake.com:
+
+- the intended target remains `https://emmake.com/nuevaweb/`;
+- the current clean/test installation in that path is not accepted as the migration clone;
+- the Portable Clone Engine must create/restore a complete isolated copy of production there;
+- database/table state and mutable file storage must be independent;
+- the full production baseline/dependency/review evidence must survive the copy;
+- only bounded evidence/checksums enter the repository;
+- after clone integrity succeeds, the existing v0.8.8 subdirectory preflight must report `ready=true`.
+
+Manual/hosting cloning may still be used as a temporary development fallback, but 10E.2A acceptance specifically proves the product-owned clone/export/import workflow.
 
 ## Sandbox preparation
 

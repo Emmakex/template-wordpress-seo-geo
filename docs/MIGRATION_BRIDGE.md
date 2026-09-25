@@ -318,6 +318,31 @@ The real-site pilot extends the accepted Phase 8D contract with explicit runtime
 
 The outbound/backups markers are operator/environment confirmations, not claims that the plugin created backups or reconfigured mail/payment providers. Reviewed `UNKNOWN` decisions remain planning metadata; the raw graph classification is preserved while the sandbox state maps reviewed `KEEP` to `unchanged`, reviewed `MIGRATE`/`REPLACE` to `migrate`, and reviewed `OPTIONAL`/`REMOVE-CANDIDATE` to `manual-review`.
 
+## Portable Clone Engine extension for Phase 10E
+
+The real-site pilot identified a product dependency that the accepted Phase 8 sandbox contract intentionally left outside the Bridge: a hosting feature or third-party tool still had to create the actual clone.
+
+That dependency is now removed from the target product path.
+
+Migration Bridge gains a Portable Clone Engine governed by `docs/PORTABLE_CLONE_ENGINE.md`. It provides three transport/provisioning operations:
+
+- local clone on the same server into an isolated destination;
+- portable export;
+- portable import.
+
+The Engine is built from resumable shared primitives so local clone is orchestration of export/import behavior rather than a second copy implementation.
+
+The clone subsystem remains below the sandbox/migration authorization boundary:
+
+- source inventory/export is read-only on production;
+- import requires a validated isolated destination;
+- environment rewrite is serialization-safe and separately reported;
+- sandbox hardening happens after restore;
+- Phase 8D readiness remains the gate before Phase 8E can mutate client content;
+- a clone package is private migration material and never valid repository evidence.
+
+The Engine has no generic stale sandbox-database restore-to-production operation. Production remains the dynamic-data authority at cutover.
+
 ## Phase 8E — Migration Engine
 
 Status: **implementation candidate**
