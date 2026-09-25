@@ -164,7 +164,7 @@ final class DatabaseRestoreStateStore {
 	 * @param mixed $prefix Raw prefix.
 	 */
 	private function normalize_prefix( mixed $prefix ): string {
-		if ( ! is_string( $prefix ) || 32 < strlen( $prefix ) ) {
+		if ( ! is_string( $prefix ) || 64 < strlen( $prefix ) ) {
 			return '';
 		}
 
