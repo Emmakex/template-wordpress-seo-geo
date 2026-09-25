@@ -16,26 +16,36 @@ final class LocalCloneOrchestrator {
 	private const PLAN_SEED = 'seo-geo-local-clone-destination-plan-v1';
 
 	/**
+	 * Local-clone destination state persistence.
+	 *
 	 * @var LocalCloneStateStore
 	 */
 	private LocalCloneStateStore $store;
 
 	/**
+	 * Read-only destination safety planner.
+	 *
 	 * @var DestinationSafetyPlanner
 	 */
 	private DestinationSafetyPlanner $planner;
 
 	/**
+	 * Verified package state persistence.
+	 *
 	 * @var PackageStateStore
 	 */
 	private PackageStateStore $package_state;
 
 	/**
+	 * Source inventory state persistence.
+	 *
 	 * @var CloneInventoryStore
 	 */
 	private CloneInventoryStore $inventory_state;
 
 	/**
+	 * Clone job state persistence.
+	 *
 	 * @var CloneJobStore
 	 */
 	private CloneJobStore $jobs;
@@ -43,11 +53,11 @@ final class LocalCloneOrchestrator {
 	/**
 	 * Construct the destination-plan orchestrator.
 	 *
-	 * @param LocalCloneStateStore|null  $store           Optional local-clone state store.
-	 * @param DestinationSafetyPlanner|null $planner      Optional read-only destination planner.
-	 * @param PackageStateStore|null     $package_state   Optional verified package state store.
-	 * @param CloneInventoryStore|null   $inventory_state Optional source inventory state store.
-	 * @param CloneJobStore|null         $jobs            Optional clone job store.
+	 * @param LocalCloneStateStore|null     $store           Optional local-clone state store.
+	 * @param DestinationSafetyPlanner|null $planner         Optional read-only destination planner.
+	 * @param PackageStateStore|null        $package_state   Optional verified package state store.
+	 * @param CloneInventoryStore|null      $inventory_state Optional source inventory state store.
+	 * @param CloneJobStore|null            $jobs            Optional clone job store.
 	 */
 	public function __construct(
 		?LocalCloneStateStore $store = null,
@@ -122,7 +132,7 @@ final class LocalCloneOrchestrator {
 			(int) ( $package['payload_byte_count'] ?? 0 ),
 			(int) ( $inventory['byte_count'] ?? 0 ) + (int) ( $database['estimated_bytes'] ?? 0 )
 		);
-		$plan = $this->planner->plan(
+		$plan           = $this->planner->plan(
 			$target_path,
 			$target_url,
 			$target_table_prefix,
