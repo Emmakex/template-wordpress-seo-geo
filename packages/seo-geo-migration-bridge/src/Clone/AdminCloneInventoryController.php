@@ -67,7 +67,7 @@ final class AdminCloneInventoryController {
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
 		$batch_size = isset( $_POST['inventory_batch_size'] )
-			? (int) wp_unslash( $_POST['inventory_batch_size'] )
+			? absint( sanitize_text_field( wp_unslash( $_POST['inventory_batch_size'] ) ) )
 			: CloneInventory::DEFAULT_BATCH_SIZE;
 
 		$result = $this->inventory->advance( $job_id, $batch_size );
