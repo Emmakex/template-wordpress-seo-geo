@@ -127,6 +127,8 @@ final class ImportFilePromotionStateStore {
 			'file_fingerprint'    => $this->hash( $state['file_fingerprint'] ?? '' ),
 			'copy_fingerprint'    => $this->hash( $state['copy_fingerprint'] ?? '' ),
 			'active_fingerprint'  => $this->hash( $state['active_fingerprint'] ?? '' ),
+			'runtime_before'      => $this->runtime( $state['runtime_before'] ?? array() ),
+			'runtime_target'      => $this->runtime( $state['runtime_target'] ?? array() ),
 			'roots'               => $roots,
 			'root_index'          => max( 0, min( 3, (int) ( $state['root_index'] ?? 0 ) ) ),
 			'pending_dirs'        => $this->paths( $state['pending_dirs'] ?? array() ),
@@ -159,6 +161,42 @@ final class ImportFilePromotionStateStore {
 		}
 
 		return wp_normalize_path( $path );
+	}
+
+	/**
+	 * Normalize one bounded WordPress plugin/theme runtime snapshot.
+	 *
+	 * @param mixed $runtime Runtime candidate.
+	 * @return array{active_plugins:list<string>,template:string,stylesheet:string}
+	 */
+	private function runtime( mixed $runtime ): array {
+		$plugins = array();
+		if ( is_array( $runtime ) && is_array( $runtime['active_plugins'] ?? null ) ) {
+			foreach ( array_slice( $runtime['active_plugins'], 0, 5000 ) as $plugin ) {
+				if (
+					is_string( $plugin )
+					&& '' !== $plugin
+					&& 512 >= strlen( $plugin )
+					&& ! str_contains( $plugin, '../' )
+					&& ! str_starts_with( $plugin, '/' )
+				) {
+					$plugins[] = wp_normalize_path( $plugin );
+				}
+			}
+		}
+
+		$template   = is_array( $runtime ) && is_string( $runtime['template'] ?? null ) ? $runtime['template'] : '';
+		$stylesheet = is_array( $runtime ) && is_string( $runtime['stylesheet'] ?? null ) ? $runtime['stylesheet'] : '';
+		foreach ( array( 'template' => &$template, 'stylesheet' => &$stylesheet ) as &$theme ) {
+			$theme = 191 >= strlen( $theme ) && 1 === preg_match( '/^[A-Za-z0-9._-]+$/', $theme ) ? $theme : '';
+		}
+		unset( $theme );
+
+		return array(
+			'active_plugins' => array_values( array_unique( $plugins ) ),
+			'template'       => $template,
+			'stylesheet'     => $stylesheet,
+		);
 	}
 
 	/**
