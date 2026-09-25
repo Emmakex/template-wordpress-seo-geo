@@ -11,6 +11,7 @@ namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -22,6 +23,7 @@ use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -109,6 +111,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_file_export_result_notice(); ?>
 			<?php $this->render_clone_package_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
+			<?php $this->render_clone_import_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -374,6 +377,8 @@ final class AdminOperatorScreen {
 			</table>
 			<?php if ( in_array( $latest['operation'] ?? null, array( 'local-clone', 'export' ), true ) ) : ?>
 				<?php $this->render_clone_inventory_section( $latest ); ?>
+			<?php elseif ( 'import' === ( $latest['operation'] ?? null ) ) : ?>
+				<?php $this->render_clone_import_section( $latest ); ?>
 			<?php endif; ?>
 		<?php endif; ?>
 		<?php
@@ -938,6 +943,122 @@ final class AdminOperatorScreen {
 			<input type="hidden" name="cleanup_confirmation" value="cleanup">
 			<?php wp_nonce_field( AdminCloneDeliveryController::NONCE_ACTION . ':cleanup:' . $job_id ); ?>
 			<?php submit_button( $this->copy->text( 'clone_delivery_cleanup' ), 'secondary', 'submit', false ); ?>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after Portable Import preflight.
+	 */
+	private function render_clone_import_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after the nonce-verified import action.
+		$status = isset( $_GET['seo_geo_clone_import'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_import'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'ready'   => 'clone_import_ready',
+			'blocked' => 'clone_import_blocked',
+			default   => null,
+		};
+
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : 'notice notice-success';
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render Portable Import private ZIP intake and read-only destination preflight.
+	 *
+	 * @param array<string,mixed> $job Import clone job.
+	 */
+	private function render_clone_import_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state       = ( new ImportStateStore() )->get( $job_id );
+		$status      = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$blockers    = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$advisories  = is_array( $state['advisories'] ?? null ) ? array_values( array_filter( $state['advisories'], 'is_string' ) ) : array();
+		$has_archive = is_array( $state ) && 0 < (int) ( $state['archive_bytes'] ?? 0 );
+		$button      = $has_archive ? 'clone_import_revalidate' : 'clone_import_validate';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_import_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_import_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th>
+					<td><code><?php echo esc_html( $status ); ?></code></td>
+				</tr>
+				<?php if ( $has_archive ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_archive_bytes' ) ); ?></th>
+						<td><?php echo esc_html( size_format( (int) ( $state['archive_bytes'] ?? 0 ) ) ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_archive_hash' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $state['archive_sha256'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_package_id' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $state['package_id'] ?? '' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_package_checksum' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) ( $state['package_checksum'] ?? '' ) ); ?></code></td>
+					</tr>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_manifest_valid', true === ( $state['manifest_contract_valid'] ?? false ) ); ?>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_child_hashes_valid', true === ( $state['child_manifest_hashes_valid'] ?? false ) ); ?>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_target_authorized', true === ( $state['target_authorized'] ?? false ) ); ?>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_payload_verified', true === ( $state['full_payload_verified'] ?? false ) ); ?>
+					<?php $this->render_sandbox_boolean_row( 'clone_import_restore_allowed', true === ( $state['restore_allowed'] ?? false ) ); ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_disk_free' ) ); ?></th>
+						<td><?php echo esc_html( null === ( $state['disk_free_bytes'] ?? null ) ? '—' : size_format( (int) $state['disk_free_bytes'] ) ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_disk_required' ) ); ?></th>
+						<td><?php echo esc_html( size_format( (int) ( $state['disk_required_bytes'] ?? 0 ) ) ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_blockers' ) ); ?></th>
+						<td><code><?php echo esc_html( array() === $blockers ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $blockers ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_advisories' ) ); ?></th>
+						<td><code><?php echo esc_html( array() === $advisories ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $advisories ) ); ?></code></td>
+					</tr>
+				<?php endif; ?>
+			</tbody>
+		</table>
+
+		<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportController::ACTION ); ?>">
+			<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+			<?php wp_nonce_field( AdminCloneImportController::NONCE_ACTION . ':' . $job_id ); ?>
+			<p>
+				<label for="seo-geo-clone-import-package"><strong><?php echo esc_html( $this->copy->text( 'clone_import_upload_label' ) ); ?></strong></label><br>
+				<input
+					type="file"
+					id="seo-geo-clone-import-package"
+					name="clone_package"
+					accept=".zip,application/zip"
+					<?php echo $has_archive ? '' : 'required'; ?>
+				>
+			</p>
+			<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_upload_help' ) ); ?></p>
+			<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 		</form>
 		<?php
 	}
