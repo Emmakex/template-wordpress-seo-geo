@@ -884,7 +884,7 @@ final class ImportEnvironmentRewriter {
 	private function supported_tables( array $plan ): ?array {
 		$source_prefix = is_string( $plan['source_prefix'] ?? null ) ? $plan['source_prefix'] : '';
 		$tables        = is_array( $plan['tables'] ?? null ) ? $plan['tables'] : array();
-		$definitions = array(
+		$definitions   = array(
 			'options'       => array(
 				'id'     => 'option_id',
 				'key'    => 'option_name',
