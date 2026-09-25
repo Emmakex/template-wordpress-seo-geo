@@ -280,6 +280,10 @@ final class PackageDelivery {
 			$pending = is_array( $state['pending_dirs'] ?? null ) ? $state['pending_dirs'] : array();
 			if ( true !== ( $state['directory_active'] ?? false ) ) {
 				if ( array() === $pending ) {
+					if ( array() !== $batch ) {
+						break;
+					}
+
 					return $this->complete_delivery( $job_id, $state );
 				}
 
