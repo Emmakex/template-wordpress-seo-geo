@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.15`;
+- current plugin version: `0.8.16`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -113,3 +113,10 @@ Acceptance evidence for 0.8.14: PR #133 merged as `2f7249e820a9e36c0d75fc95f43f6
 Phase 10E.2A.4.1 starts the destination side without restoring payload. An administrator creates an `import` job, uploads a Portable Clone ZIP through a capability/job-nonce-gated endpoint, and the Bridge stages it only inside private job-owned temporary storage. Preflight rejects unsafe or duplicate archive paths, unknown archive roots, missing manifests, unsupported package contracts and child-manifest SHA-256 mismatches.
 
 Destination validation requires an explicitly marked migration sandbox, search visibility disabled, outbound safety, fresh recovery references, explicit `SEO_GEO_MIGRATION_IMPORT_TARGET_AUTHORIZED=true`, a valid isolated origin/subdirectory topology and enough determinable free disk space. The source URL may not equal the destination URL. This version intentionally records `full_payload_verified=false` and `restore_allowed=false`; no database rows, WordPress options/content or destination files are restored in 0.8.15. Full payload checksum replay and resumable extraction belong to 10E.2A.4.2.
+
+
+### Version 0.8.16 — Full payload verification + resumable private extraction
+
+Phase 10E.2A.4.2 extracts only preflight-accepted ZIP file entries into the job-owned private `import/payload/` workspace, using bounded file/byte batches and resumable cursors. After extraction, a second bounded breadth-first pass reproduces the same `payload|path|bytes|sha256` checksum contract used by export while excluding `package/` metadata exactly as the exporter does.
+
+The restore gate stays closed during extraction and verification. It opens only when the extracted payload reproduces the accepted package checksum, payload file count and payload byte count exactly, the extracted package manifest still matches the staged ZIP preflight hash, and a fresh destination preflight remains clean. This version does not execute restore SQL or write payload into WordPress content paths; 10E.2A.4.3 remains the first database-restore phase.
