@@ -10,12 +10,14 @@ cat >"$IMPORT_REWRITE_RUNNER" <<'PHP'
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseActivationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportFilePromotionController;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\ExportWorkspace;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromoter;
 use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
@@ -64,6 +66,7 @@ $file_restore = Plugin::clone_import_file_restorer();
 $rewriter     = Plugin::clone_import_environment_rewriter();
 $finalizer    = Plugin::clone_import_finalization_planner();
 $activator    = Plugin::clone_import_database_activator();
+$promoter     = Plugin::clone_import_file_promoter();
 $workspace    = new ExportWorkspace();
 
 if (
@@ -75,6 +78,7 @@ if (
 	|| ! $rewriter instanceof ImportEnvironmentRewriter
 	|| ! $finalizer instanceof ImportFinalizationPlanner
 	|| ! $activator instanceof ImportDatabaseActivator
+	|| ! $promoter instanceof ImportFilePromoter
 ) {
 	throw new RuntimeException( 'Portable Import environment rewrite/finalization services are unavailable.' );
 }
@@ -87,6 +91,8 @@ if ( ! $wpdb instanceof wpdb ) {
 $source_home   = 'https://source.example.test/';
 $source_site   = 'https://source.example.test/wordpress/';
 $source_prefix = 'src_';
+$source_theme = 'seo-geo-fixture-theme';
+$source_bridge_plugin = 'seo-geo-migration-bridge/seo-geo-migration-bridge.php';
 $options_table = $source_prefix . 'options';
 $posts_table   = $source_prefix . 'posts';
 $destination_home = home_url( '/' );
@@ -268,7 +274,9 @@ $build_archive = static function ( string $source_job_id ) use (
 	$source_site,
 	$source_prefix,
 	$options_table,
-	$posts_table
+	$posts_table,
+	$source_theme,
+	$source_bridge_plugin
 ): array {
 	$workspace->cleanup( $source_job_id );
 	$workspace->delete_delivery_archive( $source_job_id );
@@ -299,6 +307,9 @@ $build_archive = static function ( string $source_job_id ) use (
 		array( '5', 'json_payload', $json_value ),
 		array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context' ),
 		array( '7', 'opaque_safe', 'a:1:{s:3:"bad";s:4:"nope"' ),
+		array( '8', 'active_plugins', serialize( array( $source_bridge_plugin ) ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WordPress option fixture.
+		array( '9', 'template', $source_theme ),
+		array( '10', 'stylesheet', $source_theme ),
 	);
 	$posts_rows = array(
 		array(
@@ -366,36 +377,78 @@ $build_archive = static function ( string $source_job_id ) use (
 		throw new RuntimeException( 'Could not write rewrite database manifest.' );
 	}
 
-	$file_relative = '2026/file.txt';
-	$file_content  = 'staged-file-with-source-url::' . $source_home . 'must-remain-byte-identical';
-	$file_written  = $workspace->write( $source_job_id, 'files/uploads/' . $file_relative, $file_content );
-	if ( ! is_array( $file_written ) ) {
-		throw new RuntimeException( 'Could not write rewrite file payload.' );
-	}
-
-	$file_record = array(
-		'root'          => 'uploads',
-		'relative_path' => $file_relative,
-		'payload_path'  => 'files/uploads/' . $file_relative,
-		'byte_count'    => (int) $file_written['bytes'],
-		'sha256'        => (string) $file_written['sha256'],
-		'export_status' => 'copied',
+	$file_specs = array(
+		array(
+			'root'     => 'uploads',
+			'relative' => '2026/file.txt',
+			'content'  => 'staged-file-with-source-url::' . $source_home . 'must-remain-byte-identical',
+		),
+		array(
+			'root'     => 'plugins',
+			'relative' => $source_bridge_plugin,
+			'content'  => "<?php\n/* Plugin Name: SEO GEO Migration Bridge smoke fixture */\n",
+		),
+		array(
+			'root'     => 'themes',
+			'relative' => $source_theme . '/style.css',
+			'content'  => "/*\nTheme Name: SEO GEO Fixture Theme\n*/\n",
+		),
 	);
-	$record_path = 'files-meta/uploads/' . hash( 'sha256', $file_relative ) . '.json';
-	if ( ! is_array( $workspace->write( $source_job_id, $record_path, wp_json_encode( $file_record ) . "\n" ) ) ) {
-		throw new RuntimeException( 'Could not write rewrite file record.' );
+
+	$root_summaries = array(
+		'uploads' => array( 'file_count' => 0, 'byte_count' => 0 ),
+		'plugins' => array( 'file_count' => 0, 'byte_count' => 0 ),
+		'themes'  => array( 'file_count' => 0, 'byte_count' => 0 ),
+	);
+	$file_count_total = 0;
+	$file_bytes_total = 0;
+	foreach ( $file_specs as $spec ) {
+		$root_id  = (string) $spec['root'];
+		$relative = (string) $spec['relative'];
+		$written  = $workspace->write( $source_job_id, 'files/' . $root_id . '/' . $relative, (string) $spec['content'] );
+		if ( ! is_array( $written ) ) {
+			throw new RuntimeException( 'Could not write rewrite file payload: ' . $root_id . '/' . $relative );
+		}
+
+		$record = array(
+			'root'          => $root_id,
+			'relative_path' => $relative,
+			'payload_path'  => 'files/' . $root_id . '/' . $relative,
+			'byte_count'    => (int) $written['bytes'],
+			'sha256'        => (string) $written['sha256'],
+			'export_status' => 'copied',
+		);
+		$record_path = 'files-meta/' . $root_id . '/' . hash( 'sha256', $relative ) . '.json';
+		if ( ! is_array( $workspace->write( $source_job_id, $record_path, wp_json_encode( $record ) . "\n" ) ) ) {
+			throw new RuntimeException( 'Could not write rewrite file record.' );
+		}
+
+		++$root_summaries[ $root_id ]['file_count'];
+		$root_summaries[ $root_id ]['byte_count'] += (int) $written['bytes'];
+		++$file_count_total;
+		$file_bytes_total += (int) $written['bytes'];
 	}
 
 	$files_manifest = array(
 		'schema_version'              => 1,
 		'payload_class'               => 'files',
-		'file_count'                  => 1,
-		'payload_bytes'               => (int) $file_written['bytes'],
+		'file_count'                  => $file_count_total,
+		'payload_bytes'               => $file_bytes_total,
 		'roots'                       => array(
 			array(
 				'id'         => 'uploads',
-				'file_count' => 1,
-				'byte_count' => (int) $file_written['bytes'],
+				'file_count' => $root_summaries['uploads']['file_count'],
+				'byte_count' => $root_summaries['uploads']['byte_count'],
+			),
+			array(
+				'id'         => 'plugins',
+				'file_count' => $root_summaries['plugins']['file_count'],
+				'byte_count' => $root_summaries['plugins']['byte_count'],
+			),
+			array(
+				'id'         => 'themes',
+				'file_count' => $root_summaries['themes']['file_count'],
+				'byte_count' => $root_summaries['themes']['byte_count'],
 			),
 		),
 		'source_fingerprint'          => hash( 'sha256', 'rewrite-fixture-' . $source_job_id ),
@@ -444,8 +497,8 @@ $build_archive = static function ( string $source_job_id ) use (
 			'files'    => array(
 				'manifest_path'   => 'files/manifest.json',
 				'manifest_sha256' => (string) $files['sha256'],
-				'file_count'      => 1,
-				'payload_bytes'   => (int) $file_written['bytes'],
+				'file_count'      => $file_count_total,
+				'payload_bytes'   => $file_bytes_total,
 			),
 		),
 		'integrity'      => array(
