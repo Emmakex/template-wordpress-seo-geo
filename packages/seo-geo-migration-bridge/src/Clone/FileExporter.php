@@ -4,6 +4,7 @@
  *
  * @package SeoGeoMigrationBridge
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Clone;
@@ -22,23 +23,49 @@ final class FileExporter {
 	private const MAX_PENDING_DIRECTORIES = 50000;
 	private const MAX_ENTRY_OPERATIONS    = 4000;
 
-	/** @var FileExportStateStore */
+	/**
+	 * Resumable file-export state store.
+	 *
+	 * @var FileExportStateStore
+	 */
 	private FileExportStateStore $store;
 
-	/** @var CloneInventoryStore */
+	/**
+	 * Completed source inventory store.
+	 *
+	 * @var CloneInventoryStore
+	 */
 	private CloneInventoryStore $inventory;
 
-	/** @var ExportStateStore */
+	/**
+	 * Database export state dependency.
+	 *
+	 * @var ExportStateStore
+	 */
 	private ExportStateStore $database_export;
 
-	/** @var CloneJobStore */
+	/**
+	 * Portable Clone job store.
+	 *
+	 * @var CloneJobStore
+	 */
 	private CloneJobStore $jobs;
 
-	/** @var ExportWorkspace */
+	/**
+	 * Private payload workspace.
+	 *
+	 * @var ExportWorkspace
+	 */
 	private ExportWorkspace $workspace;
 
 	/**
 	 * Construct the resumable file exporter.
+	 *
+	 * @param FileExportStateStore|null $store           Optional file-export state store.
+	 * @param CloneInventoryStore|null  $inventory       Optional source inventory store.
+	 * @param ExportStateStore|null     $database_export Optional database-export state store.
+	 * @param CloneJobStore|null        $jobs            Optional clone job store.
+	 * @param ExportWorkspace|null      $workspace       Optional private export workspace.
 	 */
 	public function __construct(
 		?FileExportStateStore $store = null,
@@ -204,7 +231,7 @@ final class FileExporter {
 				$path     = $this->join_path( $base, $relative );
 
 				if ( $this->excluded( $relative, is_dir( $path ) ) ) {
-					$state['after_name'] = $entry;
+					$state['after_name']          = $entry;
 					if ( $operations >= self::MAX_ENTRY_OPERATIONS ) {
 						$dir_finished = false;
 						break;
@@ -242,7 +269,7 @@ final class FileExporter {
 					return $this->block( $job_id, $state, 'file-export-copy-failed', true );
 				}
 
-				$record = array(
+				$record      = array(
 					'root'          => $root_id,
 					'relative_path' => wp_normalize_path( $relative ),
 					'payload_path'  => $payload_path,
@@ -263,8 +290,8 @@ final class FileExporter {
 					(string) $state['export_fingerprint'],
 					'file|' . $root_id . '|' . wp_normalize_path( $relative ) . '|' . (string) (int) $copied['bytes'] . '|' . (string) $copied['sha256']
 				);
-				$state['file_count'] = (int) ( $state['file_count'] ?? 0 ) + 1;
-				$state['byte_count'] = (int) ( $state['byte_count'] ?? 0 ) + (int) $copied['bytes'];
+				$state['file_count']          = (int) ( $state['file_count'] ?? 0 ) + 1;
+				$state['byte_count']          = (int) ( $state['byte_count'] ?? 0 ) + (int) $copied['bytes'];
 				$state['after_name'] = $entry;
 				++$accepted_files;
 				$accepted_bytes += (int) $copied['bytes'];
@@ -362,7 +389,7 @@ final class FileExporter {
 			'repository_safe'             => false,
 			'generated_at'                => gmdate( DATE_ATOM ),
 		);
-		$json = wp_json_encode( $manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+		$json     = wp_json_encode( $manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
 		if ( ! is_string( $json ) ) {
 			return $this->block( $job_id, $state, 'files-manifest-encode-failed', true );
 		}
@@ -464,8 +491,21 @@ final class FileExporter {
 			)
 		);
 		$excluded_dirs = array(
-			'.git', '.svn', 'cache', 'caches', 'tmp', 'temp', 'logs', 'log', 'updraft',
-			'ai1wm-backups', 'wp-staging', 'wpo-cache', 'litespeed', 'backup', 'backups',
+			'.git',
+			'.svn',
+			'cache',
+			'caches',
+			'tmp',
+			'temp',
+			'logs',
+			'log',
+			'updraft',
+			'ai1wm-backups',
+			'wp-staging',
+			'wpo-cache',
+			'litespeed',
+			'backup',
+			'backups',
 		);
 		if ( $is_dir && array_intersect( $segments, $excluded_dirs ) ) {
 			return true;
@@ -489,6 +529,9 @@ final class FileExporter {
 
 	/**
 	 * Chain one deterministic source fingerprint record.
+	 *
+	 * @param string $previous Previous chain hash.
+	 * @param string $record   Canonical inventory record.
 	 */
 	private function chain_hash( string $previous, string $record ): string {
 		return hash( 'sha256', $previous . "\n" . $record );
@@ -496,6 +539,9 @@ final class FileExporter {
 
 	/**
 	 * Join normalized filesystem paths.
+	 *
+	 * @param string $base     Absolute base path.
+	 * @param string $relative Relative path.
 	 */
 	private function join_path( string $base, string $relative ): string {
 		return rtrim( wp_normalize_path( $base ), '/' )
