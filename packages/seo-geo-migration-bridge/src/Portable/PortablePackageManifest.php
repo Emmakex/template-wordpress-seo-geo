@@ -39,9 +39,9 @@ final class PortablePackageManifest {
 				'baseline_sha256'   => is_string( $baseline['sha256'] ?? null ) ? $baseline['sha256'] : null,
 			),
 			'target'         => array(
-				'mode'       => is_string( $job['mode'] ?? null ) ? $job['mode'] : '',
-				'directory'  => is_string( $target['directory'] ?? null ) ? $target['directory'] : '',
-				'home_url'   => is_string( $target['home_url'] ?? null ) ? $target['home_url'] : '',
+				'mode'      => is_string( $job['mode'] ?? null ) ? $job['mode'] : '',
+				'directory' => is_string( $target['directory'] ?? null ) ? $target['directory'] : '',
+				'home_url'  => is_string( $target['home_url'] ?? null ) ? $target['home_url'] : '',
 			),
 			'payload'        => array(
 				'files'    => array(
@@ -54,22 +54,22 @@ final class PortablePackageManifest {
 				),
 			),
 			'integrity'      => array(
-				'algorithm' => 'sha256',
+				'algorithm'       => 'sha256',
 				'manifest_sha256' => null,
 			),
 			'privacy'        => array(
-				'contains_private_site_data' => true,
-				'repository_safe'            => false,
-				'wp_config_included'         => false,
-				'credentials_included'       => false,
-				'auth_salts_included'        => false,
+				'contains_private_site_data'         => true,
+				'repository_safe'                    => false,
+				'wp_config_included'                 => false,
+				'credentials_included'               => false,
+				'auth_salts_included'                => false,
 				'package_requires_protected_storage' => true,
 			),
 			'safety'         => array(
-				'production_restore_allowed' => false,
+				'production_restore_allowed'         => false,
 				'blind_dynamic_data_restore_allowed' => false,
-				'target_integrity_required'  => true,
-				'resume_required'            => true,
+				'target_integrity_required'          => true,
+				'resume_required'                    => true,
 			),
 		);
 	}
