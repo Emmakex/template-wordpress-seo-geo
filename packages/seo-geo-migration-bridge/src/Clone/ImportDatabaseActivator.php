@@ -175,20 +175,24 @@ final class ImportDatabaseActivator {
 			return $this->block( $job_id, $state, 'database-activation-sandbox-guard-failed', false );
 		}
 
+		$layout = $this->layout( $state );
+		if ( 'activated' === $layout ) {
+			// Crash-recovery path: the atomic rename completed but the workspace
+			// journal was not yet advanced. Verification uses only the frozen
+			// external journal because rollback table existence intentionally makes
+			// the pre-activation planner unavailable after the swap.
+			return $this->finish_activation_verification( $job_id, $state );
+		}
+		if ( 'prepared' !== $layout || ! $this->staging_counts_match( $state ) ) {
+			return $this->block( $job_id, $state, 'database-activation-layout-drift', false );
+		}
+
 		$snapshot = $this->finalizer->activation_plan_snapshot( $job_id );
 		if (
 			! is_array( $snapshot )
 			|| ! $this->same_hash( $state['activation_plan_hash'] ?? '', $snapshot['hash'] ?? '' )
 		) {
 			return $this->block( $job_id, $state, 'database-activation-plan-drift', false );
-		}
-
-		$layout = $this->layout( $state );
-		if ( 'activated' === $layout ) {
-			return $this->finish_activation_verification( $job_id, $state );
-		}
-		if ( 'prepared' !== $layout || ! $this->staging_counts_match( $state ) ) {
-			return $this->block( $job_id, $state, 'database-activation-layout-drift', false );
 		}
 
 		$state['status']     = 'activating';
