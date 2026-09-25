@@ -238,10 +238,10 @@ final class ImportPreflight {
 			$database_json,
 			$files_json
 		);
-		$blockers          = array_merge( $blockers, $contract_blockers );
-		$destination       = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
-		$blockers          = array_merge( $blockers, $destination['blockers'] );
-		$advisories        = array_merge( $advisories, $destination['advisories'] );
+		$blockers    = array_merge( $blockers, $contract_blockers );
+		$destination = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
+		$blockers    = array_merge( $blockers, $destination['blockers'] );
+		$advisories  = array_merge( $advisories, $destination['advisories'] );
 
 		$blockers   = array_values( array_unique( $blockers ) );
 		$advisories = array_values( array_unique( $advisories ) );
@@ -302,13 +302,13 @@ final class ImportPreflight {
 			$advisories[] = 'restore-runtime-guard-required';
 		}
 
-		$state['status']                       = $payload_valid ? 'payload-verified' : ( array() === $blockers ? 'preflight-ready' : 'blocked' );
-		$state['full_payload_verified']        = $payload_valid;
-		$state['restore_allowed']              = $payload_valid;
-		$state['blockers']                     = $blockers;
-		$state['advisories']                   = array_values( array_unique( $advisories ) );
-		$state['validated_at']                 = $now;
-		$state['updated_at']                   = $now;
+		$state['status']                = $payload_valid ? 'payload-verified' : ( array() === $blockers ? 'preflight-ready' : 'blocked' );
+		$state['full_payload_verified'] = $payload_valid;
+		$state['restore_allowed']       = $payload_valid;
+		$state['blockers']              = $blockers;
+		$state['advisories']            = array_values( array_unique( $advisories ) );
+		$state['validated_at']          = $now;
+		$state['updated_at']            = $now;
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
