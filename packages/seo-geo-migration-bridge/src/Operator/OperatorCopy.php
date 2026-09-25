@@ -65,7 +65,7 @@ final class OperatorCopy {
 				'portable_clone_blocked'         => 'Portable clone planning is blocked by one or more safety requirements. No clone data was written.',
 				'portable_clone_busy'            => 'Another portable clone job is already planned or running.',
 				'portable_clone_cancelled'       => 'Portable clone job cancelled. Production content was not changed.',
-				'portable_clone_error'           => 'Portable clone job could not be prepared.'
+				'portable_clone_error'           => 'Portable clone job could not be prepared.',
 				'sandbox_preflight_heading'      => 'Sandbox readiness',
 				'sandbox_preflight_help'         => 'Migration can run only after every isolation and recovery guard below is satisfied. A sandbox may use a distinct origin or an explicitly isolated same-origin subdirectory.',
 				'sandbox_handoff_help'           => 'Download a privacy-bounded JSON manifest with baseline identity, runtime metadata, raw dependency classifications and bounded operator review decisions. It does not contain post bodies, builder payloads, credentials, database dumps or uploads.',
@@ -170,7 +170,7 @@ final class OperatorCopy {
 				'portable_clone_blocked'         => 'La planificación del clon portable está bloqueada por uno o más requisitos de seguridad. No se escribieron datos del clon.',
 				'portable_clone_busy'            => 'Ya existe otro trabajo de clon portable planificado o en ejecución.',
 				'portable_clone_cancelled'       => 'Trabajo de clon portable cancelado. No se modificó el contenido de producción.',
-				'portable_clone_error'           => 'No se pudo preparar el trabajo de clon portable.'
+				'portable_clone_error'           => 'No se pudo preparar el trabajo de clon portable.',
 				'sandbox_preflight_heading'      => 'Preparación del sandbox',
 				'sandbox_preflight_help'         => 'La migración solo puede ejecutarse cuando se cumplan todas las protecciones de aislamiento y recuperación. El sandbox puede usar un origen distinto o una subcarpeta del mismo origen aislada explícitamente.',
 				'sandbox_handoff_help'           => 'Descarga un manifiesto JSON acotado por privacidad con la identidad de la línea base, metadatos del runtime, clasificaciones originales de dependencias y decisiones acotadas de revisión. No incluye cuerpos de entradas, cargas de constructores, credenciales, volcados de base de datos ni uploads.',
