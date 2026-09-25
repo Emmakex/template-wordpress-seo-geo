@@ -257,7 +257,7 @@ final class ExportWorkspace {
 			}
 		} else {
 			$parent = dirname( $target );
-			if ( ! is_dir( $parent ) || is_link( $parent ) || ! is_writable( $parent ) || ! wp_mkdir_p( $target ) ) {
+			if ( ! is_dir( $parent ) || is_link( $parent ) || ! wp_mkdir_p( $target ) ) {
 				return null;
 			}
 			$created = true;
