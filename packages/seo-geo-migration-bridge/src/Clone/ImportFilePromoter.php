@@ -55,23 +55,33 @@ final class ImportFilePromoter {
 	private CloneJobStore $jobs;
 
 	/**
+	 * Centralized filesystem mutation boundary.
+	 *
+	 * @var ExportWorkspace
+	 */
+	private ExportWorkspace $workspace;
+
+	/**
 	 * Construct the reversible file promoter.
 	 *
 	 * @param ImportFilePromotionStateStore|null      $store               Optional promotion journal.
 	 * @param ImportFilePromotionPlanner|null         $planner             Optional promotion planner.
 	 * @param ImportDatabaseActivationStateStore|null $database_activation Optional database activation journal.
 	 * @param CloneJobStore|null                      $jobs                Optional clone job store.
+	 * @param ExportWorkspace|null                    $workspace           Optional filesystem mutation boundary.
 	 */
 	public function __construct(
 		?ImportFilePromotionStateStore $store = null,
 		?ImportFilePromotionPlanner $planner = null,
 		?ImportDatabaseActivationStateStore $database_activation = null,
-		?CloneJobStore $jobs = null
+		?CloneJobStore $jobs = null,
+		?ExportWorkspace $workspace = null
 	) {
 		$this->store               = $store ?? new ImportFilePromotionStateStore();
 		$this->database_activation = $database_activation ?? new ImportDatabaseActivationStateStore();
 		$this->planner             = $planner ?? new ImportFilePromotionPlanner( $this->store, $this->database_activation );
 		$this->jobs                = $jobs ?? new CloneJobStore();
+		$this->workspace           = $workspace ?? new ExportWorkspace();
 	}
 
 	/**
@@ -720,11 +730,8 @@ final class ImportFilePromoter {
 	 */
 	private function prepare_candidate_directory( array $root ): bool {
 		$candidate = untrailingslashit( (string) ( $root['candidate_path'] ?? '' ) );
-		if ( '' === $candidate || file_exists( $candidate ) || is_link( $candidate ) ) {
-			return false;
-		}
 
-		return wp_mkdir_p( $candidate ) && is_dir( $candidate ) && ! is_link( $candidate );
+		return '' !== $candidate && $this->workspace->prepare_file_promotion_candidate( $candidate );
 	}
 
 	/**
@@ -736,40 +743,17 @@ final class ImportFilePromoter {
 	 */
 	private function copy_verified_file( string $source, string $target ): ?array {
 		$source_info = $this->file_info( $source );
-		if ( null === $source_info ) {
-			return null;
-		}
-
-		$parent = dirname( $target );
-		if ( ! is_dir( $parent ) && ! wp_mkdir_p( $parent ) ) {
-			return null;
-		}
-
-		$temp = $target . '.tmp-' . wp_generate_password( 12, false, false );
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_copy -- Copies verified staging bytes into a same-filesystem candidate.
-		if ( ! copy( $source, $temp ) ) {
-			return null;
-		}
-
-		$target_info = $this->file_info( $temp );
+		$copied      = $this->workspace->copy_file_to_promotion_candidate( $source, $target );
 		if (
-			null === $target_info
-			|| $source_info['bytes'] !== $target_info['bytes']
-			|| ! hash_equals( $source_info['sha256'], $target_info['sha256'] )
+			null === $source_info
+			|| null === $copied
+			|| $source_info['bytes'] !== $copied['bytes']
+			|| ! hash_equals( $source_info['sha256'], $copied['sha256'] )
 		) {
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only failed candidate temp bytes.
-			@unlink( $temp );
 			return null;
 		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic rename remains inside the candidate filesystem.
-		if ( ! rename( $temp, $target ) ) {
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only failed candidate temp bytes.
-			@unlink( $temp );
-			return null;
-		}
-
-		return $target_info;
+		return $copied;
 	}
 
 	/**
@@ -826,14 +810,7 @@ final class ImportFilePromoter {
 	 * @param string $to   Destination path.
 	 */
 	private function rename_path( string $from, string $to ): bool {
-		$from = untrailingslashit( wp_normalize_path( $from ) );
-		$to   = untrailingslashit( wp_normalize_path( $to ) );
-		if ( '' === $from || '' === $to || file_exists( $to ) ) {
-			return false;
-		}
-
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Promotion paths are sibling directories on the destination filesystem.
-		return rename( $from, $to );
+		return $this->workspace->rename_file_promotion_path( $from, $to );
 	}
 
 	/**
