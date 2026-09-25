@@ -112,6 +112,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFileRestorer.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFileController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportRewriteStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportRewriteController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -1178,6 +1181,137 @@ if ( str_contains( $import_file_controller, 'admin_post_nopriv_' ) ) {
 		'portable-clone-import-file-public-endpoint',
 		'Portable Import file restore must never expose an unauthenticated endpoint.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFileController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+
+
+$import_rewrite_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportRewriteStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_rewrite_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'rewrite', 'verify', 'complete'",
+		"'active_tables_untouched'",
+		"'active_roots_untouched'",
+		"'opaque_serialized_skips'",
+	) as $import_rewrite_state_guard
+) {
+	if ( ! str_contains( $import_rewrite_state_store, $import_rewrite_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-rewrite-state',
+			'Portable Import environment rewrite state must remain bounded, resumable, two-pass and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportRewriteStateStore.php',
+			$import_rewrite_state_guard,
+			'missing'
+		);
+	}
+}
+
+$import_environment_rewriter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_ROWS = 100;',
+		'$this->database_restorer->staging_plan( $job_id )',
+		"'complete' !== ( \$db['status'] ?? null )",
+		"'complete' !== ( \$files['status'] ?? null )",
+		"'active_tables_untouched'",
+		"'active_roots_untouched'",
+		"'options'",
+		"'posts'",
+		"is_serialized( \$value, false )",
+		"'allowed_classes' => false",
+		'serialize( $nested[\'value\'] )',
+		'json_decode( $trimmed, true )',
+		'wp_json_encode( $nested[\'value\']',
+		'$this->opaque_contains_source_environment( $value, $state )',
+		"'import-rewrite-source-environment-remains'",
+		"'credential-values-kept-opaque'",
+		"'opaque-serialized-values-reviewed'",
+		"'START TRANSACTION'",
+		"'COMMIT'",
+		"'ROLLBACK'",
+		"'rewrite-environment'",
+	) as $import_rewrite_guard
+) {
+	if ( ! str_contains( $import_environment_rewriter, $import_rewrite_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-environment-rewrite',
+			'10E.2A.4.5 environment rewrite is missing a required staging/serialization/idempotence safety boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
+			$import_rewrite_guard,
+			'missing'
+		);
+	}
+}
+
+if (
+	! str_contains( $import_environment_rewriter, '$wpdb->update(' )
+	|| ! str_contains( $import_environment_rewriter, "(string) \$spec['staging_table']" )
+	|| str_contains( $import_environment_rewriter, "(string) \$spec['target_table']," )
+) {
+	fail_migration_bridge(
+		'portable-clone-import-rewrite-table-boundary',
+		'Environment rewrite mutations must target only the validated job-owned staging table.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
+		'wpdb update against spec staging_table only',
+		'staging update boundary mismatch'
+	);
+}
+
+foreach ( array( 'wp_upload_dir(', 'WP_PLUGIN_DIR', 'get_theme_root(', 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(' ) as $rewrite_forbidden ) {
+	if ( str_contains( $import_environment_rewriter, $rewrite_forbidden ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-rewrite-active-files-boundary',
+			'10E.2A.4.5 must not resolve or mutate active/staged file roots.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
+			'staging database values only',
+			$rewrite_forbidden
+		);
+	}
+}
+
+if (
+	1 === preg_match( '/str_replace\s*\([^;]+(?:serialize|serialized)/is', $import_environment_rewriter )
+	|| str_contains( $import_environment_rewriter, 'SerializedValueRewriter' )
+) {
+	fail_migration_bridge(
+		'portable-clone-import-rewrite-raw-serialized-replacement',
+		'Environment rewrite must decode/re-encode supported serialized values and must not use a second raw serialized replacement path.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
+		'one structured serialization-safe rewrite path',
+		'raw or duplicate serialized replacement path found'
+	);
+}
+
+$import_rewrite_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportRewriteController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_environment_rewrite';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->rewriter->advance( $job_id, $batch_rows )',
+	) as $import_rewrite_controller_guard
+) {
+	if ( ! str_contains( $import_rewrite_controller, $import_rewrite_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-rewrite-entrypoint',
+			'Portable Import environment rewrite endpoint must remain administrator/job-nonce gated and bounded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportRewriteController.php',
+			$import_rewrite_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $import_rewrite_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-rewrite-public-endpoint',
+		'Portable Import environment rewrite must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportRewriteController.php',
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
