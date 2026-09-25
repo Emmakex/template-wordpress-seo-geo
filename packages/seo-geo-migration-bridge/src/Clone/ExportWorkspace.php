@@ -238,6 +238,84 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Return one existing job-owned workspace root.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	public function root_path( string $job_id ): ?string {
+		if ( ! $this->valid_job_id( $job_id ) ) {
+			return null;
+		}
+
+		$base = trailingslashit( wp_normalize_path( $this->base_path() ) );
+		$root = $base . $job_id . '/';
+
+		return is_dir( $root ) && str_starts_with( $root, $base ) ? $root : null;
+	}
+
+	/**
+	 * Delete a bounded number of job-owned workspace entries.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @param int    $limit  Maximum files/directories removed this request.
+	 * @return array{complete:bool,deleted:int}
+	 */
+	public function cleanup_batch( string $job_id, int $limit = 250 ): array {
+		$limit = max( 1, min( 1000, $limit ) );
+		$root  = $this->root_path( $job_id );
+		if ( null === $root ) {
+			return array(
+				'complete' => true,
+				'deleted'  => 0,
+			);
+		}
+
+		$base     = trailingslashit( wp_normalize_path( $this->base_path() ) );
+		$deleted  = 0;
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator( $root, FilesystemIterator::SKIP_DOTS ),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
+
+		foreach ( $iterator as $item ) {
+			if ( $deleted >= $limit ) {
+				break;
+			}
+
+			$path = wp_normalize_path( $item->getPathname() );
+			if ( ! str_starts_with( $path, $base ) ) {
+				return array(
+					'complete' => false,
+					'deleted'  => $deleted,
+				);
+			}
+
+			if ( $item->isDir() && ! $item->isLink() ) {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Removes only a job-owned private export directory.
+				$removed = @rmdir( $path );
+			} else {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only a job-owned private export file.
+				$removed = @unlink( $path );
+			}
+
+			if ( $removed ) {
+				++$deleted;
+			}
+		}
+
+		$remaining = new FilesystemIterator( $root, FilesystemIterator::SKIP_DOTS );
+		if ( ! $remaining->valid() ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Removes only the empty job-owned workspace root.
+			@rmdir( untrailingslashit( $root ) );
+		}
+
+		return array(
+			'complete' => ! is_dir( $root ),
+			'deleted'  => $deleted,
+		);
+	}
+
+	/**
 	 * Delete only the private workspace owned by one clone job.
 	 *
 	 * @param string $job_id Clone job identifier.
