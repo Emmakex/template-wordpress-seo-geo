@@ -387,8 +387,12 @@ foreach (
 		"/public const OPTION_NAME = 'seo_geo_migration_portable_clone_job_v1';/",
 		"/add_option\\( self::OPTION_NAME, \\x24job, '', false \\)/",
 		"/update_option\\( self::OPTION_NAME, \\x24job, false \\)/",
-		"/'status'\\s*=>\\s*'planned'/",
-		"/'stage'\\s*=>\\s*'inventory'/",
+		"/'operation'\\s*=>\\s*'local-clone'/",
+		"/'status'\\s*=>\\s*'created'/",
+		"/'phase'\\s*=>\\s*'inventory'/",
+		"/'cursor'\\s*=>\\s*null/",
+		"/'package_schema_version'\\s*=>\\s*self::PACKAGE_SCHEMA_VERSION/",
+		"/'integrity_state'\\s*=>\\s*'pending'/",
 	) as $portable_store_guard
 ) {
 	if ( 1 !== preg_match( $portable_store_guard, $portable_store ) ) {
@@ -405,7 +409,12 @@ foreach (
 $portable_manifest = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Portable/PortablePackageManifest.php' );
 foreach (
 	array(
-		"/'kind'\\s*=>\\s*'seo-geo-portable-site-package'/",
+		"/'package_id'\\s*=>/",
+		"/'site_url'\\s*=>/",
+		"/'database'\\s*=>\\s*\\$this->empty_payload_class/",
+		"/'uploads'\\s*=>\\s*\\$this->empty_payload_class/",
+		"/'plugins'\\s*=>\\s*\\$this->empty_payload_class/",
+		"/'themes'\\s*=>\\s*\\$this->empty_payload_class/",
 		"/'contains_private_site_data'\\s*=>\\s*true/",
 		"/'repository_safe'\\s*=>\\s*false/",
 		"/'wp_config_included'\\s*=>\\s*false/",
@@ -434,6 +443,8 @@ foreach (
 		'check_admin_referer( self::CANCEL_NONCE_ACTION )',
 		"'admin_post_' . self::PREPARE_ACTION",
 		"'admin_post_' . self::CANCEL_ACTION",
+		"'non_production_confirmed'",
+		"'confirmation-required'",
 	) as $portable_controller_guard
 ) {
 	if ( ! str_contains( $portable_controller, $portable_controller_guard ) ) {
