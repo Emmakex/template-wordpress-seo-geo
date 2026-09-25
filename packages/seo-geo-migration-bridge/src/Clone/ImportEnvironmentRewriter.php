@@ -817,7 +817,12 @@ final class ImportEnvironmentRewriter {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Read-only index metadata on a validated staging table.
-		$rows = $wpdb->get_results( 'SHOW INDEX FROM ' . $this->quote_identifier( $table ) . " WHERE Key_name = 'PRIMARY' ORDER BY Seq_in_index ASC", ARRAY_A );
+		$rows = $wpdb->get_results( 'SHOW INDEX FROM ' . $this->quote_identifier( $table ) . " WHERE Key_name = 'PRIMARY'", ARRAY_A );
+
+		usort(
+			$rows,
+			static fn( array $left, array $right ): int => (int) ( $left['Seq_in_index'] ?? 0 ) <=> (int) ( $right['Seq_in_index'] ?? 0 )
+		);
 
 		$columns = array();
 
