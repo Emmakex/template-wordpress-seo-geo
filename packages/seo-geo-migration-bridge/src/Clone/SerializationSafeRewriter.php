@@ -26,7 +26,8 @@ final class SerializationSafeRewriter {
 	 */
 	public function rewrite( string $value, array $replacements ): array {
 		$replacements = $this->normalize_replacements( $replacements );
-		$serialized    = function_exists( 'is_serialized' ) && is_serialized( $value, false );
+		$serialized    = ( function_exists( 'is_serialized' ) && is_serialized( $value, true ) )
+			|| $this->looks_serialized( $value );
 
 		if ( array() === $replacements || ! $this->contains_search( $value, $replacements ) ) {
 			return array(
@@ -342,6 +343,20 @@ final class SerializationSafeRewriter {
 			'changed'     => false,
 			'unsupported' => $this->contains_search( $payload, $replacements ),
 		);
+	}
+
+	/**
+	 * Conservatively recognize complete PHP serialization token prefixes that WordPress
+	 * may not classify consistently across versions (notably custom Serializable objects).
+	 *
+	 * Full structural validity is still proven by rewrite_token() consuming all bytes.
+	 */
+	private function looks_serialized( string $value ): bool {
+		if ( 'N;' === $value ) {
+			return true;
+		}
+
+		return 1 === preg_match( '/^(?:[abisdOCErR]):/', $value );
 	}
 
 	/**
