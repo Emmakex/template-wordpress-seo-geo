@@ -477,8 +477,14 @@ final class ImportEnvironmentRewriter {
 			if ( ! $verify ) {
 				++$nested['state']['serialized_values'];
 			}
+			if ( $nested['value'] === $decoded ) {
+				return array(
+					'value' => $value,
+					'state' => $nested['state'],
+				);
+			}
 
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Re-serializes the safely decoded scalar/array payload after URL-aware transformation.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Re-serializes only a safely decoded payload whose nested URL values actually changed.
 			$encoded = serialize( $nested['value'] );
 
 			return array(
@@ -505,6 +511,12 @@ final class ImportEnvironmentRewriter {
 			}
 			if ( ! $verify ) {
 				++$nested['state']['json_values'];
+			}
+			if ( $nested['value'] === $json ) {
+				return array(
+					'value' => $value,
+					'state' => $nested['state'],
+				);
 			}
 			$encoded = wp_json_encode( $nested['value'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 			if ( ! is_string( $encoded ) ) {
@@ -552,12 +564,6 @@ final class ImportEnvironmentRewriter {
 
 		$transformed = array();
 		foreach ( $value as $key => $item ) {
-			$key_result = is_string( $key ) ? $this->transform_plain_string( $key, $state, $verify ) : null;
-			if ( null !== $key_result ) {
-				$state = $key_result['state'];
-				$key   = $key_result['value'];
-			}
-
 			$result = $this->transform_nested( $item, $state, $depth + 1, $verify );
 			if ( null === $result ) {
 				return null;
