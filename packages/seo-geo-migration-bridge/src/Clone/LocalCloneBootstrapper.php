@@ -130,8 +130,7 @@ final class LocalCloneBootstrapper {
 			}
 			if ( 'blocked' === ( $existing['status'] ?? null ) ) {
 				$target = untrailingslashit( wp_normalize_path( (string) ( $existing['target_path'] ?? '' ) ) );
-				$marker = $this->join_path( $target, self::OWNER_MARKER );
-				if ( true === ( $existing['target_owned'] ?? false ) || is_file( $marker ) ) {
+						if ( true === ( $existing['target_owned'] ?? false ) || is_file( $marker ) ) {
 					return $existing;
 				}
 				if ( true === ( $existing['target_created'] ?? false ) && is_dir( $target ) && $this->directory_empty( $target ) ) {
@@ -173,7 +172,7 @@ final class LocalCloneBootstrapper {
 
 		if ( ! $target_exists ) {
 			$parent = dirname( $target );
-			if ( ! is_dir( $parent ) || is_link( $parent ) || ! is_writable( $parent ) ) {
+			if ( ! is_dir( $parent ) || is_link( $parent ) ) {
 				return $this->blocked_from_plan( $job_id, $plan, 'bootstrap-target-parent-not-writable' );
 			}
 		}
@@ -254,10 +253,10 @@ final class LocalCloneBootstrapper {
 			return $this->block( $job_id, $state, 'bootstrap-release-target-delete-failed' );
 		}
 
-		$state['status']       = 'released';
-		$state['target_owned'] = false;
-		$state['released_at'] = gmdate( DATE_ATOM );
-		$state['updated_at']  = $state['released_at'];
+		$state['status']        = 'released';
+		$state['target_owned']  = false;
+		$state['released_at']   = gmdate( DATE_ATOM );
+		$state['updated_at']    = $state['released_at'];
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
@@ -332,12 +331,12 @@ final class LocalCloneBootstrapper {
 			$state['marker_sha256'] = $hash;
 		}
 
-		$state['status']        = 'claimed';
-		$state['target_owned']  = true;
-		$state['claimed_at']    = '' === (string) ( $state['claimed_at'] ?? '' ) ? gmdate( DATE_ATOM ) : (string) $state['claimed_at'];
-		$state['updated_at']    = gmdate( DATE_ATOM );
-		$state['blockers']      = array();
-		$state['bootstrap_next']= 'runtime-copy';
+		$state['status']         = 'claimed';
+		$state['target_owned']   = true;
+		$state['claimed_at']     = '' === (string) ( $state['claimed_at'] ?? '' ) ? gmdate( DATE_ATOM ) : (string) $state['claimed_at'];
+		$state['updated_at']     = gmdate( DATE_ATOM );
+		$state['blockers']       = array();
+		$state['bootstrap_next'] = 'runtime-copy';
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
@@ -384,11 +383,12 @@ final class LocalCloneBootstrapper {
 			return null;
 		}
 
-		$fresh = $this->planner->plan(
+		$same_database = true === ( $plan['same_database'] ?? false );
+		$fresh         = $this->planner->plan(
 			(string) $plan['target_path'],
 			(string) $plan['target_url'],
 			(string) $plan['target_table_prefix'],
-			true === ( $plan['same_database'] ?? false ),
+			$same_database,
 			max( 0, (int) ( $plan['required_bytes'] ?? 0 ) )
 		);
 		if (
@@ -475,7 +475,7 @@ final class LocalCloneBootstrapper {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code ): ?array {
-		$blockers = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers   = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[] = $code;
 
 		$state['status']     = 'blocked';
@@ -562,7 +562,9 @@ final class LocalCloneBootstrapper {
 			$json = '{}';
 		}
 
-		return "<?php\n/** SEO/GEO Migration Bridge local-clone ownership marker. */\n/* " . base64_encode( $json ) . " */\n";
+		$identity = hash( 'sha256', $json );
+
+		return "<?php\n/** SEO/GEO Migration Bridge local-clone ownership marker. */\n/* contract=" . self::OWNER_CONTRACT . '; job=' . (string) ( $state['job_id'] ?? '' ) . '; identity=' . $identity . " */\n";
 	}
 
 	/**
