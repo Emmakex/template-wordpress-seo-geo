@@ -447,7 +447,7 @@ No database/files are copied yet.
 
 ### 10E.2A.2 — Read-only source inventory
 
-Status: **implementation candidate in Migration Bridge 0.8.10**
+Status: **complete in Migration Bridge 0.8.10; PR #128 merged and all seven post-merge gates passed**
 
 Deliver:
 
@@ -461,6 +461,15 @@ Deliver:
 No payload is created yet.
 
 ### 10E.2A.3 — Resumable export
+
+Status: **active — 10E.2A.3.1 database export implementation candidate in Migration Bridge 0.8.11**
+
+Internal sequence:
+
+- **10E.2A.3.1 — database export:** private workspace, schema + deterministic row chunks, resumable state and per-chunk/database-manifest SHA-256;
+- **10E.2A.3.2 — file export:** accepted uploads/plugins/themes copied in bounded file/byte batches with inventory reconciliation;
+- **10E.2A.3.3 — package manifest + integrity:** combine database/file manifests, source fingerprint and package checksum;
+- **10E.2A.3.4 — authenticated package delivery + retention cleanup:** capability/nonce download, explicit cleanup and bounded retention.
 
 Deliver:
 

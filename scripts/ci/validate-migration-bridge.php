@@ -91,8 +91,12 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventory.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DestinationSafetyPlanner.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -284,18 +288,126 @@ foreach (
 	}
 }
 
-foreach ( array( 'copy(', 'file_put_contents(', 'fwrite(', '->query(', '->insert(', '->update(', '->delete(' ) as $copy_primitive ) {
-	foreach ( glob( MIGRATION_BRIDGE_DIR . '/src/Clone/*.php' ) ?: array() as $clone_path ) {
-		$clone_source = (string) file_get_contents( $clone_path );
-		if ( str_contains( $clone_source, $copy_primitive ) ) {
+$clone_paths = glob( MIGRATION_BRIDGE_DIR . '/src/Clone/*.php' ) ?: array();
+foreach ( $clone_paths as $clone_path ) {
+	if ( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php' === $clone_path ) {
+		continue;
+	}
+	$clone_source = (string) file_get_contents( $clone_path );
+	foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(' ) as $filesystem_mutation ) {
+		if ( str_contains( $clone_source, $filesystem_mutation ) ) {
 			fail_migration_bridge(
-				'portable-clone-phase-boundary',
-				'10E.2A.1 must define job/manifest contracts without copying database rows or files.',
+				'portable-clone-filesystem-boundary',
+				'Portable Clone filesystem writes must remain isolated behind ExportWorkspace.',
 				$clone_path,
-				'no payload copy/restore primitive in 10E.2A.1',
-				$copy_primitive
+				'filesystem mutations only in ExportWorkspace.php',
+				$filesystem_mutation
 			);
 		}
+	}
+}
+
+$export_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_export_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'database_manifest_hash'",
+	) as $export_state_guard
+) {
+	if ( ! str_contains( $export_state_store, $export_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-export-state',
+			'Portable Clone export progress must remain bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php',
+			$export_state_guard,
+			'missing'
+		);
+	}
+}
+
+$export_workspace = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php' );
+foreach (
+	array(
+		"public const DIRECTORY_NAME = 'seo-geo-migration-bridge';",
+		'get_temp_dir()',
+		'file_put_contents(',
+		'rename(',
+		"hash_file( 'sha256'",
+		'cleanup( string $job_id )',
+	) as $export_workspace_guard
+) {
+	if ( ! str_contains( $export_workspace, $export_workspace_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-export-workspace',
+			'Portable Clone private export workspace is missing an atomic/private/cleanup guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
+			$export_workspace_guard,
+			'missing'
+		);
+	}
+}
+
+$database_exporter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_ROWS = 100;',
+		"'local-clone', 'export'",
+		'SHOW CREATE TABLE',
+		'SHOW COLUMNS FROM',
+		'SHOW KEYS FROM',
+		'SELECT * FROM',
+		"'primary-key'",
+		"'offset-fallback'",
+		"'base64-or-null'",
+		"'production_source_read_only' => true",
+		"'credentials_in_payload'      => false",
+		"'repository_safe'             => false",
+		"'database/manifest.json'",
+	) as $database_export_guard
+) {
+	if ( ! str_contains( $database_exporter, $database_export_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-database-export',
+			'Portable Clone database export is missing a required resumability/privacy/integrity boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
+			$database_export_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'INSERT INTO ', 'UPDATE ', 'DELETE FROM ', 'REPLACE INTO ', 'DROP TABLE ', 'ALTER TABLE ', 'TRUNCATE TABLE ' ) as $database_mutation_sql ) {
+	if ( str_contains( strtoupper( $database_exporter ), $database_mutation_sql ) ) {
+		fail_migration_bridge(
+			'portable-clone-source-database-read-only',
+			'Portable Clone exporter must never mutate the production source database.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
+			'SHOW/SELECT source access only',
+			$database_mutation_sql
+		);
+	}
+}
+
+$database_export_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_database_export';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->exporter->advance( $job_id, $batch_rows )',
+	) as $database_export_controller_guard
+) {
+	if ( ! str_contains( $database_export_controller, $database_export_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-database-export-entrypoint',
+			'Portable Clone database export endpoint must remain capability/nonce gated and advance one bounded batch.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
+			$database_export_controller_guard,
+			'missing'
+		);
 	}
 }
 

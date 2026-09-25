@@ -2199,7 +2199,7 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.2 — complete and accept the read-only source inventory + destination safety planner in Migration Bridge 0.8.10.** After this gate is green, continue with 10E.2A.3 resumable export; no database rows/files are copied before that phase.
+Current execution pointer: **10E.2A.3.1 — implement/accept resumable private database export in Migration Bridge 0.8.11.** 10E.2A.2 is accepted on main with all seven post-merge gates green. After 10E.2A.3.1, continue with bounded file export, package integrity, authenticated delivery and retention cleanup before import work.
 
 Migration Bridge v0.8.7 acceptance evidence:
 
@@ -2215,7 +2215,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 accepted; 10E.2A.2 implementation candidate in progress**
+Status: **active — 10E.2A.1 and 10E.2A.2 accepted; 10E.2A.3.1 implementation candidate in progress**
 
 Purpose:
 
@@ -2230,7 +2230,8 @@ Authoritative contract:
 Implementation sequence:
 
 - **10E.2A.1 — Clone contract + persistent resumable jobs**: complete in Migration Bridge 0.8.9; PR #127 merged and all seven post-merge gates passed on `2c62082431344f2abaeb4bb80c6d618814b69e9d`;
-- **10E.2A.2 — Read-only source inventory**: implementation candidate is Migration Bridge 0.8.10 with database table estimates, resumable uploads/plugins/themes hashing, exclusions, source fingerprint and destination-safety planning;
+- **10E.2A.2 — Read-only source inventory**: complete in Migration Bridge 0.8.10; PR #128 squash-merged as `2aec389db8cefb0a3e42e99751857a497c1b2ab8` and all seven post-merge gates passed;
+- **10E.2A.3.1 — Database export**: implementation candidate is Migration Bridge 0.8.11 with a private temporary workspace, resumable schema/row chunks, primary-key or deterministic fallback cursors and per-chunk/database-manifest SHA-256;
 - **10E.2A.3 — Resumable export**: chunked database/files export, manifest/checksums, authenticated download and cleanup;
 - **10E.2A.4 — Portable import**: package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
 - **10E.2A.5 — Local clone orchestration**: direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;

@@ -11,10 +11,13 @@ namespace SeoGeo\MigrationBridge;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\CloneInventory;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DestinationSafetyPlanner;
+use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
+use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Cutover\AdminCutoverController;
 use SeoGeo\MigrationBridge\Cutover\CutoverEngine;
 use SeoGeo\MigrationBridge\Migration\AdminMigrationController;
@@ -182,6 +185,27 @@ final class Plugin {
 	private static ?DestinationSafetyPlanner $destination_safety_planner = null;
 
 	/**
+	 * Portable Clone export-state store singleton.
+	 *
+	 * @var ExportStateStore|null
+	 */
+	private static ?ExportStateStore $clone_export_state_store = null;
+
+	/**
+	 * Portable Clone database exporter singleton.
+	 *
+	 * @var DatabaseExporter|null
+	 */
+	private static ?DatabaseExporter $clone_database_exporter = null;
+
+	/**
+	 * Portable Clone database export controller singleton.
+	 *
+	 * @var AdminCloneDatabaseExportController|null
+	 */
+	private static ?AdminCloneDatabaseExportController $clone_database_export_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -213,12 +237,15 @@ final class Plugin {
 		self::$migration_report       ??= new MigrationReportEngine();
 		self::$migration_report_store ??= new MigrationReportStore();
 
-		self::$clone_job_store            ??= new CloneJobStore();
-		self::$clone_controller           ??= new AdminCloneController( self::$clone_job_store );
-		self::$clone_inventory_store      ??= new CloneInventoryStore();
-		self::$clone_inventory            ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
-		self::$clone_inventory_controller ??= new AdminCloneInventoryController( self::$clone_inventory );
-		self::$destination_safety_planner ??= new DestinationSafetyPlanner();
+		self::$clone_job_store                  ??= new CloneJobStore();
+		self::$clone_controller                 ??= new AdminCloneController( self::$clone_job_store );
+		self::$clone_inventory_store            ??= new CloneInventoryStore();
+		self::$clone_inventory                  ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
+		self::$clone_inventory_controller       ??= new AdminCloneInventoryController( self::$clone_inventory );
+		self::$destination_safety_planner       ??= new DestinationSafetyPlanner();
+		self::$clone_export_state_store         ??= new ExportStateStore();
+		self::$clone_database_exporter          ??= new DatabaseExporter( self::$clone_export_state_store, self::$clone_inventory_store, self::$clone_job_store );
+		self::$clone_database_export_controller ??= new AdminCloneDatabaseExportController( self::$clone_database_exporter );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -235,6 +262,7 @@ final class Plugin {
 		self::$dependency_review_controller->boot();
 		self::$clone_controller->boot();
 		self::$clone_inventory_controller->boot();
+		self::$clone_database_export_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -320,6 +348,13 @@ final class Plugin {
 	 */
 	public static function destination_safety_planner(): ?DestinationSafetyPlanner {
 		return self::$destination_safety_planner;
+	}
+
+	/**
+	 * Return the resumable Portable Clone database exporter.
+	 */
+	public static function clone_database_exporter(): ?DatabaseExporter {
+		return self::$clone_database_exporter;
 	}
 
 	/**

@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.10`;
+- current plugin version: `0.8.11`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -83,3 +83,8 @@ Phase 10E.2A.1 starts the product-owned clone/export/import path without copying
 ### Version 0.8.10 — read-only source inventory
 
 Phase 10E.2A.2 adds the first real source-discovery layer for Portable Clone. Local-clone/export jobs can inventory WordPress-prefix table metadata and uploads/plugins/themes in bounded resumable batches, hash accepted files, persist only bounded inventory state in a non-autoloaded option, report exclusions/symlinks/unreadable entries and produce a deterministic source fingerprint. A read-only destination planner rejects production-path, payload-root, same-origin-root and shared-table-prefix collisions and can compare estimated required bytes with free space. No database rows or files are copied/restored in this version; payload creation remains 10E.2A.3.
+
+
+### Version 0.8.11 — resumable private database export
+
+Phase 10E.2A.3.1 begins real Portable Clone payload creation. After a completed 0.8.10 inventory, local-clone/export jobs can create a private temporary workspace and export only inventoried WordPress-prefix tables. Schema is stored separately; rows are written in bounded deterministic chunks using a single primary-key cursor when available or a recorded deterministic offset/order fallback otherwise. Values are binary-safe base64-or-null, each schema/chunk is SHA-256 hashed, progress is persisted in a non-autoloaded option and the final database manifest explicitly marks the payload private/non-repository-safe. Source database access in the exporter is SHOW/SELECT only. File payload export, final package assembly/download and retention policy remain later 10E.2A.3 substeps.
