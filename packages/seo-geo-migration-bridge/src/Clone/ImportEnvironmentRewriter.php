@@ -714,12 +714,12 @@ final class ImportEnvironmentRewriter {
 			return $this->block( $job_id, $state, 'import-rewrite-core-options-missing', false );
 		}
 
-		$state['stage']                = 'verify';
-		$state['table_index']          = 0;
-		$state['cursor_id']            = 0;
-		$state['verify_rows_scanned']  = 0;
-		$state['verify_source_urls']   = 0;
-		$state['updated_at']           = gmdate( DATE_ATOM );
+		$state['stage']               = 'verify';
+		$state['table_index']         = 0;
+		$state['cursor_id']           = 0;
+		$state['verify_rows_scanned'] = 0;
+		$state['verify_source_urls']  = 0;
+		$state['updated_at']          = gmdate( DATE_ATOM );
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
