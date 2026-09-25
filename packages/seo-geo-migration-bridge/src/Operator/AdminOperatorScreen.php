@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -26,6 +27,8 @@ use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadVerifier;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseRestorer;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -116,6 +119,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
+			<?php $this->render_clone_import_database_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -1071,6 +1075,9 @@ final class AdminOperatorScreen {
 		<?php if ( in_array( $status, array( 'preflight-ready', 'payload-verified' ), true ) || is_array( $payload ) ) : ?>
 			<?php $this->render_clone_import_payload_section( $job_id, $state, $payload ); ?>
 		<?php endif; ?>
+		<?php if ( is_array( $payload ) && 'complete' === ( $payload['status'] ?? null ) && true === ( $state['restore_allowed'] ?? false ) ) : ?>
+			<?php $this->render_clone_import_database_section( $job_id ); ?>
+		<?php endif; ?>
 		<?php
 	}
 
@@ -1181,6 +1188,82 @@ final class AdminOperatorScreen {
 					</select>
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_payload_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after database staging restore work.
+	 */
+	private function render_clone_import_database_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified database restore action.
+		$status = isset( $_GET['seo_geo_clone_import_database'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_import_database'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running'  => 'clone_import_database_running',
+			'complete' => 'clone_import_database_complete',
+			'blocked'  => 'clone_import_database_blocked',
+			default    => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status
+			? 'notice notice-error'
+			: ( 'running' === $status ? 'notice notice-info' : 'notice notice-success' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render isolated staging database restore controls.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function render_clone_import_database_section( string $job_id ): void {
+		$state     = ( new ImportDatabaseStateStore() )->get( $job_id );
+		$status    = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$stage     = is_array( $state ) ? (string) ( $state['stage'] ?? 'prepare' ) : 'prepare';
+		$blockers  = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$button    = 'pending' === $status ? 'clone_import_database_start' : 'clone_import_database_continue';
+		?>
+		<h4><?php echo esc_html( $this->copy->text( 'clone_import_database_heading' ) ); ?></h4>
+		<p><?php echo esc_html( $this->copy->text( 'clone_import_database_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_database_stage' ) ); ?></th><td><code><?php echo esc_html( $stage ); ?></code></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_database_tables' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['tables_completed'] ?? 0 ) . ' / ' . (string) (int) ( $state['table_count'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_database_rows' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['rows_restored'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_database_chunks' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['chunks_completed'] ?? 0 ) . ' / ' . (string) (int) ( $state['chunk_count'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_database_staging' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['current_staging_table'] ?? $state['staging_namespace'] ?? '' ) ); ?></code></td></tr>
+				<?php $this->render_sandbox_boolean_row( 'clone_import_database_active_untouched', true === ( $state['active_tables_untouched'] ?? true ) ); ?>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_database_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === $blockers ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $blockers ) ); ?></code></td></tr>
+			</tbody>
+		</table>
+
+		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportDatabaseController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneImportDatabaseController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p>
+					<label for="seo-geo-clone-import-db-rows"><strong><?php echo esc_html( $this->copy->text( 'clone_import_database_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-import-db-rows" name="database_restore_batch_rows">
+						<?php foreach ( array( 10, 25, 50, 100, 200, 500 ) as $rows ) : ?>
+							<option value="<?php echo esc_attr( (string) $rows ); ?>" <?php selected( ImportDatabaseRestorer::DEFAULT_BATCH_ROWS, $rows ); ?>><?php echo esc_html( (string) $rows ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_database_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
