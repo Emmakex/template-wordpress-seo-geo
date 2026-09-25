@@ -384,7 +384,7 @@ final class ImportFilePromotionPlanner {
 				! is_array( $info )
 				|| ! is_string( $chunk_json )
 				|| (int) ( $chunk_meta['byte_count'] ?? -1 ) !== (int) $info['bytes']
-				|| ! $this->same_hash( $chunk_meta['sha256'] ?? '', $info['sha256'] ?? '' )
+				|| ! $this->same_hash( $chunk_meta['sha256'] ?? '', $info['sha256'] )
 			) {
 				return null;
 			}
@@ -488,13 +488,13 @@ final class ImportFilePromotionPlanner {
 	 */
 	private function active_roots(): ?array {
 		$uploads = wp_upload_dir( null, false );
-		if ( ! is_array( $uploads ) || ! empty( $uploads['error'] ) || ! is_string( $uploads['basedir'] ?? null ) ) {
+		if ( ! empty( $uploads['error'] ) || '' === $uploads['basedir'] ) {
 			return null;
 		}
 
 		$plugins = defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR : '';
 		$themes  = get_theme_root();
-		if ( ! is_string( $plugins ) || '' === $plugins || ! is_string( $themes ) || '' === $themes ) {
+		if ( '' === $plugins || '' === $themes ) {
 			return null;
 		}
 
