@@ -928,7 +928,7 @@ foreach (
 	array(
 		'import_payload_root( string $job_id, bool $create = false )',
 		'extract_import_archive_files( string $job_id, array $relative_paths )',
-		"'import/payload/'",
+		"trailingslashit( \$import_dir ) . 'payload'",
 		'allowed_import_archive_relative( string $relative )',
 	) as $workspace_import_guard
 ) {
