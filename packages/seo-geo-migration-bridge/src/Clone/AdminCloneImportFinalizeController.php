@@ -53,20 +53,20 @@ final class AdminCloneImportFinalizeController {
 			);
 		}
 
-		$job_id = $this->posted_job_id();
+		$job_id          = $this->posted_job_id();
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
-		$batch_rows = isset( $_POST['finalize_batch_rows'] )
+		$batch_rows      = isset( $_POST['finalize_batch_rows'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['finalize_batch_rows'] ) ) )
 			: ImportFinalizationPlanner::DEFAULT_BATCH_ROWS;
-		$batch_files = isset( $_POST['finalize_batch_files'] )
+		$batch_files     = isset( $_POST['finalize_batch_files'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['finalize_batch_files'] ) ) )
 			: ImportFinalizationPlanner::DEFAULT_BATCH_FILES;
 		$batch_megabytes = isset( $_POST['finalize_batch_megabytes'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['finalize_batch_megabytes'] ) ) )
 			: 16;
 
-		$result = $this->planner->advance(
+		$result   = $this->planner->advance(
 			$job_id,
 			$batch_rows,
 			$batch_files,
