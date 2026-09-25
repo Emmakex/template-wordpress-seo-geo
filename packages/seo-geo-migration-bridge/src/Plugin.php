@@ -17,6 +17,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -39,6 +40,8 @@ use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizationPlanner;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
@@ -422,6 +425,27 @@ final class Plugin {
 	private static ?AdminCloneImportFinalizeController $clone_import_finalize_controller = null;
 
 	/**
+	 * Workspace-backed Portable Clone database activation journal singleton.
+	 *
+	 * @var ImportDatabaseActivationStateStore|null
+	 */
+	private static ?ImportDatabaseActivationStateStore $clone_import_database_activation_state_store = null;
+
+	/**
+	 * Reversible Portable Clone database activator singleton.
+	 *
+	 * @var ImportDatabaseActivator|null
+	 */
+	private static ?ImportDatabaseActivator $clone_import_database_activator = null;
+
+	/**
+	 * Administrator reversible database activation controller singleton.
+	 *
+	 * @var AdminCloneImportDatabaseActivationController|null
+	 */
+	private static ?AdminCloneImportDatabaseActivationController $clone_import_database_activation_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -498,6 +522,12 @@ final class Plugin {
 			self::$clone_job_store
 		);
 		self::$clone_import_finalize_controller  ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
+		self::$clone_import_database_activation_state_store ??= new ImportDatabaseActivationStateStore();
+		self::$clone_import_database_activator ??= new ImportDatabaseActivator(
+			self::$clone_import_database_activation_state_store,
+			self::$clone_import_finalization_planner
+		);
+		self::$clone_import_database_activation_controller ??= new AdminCloneImportDatabaseActivationController( self::$clone_import_database_activator );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -524,6 +554,7 @@ final class Plugin {
 		self::$clone_import_file_controller->boot();
 		self::$clone_import_rewrite_controller->boot();
 		self::$clone_import_finalize_controller->boot();
+		self::$clone_import_database_activation_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -679,6 +710,20 @@ final class Plugin {
 	 */
 	public static function clone_import_finalization_planner(): ?ImportFinalizationPlanner {
 		return self::$clone_import_finalization_planner;
+	}
+
+	/**
+	 * Return the workspace-backed Portable Clone database activation state store.
+	 */
+	public static function clone_import_database_activation_state_store(): ?ImportDatabaseActivationStateStore {
+		return self::$clone_import_database_activation_state_store;
+	}
+
+	/**
+	 * Return the reversible Portable Clone database activator.
+	 */
+	public static function clone_import_database_activator(): ?ImportDatabaseActivator {
+		return self::$clone_import_database_activator;
 	}
 
 	/**
