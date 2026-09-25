@@ -341,6 +341,7 @@ final class ExportWorkspace {
 	 *
 	 * @param string $job_id        Clone job identifier.
 	 * @param array  $relative_paths Workspace-relative files.
+	 * @phpstan-param list<string> $relative_paths
 	 */
 	public function append_delivery_archive_files( string $job_id, array $relative_paths ): bool {
 		$root = $this->root_path( $job_id );
@@ -379,16 +380,21 @@ final class ExportWorkspace {
 		$partial = $this->delivery_partial_path( $job_id );
 		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- PclZip is bundled by WordPress Core and loaded explicitly above.
 		$archive = new \PclZip( $partial );
-		$options = array(
-			PCLZIP_OPT_REMOVE_PATH,
+
+		$remove_path_option = defined( 'PCLZIP_OPT_REMOVE_PATH' )
+			? constant( 'PCLZIP_OPT_REMOVE_PATH' )
+			: null;
+		if ( ! is_int( $remove_path_option ) ) {
+			return false;
+		}
+
+		$method = is_file( $partial ) && 0 < (int) filesize( $partial ) ? 'add' : 'create';
+		$args   = array(
+			$sources,
+			$remove_path_option,
 			untrailingslashit( $root ),
 		);
-
-		$result = is_file( $partial ) && 0 < (int) filesize( $partial )
-			// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip instance.
-			? $archive->add( $sources, ...$options )
-			// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip instance.
-			: $archive->create( $sources, ...$options );
+		$result = call_user_func_array( array( $archive, $method ), $args );
 
 		if ( ! is_array( $result ) || count( $result ) !== count( $sources ) ) {
 			return false;
