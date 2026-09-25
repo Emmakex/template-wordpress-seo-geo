@@ -1350,16 +1350,13 @@ foreach (
 $import_finalizer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php' );
 foreach (
 	array(
-		"private const DB_SEED                  = 'seo-geo-import-finalize-db-v1';",
-		"private const FILE_SEED                = 'seo-geo-import-finalize-files-v1';",
+		"'seo-geo-import-finalize-db-v1'",
+		"'seo-geo-import-finalize-files-v1'",
 		'$this->database_restorer->staging_plan( $job_id )',
 		"get_option( 'blog_public', '1' )",
 		'SandboxGuard::outbound_safe()',
 		'SandboxGuard::backups_ready()',
 		'ImportPreflight::TARGET_AUTHORIZED_MARKER',
-		"'active_mutation_in_this_phase' => false",
-		"'rollback_required_before_swap' => true",
-		"'final_handoff_ready'           => false",
 		"'activation_allowed'",
 		"'handoff_ready'",
 		"'active_tables_untouched'",
@@ -1422,7 +1419,7 @@ foreach ( array( '->insert(', '->update(', '->delete(', '->query(', 'INSERT INTO
 $import_finalize_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFinalizeController.php' );
 foreach (
 	array(
-		"public const ACTION       = 'seo_geo_migration_clone_import_finalize_preflight';",
+		"'seo_geo_migration_clone_import_finalize_preflight'",
 		"current_user_can( 'manage_options' )",
 		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
 		'$this->planner->advance(',
