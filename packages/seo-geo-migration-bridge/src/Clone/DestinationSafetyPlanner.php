@@ -36,9 +36,9 @@ final class DestinationSafetyPlanner {
 
 		$source_path = wp_normalize_path( ABSPATH );
 		$target_path = $this->normalize_target_path( $target_path );
-		$source_url  = home_url( '/' );
-		$target_url  = trailingslashit( esc_url_raw( $target_url ) );
-		$blockers    = array();
+		$source_url = home_url( '/' );
+		$target_url = esc_url_raw( $target_url );
+		$blockers   = array();
 		$advisories  = array();
 
 		if ( '' === $target_path || ! $this->absolute_path( $target_path ) ) {
@@ -47,6 +47,8 @@ final class DestinationSafetyPlanner {
 
 		if ( '' === $target_url || ! in_array( wp_parse_url( $target_url, PHP_URL_SCHEME ), array( 'http', 'https' ), true ) ) {
 			$blockers[] = 'target-url-invalid';
+		} else {
+			$target_url = trailingslashit( $target_url );
 		}
 
 		if ( $this->same_path( $source_path, $target_path ) ) {
@@ -135,7 +137,7 @@ final class DestinationSafetyPlanner {
 		$uploads = wp_get_upload_dir();
 
 		return array(
-			'uploads' => is_string( $uploads['basedir'] ?? null ) ? wp_normalize_path( $uploads['basedir'] ) : '',
+			'uploads' => wp_normalize_path( $uploads['basedir'] ),
 			'plugins' => defined( 'WP_PLUGIN_DIR' ) ? wp_normalize_path( WP_PLUGIN_DIR ) : '',
 			'themes'  => wp_normalize_path( get_theme_root() ),
 		);
