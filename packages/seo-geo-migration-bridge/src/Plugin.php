@@ -16,6 +16,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportFinalizeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -36,6 +37,8 @@ use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
@@ -398,6 +401,27 @@ final class Plugin {
 	private static ?AdminCloneImportRewriteController $clone_import_rewrite_controller = null;
 
 	/**
+	 * Portable Clone import finalization-preflight state store singleton.
+	 *
+	 * @var ImportFinalizeStateStore|null
+	 */
+	private static ?ImportFinalizeStateStore $clone_import_finalize_state_store = null;
+
+	/**
+	 * Portable Clone import finalization planner singleton.
+	 *
+	 * @var ImportFinalizationPlanner|null
+	 */
+	private static ?ImportFinalizationPlanner $clone_import_finalization_planner = null;
+
+	/**
+	 * Portable Clone import finalization controller singleton.
+	 *
+	 * @var AdminCloneImportFinalizeController|null
+	 */
+	private static ?AdminCloneImportFinalizeController $clone_import_finalize_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -461,7 +485,19 @@ final class Plugin {
 		self::$clone_import_file_controller      ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
 		self::$clone_import_rewrite_state_store  ??= new ImportRewriteStateStore();
 		self::$clone_import_environment_rewriter ??= new ImportEnvironmentRewriter( self::$clone_import_rewrite_state_store, self::$clone_import_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_database_restorer, self::$clone_job_store );
-		self::$clone_import_rewrite_controller   ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
+		self::$clone_import_rewrite_controller    ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
+		self::$clone_import_finalize_state_store  ??= new ImportFinalizeStateStore();
+		self::$clone_import_finalization_planner  ??= new ImportFinalizationPlanner(
+			self::$clone_import_finalize_state_store,
+			self::$clone_import_state_store,
+			self::$clone_import_payload_state_store,
+			self::$clone_import_database_state_store,
+			self::$clone_import_file_state_store,
+			self::$clone_import_rewrite_state_store,
+			self::$clone_import_database_restorer,
+			self::$clone_job_store
+		);
+		self::$clone_import_finalize_controller   ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -487,6 +523,7 @@ final class Plugin {
 		self::$clone_import_database_controller->boot();
 		self::$clone_import_file_controller->boot();
 		self::$clone_import_rewrite_controller->boot();
+		self::$clone_import_finalize_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -635,6 +672,13 @@ final class Plugin {
 	 */
 	public static function clone_import_environment_rewriter(): ?ImportEnvironmentRewriter {
 		return self::$clone_import_environment_rewriter;
+	}
+
+	/**
+	 * Return the Portable Clone import finalization planner.
+	 */
+	public static function clone_import_finalization_planner(): ?ImportFinalizationPlanner {
+		return self::$clone_import_finalization_planner;
 	}
 
 	/**
