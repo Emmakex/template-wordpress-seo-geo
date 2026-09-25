@@ -14,7 +14,6 @@ use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\ExportWorkspace;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
-use SeoGeo\MigrationBridge\Clone\PackageArchive;
 use SeoGeo\MigrationBridge\Clone\PackageDelivery;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
 use SeoGeo\MigrationBridge\Plugin;
@@ -33,10 +32,9 @@ if ( ! $jobs instanceof CloneJobStore || ! $delivery instanceof PackageDelivery 
 }
 
 $workspace = new ExportWorkspace();
-$archive = new PackageArchive();
 $job_id = 'clone-delivery-good-0001';
 $workspace->cleanup( $job_id );
-$archive->delete( $job_id );
+$workspace->delete_delivery_archive( $job_id );
 
 $job = $jobs->create( 'export', $job_id );
 if ( ! is_array( $job ) ) {
@@ -215,7 +213,7 @@ if ( ! is_array( $state ) || 1 !== (int) ( $state['download_count'] ?? 0 ) ) {
 	throw new RuntimeException( 'Download count was not persisted.' );
 }
 
-$sentinel = trailingslashit( $archive->base_path() ) . 'unrelated-retention-sentinel.txt';
+$sentinel = trailingslashit( $workspace->delivery_base_path() ) . 'unrelated-retention-sentinel.txt';
 // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Fixture proves cleanup remains job-scoped.
 file_put_contents( $sentinel, 'keep' );
 
@@ -248,7 +246,7 @@ $result = array(
 	'final_state' => $state,
 	'cleanup_steps' => $cleanup_steps,
 	'workspace_removed' => null === $workspace->root_path( $job_id ),
-	'archive_removed' => null === $archive->info( $job_id ),
+	'archive_removed' => null === $workspace->delivery_archive_info( $job_id ),
 	'package_state_removed' => null === $package_store->get( $job_id ),
 	'sentinel_preserved' => is_file( $sentinel ) && 'keep' === file_get_contents( $sentinel ),
 	'delivery_state_autoload' => $autoload,
