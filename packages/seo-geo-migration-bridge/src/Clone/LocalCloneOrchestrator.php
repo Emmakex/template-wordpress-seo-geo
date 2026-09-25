@@ -230,7 +230,7 @@ final class LocalCloneOrchestrator {
 			$this->jobs->transition(
 				$job_id,
 				'failed-retryable',
-				is_string( $blockers[0] ?? null ) ? $blockers[0] : 'local-clone-destination-blocked'
+				$blockers[0]
 			);
 			$this->jobs->update_progress(
 				$job_id,
