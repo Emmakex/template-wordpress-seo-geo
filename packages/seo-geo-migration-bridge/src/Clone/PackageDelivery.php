@@ -73,12 +73,6 @@ final class PackageDelivery {
 	 */
 	private ExportWorkspace $workspace;
 
-	/**
-	 * Private ZIP archive storage.
-	 *
-	 * @var PackageArchive
-	 */
-	private PackageArchive $archive;
 
 	/**
 	 * Construct delivery service.
@@ -90,7 +84,6 @@ final class PackageDelivery {
 	 * @param FileExportStateStore|null $file_store      Optional file-export store.
 	 * @param CloneJobStore|null        $jobs            Optional clone-job store.
 	 * @param ExportWorkspace|null      $workspace       Optional private workspace.
-	 * @param PackageArchive|null       $archive         Optional private archive store.
 	 */
 	public function __construct(
 		?DeliveryStateStore $store = null,
@@ -99,8 +92,7 @@ final class PackageDelivery {
 		?ExportStateStore $database_store = null,
 		?FileExportStateStore $file_store = null,
 		?CloneJobStore $jobs = null,
-		?ExportWorkspace $workspace = null,
-		?PackageArchive $archive = null
+		?ExportWorkspace $workspace = null
 	) {
 		$this->store           = $store ?? new DeliveryStateStore();
 		$this->package_store   = $package_store ?? new PackageStateStore();
@@ -109,7 +101,6 @@ final class PackageDelivery {
 		$this->file_store      = $file_store ?? new FileExportStateStore();
 		$this->jobs            = $jobs ?? new CloneJobStore();
 		$this->workspace       = $workspace ?? new ExportWorkspace();
-		$this->archive         = $archive ?? new PackageArchive();
 	}
 
 	/**
@@ -190,7 +181,7 @@ final class PackageDelivery {
 		}
 
 		$package['package_manifest_hash'] = (string) $written['sha256'];
-		if ( ! $this->package_store->save( $job_id, $package ) || ! $this->archive->start( $job_id ) ) {
+		if ( ! $this->package_store->save( $job_id, $package ) || ! $this->workspace->reset_delivery_archive( $job_id ) ) {
 			return null;
 		}
 
@@ -381,7 +372,7 @@ final class PackageDelivery {
 				static fn( array $record ): string => (string) $record['relative'],
 				$batch
 			);
-			if ( ! $this->archive->append_files( $job_id, $root, $relative_paths ) ) {
+			if ( ! $this->workspace->append_delivery_archive_files( $job_id, $relative_paths ) ) {
 				return $this->block( $job_id, $state, 'delivery-archive-write-failed', true );
 			}
 
@@ -436,7 +427,7 @@ final class PackageDelivery {
 			return null;
 		}
 
-		$info = $this->archive->info( $job_id );
+		$info = $this->workspace->delivery_archive_info( $job_id );
 		if (
 			! is_array( $info )
 			|| (int) ( $state['archive_bytes'] ?? 0 ) !== (int) $info['bytes']
@@ -447,7 +438,7 @@ final class PackageDelivery {
 
 		return array(
 			'path'   => (string) $info['path'],
-			'name'   => $this->archive->download_name( $job_id ),
+			'name'   => $this->workspace->delivery_download_name( $job_id ),
 			'bytes'  => (int) $info['bytes'],
 			'sha256' => (string) $info['sha256'],
 		);
@@ -493,7 +484,7 @@ final class PackageDelivery {
 			return null;
 		}
 
-		if ( ! $this->archive->delete( $job_id ) ) {
+		if ( ! $this->workspace->delete_delivery_archive( $job_id ) ) {
 			return $this->block( $job_id, $state, 'delivery-archive-cleanup-failed', true );
 		}
 
@@ -580,7 +571,7 @@ final class PackageDelivery {
 			return $this->block( $job_id, $state, 'delivery-package-integrity-mismatch', false );
 		}
 
-		$archive = $this->archive->finalize( $job_id );
+		$archive = $this->workspace->finalize_delivery_archive( $job_id );
 		if ( ! is_array( $archive ) ) {
 			return $this->block( $job_id, $state, 'delivery-archive-finalize-failed', true );
 		}
