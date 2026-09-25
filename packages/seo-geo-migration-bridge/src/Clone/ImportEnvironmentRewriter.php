@@ -594,7 +594,7 @@ final class ImportEnvironmentRewriter {
 		$rewritten = preg_replace_callback(
 			'~https?://[^\s\x00-\x1F"\'<>]+~i',
 			function ( array $matches ) use ( &$state, $verify ): string {
-				$url = (string) ( $matches[0] ?? '' );
+				$url = (string) $matches[0];
 				$end = '';
 				while ( '' !== $url && str_contains( '.,;:!?)]}', substr( $url, -1 ) ) ) {
 					$end = substr( $url, -1 ) . $end;
@@ -997,7 +997,6 @@ final class ImportEnvironmentRewriter {
 		if (
 			1 !== preg_match( '/^[A-Za-z0-9_]{1,64}$/', $table )
 			|| 1 !== preg_match( '/^[A-Za-z0-9_]{1,64}$/', $id_column )
-			|| array() === $columns
 		) {
 			return null;
 		}
@@ -1075,7 +1074,7 @@ final class ImportEnvironmentRewriter {
 		}
 
 		foreach ( array_values( array_unique( $needles ) ) as $needle ) {
-			if ( '' !== $needle && str_contains( $value, $needle ) ) {
+			if ( str_contains( $value, $needle ) ) {
 				return true;
 			}
 		}
