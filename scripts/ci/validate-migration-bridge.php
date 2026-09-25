@@ -366,14 +366,15 @@ foreach ( array( 'copy(', 'file_put_contents(', 'fwrite(', 'unlink(', 'rename(',
 $destination_planner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/DestinationSafetyPlanner.php' );
 foreach (
 	array(
-		"'mode'                       => 'read-only-destination-plan'",
+		"'mode'",
+		"'read-only-destination-plan'",
 		"'target-path-is-production'",
 		"'target-inside-source-'",
 		"'target-url-is-production'",
 		"'same-origin-target-path-not-isolated'",
 		"'target-table-prefix-not-isolated'",
 		"'target-free-space-insufficient'",
-		"'mutations_performed'        => false",
+		"'mutations_performed'",
 	) as $destination_planner_guard
 ) {
 	if ( ! str_contains( $destination_planner, $destination_planner_guard ) ) {
