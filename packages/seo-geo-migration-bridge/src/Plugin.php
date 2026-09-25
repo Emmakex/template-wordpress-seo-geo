@@ -456,12 +456,12 @@ final class Plugin {
 		self::$clone_import_database_state_store ??= new ImportDatabaseStateStore();
 		self::$clone_import_database_restorer    ??= new ImportDatabaseRestorer( self::$clone_import_database_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_database_controller  ??= new AdminCloneImportDatabaseController( self::$clone_import_database_restorer );
-		self::$clone_import_file_state_store      ??= new ImportFileStateStore();
-		self::$clone_import_file_restorer         ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
-		self::$clone_import_file_controller       ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
-		self::$clone_import_rewrite_state_store   ??= new ImportRewriteStateStore();
-		self::$clone_import_environment_rewriter  ??= new ImportEnvironmentRewriter( self::$clone_import_rewrite_state_store, self::$clone_import_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_database_restorer, self::$clone_job_store );
-		self::$clone_import_rewrite_controller    ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
+		self::$clone_import_file_state_store     ??= new ImportFileStateStore();
+		self::$clone_import_file_restorer        ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$clone_import_file_controller      ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
+		self::$clone_import_rewrite_state_store  ??= new ImportRewriteStateStore();
+		self::$clone_import_environment_rewriter ??= new ImportEnvironmentRewriter( self::$clone_import_rewrite_state_store, self::$clone_import_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_database_restorer, self::$clone_job_store );
+		self::$clone_import_rewrite_controller   ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
