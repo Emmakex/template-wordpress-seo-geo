@@ -248,7 +248,7 @@ final class ImportPayloadVerifier {
 
 			++$cursor;
 			++$processed_files;
-			$processed_bytes += (int) $extracted['bytes'];
+			$processed_bytes             += (int) $extracted['bytes'];
 			$state['extract_file_count'] = (int) ( $state['extract_file_count'] ?? 0 ) + 1;
 			$state['extract_byte_count'] = (int) ( $state['extract_byte_count'] ?? 0 ) + (int) $extracted['bytes'];
 		}
@@ -376,7 +376,7 @@ final class ImportPayloadVerifier {
 				$state['verify_byte_count']     = (int) ( $state['verify_byte_count'] ?? 0 ) + (int) $bytes;
 				$state['after_name']            = $entry;
 				++$processed_files;
-				$processed_bytes += (int) $bytes;
+				$processed_bytes                += (int) $bytes;
 
 				if (
 					$processed_files >= $batch_files
@@ -442,8 +442,8 @@ final class ImportPayloadVerifier {
 			return null;
 		}
 
-		$advisories = is_array( $import['advisories'] ?? null ) ? $import['advisories'] : array();
-		$advisories = array_values(
+		$advisories                      = is_array( $import['advisories'] ?? null ) ? $import['advisories'] : array();
+		$advisories                      = array_values(
 			array_filter(
 				$advisories,
 				static fn( mixed $code ): bool => is_string( $code ) && 'full-payload-checksum-pending' !== $code
@@ -532,8 +532,8 @@ final class ImportPayloadVerifier {
 
 		$import = $this->import_state->get( $job_id );
 		if ( is_array( $import ) ) {
-			$import_blockers                  = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
-			$import_blockers[]                = $code;
+			$import_blockers                 = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
+			$import_blockers[]               = $code;
 			$import['status']                = 'blocked';
 			$import['blockers']              = array_values( array_unique( $import_blockers ) );
 			$import['full_payload_verified'] = false;
