@@ -339,8 +339,8 @@ final class ExportWorkspace {
 	/**
 	 * Append a bounded list of existing workspace files to the private delivery ZIP.
 	 *
-	 * @param string       $job_id        Clone job identifier.
-	 * @param array        $relative_paths Workspace-relative files.
+	 * @param string $job_id        Clone job identifier.
+	 * @param array  $relative_paths Workspace-relative files.
 	 */
 	public function append_delivery_archive_files( string $job_id, array $relative_paths ): bool {
 		$root = $this->root_path( $job_id );
