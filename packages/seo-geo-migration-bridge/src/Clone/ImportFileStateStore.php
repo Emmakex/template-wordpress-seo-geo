@@ -16,7 +16,7 @@ final class ImportFileStateStore {
 	public const OPTION_NAME    = 'seo_geo_migration_clone_import_file_state_v1';
 	public const SCHEMA_VERSION = 1;
 
-	private const MAX_STATES = 20;
+	private const MAX_STATES              = 20;
 	private const MAX_PENDING_DIRECTORIES = 50000;
 
 	/**
@@ -134,8 +134,8 @@ final class ImportFileStateStore {
 			'expected_file_count'    => max( 0, (int) ( $state['expected_file_count'] ?? 0 ) ),
 			'expected_byte_count'    => max( 0, (int) ( $state['expected_byte_count'] ?? 0 ) ),
 			'roots_completed'        => max( 0, (int) ( $state['roots_completed'] ?? 0 ) ),
-			'current_root_files'      => max( 0, (int) ( $state['current_root_files'] ?? 0 ) ),
-			'current_root_bytes'      => max( 0, (int) ( $state['current_root_bytes'] ?? 0 ) ),
+			'current_root_files'     => max( 0, (int) ( $state['current_root_files'] ?? 0 ) ),
+			'current_root_bytes'     => max( 0, (int) ( $state['current_root_bytes'] ?? 0 ) ),
 			'active_files_untouched' => true === ( $state['active_files_untouched'] ?? true ),
 			'blockers'               => $this->normalize_codes( $state['blockers'] ?? array() ),
 			'started_at'             => $this->bounded_timestamp( $state['started_at'] ?? '' ),
