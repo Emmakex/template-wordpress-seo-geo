@@ -115,6 +115,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportRewriteStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportEnvironmentRewriter.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportRewriteController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizeStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFinalizeController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -1312,6 +1315,118 @@ if ( str_contains( $import_rewrite_controller, 'admin_post_nopriv_' ) ) {
 		'portable-clone-import-rewrite-public-endpoint',
 		'Portable Import environment rewrite must never expose an unauthenticated endpoint.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportRewriteController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+
+$import_finalize_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizeStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_finalize_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'database-fingerprint', 'file-fingerprint', 'ready'",
+		"'activation_plan_hash'",
+		"'activation_allowed'",
+		"'handoff_ready'",
+		"'active_tables_untouched'",
+		"'active_roots_untouched'",
+	) as $import_finalize_state_guard
+) {
+	if ( ! str_contains( $import_finalize_state_store, $import_finalize_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-finalize-state',
+			'Portable Import finalization-preflight state must remain bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizeStateStore.php',
+			$import_finalize_state_guard,
+			'missing'
+		);
+	}
+}
+
+$import_finalizer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php' );
+foreach (
+	array(
+		"private const DB_SEED                  = 'seo-geo-import-finalize-db-v1';",
+		"private const FILE_SEED                = 'seo-geo-import-finalize-files-v1';",
+		'$this->database_restorer->staging_plan( $job_id )',
+		"get_option( 'blog_public', '1' )",
+		'SandboxGuard::outbound_safe()',
+		'SandboxGuard::backups_ready()',
+		'ImportPreflight::TARGET_AUTHORIZED_MARKER',
+		"'active_mutation_in_this_phase' => false",
+		"'rollback_required_before_swap' => true",
+		"'final_handoff_ready'           => false",
+		"'activation_allowed'      = true",
+		"'handoff_ready'            = false",
+		"'active_tables_untouched'",
+		"'active_roots_untouched'",
+		"'import-finalize-staged-file-integrity-mismatch'",
+		"'import-finalize-fingerprint-reconciliation-failed'",
+	) as $import_finalize_guard
+) {
+	if ( ! str_contains( $import_finalizer, $import_finalize_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-finalize-preflight',
+			'10E.2A.4.6.1 finalization preflight is missing a required fingerprint/sandbox/rollback boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php',
+			$import_finalize_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(', 'wp_mkdir_p(' ) as $finalize_file_mutation ) {
+	if ( str_contains( $import_finalizer, $finalize_file_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-finalize-no-file-mutation',
+			'10E.2A.4.6.1 must fingerprint and plan only; active/staging filesystem mutation belongs to later promotion.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php',
+			'no filesystem mutation primitive',
+			$finalize_file_mutation
+		);
+	}
+}
+
+foreach ( array( '->insert(', '->update(', '->delete(', '->query(', 'INSERT INTO ', 'UPDATE ', 'DELETE FROM ', 'REPLACE INTO ', 'CREATE TABLE ', 'DROP TABLE ', 'ALTER TABLE ', 'RENAME TABLE ', 'TRUNCATE TABLE ' ) as $finalize_database_mutation ) {
+	if ( str_contains( strtoupper( $import_finalizer ), strtoupper( $finalize_database_mutation ) ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-finalize-no-database-mutation',
+			'10E.2A.4.6.1 must remain read-only against staging and active database tables.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFinalizationPlanner.php',
+			'read-only SELECT/metadata queries only',
+			$finalize_database_mutation
+		);
+	}
+}
+
+$import_finalize_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFinalizeController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_finalize_preflight';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->planner->advance(',
+	) as $import_finalize_controller_guard
+) {
+	if ( ! str_contains( $import_finalize_controller, $import_finalize_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-finalize-entrypoint',
+			'Portable Import finalization preflight endpoint must remain administrator/job-nonce gated and bounded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFinalizeController.php',
+			$import_finalize_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $import_finalize_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-finalize-public-endpoint',
+		'Portable Import finalization preflight must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFinalizeController.php',
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
