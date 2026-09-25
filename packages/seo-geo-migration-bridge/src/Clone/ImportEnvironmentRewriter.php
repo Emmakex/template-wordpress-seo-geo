@@ -17,7 +17,7 @@ use wpdb;
 final class ImportEnvironmentRewriter {
 	public const MIN_BATCH_ROWS     = 1;
 	public const MAX_BATCH_ROWS     = 200;
-	public const DEFAULT_BATCH_ROWS = 25;
+	public const DEFAULT_BATCH_ROWS = 10;
 
 	private const MAX_TABLES = 1000;
 
