@@ -121,6 +121,8 @@ final class ImportFilePromotionStateStore {
 			'status'              => $status,
 			'activation_plan_hash'=> $this->hash( $state['activation_plan_hash'] ?? '' ),
 			'file_fingerprint'    => $this->hash( $state['file_fingerprint'] ?? '' ),
+			'copy_fingerprint'    => $this->hash( $state['copy_fingerprint'] ?? '' ),
+			'active_fingerprint'  => $this->hash( $state['active_fingerprint'] ?? '' ),
 			'roots'               => $roots,
 			'root_index'          => max( 0, min( 3, (int) ( $state['root_index'] ?? 0 ) ) ),
 			'pending_dirs'        => $this->paths( $state['pending_dirs'] ?? array() ),
