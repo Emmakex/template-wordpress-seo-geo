@@ -2199,7 +2199,7 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.3.4 — authenticated package delivery + retention cleanup.** 10E.2A.3.3 package manifest + integrity is accepted on `main` in Migration Bridge 0.8.13. Complete authenticated delivery/cleanup before Portable Import work.
+Current execution pointer: **10E.2A.3.4 — implement/accept authenticated package delivery + retention cleanup in Migration Bridge 0.8.14.** 10E.2A.3.3 package manifest + integrity is accepted on `main` in Migration Bridge 0.8.13. Portable Import remains blocked until this delivery/cleanup boundary is accepted.
 
 Migration Bridge v0.8.13 / 10E.2A.3.3 acceptance evidence:
 
@@ -2227,7 +2227,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1, 10E.2A.2, 10E.2A.3.1, 10E.2A.3.2 and 10E.2A.3.3 accepted; 10E.2A.3.4 next**
+Status: **active — 10E.2A.1, 10E.2A.2, 10E.2A.3.1, 10E.2A.3.2 and 10E.2A.3.3 accepted; 10E.2A.3.4 implementation candidate in 0.8.14**
 
 Purpose:
 
