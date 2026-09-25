@@ -379,7 +379,7 @@ final class Plugin {
 		self::$clone_import_preflight           ??= new ImportPreflight( self::$clone_import_state_store, self::$clone_job_store );
 		self::$clone_import_controller          ??= new AdminCloneImportController( self::$clone_import_preflight );
 		self::$clone_import_payload_state_store ??= new ImportPayloadStateStore();
-		self::$clone_import_payload_verifier    ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store );
+		self::$clone_import_payload_verifier    ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_payload_controller  ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
