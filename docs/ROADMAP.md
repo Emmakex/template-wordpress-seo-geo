@@ -2199,7 +2199,7 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.1 — implement the versioned Portable Clone Engine job/manifest contract and resumable persistence before copying any database or files.** After 10E.2A is accepted, use the Engine to build `https://emmake.com/nuevaweb/`, then continue with 10E.2B migration/parity acceptance.
+Current execution pointer: **10E.2A.2 — complete and accept the read-only source inventory + destination safety planner in Migration Bridge 0.8.10.** After this gate is green, continue with 10E.2A.3 resumable export; no database rows/files are copied before that phase.
 
 Migration Bridge v0.8.7 acceptance evidence:
 
@@ -2215,7 +2215,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — documentation merged; 10E.2A.1 implementation candidate in progress**
+Status: **active — 10E.2A.1 accepted; 10E.2A.2 implementation candidate in progress**
 
 Purpose:
 
@@ -2229,8 +2229,8 @@ Authoritative contract:
 
 Implementation sequence:
 
-- **10E.2A.1 — Clone contract + persistent resumable jobs**: versioned manifest/job schemas, job state machine, non-autoloaded persistence, capability/nonce planning controller and EN/ES operator controls; implementation candidate is Migration Bridge 0.8.9 and still performs no payload copying;
-- **10E.2A.2 — Read-only source inventory**: database/table inventory, file inventory, exclusions, estimates and destination-safety planning;
+- **10E.2A.1 — Clone contract + persistent resumable jobs**: complete in Migration Bridge 0.8.9; PR #127 merged and all seven post-merge gates passed on `2c62082431344f2abaeb4bb80c6d618814b69e9d`;
+- **10E.2A.2 — Read-only source inventory**: implementation candidate is Migration Bridge 0.8.10 with database table estimates, resumable uploads/plugins/themes hashing, exclusions, source fingerprint and destination-safety planning;
 - **10E.2A.3 — Resumable export**: chunked database/files export, manifest/checksums, authenticated download and cleanup;
 - **10E.2A.4 — Portable import**: package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
 - **10E.2A.5 — Local clone orchestration**: direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;

@@ -88,7 +88,11 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventory.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/DestinationSafetyPlanner.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -209,6 +213,8 @@ $read_only_files = array_merge(
 		MIGRATION_BRIDGE_DIR . '/src/DependencyGraphBuilder.php',
 		MIGRATION_BRIDGE_DIR . '/src/ProviderAuthorityResolver.php',
 		MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventory.php',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/DestinationSafetyPlanner.php',
 	),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array(),
@@ -290,6 +296,115 @@ foreach ( array( 'copy(', 'file_put_contents(', 'fwrite(', '->query(', '->insert
 				$copy_primitive
 			);
 		}
+	}
+}
+
+$clone_inventory_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME = 'seo_geo_migration_clone_inventory_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'fingerprint_scope' => 'database-structure-estimates+file-content'",
+	) as $clone_inventory_store_guard
+) {
+	if ( ! str_contains( $clone_inventory_store, $clone_inventory_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-inventory-store',
+			'Portable Clone inventory state must remain versioned, bounded and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
+			$clone_inventory_store_guard,
+			'missing'
+		);
+	}
+}
+
+$clone_inventory = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventory.php' );
+foreach (
+	array(
+		'public const MIN_BATCH_SIZE = 25;',
+		'public const MAX_BATCH_SIZE = 500;',
+		'public const DEFAULT_BATCH_SIZE = 100;',
+		"'local-clone', 'export'",
+		"'SHOW TABLE STATUS LIKE %s'",
+		"'uploads'",
+		"'plugins'",
+		"'themes'",
+		"hash_file( 'sha256', \$path )",
+		"'source-directory-queue-limit'",
+		"'file_count'",
+		"'byte_count'",
+		"'excluded_count'",
+		"'symlink_count'",
+		"'unreadable_count'",
+	) as $clone_inventory_guard
+) {
+	if ( ! str_contains( $clone_inventory, $clone_inventory_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-source-inventory',
+			'Portable Clone source inventory is missing a required read-only/resumable inventory guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventory.php',
+			$clone_inventory_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'copy(', 'file_put_contents(', 'fwrite(', 'unlink(', 'rename(', 'mkdir(', 'rmdir(' ) as $inventory_mutation_primitive ) {
+	if ( str_contains( $clone_inventory, $inventory_mutation_primitive ) ) {
+		fail_migration_bridge(
+			'portable-clone-inventory-read-only',
+			'10E.2A.2 source inventory must not create, copy, move or delete payload files.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventory.php',
+			'read-only source inventory',
+			$inventory_mutation_primitive
+		);
+	}
+}
+
+$destination_planner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/DestinationSafetyPlanner.php' );
+foreach (
+	array(
+		"'mode'",
+		"'read-only-destination-plan'",
+		"'target-path-is-production'",
+		"'target-inside-source-'",
+		"'target-url-is-production'",
+		"'same-origin-target-path-not-isolated'",
+		"'target-table-prefix-not-isolated'",
+		"'target-free-space-insufficient'",
+		"'mutations_performed'",
+	) as $destination_planner_guard
+) {
+	if ( ! str_contains( $destination_planner, $destination_planner_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-destination-plan',
+			'Local clone destination planner is missing a required isolation/safety guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/DestinationSafetyPlanner.php',
+			$destination_planner_guard,
+			'missing'
+		);
+	}
+}
+
+$clone_inventory_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php' );
+foreach (
+	array(
+		"public const ACTION = 'seo_geo_migration_clone_inventory';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->inventory->advance( $job_id, $batch_size )',
+	) as $clone_inventory_controller_guard
+) {
+	if ( ! str_contains( $clone_inventory_controller, $clone_inventory_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-inventory-entrypoint',
+			'Portable Clone inventory endpoint must remain capability/nonce gated and advance only one bounded batch.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
+			$clone_inventory_controller_guard,
+			'missing'
+		);
 	}
 }
 

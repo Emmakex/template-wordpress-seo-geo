@@ -99,6 +99,21 @@ The lab report exposes `migrate`, `manual-review`, `unchanged` and `blocked` sta
 
 A vendor-specific staging feature may create the clone, but it does not replace these provider-neutral acceptance checks.
 
+## Phase 10E Portable Clone Engine
+
+The real-site release pilot extends the accepted Phase 8 migration flow with a product-owned clone/export/import path so a supported client does not need a separate migration plugin.
+
+Migration Bridge 0.8.9 introduced resumable local-clone/export/import job contracts. Version 0.8.10 adds the read-only source inventory used before any payload is created:
+
+- WordPress-prefix database table metadata/row/byte estimates;
+- resumable uploads/plugins/themes file hashing;
+- default exclusions for caches/backups/temp/log paths;
+- symlink and unreadable-entry reporting;
+- deterministic source fingerprint;
+- read-only local destination planning for path/URL/table-prefix/free-space isolation.
+
+The inventory writes only its own bounded non-autoloaded progress state. It does not copy database rows, create clone payload archives, restore files, switch themes or mutate client content. Payload export begins only in the later 10E.2A.3 gate.
+
 ## Phase 8E — Migration Engine
 
 Phase 8E is the first bridge phase allowed to mutate WordPress content, and only inside an accepted Phase 8D sandbox.

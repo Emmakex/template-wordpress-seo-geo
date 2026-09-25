@@ -432,6 +432,8 @@ The exact class split may evolve during implementation, but these boundaries rem
 
 ### 10E.2A.1 — Clone contract + persistent resumable jobs
 
+Status: **complete in Migration Bridge 0.8.9**
+
 Deliver:
 
 - package/manifest schemas;
@@ -444,6 +446,8 @@ Deliver:
 No database/files are copied yet.
 
 ### 10E.2A.2 — Read-only source inventory
+
+Status: **implementation candidate in Migration Bridge 0.8.10**
 
 Deliver:
 
