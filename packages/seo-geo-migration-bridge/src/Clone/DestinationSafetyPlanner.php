@@ -93,7 +93,7 @@ final class DestinationSafetyPlanner {
 		}
 
 		$probe_path = $target_exists ? $target_path : dirname( $target_path );
-		$free_bytes = is_dir( $probe_path ) ? @disk_free_space( $probe_path ) : false;
+		$free_bytes = is_dir( $probe_path ) && is_readable( $probe_path ) ? disk_free_space( $probe_path ) : false;
 		if ( null !== $required_bytes && false !== $free_bytes && $free_bytes < $required_bytes ) {
 			$blockers[] = 'target-free-space-insufficient';
 		}
@@ -102,27 +102,27 @@ final class DestinationSafetyPlanner {
 		$advisories = array_values( array_unique( $advisories ) );
 
 		return array(
-			'mode'                       => 'read-only-destination-plan',
-			'ready'                      => array() === $blockers,
-			'source_path'                => $source_path,
-			'target_path'                => $target_path,
-			'source_url'                 => $source_url,
-			'target_url'                 => $target_url,
-			'same_origin'                => $same_origin,
-			'source_base_path'           => $source_base,
-			'target_base_path'           => $target_base,
-			'nested_under_wordpress_root'=> $nested_under_wordpress_root,
-			'payload_roots_exclude_target'=> ! $this->inside_any_payload_root( $target_path, $payload_roots ),
-			'same_database'              => $same_database,
-			'source_table_prefix'        => $source_prefix,
-			'target_table_prefix'        => $target_table_prefix,
-			'target_exists'              => $target_exists,
-			'target_empty'               => $target_empty,
-			'free_bytes'                 => false === $free_bytes ? null : (int) $free_bytes,
-			'required_bytes'             => null === $required_bytes ? null : max( 0, $required_bytes ),
-			'blockers'                   => $blockers,
-			'advisories'                 => $advisories,
-			'mutations_performed'        => false,
+			'mode'                         => 'read-only-destination-plan',
+			'ready'                        => array() === $blockers,
+			'source_path'                  => $source_path,
+			'target_path'                  => $target_path,
+			'source_url'                   => $source_url,
+			'target_url'                   => $target_url,
+			'same_origin'                  => $same_origin,
+			'source_base_path'             => $source_base,
+			'target_base_path'             => $target_base,
+			'nested_under_wordpress_root'  => $nested_under_wordpress_root,
+			'payload_roots_exclude_target' => ! $this->inside_any_payload_root( $target_path, $payload_roots ),
+			'same_database'                => $same_database,
+			'source_table_prefix'          => $source_prefix,
+			'target_table_prefix'          => $target_table_prefix,
+			'target_exists'                => $target_exists,
+			'target_empty'                 => $target_empty,
+			'free_bytes'                   => false === $free_bytes ? null : (int) $free_bytes,
+			'required_bytes'               => null === $required_bytes ? null : max( 0, $required_bytes ),
+			'blockers'                     => $blockers,
+			'advisories'                   => $advisories,
+			'mutations_performed'          => false,
 		);
 	}
 
@@ -143,6 +143,8 @@ final class DestinationSafetyPlanner {
 
 	/**
 	 * Normalize one requested absolute destination path without creating it.
+	 *
+	 * @param string $path Requested target path.
 	 */
 	private function normalize_target_path( string $path ): string {
 		$path = trim( wp_normalize_path( $path ) );
@@ -165,6 +167,8 @@ final class DestinationSafetyPlanner {
 
 	/**
 	 * Determine whether a normalized path is absolute.
+	 *
+	 * @param string $path Normalized path.
 	 */
 	private function absolute_path( string $path ): bool {
 		return 1 === preg_match( '#^(?:[A-Za-z]:/|/)#', $path );
@@ -172,6 +176,9 @@ final class DestinationSafetyPlanner {
 
 	/**
 	 * Compare normalized paths.
+	 *
+	 * @param string $left  First path.
+	 * @param string $right Second path.
 	 */
 	private function same_path( string $left, string $right ): bool {
 		if ( '' === $left || '' === $right ) {
@@ -182,23 +189,27 @@ final class DestinationSafetyPlanner {
 	}
 
 	/**
-	 * Determine whether candidate is strictly inside parent.
+	 * Determine whether candidate is strictly inside a parent path.
+	 *
+	 * @param string $candidate   Candidate path.
+	 * @param string $parent_path Parent path.
 	 */
-	private function inside_path( string $candidate, string $parent ): bool {
-		if ( '' === $candidate || '' === $parent || $this->same_path( $candidate, $parent ) ) {
+	private function inside_path( string $candidate, string $parent_path ): bool {
+		if ( '' === $candidate || '' === $parent_path || $this->same_path( $candidate, $parent_path ) ) {
 			return false;
 		}
 
-		$candidate = trailingslashit( wp_normalize_path( $candidate ) );
-		$parent    = trailingslashit( wp_normalize_path( $parent ) );
+		$candidate   = trailingslashit( wp_normalize_path( $candidate ) );
+		$parent_path = trailingslashit( wp_normalize_path( $parent_path ) );
 
-		return str_starts_with( $candidate, $parent );
+		return str_starts_with( $candidate, $parent_path );
 	}
 
 	/**
 	 * Determine whether target is inside any source payload root.
 	 *
-	 * @param array<string,string> $roots Payload roots.
+	 * @param string               $target Target path.
+	 * @param array<string,string> $roots  Payload roots.
 	 */
 	private function inside_any_payload_root( string $target, array $roots ): bool {
 		foreach ( $roots as $root ) {
@@ -212,6 +223,8 @@ final class DestinationSafetyPlanner {
 
 	/**
 	 * Return scheme/host/port origin key.
+	 *
+	 * @param string $url URL to normalize.
 	 */
 	private function origin_key( string $url ): string {
 		$parts = wp_parse_url( $url );
@@ -229,6 +242,8 @@ final class DestinationSafetyPlanner {
 
 	/**
 	 * Return normalized URL base path.
+	 *
+	 * @param string $url URL to inspect.
 	 */
 	private function url_base_path( string $url ): string {
 		$path = wp_parse_url( $url, PHP_URL_PATH );
@@ -241,9 +256,11 @@ final class DestinationSafetyPlanner {
 
 	/**
 	 * Check whether an existing target directory is empty.
+	 *
+	 * @param string $path Existing target directory.
 	 */
 	private function directory_empty( string $path ): ?bool {
-		$entries = @scandir( $path );
+		$entries = scandir( $path );
 		if ( false === $entries ) {
 			return null;
 		}
