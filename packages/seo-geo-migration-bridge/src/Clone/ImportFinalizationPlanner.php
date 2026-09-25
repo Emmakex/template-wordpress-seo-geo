@@ -611,9 +611,7 @@ final class ImportFinalizationPlanner {
 
 		$database_rows_expected = 0;
 		foreach ( $database_plan['tables'] as $table ) {
-			if ( is_array( $table ) ) {
-				$database_rows_expected += max( 0, (int) ( $table['row_count'] ?? 0 ) );
-			}
+			$database_rows_expected += max( 0, (int) $table['row_count'] );
 		}
 
 		$advisories = is_array( $rewrite['advisories'] ?? null )
@@ -956,7 +954,7 @@ final class ImportFinalizationPlanner {
 	private function active_root( string $root_id ): ?string {
 		if ( 'uploads' === $root_id ) {
 			$uploads = wp_upload_dir( null, false );
-			$basedir = is_string( $uploads['basedir'] ?? null ) ? $uploads['basedir'] : '';
+			$basedir = $uploads['basedir'];
 
 			return '' !== $basedir && is_dir( $basedir ) ? wp_normalize_path( $basedir ) : null;
 		}
@@ -966,7 +964,7 @@ final class ImportFinalizationPlanner {
 		if ( 'themes' === $root_id ) {
 			$themes = get_theme_root();
 
-			return is_string( $themes ) && is_dir( $themes ) ? wp_normalize_path( $themes ) : null;
+			return is_dir( $themes ) ? wp_normalize_path( $themes ) : null;
 		}
 
 		return null;
