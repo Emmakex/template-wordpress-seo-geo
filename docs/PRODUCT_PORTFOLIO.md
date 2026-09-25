@@ -101,6 +101,7 @@ The long-term product direction is:
       ├── Landing Engine
       ├── Blog Engine
       ├── Migration module
+      ├── Portable Clone Engine
       ├── Portable Sandbox coordinator
       └── Provider / builder integrations
 
@@ -115,6 +116,6 @@ The portfolio is successful only when all of the following remain true:
 - Theme + Manager do not duplicate SEO/GEO ownership.
 - Existing-provider sites can be analyzed without destructive mutation.
 - Landings/blogs can be previewed, published idempotently and rolled back.
-- Clients without staging have a safe portable-sandbox path.
+- Clients without staging have a safe portable-sandbox path without requiring a third-party cloning plugin for supported environments.
 - Dynamic sites never receive an unsafe stale-database overwrite during cutover.
 - Both products can be sold, versioned, updated and supported independently.
