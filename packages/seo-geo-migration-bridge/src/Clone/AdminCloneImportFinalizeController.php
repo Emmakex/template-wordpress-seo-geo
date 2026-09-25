@@ -27,6 +27,8 @@ final class AdminCloneImportFinalizeController {
 
 	/**
 	 * Construct controller.
+	 *
+	 * @param ImportFinalizationPlanner|null $planner Optional finalization planner.
 	 */
 	public function __construct( ?ImportFinalizationPlanner $planner = null ) {
 		$this->planner = $planner ?? new ImportFinalizationPlanner();
@@ -78,7 +80,7 @@ final class AdminCloneImportFinalizeController {
 			);
 		}
 
-		$status = (string) ( $result['status'] ?? 'running' );
+		$status   = (string) ( $result['status'] ?? 'running' );
 		$redirect = add_query_arg(
 			array(
 				'seo_geo_clone_finalize_preflight' => sanitize_key( $status ),
