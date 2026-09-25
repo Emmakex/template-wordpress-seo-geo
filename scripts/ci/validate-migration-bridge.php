@@ -377,6 +377,9 @@ foreach (
 		'stage_import_archive( string $job_id, string $source )',
 		'import_archive_info( string $job_id )',
 		'delete_import_archive( string $job_id )',
+		'prepare_file_promotion_candidate( string $candidate )',
+		'copy_file_to_promotion_candidate( string $source, string $target )',
+		'rename_file_promotion_path( string $from, string $to )',
 		"'wp-admin/includes/class-pclzip.php'",
 		'PCLZIP_OPT_REMOVE_PATH',
 	) as $export_workspace_guard
@@ -1574,6 +1577,131 @@ if ( str_contains( $database_activation_controller, 'admin_post_nopriv_' ) ) {
 		'portable-clone-database-activation-public-endpoint',
 		'Reversible database activation must never expose an unauthenticated endpoint.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportDatabaseActivationController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+
+$file_promotion_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFilePromotionStateStore.php' );
+foreach (
+	array(
+		"public const RELATIVE_PATH  = 'import/activation/file-promotion-state.json';",
+		"'candidate-ready'",
+		"'rolling-back'",
+		"'runtime_before'",
+		"'runtime_target'",
+		"'handoff_ready'",
+	) as $file_promotion_store_guard
+) {
+	if ( ! str_contains( $file_promotion_store, $file_promotion_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-promotion-journal',
+			'10E.2A.4.6.3 file promotion must persist external runtime/recovery state outside active WordPress roots.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFilePromotionStateStore.php',
+			$file_promotion_store_guard,
+			'missing'
+		);
+	}
+}
+
+$file_promotion_planner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFilePromotionPlanner.php' );
+foreach (
+	array(
+		'public function prepare( string $job_id ): ?array',
+		"'.seo-geo-' . $key . '-candidate-'",
+		"'.seo-geo-' . $key . '-rollback-'",
+		"'database/manifest.json'",
+		"'active_plugins'",
+		"'template'",
+		"'stylesheet'",
+		"SandboxGuard::outbound_safe()",
+		"SandboxGuard::backups_ready()",
+		'ImportPreflight::TARGET_AUTHORIZED_MARKER',
+		"'0' === (string) get_option( 'blog_public', '1' )",
+	) as $file_promotion_planner_guard
+) {
+	if ( ! str_contains( $file_promotion_planner, $file_promotion_planner_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-promotion-plan',
+			'File promotion planning is missing a same-filesystem/runtime/sandbox recovery guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFilePromotionPlanner.php',
+			$file_promotion_planner_guard,
+			'missing'
+		);
+	}
+}
+
+$file_promoter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFilePromoter.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_FILES = 20;',
+		'public function advance_candidates(',
+		'public function promote( string $job_id ): ?array',
+		'public function advance_verification(',
+		'public function rollback( string $job_id ): ?array',
+		'copy_file_to_promotion_candidate',
+		'rename_file_promotion_path',
+		"'file|' . (string) $root['id']",
+		"'file-promotion-final-integrity-failed'",
+		"'runtime_target'",
+		"'runtime_before'",
+		'update_option( \'active_plugins\'',
+		"'handoff_ready']      = true",
+		'$this->rollback_internal(',
+	) as $file_promoter_guard
+) {
+	if ( ! str_contains( $file_promoter, $file_promoter_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-promotion-contract',
+			'10E.2A.4.6.3 file promotion is missing a bounded fingerprint/runtime/rollback/final-handoff guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFilePromoter.php',
+			$file_promoter_guard,
+			'missing'
+		);
+	}
+}
+foreach ( array( 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(', 'file_put_contents(', 'fwrite(' ) as $promotion_mutation ) {
+	if ( str_contains( $file_promoter, $promotion_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-promotion-filesystem-boundary',
+			'File promotion orchestration must leave all filesystem mutations behind ExportWorkspace.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportFilePromoter.php',
+			'ExportWorkspace mutation boundary only',
+			$promotion_mutation
+		);
+	}
+}
+
+$file_promotion_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFilePromotionController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_file_promotion';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . $job_id )",
+		"'PROMOTE_FILES'",
+		"'ROLLBACK_FILES'",
+		'$this->promoter->advance_candidates(',
+		'$this->promoter->promote( $job_id )',
+		'$this->promoter->advance_verification(',
+		'$this->promoter->rollback( $job_id )',
+	) as $file_promotion_controller_guard
+) {
+	if ( ! str_contains( $file_promotion_controller, $file_promotion_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-promotion-entrypoint',
+			'File promotion endpoint must remain administrator/job-nonce/bounded-batch/explicit-confirmation gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFilePromotionController.php',
+			$file_promotion_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $file_promotion_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-file-promotion-public-endpoint',
+		'Reversible file promotion must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportFilePromotionController.php',
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
