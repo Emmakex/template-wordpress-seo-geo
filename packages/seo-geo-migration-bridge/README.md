@@ -284,3 +284,6 @@ This bridge package is never required by the final self-contained Theme. It may 
 
 
 Migration Bridge 0.8.18 adds phase 10E.2A.4.4: verified file restoration into a private job-owned staging tree. It requires completed database staging, never writes active uploads/plugins/themes, validates every copied file against `files-meta`, and completes only after a second bounded SHA-256 pass exactly reconciles file and byte totals.
+
+
+Migration Bridge 0.8.19 adds serialization-safe environment rewriting over verified job-owned staging tables. Supported PHP serialized values and JSON containers are decoded structurally, same-origin URLs are mapped to the destination, credential/token values remain opaque, and a second read-only pass must prove idempotence. Active destination tables and staged/active file bytes remain untouched; opaque serialized bytes containing source URLs block completion rather than being raw-replaced.
