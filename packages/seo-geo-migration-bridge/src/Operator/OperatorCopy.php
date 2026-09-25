@@ -177,7 +177,7 @@ final class OperatorCopy {
 				'clone_import_payload_blockers'   => 'Payload verification blockers',
 				'clone_import_payload_batch_label' => 'Files per verification batch',
 				'clone_import_payload_mb_label'   => 'Megabytes per verification batch',
-				'clone_import_payload_batch_help' => 'Recommended: 50 files / 8 MB. Extraction and checksum replay are resumable and write only inside private import storage.';
+				'clone_import_payload_batch_help' => 'Recommended: 50 files / 8 MB. Extraction and checksum replay are resumable and write only inside private import storage.',
 				'clone_local_button'              => 'Plan local sandbox clone',
 				'clone_export_button'             => 'Plan portable export',
 				'clone_import_button'             => 'Plan portable import',
@@ -399,7 +399,7 @@ final class OperatorCopy {
 				'clone_import_payload_blockers'   => 'Bloqueos de verificación del payload',
 				'clone_import_payload_batch_label' => 'Archivos por lote de verificación',
 				'clone_import_payload_mb_label'   => 'Megabytes por lote de verificación',
-				'clone_import_payload_batch_help' => 'Recomendado: 50 archivos / 8 MB. La extracción y la repetición del checksum son reanudables y solo escriben dentro del almacenamiento privado de importación.';
+				'clone_import_payload_batch_help' => 'Recomendado: 50 archivos / 8 MB. La extracción y la repetición del checksum son reanudables y solo escriben dentro del almacenamiento privado de importación.',
 				'clone_local_button'              => 'Planificar clon local del sandbox',
 				'clone_export_button'             => 'Planificar exportación portátil',
 				'clone_import_button'             => 'Planificar importación portátil',
