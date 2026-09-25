@@ -1192,7 +1192,7 @@ $serialization_rewriter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/s
 foreach (
 	array(
 		'public function rewrite( string $value, array $replacements ): array',
-		"'s:' . strlen( \$rewritten ) . ':"' . \$rewritten . '";'",
+		'strlen( $rewritten )',
 		"'O' === \$type",
 		"'C' === \$type",
 		"'unsupported' => \$this->contains_search( \$payload, \$replacements )",
