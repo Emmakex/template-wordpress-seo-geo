@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.9`;
+- current plugin version: `0.8.10`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -78,3 +78,8 @@ The plugin is transitional for the Theme 0.1.0 migration path. Its accepted capa
 ### Version 0.8.9 — Portable Clone contract foundation
 
 Phase 10E.2A.1 starts the product-owned clone/export/import path without copying site payload yet. It adds a versioned non-autoloaded resumable job store, a privacy-bounded planning manifest, capability/nonce-gated planning-job creation for local clone/export/import, EN/ES operator controls and runtime/static acceptance. Database/file inventory and payload creation remain intentionally deferred to 10E.2A.2/10E.2A.3.
+
+
+### Version 0.8.10 — read-only source inventory
+
+Phase 10E.2A.2 adds the first real source-discovery layer for Portable Clone. Local-clone/export jobs can inventory WordPress-prefix table metadata and uploads/plugins/themes in bounded resumable batches, hash accepted files, persist only bounded inventory state in a non-autoloaded option, report exclusions/symlinks/unreadable entries and produce a deterministic source fingerprint. A read-only destination planner rejects production-path, payload-root, same-origin-root and shared-table-prefix collisions and can compare estimated required bytes with free space. No database rows or files are copied/restored in this version; payload creation remains 10E.2A.3.
