@@ -131,7 +131,7 @@ final class DeliveryStateStore {
 			'archive_source_bytes'  => max( 0, (int) ( $state['archive_source_bytes'] ?? 0 ) ),
 			'verified_file_count'   => max( 0, (int) ( $state['verified_file_count'] ?? 0 ) ),
 			'verified_byte_count'   => max( 0, (int) ( $state['verified_byte_count'] ?? 0 ) ),
-			'verification_checksum'=> $this->normalize_hash( $state['verification_checksum'] ?? '' ),
+			'verification_checksum' => $this->normalize_hash( $state['verification_checksum'] ?? '' ),
 			'package_checksum'      => $this->normalize_hash( $state['package_checksum'] ?? '' ),
 			'package_manifest_hash' => $this->normalize_hash( $state['package_manifest_hash'] ?? '' ),
 			'archive_sha256'        => $this->normalize_hash( $state['archive_sha256'] ?? '' ),
