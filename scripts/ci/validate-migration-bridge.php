@@ -94,9 +94,12 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/FileExportStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/FileExporter.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneFileExportController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/BuilderDetectorInterface.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/NativeBlocksDetector.php',
 	MIGRATION_BRIDGE_DIR . '/src/Builders/ElementorDetector.php',
@@ -334,6 +337,9 @@ foreach (
 		"public const DIRECTORY_NAME = 'seo-geo-migration-bridge';",
 		'get_temp_dir()',
 		'file_put_contents(',
+		'copy_file( string $job_id, string $relative, string $source )',
+		"fopen( \$source, 'rb' )",
+		"hash_init( 'sha256' )",
 		'rename(',
 		"hash_file( 'sha256'",
 		'cleanup( string $job_id )',
@@ -406,6 +412,87 @@ foreach (
 			'Portable Clone database export endpoint must remain capability/nonce gated and advance one bounded batch.',
 			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
 			$database_export_controller_guard,
+			'missing'
+		);
+	}
+}
+
+
+$file_export_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/FileExportStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_file_export_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'export_fingerprint'",
+		"'files_manifest_hash'",
+	) as $file_export_state_guard
+) {
+	if ( ! str_contains( $file_export_state_store, $file_export_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-export-state',
+			'Portable Clone file export progress must remain bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/FileExportStateStore.php',
+			$file_export_state_guard,
+			'missing'
+		);
+	}
+}
+
+$file_exporter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/FileExporter.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_FILES = 25;',
+		'public const DEFAULT_BATCH_BYTES = 8388608;',
+		"'local-clone', 'export'",
+		'$this->workspace->copy_file(',
+		"'source-files-changed-since-inventory'",
+		"'files/manifest.json'",
+		"'production_source_read_only' => true",
+		"'credentials_in_payload'      => false",
+		"'repository_safe'             => false",
+		"'uploads', 'plugins', 'themes'",
+	) as $file_export_guard
+) {
+	if ( ! str_contains( $file_exporter, $file_export_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-export',
+			'Portable Clone file export is missing a required resumability/privacy/integrity boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/FileExporter.php',
+			$file_export_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(' ) as $file_export_mutation ) {
+	if ( str_contains( $file_exporter, $file_export_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-export-workspace-boundary',
+			'FileExporter must delegate every payload filesystem mutation to ExportWorkspace.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/FileExporter.php',
+			'no direct filesystem mutation primitives',
+			$file_export_mutation
+		);
+	}
+}
+
+$file_export_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneFileExportController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_file_export';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->exporter->advance( $job_id, $batch_files, $batch_bytes )',
+	) as $file_export_controller_guard
+) {
+	if ( ! str_contains( $file_export_controller, $file_export_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-export-entrypoint',
+			'Portable Clone file export endpoint must remain capability/nonce gated and advance one bounded batch.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneFileExportController.php',
+			$file_export_controller_guard,
 			'missing'
 		);
 	}
