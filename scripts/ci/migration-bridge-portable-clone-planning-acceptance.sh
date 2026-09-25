@@ -146,9 +146,17 @@ assert "target-directory-invalid" in invalid["blockers"]
 
 job = payload["job"]
 assert job["schema_version"] == 1
-assert job["kind"] == "portable-clone"
-assert job["status"] == "planned"
-assert job["stage"] == "inventory"
+assert job["operation"] == "local-clone"
+assert job["status"] == "created"
+assert job["phase"] == "inventory"
+assert job["cursor"] is None
+assert job["completed"] == {"files": 0, "bytes": 0, "tables": 0, "rows": 0}
+assert job["totals"] == {"files": None, "bytes": None, "tables": None, "rows": None}
+assert job["last_error_code"] is None
+assert job["package_schema_version"] == 1
+assert isinstance(job["runtime_version"], str) and job["runtime_version"]
+assert job["integrity_state"] == "pending"
+assert job["package_id"].startswith("seo-geo-clone-")
 assert job["plan"]["target"]["directory"] == "nuevaweb"
 assert payload["latest"]["job_id"] == job["job_id"]
 
@@ -159,11 +167,19 @@ assert payload["cancel_registered"] is True
 
 package = payload["package"]
 assert package["schema_version"] == 1
-assert package["kind"] == "seo-geo-portable-site-package"
-assert package["package_id"] == job["job_id"]
-assert package["payload"]["files"]["segments"] == []
+assert package["package_id"] == job["package_id"]
+assert package["operation"] == "local-clone"
+assert package["source"]["home_url"]
+assert package["source"]["site_url"]
+assert set(package["payload"]) == {"database", "uploads", "plugins", "themes"}
 assert package["payload"]["database"]["segments"] == []
+assert package["payload"]["uploads"]["segments"] == []
+assert package["payload"]["plugins"]["segments"] == []
+assert package["payload"]["themes"]["segments"] == []
 assert package["integrity"]["algorithm"] == "sha256"
+assert package["integrity"]["verification"] == "pending"
+assert package["sandbox"]["hardening_required"] is True
+assert package["sandbox"]["preflight_required"] is True
 assert package["privacy"] == {
     "contains_private_site_data": True,
     "repository_safe": False,
@@ -178,7 +194,7 @@ assert package["safety"]["target_integrity_required"] is True
 assert package["safety"]["resume_required"] is True
 
 assert payload["cancelled"]["status"] == "cancelled"
-assert payload["cancelled"]["stage"] == "cancelled"
+assert payload["cancelled"]["phase"] == "cancelled"
 assert payload["cleared"] is True
 assert payload["after_clear"] is None
 
@@ -186,6 +202,8 @@ html = payload["operator_html"]
 assert "<h2>Portable clone</h2>" in html
 assert 'value="seo_geo_migration_prepare_portable_clone"' in html
 assert 'name="target_directory"' in html
+assert 'name="non_production_confirmed"' in html
+assert "I confirm this target is non-production" in html
 assert "Prepare portable clone job" in html
 assert "another migration plugin" in html
 
