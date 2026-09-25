@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseRestoreController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -27,6 +28,8 @@ use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadVerifier;
+use SeoGeo\MigrationBridge\Clone\DatabaseRestorer;
+use SeoGeo\MigrationBridge\Clone\DatabaseRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
@@ -326,6 +329,27 @@ final class Plugin {
 	private static ?AdminCloneImportPayloadController $clone_import_payload_controller = null;
 
 	/**
+	 * Portable Clone database-restore state store singleton.
+	 *
+	 * @var DatabaseRestoreStateStore|null
+	 */
+	private static ?DatabaseRestoreStateStore $clone_database_restore_state_store = null;
+
+	/**
+	 * Portable Clone isolated database restorer singleton.
+	 *
+	 * @var DatabaseRestorer|null
+	 */
+	private static ?DatabaseRestorer $clone_database_restorer = null;
+
+	/**
+	 * Portable Clone database restore controller singleton.
+	 *
+	 * @var AdminCloneDatabaseRestoreController|null
+	 */
+	private static ?AdminCloneDatabaseRestoreController $clone_database_restore_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -379,8 +403,11 @@ final class Plugin {
 		self::$clone_import_preflight           ??= new ImportPreflight( self::$clone_import_state_store, self::$clone_job_store );
 		self::$clone_import_controller          ??= new AdminCloneImportController( self::$clone_import_preflight );
 		self::$clone_import_payload_state_store ??= new ImportPayloadStateStore();
-		self::$clone_import_payload_verifier    ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
-		self::$clone_import_payload_controller  ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
+		self::$clone_import_payload_verifier       ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$clone_import_payload_controller     ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
+		self::$clone_database_restore_state_store  ??= new DatabaseRestoreStateStore();
+		self::$clone_database_restorer             ??= new DatabaseRestorer( self::$clone_database_restore_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$clone_database_restore_controller   ??= new AdminCloneDatabaseRestoreController( self::$clone_database_restorer );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -403,6 +430,7 @@ final class Plugin {
 		self::$clone_delivery_controller->boot();
 		self::$clone_import_controller->boot();
 		self::$clone_import_payload_controller->boot();
+		self::$clone_database_restore_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -530,6 +558,13 @@ final class Plugin {
 	 */
 	public static function clone_import_payload_verifier(): ?ImportPayloadVerifier {
 		return self::$clone_import_payload_verifier;
+	}
+
+	/**
+	 * Return the resumable isolated Portable Clone database restorer.
+	 */
+	public static function clone_database_restorer(): ?DatabaseRestorer {
+		return self::$clone_database_restorer;
 	}
 
 	/**
