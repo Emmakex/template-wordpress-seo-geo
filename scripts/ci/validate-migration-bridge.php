@@ -1459,7 +1459,7 @@ $import_finalizer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clo
 foreach (
 	array(
 		'public function activation_plan_snapshot( string $job_id ): ?array',
-		"'ready' !== ( $state['status'] ?? null )",
+		"'ready' !== ( \$state['status'] ?? null )",
 		"'activation_allowed'",
 		"'handoff_ready'",
 		'$this->runtime_gate( $job_id, $state )',
