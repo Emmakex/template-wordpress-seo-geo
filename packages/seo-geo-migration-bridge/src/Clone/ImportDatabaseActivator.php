@@ -127,7 +127,7 @@ final class ImportDatabaseActivator {
 				return null;
 			}
 
-			$entry = array(
+			$entry        = array(
 				'staging_table'  => $staging,
 				'target_table'   => $target,
 				'rollback_table' => $rollback,
@@ -675,12 +675,12 @@ final class ImportDatabaseActivator {
 			return false;
 		}
 
-		$data             = array(
+		$data    = array(
 			'option_id'    => $next_id,
 			'option_name'  => $name,
 			'option_value' => $value,
 		);
-		$formats          = array( '%d', '%s', '%s' );
+		$formats = array( '%d', '%s', '%s' );
 		if ( in_array( 'autoload', $columns, true ) ) {
 			$data['autoload'] = '' !== $autoload ? $autoload : 'no';
 			$formats[]        = '%s';
@@ -703,7 +703,7 @@ final class ImportDatabaseActivator {
 
 		$quoted = $this->quote_identifier( $table );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Validated staging table identifier.
-		$max    = $wpdb->get_var( "SELECT MAX(option_id) FROM {$quoted}" );
+		$max = $wpdb->get_var( "SELECT MAX(option_id) FROM {$quoted}" );
 
 		return null === $max ? 1 : max( 1, (int) $max + 1 );
 	}
@@ -880,7 +880,7 @@ final class ImportDatabaseActivator {
 	 */
 	private function block( string $job_id, array $state, string $code, bool $database_swapped ): ?array {
 		$blockers                        = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
-		$blockers[]                    = $code;
+		$blockers[]                      = $code;
 		$state['status']                 = 'blocked';
 		$state['database_swapped']       = $database_swapped;
 		$state['handoff_ready']          = false;
