@@ -58,13 +58,13 @@ final class AdminClonePackageController {
 			: '';
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
-		$batch_files = isset( $_POST['package_batch_size'] )
+		$batch_files     = isset( $_POST['package_batch_size'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['package_batch_size'] ) ) )
 			: PackageBuilder::DEFAULT_BATCH_FILES;
 		$batch_megabytes = isset( $_POST['package_batch_megabytes'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['package_batch_megabytes'] ) ) )
 			: 16;
-		$batch_bytes = $batch_megabytes * 1024 * 1024;
+		$batch_bytes     = $batch_megabytes * 1024 * 1024;
 
 		$result = $this->builder->advance( $job_id, $batch_files, $batch_bytes );
 		if ( ! is_array( $result ) ) {
