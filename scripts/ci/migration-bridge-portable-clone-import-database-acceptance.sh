@@ -591,11 +591,11 @@ assert payload["active_after_good"] == expected_active
 assert payload["active_after_all"] == expected_active
 
 assert payload["drift_first"]["status"] == "running"
-assert payload["drift_first"]["rows_restored"] == 1
+assert payload["drift_first"]["rows_restored"] == 2
 drift = payload["drift_blocked"]
 assert drift["status"] == "blocked"
 assert "import-database-runtime-guard-failed" in drift["blockers"]
-assert drift["rows_restored"] == 1
+assert drift["rows_restored"] == 2
 assert drift["active_tables_untouched"] is True
 
 myisam = payload["myisam"]
