@@ -775,6 +775,27 @@ final class Plugin {
 	}
 
 	/**
+	 * Return the workspace-backed Portable Clone file-promotion journal.
+	 */
+	public static function clone_import_file_promotion_state_store(): ?ImportFilePromotionStateStore {
+		return self::$clone_import_file_promotion_state_store;
+	}
+
+	/**
+	 * Return the read-only Portable Clone file-promotion planner.
+	 */
+	public static function clone_import_file_promotion_planner(): ?ImportFilePromotionPlanner {
+		return self::$clone_import_file_promotion_planner;
+	}
+
+	/**
+	 * Return the reversible Portable Clone file promoter.
+	 */
+	public static function clone_import_file_promoter(): ?ImportFilePromoter {
+		return self::$clone_import_file_promoter;
+	}
+
+	/**
 	 * Return the read-only final migration report engine.
 	 */
 	public static function migration_report(): ?MigrationReportEngine {
