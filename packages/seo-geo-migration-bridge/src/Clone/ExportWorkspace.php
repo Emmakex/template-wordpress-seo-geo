@@ -140,10 +140,14 @@ final class ExportWorkspace {
 		$output = fopen( $temp, 'wb' );
 		if ( false === $input || false === $output ) {
 			if ( is_resource( $input ) ) {
-				fclose( $input );
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closes only the bounded source stream.
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closes only the bounded source stream.
+		fclose( $input );
 			}
 			if ( is_resource( $output ) ) {
-				fclose( $output );
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closes only the job-owned private stream.
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closes only the job-owned private stream.
+		fclose( $output );
 			}
 			if ( is_file( $temp ) ) {
 				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Removes only this failed job-owned temp file.
