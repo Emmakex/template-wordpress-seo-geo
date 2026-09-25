@@ -100,6 +100,80 @@ final class ImportDatabaseRestorer {
 	}
 
 	/**
+	 * Return a fresh validated mapping of restored source tables to staging/target tables.
+	 *
+	 * Environment rewrite consumers must use this map instead of reproducing the
+	 * staging-name algorithm independently.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @return array{source_prefix:string,destination_prefix:string,staging_namespace:string,database_manifest_sha256:string,tables:list<array{source_table:string,target_table:string,staging_table:string,columns:list<string>,strategy:string,cursor_column:string,row_count:int}>}|null
+	 */
+	public function staging_plan( string $job_id ): ?array {
+		$state = $this->store->get( $job_id );
+		if (
+			! is_array( $state )
+			|| 'complete' !== ( $state['status'] ?? null )
+			|| 'complete' !== ( $state['stage'] ?? null )
+			|| true !== ( $state['active_tables_untouched'] ?? false )
+			|| null === $this->runtime_guard( $job_id, $state )
+		) {
+			return null;
+		}
+
+		$bundle = $this->database_manifest( $job_id );
+		if (
+			null === $bundle
+			|| ! $this->same_hash( $bundle['sha256'], $state['database_manifest_sha256'] ?? '' )
+		) {
+			return null;
+		}
+
+		$manifest = $bundle['manifest'];
+		$tables   = is_array( $manifest['tables'] ?? null ) ? array_values( $manifest['tables'] ) : array();
+		$plan     = array();
+
+		foreach ( $tables as $meta ) {
+			if ( ! is_array( $meta ) || ! $this->table_manifest_valid( $meta, (string) $state['source_prefix'] ) ) {
+				return null;
+			}
+
+			$source  = (string) $meta['name'];
+			$target  = $this->target_table( $source, (string) $state['source_prefix'], (string) $state['destination_prefix'] );
+			$staging = $this->staging_table( (string) $state['staging_namespace'], $source );
+			$columns = is_array( $meta['columns'] ?? null )
+				? array_values( array_filter( $meta['columns'], 'is_string' ) )
+				: array();
+
+			if (
+				'' === $target
+				|| '' === $staging
+				|| ! $this->table_exists( $staging )
+				|| $this->table_row_count( $staging ) !== max( 0, (int) ( $meta['row_count'] ?? 0 ) )
+			) {
+				return null;
+			}
+
+			$plan[] = array(
+				'source_table'  => $source,
+				'target_table'  => $target,
+				'staging_table' => $staging,
+				'columns'       => $columns,
+				'strategy'      => is_string( $meta['strategy'] ?? null ) ? $meta['strategy'] : '',
+				'cursor_column' => is_string( $meta['cursor_column'] ?? null ) ? $meta['cursor_column'] : '',
+				'row_count'     => max( 0, (int) ( $meta['row_count'] ?? 0 ) ),
+			);
+		}
+
+		return array(
+			'source_prefix'            => (string) $state['source_prefix'],
+			'destination_prefix'       => (string) $state['destination_prefix'],
+			'staging_namespace'        => (string) $state['staging_namespace'],
+			'database_manifest_sha256' => (string) $state['database_manifest_sha256'],
+			'tables'                   => $plan,
+		);
+	}
+
+	/**
 	 * Initialize staging restore after full payload verification and fresh preflight.
 	 *
 	 * @param string $job_id Clone job identifier.
