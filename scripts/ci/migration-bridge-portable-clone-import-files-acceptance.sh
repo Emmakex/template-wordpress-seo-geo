@@ -416,12 +416,21 @@ $run_files = static function ( string $job_id ) use ( $file_restore ): array {
 $good_archive = $build_archive( 'clone-import-files-source-good-0001' );
 $prepare_import( 'clone-import-files-good-0001', $good_archive );
 $good = $run_files( 'clone-import-files-good-0001' );
+if ( 'complete' !== ( $good['status'] ?? null ) ) {
+	throw new RuntimeException(
+		'Good file staging did not complete: ' . wp_json_encode( $good, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+	);
+}
 
 $staged_contents = array();
 foreach ( array( 'uploads', 'plugins', 'themes' ) as $root_id ) {
 	$info = $stage->file_info( 'clone-import-files-good-0001', $root_id, $sentinel );
 	if ( ! is_array( $info ) ) {
-		throw new RuntimeException( 'Expected staged file is missing.' );
+		throw new RuntimeException(
+			'Expected staged file is missing for ' . $root_id
+			. '; state=' . wp_json_encode( $good, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+			. '; summary=' . wp_json_encode( $stage->payload_summary( 'clone-import-files-good-0001' ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+		);
 	}
 	$staged_contents[ $root_id ] = file_get_contents( $info['path'] );
 }
