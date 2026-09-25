@@ -643,7 +643,7 @@ final class AdminOperatorScreen {
 				</tr>
 				<?php if ( 'complete' === $status ) : ?>
 					<tr>
-						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_file_export_manifest' ) ); ?></th>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_files_manifest' ) ); ?></th>
 						<td><code><?php echo esc_html( (string) ( $export['files_manifest_hash'] ?? '' ) ); ?></code></td>
 					</tr>
 				<?php endif; ?>
