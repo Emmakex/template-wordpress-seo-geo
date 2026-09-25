@@ -92,16 +92,16 @@ final class ImportActivationPlanner {
 	/**
 	 * Construct activation planner.
 	 *
-	 * @param ImportActivationPlanStore|null         $store              Optional activation-plan store.
-	 * @param ImportPreflight|null                   $preflight          Optional fresh import preflight.
-	 * @param ImportPayloadStateStore|null           $payload_state      Optional payload state store.
-	 * @param ImportDatabaseStateStore|null          $database_state     Optional database staging state.
-	 * @param ImportFileStateStore|null              $file_state         Optional file staging state.
-	 * @param ImportRewriteStateStore|null           $rewrite_state      Optional environment rewrite state.
-	 * @param ImportDatabaseRestorer|null            $database_restorer  Optional database staging planner.
-	 * @param ExportWorkspace|null                   $workspace          Optional private import workspace.
-	 * @param ImportRecoveryEvidenceValidator|null   $recovery_validator Optional recovery validator.
-	 * @param CloneJobStore|null                     $jobs               Optional clone job store.
+	 * @param ImportActivationPlanStore|null       $store              Optional activation-plan store.
+	 * @param ImportPreflight|null                 $preflight          Optional fresh import preflight.
+	 * @param ImportPayloadStateStore|null         $payload_state      Optional payload state store.
+	 * @param ImportDatabaseStateStore|null        $database_state     Optional database staging state.
+	 * @param ImportFileStateStore|null            $file_state         Optional file staging state.
+	 * @param ImportRewriteStateStore|null         $rewrite_state      Optional environment rewrite state.
+	 * @param ImportDatabaseRestorer|null          $database_restorer  Optional database staging planner.
+	 * @param ExportWorkspace|null                 $workspace          Optional private import workspace.
+	 * @param ImportRecoveryEvidenceValidator|null $recovery_validator Optional recovery validator.
+	 * @param CloneJobStore|null                   $jobs               Optional clone job store.
 	 */
 	public function __construct(
 		?ImportActivationPlanStore $store = null,
@@ -140,7 +140,7 @@ final class ImportActivationPlanner {
 	/**
 	 * Build and persist a non-mutating sandbox activation plan.
 	 *
-	 * @param string              $job_id            Clone job identifier.
+	 * @param string            $job_id            Clone job identifier.
 	 * @param array<string,mixed> $recovery_evidence External recovery evidence.
 	 * @return array<string,mixed>|null
 	 */
@@ -216,7 +216,7 @@ final class ImportActivationPlanner {
 
 		$database_plan = $this->database_plan( $job_id );
 		if ( null === $database_plan ) {
-			$blockers[]  = 'activation-database-plan-invalid';
+			$blockers[]   = 'activation-database-plan-invalid';
 			$table_rows   = array();
 			$table_prefix = '';
 		} else {
@@ -407,7 +407,7 @@ final class ImportActivationPlanner {
 	/**
 	 * Verify staged file tree still matches accepted 0.8.18 totals and active roots remain distinct.
 	 *
-	 * @param string              $job_id Clone job identifier.
+	 * @param string            $job_id Clone job identifier.
 	 * @param array<string,mixed> $state  File-staging state.
 	 * @return array{file_count:int,byte_count:int,roots:list<array<string,mixed>>,blockers:list<string>,advisories:list<string>}
 	 */
