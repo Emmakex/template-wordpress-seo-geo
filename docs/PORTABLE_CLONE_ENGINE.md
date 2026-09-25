@@ -462,14 +462,14 @@ No payload is created yet.
 
 ### 10E.2A.3 — Resumable export
 
-Status: **active — 10E.2A.3.1 database export, 10E.2A.3.2 file export and 10E.2A.3.3 package manifest + integrity are complete; 10E.2A.3.4 authenticated delivery + retention cleanup implementation candidate is Migration Bridge 0.8.14**
+Status: **complete in Migration Bridge 0.8.14 — database export, file export, package integrity, authenticated delivery and bounded retention cleanup are accepted**
 
 Internal sequence:
 
 - **10E.2A.3.1 — database export:** complete in 0.8.11; private workspace, schema + deterministic row chunks, resumable state and per-chunk/database-manifest SHA-256;
 - **10E.2A.3.2 — file export:** complete in 0.8.12; accepted uploads/plugins/themes streamed into the private workspace in bounded file/byte batches with per-file SHA-256 and exact inventory fingerprint/count/byte reconciliation;
 - **10E.2A.3.3 — package manifest + integrity:** complete in 0.8.13; revalidate exported records, compute a resumable full-workspace checksum, require a second matching verification pass before `verified=true`, and block deliberate payload drift/tampering;
-- **10E.2A.3.4 — authenticated package delivery + retention cleanup:** 0.8.14 candidate; resumable private ZIP build, package-checksum replay, archive SHA-256, administrator/nonce-only download, 24-hour expiry, explicit bounded cleanup and bounded expired-artifact maintenance.
+- **10E.2A.3.4 — authenticated package delivery + retention cleanup:** complete in 0.8.14; resumable private ZIP build, package-checksum replay, archive SHA-256, administrator/nonce-only download, 24-hour expiry, explicit bounded cleanup and bounded expired-artifact maintenance.
 
 Deliver:
 
@@ -481,6 +481,17 @@ Deliver:
 - cleanup/retention.
 
 ### 10E.2A.4 — Portable import
+
+Status: **active — 10E.2A.4.1 intake + destination preflight is the Migration Bridge 0.8.15 candidate**
+
+Internal sequence:
+
+- **10E.2A.4.1 — intake + destination preflight:** stage the ZIP only in job-owned private storage; reject traversal/unknown roots/duplicate paths; validate package + child-manifest contracts and hashes; require an explicitly authorized isolated sandbox destination, noindex, outbound safety, recovery references and sufficient disk space. This subphase performs no restore and keeps `restore_allowed=false`.
+- **10E.2A.4.2 — full payload verification + resumable extraction:** replay the accepted package checksum while extracting into a private import workspace before restore is enabled.
+- **10E.2A.4.3 — database restore:** bounded destination-only schema/row restore with resumable state.
+- **10E.2A.4.4 — file restore:** bounded destination-only uploads/plugins/themes restore.
+- **10E.2A.4.5 — serialization-safe environment rewrite:** rewrite WordPress environment values without raw serialized-string replacement.
+- **10E.2A.4.6 — sandbox hardening + final integrity verification:** prove the restored target remains isolated and hand off only after the existing sandbox safety contract is satisfied.
 
 Deliver:
 
