@@ -300,8 +300,9 @@ final class AdminOperatorScreen {
 
 		$key = match ( $status ) {
 			'planned'   => 'portable_clone_planned',
-			'blocked'   => 'portable_clone_blocked',
-			'busy'      => 'portable_clone_busy',
+			'blocked'               => 'portable_clone_blocked',
+			'confirmation-required' => 'portable_clone_confirmation_required',
+			'busy'                  => 'portable_clone_busy',
 			'cancelled' => 'portable_clone_cancelled',
 			'error'     => 'portable_clone_error',
 			default     => null,
@@ -311,7 +312,7 @@ final class AdminOperatorScreen {
 			return;
 		}
 
-		$class = in_array( $status, array( 'blocked', 'busy', 'error' ), true )
+		$class = in_array( $status, array( 'blocked', 'confirmation-required', 'busy', 'error' ), true )
 			? 'notice notice-error'
 			: 'notice notice-success';
 		?>
@@ -352,6 +353,12 @@ final class AdminOperatorScreen {
 					>
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'portable_clone_directory_help' ) ); ?></p>
+				<p>
+					<label>
+						<input type="checkbox" name="non_production_confirmed" value="1" required>
+						<?php echo esc_html( $this->copy->text( 'portable_clone_confirmation_label' ) ); ?>
+					</label>
+				</p>
 				<?php submit_button( $this->copy->text( 'portable_clone_prepare_button' ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php else : ?>
@@ -363,7 +370,7 @@ final class AdminOperatorScreen {
 					</tr>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'portable_clone_stage_label' ) ); ?></th>
-						<td><code><?php echo esc_html( (string) ( $clone['stage'] ?? '' ) ); ?></code></td>
+						<td><code><?php echo esc_html( (string) ( $clone['phase'] ?? '' ) ); ?></code></td>
 					</tr>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'portable_clone_target_label' ) ); ?></th>
