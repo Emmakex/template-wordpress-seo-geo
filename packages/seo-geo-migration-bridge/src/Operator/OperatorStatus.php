@@ -296,28 +296,38 @@ final class OperatorStatus {
 			);
 		}
 
-		$plan     = is_array( $job['plan'] ?? null ) ? $job['plan'] : array();
-		$target   = is_array( $plan['target'] ?? null ) ? $plan['target'] : array();
-		$progress = is_array( $job['progress'] ?? null ) ? $job['progress'] : array();
+		$plan      = is_array( $job['plan'] ?? null ) ? $job['plan'] : array();
+		$target    = is_array( $plan['target'] ?? null ) ? $plan['target'] : array();
+		$completed = is_array( $job['completed'] ?? null ) ? $job['completed'] : array();
+		$totals    = is_array( $job['totals'] ?? null ) ? $job['totals'] : array();
 
 		return array(
-			'available'        => true,
-			'job_id'           => is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '',
-			'mode'             => is_string( $job['mode'] ?? null ) ? $job['mode'] : '',
-			'status'           => is_string( $job['status'] ?? null ) ? $job['status'] : 'unknown',
-			'stage'            => is_string( $job['stage'] ?? null ) ? $job['stage'] : 'unknown',
-			'target_directory' => is_string( $target['directory'] ?? null ) ? $target['directory'] : '',
-			'target_home_url'  => is_string( $target['home_url'] ?? null ) ? $target['home_url'] : '',
-			'progress'         => array(
-				'files_discovered' => max( 0, (int) ( $progress['files_discovered'] ?? 0 ) ),
-				'files_copied'     => max( 0, (int) ( $progress['files_copied'] ?? 0 ) ),
-				'bytes_copied'     => max( 0, (int) ( $progress['bytes_copied'] ?? 0 ) ),
-				'tables_total'     => max( 0, (int) ( $progress['tables_total'] ?? 0 ) ),
-				'tables_copied'    => max( 0, (int) ( $progress['tables_copied'] ?? 0 ) ),
-				'rows_copied'      => max( 0, (int) ( $progress['rows_copied'] ?? 0 ) ),
+			'available'              => true,
+			'job_id'                 => is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '',
+			'package_id'             => is_string( $job['package_id'] ?? null ) ? $job['package_id'] : '',
+			'operation'              => is_string( $job['operation'] ?? null ) ? $job['operation'] : '',
+			'status'                 => is_string( $job['status'] ?? null ) ? $job['status'] : 'unknown',
+			'phase'                  => is_string( $job['phase'] ?? null ) ? $job['phase'] : 'unknown',
+			'target_directory'       => is_string( $target['directory'] ?? null ) ? $target['directory'] : '',
+			'target_home_url'        => is_string( $target['home_url'] ?? null ) ? $target['home_url'] : '',
+			'completed'              => array(
+				'files'  => max( 0, (int) ( $completed['files'] ?? 0 ) ),
+				'bytes'  => max( 0, (int) ( $completed['bytes'] ?? 0 ) ),
+				'tables' => max( 0, (int) ( $completed['tables'] ?? 0 ) ),
+				'rows'   => max( 0, (int) ( $completed['rows'] ?? 0 ) ),
 			),
-			'created_at'       => is_string( $job['created_at'] ?? null ) ? $job['created_at'] : null,
-			'updated_at'       => is_string( $job['updated_at'] ?? null ) ? $job['updated_at'] : null,
+			'totals'                 => array(
+				'files'  => isset( $totals['files'] ) ? max( 0, (int) $totals['files'] ) : null,
+				'bytes'  => isset( $totals['bytes'] ) ? max( 0, (int) $totals['bytes'] ) : null,
+				'tables' => isset( $totals['tables'] ) ? max( 0, (int) $totals['tables'] ) : null,
+				'rows'   => isset( $totals['rows'] ) ? max( 0, (int) $totals['rows'] ) : null,
+			),
+			'last_error_code'        => is_string( $job['last_error_code'] ?? null ) ? $job['last_error_code'] : null,
+			'package_schema_version' => max( 0, (int) ( $job['package_schema_version'] ?? 0 ) ),
+			'runtime_version'        => is_string( $job['runtime_version'] ?? null ) ? $job['runtime_version'] : '',
+			'integrity_state'        => is_string( $job['integrity_state'] ?? null ) ? $job['integrity_state'] : '',
+			'created_at'             => is_string( $job['created_at'] ?? null ) ? $job['created_at'] : null,
+			'updated_at'             => is_string( $job['updated_at'] ?? null ) ? $job['updated_at'] : null,
 		);
 	}
 
