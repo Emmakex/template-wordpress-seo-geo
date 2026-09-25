@@ -18,6 +18,11 @@ final class AdminCloneImportEnvironmentController {
 	public const ACTION       = 'seo_geo_migration_clone_import_environment';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_import_environment';
 
+	/**
+	 * Staging environment rewrite service.
+	 *
+	 * @var ImportEnvironmentRewriter
+	 */
 	private ImportEnvironmentRewriter $rewriter;
 
 	/**
@@ -86,6 +91,9 @@ final class AdminCloneImportEnvironmentController {
 
 	/**
 	 * Redirect to operator screen.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @param string $status Rewrite status.
 	 */
 	private function redirect_to_operator( string $job_id, string $status ): never {
 		$redirect = add_query_arg(
