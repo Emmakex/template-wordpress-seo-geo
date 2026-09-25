@@ -248,7 +248,7 @@ final class ImportPayloadVerifier {
 
 			++$cursor;
 			++$processed_files;
-			$processed_bytes             += (int) $extracted['bytes'];
+			$processed_bytes            += (int) $extracted['bytes'];
 			$state['extract_file_count'] = (int) ( $state['extract_file_count'] ?? 0 ) + 1;
 			$state['extract_byte_count'] = (int) ( $state['extract_byte_count'] ?? 0 ) + (int) $extracted['bytes'];
 		}
@@ -376,7 +376,7 @@ final class ImportPayloadVerifier {
 				$state['verify_byte_count']     = (int) ( $state['verify_byte_count'] ?? 0 ) + (int) $bytes;
 				$state['after_name']            = $entry;
 				++$processed_files;
-				$processed_bytes                += (int) $bytes;
+				$processed_bytes += (int) $bytes;
 
 				if (
 					$processed_files >= $batch_files
