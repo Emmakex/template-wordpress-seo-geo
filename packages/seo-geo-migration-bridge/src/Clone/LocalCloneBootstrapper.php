@@ -115,8 +115,28 @@ final class LocalCloneBootstrapper {
 			if ( 'claiming' === ( $existing['status'] ?? null ) ) {
 				return $this->finish_claim( $job_id, $existing );
 			}
-
-			return $existing;
+			if ( 'released' === ( $existing['status'] ?? null ) ) {
+				return $existing;
+			}
+			if ( 'blocked' === ( $existing['status'] ?? null ) ) {
+				$target = untrailingslashit( wp_normalize_path( (string) ( $existing['target_path'] ?? '' ) ) );
+				$marker = $this->join_path( $target, self::OWNER_MARKER );
+				if ( true === ( $existing['target_owned'] ?? false ) || is_file( $marker ) ) {
+					return $existing;
+				}
+				if ( true === ( $existing['target_created'] ?? false ) && is_dir( $target ) && $this->directory_empty( $target ) ) {
+					$existing['status']     = 'claiming';
+					$existing['blockers']   = array();
+					$existing['updated_at'] = gmdate( DATE_ATOM );
+					if ( ! $this->store->save( $job_id, $existing ) ) {
+						return null;
+					}
+					return $this->finish_claim( $job_id, $existing );
+				}
+				if ( ! $this->store->delete( $job_id ) ) {
+					return $existing;
+				}
+			}
 		}
 
 		$plan = $this->fresh_plan( $job_id );
