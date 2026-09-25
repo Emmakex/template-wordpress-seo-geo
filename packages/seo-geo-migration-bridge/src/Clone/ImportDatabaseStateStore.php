@@ -132,10 +132,11 @@ final class ImportDatabaseStateStore {
 			'staging_namespace'        => $this->normalize_identifier( $state['staging_namespace'] ?? '' ),
 			'table_index'              => max( 0, (int) ( $state['table_index'] ?? 0 ) ),
 			'table_count'              => max( 0, (int) ( $state['table_count'] ?? 0 ) ),
-			'current_source_table'     => $this->normalize_identifier( $state['current_source_table'] ?? '' ),
-			'current_target_table'     => $this->normalize_identifier( $state['current_target_table'] ?? '' ),
+			'current_source_table'     => $this->normalize_table_name( $state['current_source_table'] ?? '' ),
+			'current_target_table'     => $this->normalize_table_name( $state['current_target_table'] ?? '' ),
 			'current_staging_table'    => $this->normalize_identifier( $state['current_staging_table'] ?? '' ),
 			'chunk_index'              => max( 0, (int) ( $state['chunk_index'] ?? 0 ) ),
+			'chunk_row_offset'         => max( 0, (int) ( $state['chunk_row_offset'] ?? 0 ) ),
 			'chunk_count'              => max( 0, (int) ( $state['chunk_count'] ?? 0 ) ),
 			'chunks_completed'         => max( 0, (int) ( $state['chunks_completed'] ?? 0 ) ),
 			'rows_restored'            => max( 0, (int) ( $state['rows_restored'] ?? 0 ) ),
@@ -169,6 +170,24 @@ final class ImportDatabaseStateStore {
 		}
 
 		return 1 === preg_match( '/^[A-Za-z0-9_]*$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * Normalize one bounded source/final table name.
+	 *
+	 * @param mixed $value Raw table name.
+	 */
+	private function normalize_table_name( mixed $value ): string {
+		if (
+			! is_string( $value )
+			|| '' === $value
+			|| 64 < strlen( $value )
+			|| 1 === preg_match( '/[\\x00-\\x1F\\x7F]/', $value )
+		) {
+			return '';
+		}
+
+		return $value;
 	}
 
 	/**
