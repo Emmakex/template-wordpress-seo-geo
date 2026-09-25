@@ -223,7 +223,7 @@ final class LocalCloneRuntimeBootstrapper {
 
 		return 'core-verify' === ( $state['stage'] ?? null )
 			? $this->advance_verify( $job_id, $state, $batch_files, $batch_bytes )
-			: $this->advance_copy( $job_id, $state, $batch_files, $batch_bytes );
+			: $this->advance_core_files( $job_id, $state, $batch_files, $batch_bytes );
 	}
 
 	/**
@@ -235,7 +235,7 @@ final class LocalCloneRuntimeBootstrapper {
 	 * @param int                 $batch_bytes Maximum bytes.
 	 * @return array<string,mixed>|null
 	 */
-	private function advance_copy( string $job_id, array $state, int $batch_files, int $batch_bytes ): ?array {
+	private function advance_core_files( string $job_id, array $state, int $batch_files, int $batch_bytes ): ?array {
 		if ( 'core-copy' !== ( $state['stage'] ?? null ) ) {
 			return $this->block( $job_id, $state, 'runtime-copy-stage-invalid' );
 		}
