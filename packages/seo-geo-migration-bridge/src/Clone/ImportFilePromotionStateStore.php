@@ -85,7 +85,7 @@ final class ImportFilePromotionStateStore {
 		}
 
 		$status = is_string( $state['status'] ?? null ) ? $state['status'] : 'prepared';
-		if ( ! in_array( $status, array( 'prepared', 'copying', 'verifying', 'promoting', 'verified', 'rolling-back', 'rolled-back', 'blocked' ), true ) ) {
+		if ( ! in_array( $status, array( 'prepared', 'copying', 'candidate-ready', 'promoting', 'verifying', 'verified', 'rolling-back', 'rolled-back', 'blocked' ), true ) ) {
 			return null;
 		}
 
@@ -123,6 +123,9 @@ final class ImportFilePromotionStateStore {
 			'file_fingerprint'    => $this->hash( $state['file_fingerprint'] ?? '' ),
 			'roots'               => $roots,
 			'root_index'          => max( 0, min( 3, (int) ( $state['root_index'] ?? 0 ) ) ),
+			'pending_dirs'        => $this->paths( $state['pending_dirs'] ?? array() ),
+			'current_dir'         => $this->relative( $state['current_dir'] ?? '' ),
+			'after_name'          => $this->name( $state['after_name'] ?? '' ),
 			'file_count'          => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
 			'byte_count'          => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
 			'verify_file_count'   => max( 0, (int) ( $state['verify_file_count'] ?? 0 ) ),
@@ -157,6 +160,54 @@ final class ImportFilePromotionStateStore {
 	 *
 	 * @param mixed $status Status candidate.
 	 */
+	/**
+	 * Normalize bounded relative directory queue entries.
+	 *
+	 * @param mixed $paths Path candidates.
+	 * @return list<string>
+	 */
+	private function paths( mixed $paths ): array {
+		if ( ! is_array( $paths ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( array_slice( $paths, 0, 50000 ) as $path ) {
+			$normalized = $this->relative( $path );
+			if ( '' === $normalized && '' !== $path ) {
+				continue;
+			}
+			$out[] = $normalized;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Normalize one root-relative path.
+	 *
+	 * @param mixed $path Path candidate.
+	 */
+	private function relative( mixed $path ): string {
+		if ( ! is_string( $path ) ) {
+			return '';
+		}
+
+		$path = ltrim( wp_normalize_path( $path ), '/' );
+		return 2048 >= strlen( $path ) && ! str_contains( $path, '../' ) && ! str_contains( $path, '/..' )
+			? $path
+			: '';
+	}
+
+	/**
+	 * Normalize one directory entry name.
+	 *
+	 * @param mixed $name Name candidate.
+	 */
+	private function name( mixed $name ): string {
+		return is_string( $name ) && 255 >= strlen( $name ) && ! str_contains( $name, '/' ) ? $name : '';
+	}
+
 	private function root_status( mixed $status ): string {
 		return is_string( $status )
 			&& in_array( $status, array( 'pending', 'copying', 'candidate-ready', 'promoted', 'verified', 'rolled-back', 'blocked' ), true )
