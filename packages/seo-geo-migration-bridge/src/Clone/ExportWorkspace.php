@@ -514,6 +514,10 @@ final class ExportWorkspace {
 	 * @return array{path:string,bytes:int,sha256:string}|null
 	 */
 	public function stage_import_archive( string $job_id, string $source ): ?array {
+		if ( ! $this->delete_import_archive( $job_id ) ) {
+			return null;
+		}
+
 		$written = $this->copy_file( $job_id, 'import/package.zip', $source );
 		if ( null === $written ) {
 			return null;
