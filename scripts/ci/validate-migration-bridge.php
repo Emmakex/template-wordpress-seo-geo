@@ -1642,7 +1642,7 @@ foreach (
 		'public function rollback( string $job_id ): ?array',
 		'copy_file_to_promotion_candidate',
 		'rename_file_promotion_path',
-		"'file|' . (string) $root['id']",
+		"'file|' . (string) \$root['id']",
 		"'file-promotion-final-integrity-failed'",
 		"'runtime_target'",
 		"'runtime_before'",
