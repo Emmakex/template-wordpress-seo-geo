@@ -150,6 +150,47 @@ final class ImportFinalizationPlanner {
 	}
 
 	/**
+	 * Return the exact activation plan only after read-only finalization is ready.
+	 *
+	 * The plan is rebuilt through the same fresh runtime gate used by finalization,
+	 * then bound to the accepted activation-plan hash. Consumers may mutate only
+	 * after this method succeeds.
+	 *
+	 * @return array{plan:array<string,mixed>,hash:string,database_fingerprint:string,file_fingerprint:string}|null
+	 */
+	public function activation_plan_snapshot( string $job_id ): ?array {
+		$state = $this->store->get( $job_id );
+		if (
+			! is_array( $state )
+			|| 'ready' !== ( $state['status'] ?? null )
+			|| 'ready' !== ( $state['stage'] ?? null )
+			|| true !== ( $state['activation_allowed'] ?? false )
+			|| true === ( $state['handoff_ready'] ?? false )
+			|| array() !== ( $state['blockers'] ?? array() )
+		) {
+			return null;
+		}
+
+		$gate = $this->runtime_gate( $job_id, $state );
+		if (
+			null === $gate
+			|| ! hash_equals(
+				(string) ( $state['activation_plan_hash'] ?? '' ),
+				(string) ( $gate['activation_plan_hash'] ?? '' )
+			)
+		) {
+			return null;
+		}
+
+		return array(
+			'plan'                 => $gate['activation_plan'],
+			'hash'                 => (string) $gate['activation_plan_hash'],
+			'database_fingerprint' => (string) ( $state['database_fingerprint'] ?? '' ),
+			'file_fingerprint'     => (string) ( $state['file_fingerprint'] ?? '' ),
+		);
+	}
+
+	/**
 	 * Start finalization preflight after rewrite verification completed.
 	 *
 	 * @param string $job_id Clone job identifier.
