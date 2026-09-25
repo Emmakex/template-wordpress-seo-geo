@@ -12,6 +12,7 @@ namespace SeoGeo\MigrationBridge;
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -24,6 +25,8 @@ use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportPayloadVerifier;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
@@ -302,6 +305,27 @@ final class Plugin {
 	private static ?AdminCloneImportController $clone_import_controller = null;
 
 	/**
+	 * Portable Clone import payload state store singleton.
+	 *
+	 * @var ImportPayloadStateStore|null
+	 */
+	private static ?ImportPayloadStateStore $clone_import_payload_state_store = null;
+
+	/**
+	 * Portable Clone private payload verifier singleton.
+	 *
+	 * @var ImportPayloadVerifier|null
+	 */
+	private static ?ImportPayloadVerifier $clone_import_payload_verifier = null;
+
+	/**
+	 * Portable Clone import payload controller singleton.
+	 *
+	 * @var AdminCloneImportPayloadController|null
+	 */
+	private static ?AdminCloneImportPayloadController $clone_import_payload_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -354,6 +378,9 @@ final class Plugin {
 		self::$clone_import_state_store         ??= new ImportStateStore();
 		self::$clone_import_preflight           ??= new ImportPreflight( self::$clone_import_state_store, self::$clone_job_store );
 		self::$clone_import_controller          ??= new AdminCloneImportController( self::$clone_import_preflight );
+		self::$clone_import_payload_state_store ??= new ImportPayloadStateStore();
+		self::$clone_import_payload_verifier    ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$clone_import_payload_controller  ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -375,6 +402,7 @@ final class Plugin {
 		self::$clone_package_controller->boot();
 		self::$clone_delivery_controller->boot();
 		self::$clone_import_controller->boot();
+		self::$clone_import_payload_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -495,6 +523,13 @@ final class Plugin {
 	 */
 	public static function clone_import_preflight(): ?ImportPreflight {
 		return self::$clone_import_preflight;
+	}
+
+	/**
+	 * Return the resumable Portable Clone import payload verifier.
+	 */
+	public static function clone_import_payload_verifier(): ?ImportPayloadVerifier {
+		return self::$clone_import_payload_verifier;
 	}
 
 	/**

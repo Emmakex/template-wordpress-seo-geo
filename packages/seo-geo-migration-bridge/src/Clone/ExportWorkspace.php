@@ -577,6 +577,194 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Prepare one empty job-owned private extraction root.
+	 *
+	 * The parent import directory is already protected by ExportWorkspace. This
+	 * child intentionally receives no generated guard files because those would
+	 * alter the Portable Clone package checksum replay.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	public function prepare_import_extraction( string $job_id ): ?string {
+		$root = $this->ensure( $job_id );
+		if ( null === $root ) {
+			return null;
+		}
+
+		$path = trailingslashit( $root ) . 'import/extracted';
+		if ( is_dir( $path ) ) {
+			$remaining = new FilesystemIterator( $path, FilesystemIterator::SKIP_DOTS );
+			if ( $remaining->valid() ) {
+				return null;
+			}
+		} elseif ( ! wp_mkdir_p( $path ) ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive job-owned extraction directory permissions.
+		@chmod( $path, 0700 );
+
+		return trailingslashit( wp_normalize_path( $path ) );
+	}
+
+	/**
+	 * Return one existing job-owned private extraction root.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	public function import_extraction_root( string $job_id ): ?string {
+		$root = $this->root_path( $job_id );
+		if ( null === $root ) {
+			return null;
+		}
+
+		$path = trailingslashit( $root ) . 'import/extracted/';
+		return is_dir( $path ) && str_starts_with( $path, trailingslashit( $root ) )
+			? wp_normalize_path( $path )
+			: null;
+	}
+
+	/**
+	 * Return bounded archive-entry metadata for the staged Portable Clone ZIP.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @return list<array{name:string,size:int,folder:bool}>
+	 */
+	public function import_archive_entries( string $job_id ): array {
+		$info = $this->import_archive_info( $job_id );
+		if ( null === $info || ! $this->load_pclzip() ) {
+			return array();
+		}
+
+		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip is loaded explicitly above.
+		$archive = new \PclZip( $info['path'] );
+		$list    = $archive->listContent();
+		if ( ! is_array( $list ) ) {
+			return array();
+		}
+
+		$entries = array();
+		foreach ( $list as $entry ) {
+			if ( ! is_array( $entry ) || ! is_string( $entry['filename'] ?? null ) ) {
+				return array();
+			}
+
+			$name      = (string) $entry['filename'];
+			$canonical = rtrim( $name, '/' );
+			if ( '' === $canonical || '' === $this->normalize_archive_relative( $canonical ) ) {
+				return array();
+			}
+
+			$entries[] = array(
+				'name'   => $name,
+				'size'   => max( 0, (int) ( $entry['size'] ?? 0 ) ),
+				'folder' => true === ( $entry['folder'] ?? false ) || str_ends_with( $name, '/' ),
+			);
+		}
+
+		return $entries;
+	}
+
+	/**
+	 * Extract one already-preflighted archive file into the private import root.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @param string $name   Exact archive-relative file path.
+	 * @return array{path:string,bytes:int,sha256:string}|null
+	 */
+	public function extract_import_archive_entry( string $job_id, string $name ): ?array {
+		$relative = $this->normalize_archive_relative( $name );
+		$archive  = $this->import_archive_info( $job_id );
+		$root     = $this->import_extraction_root( $job_id );
+		if (
+			'' === $relative
+			|| str_ends_with( $relative, '/' )
+			|| null === $archive
+			|| null === $root
+			|| ! $this->load_pclzip()
+		) {
+			return null;
+		}
+
+		$by_name = defined( 'PCLZIP_OPT_BY_NAME' ) ? constant( 'PCLZIP_OPT_BY_NAME' ) : null;
+		$path    = defined( 'PCLZIP_OPT_PATH' ) ? constant( 'PCLZIP_OPT_PATH' ) : null;
+		if ( ! is_int( $by_name ) || ! is_int( $path ) ) {
+			return null;
+		}
+
+		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip is loaded explicitly above.
+		$zip = new \PclZip( $archive['path'] );
+		// WordPress Core PclZip exposes variadic extraction options not represented by the static stub.
+		$result = $zip->extract( $by_name, $name, $path, untrailingslashit( $root ) ); // @phpstan-ignore arguments.count
+		if ( ! is_array( $result ) || array() === $result ) {
+			return null;
+		}
+
+		$absolute = trailingslashit( $root ) . $relative;
+		$absolute = wp_normalize_path( $absolute );
+		if (
+			! str_starts_with( $absolute, trailingslashit( wp_normalize_path( $root ) ) )
+			|| ! is_file( $absolute )
+			|| ! is_readable( $absolute )
+			|| is_link( $absolute )
+		) {
+			return null;
+		}
+
+		$bytes = filesize( $absolute );
+		$hash  = hash_file( 'sha256', $absolute );
+		if ( false === $bytes || false === $hash ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive extracted payload permissions.
+		@chmod( $absolute, 0600 );
+
+		return array(
+			'path'   => $relative,
+			'bytes'  => (int) $bytes,
+			'sha256' => $hash,
+		);
+	}
+
+	/**
+	 * Return one extracted private payload file identity.
+	 *
+	 * @param string $job_id   Clone job identifier.
+	 * @param string $relative Package-relative file path.
+	 * @return array{path:string,bytes:int,sha256:string}|null
+	 */
+	public function import_extracted_file_info( string $job_id, string $relative ): ?array {
+		$relative = $this->normalize_archive_relative( $relative );
+		$root     = $this->import_extraction_root( $job_id );
+		if ( '' === $relative || null === $root ) {
+			return null;
+		}
+
+		$absolute = wp_normalize_path( trailingslashit( $root ) . $relative );
+		if (
+			! str_starts_with( $absolute, trailingslashit( wp_normalize_path( $root ) ) )
+			|| ! is_file( $absolute )
+			|| ! is_readable( $absolute )
+			|| is_link( $absolute )
+		) {
+			return null;
+		}
+
+		$bytes = filesize( $absolute );
+		$hash  = hash_file( 'sha256', $absolute );
+		if ( false === $bytes || false === $hash ) {
+			return null;
+		}
+
+		return array(
+			'path'   => $absolute,
+			'bytes'  => (int) $bytes,
+			'sha256' => $hash,
+		);
+	}
+
+	/**
 	 * Delete only the private workspace owned by one clone job.
 	 *
 	 * @param string $job_id Clone job identifier.

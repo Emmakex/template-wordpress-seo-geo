@@ -103,6 +103,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneInventoryController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneDatabaseExportController.php',
@@ -737,6 +740,7 @@ foreach (
 		'disk_free_space(',
 		"'full_payload_verified'",
 		"'restore_allowed'",
+		"'restore-runtime-guard-required'",
 		'$this->workspace->stage_import_archive( $job_id, $source )',
 	) as $import_preflight_guard
 ) {
@@ -757,7 +761,7 @@ if (
 ) {
 	fail_migration_bridge(
 		'portable-clone-import-restore-gate',
-		'10E.2A.4.1 must keep full payload verification and restore authorization disabled.',
+		'Import preflight alone must keep full payload verification and restore authorization disabled.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPreflight.php',
 		'full_payload_verified=false and restore_allowed=false',
 		'restore gate mismatch'
@@ -819,6 +823,132 @@ if ( str_contains( $import_controller, 'admin_post_nopriv_' ) ) {
 	);
 }
 
+
+$import_payload_state_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_payload_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'archive_cursor'",
+		"'expected_checksum'",
+		"'verification_checksum'",
+		"'extract_file_count'",
+		"'verify_file_count'",
+	) as $import_payload_state_guard
+) {
+	if ( ! str_contains( $import_payload_state_store, $import_payload_state_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-state',
+			'Portable Import payload verification state must remain bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadStateStore.php',
+			$import_payload_state_guard,
+			'missing'
+		);
+	}
+}
+
+$import_payload_verifier = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_FILES = 50;',
+		'public const DEFAULT_BATCH_BYTES = 8388608;',
+		"'seo-geo-portable-clone-package-v1'",
+		'$this->workspace->prepare_import_extraction( $job_id )',
+		'$this->workspace->extract_import_archive_entry( $job_id, $name )',
+		"'import-payload-archive-identity-changed'",
+		"'import-payload-checksum-mismatch'",
+		'$this->preflight->validate( $job_id )',
+		"'payload-verified'",
+		"'restore_allowed'",
+		"'verify'",
+	) as $import_payload_guard
+) {
+	if ( ! str_contains( $import_payload_verifier, $import_payload_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-verification',
+			'Portable Import payload verification is missing a required private extraction/checksum/fresh-preflight boundary.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
+			$import_payload_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(', 'move_uploaded_file(' ) as $import_payload_mutation ) {
+	if ( str_contains( $import_payload_verifier, $import_payload_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-workspace-boundary',
+			'ImportPayloadVerifier must delegate every extraction filesystem mutation to ExportWorkspace.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
+			'no direct filesystem mutation primitives',
+			$import_payload_mutation
+		);
+	}
+}
+
+foreach ( array( 'INSERT INTO ', 'UPDATE ', 'DELETE FROM ', 'REPLACE INTO ', 'DROP TABLE ', 'ALTER TABLE ', 'TRUNCATE TABLE ', 'CREATE TABLE ' ) as $import_payload_sql_mutation ) {
+	if ( str_contains( strtoupper( $import_payload_verifier ), $import_payload_sql_mutation ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-no-restore-yet',
+			'10E.2A.4.2 may verify private payload but must not restore destination database state.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportPayloadVerifier.php',
+			'no destination restore SQL',
+			$import_payload_sql_mutation
+		);
+	}
+}
+
+$import_payload_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_import_payload';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		'$this->verifier->advance( $job_id, $batch_files, $batch_bytes )',
+	) as $import_payload_controller_guard
+) {
+	if ( ! str_contains( $import_payload_controller, $import_payload_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-payload-entrypoint',
+			'Portable Import payload endpoint must remain administrator/job-nonce gated and bounded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php',
+			$import_payload_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $import_payload_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-import-payload-public-endpoint',
+		'Portable Import payload verification must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneImportPayloadController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+$export_workspace = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php' );
+foreach (
+	array(
+		'prepare_import_extraction( string $job_id )',
+		'import_extraction_root( string $job_id )',
+		'import_archive_entries( string $job_id )',
+		'extract_import_archive_entry( string $job_id, string $name )',
+		'import_extracted_file_info( string $job_id, string $relative )',
+	) as $import_workspace_guard
+) {
+	if ( ! str_contains( $export_workspace, $import_workspace_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-import-private-extraction-workspace',
+			'ExportWorkspace must own all private Portable Import extraction operations.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
+			$import_workspace_guard,
+			'missing'
+		);
+	}
+}
 
 $clone_inventory_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php' );
 foreach (

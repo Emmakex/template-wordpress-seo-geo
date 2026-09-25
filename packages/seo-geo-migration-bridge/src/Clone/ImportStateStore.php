@@ -112,7 +112,7 @@ final class ImportStateStore {
 		}
 
 		$status = is_string( $state['status'] ?? null ) ? $state['status'] : 'pending';
-		if ( ! in_array( $status, array( 'pending', 'staged', 'preflight-ready', 'blocked' ), true ) ) {
+		if ( ! in_array( $status, array( 'pending', 'staged', 'preflight-ready', 'payload-verified', 'blocked' ), true ) ) {
 			return null;
 		}
 

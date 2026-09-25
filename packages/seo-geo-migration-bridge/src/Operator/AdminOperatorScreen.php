@@ -12,6 +12,7 @@ namespace SeoGeo\MigrationBridge\Operator;
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -23,6 +24,8 @@ use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
 use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportPayloadVerifier;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -112,6 +115,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_package_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
+			<?php $this->render_clone_import_payload_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -1043,23 +1047,143 @@ final class AdminOperatorScreen {
 			</tbody>
 		</table>
 
-		<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportController::ACTION ); ?>">
-			<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
-			<?php wp_nonce_field( AdminCloneImportController::NONCE_ACTION . ':' . $job_id ); ?>
-			<p>
-				<label for="seo-geo-clone-import-package"><strong><?php echo esc_html( $this->copy->text( 'clone_import_upload_label' ) ); ?></strong></label><br>
-				<input
-					type="file"
-					id="seo-geo-clone-import-package"
-					name="clone_package"
-					accept=".zip,application/zip"
-					<?php echo $has_archive ? '' : 'required'; ?>
-				>
-			</p>
-			<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_upload_help' ) ); ?></p>
-			<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
-		</form>
+		<?php $payload = ( new ImportPayloadStateStore() )->get( $job_id ); ?>
+		<?php if ( ! is_array( $payload ) ) : ?>
+			<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneImportController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p>
+					<label for="seo-geo-clone-import-package"><strong><?php echo esc_html( $this->copy->text( 'clone_import_upload_label' ) ); ?></strong></label><br>
+					<input
+						type="file"
+						id="seo-geo-clone-import-package"
+						name="clone_package"
+						accept=".zip,application/zip"
+						<?php echo $has_archive ? '' : 'required'; ?>
+					>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_upload_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+
+		<?php if ( in_array( $status, array( 'preflight-ready', 'payload-verified' ), true ) || is_array( $payload ) ) : ?>
+			<?php $this->render_clone_import_payload_section( $job_id, $state, $payload ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after private payload extraction/checksum work.
+	 */
+	private function render_clone_import_payload_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified payload action.
+		$status = isset( $_GET['seo_geo_clone_import_payload'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_import_payload'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running'  => 'clone_import_payload_running',
+			'complete' => 'clone_import_payload_complete',
+			'blocked'  => 'clone_import_payload_blocked',
+			default    => null,
+		};
+
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status
+			? 'notice notice-error'
+			: ( 'running' === $status ? 'notice notice-info' : 'notice notice-success' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render bounded private extraction/full-checksum controls.
+	 *
+	 * @param string                   $job_id  Clone job identifier.
+	 * @param array<string,mixed>|null $import  Import preflight state.
+	 * @param array<string,mixed>|null $payload Payload-verification state.
+	 */
+	private function render_clone_import_payload_section( string $job_id, ?array $import, ?array $payload ): void {
+		$status         = is_array( $payload ) ? (string) ( $payload['status'] ?? 'running' ) : 'pending';
+		$stage          = is_array( $payload ) ? (string) ( $payload['stage'] ?? 'extract' ) : 'extract';
+		$extract_files  = (int) ( $payload['extract_file_count'] ?? 0 );
+		$extract_bytes  = (int) ( $payload['extract_byte_count'] ?? 0 );
+		$verify_files   = (int) ( $payload['verify_file_count'] ?? 0 );
+		$verify_bytes   = (int) ( $payload['verify_byte_count'] ?? 0 );
+		$expected_files = (int) ( $payload['expected_file_count'] ?? ( $import['payload_file_count'] ?? 0 ) );
+		$expected_bytes = (int) ( $payload['expected_byte_count'] ?? ( $import['payload_bytes'] ?? 0 ) );
+		$blockers       = is_array( $payload['blockers'] ?? null ) ? array_values( array_filter( $payload['blockers'], 'is_string' ) ) : array();
+		$button         = 'pending' === $status ? 'clone_import_payload_start' : 'clone_import_payload_continue';
+		?>
+		<h4><?php echo esc_html( $this->copy->text( 'clone_import_payload_heading' ) ); ?></h4>
+		<p><?php echo esc_html( $this->copy->text( 'clone_import_payload_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_payload_stage' ) ); ?></th>
+					<td><code><?php echo esc_html( $stage ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_payload_extract_files' ) ); ?></th>
+					<td><?php echo esc_html( (string) $extract_files ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_payload_extract_bytes' ) ); ?></th>
+					<td><?php echo esc_html( size_format( $extract_bytes ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_payload_verify_files' ) ); ?></th>
+					<td><?php echo esc_html( $verify_files . ' / ' . $expected_files ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_payload_verify_bytes' ) ); ?></th>
+					<td><?php echo esc_html( size_format( $verify_bytes ) . ' / ' . size_format( $expected_bytes ) ); ?></td>
+				</tr>
+				<?php if ( is_array( $payload ) && '' !== (string) ( $payload['verification_checksum'] ?? '' ) ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_payload_checksum' ) ); ?></th>
+						<td><code><?php echo esc_html( (string) $payload['verification_checksum'] ); ?></code></td>
+					</tr>
+				<?php endif; ?>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_payload_blockers' ) ); ?></th>
+					<td><code><?php echo esc_html( array() === $blockers ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $blockers ) ); ?></code></td>
+				</tr>
+			</tbody>
+		</table>
+
+		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportPayloadController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneImportPayloadController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p>
+					<label for="seo-geo-clone-import-payload-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_import_payload_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-import-payload-batch" name="import_payload_batch_size">
+						<?php foreach ( array( 10, 25, 50, 100, 200, 500 ) as $size ) : ?>
+							<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( ImportPayloadVerifier::DEFAULT_BATCH_FILES, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<label for="seo-geo-clone-import-payload-megabytes"><strong><?php echo esc_html( $this->copy->text( 'clone_import_payload_mb_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-import-payload-megabytes" name="import_payload_batch_megabytes">
+						<?php foreach ( array( 2, 4, 8, 16, 32, 64, 128 ) as $megabytes ) : ?>
+							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 8, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_payload_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
 		<?php
 	}
 
