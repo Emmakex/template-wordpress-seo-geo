@@ -249,7 +249,7 @@ final class ExportWorkspace {
 			return false;
 		}
 
-		return wp_mkdir_p( $candidate ) && is_dir( $candidate ) && ! is_link( $candidate );
+		return wp_mkdir_p( $candidate ) && is_dir( $candidate );
 	}
 
 	/**
