@@ -297,9 +297,9 @@ final class Plugin {
 		self::$clone_file_export_state_store    ??= new FileExportStateStore();
 		self::$clone_file_exporter              ??= new FileExporter( self::$clone_file_export_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_job_store );
 		self::$clone_file_export_controller     ??= new AdminCloneFileExportController( self::$clone_file_exporter );
-		self::$clone_package_state_store         ??= new PackageStateStore();
-		self::$clone_package_builder             ??= new PackageBuilder( self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
-		self::$clone_package_controller          ??= new AdminClonePackageController( self::$clone_package_builder );
+		self::$clone_package_state_store        ??= new PackageStateStore();
+		self::$clone_package_builder            ??= new PackageBuilder( self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
+		self::$clone_package_controller         ??= new AdminClonePackageController( self::$clone_package_builder );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
