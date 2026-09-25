@@ -45,7 +45,7 @@ final class DestinationSafetyPlanner {
 			$blockers[] = 'target-path-invalid';
 		}
 
-		if ( '' === $target_url || ! in_array( wp_parse_url( $target_url, PHP_URL_SCHEME ), array( 'http', 'https' ), true ) ) {
+		if ( ! in_array( wp_parse_url( $target_url, PHP_URL_SCHEME ), array( 'http', 'https' ), true ) ) {
 			$blockers[] = 'target-url-invalid';
 		} else {
 			$target_url = trailingslashit( $target_url );
