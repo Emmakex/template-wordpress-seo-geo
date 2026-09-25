@@ -103,6 +103,8 @@ final class ImportEnvironmentRewriter {
 			|| true !== ( $files['active_roots_untouched'] ?? false )
 			|| ! is_array( $payload )
 			|| 'complete' !== ( $payload['status'] ?? null )
+			|| ! $this->same_hash( $payload['archive_sha256'] ?? '', $db['payload_archive_sha256'] ?? '' )
+			|| ! $this->same_hash( $payload['archive_sha256'] ?? '', $files['payload_archive_sha256'] ?? '' )
 		) {
 			return null;
 		}
@@ -628,6 +630,8 @@ final class ImportEnvironmentRewriter {
 			|| true !== ( $files['active_roots_untouched'] ?? false )
 			|| ! is_array( $payload )
 			|| 'complete' !== ( $payload['status'] ?? null )
+			|| ! $this->same_hash( $payload['archive_sha256'] ?? '', $db['payload_archive_sha256'] ?? '' )
+			|| ! $this->same_hash( $payload['archive_sha256'] ?? '', $files['payload_archive_sha256'] ?? '' )
 			|| ! $this->same_hash( $payload['archive_sha256'] ?? '', $state['payload_archive_sha256'] ?? '' )
 			|| ! $this->same_hash( $db['database_manifest_sha256'] ?? '', $state['database_manifest_sha256'] ?? '' )
 			|| (string) ( $db['staging_namespace'] ?? '' ) !== (string) ( $state['staging_namespace'] ?? '' )
