@@ -8,8 +8,11 @@ cat >"$IMPORT_REWRITE_RUNNER" <<'PHP'
 <?php
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportActivationPlanController;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\ExportWorkspace;
+use SeoGeo\MigrationBridge\Clone\ImportActivationPlanStore;
+use SeoGeo\MigrationBridge\Clone\ImportActivationPlanner;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
@@ -30,6 +33,7 @@ foreach (
 		ImportDatabaseStateStore::OPTION_NAME,
 		ImportFileStateStore::OPTION_NAME,
 		ImportRewriteStateStore::OPTION_NAME,
+		ImportActivationPlanStore::OPTION_NAME,
 	) as $option_name
 ) {
 	delete_option( $option_name );
@@ -55,6 +59,7 @@ $verifier     = Plugin::clone_import_payload_verifier();
 $db_restore   = Plugin::clone_import_database_restorer();
 $file_restore = Plugin::clone_import_file_restorer();
 $rewriter     = Plugin::clone_import_environment_rewriter();
+$activation   = Plugin::clone_import_activation_planner();
 $workspace    = new ExportWorkspace();
 
 if (
@@ -64,6 +69,7 @@ if (
 	|| ! $db_restore instanceof ImportDatabaseRestorer
 	|| ! $file_restore instanceof ImportFileRestorer
 	|| ! $rewriter instanceof ImportEnvironmentRewriter
+	|| ! $activation instanceof ImportActivationPlanner
 ) {
 	throw new RuntimeException( 'Portable Import environment rewrite services are unavailable.' );
 }
@@ -627,7 +633,40 @@ $json_after = isset( $options['json_payload'] ) ? json_decode( $options['json_pa
 $staged_file_after = $workspace->import_staged_file_info( $job_id, 'uploads', '2026/file.txt' );
 $active_after      = get_option( $active_sentinel_name );
 
-// Negative safety case: rerun from source core URLs but inject opaque serialized bytes containing the source environment.
+// 10E.2A.4.6.1: build a non-mutating activation + rollback plan from the verified staging state.
+$recovery_now = gmdate( DATE_ATOM );
+$fresh_recovery = array(
+	'database' => array(
+		'reference'  => 'external-db-backup-rewrite-fixture',
+		'sha256'     => hash( 'sha256', 'external-db-backup-rewrite-fixture' ),
+		'created_at' => $recovery_now,
+		'scope'      => 'full-database',
+		'size_bytes' => 4096,
+	),
+	'wp_content' => array(
+		'reference'  => 'external-wp-content-backup-rewrite-fixture',
+		'sha256'     => hash( 'sha256', 'external-wp-content-backup-rewrite-fixture' ),
+		'created_at' => $recovery_now,
+		'scope'      => 'wp-content-tree',
+		'size_bytes' => 8192,
+	),
+);
+$activation_good = $activation->plan( $job_id, $fresh_recovery );
+if ( ! is_array( $activation_good ) || 'ready' !== ( $activation_good['status'] ?? null ) ) {
+	throw new RuntimeException( 'Sandbox activation planning did not become ready: ' . wp_json_encode( $activation_good ) );
+}
+
+$activation_active_after = get_option( $active_sentinel_name );
+$activation_file_after   = $workspace->import_staged_file_info( $job_id, 'uploads', '2026/file.txt' );
+
+$stale_recovery = $fresh_recovery;
+$stale_recovery['database']['created_at'] = gmdate( DATE_ATOM, time() - ( 2 * DAY_IN_SECONDS ) );
+$activation_stale = $activation->plan( $job_id, $stale_recovery );
+if ( ! is_array( $activation_stale ) || 'blocked' !== ( $activation_stale['status'] ?? null ) ) {
+	throw new RuntimeException( 'Stale recovery evidence did not block activation planning.' );
+}
+
+// Negative rewrite safety case: rerun from source core URLs but inject opaque serialized bytes containing the source environment.
 $rewrite_store = new ImportRewriteStateStore();
 $rewrite_store->delete( $job_id );
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -677,6 +716,12 @@ echo wp_json_encode(
 		'staged_file_before'       => $staged_file_before,
 		'staged_file_after'        => $staged_file_after,
 		'staged_file_after_bad'    => $staged_file_after_bad,
+		'activation_good'          => $activation_good,
+		'activation_stale'         => $activation_stale,
+		'activation_active_after'  => $activation_active_after,
+		'activation_file_after'    => $activation_file_after,
+		'activation_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportActivationPlanController::ACTION ),
+		'activation_public_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportActivationPlanController::ACTION ),
 		'rewrite_state_autoload'   => $autoload,
 		'controller_registered'    => false !== has_action( 'admin_post_' . AdminCloneImportRewriteController::ACTION ),
 		'public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportRewriteController::ACTION ),
@@ -795,6 +840,41 @@ assert "import-rewrite-value-transform-failed" in bad["blockers"]
 assert bad["active_tables_untouched"] is True
 assert bad["active_roots_untouched"] is True
 
+activation = payload["activation_good"]
+assert activation["schema_version"] == 1
+assert activation["status"] == "ready"
+assert activation["activation_ready"] is True
+assert activation["database_activation_allowed"] is False
+assert activation["file_activation_allowed"] is False
+assert activation["mutations_performed"] is False
+assert activation["recovery_valid"] is True
+assert activation["active_tables_untouched"] is True
+assert activation["active_roots_untouched"] is True
+assert activation["rewrite_verified"] is True
+assert activation["blockers"] == []
+assert re.fullmatch(r"[a-f0-9]{64}", activation["plan_sha256"])
+assert activation["table_count"] == 2
+assert activation["staging_file_count"] == 1
+assert activation["staging_file_bytes"] > 0
+assert len(activation["tables"]) == 2
+for row in activation["tables"]:
+    assert row["target_table"] != row["staging_table"]
+    assert row["target_table"] != row["rollback_table"]
+    assert row["staging_table"] != row["rollback_table"]
+
+stale = payload["activation_stale"]
+assert stale["status"] == "blocked"
+assert stale["activation_ready"] is False
+assert stale["database_activation_allowed"] is False
+assert stale["file_activation_allowed"] is False
+assert stale["mutations_performed"] is False
+assert any(code.startswith("activation-recovery-created-at-invalid-or-stale-database") for code in stale["blockers"])
+
+assert payload["activation_active_after"] == payload["active_before"]
+assert payload["activation_file_after"] == payload["staged_file_before"]
+assert payload["activation_controller_registered"] is True
+assert payload["activation_public_absent"] is True
+
 assert payload["rewrite_state_autoload"] in ("off", "no", "auto-off")
 assert payload["controller_registered"] is True
 assert payload["public_controller_absent"] is True
@@ -804,4 +884,4 @@ PY
   fail_smoke "clone-import-rewrite-contract" "Portable Import environment rewrite contract is invalid" "structured serialized/JSON rewrite + credential opacity + idempotence + active/staged immutability + opaque-source blocker" "${IMPORT_REWRITE_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Import environment rewrite OK: supported staging URLs rewritten transactionally; serialized/JSON structures stayed valid; credentials and staged files stayed opaque/unchanged; second pass was idempotent; opaque source URL was blocked.\n'
+printf '[smoke] Portable Import environment rewrite + activation plan OK: staging rewrite stayed serialization-safe; fresh recovery produced a non-mutating rollback plan; stale recovery blocked activation; active tables/files remained untouched.\n'
