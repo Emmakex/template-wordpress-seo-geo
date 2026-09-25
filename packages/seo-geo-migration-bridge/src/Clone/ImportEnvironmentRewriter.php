@@ -158,7 +158,6 @@ final class ImportEnvironmentRewriter {
 		if (
 			null === $manifest_bundle
 			|| ! $this->same_hash( $manifest_bundle['sha256'], $db['database_manifest_sha256'] ?? '' )
-			|| ! $this->same_hash( $payload['archive_sha256'] ?? '', $db['payload_archive_sha256'] ?? '' )
 		) {
 			return null;
 		}
@@ -785,10 +784,6 @@ final class ImportEnvironmentRewriter {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Read-only metadata on a validated staging table.
 		$rows = $wpdb->get_results( 'SHOW COLUMNS FROM ' . $this->quote_identifier( $table ), ARRAY_A );
 
-		if ( ! is_array( $rows ) ) {
-			return null;
-		}
-
 		$columns = array();
 
 		foreach ( $rows as $row ) {
@@ -823,10 +818,6 @@ final class ImportEnvironmentRewriter {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Read-only index metadata on a validated staging table.
 		$rows = $wpdb->get_results( 'SHOW INDEX FROM ' . $this->quote_identifier( $table ) . " WHERE Key_name = 'PRIMARY' ORDER BY Seq_in_index ASC", ARRAY_A );
-
-		if ( ! is_array( $rows ) ) {
-			return null;
-		}
 
 		$columns = array();
 
@@ -879,12 +870,8 @@ final class ImportEnvironmentRewriter {
 			return null;
 		}
 
-		/**
-		 * Selected staging rows.
-		 *
-		 * @var list<array<string,mixed>> $rows
-		 */
-		return array_values( $rows );
+		/** @var list<array<string,mixed>> $rows */
+		return $rows;
 	}
 
 	/**
