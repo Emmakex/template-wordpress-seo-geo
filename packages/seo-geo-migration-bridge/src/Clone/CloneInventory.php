@@ -354,8 +354,8 @@ final class CloneInventory {
 				'estimated_rows'  => $table_rows,
 				'estimated_bytes' => $table_bytes,
 			);
-			$estimated_rows +  = $table_rows;
-			$estimated_bytes + = $table_bytes;
+			$estimated_rows += $table_rows;
+			$estimated_bytes += $table_bytes;
 		}
 
 		return array(
