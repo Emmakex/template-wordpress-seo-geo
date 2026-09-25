@@ -80,6 +80,9 @@ final class ImportPreflight {
 	 */
 	public function stage( string $job_id, string $source ): ?array {
 		$job = $this->jobs->get( $job_id );
+		if ( is_array( ( new ImportPayloadStateStore() )->get( $job_id ) ) ) {
+			return null;
+		}
 		if ( ! is_array( $job ) || 'import' !== ( $job['operation'] ?? null ) ) {
 			return null;
 		}
@@ -167,7 +170,7 @@ final class ImportPreflight {
 			! is_array( $job )
 			|| 'import' !== ( $job['operation'] ?? null )
 			|| ! is_array( $state )
-			|| ! in_array( $state['status'] ?? null, array( 'staged', 'blocked', 'preflight-ready' ), true )
+			|| ! in_array( $state['status'] ?? null, array( 'staged', 'blocked', 'preflight-ready', 'payload-verified' ), true )
 		) {
 			return null;
 		}
@@ -248,7 +251,6 @@ final class ImportPreflight {
 		$db_source = is_array( $database['source'] ?? null ) ? $database['source'] : array();
 		$now       = gmdate( DATE_ATOM );
 
-		$state['status']                       = array() === $blockers ? 'preflight-ready' : 'blocked';
 		$state['package_id']                   = is_string( $package['package_id'] ?? null ) ? $package['package_id'] : '';
 		$state['package_manifest_sha256']      = is_string( $package_json ) ? hash( 'sha256', $package_json ) : '';
 		$state['package_checksum']             = is_string( $integrity['package_checksum'] ?? null ) ? $integrity['package_checksum'] : '';
@@ -273,10 +275,38 @@ final class ImportPreflight {
 		$state['manifest_contract_valid']      = array() === $contract_blockers;
 		$state['child_manifest_hashes_valid']  = ! in_array( 'import-database-manifest-hash-mismatch', $contract_blockers, true )
 			&& ! in_array( 'import-files-manifest-hash-mismatch', $contract_blockers, true );
-		$state['full_payload_verified']        = false;
-		$state['restore_allowed']              = false;
+		$payload_state = ( new ImportPayloadStateStore() )->get( $job_id );
+		$payload_valid = array() === $blockers
+			&& is_array( $payload_state )
+			&& 'complete' === ( $payload_state['status'] ?? null )
+			&& hash_equals(
+				(string) ( $state['archive_sha256'] ?? '' ),
+				(string) ( $payload_state['archive_sha256'] ?? '' )
+			)
+			&& hash_equals(
+				(string) ( $state['package_manifest_sha256'] ?? '' ),
+				(string) ( $payload_state['package_manifest_sha256'] ?? '' )
+			)
+			&& hash_equals(
+				(string) ( $state['package_checksum'] ?? '' ),
+				(string) ( $payload_state['expected_checksum'] ?? '' )
+			);
+
+		if ( $payload_valid ) {
+			$advisories = array_values(
+				array_filter(
+					$advisories,
+					static fn( mixed $code ): bool => is_string( $code ) && 'full-payload-checksum-pending' !== $code
+				)
+			);
+			$advisories[] = 'restore-runtime-guard-required';
+		}
+
+		$state['status']                       = $payload_valid ? 'payload-verified' : ( array() === $blockers ? 'preflight-ready' : 'blocked' );
+		$state['full_payload_verified']        = $payload_valid;
+		$state['restore_allowed']              = $payload_valid;
 		$state['blockers']                     = $blockers;
-		$state['advisories']                   = $advisories;
+		$state['advisories']                   = array_values( array_unique( $advisories ) );
 		$state['validated_at']                 = $now;
 		$state['updated_at']                   = $now;
 
@@ -288,8 +318,8 @@ final class ImportPreflight {
 			$this->jobs->transition( $job_id, 'active' );
 			$this->jobs->update_progress(
 				$job_id,
-				'validate',
-				'preflight-ready',
+				$payload_valid ? 'verify' : 'validate',
+				$payload_valid ? 'payload-verified' : 'preflight-ready',
 				array(
 					'completed' => (int) $inspection['entry_count'],
 					'total'     => (int) $inspection['entry_count'],
