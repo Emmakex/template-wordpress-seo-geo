@@ -454,6 +454,9 @@ final class ImportEnvironmentRewriter {
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Import requires PHP serialization parsing with classes explicitly forbidden.
 			$decoded = @unserialize( trim( $value ), array( 'allowed_classes' => false ) );
 			if ( false === $decoded && 'b:0;' !== trim( $value ) ) {
+				if ( $this->opaque_contains_source_environment( $value, $state ) ) {
+					return null;
+				}
 				if ( ! $verify ) {
 					++$state['opaque_serialized_skips'];
 				}
@@ -465,6 +468,9 @@ final class ImportEnvironmentRewriter {
 
 			$nested = $this->transform_nested( $decoded, $state, $depth + 1, $verify );
 			if ( null === $nested ) {
+				if ( $this->opaque_contains_source_environment( $value, $state ) ) {
+					return null;
+				}
 				if ( ! $verify ) {
 					++$state['opaque_serialized_skips'];
 				}
@@ -494,6 +500,9 @@ final class ImportEnvironmentRewriter {
 		}
 
 		if ( $this->looks_serialized( $value ) ) {
+			if ( $this->opaque_contains_source_environment( $value, $state ) ) {
+				return null;
+			}
 			if ( ! $verify ) {
 				++$state['opaque_serialized_skips'];
 			}
@@ -1007,6 +1016,36 @@ final class ImportEnvironmentRewriter {
 		$decoded = json_decode( $trimmed, true );
 
 		return JSON_ERROR_NONE === json_last_error() && is_array( $decoded ) ? $decoded : null;
+	}
+
+	/**
+	 * Detect source-environment URLs inside an opaque serialized-looking byte string.
+	 *
+	 * This is detection only: opaque payload bytes are never search/replaced because
+	 * doing so could corrupt serialized length metadata or unsupported object state.
+	 *
+	 * @param string              $value Opaque serialized-looking bytes.
+	 * @param array<string,mixed> $state Rewrite state.
+	 */
+	private function opaque_contains_source_environment( string $value, array $state ): bool {
+		$needles = array();
+		foreach ( array( 'source_home_url', 'source_site_url' ) as $key ) {
+			$source = is_string( $state[ $key ] ?? null ) ? untrailingslashit( $state[ $key ] ) : '';
+			if ( '' === $source ) {
+				continue;
+			}
+
+			$needles[] = $source;
+			$needles[] = str_replace( '/', '\\/', $source );
+		}
+
+		foreach ( array_values( array_unique( $needles ) ) as $needle ) {
+			if ( '' !== $needle && str_contains( $value, $needle ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
