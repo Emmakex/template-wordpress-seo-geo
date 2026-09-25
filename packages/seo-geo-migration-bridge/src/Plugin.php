@@ -199,26 +199,26 @@ final class Plugin {
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
-		self::$analyzer                     ??= new SiteAnalyzer();
-		self::$baseline_snapshotter         ??= new BaselineSnapshotter();
-		self::$dependency_graph             ??= new DependencyGraphBuilder();
-		self::$sandbox_lab                  ??= new SandboxMigrationLab();
-		self::$migration_engine             ??= new MigrationEngine();
-		self::$migration_controller         ??= new AdminMigrationController( self::$migration_engine );
-		self::$parity_engine                ??= new SeoParityEngine();
-		self::$cutover_engine               ??= new CutoverEngine();
-		self::$cutover_controller           ??= new AdminCutoverController( self::$cutover_engine );
-		self::$operator_status              ??= new OperatorStatus();
-		self::$operator_screen              ??= new AdminOperatorScreen( self::$operator_status );
-		self::$migration_report             ??= new MigrationReportEngine();
-		self::$migration_report_store       ??= new MigrationReportStore();
+		self::$analyzer               ??= new SiteAnalyzer();
+		self::$baseline_snapshotter   ??= new BaselineSnapshotter();
+		self::$dependency_graph       ??= new DependencyGraphBuilder();
+		self::$sandbox_lab            ??= new SandboxMigrationLab();
+		self::$migration_engine       ??= new MigrationEngine();
+		self::$migration_controller   ??= new AdminMigrationController( self::$migration_engine );
+		self::$parity_engine          ??= new SeoParityEngine();
+		self::$cutover_engine         ??= new CutoverEngine();
+		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
+		self::$operator_status        ??= new OperatorStatus();
+		self::$operator_screen        ??= new AdminOperatorScreen( self::$operator_status );
+		self::$migration_report       ??= new MigrationReportEngine();
+		self::$migration_report_store ??= new MigrationReportStore();
 
-		self::$clone_job_store              ??= new CloneJobStore();
-		self::$clone_controller             ??= new AdminCloneController( self::$clone_job_store );
-		self::$clone_inventory_store        ??= new CloneInventoryStore();
-		self::$clone_inventory              ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
-		self::$clone_inventory_controller   ??= new AdminCloneInventoryController( self::$clone_inventory );
-		self::$destination_safety_planner   ??= new DestinationSafetyPlanner();
+		self::$clone_job_store            ??= new CloneJobStore();
+		self::$clone_controller           ??= new AdminCloneController( self::$clone_job_store );
+		self::$clone_inventory_store      ??= new CloneInventoryStore();
+		self::$clone_inventory            ??= new CloneInventory( self::$clone_inventory_store, self::$clone_job_store );
+		self::$clone_inventory_controller ??= new AdminCloneInventoryController( self::$clone_inventory );
+		self::$destination_safety_planner ??= new DestinationSafetyPlanner();
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
