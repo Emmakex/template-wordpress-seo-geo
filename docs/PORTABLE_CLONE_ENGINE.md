@@ -462,14 +462,14 @@ No payload is created yet.
 
 ### 10E.2A.3 — Resumable export
 
-Status: **active — 10E.2A.3.1 database export, 10E.2A.3.2 file export and 10E.2A.3.3 package manifest + integrity are complete; 10E.2A.3.4 authenticated delivery + retention cleanup implementation candidate is Migration Bridge 0.8.14**
+Status: **complete in Migration Bridge 0.8.14 — database export, file export, package integrity, authenticated private delivery and bounded retention cleanup are accepted; next is 10E.2A.4 Portable Import**
 
 Internal sequence:
 
 - **10E.2A.3.1 — database export:** complete in 0.8.11; private workspace, schema + deterministic row chunks, resumable state and per-chunk/database-manifest SHA-256;
 - **10E.2A.3.2 — file export:** complete in 0.8.12; accepted uploads/plugins/themes streamed into the private workspace in bounded file/byte batches with per-file SHA-256 and exact inventory fingerprint/count/byte reconciliation;
 - **10E.2A.3.3 — package manifest + integrity:** complete in 0.8.13; revalidate exported records, compute a resumable full-workspace checksum, require a second matching verification pass before `verified=true`, and block deliberate payload drift/tampering;
-- **10E.2A.3.4 — authenticated package delivery + retention cleanup:** 0.8.14 candidate; resumable private ZIP build, package-checksum replay, archive SHA-256, administrator/nonce-only download, 24-hour expiry, explicit bounded cleanup and bounded expired-artifact maintenance.
+- **10E.2A.3.4 — authenticated package delivery + retention cleanup:** complete in 0.8.14; resumable private ZIP build, package-checksum replay, archive SHA-256, administrator/nonce-only download, no public URL, 24-hour expiry, explicit bounded cleanup and bounded expired-artifact maintenance.
 
 Deliver:
 
