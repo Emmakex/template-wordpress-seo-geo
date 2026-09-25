@@ -18,6 +18,11 @@ final class AdminCloneLocalRuntimeController {
 	public const ACTION       = 'seo_geo_migration_clone_local_runtime_advance';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_local_runtime';
 
+	/**
+	 * Resumable local-clone core runtime service.
+	 *
+	 * @var LocalCloneRuntimeBootstrapper
+	 */
 	private LocalCloneRuntimeBootstrapper $runtime;
 
 	/**
@@ -69,7 +74,7 @@ final class AdminCloneLocalRuntimeController {
 		$batch_files = isset( $_POST['runtime_batch_files'] )
 			? absint( wp_unslash( $_POST['runtime_batch_files'] ) )
 			: LocalCloneRuntimeBootstrapper::DEFAULT_BATCH_FILES;
-		$batch_mb = isset( $_POST['runtime_batch_megabytes'] )
+		$batch_mb    = isset( $_POST['runtime_batch_megabytes'] )
 			? absint( wp_unslash( $_POST['runtime_batch_megabytes'] ) )
 			: 8;
 
