@@ -18,9 +18,9 @@ use wpdb;
 final class ImportPreflight {
 	public const TARGET_AUTHORIZED_MARKER = 'SEO_GEO_MIGRATION_IMPORT_TARGET_AUTHORIZED';
 
-	private const MAX_ARCHIVE_ENTRIES      = 200000;
-	private const MAX_MANIFEST_BYTES       = 16777216;
-	private const MIN_FREE_HEADROOM_BYTES  = 67108864;
+	private const MAX_ARCHIVE_ENTRIES       = 200000;
+	private const MAX_MANIFEST_BYTES        = 16777216;
+	private const MIN_FREE_HEADROOM_BYTES   = 67108864;
 	private const PACKAGE_CHECKSUM_CONTRACT = 'lexicographic-bfs-path+bytes+sha256-v1';
 
 	/**
@@ -235,10 +235,10 @@ final class ImportPreflight {
 			$database_json,
 			$files_json
 		);
-		$blockers          = array_merge( $blockers, $contract_blockers );
-		$destination      = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
-		$blockers          = array_merge( $blockers, $destination['blockers'] );
-		$advisories        = array_merge( $advisories, $destination['advisories'] );
+		$blockers    = array_merge( $blockers, $contract_blockers );
+		$destination = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
+		$blockers    = array_merge( $blockers, $destination['blockers'] );
+		$advisories  = array_merge( $advisories, $destination['advisories'] );
 
 		$blockers   = array_values( array_unique( $blockers ) );
 		$advisories = array_values( array_unique( $advisories ) );
@@ -273,12 +273,12 @@ final class ImportPreflight {
 		$state['manifest_contract_valid']      = array() === $contract_blockers;
 		$state['child_manifest_hashes_valid']  = ! in_array( 'import-database-manifest-hash-mismatch', $contract_blockers, true )
 			&& ! in_array( 'import-files-manifest-hash-mismatch', $contract_blockers, true );
-		$state['full_payload_verified']        = false;
-		$state['restore_allowed']              = false;
-		$state['blockers']                     = $blockers;
-		$state['advisories']                   = $advisories;
-		$state['validated_at']                 = $now;
-		$state['updated_at']                   = $now;
+		$state['full_payload_verified'] = false;
+		$state['restore_allowed']       = false;
+		$state['blockers']              = $blockers;
+		$state['advisories']            = $advisories;
+		$state['validated_at']          = $now;
+		$state['updated_at']            = $now;
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
@@ -372,11 +372,11 @@ final class ImportPreflight {
 		?string $database_json,
 		?string $files_json
 	): array {
-		$blockers = array();
-		$source   = is_array( $package['source'] ?? null ) ? $package['source'] : array();
-		$payload  = is_array( $package['payload'] ?? null ) ? $package['payload'] : array();
-		$db_ref   = is_array( $payload['database'] ?? null ) ? $payload['database'] : array();
-		$file_ref = is_array( $payload['files'] ?? null ) ? $payload['files'] : array();
+		$blockers  = array();
+		$source    = is_array( $package['source'] ?? null ) ? $package['source'] : array();
+		$payload   = is_array( $package['payload'] ?? null ) ? $package['payload'] : array();
+		$db_ref    = is_array( $payload['database'] ?? null ) ? $payload['database'] : array();
+		$file_ref  = is_array( $payload['files'] ?? null ) ? $payload['files'] : array();
 		$integrity = is_array( $package['integrity'] ?? null ) ? $package['integrity'] : array();
 		$safety    = is_array( $package['safety'] ?? null ) ? $package['safety'] : array();
 		$delivery  = is_array( $package['delivery'] ?? null ) ? $package['delivery'] : array();
@@ -601,7 +601,7 @@ final class ImportPreflight {
 	 * Read one bounded manifest entry from PclZip without extracting to disk.
 	 *
 	 * @param \PclZip $archive Archive instance.
-	 * @param string   $name    Exact archive path.
+	 * @param string  $name    Exact archive path.
 	 */
 	private function read_archive_entry( \PclZip $archive, string $name ): ?string {
 		if (
@@ -628,7 +628,7 @@ final class ImportPreflight {
 		foreach ( $result as $entry ) {
 			if (
 				! is_array( $entry )
-				|| $name !== ( $entry['filename'] ?? null )
+				|| ( $entry['filename'] ?? null ) !== $name
 				|| ! is_string( $entry['content'] ?? null )
 			) {
 				continue;
@@ -792,13 +792,13 @@ final class ImportPreflight {
 	private function block( string $job_id, array $state, string $code, bool $retryable ): ?array {
 		$blockers            = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[]          = $code;
-		$state['schema_version'] = ImportStateStore::SCHEMA_VERSION;
-		$state['job_id']     = $job_id;
-		$state['status']     = 'blocked';
-		$state['blockers']   = array_values( array_unique( $blockers ) );
+		$state['schema_version']        = ImportStateStore::SCHEMA_VERSION;
+		$state['job_id']                = $job_id;
+		$state['status']                = 'blocked';
+		$state['blockers']              = array_values( array_unique( $blockers ) );
 		$state['restore_allowed']       = false;
 		$state['full_payload_verified'] = false;
-		$state['updated_at'] = gmdate( DATE_ATOM );
+		$state['updated_at']            = gmdate( DATE_ATOM );
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
