@@ -105,6 +105,8 @@ Acceptance evidence for 0.8.13: PR #131 squash-merged as `896c449116980238e4163d
 
 Phase 10E.2A.3.4 turns a verified private package workspace into a downloadable portable ZIP without exposing a public archive URL. ZIP construction is resumable and bounded by file count/bytes, uses WordPress Core PclZip for broad hosting compatibility, and replays the package checksum contract while archiving so payload drift blocks delivery. The finalized ZIP receives its own SHA-256 and is streamed only through authenticated `admin_post` with `manage_options` + job-scoped nonce. Ready packages have a 24-hour private retention deadline; expired downloads are refused, explicit cleanup is capability/nonce gated, and opportunistic admin maintenance advances bounded job-scoped cleanup batches without touching unrelated temp files. Portable Import remains 10E.2A.4.
 
+Acceptance evidence for 0.8.14: PR #133 merged as `2f7249e820a9e36c0d75fc95f43f695db017dbda`; all seven post-merge gates passed (Foundation `36137249879`, Package `36137249445`, PHP Quality `36137249424`, WordPress Smoke `36137249674`, Accessibility/Responsive `36137249673`, Performance `36137249588`, Release `36137249573`). Deterministic installable ZIP SHA-256: `e81a412bafff42f1c8c5a41370313373a5b83ec5ac73b8ad454973c7e2d9bab0`.
+
 
 ### Version 0.8.15 — Portable Import intake + destination preflight
 
