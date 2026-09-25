@@ -201,12 +201,12 @@ final class Plugin {
 
 		self::$baseline_capture_controller ??= new AdminBaselineCaptureController( self::$incremental_baseline_capture );
 
-		self::$sandbox_handoff_controller    ??= new AdminSandboxHandoffController();
-		self::$dependency_review_controller  ??= new AdminDependencyReviewController();
-		self::$portable_clone_planner        ??= new PortableClonePlanner();
-		self::$portable_clone_store          ??= new PortableCloneJobStore();
-		self::$portable_package_manifest     ??= new PortablePackageManifest();
-		self::$portable_clone_controller     ??= new AdminPortableCloneController( self::$portable_clone_planner, self::$portable_clone_store );
+		self::$sandbox_handoff_controller   ??= new AdminSandboxHandoffController();
+		self::$dependency_review_controller ??= new AdminDependencyReviewController();
+		self::$portable_clone_planner       ??= new PortableClonePlanner();
+		self::$portable_clone_store         ??= new PortableCloneJobStore();
+		self::$portable_package_manifest    ??= new PortablePackageManifest();
+		self::$portable_clone_controller    ??= new AdminPortableCloneController( self::$portable_clone_planner, self::$portable_clone_store );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
