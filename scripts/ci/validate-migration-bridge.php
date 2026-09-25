@@ -1459,10 +1459,10 @@ $import_finalizer = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clo
 foreach (
 	array(
 		'public function activation_plan_snapshot( string $job_id ): ?array',
-		"'ready' !== ( \$state['status'] ?? null )",
+		"'ready' !== ( $state['status'] ?? null )",
 		"'activation_allowed'",
 		"'handoff_ready'",
-		'\$this->runtime_gate( \$job_id, \$state )',
+		'$this->runtime_gate( $job_id, $state )',
 		"'activation_plan_hash'",
 	) as $activation_plan_snapshot_guard
 ) {
@@ -1511,8 +1511,11 @@ foreach (
 		'ImportFinalizeStateStore::OPTION_NAME',
 		"'blog_public', '0'",
 		"'active_plugins'",
+		"'template'",
+		"'stylesheet'",
 		'plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR',
 		"'RENAME TABLE '",
+		'wp_cache_flush()',
 		'$this->rename_reverse( $state )',
 		"'database-activation-verification-failed'",
 		"'database-rollback-verification-failed'",
