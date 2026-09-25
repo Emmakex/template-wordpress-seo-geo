@@ -585,8 +585,8 @@ final class ImportFileRestorer {
 			if ( ! in_array( $id, array( 'uploads', 'plugins', 'themes' ), true ) || isset( $seen[ $id ] ) ) {
 				return null;
 			}
-			$files      = max( 0, (int) ( $root['file_count'] ?? 0 ) );
-			$bytes      = max( 0, (int) ( $root['byte_count'] ?? 0 ) );
+			$files        = max( 0, (int) ( $root['file_count'] ?? 0 ) );
+			$bytes        = max( 0, (int) ( $root['byte_count'] ?? 0 ) );
 			$normalized[] = array(
 				'id'         => $id,
 				'file_count' => $files,
