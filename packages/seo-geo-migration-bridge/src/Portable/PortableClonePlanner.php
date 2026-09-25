@@ -178,7 +178,7 @@ final class PortableClonePlanner {
 		$query  = $this->db->prepare( 'SHOW TABLES LIKE %s', $like );
 		$result = $this->db->get_var( $query );
 
-		return is_string( $result ) && '' !== $result;
+		return is_string( $result );
 	}
 
 	/**
