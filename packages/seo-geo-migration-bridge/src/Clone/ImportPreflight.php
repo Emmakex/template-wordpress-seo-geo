@@ -238,10 +238,10 @@ final class ImportPreflight {
 			$database_json,
 			$files_json
 		);
-		$blockers    = array_merge( $blockers, $contract_blockers );
-		$destination = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
-		$blockers    = array_merge( $blockers, $destination['blockers'] );
-		$advisories  = array_merge( $advisories, $destination['advisories'] );
+		$blockers          = array_merge( $blockers, $contract_blockers );
+		$destination       = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
+		$blockers          = array_merge( $blockers, $destination['blockers'] );
+		$advisories        = array_merge( $advisories, $destination['advisories'] );
 
 		$blockers   = array_values( array_unique( $blockers ) );
 		$advisories = array_values( array_unique( $advisories ) );
@@ -275,8 +275,8 @@ final class ImportPreflight {
 		$state['manifest_contract_valid']      = array() === $contract_blockers;
 		$state['child_manifest_hashes_valid']  = ! in_array( 'import-database-manifest-hash-mismatch', $contract_blockers, true )
 			&& ! in_array( 'import-files-manifest-hash-mismatch', $contract_blockers, true );
-		$payload_state = ( new ImportPayloadStateStore() )->get( $job_id );
-		$payload_valid = array() === $blockers
+		$payload_state                         = ( new ImportPayloadStateStore() )->get( $job_id );
+		$payload_valid                         = array() === $blockers
 			&& is_array( $payload_state )
 			&& 'complete' === ( $payload_state['status'] ?? null )
 			&& hash_equals(
@@ -293,7 +293,7 @@ final class ImportPreflight {
 			);
 
 		if ( $payload_valid ) {
-			$advisories = array_values(
+			$advisories   = array_values(
 				array_filter(
 					$advisories,
 					static fn( mixed $code ): bool => is_string( $code ) && 'full-payload-checksum-pending' !== $code
