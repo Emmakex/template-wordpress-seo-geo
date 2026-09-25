@@ -1328,8 +1328,8 @@ foreach (
 		"'database'   => 'full-database'",
 		"'wp_content' => 'wp-content-tree'",
 		'DAY_IN_SECONDS',
-		"'recovery-created-at-invalid-or-stale:'",
-		"'recovery-sha256-invalid:'",
+		"'recovery-created-at-invalid-or-stale-'",
+		"'recovery-sha256-invalid-'",
 	) as $activation_recovery_guard
 ) {
 	if ( ! str_contains( $activation_recovery, $activation_recovery_guard ) ) {
