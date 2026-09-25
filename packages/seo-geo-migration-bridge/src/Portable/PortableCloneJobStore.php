@@ -19,6 +19,16 @@ final class PortableCloneJobStore {
 	public const OPTION_NAME = 'seo_geo_migration_portable_clone_job_v1';
 
 	/**
+	 * Job schema version.
+	 */
+	public const SCHEMA_VERSION = 1;
+
+	/**
+	 * Initial portable package schema version.
+	 */
+	public const PACKAGE_SCHEMA_VERSION = 1;
+
+	/**
 	 * Return the current normalized job.
 	 *
 	 * @return array<string,mixed>|null
@@ -26,7 +36,7 @@ final class PortableCloneJobStore {
 	public function latest(): ?array {
 		$value = get_option( self::OPTION_NAME, null );
 
-		if ( ! is_array( $value ) || 1 !== ( $value['schema_version'] ?? null ) ) {
+		if ( ! is_array( $value ) || self::SCHEMA_VERSION !== ( $value['schema_version'] ?? null ) ) {
 			return null;
 		}
 
@@ -34,7 +44,9 @@ final class PortableCloneJobStore {
 	}
 
 	/**
-	 * Start one planned job from a ready clone plan.
+	 * Start one planned local-clone job from a ready clone plan.
+	 *
+	 * A repeated prepare request never replaces an active/retryable job.
 	 *
 	 * @param array<string,mixed> $plan Ready portable clone plan.
 	 * @return array<string,mixed>|null
@@ -45,30 +57,38 @@ final class PortableCloneJobStore {
 		}
 
 		$current = $this->latest();
-		if ( is_array( $current ) && in_array( $current['status'] ?? null, array( 'planned', 'running' ), true ) ) {
+		if ( is_array( $current ) && ! $this->terminal( (string) ( $current['status'] ?? '' ) ) ) {
 			return null;
 		}
 
 		$now = gmdate( DATE_ATOM );
 		$job = array(
-			'schema_version' => 1,
-			'job_id'         => wp_generate_uuid4(),
-			'kind'           => 'portable-clone',
-			'mode'           => 'local-subdirectory',
-			'status'         => 'planned',
-			'stage'          => 'inventory',
-			'created_at'     => $now,
-			'updated_at'     => $now,
-			'plan'           => $plan,
-			'progress'       => array(
-				'files_discovered' => 0,
-				'files_copied'     => 0,
-				'bytes_copied'     => 0,
-				'tables_total'     => 0,
-				'tables_copied'    => 0,
-				'rows_copied'      => 0,
+			'schema_version'         => self::SCHEMA_VERSION,
+			'job_id'                 => wp_generate_uuid4(),
+			'package_id'             => $this->package_id(),
+			'operation'              => 'local-clone',
+			'status'                 => 'created',
+			'phase'                  => 'inventory',
+			'cursor'                 => null,
+			'completed'              => array(
+				'files'  => 0,
+				'bytes'  => 0,
+				'tables' => 0,
+				'rows'   => 0,
 			),
-			'errors'         => array(),
+			'totals'                 => array(
+				'files'  => null,
+				'bytes'  => null,
+				'tables' => null,
+				'rows'   => null,
+			),
+			'last_error_code'        => null,
+			'created_at'             => $now,
+			'updated_at'             => $now,
+			'package_schema_version' => self::PACKAGE_SCHEMA_VERSION,
+			'runtime_version'        => defined( 'SEO_GEO_MIGRATION_BRIDGE_VERSION' ) ? SEO_GEO_MIGRATION_BRIDGE_VERSION : '',
+			'integrity_state'        => 'pending',
+			'plan'                   => $plan,
 		);
 
 		$saved = false === get_option( self::OPTION_NAME, false )
@@ -84,12 +104,19 @@ final class PortableCloneJobStore {
 	 * @param array<string,mixed> $job Job state.
 	 */
 	public function save( array $job ): bool {
-		if ( ! is_string( $job['job_id'] ?? null ) || '' === $job['job_id'] ) {
+		if (
+			! is_string( $job['job_id'] ?? null )
+			|| '' === $job['job_id']
+			|| ! $this->valid_status( (string) ( $job['status'] ?? '' ) )
+			|| ! is_string( $job['phase'] ?? null )
+			|| '' === $job['phase']
+		) {
 			return false;
 		}
 
-		$job['schema_version'] = 1;
-		$job['updated_at']     = gmdate( DATE_ATOM );
+		$job['schema_version']         = self::SCHEMA_VERSION;
+		$job['package_schema_version'] = self::PACKAGE_SCHEMA_VERSION;
+		$job['updated_at']             = gmdate( DATE_ATOM );
 
 		return false === get_option( self::OPTION_NAME, false )
 			? add_option( self::OPTION_NAME, $job, '', false )
@@ -97,7 +124,7 @@ final class PortableCloneJobStore {
 	}
 
 	/**
-	 * Mark the current planned/running job as cancelled.
+	 * Mark the current non-terminal job as cancelled.
 	 */
 	public function cancel(): bool {
 		$job = $this->latest();
@@ -105,14 +132,19 @@ final class PortableCloneJobStore {
 			return true;
 		}
 
-		$job['status'] = 'cancelled';
-		$job['stage']  = 'cancelled';
+		if ( $this->terminal( (string) ( $job['status'] ?? '' ) ) ) {
+			return true;
+		}
+
+		$job['status']          = 'cancelled';
+		$job['phase']           = 'cancelled';
+		$job['last_error_code'] = null;
 
 		return $this->save( $job );
 	}
 
 	/**
-	 * Remove only terminal planning state.
+	 * Remove only terminal job state.
 	 */
 	public function clear_terminal(): bool {
 		$job = $this->latest();
@@ -120,10 +152,62 @@ final class PortableCloneJobStore {
 			return true;
 		}
 
-		if ( ! in_array( $job['status'] ?? null, array( 'cancelled', 'complete', 'error' ), true ) ) {
+		if ( ! $this->terminal( (string) ( $job['status'] ?? '' ) ) ) {
 			return false;
 		}
 
 		return delete_option( self::OPTION_NAME );
+	}
+
+	/**
+	 * Return whether a state is terminal.
+	 *
+	 * @param string $status Job status.
+	 */
+	private function terminal( string $status ): bool {
+		return in_array( $status, array( 'completed', 'failed-terminal', 'cancelled' ), true );
+	}
+
+	/**
+	 * Validate a current/future state from the accepted state-machine contract.
+	 *
+	 * @param string $status Job status.
+	 */
+	private function valid_status( string $status ): bool {
+		return in_array(
+			$status,
+			array(
+				'created',
+				'inventory',
+				'database',
+				'files',
+				'manifest',
+				'integrity',
+				'completed',
+				'validate',
+				'prepare-target',
+				'restore-database',
+				'restore-files',
+				'rewrite-environment',
+				'harden-sandbox',
+				'verify',
+				'paused',
+				'failed-retryable',
+				'failed-terminal',
+				'cancelled',
+			),
+			true
+		);
+	}
+
+	/**
+	 * Generate a package identity without exposing credentials or filesystem paths.
+	 */
+	private function package_id(): string {
+		$host_value = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+		$host       = is_string( $host_value ) ? sanitize_key( str_replace( '.', '-', $host_value ) ) : 'site';
+		$random     = substr( str_replace( '-', '', wp_generate_uuid4() ), 0, 8 );
+
+		return sprintf( 'seo-geo-clone-%s-%s-%s', '' !== $host ? $host : 'site', gmdate( 'YmdHis' ), $random );
 	}
 }
