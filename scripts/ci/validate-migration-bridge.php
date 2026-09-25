@@ -1349,9 +1349,6 @@ foreach (
 		"public const OPTION_NAME    = 'seo_geo_migration_clone_import_activation_plan_v1';",
 		'public const SCHEMA_VERSION = 1;',
 		"add_option( self::OPTION_NAME, \$states, '', false )",
-		"'database_activation_allowed'=> false",
-		"'file_activation_allowed'    => false",
-		"'mutations_performed'        => false",
 	) as $activation_store_guard
 ) {
 	if ( ! str_contains( $activation_store, $activation_store_guard ) ) {
@@ -1363,6 +1360,20 @@ foreach (
 			'missing'
 		);
 	}
+}
+
+if (
+	1 !== preg_match( "/'database_activation_allowed'\\s*=>\\s*false/", $activation_store )
+	|| 1 !== preg_match( "/'file_activation_allowed'\\s*=>\\s*false/", $activation_store )
+	|| 1 !== preg_match( "/'mutations_performed'\\s*=>\\s*false/", $activation_store )
+) {
+	fail_migration_bridge(
+		'portable-clone-activation-plan-store-gates',
+		'Activation plan state must persist activation gates as false in 10E.2A.4.6.1.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanStore.php',
+		'database/file activation false and mutations_performed=false',
+		'activation gate mismatch'
+	);
 }
 
 $activation_planner = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanner.php' );
@@ -1379,9 +1390,6 @@ foreach (
 		"'activation-file-staging-totals-drift'",
 		"'activation-active-root-overlaps-staging:'",
 		"'activation-active-root-symlink-unsupported:'",
-		"'database_activation_allowed' => false",
-		"'file_activation_allowed'     => false",
-		"'mutations_performed'         => false",
 	) as $activation_planner_guard
 ) {
 	if ( ! str_contains( $activation_planner, $activation_planner_guard ) ) {
@@ -1393,6 +1401,20 @@ foreach (
 			'missing'
 		);
 	}
+}
+
+if (
+	1 !== preg_match( "/'database_activation_allowed'\\s*=>\\s*false/", $activation_planner )
+	|| 1 !== preg_match( "/'file_activation_allowed'\\s*=>\\s*false/", $activation_planner )
+	|| 1 !== preg_match( "/'mutations_performed'\\s*=>\\s*false/", $activation_planner )
+) {
+	fail_migration_bridge(
+		'portable-clone-activation-planner-gates',
+		'Activation planner must never enable destructive activation in 10E.2A.4.6.1.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportActivationPlanner.php',
+		'activation flags false and mutations_performed=false',
+		'activation gate mismatch'
+	);
 }
 
 foreach (
