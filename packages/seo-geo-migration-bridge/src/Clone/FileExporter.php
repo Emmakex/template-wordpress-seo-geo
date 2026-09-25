@@ -362,9 +362,6 @@ final class FileExporter {
 
 		$root_summaries = array();
 		foreach ( $roots as $root ) {
-			if ( ! is_array( $root ) ) {
-				continue;
-			}
 			$root_summaries[] = array(
 				'id'         => is_string( $root['id'] ?? null ) ? $root['id'] : '',
 				'file_count' => max( 0, (int) ( $root['file_count'] ?? 0 ) ),
