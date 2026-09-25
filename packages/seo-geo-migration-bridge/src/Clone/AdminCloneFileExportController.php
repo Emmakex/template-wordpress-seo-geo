@@ -4,6 +4,7 @@
  *
  * @package SeoGeoMigrationBridge
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Clone;
@@ -17,7 +18,11 @@ final class AdminCloneFileExportController {
 	public const ACTION       = 'seo_geo_migration_clone_file_export';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_file_export';
 
-	/** @var FileExporter */
+	/**
+	 * Resumable file exporter.
+	 *
+	 * @var FileExporter
+	 */
 	private FileExporter $exporter;
 
 	/**
@@ -49,13 +54,13 @@ final class AdminCloneFileExportController {
 			: '';
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
-		$batch_files = isset( $_POST['file_batch_size'] )
+		$batch_files     = isset( $_POST['file_batch_size'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['file_batch_size'] ) ) )
 			: FileExporter::DEFAULT_BATCH_FILES;
 		$batch_megabytes = isset( $_POST['file_batch_megabytes'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['file_batch_megabytes'] ) ) )
 			: 8;
-		$batch_bytes = $batch_megabytes * 1024 * 1024;
+		$batch_bytes     = $batch_megabytes * 1024 * 1024;
 
 		$result = $this->exporter->advance( $job_id, $batch_files, $batch_bytes );
 		if ( ! is_array( $result ) ) {
