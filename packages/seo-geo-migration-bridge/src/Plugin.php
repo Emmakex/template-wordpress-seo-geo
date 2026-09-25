@@ -15,6 +15,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -33,6 +34,8 @@ use SeoGeo\MigrationBridge\Clone\ImportDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportEnvironmentRewriter;
+use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPreflight;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
@@ -374,6 +377,27 @@ final class Plugin {
 	private static ?AdminCloneImportFileController $clone_import_file_controller = null;
 
 	/**
+	 * Portable Clone environment rewrite state store singleton.
+	 *
+	 * @var ImportRewriteStateStore|null
+	 */
+	private static ?ImportRewriteStateStore $clone_import_rewrite_state_store = null;
+
+	/**
+	 * Portable Clone serialization-safe environment rewriter singleton.
+	 *
+	 * @var ImportEnvironmentRewriter|null
+	 */
+	private static ?ImportEnvironmentRewriter $clone_import_environment_rewriter = null;
+
+	/**
+	 * Portable Clone environment rewrite controller singleton.
+	 *
+	 * @var AdminCloneImportRewriteController|null
+	 */
+	private static ?AdminCloneImportRewriteController $clone_import_rewrite_controller = null;
+
+	/**
 	 * Read-only final migration report engine singleton.
 	 *
 	 * @var MigrationReportEngine|null
@@ -432,9 +456,12 @@ final class Plugin {
 		self::$clone_import_database_state_store ??= new ImportDatabaseStateStore();
 		self::$clone_import_database_restorer    ??= new ImportDatabaseRestorer( self::$clone_import_database_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_database_controller  ??= new AdminCloneImportDatabaseController( self::$clone_import_database_restorer );
-		self::$clone_import_file_state_store     ??= new ImportFileStateStore();
-		self::$clone_import_file_restorer        ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
-		self::$clone_import_file_controller      ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
+		self::$clone_import_file_state_store      ??= new ImportFileStateStore();
+		self::$clone_import_file_restorer         ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$clone_import_file_controller       ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
+		self::$clone_import_rewrite_state_store   ??= new ImportRewriteStateStore();
+		self::$clone_import_environment_rewriter  ??= new ImportEnvironmentRewriter( self::$clone_import_rewrite_state_store, self::$clone_import_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_database_restorer, self::$clone_job_store );
+		self::$clone_import_rewrite_controller    ??= new AdminCloneImportRewriteController( self::$clone_import_environment_rewriter );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
 
@@ -459,6 +486,7 @@ final class Plugin {
 		self::$clone_import_payload_controller->boot();
 		self::$clone_import_database_controller->boot();
 		self::$clone_import_file_controller->boot();
+		self::$clone_import_rewrite_controller->boot();
 		self::$operator_screen->register();
 	}
 
@@ -600,6 +628,13 @@ final class Plugin {
 	 */
 	public static function clone_import_file_restorer(): ?ImportFileRestorer {
 		return self::$clone_import_file_restorer;
+	}
+
+	/**
+	 * Return the serialization-safe Portable Clone environment rewriter.
+	 */
+	public static function clone_import_environment_rewriter(): ?ImportEnvironmentRewriter {
+		return self::$clone_import_environment_rewriter;
 	}
 
 	/**
