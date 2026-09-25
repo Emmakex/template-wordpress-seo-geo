@@ -350,6 +350,11 @@ final class ImportFileRestorer {
 
 				$record = $this->file_record( $job_id, $root_id, $relative );
 				if ( null === $record ) {
+					if ( $this->workspace_guard_file( $path ) ) {
+						$state['after_name'] = $entry;
+						continue;
+					}
+
 					return $this->block( $job_id, $state, 'import-files-record-invalid', false );
 				}
 
@@ -739,6 +744,35 @@ final class ImportFileRestorer {
 		}
 
 		return $relative;
+	}
+
+	/**
+	 * Recognize deterministic ExportWorkspace defense-in-depth files that are not source payload records.
+	 *
+	 * Real source .htaccess/index.php files are processed normally because their file metadata record
+	 * is resolved before this fallback is evaluated.
+	 *
+	 * @param string $path Absolute extracted file path.
+	 */
+	private function workspace_guard_file( string $path ): bool {
+		$basename = basename( $path );
+		$content  = match ( $basename ) {
+			'.htaccess' => "Deny from all\n",
+			'index.php' => "<?php\n// Silence is golden.\n",
+			default     => null,
+		};
+
+		if ( ! is_string( $content ) || ! is_file( $path ) || ! is_readable( $path ) ) {
+			return false;
+		}
+
+		$bytes = filesize( $path );
+		$hash  = hash_file( 'sha256', $path );
+
+		return false !== $bytes
+			&& is_string( $hash )
+			&& strlen( $content ) === (int) $bytes
+			&& hash_equals( hash( 'sha256', $content ), $hash );
 	}
 
 	/**
