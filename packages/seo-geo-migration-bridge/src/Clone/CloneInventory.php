@@ -181,7 +181,7 @@ final class CloneInventory {
 			$base = is_string( $root['path'] ?? null ) ? $root['path'] : '';
 			if ( '' === $base || ! is_dir( $base ) || ! is_readable( $base ) ) {
 				$state['unreadable_count'] = (int) ( $state['unreadable_count'] ?? 0 ) + 1;
-				$state                      = $this->advance_root( $state );
+				$state                     = $this->advance_root( $state );
 				continue;
 			}
 
@@ -201,8 +201,8 @@ final class CloneInventory {
 			$entries     = scandir( $absolute, SCANDIR_SORT_ASCENDING );
 			if ( false === $entries ) {
 				$state['unreadable_count'] = (int) ( $state['unreadable_count'] ?? 0 ) + 1;
-				$state['current_dir']       = '';
-				$state['after_name']        = '';
+				$state['current_dir']      = '';
+				$state['after_name']       = '';
 				continue;
 			}
 
@@ -240,8 +240,8 @@ final class CloneInventory {
 						return $this->block( $state, 'source-directory-queue-limit' );
 					}
 					$pending[]               = $relative;
-					$state['pending_dirs']   = $pending;
-					$state['after_name']     = $entry;
+					$state['pending_dirs'] = $pending;
+					$state['after_name']   = $entry;
 					if ( $operations >= self::MAX_ENTRY_OPERATIONS ) {
 						$dir_finished = false;
 						break;
@@ -331,7 +331,7 @@ final class CloneInventory {
 		}
 
 		$like = $wpdb->esc_like( $wpdb->prefix ) . '%';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared -- Read-only table metadata query; LIKE value is prepared.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Read-only table metadata query; LIKE value is prepared.
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $like ), ARRAY_A );
 		if ( ! is_array( $rows ) ) {
 			$rows = array();
@@ -504,9 +504,9 @@ final class CloneInventory {
 
 		$blockers = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[]             = $code;
-		$state['blockers']      = array_values( array_unique( $blockers ) );
-		$state['status']        = 'blocked';
-		$state['updated_at']    = gmdate( DATE_ATOM );
+		$state['blockers']   = array_values( array_unique( $blockers ) );
+		$state['status']     = 'blocked';
+		$state['updated_at'] = gmdate( DATE_ATOM );
 
 		$this->store->save( $job_id, $state );
 		$this->jobs->transition( $job_id, 'failed-terminal', $code );
