@@ -14,6 +14,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportDatabaseController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminClonePackageController;
@@ -29,6 +30,8 @@ use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadVerifier;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFileRestorer;
+use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageBuilder;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -120,6 +123,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
 			<?php $this->render_clone_import_database_result_notice(); ?>
+			<?php $this->render_clone_import_file_result_notice(); ?>
 
 			<h2><?php echo esc_html( $this->copy->text( 'overview_heading' ) ); ?></h2>
 			<table class="widefat striped" role="presentation">
@@ -1264,6 +1268,89 @@ final class AdminOperatorScreen {
 					</select>
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_database_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'complete' === $status ) : ?>
+			<?php $this->render_clone_import_file_section( $job_id ); ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after staging-file restore work.
+	 */
+	private function render_clone_import_file_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice after nonce-verified file restore action.
+		$status = isset( $_GET['seo_geo_clone_file_restore'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_file_restore'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running'  => 'clone_import_file_running',
+			'complete' => 'clone_import_file_complete',
+			'blocked'  => 'clone_import_file_blocked',
+			default    => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status
+			? 'notice notice-error'
+			: ( 'running' === $status ? 'notice notice-info' : 'notice notice-success' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render isolated staging-file restore controls.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function render_clone_import_file_section( string $job_id ): void {
+		$state    = ( new ImportFileStateStore() )->get( $job_id );
+		$status   = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$stage    = is_array( $state ) ? (string) ( $state['stage'] ?? 'copy' ) : 'copy';
+		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
+		$button   = 'pending' === $status ? 'clone_import_file_start' : 'clone_import_file_continue';
+		?>
+		<h4><?php echo esc_html( $this->copy->text( 'clone_import_file_heading' ) ); ?></h4>
+		<p><?php echo esc_html( $this->copy->text( 'clone_import_file_help' ) ); ?></p>
+		<table class="widefat striped" role="presentation">
+			<tbody>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_file_stage' ) ); ?></th><td><code><?php echo esc_html( $stage ); ?></code></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_file_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['file_count'] ?? 0 ) . ' / ' . (string) (int) ( $state['expected_file_count'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_file_bytes' ) ); ?></th><td><?php echo esc_html( size_format( (int) ( $state['byte_count'] ?? 0 ) ) . ' / ' . size_format( (int) ( $state['expected_byte_count'] ?? 0 ) ) ); ?></td></tr>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_file_verified' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['verify_file_count'] ?? 0 ) . ' / ' . (string) (int) ( $state['expected_file_count'] ?? 0 ) ); ?></td></tr>
+				<?php $this->render_sandbox_boolean_row( 'clone_import_file_active_untouched', true === ( $state['active_roots_untouched'] ?? true ) ); ?>
+				<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_file_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === $blockers ? $this->copy->text( 'clone_import_none' ) : implode( ', ', $blockers ) ); ?></code></td></tr>
+			</tbody>
+		</table>
+
+		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportFileController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneImportFileController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p>
+					<label for="seo-geo-clone-import-file-count"><strong><?php echo esc_html( $this->copy->text( 'clone_import_file_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-import-file-count" name="file_restore_batch_files">
+						<?php foreach ( range( 1, 20 ) as $files ) : ?>
+							<option value="<?php echo esc_attr( (string) $files ); ?>" <?php selected( ImportFileRestorer::DEFAULT_BATCH_FILES, $files ); ?>><?php echo esc_html( (string) $files ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<label for="seo-geo-clone-import-file-megabytes"><strong><?php echo esc_html( $this->copy->text( 'clone_import_file_mb_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-import-file-megabytes" name="file_restore_batch_megabytes">
+						<?php foreach ( array( 2, 4, 8, 16, 32, 64, 128 ) as $megabytes ) : ?>
+							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 8, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_file_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
