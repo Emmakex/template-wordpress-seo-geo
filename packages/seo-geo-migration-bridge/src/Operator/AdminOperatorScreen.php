@@ -1492,8 +1492,8 @@ final class AdminOperatorScreen {
 		$blockers   = is_array( $plan['blockers'] ?? null ) ? array_values( array_filter( $plan['blockers'], 'is_string' ) ) : array();
 		$advisories = is_array( $plan['advisories'] ?? null ) ? array_values( array_filter( $plan['advisories'], 'is_string' ) ) : array();
 		$recovery   = is_array( $plan['recovery'] ?? null ) ? $plan['recovery'] : array();
-		$db          = is_array( $recovery['database'] ?? null ) ? $recovery['database'] : array();
-		$content     = is_array( $recovery['wp_content'] ?? null ) ? $recovery['wp_content'] : array();
+		$db         = is_array( $recovery['database'] ?? null ) ? $recovery['database'] : array();
+		$content    = is_array( $recovery['wp_content'] ?? null ) ? $recovery['wp_content'] : array();
 		?>
 		<h4><?php echo esc_html( $this->copy->text( 'clone_import_activation_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_activation_help' ) ); ?></p>
