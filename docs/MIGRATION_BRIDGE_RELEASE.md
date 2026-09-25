@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.14`;
+- current plugin version: `0.8.15`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -104,3 +104,10 @@ Acceptance evidence for 0.8.13: PR #131 squash-merged as `896c449116980238e4163d
 ### Version 0.8.14 — authenticated package delivery + retention cleanup
 
 Phase 10E.2A.3.4 turns a verified private package workspace into a downloadable portable ZIP without exposing a public archive URL. ZIP construction is resumable and bounded by file count/bytes, uses WordPress Core PclZip for broad hosting compatibility, and replays the package checksum contract while archiving so payload drift blocks delivery. The finalized ZIP receives its own SHA-256 and is streamed only through authenticated `admin_post` with `manage_options` + job-scoped nonce. Ready packages have a 24-hour private retention deadline; expired downloads are refused, explicit cleanup is capability/nonce gated, and opportunistic admin maintenance advances bounded job-scoped cleanup batches without touching unrelated temp files. Portable Import remains 10E.2A.4.
+
+
+### Version 0.8.15 — Portable Import intake + destination preflight
+
+Phase 10E.2A.4.1 starts the destination side without restoring payload. An administrator creates an `import` job, uploads a Portable Clone ZIP through a capability/job-nonce-gated endpoint, and the Bridge stages it only inside private job-owned temporary storage. Preflight rejects unsafe or duplicate archive paths, unknown archive roots, missing manifests, unsupported package contracts and child-manifest SHA-256 mismatches.
+
+Destination validation requires an explicitly marked migration sandbox, search visibility disabled, outbound safety, fresh recovery references, explicit `SEO_GEO_MIGRATION_IMPORT_TARGET_AUTHORIZED=true`, a valid isolated origin/subdirectory topology and enough determinable free disk space. The source URL may not equal the destination URL. This version intentionally records `full_payload_verified=false` and `restore_allowed=false`; no database rows, WordPress options/content or destination files are restored in 0.8.15. Full payload checksum replay and resumable extraction belong to 10E.2A.4.2.
