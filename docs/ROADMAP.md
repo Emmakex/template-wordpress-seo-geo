@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.3.4 — implement/accept authenticated package delivery + retention cleanup in Migration Bridge 0.8.14.** 10E.2A.3.3 package manifest + integrity is accepted on `main` in Migration Bridge 0.8.13. Portable Import remains blocked until this delivery/cleanup boundary is accepted.
+Current execution pointer: **10E.2A.4.1 — Portable Import intake + destination preflight in Migration Bridge 0.8.15.** Migration Bridge 0.8.14 completed the export side through authenticated private ZIP delivery, 24-hour retention and bounded cleanup. 10E.2A.4.1 may stage and inspect a ZIP but must keep `restore_allowed=false` until full payload verification is implemented in 10E.2A.4.2.
+
+Migration Bridge v0.8.14 / 10E.2A.3.4 acceptance evidence:
+
+- PR #133 merged as `2f7249e820a9e36c0d75fc95f43f695db017dbda`;
+- post-merge Foundation CI `36137249879` passed;
+- post-merge Phase 1 Package CI `36137249445` passed;
+- post-merge PHP Quality CI `36137249424` passed;
+- post-merge WordPress Smoke CI `36137249674` passed;
+- post-merge Accessibility & Responsive CI `36137249673` passed;
+- post-merge Performance Baseline CI `36137249588` passed;
+- post-merge Migration Bridge Release CI `36137249573` passed.
 
 Migration Bridge v0.8.13 / 10E.2A.3.3 acceptance evidence:
 
@@ -2227,7 +2238,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1, 10E.2A.2, 10E.2A.3.1, 10E.2A.3.2 and 10E.2A.3.3 accepted; 10E.2A.3.4 implementation candidate in 0.8.14**
+Status: **active — 10E.2A.1 through 10E.2A.3.4 accepted; 10E.2A.4.1 Portable Import intake + destination preflight is the 0.8.15 candidate**
 
 Purpose:
 
@@ -2246,8 +2257,15 @@ Implementation sequence:
 - **10E.2A.3.1 — Database export**: complete in Migration Bridge 0.8.11 with a private temporary workspace, resumable schema/row chunks, primary-key or deterministic fallback cursors and per-chunk/database-manifest SHA-256;
 - **10E.2A.3.2 — File export**: complete in Migration Bridge 0.8.12 with deterministic uploads/plugins/themes traversal, bounded file/byte batches, atomic private copies, per-file SHA-256 and exact source-inventory reconciliation;
 - **10E.2A.3.3 — Package manifest + integrity**: complete in Migration Bridge 0.8.13; PR #131 squash-merged as `896c449116980238e4163da6b15ee4caec20b67c`, with exported-record revalidation, resumable full-workspace SHA-256 chaining, a second exact verification pass before `verified=true`, and tamper rejection;
-- **10E.2A.3 — Resumable export**: chunked database/files export, manifest/checksums, authenticated download and cleanup;
-- **10E.2A.4 — Portable import**: package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
+- **10E.2A.3.4 — Authenticated package delivery + retention cleanup**: complete in Migration Bridge 0.8.14; PR #133 merged as `2f7249e820a9e36c0d75fc95f43f695db017dbda`, with resumable private ZIP assembly, replayed package checksum, archive SHA-256, administrator/job-nonce download only, 24-hour expiry and bounded cleanup; all seven post-merge gates passed;
+- **10E.2A.3 — Resumable export**: complete through 10E.2A.3.4;
+- **10E.2A.4.1 — Import intake + destination preflight**: active in Migration Bridge 0.8.15; stage ZIP privately, reject unsafe archive topology, validate package/child manifests and destination isolation, but perform no restore;
+- **10E.2A.4.2 — Full payload verification + resumable extraction**: planned; replay the package checksum before any restore mutation;
+- **10E.2A.4.3 — Database restore**: planned; bounded destination-only table restore;
+- **10E.2A.4.4 — File restore**: planned; bounded destination-only uploads/plugins/themes restore;
+- **10E.2A.4.5 — Serialization-safe environment rewrite**: planned;
+- **10E.2A.4.6 — Sandbox hardening + final integrity verification**: planned;
+- **10E.2A.4 — Portable import**: active; package validation, isolated target plan, chunked restore, serialization-safe environment rewrite and integrity verification;
 - **10E.2A.5 — Local clone orchestration**: direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
 - **10E.2A.6 — Emmake real clone acceptance**: create/verify the actual `emmake.com/nuevaweb/` clone, preserve baseline/dependency/review evidence and require sandbox `ready=true`.
 
