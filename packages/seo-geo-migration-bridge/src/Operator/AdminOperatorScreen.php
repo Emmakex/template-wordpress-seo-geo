@@ -15,6 +15,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBootstrapController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalSandboxRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalTargetPreflightController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -39,6 +40,7 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneSandboxRuntimeStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneSandboxRuntimeBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
+use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -148,6 +150,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_local_runtime_result_notice(); ?>
 			<?php $this->render_clone_local_sandbox_runtime_result_notice(); ?>
 			<?php $this->render_clone_local_package_handoff_result_notice(); ?>
+			<?php $this->render_clone_local_target_preflight_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -1272,6 +1275,7 @@ final class AdminOperatorScreen {
 
 		<?php if ( 'ready' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next' ) ); ?></p>
+			<?php $this->render_clone_local_target_preflight_section( $job ); ?>
 		<?php elseif ( 'blocked' !== $status ) : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalPackageHandoffController::ACTION ); ?>">
@@ -1296,6 +1300,85 @@ final class AdminOperatorScreen {
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_handoff_continue' : 'clone_local_handoff_start' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+		<?php
+	}
+
+
+	/**
+	 * Render a bounded result notice after private local target intake/preflight.
+	 */
+	private function render_clone_local_target_preflight_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_target_preflight'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_target_preflight'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running' => 'clone_local_target_preflight_running',
+			'ready'   => 'clone_local_target_preflight_ready',
+			'blocked' => 'clone_local_target_preflight_blocked',
+			default   => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : ( 'ready' === $status ? 'notice notice-success' : 'notice notice-info' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render private same-server target intake/preflight controls.
+	 *
+	 * @param array<string,mixed> $job Parent local-clone job.
+	 */
+	private function render_clone_local_target_preflight_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneTargetPreflightStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_child_job' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['child_import_job_id'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_import_status' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['import_preflight_status'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_archive_bytes' ) ); ?></th><td><?php echo esc_html( size_format( (int) ( $state['import_archive_bytes'] ?? 0 ) ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_archive_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['import_archive_sha256'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_restore_allowed' ) ); ?></th><td><?php echo esc_html( true === ( $state['restore_allowed'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_database_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['database_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_content_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['client_content_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next_label' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['preflight_next'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php if ( 'ready' === $status ) : ?>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_next' ) ); ?></p>
+		<?php elseif ( 'blocked' !== $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalTargetPreflightController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalTargetPreflightController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php if ( ! is_array( $state ) ) : ?>
+					<p><label><input type="checkbox" name="local_clone_target_preflight_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_confirm' ) ); ?></label></p>
+				<?php endif; ?>
+				<?php submit_button( $this->copy->text( 'clone_local_target_preflight_start' ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
 		<?php
