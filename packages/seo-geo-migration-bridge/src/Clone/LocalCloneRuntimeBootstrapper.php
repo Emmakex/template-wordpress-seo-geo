@@ -557,7 +557,7 @@ final class LocalCloneRuntimeBootstrapper {
 
 			if ( $dir_finished ) {
 				$state['current_dir'] = '';
-				$state['after_name']   = '';
+				$state['after_name']  = '';
 			}
 
 			if ( $accepted_files >= $batch_files || $accepted_bytes >= $batch_bytes || $operations >= self::MAX_ENTRY_OPERATIONS ) {
