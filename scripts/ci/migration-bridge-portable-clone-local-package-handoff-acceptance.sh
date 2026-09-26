@@ -1802,6 +1802,131 @@ assert len(target_posts) == 1, payload
 assert target_posts[0]["post_content"] == "Visit " + destination_home + "about and keep https://external.example.test/reference", payload
 assert target_posts[0]["post_excerpt"] == "Media " + destination_home + "wp-content/uploads/2026/local.txt", payload
 assert target_posts[0]["post_content_filtered"] == "", payload
+assert payload["active_plugins_after_activation"] == payload["active_plugins_before"], payload
+assert payload["active_template_after_activation"] == payload["active_template_before"], payload
+assert payload["active_stylesheet_after_activation"] == payload["active_stylesheet_before"], payload
+
+promotion_prepared = payload["local_file_promotion_prepared"]
+assert promotion_prepared is not None, payload
+assert promotion_prepared["status"] == "prepared", payload
+assert promotion_prepared["database_activated"] is True, payload
+assert promotion_prepared["rollback_available"] is True, payload
+assert promotion_prepared["handoff_ready"] is False, payload
+assert promotion_prepared["source_untouched"] is True, payload
+assert promotion_prepared["activation_plan_hash"] == activation_active["activation_plan_hash"], payload
+assert promotion_prepared["file_fingerprint"] == finalization["file_fingerprint"], payload
+assert payload["file_promotion_candidates_absent_after_prepare"] is True, payload
+
+promotion_child_prepared = payload["file_promotion_child_prepared"]
+assert promotion_child_prepared is not None, payload
+assert promotion_child_prepared["status"] == "prepared", payload
+assert len(promotion_child_prepared["roots"]) == 3, payload
+assert {root["id"] for root in promotion_child_prepared["roots"]} == {"uploads", "plugins", "themes"}, payload
+target_root = handoff["target_path"].rstrip("/")
+for root in promotion_child_prepared["roots"]:
+    assert root["active_path"] == target_root + "/wp-content/" + root["id"] + "/", payload
+    assert root["candidate_path"].startswith(target_root + "/wp-content/."), payload
+    assert root["rollback_path"].startswith(target_root + "/wp-content/."), payload
+    assert not root["staging_path"].startswith(target_root + "/wp-content/"), payload
+
+promotion_candidate = payload["local_file_promotion_candidate"]
+assert promotion_candidate is not None, payload
+assert promotion_candidate["status"] == "candidate-ready", payload
+assert promotion_candidate["file_count"] == 4, payload
+assert promotion_candidate["copy_fingerprint"] == promotion_candidate["file_fingerprint"], payload
+assert promotion_candidate["promotion_next"] == "promote-files", payload
+assert payload["target_upload_absent_after_candidates"] is True, payload
+assert payload["target_plugin_absent_after_candidates"] is True, payload
+assert payload["target_theme_absent_after_candidates"] is True, payload
+assert payload["target_bridge_present_after_candidates"] is True, payload
+
+promotion_child_candidate = payload["file_promotion_child_candidate"]
+assert promotion_child_candidate is not None, payload
+assert promotion_child_candidate["status"] == "candidate-ready", payload
+assert promotion_child_candidate["file_count"] == 4, payload
+assert promotion_child_candidate["copy_fingerprint"] == promotion_child_candidate["file_fingerprint"], payload
+assert all(root["candidate_ready"] is True for root in promotion_child_candidate["roots"]), payload
+
+promotion_swapped = payload["local_file_promotion_promoted"]
+assert promotion_swapped is not None, payload
+assert promotion_swapped["status"] == "verifying", payload
+assert promotion_swapped["source_untouched"] is True, payload
+
+promotion_verified = payload["local_file_promotion_verified_state"]
+assert promotion_verified is not None, payload
+assert promotion_verified["status"] == "verified", payload
+assert promotion_verified["file_count"] == 4, payload
+assert promotion_verified["verify_file_count"] == 4, payload
+assert promotion_verified["active_fingerprint"] == promotion_verified["file_fingerprint"], payload
+assert promotion_verified["rollback_available"] is True, payload
+assert promotion_verified["handoff_ready"] is True, payload
+assert promotion_verified["source_untouched"] is True, payload
+assert promotion_verified["promotion_next"] == "local-clone-handoff-ready", payload
+assert payload["local_file_promotion_verified"] is True, payload
+
+promotion_child_verified = payload["file_promotion_child_verified"]
+assert promotion_child_verified is not None, payload
+assert promotion_child_verified["status"] == "verified", payload
+assert promotion_child_verified["file_count"] == 4, payload
+assert promotion_child_verified["verify_file_count"] == 4, payload
+assert promotion_child_verified["active_fingerprint"] == promotion_child_verified["file_fingerprint"], payload
+assert promotion_child_verified["handoff_ready"] is True, payload
+assert promotion_child_verified["rollback_available"] is True, payload
+
+db_after_files = payload["database_activation_child_after_file_promotion"]
+assert db_after_files is not None, payload
+assert db_after_files["status"] == "activated", payload
+assert db_after_files["database_swapped"] is True, payload
+assert db_after_files["handoff_ready"] is True, payload
+assert db_after_files["active_files_untouched"] is False, payload
+
+assert payload["target_upload_content_after_promotion"] == "local-upload\n", payload
+assert payload["target_plugin_content_after_promotion"] == "<?php\n// local staged plugin\n", payload
+assert payload["target_theme_content_after_promotion"] == "body{display:block}\n", payload
+assert payload["target_bridge_hash_after_promotion"] == payload["bridge_fixture_hash"], payload
+runtime_after_promotion = {row["option_name"]: row["option_value"] for row in payload["target_options_after_file_promotion"]}
+assert runtime_after_promotion["blog_public"] == "0", payload
+assert "sample-local/plugin.php" in runtime_after_promotion["active_plugins"], payload
+assert "seo-geo-migration-bridge/seo-geo-migration-bridge.php" in runtime_after_promotion["active_plugins"], payload
+assert runtime_after_promotion["template"] == "sample-local", payload
+assert runtime_after_promotion["stylesheet"] == "sample-local", payload
+
+assert payload["source_after_file_promotion"] == payload["source_before"], payload
+assert payload["active_home_after_file_promotion"] == payload["active_home_before"], payload
+assert payload["active_siteurl_after_file_promotion"] == payload["active_siteurl_before"], payload
+assert payload["active_plugins_after_file_promotion"] == payload["active_plugins_before"], payload
+assert payload["active_template_after_file_promotion"] == payload["active_template_before"], payload
+assert payload["active_stylesheet_after_file_promotion"] == payload["active_stylesheet_before"], payload
+
+file_rolled_back = payload["local_file_promotion_rolled_back"]
+assert file_rolled_back is not None, payload
+assert file_rolled_back["status"] == "rolled-back", payload
+assert file_rolled_back["handoff_ready"] is False, payload
+assert file_rolled_back["rollback_available"] is False, payload
+assert file_rolled_back["promotion_next"] == "database-rollback-or-cleanup", payload
+assert payload["target_upload_absent_after_file_rollback"] is True, payload
+assert payload["target_plugin_absent_after_file_rollback"] is True, payload
+assert payload["target_theme_absent_after_file_rollback"] is True, payload
+assert payload["target_bridge_present_after_file_rollback"] is True, payload
+
+promotion_child_rollback = payload["file_promotion_child_after_rollback"]
+assert promotion_child_rollback is not None, payload
+assert promotion_child_rollback["status"] == "rolled-back", payload
+assert promotion_child_rollback["handoff_ready"] is False, payload
+assert promotion_child_rollback["rollback_available"] is False, payload
+
+db_after_file_rollback = payload["database_activation_child_after_file_rollback"]
+assert db_after_file_rollback is not None, payload
+assert db_after_file_rollback["status"] == "activated", payload
+assert db_after_file_rollback["handoff_ready"] is False, payload
+assert db_after_file_rollback["active_files_untouched"] is True, payload
+
+runtime_after_file_rollback = {row["option_name"]: row["option_value"] for row in payload["target_options_after_file_rollback"]}
+assert runtime_after_file_rollback["blog_public"] == "0", payload
+assert "seo-geo-migration-bridge/seo-geo-migration-bridge.php" in runtime_after_file_rollback["active_plugins"], payload
+assert "sample-local/plugin.php" not in runtime_after_file_rollback["active_plugins"], payload
+assert runtime_after_file_rollback["template"] == "sample-local", payload
+assert runtime_after_file_rollback["stylesheet"] == "sample-local", payload
 
 rolled_back = payload["local_database_activation_rolled_back"]
 assert rolled_back is not None, payload
@@ -1880,6 +2005,9 @@ assert payload["local_finalization_public_controller_absent"] is True, payload
 assert payload["local_database_activation_service_registered"] is True, payload
 assert payload["local_database_activation_controller_registered"] is True, payload
 assert payload["local_database_activation_public_controller_absent"] is True, payload
+assert payload["local_file_promotion_service_registered"] is True, payload
+assert payload["local_file_promotion_controller_registered"] is True, payload
+assert payload["local_file_promotion_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -1930,6 +2058,10 @@ assert payload["file_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["rewrite_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["finalization_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["database_activation_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["file_promotion_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["active_plugins_after"] == payload["active_plugins_before"], payload
+assert payload["active_template_after"] == payload["active_template_before"], payload
+assert payload["active_stylesheet_after"] == payload["active_stylesheet_before"], payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
@@ -1945,7 +2077,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone reversible database activation contract is invalid" "guarded finalization + atomic DB activation + verified rollback + zero client-file promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone reversible file promotion contract is invalid" "atomic DB activation + verified file candidates + isolated swap + file rollback + DB rollback" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone reversible database activation OK: guarded plan prepared, isolated target DB atomically activated/verified, client files stayed untouched, and rollback returned tables to staging.\n'
+printf '[smoke] Local clone reversible file promotion OK: DB activated, verified candidates swapped only inside the isolated target, target runtime activated, file rollback restored control roots, then DB rollback returned tables to staging.\n'
