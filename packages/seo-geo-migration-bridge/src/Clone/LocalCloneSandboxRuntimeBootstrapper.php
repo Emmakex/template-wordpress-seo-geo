@@ -783,6 +783,7 @@ final class LocalCloneSandboxRuntimeBootstrapper {
 			$source_secret = defined( $salt_name ) && is_string( constant( $salt_name ) )
 				? (string) constant( $salt_name )
 				: (string) constant( 'DB_PASSWORD' );
+
 			$derived = hash_hmac(
 				'sha512',
 				(string) $state['plan_hash'] . '|' . $salt_name . '|' . (string) $state['ownership_marker_sha256'],
