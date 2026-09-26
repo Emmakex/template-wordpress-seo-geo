@@ -72,14 +72,14 @@ final class LocalCloneFilePromoter {
 	/**
 	 * Construct local file promoter.
 	 *
-	 * @param LocalCloneFilePromotionStateStore|null       $store                 Optional parent promotion state.
-	 * @param LocalCloneDatabaseActivator|null             $database              Optional pre-promotion DB authority.
-	 * @param LocalCloneDatabaseActivationStateStore|null  $database_parent_state Optional persistent parent DB state.
-	 * @param ImportFilePromoter|null                      $promoter              Optional child promoter.
-	 * @param ImportFilePromotionStateStore|null           $promotion_state       Optional child promotion journal.
-	 * @param ImportDatabaseActivationStateStore|null      $database_state        Optional child DB journal.
-	 * @param ImportStateStore|null                        $import_state          Optional child import state.
-	 * @param CloneJobStore|null                           $jobs                  Optional parent clone jobs.
+	 * @param LocalCloneFilePromotionStateStore|null      $store                 Optional parent promotion state.
+	 * @param LocalCloneDatabaseActivator|null            $database              Optional pre-promotion DB authority.
+	 * @param LocalCloneDatabaseActivationStateStore|null $database_parent_state Optional persistent parent DB state.
+	 * @param ImportFilePromoter|null                     $promoter              Optional child promoter.
+	 * @param ImportFilePromotionStateStore|null          $promotion_state       Optional child promotion journal.
+	 * @param ImportDatabaseActivationStateStore|null     $database_state        Optional child DB journal.
+	 * @param ImportStateStore|null                       $import_state          Optional child import state.
+	 * @param CloneJobStore|null                          $jobs                  Optional parent clone jobs.
 	 */
 	public function __construct(
 		?LocalCloneFilePromotionStateStore $store = null,
@@ -673,14 +673,14 @@ final class LocalCloneFilePromoter {
 		$blockers   = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[] = $code;
 
-		$state['schema_version']     = LocalCloneFilePromotionStateStore::SCHEMA_VERSION;
-		$state['job_id']             = $job_id;
-		$state['status']             = 'blocked';
-		$state['handoff_ready']      = false;
-		$state['source_untouched']   = true === ( $state['source_untouched'] ?? false );
-		$state['promotion_next']     = 'review-file-promotion';
-		$state['blockers']           = array_values( array_unique( array_filter( $blockers, 'is_string' ) ) );
-		$state['updated_at']         = $now;
+		$state['schema_version']   = LocalCloneFilePromotionStateStore::SCHEMA_VERSION;
+		$state['job_id']           = $job_id;
+		$state['status']           = 'blocked';
+		$state['handoff_ready']    = false;
+		$state['source_untouched'] = true === ( $state['source_untouched'] ?? false );
+		$state['promotion_next']   = 'review-file-promotion';
+		$state['blockers']         = array_values( array_unique( array_filter( $blockers, 'is_string' ) ) );
+		$state['updated_at']       = $now;
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
