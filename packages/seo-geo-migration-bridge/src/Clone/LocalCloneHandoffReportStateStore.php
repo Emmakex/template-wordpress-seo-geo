@@ -234,6 +234,8 @@ final class LocalCloneHandoffReportStateStore {
 
 	/**
 	 * Validate job id.
+	 *
+	 * @param string $job_id Parent local-clone job identifier.
 	 */
 	private function valid_job_id( string $job_id ): bool {
 		return 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/', $job_id );
