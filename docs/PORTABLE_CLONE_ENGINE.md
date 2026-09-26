@@ -514,9 +514,11 @@ Implementation sequence:
 - **10E.2A.5.2.2 — bounded runtime copy + sandbox config/hardening:** complete through 5.2.2.2;
 - **10E.2A.5.2 — isolated target bootstrap:** complete through 5.2.2.2;
 - **10E.2A.5.3.1 — private same-server package handoff (complete in 0.8.27):** reuse the accepted private ZIP builder against the already verified `local-clone` workspace while preserving the exact frozen package manifest/hash, keeping the clone job active and binding the private archive SHA-256/bytes to current ownership, sandbox-control and package authority;
-- **10E.2A.5.3.2.1 — target intake + sandbox preflight (0.8.28 candidate):** stage the verified private same-server archive into a deterministic child `import` job, reuse `ImportPreflight` against destination authority derived from the verified local sandbox runtime, keep the local-clone transport contract frozen, reject target/package/archive drift, and require `restore_allowed=false` with zero destination tables/uploads/themes;
-- **10E.2A.5.3.2 — target intake + sandbox preflight:** active through 5.3.2.1; full private payload extraction/checksum replay remains next before any restore mutation;
-- **10E.2A.5.3 — local package handoff + sandbox preflight:** active through 5.3.2.1.
+- **10E.2A.5.3.2.1 — target intake + sandbox preflight (complete in 0.8.28):** stage the verified private same-server archive into a deterministic child `import` job, reuse `ImportPreflight` against destination authority derived from the verified local sandbox runtime, keep the local-clone transport contract frozen, reject target/package/archive drift, and require `restore_allowed=false` with zero destination tables/uploads/themes;
+- **10E.2A.5.3.2.2 — private payload extraction + full checksum replay (0.8.29 candidate):** reuse `ImportPayloadVerifier` on that deterministic child import, extract only into private import workspace storage in bounded resumable batches, revalidate parent target/archive authority around each batch, and unlock child restore eligibility only after the complete payload checksum equals the frozen package checksum while destination tables/uploads/themes remain absent;
+- **10E.2A.5.3.2 — target intake + sandbox preflight:** complete through 5.3.2.2 once 0.8.29 is accepted;
+- **10E.2A.5.3.3.1 — transactional database staging restore:** next; reuse the existing `ImportDatabaseRestorer` to restore only into isolated staging tables, never directly into the target active prefix;
+- **10E.2A.5.3 — local package handoff + sandbox import preparation:** active through 5.3.2.2.
 
 Deliver:
 
@@ -534,6 +536,8 @@ The 5.2.2.2 control-runtime contract keeps data import separate from runtime boo
 The 5.3.1 handoff is transport-only. It does not rewrite the package to make it look like an external authenticated download and does not import anything into the target. The local-clone manifest remains byte-for-byte frozen, while the existing `PackageDelivery` archive engine is reused solely to produce a private same-server ZIP whose bytes/SHA-256 are rebound to the accepted ownership, sandbox-runtime and package hashes. The next target-intake microphase must consume that artifact through the existing import primitives rather than introducing a second importer.
 
 The 5.3.2.1 target intake deliberately reuses the accepted Portable Import validator rather than booting an empty target WordPress before its tables exist. A deterministic child `import` job receives a private staged copy of the handoff archive plus a destination context derived only from the verified 0.8.26 sandbox runtime. `ImportPreflight` keeps its normal upload path unchanged while accepting the local-clone transport contract only for this bound private context. Completion proves archive and package authority, child-manifest hashes, subdirectory isolation, free-space budget, noindex/outbound/backups guards and zero target tables/uploads/themes; it still leaves `restore_allowed=false` until the next full payload checksum replay.
+
+The 5.3.2.2 payload phase reuses `ImportPayloadVerifier` without giving it a second local-clone implementation. Extraction is resumable and remains under the private child-import workspace; the active target directory and isolated destination table prefix are checked again before and after each bounded batch. A complete payload state is accepted only when its replayed checksum equals the frozen package checksum and a fresh import preflight promotes the child to `payload-verified` with restore eligibility. That flag is not a restore action: target tables, uploads and themes must still be absent. The next local-clone wrapper therefore starts with the existing transactional database staging restorer.
 
 ### 10E.2A.6 — Emmake real clone acceptance
 

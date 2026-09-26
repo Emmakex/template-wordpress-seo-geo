@@ -16,6 +16,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalSandboxRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalTargetPreflightController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadVerificationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -45,6 +46,8 @@ use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflight;
+use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerification;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -361,6 +364,27 @@ final class Plugin {
 	 * @var AdminCloneLocalTargetPreflightController|null
 	 */
 	private static ?AdminCloneLocalTargetPreflightController $local_clone_target_preflight_controller = null;
+
+	/**
+	 * Local-clone payload-verification state store singleton.
+	 *
+	 * @var LocalClonePayloadVerificationStateStore|null
+	 */
+	private static ?LocalClonePayloadVerificationStateStore $local_clone_payload_verification_state_store = null;
+
+	/**
+	 * Local-clone payload-verification service singleton.
+	 *
+	 * @var LocalClonePayloadVerification|null
+	 */
+	private static ?LocalClonePayloadVerification $local_clone_payload_verification = null;
+
+	/**
+	 * Local-clone payload-verification controller singleton.
+	 *
+	 * @var AdminCloneLocalPayloadVerificationController|null
+	 */
+	private static ?AdminCloneLocalPayloadVerificationController $local_clone_payload_verification_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -734,6 +758,16 @@ final class Plugin {
 		self::$local_clone_target_preflight_controller      ??= new AdminCloneLocalTargetPreflightController( self::$local_clone_target_preflight );
 		self::$clone_import_payload_state_store             ??= new ImportPayloadStateStore();
 		self::$clone_import_payload_verifier                ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$local_clone_payload_verification_state_store ??= new LocalClonePayloadVerificationStateStore();
+		self::$local_clone_payload_verification             ??= new LocalClonePayloadVerification(
+			self::$local_clone_payload_verification_state_store,
+			self::$local_clone_target_preflight,
+			self::$clone_import_payload_verifier,
+			self::$clone_import_payload_state_store,
+			self::$clone_import_state_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_payload_verification_controller  ??= new AdminCloneLocalPayloadVerificationController( self::$local_clone_payload_verification );
 		self::$clone_import_payload_controller              ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
 		self::$clone_import_database_state_store            ??= new ImportDatabaseStateStore();
 		self::$clone_import_database_restorer               ??= new ImportDatabaseRestorer( self::$clone_import_database_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
@@ -800,6 +834,7 @@ final class Plugin {
 		self::$local_clone_sandbox_runtime_controller->boot();
 		self::$local_clone_package_handoff_controller->boot();
 		self::$local_clone_target_preflight_controller->boot();
+		self::$local_clone_payload_verification_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -981,6 +1016,20 @@ final class Plugin {
 	 */
 	public static function local_clone_target_preflight(): ?LocalCloneTargetPreflight {
 		return self::$local_clone_target_preflight;
+	}
+
+	/**
+	 * Return the local-clone payload-verification state store.
+	 */
+	public static function local_clone_payload_verification_state_store(): ?LocalClonePayloadVerificationStateStore {
+		return self::$local_clone_payload_verification_state_store;
+	}
+
+	/**
+	 * Return the local-clone payload-verification service.
+	 */
+	public static function local_clone_payload_verification(): ?LocalClonePayloadVerification {
+		return self::$local_clone_payload_verification;
 	}
 
 	/**
