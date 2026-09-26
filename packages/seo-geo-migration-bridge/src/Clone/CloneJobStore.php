@@ -55,6 +55,7 @@ final class CloneJobStore {
 			'restore-database',
 			'restore-files',
 			'rewrite-environment',
+			'finalize-preflight',
 			'harden-sandbox',
 			'verify',
 			'completed',
