@@ -120,6 +120,12 @@ final class ImportStateStore {
 			'schema_version'               => self::SCHEMA_VERSION,
 			'job_id'                       => $job_id,
 			'status'                       => $status,
+			'transport'                    => $this->bounded_text( $state['transport'] ?? 'portable-upload', 32 ),
+			'local_handoff_parent_job_id'  => $this->bounded_text( $state['local_handoff_parent_job_id'] ?? '', 128 ),
+			'destination_root_path'        => $this->bounded_path( $state['destination_root_path'] ?? '' ),
+			'destination_authority_sha256' => $this->normalize_hash( $state['destination_authority_sha256'] ?? '' ),
+			'expected_package_manifest_sha256' => $this->normalize_hash( $state['expected_package_manifest_sha256'] ?? '' ),
+			'expected_package_checksum'    => $this->normalize_hash( $state['expected_package_checksum'] ?? '' ),
 			'archive_sha256'               => $this->normalize_hash( $state['archive_sha256'] ?? '' ),
 			'archive_bytes'                => max( 0, (int) ( $state['archive_bytes'] ?? 0 ) ),
 			'package_id'                   => $this->bounded_text( $state['package_id'] ?? '', 160 ),
@@ -172,6 +178,21 @@ final class ImportStateStore {
 	 */
 	private function bounded_text( mixed $value, int $limit ): string {
 		return is_string( $value ) ? substr( $value, 0, $limit ) : '';
+	}
+
+	/**
+	 * Normalize one bounded HTTP(S) URL.
+	 *
+	 * @param mixed $url Raw URL.
+	 */
+	private function bounded_path( mixed $path ): string {
+		if ( ! is_string( $path ) ) {
+			return '';
+		}
+
+		$path = untrailingslashit( wp_normalize_path( trim( $path ) ) );
+
+		return '' !== $path && 4096 >= strlen( $path ) ? $path : '';
 	}
 
 	/**
