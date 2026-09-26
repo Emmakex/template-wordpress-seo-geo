@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.5.2 private local handoff/staging/rewrite/finalization acceptance.
+# Phase 10E.2A.5.3.1-5.5.4 private local clone acceptance through reversible file promotion.
 
-printf '[smoke] Checking private same-server local-clone staging, rewrite and guarded finalization plan.\n'
+printf '[smoke] Checking private same-server local-clone DB activation, reversible file promotion and rollback.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -14,6 +14,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFilePromotionController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -37,6 +38,9 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromoter;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromotionStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromotionStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
@@ -69,6 +73,7 @@ $options = array(
 	LocalCloneEnvironmentRewriteStateStore::OPTION_NAME,
 	LocalCloneFinalizationPlanStateStore::OPTION_NAME,
 	LocalCloneDatabaseActivationStateStore::OPTION_NAME,
+	LocalCloneFilePromotionStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
 	ImportFinalizeStateStore::OPTION_NAME,
 	ImportRewriteStateStore::OPTION_NAME,
@@ -93,6 +98,7 @@ $local_files       = Plugin::local_clone_file_restorer();
 $local_rewriter    = Plugin::local_clone_environment_rewriter();
 $local_finalizer   = Plugin::local_clone_finalization_planner();
 $local_activation  = Plugin::local_clone_database_activator();
+$local_promotion   = Plugin::local_clone_file_promoter();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -107,6 +113,7 @@ if (
 	|| ! $local_rewriter instanceof LocalCloneEnvironmentRewriter
 	|| ! $local_finalizer instanceof LocalCloneFinalizationPlanner
 	|| ! $local_activation instanceof LocalCloneDatabaseActivator
+	|| ! $local_promotion instanceof LocalCloneFilePromoter
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -164,8 +171,11 @@ $source_snapshot = static function () use ( $quoted_source ): array {
 	return is_array( $rows ) ? $rows : array();
 };
 $source_before = $source_snapshot();
-$active_home_before    = (string) get_option( 'home', '' );
-$active_siteurl_before = (string) get_option( 'siteurl', '' );
+$active_home_before       = (string) get_option( 'home', '' );
+$active_siteurl_before    = (string) get_option( 'siteurl', '' );
+$active_plugins_before    = get_option( 'active_plugins', array() );
+$active_template_before   = (string) get_option( 'template', '' );
+$active_stylesheet_before = (string) get_option( 'stylesheet', '' );
 
 $job = $jobs->create( 'local-clone', $job_id );
 if ( ! is_array( $job ) ) {
@@ -287,6 +297,8 @@ if ( ! is_string( $json_value ) ) {
 	throw new RuntimeException( 'Could not encode local rewrite JSON fixture.' );
 }
 
+// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Fixture exercises the WordPress active_plugins contract.
+$client_plugins = serialize( array( 'sample-local/plugin.php' ) );
 $options_rows = array(
 	array( '1', 'home', $source_home, 'yes' ),
 	array( '2', 'siteurl', $source_site, 'yes' ),
@@ -294,6 +306,9 @@ $options_rows = array(
 	array( '4', 'serialized_payload', $serialized_value, 'yes' ),
 	array( '5', 'json_payload', $json_value, 'yes' ),
 	array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context', 'yes' ),
+	array( '7', 'active_plugins', $client_plugins, 'yes' ),
+	array( '8', 'template', 'sample-local', 'yes' ),
+	array( '9', 'stylesheet', 'sample-local', 'yes' ),
 );
 $posts_rows = array(
 	array(
@@ -332,11 +347,42 @@ $posts_meta = $write_table(
 	$posts_schema
 );
 
+$bridge_fixture = defined( 'SEO_GEO_MIGRATION_BRIDGE_DIR' )
+	? file_get_contents( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' )
+	: false;
+if ( ! is_string( $bridge_fixture ) || '' === $bridge_fixture ) {
+	throw new RuntimeException( 'Could not read Migration Bridge runtime fixture.' );
+}
+$bridge_fixture_hash = hash( 'sha256', $bridge_fixture );
+
 $files = array(
 	array( 'root' => 'uploads', 'relative' => '2026/local.txt', 'content' => "local-upload\n" ),
 	array( 'root' => 'plugins', 'relative' => 'sample-local/plugin.php', 'content' => "<?php\n// local staged plugin\n" ),
+	array( 'root' => 'plugins', 'relative' => 'seo-geo-migration-bridge/seo-geo-migration-bridge.php', 'content' => $bridge_fixture ),
 	array( 'root' => 'themes', 'relative' => 'sample-local/style.css', 'content' => "body{display:block}\n" ),
 );
+
+$bridge_src = SEO_GEO_MIGRATION_BRIDGE_DIR . 'src';
+$bridge_iterator = new RecursiveIteratorIterator(
+	new RecursiveDirectoryIterator( $bridge_src, FilesystemIterator::SKIP_DOTS )
+);
+foreach ( $bridge_iterator as $bridge_file ) {
+	if ( ! $bridge_file->isFile() || $bridge_file->isLink() ) {
+		continue;
+	}
+	$absolute = wp_normalize_path( $bridge_file->getPathname() );
+	$relative = ltrim( substr( $absolute, strlen( wp_normalize_path( SEO_GEO_MIGRATION_BRIDGE_DIR ) ) ), '/' );
+	$content  = file_get_contents( $absolute );
+	if ( ! is_string( $content ) ) {
+		throw new RuntimeException( 'Could not read Migration Bridge source fixture.' );
+	}
+	$files[] = array(
+		'root'     => 'plugins',
+		'relative' => 'seo-geo-migration-bridge/' . $relative,
+		'content'  => $content,
+	);
+}
+$fixture_file_count = count( $files );
 $root_stats = array(
 	'uploads' => array( 'file_count' => 0, 'byte_count' => 0 ),
 	'plugins' => array( 'file_count' => 0, 'byte_count' => 0 ),
@@ -614,7 +660,16 @@ $target_preflight_child = is_array( $target_preflight_state )
 
 $local_payload_mid = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $local_payload_state = $local_payload_mid;
-for ( $i = 0; $i < 140; ++$i ) {
+$payload_iteration_limit = is_array( $local_payload_state )
+	? max(
+		800,
+		2 * (
+			(int) ( $local_payload_state['archive_entry_count'] ?? 0 )
+			+ (int) ( $local_payload_state['expected_file_count'] ?? 0 )
+		)
+	)
+	: 800;
+for ( $i = 0; $i < $payload_iteration_limit; ++$i ) {
 	if ( is_array( $local_payload_state ) && in_array( $local_payload_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
 		break;
 	}
@@ -690,7 +745,7 @@ $target_tables_after_database = $GLOBALS['wpdb']->get_col(
 
 $local_files_mid = $local_files->advance( $job_id, 1, 1024 * 1024 );
 $local_files_state = $local_files_mid;
-for ( $i = 0; $i < 180; ++$i ) {
+for ( $i = 0; $i < 600; ++$i ) {
 	if ( is_array( $local_files_state ) && in_array( $local_files_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
 		break;
 	}
@@ -865,8 +920,96 @@ $target_upload_absent_after_activation = ! file_exists( trailingslashit( $target
 $target_plugin_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
 $target_theme_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
 $source_after_activation = $source_snapshot();
-$active_home_after_activation    = (string) get_option( 'home', '' );
-$active_siteurl_after_activation = (string) get_option( 'siteurl', '' );
+$active_home_after_activation       = (string) get_option( 'home', '' );
+$active_siteurl_after_activation    = (string) get_option( 'siteurl', '' );
+$active_plugins_after_activation    = get_option( 'active_plugins', array() );
+$active_template_after_activation   = (string) get_option( 'template', '' );
+$active_stylesheet_after_activation = (string) get_option( 'stylesheet', '' );
+
+$local_file_promotion_prepared = $local_promotion->prepare( $job_id );
+$file_promotion_child_prepared = '' !== $payload_child_id
+	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
+	: null;
+$file_promotion_candidates_absent_after_prepare = true;
+if ( is_array( $file_promotion_child_prepared ) ) {
+	foreach ( (array) ( $file_promotion_child_prepared['roots'] ?? array() ) as $root_plan ) {
+		if (
+			is_array( $root_plan )
+			&& is_string( $root_plan['candidate_path'] ?? null )
+			&& file_exists( untrailingslashit( $root_plan['candidate_path'] ) )
+		) {
+			$file_promotion_candidates_absent_after_prepare = false;
+		}
+	}
+}
+
+$local_file_promotion_candidate = $local_file_promotion_prepared;
+for ( $i = 0; $i < 600; ++$i ) {
+	if ( is_array( $local_file_promotion_candidate ) && in_array( $local_file_promotion_candidate['status'] ?? null, array( 'candidate-ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_file_promotion_candidate = $local_promotion->advance_candidates( $job_id, 1, 1024 * 1024 );
+}
+$file_promotion_child_candidate = '' !== $payload_child_id
+	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
+	: null;
+$target_upload_absent_after_candidates = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_candidates = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_candidates = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$target_bridge_present_after_candidates = is_file( trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php' );
+
+$local_file_promotion_promoted = $local_promotion->promote( $job_id );
+$local_file_promotion_verified_state = $local_file_promotion_promoted;
+for ( $i = 0; $i < 600; ++$i ) {
+	if ( is_array( $local_file_promotion_verified_state ) && in_array( $local_file_promotion_verified_state['status'] ?? null, array( 'verified', 'blocked', 'rolled-back' ), true ) ) {
+		break;
+	}
+	$local_file_promotion_verified_state = $local_promotion->advance_verification( $job_id, 1, 1024 * 1024 );
+}
+$local_file_promotion_verified = $local_promotion->verified_snapshot( $job_id );
+$file_promotion_child_verified = '' !== $payload_child_id
+	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
+	: null;
+$database_activation_child_after_file_promotion = '' !== $payload_child_id
+	? ( new ImportDatabaseActivationStateStore() )->get( $payload_child_id )
+	: null;
+
+$target_upload_after_promotion = trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt';
+$target_plugin_after_promotion = trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php';
+$target_bridge_after_promotion = trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php';
+$target_theme_after_promotion  = trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css';
+$target_upload_content_after_promotion = is_file( $target_upload_after_promotion ) ? file_get_contents( $target_upload_after_promotion ) : false;
+$target_plugin_content_after_promotion = is_file( $target_plugin_after_promotion ) ? file_get_contents( $target_plugin_after_promotion ) : false;
+$target_bridge_hash_after_promotion = is_file( $target_bridge_after_promotion ) ? hash_file( 'sha256', $target_bridge_after_promotion ) : false;
+$target_theme_content_after_promotion = is_file( $target_theme_after_promotion ) ? file_get_contents( $target_theme_after_promotion ) : false;
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of isolated target runtime options.
+$target_options_after_file_promotion = $GLOBALS['wpdb']->get_results(
+	"SELECT option_name, option_value FROM {$quoted_target_options} WHERE option_name IN ('active_plugins','template','stylesheet','blog_public') ORDER BY option_name ASC",
+	ARRAY_A
+);
+$source_after_file_promotion = $source_snapshot();
+$active_home_after_file_promotion       = (string) get_option( 'home', '' );
+$active_siteurl_after_file_promotion    = (string) get_option( 'siteurl', '' );
+$active_plugins_after_file_promotion    = get_option( 'active_plugins', array() );
+$active_template_after_file_promotion   = (string) get_option( 'template', '' );
+$active_stylesheet_after_file_promotion = (string) get_option( 'stylesheet', '' );
+
+$local_file_promotion_rolled_back = $local_promotion->rollback( $job_id );
+$file_promotion_child_after_rollback = '' !== $payload_child_id
+	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
+	: null;
+$database_activation_child_after_file_rollback = '' !== $payload_child_id
+	? ( new ImportDatabaseActivationStateStore() )->get( $payload_child_id )
+	: null;
+$target_upload_absent_after_file_rollback = ! file_exists( $target_upload_after_promotion );
+$target_plugin_absent_after_file_rollback = ! file_exists( $target_plugin_after_promotion );
+$target_theme_absent_after_file_rollback = ! file_exists( $target_theme_after_promotion );
+$target_bridge_present_after_file_rollback = is_file( $target_bridge_after_promotion );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of isolated target runtime after file rollback.
+$target_options_after_file_rollback = $GLOBALS['wpdb']->get_results(
+	"SELECT option_name, option_value FROM {$quoted_target_options} WHERE option_name IN ('active_plugins','template','stylesheet','blog_public') ORDER BY option_name ASC",
+	ARRAY_A
+);
 
 $local_database_activation_rolled_back = $local_activation->rollback( $job_id );
 $database_activation_child_after_rollback = '' !== $payload_child_id
@@ -951,9 +1094,19 @@ $database_activation_autoload = $GLOBALS['wpdb']->get_var(
 	)
 );
 
+$file_promotion_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneFilePromotionStateStore::OPTION_NAME
+	)
+);
+
 $source_after_all = $source_snapshot();
-$active_home_after    = (string) get_option( 'home', '' );
-$active_siteurl_after = (string) get_option( 'siteurl', '' );
+$active_home_after       = (string) get_option( 'home', '' );
+$active_siteurl_after    = (string) get_option( 'siteurl', '' );
+$active_plugins_after    = get_option( 'active_plugins', array() );
+$active_template_after   = (string) get_option( 'template', '' );
+$active_stylesheet_after = (string) get_option( 'stylesheet', '' );
 
 echo wp_json_encode(
 	array(
@@ -1063,6 +1216,44 @@ echo wp_json_encode(
 		'source_after_activation' => $source_after_activation,
 		'active_home_after_activation' => $active_home_after_activation,
 		'active_siteurl_after_activation' => $active_siteurl_after_activation,
+		'active_plugins_after_activation' => $active_plugins_after_activation,
+		'active_template_after_activation' => $active_template_after_activation,
+		'active_stylesheet_after_activation' => $active_stylesheet_after_activation,
+		'local_file_promotion_prepared' => $local_file_promotion_prepared,
+		'file_promotion_child_prepared' => $file_promotion_child_prepared,
+		'file_promotion_candidates_absent_after_prepare' => $file_promotion_candidates_absent_after_prepare,
+		'local_file_promotion_candidate' => $local_file_promotion_candidate,
+		'file_promotion_child_candidate' => $file_promotion_child_candidate,
+		'target_upload_absent_after_candidates' => $target_upload_absent_after_candidates,
+		'target_plugin_absent_after_candidates' => $target_plugin_absent_after_candidates,
+		'target_theme_absent_after_candidates' => $target_theme_absent_after_candidates,
+		'target_bridge_present_after_candidates' => $target_bridge_present_after_candidates,
+		'local_file_promotion_promoted' => $local_file_promotion_promoted,
+		'local_file_promotion_verified_state' => $local_file_promotion_verified_state,
+		'local_file_promotion_verified' => is_array( $local_file_promotion_verified ),
+		'file_promotion_child_verified' => $file_promotion_child_verified,
+		'database_activation_child_after_file_promotion' => $database_activation_child_after_file_promotion,
+		'target_upload_content_after_promotion' => $target_upload_content_after_promotion,
+		'target_plugin_content_after_promotion' => $target_plugin_content_after_promotion,
+		'target_bridge_hash_after_promotion' => $target_bridge_hash_after_promotion,
+		'bridge_fixture_hash' => $bridge_fixture_hash,
+		'fixture_file_count' => $fixture_file_count,
+		'target_theme_content_after_promotion' => $target_theme_content_after_promotion,
+		'target_options_after_file_promotion' => $target_options_after_file_promotion,
+		'source_after_file_promotion' => $source_after_file_promotion,
+		'active_home_after_file_promotion' => $active_home_after_file_promotion,
+		'active_siteurl_after_file_promotion' => $active_siteurl_after_file_promotion,
+		'active_plugins_after_file_promotion' => $active_plugins_after_file_promotion,
+		'active_template_after_file_promotion' => $active_template_after_file_promotion,
+		'active_stylesheet_after_file_promotion' => $active_stylesheet_after_file_promotion,
+		'local_file_promotion_rolled_back' => $local_file_promotion_rolled_back,
+		'file_promotion_child_after_rollback' => $file_promotion_child_after_rollback,
+		'database_activation_child_after_file_rollback' => $database_activation_child_after_file_rollback,
+		'target_upload_absent_after_file_rollback' => $target_upload_absent_after_file_rollback,
+		'target_plugin_absent_after_file_rollback' => $target_plugin_absent_after_file_rollback,
+		'target_theme_absent_after_file_rollback' => $target_theme_absent_after_file_rollback,
+		'target_bridge_present_after_file_rollback' => $target_bridge_present_after_file_rollback,
+		'target_options_after_file_rollback' => $target_options_after_file_rollback,
 		'local_database_activation_rolled_back' => $local_database_activation_rolled_back,
 		'database_activation_child_after_rollback' => $database_activation_child_after_rollback,
 		'target_table_count_after_activation_rollback' => is_array( $target_tables_after_activation_rollback ) ? count( $target_tables_after_activation_rollback ) : -1,
@@ -1120,6 +1311,9 @@ echo wp_json_encode(
 		'local_database_activation_service_registered' => $local_activation instanceof LocalCloneDatabaseActivator,
 		'local_database_activation_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalDatabaseActivationController::ACTION ),
 		'local_database_activation_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalDatabaseActivationController::ACTION ),
+		'local_file_promotion_service_registered' => $local_promotion instanceof LocalCloneFilePromoter,
+		'local_file_promotion_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFilePromotionController::ACTION ),
+		'local_file_promotion_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFilePromotionController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
@@ -1128,6 +1322,13 @@ echo wp_json_encode(
 		'rewrite_autoload'            => $rewrite_autoload,
 		'finalization_autoload'       => $finalization_autoload,
 		'database_activation_autoload' => $database_activation_autoload,
+		'file_promotion_autoload'      => $file_promotion_autoload,
+		'active_plugins_before'        => $active_plugins_before,
+		'active_plugins_after'         => $active_plugins_after,
+		'active_template_before'       => $active_template_before,
+		'active_template_after'        => $active_template_after,
+		'active_stylesheet_before'     => $active_stylesheet_before,
+		'active_stylesheet_after'      => $active_stylesheet_after,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -1263,7 +1464,7 @@ assert local_db is not None, payload
 assert local_db["status"] == "ready", payload
 assert local_db["stage"] == "complete", payload
 assert local_db["destination_prefix"] == handoff["target_table_prefix"], payload
-assert local_db["rows_restored"] == 7, payload
+assert local_db["rows_restored"] == 10, payload
 assert local_db["tables_completed"] == 2, payload
 assert local_db["table_count"] == 2, payload
 assert local_db["active_tables_untouched"] is True, payload
@@ -1277,7 +1478,7 @@ db_child = payload["database_child_state"]
 assert db_child is not None, payload
 assert db_child["status"] == "complete", payload
 assert db_child["stage"] == "complete", payload
-assert db_child["rows_restored"] == 7, payload
+assert db_child["rows_restored"] == 10, payload
 assert db_child["tables_completed"] == 2, payload
 assert db_child["active_tables_untouched"] is True, payload
 assert db_child["destination_prefix"] == handoff["target_table_prefix"], payload
@@ -1301,7 +1502,7 @@ for source_name, staging_name in (
     assert not staging_name.startswith(handoff["target_table_prefix"]), payload
 
 options_before = {row["option_name"]: row["option_value"] for row in payload["staging_options_before_rewrite"]}
-assert set(options_before) == {"home", "siteurl", "plain_url", "serialized_payload", "json_payload", "api_token"}, payload
+assert set(options_before) == {"home", "siteurl", "plain_url", "serialized_payload", "json_payload", "api_token", "active_plugins", "template", "stylesheet"}, payload
 assert len(payload["staging_posts_before_rewrite"]) == 1, payload
 assert payload["source_before"] == [{"id": "999", "title": "production-sentinel"}], payload
 assert payload["source_after_database"] == payload["source_before"], payload
@@ -1319,8 +1520,8 @@ local_files = payload["local_files_state"]
 assert local_files is not None, payload
 assert local_files["status"] == "ready", payload
 assert local_files["stage"] == "complete", payload
-assert local_files["file_count"] == 3, payload
-assert local_files["verify_file_count"] == 3, payload
+assert local_files["file_count"] == payload["fixture_file_count"], payload
+assert local_files["verify_file_count"] == payload["fixture_file_count"], payload
 assert local_files["file_count"] == local_files["expected_file_count"], payload
 assert local_files["byte_count"] == local_files["expected_byte_count"], payload
 assert local_files["verify_file_count"] == local_files["expected_file_count"], payload
@@ -1337,8 +1538,8 @@ file_child = payload["file_child_state"]
 assert file_child is not None, payload
 assert file_child["status"] == "complete", payload
 assert file_child["stage"] == "complete", payload
-assert file_child["file_count"] == 3, payload
-assert file_child["verify_file_count"] == 3, payload
+assert file_child["file_count"] == payload["fixture_file_count"], payload
+assert file_child["verify_file_count"] == payload["fixture_file_count"], payload
 assert file_child["active_roots_untouched"] is True, payload
 
 expected_files = {
@@ -1373,7 +1574,7 @@ assert rewrite["target_unactivated"] is True, payload
 assert rewrite["verify_source_urls"] == 0, payload
 assert rewrite["home_rewrites"] == 1, payload
 assert rewrite["siteurl_rewrites"] == 1, payload
-assert rewrite["rows_scanned"] == 7, payload
+assert rewrite["rows_scanned"] == 10, payload
 assert rewrite["rows_changed"] >= 6, payload
 assert rewrite["values_changed"] >= 7, payload
 assert rewrite["same_origin_rewrites"] >= 4, payload
@@ -1430,9 +1631,9 @@ finalization = payload["local_finalization_state"]
 assert finalization is not None, payload
 assert finalization["status"] == "ready", payload
 assert finalization["stage"] == "ready", payload
-assert finalization["database_rows_hashed"] == 7, payload
+assert finalization["database_rows_hashed"] == 10, payload
 assert finalization["database_table_count"] == 2, payload
-assert finalization["files_hashed"] == 3, payload
+assert finalization["files_hashed"] == payload["fixture_file_count"], payload
 assert finalization["files_hashed"] == finalization["expected_file_count"], payload
 assert finalization["file_bytes_hashed"] == finalization["expected_file_bytes"], payload
 assert finalization["sandbox_hardening_ready"] is True, payload
@@ -1449,8 +1650,8 @@ finalization_child = payload["finalization_child_state"]
 assert finalization_child is not None, payload
 assert finalization_child["status"] == "ready", payload
 assert finalization_child["stage"] == "ready", payload
-assert finalization_child["database_rows_hashed"] == 7, payload
-assert finalization_child["files_hashed"] == 3, payload
+assert finalization_child["database_rows_hashed"] == 10, payload
+assert finalization_child["files_hashed"] == payload["fixture_file_count"], payload
 assert finalization_child["activation_allowed"] is True, payload
 assert finalization_child["handoff_ready"] is False, payload
 assert finalization_child["active_tables_untouched"] is True, payload
@@ -1571,7 +1772,7 @@ assert activation_prepared["activation_next"] == "database-activation", payload
 assert activation_prepared["target_table_prefix"] == handoff["target_table_prefix"], payload
 assert activation_prepared["options_target"] == handoff["target_table_prefix"] + "options", payload
 assert activation_prepared["table_count"] == 2, payload
-assert activation_prepared["row_count"] == 7, payload
+assert activation_prepared["row_count"] == 10, payload
 assert activation_prepared["activation_plan_hash"] == activation_recovered["hash"], payload
 assert payload["target_table_count_after_activation_prepare"] == 0, payload
 assert payload["target_upload_absent_after_activation_prepare"] is True, payload
@@ -1587,7 +1788,7 @@ assert activation_active["active_files_untouched"] is True, payload
 assert activation_active["target_database_active"] is True, payload
 assert activation_active["activation_next"] == "file-promotion", payload
 assert activation_active["table_count"] == 2, payload
-assert activation_active["row_count"] == 9, payload
+assert activation_active["row_count"] == 11, payload
 assert activation_active["target_table_prefix"] == handoff["target_table_prefix"], payload
 assert activation_active["options_target"] == payload["target_options_table"], payload
 assert activation_active["activation_plan_hash"] == activation_recovered["hash"], payload
@@ -1602,7 +1803,7 @@ assert activation_child["active_files_untouched"] is True, payload
 assert activation_child["handoff_ready"] is False, payload
 assert activation_child["options_target"] == payload["target_options_table"], payload
 assert len(activation_child["tables"]) == 2, payload
-assert sum(item["row_count"] for item in activation_child["tables"]) == 9, payload
+assert sum(item["row_count"] for item in activation_child["tables"]) == 11, payload
 
 assert payload["target_table_count_after_activation"] == 2, payload
 assert payload["staging_tables_absent_after_activation"] is True, payload
@@ -1614,7 +1815,7 @@ assert payload["active_home_after_activation"] == payload["active_home_before"],
 assert payload["active_siteurl_after_activation"] == payload["active_siteurl_before"], payload
 
 target_options = {row["option_name"]: row["option_value"] for row in payload["target_options_after_activation"]}
-assert len(target_options) == 8, payload
+assert len(target_options) == 10, payload
 assert target_options["home"] == destination_home, payload
 assert target_options["siteurl"] == destination_site, payload
 assert target_options["plain_url"] == destination_home + "catalog/item?x=1#top", payload
@@ -1633,6 +1834,131 @@ assert len(target_posts) == 1, payload
 assert target_posts[0]["post_content"] == "Visit " + destination_home + "about and keep https://external.example.test/reference", payload
 assert target_posts[0]["post_excerpt"] == "Media " + destination_home + "wp-content/uploads/2026/local.txt", payload
 assert target_posts[0]["post_content_filtered"] == "", payload
+assert payload["active_plugins_after_activation"] == payload["active_plugins_before"], payload
+assert payload["active_template_after_activation"] == payload["active_template_before"], payload
+assert payload["active_stylesheet_after_activation"] == payload["active_stylesheet_before"], payload
+
+promotion_prepared = payload["local_file_promotion_prepared"]
+assert promotion_prepared is not None, payload
+assert promotion_prepared["status"] == "prepared", payload
+assert promotion_prepared["database_activated"] is True, payload
+assert promotion_prepared["rollback_available"] is True, payload
+assert promotion_prepared["handoff_ready"] is False, payload
+assert promotion_prepared["source_untouched"] is True, payload
+assert promotion_prepared["activation_plan_hash"] == activation_active["activation_plan_hash"], payload
+assert promotion_prepared["file_fingerprint"] == finalization["file_fingerprint"], payload
+assert payload["file_promotion_candidates_absent_after_prepare"] is True, payload
+
+promotion_child_prepared = payload["file_promotion_child_prepared"]
+assert promotion_child_prepared is not None, payload
+assert promotion_child_prepared["status"] == "prepared", payload
+assert len(promotion_child_prepared["roots"]) == 3, payload
+assert {root["id"] for root in promotion_child_prepared["roots"]} == {"uploads", "plugins", "themes"}, payload
+target_root = handoff["target_path"].rstrip("/")
+for root in promotion_child_prepared["roots"]:
+    assert root["active_path"] == target_root + "/wp-content/" + root["id"] + "/", payload
+    assert root["candidate_path"].startswith(target_root + "/wp-content/."), payload
+    assert root["rollback_path"].startswith(target_root + "/wp-content/."), payload
+    assert not root["staging_path"].startswith(target_root + "/wp-content/"), payload
+
+promotion_candidate = payload["local_file_promotion_candidate"]
+assert promotion_candidate is not None, payload
+assert promotion_candidate["status"] == "candidate-ready", payload
+assert promotion_candidate["file_count"] == payload["fixture_file_count"], payload
+assert promotion_candidate["copy_fingerprint"] == promotion_candidate["file_fingerprint"], payload
+assert promotion_candidate["promotion_next"] == "promote-files", payload
+assert payload["target_upload_absent_after_candidates"] is True, payload
+assert payload["target_plugin_absent_after_candidates"] is True, payload
+assert payload["target_theme_absent_after_candidates"] is True, payload
+assert payload["target_bridge_present_after_candidates"] is True, payload
+
+promotion_child_candidate = payload["file_promotion_child_candidate"]
+assert promotion_child_candidate is not None, payload
+assert promotion_child_candidate["status"] == "candidate-ready", payload
+assert promotion_child_candidate["file_count"] == payload["fixture_file_count"], payload
+assert promotion_child_candidate["copy_fingerprint"] == promotion_child_candidate["file_fingerprint"], payload
+assert all(root["candidate_ready"] is True for root in promotion_child_candidate["roots"]), payload
+
+promotion_swapped = payload["local_file_promotion_promoted"]
+assert promotion_swapped is not None, payload
+assert promotion_swapped["status"] == "verifying", payload
+assert promotion_swapped["source_untouched"] is True, payload
+
+promotion_verified = payload["local_file_promotion_verified_state"]
+assert promotion_verified is not None, payload
+assert promotion_verified["status"] == "verified", payload
+assert promotion_verified["file_count"] == payload["fixture_file_count"], payload
+assert promotion_verified["verify_file_count"] == payload["fixture_file_count"], payload
+assert promotion_verified["active_fingerprint"] == promotion_verified["file_fingerprint"], payload
+assert promotion_verified["rollback_available"] is True, payload
+assert promotion_verified["handoff_ready"] is True, payload
+assert promotion_verified["source_untouched"] is True, payload
+assert promotion_verified["promotion_next"] == "local-clone-handoff-ready", payload
+assert payload["local_file_promotion_verified"] is True, payload
+
+promotion_child_verified = payload["file_promotion_child_verified"]
+assert promotion_child_verified is not None, payload
+assert promotion_child_verified["status"] == "verified", payload
+assert promotion_child_verified["file_count"] == payload["fixture_file_count"], payload
+assert promotion_child_verified["verify_file_count"] == payload["fixture_file_count"], payload
+assert promotion_child_verified["active_fingerprint"] == promotion_child_verified["file_fingerprint"], payload
+assert promotion_child_verified["handoff_ready"] is True, payload
+assert promotion_child_verified["rollback_available"] is True, payload
+
+db_after_files = payload["database_activation_child_after_file_promotion"]
+assert db_after_files is not None, payload
+assert db_after_files["status"] == "activated", payload
+assert db_after_files["database_swapped"] is True, payload
+assert db_after_files["handoff_ready"] is True, payload
+assert db_after_files["active_files_untouched"] is False, payload
+
+assert payload["target_upload_content_after_promotion"] == "local-upload\n", payload
+assert payload["target_plugin_content_after_promotion"] == "<?php\n// local staged plugin\n", payload
+assert payload["target_theme_content_after_promotion"] == "body{display:block}\n", payload
+assert payload["target_bridge_hash_after_promotion"] == payload["bridge_fixture_hash"], payload
+runtime_after_promotion = {row["option_name"]: row["option_value"] for row in payload["target_options_after_file_promotion"]}
+assert runtime_after_promotion["blog_public"] == "0", payload
+assert "sample-local/plugin.php" in runtime_after_promotion["active_plugins"], payload
+assert "seo-geo-migration-bridge/seo-geo-migration-bridge.php" in runtime_after_promotion["active_plugins"], payload
+assert runtime_after_promotion["template"] == "sample-local", payload
+assert runtime_after_promotion["stylesheet"] == "sample-local", payload
+
+assert payload["source_after_file_promotion"] == payload["source_before"], payload
+assert payload["active_home_after_file_promotion"] == payload["active_home_before"], payload
+assert payload["active_siteurl_after_file_promotion"] == payload["active_siteurl_before"], payload
+assert payload["active_plugins_after_file_promotion"] == payload["active_plugins_before"], payload
+assert payload["active_template_after_file_promotion"] == payload["active_template_before"], payload
+assert payload["active_stylesheet_after_file_promotion"] == payload["active_stylesheet_before"], payload
+
+file_rolled_back = payload["local_file_promotion_rolled_back"]
+assert file_rolled_back is not None, payload
+assert file_rolled_back["status"] == "rolled-back", payload
+assert file_rolled_back["handoff_ready"] is False, payload
+assert file_rolled_back["rollback_available"] is False, payload
+assert file_rolled_back["promotion_next"] == "database-rollback-or-cleanup", payload
+assert payload["target_upload_absent_after_file_rollback"] is True, payload
+assert payload["target_plugin_absent_after_file_rollback"] is True, payload
+assert payload["target_theme_absent_after_file_rollback"] is True, payload
+assert payload["target_bridge_present_after_file_rollback"] is True, payload
+
+promotion_child_rollback = payload["file_promotion_child_after_rollback"]
+assert promotion_child_rollback is not None, payload
+assert promotion_child_rollback["status"] == "rolled-back", payload
+assert promotion_child_rollback["handoff_ready"] is False, payload
+assert promotion_child_rollback["rollback_available"] is False, payload
+
+db_after_file_rollback = payload["database_activation_child_after_file_rollback"]
+assert db_after_file_rollback is not None, payload
+assert db_after_file_rollback["status"] == "activated", payload
+assert db_after_file_rollback["handoff_ready"] is False, payload
+assert db_after_file_rollback["active_files_untouched"] is True, payload
+
+runtime_after_file_rollback = {row["option_name"]: row["option_value"] for row in payload["target_options_after_file_rollback"]}
+assert runtime_after_file_rollback["blog_public"] == "0", payload
+assert "seo-geo-migration-bridge/seo-geo-migration-bridge.php" in runtime_after_file_rollback["active_plugins"], payload
+assert "sample-local/plugin.php" not in runtime_after_file_rollback["active_plugins"], payload
+assert runtime_after_file_rollback["template"] == "sample-local", payload
+assert runtime_after_file_rollback["stylesheet"] == "sample-local", payload
 
 rolled_back = payload["local_database_activation_rolled_back"]
 assert rolled_back is not None, payload
@@ -1656,7 +1982,7 @@ assert activation_child_rollback["database_swapped"] is False, payload
 assert activation_child_rollback["rollback_available"] is False, payload
 
 staging_options_rollback = {row["option_name"]: row["option_value"] for row in payload["staging_options_after_activation_rollback"]}
-assert len(staging_options_rollback) == 8, payload
+assert len(staging_options_rollback) == 10, payload
 assert staging_options_rollback["home"] == destination_home, payload
 assert staging_options_rollback["siteurl"] == destination_site, payload
 assert staging_options_rollback["blog_public"] == "0", payload
@@ -1711,6 +2037,9 @@ assert payload["local_finalization_public_controller_absent"] is True, payload
 assert payload["local_database_activation_service_registered"] is True, payload
 assert payload["local_database_activation_controller_registered"] is True, payload
 assert payload["local_database_activation_public_controller_absent"] is True, payload
+assert payload["local_file_promotion_service_registered"] is True, payload
+assert payload["local_file_promotion_controller_registered"] is True, payload
+assert payload["local_file_promotion_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -1761,6 +2090,10 @@ assert payload["file_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["rewrite_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["finalization_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["database_activation_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["file_promotion_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["active_plugins_after"] == payload["active_plugins_before"], payload
+assert payload["active_template_after"] == payload["active_template_before"], payload
+assert payload["active_stylesheet_after"] == payload["active_stylesheet_before"], payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
@@ -1776,7 +2109,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone reversible database activation contract is invalid" "guarded finalization + atomic DB activation + verified rollback + zero client-file promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone reversible file promotion contract is invalid" "atomic DB activation + verified file candidates + isolated swap + file rollback + DB rollback" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone reversible database activation OK: guarded plan prepared, isolated target DB atomically activated/verified, client files stayed untouched, and rollback returned tables to staging.\n'
+printf '[smoke] Local clone reversible file promotion OK: DB activated, verified candidates swapped only inside the isolated target, target runtime activated, file rollback restored control roots, then DB rollback returned tables to staging.\n'

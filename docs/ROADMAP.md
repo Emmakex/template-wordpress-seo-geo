@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.5.3 — reversible local database activation in Migration Bridge 0.8.34.** Migration Bridge 0.8.33 is accepted on `main` at `f56b21a9d21b8c9e1edc1dfae1c54ad14f6121ea`: guarded local finalization fingerprints rewritten DB/file staging, freezes the exact activation/rollback map for the isolated target, and creates no target tables or file candidates. 0.8.34 reuses the accepted atomic `ImportDatabaseActivator` under private same-server authority: prepare freezes a recovery journal without mutation, activate overlays only the isolated target `options` staging table with `blog_public=0` + Migration Bridge control runtime and performs one atomic multi-table rename, then exact counts/control hashes verify the target. Production WordPress and client files remain untouched, and explicit rollback returns target tables to staging until file promotion starts. Next: **10E.2A.5.5.4 — reversible local file promotion**.
+Current execution pointer: **10E.2A.5.5.4 — reversible local file promotion in Migration Bridge 0.8.35.** Migration Bridge 0.8.34 is accepted on `main` at `21000d314e29d423ec971479299ce0c1a6f6f6d0`: the isolated target database activates through one atomic reversible table swap, keeps `blog_public=0` + Migration Bridge control runtime, preserves production WordPress and leaves client files untouched. 0.8.35 reuses the accepted file-promotion planner/promoter under private same-server authority: verified private uploads/plugins/themes are copied into same-filesystem candidates, fingerprinted before swap, promoted only inside the isolated target, re-hashed after activation and kept reversible through rollback siblings. The target `wp_options` runtime is updated directly without mutating source WordPress; file rollback restores the control-runtime layout and makes database rollback available again. Next: final local target smoke/handoff reporting.
+
+Migration Bridge v0.8.34 / 10E.2A.5.5.3 acceptance evidence:
+
+- PR #160 squash-merged to `main` as `21000d314e29d423ec971479299ce0c1a6f6f6d0`;
+- Foundation CI `36246110461` passed;
+- Phase 1 Package CI `36246110469` passed;
+- PHP Quality CI `36246110510` passed;
+- WordPress Smoke CI `36246110630` passed, including mutation-free activation-journal preparation, atomic isolated target-table activation, exact row/control verification, source/client-file preservation and reversible rollback to staging;
+- Accessibility & Responsive CI `36246110531` passed;
+- Performance Baseline CI `36246110527` passed;
+- Migration Bridge Release CI `36246110523` passed.
 
 Migration Bridge v0.8.33 / 10E.2A.5.5.2 acceptance evidence:
 

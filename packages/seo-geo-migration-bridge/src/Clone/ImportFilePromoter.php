@@ -63,6 +63,13 @@ final class ImportFilePromoter {
 	private ExportWorkspace $workspace;
 
 	/**
+	 * Child import state.
+	 *
+	 * @var ImportStateStore
+	 */
+	private ImportStateStore $import_state;
+
+	/**
 	 * Construct the reversible file promoter.
 	 *
 	 * @param ImportFilePromotionStateStore|null      $store               Optional promotion journal.
@@ -70,19 +77,22 @@ final class ImportFilePromoter {
 	 * @param ImportDatabaseActivationStateStore|null $database_activation Optional database activation journal.
 	 * @param CloneJobStore|null                      $jobs                Optional clone job store.
 	 * @param ExportWorkspace|null                    $workspace           Optional filesystem mutation boundary.
+	 * @param ImportStateStore|null                   $import_state        Optional child import state.
 	 */
 	public function __construct(
 		?ImportFilePromotionStateStore $store = null,
 		?ImportFilePromotionPlanner $planner = null,
 		?ImportDatabaseActivationStateStore $database_activation = null,
 		?CloneJobStore $jobs = null,
-		?ExportWorkspace $workspace = null
+		?ExportWorkspace $workspace = null,
+		?ImportStateStore $import_state = null
 	) {
 		$this->store               = $store ?? new ImportFilePromotionStateStore();
 		$this->database_activation = $database_activation ?? new ImportDatabaseActivationStateStore();
 		$this->planner             = $planner ?? new ImportFilePromotionPlanner( $this->store, $this->database_activation );
 		$this->jobs                = $jobs ?? new CloneJobStore();
 		$this->workspace           = $workspace ?? new ExportWorkspace();
+		$this->import_state        = $import_state ?? new ImportStateStore();
 	}
 
 	/**
@@ -311,7 +321,7 @@ final class ImportFilePromoter {
 			}
 		}
 
-		if ( ! $this->apply_runtime( $state['runtime_target'] ?? array() ) ) {
+		if ( ! $this->apply_runtime( $job_id, $state['runtime_target'] ?? array() ) ) {
 			return $this->rollback_internal( $job_id, $state, 'file-promotion-source-runtime-activate-failed' );
 		}
 
@@ -545,7 +555,7 @@ final class ImportFilePromoter {
 			|| (int) $state['verify_byte_count'] !== $expected_bytes
 			|| ! $this->same_hash( $state['active_fingerprint'] ?? '', $state['file_fingerprint'] ?? '' )
 			|| ! $this->runtime_ready( $job_id, $state )
-			|| ! $this->runtime_matches( $state['runtime_target'] ?? array() )
+			|| ! $this->runtime_matches( $job_id, $state['runtime_target'] ?? array() )
 		) {
 			return $this->rollback_internal( $job_id, $state, 'file-promotion-final-integrity-failed' );
 		}
@@ -632,7 +642,7 @@ final class ImportFilePromoter {
 			$state['roots'][ $index ]['rollback_ready'] = false;
 		}
 
-		if ( ! $this->apply_runtime( $state['runtime_before'] ?? array() ) ) {
+		if ( ! $this->apply_runtime( $job_id, $state['runtime_before'] ?? array() ) ) {
 			return $this->block( $job_id, $state, 'file-promotion-rollback-runtime-restore-failed' );
 		}
 
@@ -677,6 +687,45 @@ final class ImportFilePromoter {
 			return false;
 		}
 
+		$import = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			$options = $this->private_same_server_options_table( $import );
+			$root    = $this->private_same_server_root( $import );
+			if (
+				null === $options
+				|| null === $root
+				|| (string) ( $database['options_target'] ?? '' ) !== $options
+				|| true !== ( $import['destination_storage_isolated'] ?? false )
+				|| true !== ( $import['search_visibility_disabled'] ?? false )
+				|| true !== ( $import['outbound_safe'] ?? false )
+				|| true !== ( $import['backups_ready'] ?? false )
+				|| true !== ( $import['target_authorized'] ?? false )
+				|| true !== ( $import['full_payload_verified'] ?? false )
+				|| true !== ( $import['restore_allowed'] ?? false )
+				|| array() !== ( $import['blockers'] ?? array() )
+				|| '0' !== $this->local_option_value( $options, 'blog_public' )
+				|| ! $this->options_runtime_schema_ready( $options )
+			) {
+				return false;
+			}
+
+			foreach (
+				array(
+					'wp-config.php',
+					'wp-content',
+					'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php',
+					'wp-content/mu-plugins/seo-geo-migration-sandbox-bootstrap.php',
+				) as $relative
+			) {
+				$path = $this->join_path( $root, $relative );
+				if ( is_link( $path ) || ( 'wp-content' === $relative ? ! is_dir( $path ) : ! is_file( $path ) ) ) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
 		$authorized = defined( ImportPreflight::TARGET_AUTHORIZED_MARKER )
 			&& true === constant( ImportPreflight::TARGET_AUTHORIZED_MARKER );
 
@@ -691,21 +740,24 @@ final class ImportFilePromoter {
 	}
 
 	/**
-	 * Require the minimum WordPress options schema needed by update_option().
+	 * Require the minimum WordPress options schema needed for runtime updates.
 	 *
-	 * Database activation is intentionally source-faithful, but final file promotion
-	 * must not enable handoff if the activated options table cannot support the
-	 * WordPress runtime that will execute on the next request.
+	 * @param string|null $table Explicit isolated options table, or null for current WordPress.
 	 */
-	private function options_runtime_schema_ready(): bool {
+	private function options_runtime_schema_ready( ?string $table = null ): bool {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb ) {
 			return false;
 		}
 
-		$table = str_replace( '`', '``', $wpdb->options );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Read-only schema verification of the trusted active WordPress options table.
-		$columns = $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`", 0 );
+		$table = null === $table ? $wpdb->options : $table;
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table ) ) {
+			return false;
+		}
+
+		$quoted = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $table ) . chr( 96 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Read-only schema verification of a validated options table.
+		$columns = $wpdb->get_col( "SHOW COLUMNS FROM {$quoted}", 0 );
 
 		return array() === array_diff(
 			array( 'option_id', 'option_name', 'option_value', 'autoload' ),
@@ -758,9 +810,10 @@ final class ImportFilePromoter {
 	/**
 	 * Apply one bounded WordPress plugin/theme runtime after a root swap.
 	 *
-	 * @param mixed $runtime Runtime snapshot.
+	 * @param string $job_id  Child import job identifier.
+	 * @param mixed  $runtime Runtime snapshot.
 	 */
-	private function apply_runtime( mixed $runtime ): bool {
+	private function apply_runtime( string $job_id, mixed $runtime ): bool {
 		if ( ! is_array( $runtime ) ) {
 			return false;
 		}
@@ -772,31 +825,204 @@ final class ImportFilePromoter {
 			return false;
 		}
 
+		$import = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			$table = $this->private_same_server_options_table( $import );
+			if ( null === $table || ! $this->options_runtime_schema_ready( $table ) ) {
+				return false;
+			}
+
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WordPress active_plugins is a serialized list by contract.
+			$plugins_raw = serialize( $plugins );
+			global $wpdb;
+			if ( ! $wpdb instanceof wpdb ) {
+				return false;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Transaction mutates only the isolated target options table.
+			if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+				return false;
+			}
+
+			$ok = $this->local_update_option( $table, 'active_plugins', $plugins_raw )
+				&& $this->local_update_option( $table, 'template', $template )
+				&& $this->local_update_option( $table, 'stylesheet', $stylesheet )
+				&& '0' === $this->local_option_value( $table, 'blog_public' );
+			if ( ! $ok ) {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				return false;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Commit only the isolated target runtime update.
+			if ( false === $wpdb->query( 'COMMIT' ) ) {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				return false;
+			}
+
+			return $this->runtime_matches( $job_id, $runtime );
+		}
+
 		update_option( 'active_plugins', $plugins, false );
 		update_option( 'template', $template, false );
 		update_option( 'stylesheet', $stylesheet, false );
 		wp_cache_flush();
 
-		return $this->runtime_matches( $runtime );
+		return $this->runtime_matches( $job_id, $runtime );
 	}
 
 	/**
 	 * Verify the active WordPress plugin/theme runtime exactly.
 	 *
-	 * @param mixed $runtime Expected runtime snapshot.
+	 * @param string $job_id  Child import job identifier.
+	 * @param mixed  $runtime Expected runtime snapshot.
 	 */
-	private function runtime_matches( mixed $runtime ): bool {
+	private function runtime_matches( string $job_id, mixed $runtime ): bool {
 		if ( ! is_array( $runtime ) ) {
 			return false;
 		}
 
 		$expected_plugins = is_array( $runtime['active_plugins'] ?? null ) ? array_values( $runtime['active_plugins'] ) : array();
-		$active_plugins   = get_option( 'active_plugins', array() );
+		$import           = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			$table = $this->private_same_server_options_table( $import );
+			if ( null === $table ) {
+				return false;
+			}
+
+			$plugins_raw = $this->local_option_value( $table, 'active_plugins' );
+			$template    = $this->local_option_value( $table, 'template' );
+			$stylesheet  = $this->local_option_value( $table, 'stylesheet' );
+			if ( null === $plugins_raw || ! is_serialized( $plugins_raw, false ) ) {
+				return false;
+			}
+
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Verified WordPress plugin list; classes remain disabled.
+			$active_plugins = @unserialize( $plugins_raw, array( 'allowed_classes' => false ) );
+
+			return is_array( $active_plugins )
+				&& array_values( $active_plugins ) === $expected_plugins
+				&& (string) ( $runtime['template'] ?? '' ) === (string) $template
+				&& (string) ( $runtime['stylesheet'] ?? '' ) === (string) $stylesheet;
+		}
+
+		$active_plugins = get_option( 'active_plugins', array() );
 
 		return is_array( $active_plugins )
 			&& array_values( $active_plugins ) === $expected_plugins
 			&& (string) ( $runtime['template'] ?? '' ) === (string) get_option( 'template', '' )
 			&& (string) ( $runtime['stylesheet'] ?? '' ) === (string) get_option( 'stylesheet', '' );
+	}
+
+	/**
+	 * Resolve one private same-server child import.
+	 *
+	 * @param string $job_id Child import job identifier.
+	 * @return array<string,mixed>|null
+	 */
+	private function private_same_server_import( string $job_id ): ?array {
+		$import = $this->import_state->get( $job_id );
+		if (
+			! is_array( $import )
+			|| 'private-same-server' !== ( $import['transport'] ?? null )
+			|| ! is_string( $import['local_handoff_parent_job_id'] ?? null )
+			|| '' === $import['local_handoff_parent_job_id']
+		) {
+			return null;
+		}
+
+		return $import;
+	}
+
+	/**
+	 * Resolve the isolated local-clone root.
+	 *
+	 * @param array<string,mixed> $import Child import state.
+	 */
+	private function private_same_server_root( array $import ): ?string {
+		$root = is_string( $import['destination_root_path'] ?? null )
+			? untrailingslashit( wp_normalize_path( $import['destination_root_path'] ) )
+			: '';
+		if (
+			'' === $root
+			|| ! is_dir( $root )
+			|| is_link( $root )
+			|| untrailingslashit( wp_normalize_path( ABSPATH ) ) === $root
+		) {
+			return null;
+		}
+
+		return $root;
+	}
+
+	/**
+	 * Resolve the isolated activated options table.
+	 *
+	 * @param array<string,mixed> $import Child import state.
+	 */
+	private function private_same_server_options_table( array $import ): ?string {
+		$prefix = is_string( $import['destination_table_prefix'] ?? null )
+			? $import['destination_table_prefix']
+			: '';
+		$table  = $prefix . 'options';
+
+		return 1 === preg_match( '/^[A-Za-z0-9_]+$/', $prefix )
+			&& 1 === preg_match( '/^[A-Za-z0-9_]+$/', $table )
+			? $table
+			: null;
+	}
+
+	/**
+	 * Read one option from an explicit validated options table.
+	 *
+	 * @param string $table Options table.
+	 * @param string $name  Option name.
+	 */
+	private function local_option_value( string $table, string $name ): ?string {
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb || 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table ) ) {
+			return null;
+		}
+
+		$quoted = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $table ) . chr( 96 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only option lookup against a validated isolated table.
+		$value = $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Validated identifier cannot be parameterized.
+				"SELECT option_value FROM {$quoted} WHERE option_name = %s LIMIT 1",
+				$name
+			)
+		);
+
+		return is_string( $value ) ? $value : null;
+	}
+
+	/**
+	 * Update an existing isolated target option without touching source WordPress.
+	 *
+	 * @param string $table Options table.
+	 * @param string $name  Option name.
+	 * @param string $value Option value.
+	 */
+	private function local_update_option( string $table, string $name, string $value ): bool {
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb || 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Mutates only one validated isolated target options table.
+		$updated = $wpdb->update(
+			$table,
+			array( 'option_value' => $value ),
+			array( 'option_name' => $name ),
+			array( '%s' ),
+			array( '%s' )
+		);
+
+		if ( false === $updated ) {
+			return false;
+		}
+
+		return 1 === $updated || $this->local_option_value( $table, $name ) === $value;
 	}
 
 	/**
