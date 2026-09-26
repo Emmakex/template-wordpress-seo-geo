@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.4.2 private local handoff/intake/payload/database/file acceptance.
+# Phase 10E.2A.5.3.1-5.5.1 private local handoff/staging/rewrite acceptance.
 
-printf '[smoke] Checking private same-server local-clone handoff, database staging and private file staging.\n'
+printf '[smoke] Checking private same-server local-clone staging and serialization-safe environment rewrite.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -11,6 +11,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -28,6 +29,9 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestorer;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriter;
+use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
@@ -54,7 +58,9 @@ $options = array(
 	LocalClonePayloadVerificationStateStore::OPTION_NAME,
 	LocalCloneDatabaseRestoreStateStore::OPTION_NAME,
 	LocalCloneFileRestoreStateStore::OPTION_NAME,
+	LocalCloneEnvironmentRewriteStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
+	ImportRewriteStateStore::OPTION_NAME,
 	ImportFileStateStore::OPTION_NAME,
 	ImportDatabaseStateStore::OPTION_NAME,
 	ImportPayloadStateStore::OPTION_NAME,
@@ -73,6 +79,7 @@ $target_preflight = Plugin::local_clone_target_preflight();
 $local_payload     = Plugin::local_clone_payload_verifier();
 $local_database    = Plugin::local_clone_database_restorer();
 $local_files       = Plugin::local_clone_file_restorer();
+$local_rewriter    = Plugin::local_clone_environment_rewriter();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -84,6 +91,7 @@ if (
 	|| ! $local_payload instanceof LocalClonePayloadVerifier
 	|| ! $local_database instanceof LocalCloneDatabaseRestorer
 	|| ! $local_files instanceof LocalCloneFileRestorer
+	|| ! $local_rewriter instanceof LocalCloneEnvironmentRewriter
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -115,6 +123,10 @@ $target_path   = trailingslashit( wp_normalize_path( ABSPATH ) ) . 'nuevaweb-pac
 $target_url    = trailingslashit( home_url( '/nuevaweb-package-handoff/' ) );
 $source_prefix = $GLOBALS['wpdb']->prefix;
 $target_prefix = $source_prefix . 'sghandoff_';
+$source_home   = home_url( '/' );
+$source_site   = site_url( '/' );
+$options_table = $source_prefix . 'options';
+$posts_table   = $source_prefix . 'posts';
 $source_table  = $source_prefix . 'sg_local_demo';
 $quoted_source = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $source_table ) . chr( 96 );
 
@@ -137,6 +149,8 @@ $source_snapshot = static function () use ( $quoted_source ): array {
 	return is_array( $rows ) ? $rows : array();
 };
 $source_before = $source_snapshot();
+$active_home_before    = (string) get_option( 'home', '' );
+$active_siteurl_before = (string) get_option( 'siteurl', '' );
 
 $job = $jobs->create( 'local-clone', $job_id );
 if ( ! is_array( $job ) ) {
@@ -144,34 +158,165 @@ if ( ! is_array( $job ) ) {
 }
 
 $source_fingerprint = hash( 'sha256', 'local-handoff-source:' . $job_id );
-$table_dir          = 'database/tables/' . substr( hash( 'sha256', $source_table ), 0, 20 );
-$schema_sql         = 'CREATE TABLE `' . $source_table . '` ('
-	. '`id` bigint unsigned NOT NULL, '
-	. '`title` varchar(190) NOT NULL, '
-	. 'PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;' . "\n";
-$schema_written = $workspace->write( $job_id, $table_dir . '/schema.sql', $schema_sql );
 
-$chunk_payload = array(
-	'schema_version'   => 1,
-	'table'            => $source_table,
-	'strategy'         => 'primary-key',
-	'cursor_column'    => 'id',
-	'cursor_start_b64' => '',
-	'offset_start'     => 0,
-	'chunk_index'      => 0,
-	'row_count'        => 3,
-	'columns'          => array( 'id', 'title' ),
-	'value_encoding'   => 'base64-or-null',
-	'rows'             => array(
-		array( base64_encode( '1' ), base64_encode( 'alpha' ) ),
-		array( base64_encode( '2' ), base64_encode( 'beta' ) ),
-		array( base64_encode( '3' ), base64_encode( 'gamma' ) ),
+/**
+ * Encode one exported database row.
+ *
+ * @param list<string|null> $values Raw values.
+ * @return list<string|null>
+ */
+$encode_row = static function ( array $values ): array {
+	return array_map(
+		static function ( ?string $value ): ?string {
+			if ( null === $value ) {
+				return null;
+			}
+
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Binary-safe migration fixture encoding.
+			return base64_encode( $value );
+		},
+		$values
+	);
+};
+
+/**
+ * Write one source table schema/chunk and return manifest metadata.
+ *
+ * @param string                  $table      Source table.
+ * @param list<string>            $columns    Exported columns.
+ * @param string                  $id_column  Cursor/primary-key column.
+ * @param list<list<string|null>> $rows       Raw rows.
+ * @param string                  $schema_sql CREATE TABLE statement.
+ * @return array<string,mixed>
+ */
+$write_table = static function (
+	string $table,
+	array $columns,
+	string $id_column,
+	array $rows,
+	string $schema_sql
+) use ( $workspace, $job_id, $encode_row ): array {
+	$table_dir = 'database/tables/' . substr( hash( 'sha256', $table ), 0, 20 );
+	$schema    = $workspace->write( $job_id, $table_dir . '/schema.sql', $schema_sql . "\n" );
+	if ( ! is_array( $schema ) ) {
+		throw new RuntimeException( 'Could not write local rewrite schema fixture.' );
+	}
+
+	$encoded_rows = array_map( $encode_row, $rows );
+	$chunk        = array(
+		'schema_version'   => 1,
+		'table'            => $table,
+		'strategy'         => 'primary-key',
+		'cursor_column'    => $id_column,
+		'cursor_start_b64' => '',
+		'offset_start'     => 0,
+		'chunk_index'      => 0,
+		'row_count'        => count( $encoded_rows ),
+		'columns'          => $columns,
+		'value_encoding'   => 'base64-or-null',
+		'rows'             => $encoded_rows,
+	);
+	$chunk_json = wp_json_encode( $chunk, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	if ( ! is_string( $chunk_json ) ) {
+		throw new RuntimeException( 'Could not encode local rewrite chunk fixture.' );
+	}
+	$chunk_path = $table_dir . '/chunks/000000.json';
+	$written    = $workspace->write( $job_id, $chunk_path, $chunk_json );
+	if ( ! is_array( $written ) ) {
+		throw new RuntimeException( 'Could not write local rewrite chunk fixture.' );
+	}
+
+	return array(
+		'schema_version' => 1,
+		'name'           => $table,
+		'slug'           => substr( hash( 'sha256', $table ), 0, 20 ),
+		'schema'         => array(
+			'path'   => $table_dir . '/schema.sql',
+			'bytes'  => (int) $schema['bytes'],
+			'sha256' => (string) $schema['sha256'],
+		),
+		'strategy'       => 'primary-key',
+		'cursor_column'  => $id_column,
+		'order_columns'  => array(),
+		'columns'        => $columns,
+		'chunks'         => array(
+			array(
+				'index'      => 0,
+				'path'       => $chunk_path,
+				'row_count'  => count( $encoded_rows ),
+				'byte_count' => (int) $written['bytes'],
+				'sha256'     => (string) $written['sha256'],
+			),
+		),
+		'chunk_count'    => 1,
+		'row_count'      => count( $encoded_rows ),
+		'byte_count'     => (int) $written['bytes'],
+		'complete'       => true,
+	);
+};
+
+$serialized_value = serialize( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Fixture intentionally exercises serialization-safe rewrite.
+	array(
+		'url'   => $source_home . 'serialized',
+		'asset' => $source_home . 'wp-content/uploads/2026/local.txt',
+	)
+);
+$json_value = wp_json_encode(
+	array(
+		'url'    => $source_home . 'json',
+		'nested' => array( 'site' => $source_site . 'admin' ),
+	),
+	JSON_UNESCAPED_SLASHES
+);
+if ( ! is_string( $json_value ) ) {
+	throw new RuntimeException( 'Could not encode local rewrite JSON fixture.' );
+}
+
+$options_rows = array(
+	array( '1', 'home', $source_home, 'yes' ),
+	array( '2', 'siteurl', $source_site, 'yes' ),
+	array( '3', 'plain_url', $source_home . 'catalog/item?x=1#top', 'yes' ),
+	array( '4', 'serialized_payload', $serialized_value, 'yes' ),
+	array( '5', 'json_payload', $json_value, 'yes' ),
+	array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context', 'yes' ),
+);
+$posts_rows = array(
+	array(
+		'1',
+		'Visit ' . $source_home . 'about and keep https://external.example.test/reference',
+		'Media ' . $source_home . 'wp-content/uploads/2026/local.txt',
+		'',
 	),
 );
-$chunk_json = wp_json_encode( $chunk_payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
-$chunk_written = is_string( $chunk_json )
-	? $workspace->write( $job_id, $table_dir . '/chunks/000000.json', $chunk_json )
-	: null;
+
+$options_schema = 'CREATE TABLE `' . $options_table . '` ('
+	. '`option_id` bigint unsigned NOT NULL, '
+	. '`option_name` varchar(191) NOT NULL, '
+	. '`option_value` longtext NOT NULL, '
+	. '`autoload` varchar(20) NOT NULL DEFAULT \'yes\', '
+	. 'PRIMARY KEY (`option_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
+$posts_schema = 'CREATE TABLE `' . $posts_table . '` ('
+	. '`ID` bigint unsigned NOT NULL, '
+	. '`post_content` longtext NOT NULL, '
+	. '`post_excerpt` text NOT NULL, '
+	. '`post_content_filtered` longtext NOT NULL, '
+	. 'PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
+
+$options_meta = $write_table(
+	$options_table,
+	array( 'option_id', 'option_name', 'option_value', 'autoload' ),
+	'option_id',
+	$options_rows,
+	$options_schema
+);
+$posts_meta = $write_table(
+	$posts_table,
+	array( 'ID', 'post_content', 'post_excerpt', 'post_content_filtered' ),
+	'ID',
+	$posts_rows,
+	$posts_schema
+);
+
 $files = array(
 	array( 'root' => 'uploads', 'relative' => '2026/local.txt', 'content' => "local-upload\n" ),
 	array( 'root' => 'plugins', 'relative' => 'sample-local/plugin.php', 'content' => "<?php\n// local staged plugin\n" ),
@@ -209,52 +354,21 @@ foreach ( $files as $file ) {
 	$root_stats[ $file['root'] ]['byte_count'] += (int) $written['bytes'];
 	$total_file_bytes += (int) $written['bytes'];
 }
-if ( ! is_array( $schema_written ) || ! is_array( $chunk_written ) ) {
-	throw new RuntimeException( 'Could not write local database payload fixtures.' );
-}
-
-$table_meta = array(
-	'schema_version' => 1,
-	'name'           => $source_table,
-	'slug'           => substr( hash( 'sha256', $source_table ), 0, 20 ),
-	'schema'         => array(
-		'path'   => $table_dir . '/schema.sql',
-		'bytes'  => (int) $schema_written['bytes'],
-		'sha256' => (string) $schema_written['sha256'],
-	),
-	'strategy'       => 'primary-key',
-	'cursor_column'  => 'id',
-	'order_columns'  => array(),
-	'columns'        => array( 'id', 'title' ),
-	'chunks'         => array(
-		array(
-			'index'      => 0,
-			'path'       => $table_dir . '/chunks/000000.json',
-			'row_count'  => 3,
-			'byte_count' => (int) $chunk_written['bytes'],
-			'sha256'     => (string) $chunk_written['sha256'],
-		),
-	),
-	'chunk_count'    => 1,
-	'row_count'      => 3,
-	'byte_count'     => (int) $chunk_written['bytes'],
-	'complete'       => true,
-);
 
 $database_manifest = array(
 	'schema_version'              => 1,
 	'package_id'                  => $job_id,
 	'payload_class'               => 'database',
 	'source'                      => array(
-		'home_url'     => home_url( '/' ),
-		'site_url'     => site_url( '/' ),
+		'home_url'     => $source_home,
+		'site_url'     => $source_site,
 		'table_prefix' => $source_prefix,
 	),
-	'tables'                      => array( $table_meta ),
-	'table_count'                 => 1,
-	'row_count'                   => 3,
-	'payload_bytes'               => (int) $table_meta['byte_count'],
-	'chunk_count'                 => 1,
+	'tables'                      => array( $options_meta, $posts_meta ),
+	'table_count'                 => 2,
+	'row_count'                   => count( $options_rows ) + count( $posts_rows ),
+	'payload_bytes'               => (int) $options_meta['byte_count'] + (int) $posts_meta['byte_count'],
+	'chunk_count'                 => 2,
 	'production_source_read_only' => true,
 	'credentials_in_payload'      => false,
 	'contains_private_site_data'  => true,
@@ -345,8 +459,8 @@ $manifest = array(
 	'package_id'     => $job_id,
 	'operation'      => 'local-clone',
 	'source'         => array(
-		'home_url'           => home_url( '/' ),
-		'site_url'           => site_url( '/' ),
+		'home_url'           => $source_home,
+		'site_url'           => $source_site,
 		'wordpress_version'  => get_bloginfo( 'version' ),
 		'php_version'        => PHP_VERSION,
 		'source_fingerprint' => $source_fingerprint,
@@ -355,8 +469,8 @@ $manifest = array(
 		'database' => array(
 			'manifest_path'   => 'database/manifest.json',
 			'manifest_sha256' => (string) $database_written['sha256'],
-			'row_count'       => 3,
-			'chunk_count'     => 1,
+			'row_count'       => (int) $database_manifest['row_count'],
+			'chunk_count'     => (int) $database_manifest['chunk_count'],
 			'payload_bytes'   => (int) $database_manifest['payload_bytes'],
 		),
 		'files'    => array(
@@ -397,7 +511,7 @@ $inventory->save(
 	array(
 		'status'       => 'complete',
 		'database'     => array(
-			'estimated_rows'  => 3,
+			'estimated_rows'  => (int) $database_manifest['row_count'],
 			'estimated_bytes' => 4096,
 		),
 		'roots'        => array(),
@@ -508,18 +622,47 @@ for ( $i = 0; $i < 140; ++$i ) {
 $local_database_verified = $local_database->verified_snapshot( $job_id );
 $local_database_plan = $local_database->staging_plan( $job_id );
 $database_child_state = '' !== $payload_child_id ? ( new ImportDatabaseStateStore() )->get( $payload_child_id ) : null;
-$staging_table = is_array( $local_database_plan )
-	&& is_array( $local_database_plan['tables'] ?? null )
-	&& is_array( $local_database_plan['tables'][0] ?? null )
-	? (string) ( $local_database_plan['tables'][0]['staging_table'] ?? '' )
-	: '';
-$quoted_staging = '' !== $staging_table
-	? chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $staging_table ) . chr( 96 )
-	: '';
-$staging_rows = '' !== $quoted_staging
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of deterministic staging table.
-	? $GLOBALS['wpdb']->get_results( "SELECT id, title FROM {$quoted_staging} ORDER BY id ASC", ARRAY_A )
-	: array();
+
+$staging_by_source = array();
+if ( is_array( $local_database_plan ) && is_array( $local_database_plan['tables'] ?? null ) ) {
+	foreach ( $local_database_plan['tables'] as $table_plan ) {
+		if (
+			is_array( $table_plan )
+			&& is_string( $table_plan['source_table'] ?? null )
+			&& is_string( $table_plan['staging_table'] ?? null )
+		) {
+			$staging_by_source[ $table_plan['source_table'] ] = $table_plan['staging_table'];
+		}
+	}
+}
+$options_staging_table = (string) ( $staging_by_source[ $options_table ] ?? '' );
+$posts_staging_table   = (string) ( $staging_by_source[ $posts_table ] ?? '' );
+$quote_table = static function ( string $table ): string {
+	return chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $table ) . chr( 96 );
+};
+
+$read_staged_options = static function () use ( $options_staging_table, $quote_table ): array {
+	if ( '' === $options_staging_table ) {
+		return array();
+	}
+	$quoted = $quote_table( $options_staging_table );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of deterministic job-owned staging table.
+	$rows = $GLOBALS['wpdb']->get_results( "SELECT option_id, option_name, option_value FROM {$quoted} ORDER BY option_id ASC", ARRAY_A );
+
+	return is_array( $rows ) ? $rows : array();
+};
+$read_staged_posts = static function () use ( $posts_staging_table, $quote_table ): array {
+	if ( '' === $posts_staging_table ) {
+		return array();
+	}
+	$quoted = $quote_table( $posts_staging_table );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of deterministic job-owned staging table.
+	$rows = $GLOBALS['wpdb']->get_results( "SELECT ID, post_content, post_excerpt, post_content_filtered FROM {$quoted} ORDER BY ID ASC", ARRAY_A );
+
+	return is_array( $rows ) ? $rows : array();
+};
+$staging_options_before_rewrite = $read_staged_options();
+$staging_posts_before_rewrite   = $read_staged_posts();
 $source_after_database = $source_snapshot();
 
 $table_pattern_after_database = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
@@ -554,6 +697,19 @@ $target_upload_absent_after_files = ! file_exists( trailingslashit( $target_path
 $target_plugin_absent_after_files = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
 $target_theme_absent_after_files = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
 $target_bridge_present_after_files = is_file( trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php' );
+
+$local_rewrite_mid = $local_rewriter->advance( $job_id, 1 );
+$local_rewrite_state = $local_rewrite_mid;
+for ( $i = 0; $i < 220; ++$i ) {
+	if ( is_array( $local_rewrite_state ) && in_array( $local_rewrite_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_rewrite_state = $local_rewriter->advance( $job_id, 1 );
+}
+$local_rewrite_verified = $local_rewriter->verified_snapshot( $job_id );
+$rewrite_child_state = '' !== $payload_child_id ? ( new ImportRewriteStateStore() )->get( $payload_child_id ) : null;
+$staging_options_after_rewrite = $read_staged_options();
+$staging_posts_after_rewrite   = $read_staged_posts();
 $job_before_mutation = $jobs->get( $job_id );
 
 $table_pattern = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
@@ -576,12 +732,16 @@ if ( is_array( $payload_child_import ) && is_array( $target_preflight_state ) ) 
 }
 
 $target_verified_after_mutation = null;
+$local_rewrite_verified_after_mutation = null;
+$local_rewrite_after_mutation = null;
 $local_payload_verified_after_mutation = null;
 $local_payload_after_mutation = null;
 $payload_child_after_mutation = null;
 $created_table = $target_prefix . 'tamper_guard';
 $GLOBALS['wpdb']->query( "CREATE TABLE {$created_table} (id bigint unsigned NOT NULL)" );
 $target_verified_after_mutation = $target_preflight->verified_snapshot( $job_id );
+$local_rewrite_verified_after_mutation = $local_rewriter->verified_snapshot( $job_id );
+$local_rewrite_after_mutation = $local_rewriter->advance( $job_id, 1 );
 $local_payload_verified_after_mutation = $local_payload->verified_snapshot( $job_id );
 $local_payload_after_mutation = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $payload_child_after_mutation = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
@@ -589,10 +749,15 @@ $GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$created_table}" );
 
 $local_payload_after_recovery = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $payload_child_after_recovery = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
-$local_database_verified_after_recovery = $local_database->verified_snapshot( $job_id );
+$local_database_verified_before_recovery = $local_database->verified_snapshot( $job_id );
 $local_database_after_recovery = $local_database->advance( $job_id, 10 );
-$local_files_verified_after_recovery = $local_files->verified_snapshot( $job_id );
+$local_database_verified_after_recovery = $local_database->verified_snapshot( $job_id );
+$local_files_verified_before_recovery = $local_files->verified_snapshot( $job_id );
 $local_files_after_recovery = $local_files->advance( $job_id, 1, 1024 * 1024 );
+$local_files_verified_after_recovery = $local_files->verified_snapshot( $job_id );
+$local_rewrite_verified_before_recovery = $local_rewriter->verified_snapshot( $job_id );
+$local_rewrite_after_recovery = $local_rewriter->advance( $job_id, 1 );
+$local_rewrite_verified_after_recovery = $local_rewriter->verified_snapshot( $job_id );
 $job_after_recovery = $jobs->get( $job_id );
 
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
@@ -600,6 +765,8 @@ if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$local_rewrite_verified_after_archive_tamper = $local_rewriter->verified_snapshot( $job_id );
+$local_rewrite_after_archive_tamper = $local_rewriter->advance( $job_id, 1 );
 $local_files_verified_after_archive_tamper = $local_files->verified_snapshot( $job_id );
 $local_files_after_archive_tamper = $local_files->advance( $job_id, 1, 1024 * 1024 );
 $local_database_verified_after_archive_tamper = $local_database->verified_snapshot( $job_id );
@@ -636,7 +803,16 @@ $file_autoload = $GLOBALS['wpdb']->get_var(
 	)
 );
 
+$rewrite_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneEnvironmentRewriteStateStore::OPTION_NAME
+	)
+);
+
 $source_after_all = $source_snapshot();
+$active_home_after    = (string) get_option( 'home', '' );
+$active_siteurl_after = (string) get_option( 'siteurl', '' );
 
 echo wp_json_encode(
 	array(
@@ -659,13 +835,23 @@ echo wp_json_encode(
 		'local_database_verified'     => is_array( $local_database_verified ),
 		'local_database_plan'         => $local_database_plan,
 		'database_child_state'        => $database_child_state,
-		'staging_table'               => $staging_table,
-		'staging_rows'                => $staging_rows,
+		'options_table'               => $options_table,
+		'posts_table'                 => $posts_table,
+		'options_staging_table'       => $options_staging_table,
+		'posts_staging_table'         => $posts_staging_table,
+		'staging_options_before_rewrite' => $staging_options_before_rewrite,
+		'staging_posts_before_rewrite' => $staging_posts_before_rewrite,
+		'staging_options_after_rewrite' => $staging_options_after_rewrite,
+		'staging_posts_after_rewrite' => $staging_posts_after_rewrite,
 		'source_table'                => $source_table,
 		'source_prefix'               => $source_prefix,
 		'source_before'               => $source_before,
 		'source_after_database'       => $source_after_database,
 		'source_after_all'            => $source_after_all,
+		'active_home_before'          => $active_home_before,
+		'active_home_after'           => $active_home_after,
+		'active_siteurl_before'       => $active_siteurl_before,
+		'active_siteurl_after'        => $active_siteurl_after,
 		'target_table_count_after_database' => is_array( $target_tables_after_database ) ? count( $target_tables_after_database ) : -1,
 		'local_files_mid'             => $local_files_mid,
 		'local_files_state'           => $local_files_state,
@@ -679,21 +865,34 @@ echo wp_json_encode(
 		'target_plugin_absent_after_files' => $target_plugin_absent_after_files,
 		'target_theme_absent_after_files' => $target_theme_absent_after_files,
 		'target_bridge_present_after_files' => $target_bridge_present_after_files,
+		'local_rewrite_mid'           => $local_rewrite_mid,
+		'local_rewrite_state'         => $local_rewrite_state,
+		'local_rewrite_verified'      => is_array( $local_rewrite_verified ),
+		'rewrite_child_state'         => $rewrite_child_state,
 		'job_before_mutation'         => $job_before_mutation,
 		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
+		'local_rewrite_verified_after_mutation' => is_array( $local_rewrite_verified_after_mutation ),
+		'local_rewrite_after_mutation' => $local_rewrite_after_mutation,
 		'local_payload_verified_after_mutation' => is_array( $local_payload_verified_after_mutation ),
 		'local_payload_after_mutation' => $local_payload_after_mutation,
 		'payload_child_after_mutation' => $payload_child_after_mutation,
 		'local_payload_after_recovery' => $local_payload_after_recovery,
-		'local_database_verified_after_recovery' => is_array( $local_database_verified_after_recovery ),
+		'local_database_verified_before_recovery' => is_array( $local_database_verified_before_recovery ),
 		'local_database_after_recovery' => $local_database_after_recovery,
-		'local_files_verified_after_recovery' => is_array( $local_files_verified_after_recovery ),
+		'local_database_verified_after_recovery' => is_array( $local_database_verified_after_recovery ),
+		'local_files_verified_before_recovery' => is_array( $local_files_verified_before_recovery ),
 		'local_files_after_recovery' => $local_files_after_recovery,
+		'local_files_verified_after_recovery' => is_array( $local_files_verified_after_recovery ),
+		'local_rewrite_verified_before_recovery' => is_array( $local_rewrite_verified_before_recovery ),
+		'local_rewrite_after_recovery' => $local_rewrite_after_recovery,
+		'local_rewrite_verified_after_recovery' => is_array( $local_rewrite_verified_after_recovery ),
 		'payload_child_after_recovery' => $payload_child_after_recovery,
 		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
+		'local_rewrite_verified_after_archive_tamper' => is_array( $local_rewrite_verified_after_archive_tamper ),
+		'local_rewrite_after_archive_tamper' => $local_rewrite_after_archive_tamper,
 		'local_files_verified_after_archive_tamper' => is_array( $local_files_verified_after_archive_tamper ),
 		'local_files_after_archive_tamper' => $local_files_after_archive_tamper,
 		'local_database_verified_after_archive_tamper' => is_array( $local_database_verified_after_archive_tamper ),
@@ -724,11 +923,15 @@ echo wp_json_encode(
 		'local_files_service_registered' => $local_files instanceof LocalCloneFileRestorer,
 		'local_files_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFileController::ACTION ),
 		'local_files_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFileController::ACTION ),
+		'local_rewrite_service_registered' => $local_rewriter instanceof LocalCloneEnvironmentRewriter,
+		'local_rewrite_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalEnvironmentRewriteController::ACTION ),
+		'local_rewrite_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalEnvironmentRewriteController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
 		'database_autoload'           => $database_autoload,
 		'file_autoload'               => $file_autoload,
+		'rewrite_autoload'            => $rewrite_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -864,9 +1067,9 @@ assert local_db is not None, payload
 assert local_db["status"] == "ready", payload
 assert local_db["stage"] == "complete", payload
 assert local_db["destination_prefix"] == handoff["target_table_prefix"], payload
-assert local_db["rows_restored"] == 3, payload
-assert local_db["tables_completed"] == 1, payload
-assert local_db["table_count"] == 1, payload
+assert local_db["rows_restored"] == 7, payload
+assert local_db["tables_completed"] == 2, payload
+assert local_db["table_count"] == 2, payload
 assert local_db["active_tables_untouched"] is True, payload
 assert local_db["target_tables_untouched"] is True, payload
 assert local_db["client_content_untouched"] is True, payload
@@ -878,8 +1081,8 @@ db_child = payload["database_child_state"]
 assert db_child is not None, payload
 assert db_child["status"] == "complete", payload
 assert db_child["stage"] == "complete", payload
-assert db_child["rows_restored"] == 3, payload
-assert db_child["tables_completed"] == 1, payload
+assert db_child["rows_restored"] == 7, payload
+assert db_child["tables_completed"] == 2, payload
 assert db_child["active_tables_untouched"] is True, payload
 assert db_child["destination_prefix"] == handoff["target_table_prefix"], payload
 assert db_child["staging_namespace"] == local_db["staging_namespace"], payload
@@ -888,21 +1091,27 @@ db_plan = payload["local_database_plan"]
 assert db_plan is not None, payload
 assert db_plan["destination_prefix"] == handoff["target_table_prefix"], payload
 assert db_plan["staging_namespace"] == local_db["staging_namespace"], payload
-assert len(db_plan["tables"]) == 1, payload
-assert db_plan["tables"][0]["source_table"] == payload["source_table"], payload
-assert db_plan["tables"][0]["target_table"] == handoff["target_table_prefix"] + payload["source_table"][len(payload["source_prefix"]):], payload
-assert db_plan["tables"][0]["staging_table"] == payload["staging_table"], payload
-assert not payload["staging_table"].startswith(payload["source_prefix"]), payload
-assert not payload["staging_table"].startswith(handoff["target_table_prefix"]), payload
+assert len(db_plan["tables"]) == 2, payload
+db_tables = {item["source_table"]: item for item in db_plan["tables"]}
+assert set(db_tables) == {payload["options_table"], payload["posts_table"]}, payload
+for source_name, staging_name in (
+    (payload["options_table"], payload["options_staging_table"]),
+    (payload["posts_table"], payload["posts_staging_table"]),
+):
+    table = db_tables[source_name]
+    assert table["staging_table"] == staging_name, payload
+    assert table["target_table"] == handoff["target_table_prefix"] + source_name[len(payload["source_prefix"]):], payload
+    assert not staging_name.startswith(payload["source_prefix"]), payload
+    assert not staging_name.startswith(handoff["target_table_prefix"]), payload
 
-assert payload["staging_rows"] == [
-    {"id": "1", "title": "alpha"},
-    {"id": "2", "title": "beta"},
-    {"id": "3", "title": "gamma"},
-], payload
+options_before = {row["option_name"]: row["option_value"] for row in payload["staging_options_before_rewrite"]}
+assert set(options_before) == {"home", "siteurl", "plain_url", "serialized_payload", "json_payload", "api_token"}, payload
+assert len(payload["staging_posts_before_rewrite"]) == 1, payload
 assert payload["source_before"] == [{"id": "999", "title": "production-sentinel"}], payload
 assert payload["source_after_database"] == payload["source_before"], payload
 assert payload["source_after_all"] == payload["source_before"], payload
+assert payload["active_home_after"] == payload["active_home_before"], payload
+assert payload["active_siteurl_after"] == payload["active_siteurl_before"], payload
 assert payload["target_table_count_after_database"] == 0, payload
 
 files_mid = payload["local_files_mid"]
@@ -953,6 +1162,74 @@ assert payload["target_plugin_absent_after_files"] is True, payload
 assert payload["target_theme_absent_after_files"] is True, payload
 assert payload["target_bridge_present_after_files"] is True, payload
 
+rewrite_mid = payload["local_rewrite_mid"]
+assert rewrite_mid is not None, payload
+assert rewrite_mid["status"] == "running", payload
+assert rewrite_mid["stage"] in ("rewrite", "verify"), payload
+
+rewrite = payload["local_rewrite_state"]
+assert rewrite is not None, payload
+assert rewrite["status"] == "ready", payload
+assert rewrite["stage"] == "complete", payload
+assert rewrite["active_tables_untouched"] is True, payload
+assert rewrite["active_roots_untouched"] is True, payload
+assert rewrite["target_unactivated"] is True, payload
+assert rewrite["verify_source_urls"] == 0, payload
+assert rewrite["home_rewrites"] == 1, payload
+assert rewrite["siteurl_rewrites"] == 1, payload
+assert rewrite["rows_scanned"] == 7, payload
+assert rewrite["rows_changed"] >= 6, payload
+assert rewrite["values_changed"] >= 7, payload
+assert rewrite["same_origin_rewrites"] >= 4, payload
+assert rewrite["upload_url_rewrites"] >= 2, payload
+assert rewrite["serialized_values"] >= 1, payload
+assert rewrite["json_values"] >= 1, payload
+assert rewrite["credential_skips"] == 1, payload
+assert rewrite["rewrite_next"] == "finalization-plan", payload
+assert rewrite["blockers"] == [], payload
+assert "credential-values-kept-opaque" in rewrite["advisories"], payload
+assert payload["local_rewrite_verified"] is True, payload
+
+rewrite_child = payload["rewrite_child_state"]
+assert rewrite_child is not None, payload
+assert rewrite_child["status"] == "complete", payload
+assert rewrite_child["stage"] == "complete", payload
+assert rewrite_child["verify_source_urls"] == 0, payload
+assert rewrite_child["active_tables_untouched"] is True, payload
+assert rewrite_child["active_roots_untouched"] is True, payload
+
+source_home = rewrite["source_home_url"]
+source_site = rewrite["source_site_url"]
+destination_home = rewrite["destination_home_url"]
+destination_site = rewrite["destination_site_url"]
+assert destination_home == handoff["target_url"], payload
+assert destination_site == handoff["target_url"], payload
+assert source_home != destination_home, payload
+assert source_site != destination_site, payload
+
+options_after = {row["option_name"]: row["option_value"] for row in payload["staging_options_after_rewrite"]}
+assert options_after["home"] == destination_home, payload
+assert options_after["siteurl"] == destination_site, payload
+assert options_after["plain_url"] == destination_home + "catalog/item?x=1#top", payload
+assert options_after["serialized_payload"] != options_before["serialized_payload"], payload
+assert destination_home + "serialized" in options_after["serialized_payload"], payload
+assert destination_home + "wp-content/uploads/2026/local.txt" in options_after["serialized_payload"], payload
+json_after = json.loads(options_after["json_payload"])
+assert json_after["url"] == destination_home + "json", payload
+assert json_after["nested"]["site"] == destination_site + "admin", payload
+assert options_after["api_token"] == options_before["api_token"], payload
+
+posts_after = payload["staging_posts_after_rewrite"]
+assert len(posts_after) == 1, payload
+assert posts_after[0]["post_content"] == "Visit " + destination_home + "about and keep https://external.example.test/reference", payload
+assert posts_after[0]["post_excerpt"] == "Media " + destination_home + "wp-content/uploads/2026/local.txt", payload
+assert posts_after[0]["post_content_filtered"] == "", payload
+
+assert payload["local_rewrite_verified_after_mutation"] is False, payload
+rewrite_blocked = payload["local_rewrite_after_mutation"]
+assert rewrite_blocked is not None and rewrite_blocked["status"] == "blocked", payload
+assert "local-rewrite-parent-authority-unavailable" in rewrite_blocked["blockers"], payload
+
 assert payload["local_payload_verified_after_mutation"] is False, payload
 blocked_parent = payload["local_payload_after_mutation"]
 assert blocked_parent is not None and blocked_parent["status"] == "blocked", payload
@@ -974,20 +1251,35 @@ assert recovered_child is not None, payload
 assert recovered_child["status"] == "payload-verified", payload
 assert recovered_child["full_payload_verified"] is True, payload
 assert recovered_child["restore_allowed"] is True, payload
-assert payload["local_database_verified_after_recovery"] is True, payload
+assert payload["local_database_verified_before_recovery"] is False, payload
 db_recovered = payload["local_database_after_recovery"]
 assert db_recovered is not None and db_recovered["status"] == "ready", payload
 assert db_recovered["stage"] == "complete", payload
-assert payload["local_files_verified_after_recovery"] is True, payload
+assert db_recovered["blockers"] == [], payload
+assert payload["local_database_verified_after_recovery"] is True, payload
+assert payload["local_files_verified_before_recovery"] is False, payload
 files_recovered = payload["local_files_after_recovery"]
 assert files_recovered is not None and files_recovered["status"] == "ready", payload
 assert files_recovered["stage"] == "complete", payload
 assert files_recovered["private_staging_verified"] is True, payload
+assert files_recovered["blockers"] == [], payload
+assert payload["local_files_verified_after_recovery"] is True, payload
+assert payload["local_rewrite_verified_before_recovery"] is False, payload
+rewrite_recovered = payload["local_rewrite_after_recovery"]
+assert rewrite_recovered is not None and rewrite_recovered["status"] == "ready", payload
+assert rewrite_recovered["stage"] == "complete", payload
+assert rewrite_recovered["verify_source_urls"] == 0, payload
+assert payload["local_rewrite_verified_after_recovery"] is True, payload
 
 job_after_recovery = payload["job_after_recovery"]
 assert job_after_recovery["status"] == "active", payload
-assert job_after_recovery["phase"] == "restore-files", payload
-assert job_after_recovery["cursor"] == "local-file-staging-complete", payload
+assert job_after_recovery["phase"] == "rewrite-environment", payload
+assert job_after_recovery["cursor"] == "local-environment-rewrite-complete", payload
+
+assert payload["local_rewrite_verified_after_archive_tamper"] is False, payload
+archive_rewrite_blocked = payload["local_rewrite_after_archive_tamper"]
+assert archive_rewrite_blocked is not None and archive_rewrite_blocked["status"] == "blocked", payload
+assert "local-rewrite-parent-authority-unavailable" in archive_rewrite_blocked["blockers"], payload
 
 assert payload["local_files_verified_after_archive_tamper"] is False, payload
 archive_files_blocked = payload["local_files_after_archive_tamper"]
@@ -1018,6 +1310,9 @@ assert payload["local_database_public_controller_absent"] is True, payload
 assert payload["local_files_service_registered"] is True, payload
 assert payload["local_files_controller_registered"] is True, payload
 assert payload["local_files_public_controller_absent"] is True, payload
+assert payload["local_rewrite_service_registered"] is True, payload
+assert payload["local_rewrite_controller_registered"] is True, payload
+assert payload["local_rewrite_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -1065,12 +1360,13 @@ assert payload["autoload"] in ("off", "no", "auto-off"), payload
 assert payload["payload_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["database_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["file_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["rewrite_autoload"] in ("off", "no", "auto-off"), payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
 assert job_before_mutation["status"] == "active", payload
-assert job_before_mutation["phase"] == "restore-files", payload
-assert job_before_mutation["cursor"] == "local-file-staging-complete", payload
+assert job_before_mutation["phase"] == "rewrite-environment", payload
+assert job_before_mutation["cursor"] == "local-environment-rewrite-complete", payload
 
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
@@ -1080,7 +1376,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone handoff/intake/payload/database/file contract is invalid" "immutable package + DB staging + verified private files + zero active target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone handoff/staging/environment rewrite contract is invalid" "immutable package + private DB/files + serialization-safe rewrite + zero active target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone handoff + database + file staging OK: rows and client files restored only to isolated job-owned staging, production/target roots stayed untouched, authority drift revoked restore eligibility.\n'
+printf '[smoke] Local clone staging + environment rewrite OK: options/posts rewrote safely in job-owned staging, serialized/JSON values verified, sensitive values stayed opaque, target remained unactivated.\n'

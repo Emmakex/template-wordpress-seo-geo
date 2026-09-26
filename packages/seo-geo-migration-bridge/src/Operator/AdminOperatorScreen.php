@@ -19,6 +19,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalTargetPreflightController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -47,6 +48,7 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -160,6 +162,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_local_payload_result_notice(); ?>
 			<?php $this->render_clone_local_database_result_notice(); ?>
 			<?php $this->render_clone_local_file_result_notice(); ?>
+			<?php $this->render_clone_local_rewrite_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -1650,6 +1653,7 @@ final class AdminOperatorScreen {
 
 		<?php if ( 'ready' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_files_next' ) ); ?></p>
+			<?php $this->render_clone_local_rewrite_section( $job ); ?>
 		<?php else : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalFileController::ACTION ); ?>">
@@ -1674,6 +1678,101 @@ final class AdminOperatorScreen {
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_files_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_files_continue' : 'clone_local_files_start' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after local staging environment rewrite batches.
+	 */
+	private function render_clone_local_rewrite_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_rewrite'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_rewrite'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running' => 'clone_local_rewrite_running',
+			'ready'   => 'clone_local_rewrite_ready',
+			'blocked' => 'clone_local_rewrite_blocked',
+			default   => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : ( 'ready' === $status ? 'notice notice-success' : 'notice notice-info' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render local serialization-safe staging rewrite controls.
+	 *
+	 * @param array<string,mixed> $job Parent local-clone job.
+	 */
+	private function render_clone_local_rewrite_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneEnvironmentRewriteStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_stage' ) ); ?></th><td><code><?php echo esc_html( $stage ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_child_job' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['child_import_job_id'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_source_home' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['source_home_url'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_destination_home' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['destination_home_url'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_rows' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['rows_changed'] ?? 0 ) ); ?> / <?php echo esc_html( (string) (int) ( $state['rows_scanned'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_values' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['values_changed'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_core_urls' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['home_rewrites'] ?? 0 ) ); ?> / <?php echo esc_html( (string) (int) ( $state['siteurl_rewrites'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_same_origin' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['same_origin_rewrites'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_upload_urls' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['upload_url_rewrites'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_structured' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['serialized_values'] ?? 0 ) ); ?> / <?php echo esc_html( (string) (int) ( $state['json_values'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_credentials' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['credential_skips'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_verify' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['verify_rows_scanned'] ?? 0 ) ); ?> / <?php echo esc_html( (string) (int) ( $state['verify_source_urls'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_active_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['active_tables_untouched'] ?? false ) && true === ( $state['active_roots_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_target_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['target_unactivated'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next_label' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['rewrite_next'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php if ( 'ready' === $status ) : ?>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_next' ) ); ?></p>
+		<?php else : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalEnvironmentRewriteController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalEnvironmentRewriteController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php if ( ! is_array( $state ) ) : ?>
+					<p><label><input type="checkbox" name="local_clone_rewrite_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_rewrite_confirm' ) ); ?></label></p>
+				<?php endif; ?>
+				<p>
+					<label for="seo-geo-local-rewrite-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-local-rewrite-batch" name="local_clone_rewrite_batch_rows">
+						<?php foreach ( array( 10, 25, 50, 100, 200, 500 ) as $rows ) : ?>
+							<option value="<?php echo esc_attr( (string) $rows ); ?>" <?php selected( ImportEnvironmentRewriter::DEFAULT_BATCH_ROWS, $rows ); ?>><?php echo esc_html( (string) $rows ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_rewrite_continue' : 'clone_local_rewrite_start' ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
 		<?php
