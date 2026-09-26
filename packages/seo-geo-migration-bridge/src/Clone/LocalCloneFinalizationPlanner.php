@@ -341,7 +341,7 @@ final class LocalCloneFinalizationPlanner {
 	/**
 	 * Confirm saved parent state still matches current authority.
 	 *
-	 * @param array<string,mixed> $state Parent finalization state.
+	 * @param array<string,mixed>                                      $state     Parent finalization state.
 	 * @param array{rewrite:array<string,mixed>,import:array<string,mixed>} $authority Current authority.
 	 */
 	private function state_matches_authority( array $state, array $authority ): bool {
@@ -422,8 +422,8 @@ final class LocalCloneFinalizationPlanner {
 			}
 			$seen[ $id ] = true;
 
-			$expected = trailingslashit( wp_normalize_path( $root . '/wp-content/' . $id ) );
-			$active   = is_string( $entry['active_root'] ?? null ) ? trailingslashit( wp_normalize_path( $entry['active_root'] ) ) : '';
+			$expected     = trailingslashit( wp_normalize_path( $root . '/wp-content/' . $id ) );
+			$active    = is_string( $entry['active_root'] ?? null ) ? trailingslashit( wp_normalize_path( $entry['active_root'] ) ) : '';
 			$candidate = is_string( $entry['candidate_root'] ?? null ) ? wp_normalize_path( $entry['candidate_root'] ) : '';
 			$rollback  = is_string( $entry['rollback_root'] ?? null ) ? wp_normalize_path( $entry['rollback_root'] ) : '';
 			if (
@@ -511,14 +511,14 @@ final class LocalCloneFinalizationPlanner {
 		$blockers[] = $code;
 
 		$state['schema_version']          = LocalCloneFinalizationPlanStateStore::SCHEMA_VERSION;
-		$state['job_id']                  = $job_id;
-		$state['status']                  = 'blocked';
-		$state['stage']                   = is_string( $state['stage'] ?? null ) ? $state['stage'] : 'database-fingerprint';
-		$state['activation_plan_ready']   = false;
-		$state['target_unactivated']      = false;
-		$state['blockers']                = array_values( array_unique( array_filter( $blockers, 'is_string' ) ) );
-		$state['started_at']              = (string) ( $state['started_at'] ?? $now );
-		$state['updated_at']              = $now;
+		$state['job_id']                = $job_id;
+		$state['status']                = 'blocked';
+		$state['stage']                 = is_string( $state['stage'] ?? null ) ? $state['stage'] : 'database-fingerprint';
+		$state['activation_plan_ready'] = false;
+		$state['target_unactivated']    = false;
+		$state['blockers']              = array_values( array_unique( array_filter( $blockers, 'is_string' ) ) );
+		$state['started_at']            = (string) ( $state['started_at'] ?? $now );
+		$state['updated_at']            = $now;
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
