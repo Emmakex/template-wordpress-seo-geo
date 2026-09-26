@@ -95,7 +95,7 @@ final class AdminCloneLocalDatabaseActivationController {
 			add_query_arg(
 				array(
 					'seo_geo_clone_local_database_activation' => sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ),
-					'clone_job_id'                           => $job_id,
+					'clone_job_id'                            => $job_id,
 				),
 				admin_url( 'tools.php?page=' . AdminOperatorScreen::PAGE_SLUG )
 			)
