@@ -17,6 +17,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalSandboxRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalTargetPreflightController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -43,6 +44,7 @@ use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -154,6 +156,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_local_package_handoff_result_notice(); ?>
 			<?php $this->render_clone_local_target_preflight_result_notice(); ?>
 			<?php $this->render_clone_local_payload_result_notice(); ?>
+			<?php $this->render_clone_local_database_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -1456,6 +1459,7 @@ final class AdminOperatorScreen {
 
 		<?php if ( 'ready' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_payload_next' ) ); ?></p>
+			<?php $this->render_clone_local_database_section( $job ); ?>
 		<?php else : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalPayloadController::ACTION ); ?>">
@@ -1480,6 +1484,96 @@ final class AdminOperatorScreen {
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_payload_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_payload_continue' : 'clone_local_payload_start' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after local database staging batches.
+	 */
+	private function render_clone_local_database_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_database'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_database'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running' => 'clone_local_database_running',
+			'ready'   => 'clone_local_database_ready',
+			'blocked' => 'clone_local_database_blocked',
+			default   => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : ( 'ready' === $status ? 'notice notice-success' : 'notice notice-info' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render local transactional database staging controls.
+	 *
+	 * @param array<string,mixed> $job Parent local-clone job.
+	 */
+	private function render_clone_local_database_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneDatabaseRestoreStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_database_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_database_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_stage' ) ); ?></th><td><code><?php echo esc_html( $stage ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_child_job' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['child_import_job_id'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_destination_prefix' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['destination_prefix'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_staging_namespace' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['staging_namespace'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_tables' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['tables_completed'] ?? 0 ) ); ?> / <?php echo esc_html( (string) (int) ( $state['table_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_rows' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['rows_restored'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_active_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['active_tables_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_target_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['target_tables_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_content_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['client_content_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next_label' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['database_next'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php if ( 'ready' === $status ) : ?>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_database_next' ) ); ?></p>
+		<?php else : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalDatabaseController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalDatabaseController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php if ( ! is_array( $state ) ) : ?>
+					<p><label><input type="checkbox" name="local_clone_database_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_database_confirm' ) ); ?></label></p>
+				<?php endif; ?>
+				<p>
+					<label for="seo-geo-local-database-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_local_database_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-local-database-batch" name="local_clone_database_batch_rows">
+						<?php foreach ( array( 10, 25, 50, 100, 200, 500 ) as $rows ) : ?>
+							<option value="<?php echo esc_attr( (string) $rows ); ?>" <?php selected( ImportDatabaseRestorer::DEFAULT_BATCH_ROWS, $rows ); ?>><?php echo esc_html( (string) $rows ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_database_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_database_continue' : 'clone_local_database_start' ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
 		<?php
