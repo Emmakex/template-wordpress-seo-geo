@@ -131,6 +131,7 @@ final class LocalCloneTargetPreflight {
 		$archive  = $this->workspace->import_archive_info( $child_id );
 		if (
 			! is_array( $import )
+			|| ! $this->child_state_matches_authority( $import, $state, $authority )
 			|| 'preflight-ready' !== ( $import['status'] ?? null )
 			|| 'private-same-server' !== ( $import['transport'] ?? null )
 			|| true === ( $import['restore_allowed'] ?? true )
@@ -195,6 +196,9 @@ final class LocalCloneTargetPreflight {
 		}
 
 		$import = $this->import_state->get( $child );
+		if ( is_array( $import ) && ! $this->child_context_matches( $import, $context ) ) {
+			return $this->block( $job_id, $this->store->get( $job_id ) ?? array(), 'local-target-preflight-child-authority-drift' );
+		}
 		if ( ! is_array( $import ) ) {
 			$import = $this->preflight->stage_local_handoff( $child, (string) $archive['path'], $context );
 		}
@@ -356,6 +360,52 @@ final class LocalCloneTargetPreflight {
 				)
 			)
 		);
+	}
+
+
+	/**
+	 * Confirm one persisted child import state still matches its parent-ready state and live authority.
+	 *
+	 * @param array<string,mixed> $import    Child import state.
+	 * @param array<string,mixed> $state     Parent target-preflight state.
+	 * @param array<string,mixed> $authority Live parent authority.
+	 */
+	private function child_state_matches_authority( array $import, array $state, array $authority ): bool {
+		$handoff = $authority['handoff'];
+		$sandbox = $authority['sandbox'];
+
+		return 'private-same-server' === ( $import['transport'] ?? null )
+			&& hash_equals( (string) ( $import['local_handoff_parent_job_id'] ?? '' ), (string) $state['job_id'] )
+			&& hash_equals( (string) ( $import['destination_root_path'] ?? '' ), (string) $handoff['target_path'] )
+			&& hash_equals( (string) ( $import['destination_home_url'] ?? '' ), (string) $handoff['target_url'] )
+			&& hash_equals( (string) ( $import['destination_site_url'] ?? '' ), (string) $handoff['target_url'] )
+			&& hash_equals( (string) ( $import['destination_table_prefix'] ?? '' ), (string) $handoff['target_table_prefix'] )
+			&& hash_equals(
+				(string) ( $import['destination_authority_sha256'] ?? '' ),
+				$this->destination_authority_hash( $handoff, $sandbox )
+			)
+			&& hash_equals( (string) ( $import['expected_package_manifest_sha256'] ?? '' ), (string) $handoff['package_manifest_hash'] )
+			&& hash_equals( (string) ( $import['expected_package_checksum'] ?? '' ), (string) $handoff['package_checksum'] );
+	}
+
+	/**
+	 * Confirm an existing staged child state matches the exact fresh context before revalidation.
+	 *
+	 * @param array<string,mixed> $import  Child import state.
+	 * @param array<string,mixed> $context Fresh verified destination context.
+	 */
+	private function child_context_matches( array $import, array $context ): bool {
+		return 'private-same-server' === ( $import['transport'] ?? null )
+			&& hash_equals( (string) ( $import['local_handoff_parent_job_id'] ?? '' ), (string) $context['parent_job_id'] )
+			&& hash_equals( (string) ( $import['destination_root_path'] ?? '' ), (string) $context['target_path'] )
+			&& hash_equals( (string) ( $import['destination_home_url'] ?? '' ), (string) $context['target_url'] )
+			&& hash_equals( (string) ( $import['destination_site_url'] ?? '' ), (string) $context['target_url'] )
+			&& hash_equals( (string) ( $import['destination_table_prefix'] ?? '' ), (string) $context['target_table_prefix'] )
+			&& hash_equals( (string) ( $import['destination_authority_sha256'] ?? '' ), (string) $context['destination_authority_sha256'] )
+			&& hash_equals( (string) ( $import['expected_package_manifest_sha256'] ?? '' ), (string) $context['package_manifest_sha256'] )
+			&& hash_equals( (string) ( $import['expected_package_checksum'] ?? '' ), (string) $context['package_checksum'] )
+			&& hash_equals( (string) ( $import['archive_sha256'] ?? '' ), (string) $context['archive_sha256'] )
+			&& (int) ( $import['archive_bytes'] ?? -1 ) === (int) $context['archive_bytes'];
 	}
 
 	/**
