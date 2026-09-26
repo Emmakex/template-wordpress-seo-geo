@@ -61,7 +61,7 @@ final class LocalClonePackageHandoff {
 	/**
 	 * Construct local package handoff.
 	 *
-	 * @param LocalClonePackageHandoffStateStore|null  $store           Optional handoff state.
+	 * @param LocalClonePackageHandoffStateStore|null   $store           Optional handoff state.
 	 * @param LocalCloneBootstrapper|null               $ownership       Optional ownership service.
 	 * @param LocalCloneSandboxRuntimeBootstrapper|null $sandbox_runtime Optional sandbox runtime.
 	 * @param PackageStateStore|null                    $packages        Optional package state.
