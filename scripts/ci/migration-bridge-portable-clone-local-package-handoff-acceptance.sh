@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -34,6 +35,9 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivator;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
@@ -64,6 +68,7 @@ $options = array(
 	LocalCloneFileRestoreStateStore::OPTION_NAME,
 	LocalCloneEnvironmentRewriteStateStore::OPTION_NAME,
 	LocalCloneFinalizationPlanStateStore::OPTION_NAME,
+	LocalCloneDatabaseActivationStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
 	ImportFinalizeStateStore::OPTION_NAME,
 	ImportRewriteStateStore::OPTION_NAME,
@@ -87,6 +92,7 @@ $local_database    = Plugin::local_clone_database_restorer();
 $local_files       = Plugin::local_clone_file_restorer();
 $local_rewriter    = Plugin::local_clone_environment_rewriter();
 $local_finalizer   = Plugin::local_clone_finalization_planner();
+$local_activation  = Plugin::local_clone_database_activator();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -100,6 +106,7 @@ if (
 	|| ! $local_files instanceof LocalCloneFileRestorer
 	|| ! $local_rewriter instanceof LocalCloneEnvironmentRewriter
 	|| ! $local_finalizer instanceof LocalCloneFinalizationPlanner
+	|| ! $local_activation instanceof LocalCloneDatabaseActivator
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
