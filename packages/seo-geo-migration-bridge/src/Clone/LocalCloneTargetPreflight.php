@@ -74,14 +74,14 @@ final class LocalCloneTargetPreflight {
 	/**
 	 * Construct local target preflight.
 	 *
-	 * @param LocalCloneTargetPreflightStateStore|null   $store           Optional parent state store.
-	 * @param LocalClonePackageHandoff|null              $handoff         Optional verified handoff service.
-	 * @param LocalCloneSandboxRuntimeBootstrapper|null  $sandbox_runtime Optional sandbox runtime service.
-	 * @param PackageDelivery|null                       $delivery        Optional private archive delivery service.
-	 * @param ImportPreflight|null                       $preflight       Optional existing Portable Import preflight.
-	 * @param ImportStateStore|null                      $import_state    Optional child import state store.
-	 * @param CloneJobStore|null                         $jobs            Optional clone job store.
-	 * @param ExportWorkspace|null                       $workspace       Optional private workspace.
+	 * @param LocalCloneTargetPreflightStateStore|null  $store           Optional parent state store.
+	 * @param LocalClonePackageHandoff|null             $handoff         Optional verified handoff service.
+	 * @param LocalCloneSandboxRuntimeBootstrapper|null $sandbox_runtime Optional sandbox runtime service.
+	 * @param PackageDelivery|null                      $delivery        Optional private archive delivery service.
+	 * @param ImportPreflight|null                      $preflight       Optional existing Portable Import preflight.
+	 * @param ImportStateStore|null                     $import_state    Optional child import state store.
+	 * @param CloneJobStore|null                        $jobs            Optional clone job store.
+	 * @param ExportWorkspace|null                      $workspace       Optional private workspace.
 	 */
 	public function __construct(
 		?LocalCloneTargetPreflightStateStore $store = null,
