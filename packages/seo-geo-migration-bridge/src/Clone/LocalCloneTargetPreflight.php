@@ -444,7 +444,7 @@ final class LocalCloneTargetPreflight {
 				$wpdb->esc_like( $prefix ) . '%'
 			)
 		);
-		if ( is_array( $tables ) && array() !== $tables ) {
+		if ( array() !== $tables ) {
 			return false;
 		}
 
