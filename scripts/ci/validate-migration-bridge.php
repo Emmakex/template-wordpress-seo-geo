@@ -100,6 +100,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeBootstrapper.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalRuntimeController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBridgeStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBridgeBootstrapper.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalBridgeController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
@@ -500,6 +503,101 @@ if ( str_contains( $local_runtime_controller, 'admin_post_nopriv_' ) ) {
 		'portable-clone-local-runtime-public-endpoint',
 		'Local clone core runtime must never expose an unauthenticated endpoint.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalRuntimeController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+$local_bridge_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBridgeStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_local_clone_bridge_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'bridge-copy', 'bridge-verify', 'bridge-complete'",
+		"'copy_fingerprint'",
+		"'verify_fingerprint'",
+		"'client_content_untouched'",
+		"'bridge_runtime_ready'",
+	) as $local_bridge_store_guard
+) {
+	if ( ! str_contains( $local_bridge_store, $local_bridge_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-bridge-state',
+			'Local clone Bridge runtime state must remain versioned, bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBridgeStateStore.php',
+			$local_bridge_store_guard,
+			'missing'
+		);
+	}
+}
+
+$local_bridge = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBridgeBootstrapper.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_FILES = 25;',
+		'public const DEFAULT_BATCH_BYTES = 4194304;',
+		"'wp-content/plugins/seo-geo-migration-bridge'",
+		'$this->ownership->verified_snapshot( $job_id )',
+		"'core-complete'",
+		"'runtime_core_ready'",
+		'$this->workspace->ensure_local_clone_directory( $target, $relative )',
+		'$this->workspace->copy_file_to_local_clone_target( $path, $target, $target_relative )',
+		"'bridge-copy'",
+		"'bridge-verify'",
+		"'bridge-target-entry-drift'",
+		"'bridge-integrity-mismatch'",
+		"'isolated-config-hardening'",
+	) as $local_bridge_guard
+) {
+	if ( ! str_contains( $local_bridge, $local_bridge_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-bridge',
+			'Local clone Bridge control runtime is missing a core-readiness, ownership, resumability or second-pass integrity guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBridgeBootstrapper.php',
+			$local_bridge_guard,
+			'missing'
+		);
+	}
+}
+foreach ( array( "'wp-config.php'", "'wp-content/uploads'", "'wp-content/themes'" ) as $local_bridge_forbidden_scope ) {
+	if ( str_contains( $local_bridge, $local_bridge_forbidden_scope ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-bridge-scope',
+			'10E.2A.5.2.2.2.1 must install only the Migration Bridge control plugin and must not authorize config/client-content restore.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBridgeBootstrapper.php',
+			'Bridge control-plugin subtree only',
+			$local_bridge_forbidden_scope
+		);
+	}
+}
+
+$local_bridge_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalBridgeController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_local_bridge_advance';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		"'local_clone_bridge_confirm'",
+		'$this->bridge->advance( $job_id, $batch_files, $batch_mb * 1024 * 1024 )',
+	) as $local_bridge_controller_guard
+) {
+	if ( ! str_contains( $local_bridge_controller, $local_bridge_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-bridge-entrypoint',
+			'Local clone Bridge runtime endpoint must remain administrator/job-nonce/bounded-batch and first-run-confirmation gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalBridgeController.php',
+			$local_bridge_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $local_bridge_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-local-bridge-public-endpoint',
+		'Local clone Bridge runtime must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalBridgeController.php',
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
