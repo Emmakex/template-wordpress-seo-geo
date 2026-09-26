@@ -222,9 +222,12 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
 success = payload["success_state"]
-assert payload["success_plan"]["status"] == "ready"
-assert payload["success_claim"]["status"] == "claimed"
-assert success["status"] == "complete"
+assert payload["success_plan"] is not None, payload
+assert payload["success_plan"]["status"] == "ready", payload
+assert payload["success_claim"] is not None, payload
+assert payload["success_claim"]["status"] == "claimed", payload
+assert success is not None, payload
+assert success["status"] == "complete", payload
 assert success["stage"] == "core-complete"
 assert success["runtime_core_ready"] is True
 assert success["production_untouched"] is True
