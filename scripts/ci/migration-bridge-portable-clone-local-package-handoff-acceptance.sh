@@ -1247,15 +1247,17 @@ assert recovered_child is not None, payload
 assert recovered_child["status"] == "payload-verified", payload
 assert recovered_child["full_payload_verified"] is True, payload
 assert recovered_child["restore_allowed"] is True, payload
-assert payload["local_database_verified_after_recovery"] is True, payload
+assert payload["local_database_verified_after_recovery"] is False, payload
 db_recovered = payload["local_database_after_recovery"]
 assert db_recovered is not None and db_recovered["status"] == "ready", payload
 assert db_recovered["stage"] == "complete", payload
-assert payload["local_files_verified_after_recovery"] is True, payload
+assert db_recovered["blockers"] == [], payload
+assert payload["local_files_verified_after_recovery"] is False, payload
 files_recovered = payload["local_files_after_recovery"]
 assert files_recovered is not None and files_recovered["status"] == "ready", payload
 assert files_recovered["stage"] == "complete", payload
 assert files_recovered["private_staging_verified"] is True, payload
+assert files_recovered["blockers"] == [], payload
 assert payload["local_rewrite_verified_before_recovery"] is False, payload
 rewrite_recovered = payload["local_rewrite_after_recovery"]
 assert rewrite_recovered is not None and rewrite_recovered["status"] == "ready", payload
