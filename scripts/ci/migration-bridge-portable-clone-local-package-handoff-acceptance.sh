@@ -556,6 +556,8 @@ $database_autoload = $GLOBALS['wpdb']->get_var(
 	)
 );
 
+$source_after_all = $source_snapshot();
+
 echo wp_json_encode(
 	array(
 		'plan'                        => $plan,
@@ -572,17 +574,34 @@ echo wp_json_encode(
 		'payload_child_import'        => $payload_child_import,
 		'payload_child_state'         => $payload_child_state,
 		'target_preflight_after_payload' => is_array( $target_preflight_after_payload ),
+		'local_database_mid'          => $local_database_mid,
+		'local_database_state'        => $local_database_state,
+		'local_database_verified'     => is_array( $local_database_verified ),
+		'local_database_plan'         => $local_database_plan,
+		'database_child_state'        => $database_child_state,
+		'staging_table'               => $staging_table,
+		'staging_rows'                => $staging_rows,
+		'source_table'                => $source_table,
+		'source_prefix'               => $source_prefix,
+		'source_before'               => $source_before,
+		'source_after_database'       => $source_after_database,
+		'source_after_all'            => $source_after_all,
+		'target_table_count_after_database' => is_array( $target_tables_after_database ) ? count( $target_tables_after_database ) : -1,
 		'job_before_mutation'         => $job_before_mutation,
 		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
 		'local_payload_verified_after_mutation' => is_array( $local_payload_verified_after_mutation ),
 		'local_payload_after_mutation' => $local_payload_after_mutation,
 		'payload_child_after_mutation' => $payload_child_after_mutation,
 		'local_payload_after_recovery' => $local_payload_after_recovery,
+		'local_database_verified_after_recovery' => is_array( $local_database_verified_after_recovery ),
+		'local_database_after_recovery' => $local_database_after_recovery,
 		'payload_child_after_recovery' => $payload_child_after_recovery,
 		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
+		'local_database_verified_after_archive_tamper' => is_array( $local_database_verified_after_archive_tamper ),
+		'local_database_after_archive_tamper' => $local_database_after_archive_tamper,
 		'local_payload_verified_after_archive_tamper' => is_array( $local_payload_verified_after_archive_tamper ),
 		'local_payload_after_archive_tamper' => $local_payload_after_archive_tamper,
 		'payload_child_after_archive_tamper' => $payload_child_after_archive_tamper,
@@ -603,13 +622,30 @@ echo wp_json_encode(
 		'local_payload_service_registered' => $local_payload instanceof LocalClonePayloadVerifier,
 		'local_payload_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalPayloadController::ACTION ),
 		'local_payload_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPayloadController::ACTION ),
+		'local_database_service_registered' => $local_database instanceof LocalCloneDatabaseRestorer,
+		'local_database_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalDatabaseController::ACTION ),
+		'local_database_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalDatabaseController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
+		'database_autoload'           => $database_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 );
+
+if ( is_array( $local_database_plan ) && is_array( $local_database_plan['tables'] ?? null ) ) {
+	foreach ( $local_database_plan['tables'] as $table_plan ) {
+		if ( ! is_array( $table_plan ) || ! is_string( $table_plan['staging_table'] ?? null ) ) {
+			continue;
+		}
+		$cleanup_table = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $table_plan['staging_table'] ) . chr( 96 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Test-only cleanup of deterministic staging table.
+		$GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$cleanup_table}" );
+	}
+}
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Test-only production sentinel cleanup.
+$GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$quoted_source}" );
 
 $workspace->delete_delivery_archive( $job_id );
 $workspace->cleanup( $job_id );
@@ -714,6 +750,57 @@ assert payload_import["restore_allowed"] is True, payload
 assert payload_import["blockers"] == [], payload
 assert "restore-runtime-guard-required" in payload_import["advisories"], payload
 
+local_db_mid = payload["local_database_mid"]
+assert local_db_mid is not None, payload
+assert local_db_mid["status"] == "running", payload
+assert local_db_mid["stage"] in ("rows", "table-verify", "schema"), payload
+
+local_db = payload["local_database_state"]
+assert local_db is not None, payload
+assert local_db["status"] == "ready", payload
+assert local_db["stage"] == "complete", payload
+assert local_db["destination_prefix"] == handoff["target_table_prefix"], payload
+assert local_db["rows_restored"] == 3, payload
+assert local_db["tables_completed"] == 1, payload
+assert local_db["table_count"] == 1, payload
+assert local_db["active_tables_untouched"] is True, payload
+assert local_db["target_tables_untouched"] is True, payload
+assert local_db["client_content_untouched"] is True, payload
+assert local_db["database_next"] == "file-staging-restore", payload
+assert local_db["blockers"] == [], payload
+assert payload["local_database_verified"] is True, payload
+
+db_child = payload["database_child_state"]
+assert db_child is not None, payload
+assert db_child["status"] == "complete", payload
+assert db_child["stage"] == "complete", payload
+assert db_child["rows_restored"] == 3, payload
+assert db_child["tables_completed"] == 1, payload
+assert db_child["active_tables_untouched"] is True, payload
+assert db_child["destination_prefix"] == handoff["target_table_prefix"], payload
+assert db_child["staging_namespace"] == local_db["staging_namespace"], payload
+
+db_plan = payload["local_database_plan"]
+assert db_plan is not None, payload
+assert db_plan["destination_prefix"] == handoff["target_table_prefix"], payload
+assert db_plan["staging_namespace"] == local_db["staging_namespace"], payload
+assert len(db_plan["tables"]) == 1, payload
+assert db_plan["tables"][0]["source_table"] == payload["source_table"], payload
+assert db_plan["tables"][0]["target_table"] == handoff["target_table_prefix"] + payload["source_table"][len(payload["source_prefix"]):], payload
+assert db_plan["tables"][0]["staging_table"] == payload["staging_table"], payload
+assert not payload["staging_table"].startswith(payload["source_prefix"]), payload
+assert not payload["staging_table"].startswith(handoff["target_table_prefix"]), payload
+
+assert payload["staging_rows"] == [
+    {"id": "1", "title": "alpha"},
+    {"id": "2", "title": "beta"},
+    {"id": "3", "title": "gamma"},
+], payload
+assert payload["source_before"] == [{"id": "999", "title": "production-sentinel"}], payload
+assert payload["source_after_database"] == payload["source_before"], payload
+assert payload["source_after_all"] == payload["source_before"], payload
+assert payload["target_table_count_after_database"] == 0, payload
+
 assert payload["local_payload_verified_after_mutation"] is False, payload
 blocked_parent = payload["local_payload_after_mutation"]
 assert blocked_parent is not None and blocked_parent["status"] == "blocked", payload
@@ -735,10 +822,20 @@ assert recovered_child is not None, payload
 assert recovered_child["status"] == "payload-verified", payload
 assert recovered_child["full_payload_verified"] is True, payload
 assert recovered_child["restore_allowed"] is True, payload
+assert payload["local_database_verified_after_recovery"] is True, payload
+db_recovered = payload["local_database_after_recovery"]
+assert db_recovered is not None and db_recovered["status"] == "ready", payload
+assert db_recovered["stage"] == "complete", payload
+
 job_after_recovery = payload["job_after_recovery"]
 assert job_after_recovery["status"] == "active", payload
-assert job_after_recovery["phase"] == "verify", payload
-assert job_after_recovery["cursor"] == "local-payload-verified", payload
+assert job_after_recovery["phase"] == "restore-database", payload
+assert job_after_recovery["cursor"] == "local-database-staging-complete", payload
+
+assert payload["local_database_verified_after_archive_tamper"] is False, payload
+archive_db_blocked = payload["local_database_after_archive_tamper"]
+assert archive_db_blocked is not None and archive_db_blocked["status"] == "blocked", payload
+assert "local-database-parent-authority-unavailable" in archive_db_blocked["blockers"], payload
 
 assert payload["local_payload_verified_after_archive_tamper"] is False, payload
 archive_blocked_parent = payload["local_payload_after_archive_tamper"]
@@ -753,6 +850,9 @@ assert archive_blocked_child["restore_allowed"] is False, payload
 assert payload["local_payload_service_registered"] is True, payload
 assert payload["local_payload_controller_registered"] is True, payload
 assert payload["local_payload_public_controller_absent"] is True, payload
+assert payload["local_database_service_registered"] is True, payload
+assert payload["local_database_controller_registered"] is True, payload
+assert payload["local_database_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -798,12 +898,13 @@ assert payload["controller_registered"] is True, payload
 assert payload["public_controller_absent"] is True, payload
 assert payload["autoload"] in ("off", "no", "auto-off"), payload
 assert payload["payload_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["database_autoload"] in ("off", "no", "auto-off"), payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
 assert job_before_mutation["status"] == "active", payload
-assert job_before_mutation["phase"] == "verify", payload
-assert job_before_mutation["cursor"] == "local-payload-verified", payload
+assert job_before_mutation["phase"] == "restore-database", payload
+assert job_before_mutation["cursor"] == "local-database-staging-complete", payload
 
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
@@ -813,7 +914,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone handoff/intake/payload contract is invalid" "immutable package + private preflight/extraction/checksum + no active target restore" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone handoff/intake/payload/database contract is invalid" "immutable package + private checksum + transactional staging rows + zero active target mutation" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone handoff + target preflight + payload verification OK: private extraction resumed, full checksum matched, restore gate opened only for child staging, target stayed untouched, authority drift revoked restore eligibility.\n'
+printf '[smoke] Local clone handoff + payload + database staging OK: checksum replay passed, rows restored only to isolated job-owned staging tables, production/future target tables stayed untouched, authority drift revoked restore eligibility.\n'
