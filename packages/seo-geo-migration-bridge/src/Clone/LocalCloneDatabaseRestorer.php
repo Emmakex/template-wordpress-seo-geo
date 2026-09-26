@@ -175,6 +175,17 @@ final class LocalCloneDatabaseRestorer {
 	public function advance( string $job_id, int $batch_rows = ImportDatabaseRestorer::DEFAULT_BATCH_ROWS ): ?array {
 		$ready = $this->verified_snapshot( $job_id );
 		if ( is_array( $ready ) ) {
+			$this->jobs->transition( $job_id, 'active', null );
+			$this->jobs->update_progress(
+				$job_id,
+				'restore-database',
+				'local-database-staging-complete',
+				array(
+					'completed' => (int) ( $ready['rows_restored'] ?? 0 ),
+					'total'     => (int) ( $ready['rows_restored'] ?? 0 ),
+				)
+			);
+
 			return $ready;
 		}
 
