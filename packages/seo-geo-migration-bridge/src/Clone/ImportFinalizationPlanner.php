@@ -98,6 +98,13 @@ final class ImportFinalizationPlanner {
 	private ExportWorkspace $workspace;
 
 	/**
+	 * Fresh local-clone target authority for private same-server finalization.
+	 *
+	 * @var LocalCloneTargetPreflight
+	 */
+	private LocalCloneTargetPreflight $local_target_preflight;
+
+	/**
 	 * Construct planner.
 	 *
 	 * @param ImportFinalizeStateStore|null $store             Optional finalization state store.
@@ -108,7 +115,8 @@ final class ImportFinalizationPlanner {
 	 * @param ImportRewriteStateStore|null  $rewrite_state     Optional environment rewrite state store.
 	 * @param ImportDatabaseRestorer|null   $database_restorer Optional database staging-plan dependency.
 	 * @param CloneJobStore|null            $jobs              Optional clone job store.
-	 * @param ExportWorkspace|null          $workspace         Optional private import workspace.
+	 * @param ExportWorkspace|null          $workspace              Optional private import workspace.
+	 * @param LocalCloneTargetPreflight|null $local_target_preflight Optional verified local target authority.
 	 */
 	public function __construct(
 		?ImportFinalizeStateStore $store = null,
@@ -119,7 +127,8 @@ final class ImportFinalizationPlanner {
 		?ImportRewriteStateStore $rewrite_state = null,
 		?ImportDatabaseRestorer $database_restorer = null,
 		?CloneJobStore $jobs = null,
-		?ExportWorkspace $workspace = null
+		?ExportWorkspace $workspace = null,
+		?LocalCloneTargetPreflight $local_target_preflight = null
 	) {
 		$this->store             = $store ?? new ImportFinalizeStateStore();
 		$this->import_state      = $import_state ?? new ImportStateStore();
@@ -128,8 +137,9 @@ final class ImportFinalizationPlanner {
 		$this->file_state        = $file_state ?? new ImportFileStateStore();
 		$this->rewrite_state     = $rewrite_state ?? new ImportRewriteStateStore();
 		$this->jobs              = $jobs ?? new CloneJobStore();
-		$this->workspace         = $workspace ?? new ExportWorkspace();
-		$this->database_restorer = $database_restorer ?? new ImportDatabaseRestorer(
+		$this->workspace              = $workspace ?? new ExportWorkspace();
+		$this->local_target_preflight = $local_target_preflight ?? new LocalCloneTargetPreflight();
+		$this->database_restorer      = $database_restorer ?? new ImportDatabaseRestorer(
 			$this->database_state,
 			$this->import_state,
 			$this->payload_state,
@@ -687,12 +697,24 @@ final class ImportFinalizationPlanner {
 		}
 
 		if ( $this->private_same_server_import( $import ) ) {
-			$root   = $this->private_same_server_root( $import );
-			$prefix = is_string( $import['destination_table_prefix'] ?? null )
+			$root      = $this->private_same_server_root( $import );
+			$prefix    = is_string( $import['destination_table_prefix'] ?? null )
 				? $import['destination_table_prefix']
 				: '';
+			$parent_id = (string) ( $import['local_handoff_parent_job_id'] ?? '' );
+			$target    = '' !== $parent_id ? $this->local_target_preflight->verified_snapshot( $parent_id ) : null;
 			if (
 				null === $root
+				|| ! is_array( $target )
+				|| 'ready' !== ( $target['status'] ?? null )
+				|| true !== ( $target['preflight_ready'] ?? false )
+				|| array() !== ( $target['blockers'] ?? array() )
+				|| ! hash_equals( (string) ( $target['child_import_job_id'] ?? '' ), (string) ( $import['job_id'] ?? '' ) )
+				|| ! hash_equals( (string) ( $target['target_path'] ?? '' ), (string) ( $import['destination_root_path'] ?? '' ) )
+				|| ! hash_equals( (string) ( $target['target_url'] ?? '' ), (string) ( $import['destination_home_url'] ?? '' ) )
+				|| ! hash_equals( (string) ( $target['target_url'] ?? '' ), (string) ( $import['destination_site_url'] ?? '' ) )
+				|| ! hash_equals( (string) ( $target['target_table_prefix'] ?? '' ), $prefix )
+				|| ! hash_equals( (string) ( $target['destination_authority_sha256'] ?? '' ), (string) ( $import['destination_authority_sha256'] ?? '' ) )
 				|| 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $prefix )
 				|| $prefix === $wpdb->prefix
 				|| 'subdirectory' !== ( $import['destination_mode'] ?? null )
