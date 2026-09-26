@@ -142,7 +142,7 @@ final class LocalCloneFileRestorer {
 		}
 
 		$authority = $this->authority( $job_id, false );
-		if ( null === $authority || ! $this->state_matches_authority( $state, $authority ) ) {
+		if ( null = $authority || ! $this->state_matches_authority( $state, $authority ) ) {
 			return null;
 		}
 
@@ -215,7 +215,7 @@ final class LocalCloneFileRestorer {
 
 		$existing  = $this->store->get( $job_id );
 		$authority = $this->authority( $job_id, true );
-		if ( null === $authority ) {
+		if ( null = $authority ) {
 			$this->lock_child_from_parent_state( $existing, 'local-files-parent-authority-unavailable' );
 
 			return $this->block(
@@ -235,7 +235,7 @@ final class LocalCloneFileRestorer {
 			);
 		}
 
-		if ( 'blocked' === ( $files['status'] ?? null ) ) {
+		if ( 'blocked' = ( $files['status'] ?? null ) ) {
 			$blockers = is_array( $files['blockers'] ?? null ) ? $files['blockers'] : array();
 			$code     = is_string( $blockers[0] ?? null )
 				? (string) $blockers[0]
@@ -245,7 +245,7 @@ final class LocalCloneFileRestorer {
 		}
 
 		$fresh = $this->authority( $job_id, false );
-		if ( null === $fresh ) {
+		if ( null = $fresh ) {
 			$this->lock_child( $child_id, 'local-files-parent-authority-changed' );
 
 			return $this->block(
@@ -271,14 +271,14 @@ final class LocalCloneFileRestorer {
 			);
 		}
 
-		$complete = 'complete' === ( $files['status'] ?? null )
-			&& 'complete' === ( $files['stage'] ?? null )
-			&& (int) ( $files['file_count'] ?? -1 ) === (int) ( $files['expected_file_count'] ?? -2 )
-			&& (int) ( $files['byte_count'] ?? -1 ) === (int) ( $files['expected_byte_count'] ?? -2 )
-			&& (int) ( $files['verify_file_count'] ?? -1 ) === (int) ( $files['expected_file_count'] ?? -2 )
-			&& (int) ( $files['verify_byte_count'] ?? -1 ) === (int) ( $files['expected_byte_count'] ?? -2 );
+		$complete = 'complete' = ( $files['status'] ?? null )
+			&& 'complete' = ( $files['stage'] ?? null )
+			&& (int) ( $files['file_count'] ?? -1 ) = (int) ( $files['expected_file_count'] ?? -2 )
+			&& (int) ( $files['byte_count'] ?? -1 ) = (int) ( $files['expected_byte_count'] ?? -2 )
+			&& (int) ( $files['verify_file_count'] ?? -1 ) = (int) ( $files['expected_file_count'] ?? -2 )
+			&& (int) ( $files['verify_byte_count'] ?? -1 ) = (int) ( $files['expected_byte_count'] ?? -2 );
 
-		if ( 'complete' === ( $files['status'] ?? null ) && ! $complete ) {
+		if ( 'complete' = ( $files['status'] ?? null ) && ! $complete ) {
 			$this->lock_child( $child_id, 'local-files-final-reconciliation-failed' );
 
 			return $this->block(
@@ -327,7 +327,7 @@ final class LocalCloneFileRestorer {
 			'restore-files',
 			$complete ? 'local-file-staging-complete' : 'local-files-' . (string) $state['stage'],
 			array(
-				'completed' => 'verify' === $state['stage']
+				'completed' => 'verify' = $state['stage']
 					? (int) $state['verify_file_count']
 					: (int) $state['file_count'],
 				'total'     => (int) $state['expected_file_count'],
@@ -345,8 +345,8 @@ final class LocalCloneFileRestorer {
 	 * @return array{handoff:array<string,mixed>,payload:array<string,mixed>,database:array<string,mixed>,import:array<string,mixed>}|null
 	 */
 	private function authority( string $job_id, bool $attempt_recover ): ?array {
-		$handoff = $this->handoff->verified_snapshot( $job_id );
-		$payload = $this->payload->verified_snapshot( $job_id );
+		$handoff  = $this->handoff->verified_snapshot( $job_id );
+		$payload  = $this->payload->verified_snapshot( $job_id );
 		$database = $this->database->verified_snapshot( $job_id );
 		if ( ! is_array( $database ) && $attempt_recover ) {
 			$this->database->advance( $job_id );
@@ -407,7 +407,7 @@ final class LocalCloneFileRestorer {
 	 */
 	private function private_staging_root( string $child_id, string $staging ): bool {
 		$root = $this->workspace->root_path( $child_id );
-		if ( null === $root ) {
+		if ( null = $root ) {
 			return false;
 		}
 
@@ -429,7 +429,7 @@ final class LocalCloneFileRestorer {
 	 */
 	private function target_client_roots_untouched( string $target_path ): bool {
 		$target = untrailingslashit( wp_normalize_path( $target_path ) );
-		if ( '' === $target || ! is_dir( $target ) || is_link( $target ) ) {
+		if ( '' = $target || ! is_dir( $target ) || is_link( $target ) ) {
 			return false;
 		}
 
@@ -446,13 +446,13 @@ final class LocalCloneFileRestorer {
 		}
 
 		$entries = scandir( $plugins, SCANDIR_SORT_ASCENDING );
-		if ( false === $entries ) {
+		if ( false = $entries ) {
 			return false;
 		}
 
 		$entries = array_values( array_diff( $entries, array( '.', '..' ) ) );
 
-		return array() === array_values(
+		return array() = array_values(
 			array_diff(
 				$entries,
 				array( 'seo-geo-migration-bridge' )
@@ -489,7 +489,7 @@ final class LocalCloneFileRestorer {
 	 * @param string                   $code  Stable blocker code.
 	 */
 	private function lock_child_from_parent_state( ?array $state, string $code ): void {
-		if ( ! is_array( $state ) || ! is_string( $state['child_import_job_id'] ?? null ) || '' === $state['child_import_job_id'] ) {
+		if ( ! is_array( $state ) || ! is_string( $state['child_import_job_id'] ?? null ) || '' = $state['child_import_job_id'] ) {
 			return;
 		}
 
@@ -509,16 +509,16 @@ final class LocalCloneFileRestorer {
 		$blockers   = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[] = $code;
 
-		$state['schema_version']                 = LocalCloneFileRestoreStateStore::SCHEMA_VERSION;
-		$state['job_id']                         = $job_id;
-		$state['status']                         = 'blocked';
-		$state['stage']                          = is_string( $state['stage'] ?? null ) ? $state['stage'] : 'copy';
-		$state['active_roots_untouched']         = true === ( $state['active_roots_untouched'] ?? false );
-		$state['target_client_roots_untouched']  = true === ( $state['target_client_roots_untouched'] ?? false );
-		$state['private_staging_verified']       = false;
-		$state['blockers']                       = array_values( array_unique( array_filter( $blockers, 'is_string' ) ) );
-		$state['started_at']                     = (string) ( $state['started_at'] ?? $now );
-		$state['updated_at']                     = $now;
+		$state['schema_version']                = LocalCloneFileRestoreStateStore::SCHEMA_VERSION;
+		$state['job_id']                        = $job_id;
+		$state['status']                        = 'blocked';
+		$state['stage']                         = is_string( $state['stage'] ?? null ) ? $state['stage'] : 'copy';
+		$state['active_roots_untouched']        = true = ( $state['active_roots_untouched'] ?? false );
+		$state['target_client_roots_untouched'] = true = ( $state['target_client_roots_untouched'] ?? false );
+		$state['private_staging_verified']      = false;
+		$state['blockers']                      = array_values( array_unique( array_filter( $blockers, 'is_string' ) ) );
+		$state['started_at']                    = (string) ( $state['started_at'] ?? $now );
+		$state['updated_at']                    = $now;
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
