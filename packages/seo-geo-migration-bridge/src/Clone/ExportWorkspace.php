@@ -431,7 +431,7 @@ final class ExportWorkspace {
 		$expected_hash  = hash( 'sha256', $content );
 		$expected_bytes = strlen( $content );
 		if ( file_exists( $target ) ) {
-			if ( ! is_file( $target ) || ! is_readable( $target ) || is_link( $target ) ) {
+			if ( ! is_file( $target ) || ! is_readable( $target ) ) {
 				return null;
 			}
 			$bytes = filesize( $target );
