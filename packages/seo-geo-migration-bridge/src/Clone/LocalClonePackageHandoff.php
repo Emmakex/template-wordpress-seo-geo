@@ -61,12 +61,12 @@ final class LocalClonePackageHandoff {
 	/**
 	 * Construct local package handoff.
 	 *
-	 * @param LocalClonePackageHandoffStateStore|null $store           Optional handoff state.
-	 * @param LocalCloneBootstrapper|null              $ownership       Optional ownership service.
+	 * @param LocalClonePackageHandoffStateStore|null  $store           Optional handoff state.
+	 * @param LocalCloneBootstrapper|null               $ownership       Optional ownership service.
 	 * @param LocalCloneSandboxRuntimeBootstrapper|null $sandbox_runtime Optional sandbox runtime.
-	 * @param PackageStateStore|null                   $packages        Optional package state.
-	 * @param PackageDelivery|null                     $delivery        Optional private ZIP builder.
-	 * @param CloneJobStore|null                       $jobs            Optional clone job store.
+	 * @param PackageStateStore|null                    $packages        Optional package state.
+	 * @param PackageDelivery|null                      $delivery        Optional private ZIP builder.
+	 * @param CloneJobStore|null                        $jobs            Optional clone job store.
 	 */
 	public function __construct(
 		?LocalClonePackageHandoffStateStore $store = null,
