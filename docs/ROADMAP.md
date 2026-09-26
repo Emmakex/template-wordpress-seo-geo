@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.5.2 — guarded finalization plan in Migration Bridge 0.8.33.** Migration Bridge 0.8.32 is accepted on `main` at `7e30ddf168ae1f7b5f9beae5c945c2f04a7ed5b1`: serialization-safe local rewrite covers plain URLs, JSON and PHP serialized values, preserves credential-like values, proves same-origin subdirectory rewrites are idempotent, and leaves production/target active state untouched. 0.8.33 reuses the accepted `ImportFinalizationPlanner` on the same verified private child, revalidates local target authority before each batch, fingerprints the rewritten database and private files, and freezes the exact activation/rollback map for the isolated target without creating target tables or client-file candidates. Next: **10E.2A.5.5.3 — reversible local database activation**; file promotion remains a later explicit gate.
+Current execution pointer: **10E.2A.5.5.3 — reversible local database activation in Migration Bridge 0.8.34.** Migration Bridge 0.8.33 is accepted on `main` at `f56b21a9d21b8c9e1edc1dfae1c54ad14f6121ea`: guarded local finalization fingerprints rewritten DB/file staging, freezes the exact activation/rollback map for the isolated target, and creates no target tables or file candidates. 0.8.34 reuses the accepted atomic `ImportDatabaseActivator` under private same-server authority: prepare freezes a recovery journal without mutation, activate overlays only the isolated target `options` staging table with `blog_public=0` + Migration Bridge control runtime and performs one atomic multi-table rename, then exact counts/control hashes verify the target. Production WordPress and client files remain untouched, and explicit rollback returns target tables to staging until file promotion starts. Next: **10E.2A.5.5.4 — reversible local file promotion**.
+
+Migration Bridge v0.8.33 / 10E.2A.5.5.2 acceptance evidence:
+
+- PR #159 squash-merged to `main` as `f56b21a9d21b8c9e1edc1dfae1c54ad14f6121ea`;
+- Foundation CI `36241411114` passed;
+- Phase 1 Package CI `36241411142` passed;
+- PHP Quality CI `36241411191` passed;
+- WordPress Smoke CI `36241411134` passed, including rewritten DB/file fingerprints, frozen local activation/rollback plan, target-root mapping and zero target-table/client-file activation;
+- Accessibility & Responsive CI `36241411229` passed;
+- Performance Baseline CI `36241411113` passed;
+- Migration Bridge Release CI `36241411117` passed.
 
 Migration Bridge v0.8.32 / 10E.2A.5.5.1 acceptance evidence:
 
