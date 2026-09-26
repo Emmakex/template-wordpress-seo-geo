@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPlanController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBootstrapController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalRuntimeController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBridgeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -33,6 +34,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeBootstrapper;
+use SeoGeo\MigrationBridge\Clone\LocalCloneBridgeStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneBridgeBootstrapper;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -140,6 +143,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_local_plan_result_notice(); ?>
 			<?php $this->render_clone_local_bootstrap_result_notice(); ?>
 			<?php $this->render_clone_local_runtime_result_notice(); ?>
+			<?php $this->render_clone_local_bridge_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -1079,6 +1083,7 @@ final class AdminOperatorScreen {
 
 		<?php if ( 'complete' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_runtime_next' ) ); ?></p>
+			<?php $this->render_clone_local_bridge_section( $job ); ?>
 		<?php elseif ( 'blocked' !== $status ) : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalRuntimeController::ACTION ); ?>">
@@ -1103,6 +1108,98 @@ final class AdminOperatorScreen {
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_runtime_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_runtime_continue' : 'clone_local_runtime_start' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after local-clone Bridge runtime batches.
+	 */
+	private function render_clone_local_bridge_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_bridge'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_bridge'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running'  => 'clone_local_bridge_running',
+			'complete' => 'clone_local_bridge_complete',
+			'blocked'  => 'clone_local_bridge_blocked',
+			default    => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : ( 'complete' === $status ? 'notice notice-success' : 'notice notice-info' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render resumable local-clone Migration Bridge control-runtime controls.
+	 *
+	 * @param array<string,mixed> $job Clone job.
+	 */
+	private function render_clone_local_bridge_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneBridgeStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_bridge_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_bridge_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bridge_stage' ) ); ?></th><td><code><?php echo esc_html( $stage ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bridge_copy_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['copy_file_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bridge_verify_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['verify_file_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bridge_fingerprint' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['copy_fingerprint'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bridge_content_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['client_content_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_db_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['database_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php if ( 'complete' === $status ) : ?>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_bridge_next' ) ); ?></p>
+		<?php elseif ( 'blocked' !== $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalBridgeController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalBridgeController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php if ( ! is_array( $state ) ) : ?>
+					<p><label><input type="checkbox" name="local_clone_bridge_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_bridge_confirm' ) ); ?></label></p>
+				<?php endif; ?>
+				<p>
+					<label for="seo-geo-local-bridge-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_local_bridge_batch_label' ) ); ?></strong></label>
+					<select id="seo-geo-local-bridge-batch" name="bridge_batch_files">
+						<?php foreach ( array( 10, 25, 50, 100, 200 ) as $size ) : ?>
+							<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( LocalCloneBridgeBootstrapper::DEFAULT_BATCH_FILES, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<label for="seo-geo-local-bridge-mb"><strong><?php echo esc_html( $this->copy->text( 'clone_local_bridge_mb_label' ) ); ?></strong></label>
+					<select id="seo-geo-local-bridge-mb" name="bridge_batch_megabytes">
+						<?php foreach ( array( 1, 2, 4, 8, 16, 32 ) as $megabytes ) : ?>
+							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 4, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_bridge_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_bridge_continue' : 'clone_local_bridge_start' ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
 		<?php
