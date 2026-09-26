@@ -61,7 +61,7 @@ final class AdminCloneLocalFileController {
 		$existing = $this->restorer->snapshot( $job_id );
 		if ( ! is_array( $existing ) ) {
 			$confirmed = isset( $_POST['local_clone_files_confirm'] )
-				&& '1' = sanitize_text_field( wp_unslash( $_POST['local_clone_files_confirm'] ) );
+				&& '1' === sanitize_text_field( wp_unslash( $_POST['local_clone_files_confirm'] ) );
 			if ( ! $confirmed ) {
 				wp_die(
 					esc_html__( 'Explicit confirmation is required before copying verified client files into private job staging.', 'seo-geo-migration-bridge' ),
