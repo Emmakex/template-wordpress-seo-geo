@@ -769,6 +769,7 @@ fi
 printf '%s' "$LOCAL_HANDOFF_JSON" >"$TMP_DIR/portable-clone-local-package-handoff.json"
 
 if ! LOCAL_HANDOFF_ASSERTION="$(python3 - "$TMP_DIR/portable-clone-local-package-handoff.json" <<'PY'
+import hashlib
 import json
 import re
 import sys
@@ -904,6 +905,54 @@ assert payload["source_after_database"] == payload["source_before"], payload
 assert payload["source_after_all"] == payload["source_before"], payload
 assert payload["target_table_count_after_database"] == 0, payload
 
+files_mid = payload["local_files_mid"]
+assert files_mid is not None, payload
+assert files_mid["status"] == "running", payload
+assert files_mid["stage"] in ("copy", "verify"), payload
+
+local_files = payload["local_files_state"]
+assert local_files is not None, payload
+assert local_files["status"] == "ready", payload
+assert local_files["stage"] == "complete", payload
+assert local_files["file_count"] == 3, payload
+assert local_files["verify_file_count"] == 3, payload
+assert local_files["file_count"] == local_files["expected_file_count"], payload
+assert local_files["byte_count"] == local_files["expected_byte_count"], payload
+assert local_files["verify_file_count"] == local_files["expected_file_count"], payload
+assert local_files["verify_byte_count"] == local_files["expected_byte_count"], payload
+assert local_files["active_roots_untouched"] is True, payload
+assert local_files["target_client_roots_untouched"] is True, payload
+assert local_files["private_staging_verified"] is True, payload
+assert local_files["file_next"] == "environment-rewrite", payload
+assert local_files["blockers"] == [], payload
+assert payload["local_files_verified"] is True, payload
+assert payload["file_staging_root"], payload
+
+file_child = payload["file_child_state"]
+assert file_child is not None, payload
+assert file_child["status"] == "complete", payload
+assert file_child["stage"] == "complete", payload
+assert file_child["file_count"] == 3, payload
+assert file_child["verify_file_count"] == 3, payload
+assert file_child["active_roots_untouched"] is True, payload
+
+expected_files = {
+    "staged_upload": b"local-upload\n",
+    "staged_plugin": b"<?php\n// local staged plugin\n",
+    "staged_theme": b"body{display:block}\n",
+}
+for key, content in expected_files.items():
+    info = payload[key]
+    assert info is not None, payload
+    assert info["bytes"] == len(content), payload
+    assert info["sha256"] == hashlib.sha256(content).hexdigest(), payload
+    assert info["path"].startswith(payload["file_staging_root"]), payload
+
+assert payload["target_upload_absent_after_files"] is True, payload
+assert payload["target_plugin_absent_after_files"] is True, payload
+assert payload["target_theme_absent_after_files"] is True, payload
+assert payload["target_bridge_present_after_files"] is True, payload
+
 assert payload["local_payload_verified_after_mutation"] is False, payload
 blocked_parent = payload["local_payload_after_mutation"]
 assert blocked_parent is not None and blocked_parent["status"] == "blocked", payload
@@ -929,11 +978,21 @@ assert payload["local_database_verified_after_recovery"] is True, payload
 db_recovered = payload["local_database_after_recovery"]
 assert db_recovered is not None and db_recovered["status"] == "ready", payload
 assert db_recovered["stage"] == "complete", payload
+assert payload["local_files_verified_after_recovery"] is True, payload
+files_recovered = payload["local_files_after_recovery"]
+assert files_recovered is not None and files_recovered["status"] == "ready", payload
+assert files_recovered["stage"] == "complete", payload
+assert files_recovered["private_staging_verified"] is True, payload
 
 job_after_recovery = payload["job_after_recovery"]
 assert job_after_recovery["status"] == "active", payload
-assert job_after_recovery["phase"] == "restore-database", payload
-assert job_after_recovery["cursor"] == "local-database-staging-complete", payload
+assert job_after_recovery["phase"] == "restore-files", payload
+assert job_after_recovery["cursor"] == "local-file-staging-complete", payload
+
+assert payload["local_files_verified_after_archive_tamper"] is False, payload
+archive_files_blocked = payload["local_files_after_archive_tamper"]
+assert archive_files_blocked is not None and archive_files_blocked["status"] == "blocked", payload
+assert "local-files-parent-authority-unavailable" in archive_files_blocked["blockers"], payload
 
 assert payload["local_database_verified_after_archive_tamper"] is False, payload
 archive_db_blocked = payload["local_database_after_archive_tamper"]
@@ -956,6 +1015,9 @@ assert payload["local_payload_public_controller_absent"] is True, payload
 assert payload["local_database_service_registered"] is True, payload
 assert payload["local_database_controller_registered"] is True, payload
 assert payload["local_database_public_controller_absent"] is True, payload
+assert payload["local_files_service_registered"] is True, payload
+assert payload["local_files_controller_registered"] is True, payload
+assert payload["local_files_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -1002,12 +1064,13 @@ assert payload["public_controller_absent"] is True, payload
 assert payload["autoload"] in ("off", "no", "auto-off"), payload
 assert payload["payload_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["database_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["file_autoload"] in ("off", "no", "auto-off"), payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
 assert job_before_mutation["status"] == "active", payload
-assert job_before_mutation["phase"] == "restore-database", payload
-assert job_before_mutation["cursor"] == "local-database-staging-complete", payload
+assert job_before_mutation["phase"] == "restore-files", payload
+assert job_before_mutation["cursor"] == "local-file-staging-complete", payload
 
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
@@ -1017,7 +1080,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone handoff/intake/payload/database contract is invalid" "immutable package + private checksum + transactional staging rows + zero active target mutation" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone handoff/intake/payload/database/file contract is invalid" "immutable package + DB staging + verified private files + zero active target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone handoff + payload + database staging OK: checksum replay passed, rows restored only to isolated job-owned staging tables, production/future target tables stayed untouched, authority drift revoked restore eligibility.\n'
+printf '[smoke] Local clone handoff + database + file staging OK: rows and client files restored only to isolated job-owned staging, production/target roots stayed untouched, authority drift revoked restore eligibility.\n'
