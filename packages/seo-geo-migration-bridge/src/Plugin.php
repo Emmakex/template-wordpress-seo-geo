@@ -650,13 +650,13 @@ final class Plugin {
 		);
 		self::$local_clone_runtime_controller               ??= new AdminCloneLocalRuntimeController( self::$local_clone_runtime_bootstrapper );
 		self::$local_clone_bridge_state_store               ??= new LocalCloneBridgeStateStore();
-		self::$local_clone_bridge_bootstrapper             ??= new LocalCloneBridgeBootstrapper(
+		self::$local_clone_bridge_bootstrapper              ??= new LocalCloneBridgeBootstrapper(
 			self::$local_clone_bridge_state_store,
 			self::$local_clone_bootstrapper,
 			self::$local_clone_runtime_state_store,
 			self::$clone_job_store
 		);
-		self::$local_clone_bridge_controller               ??= new AdminCloneLocalBridgeController( self::$local_clone_bridge_bootstrapper );
+		self::$local_clone_bridge_controller                ??= new AdminCloneLocalBridgeController( self::$local_clone_bridge_bootstrapper );
 		self::$clone_delivery_state_store                   ??= new DeliveryStateStore();
 		self::$clone_package_delivery                       ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
 		self::$clone_delivery_controller                    ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
