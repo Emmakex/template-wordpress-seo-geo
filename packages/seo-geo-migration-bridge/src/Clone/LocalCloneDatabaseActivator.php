@@ -109,7 +109,7 @@ final class LocalCloneDatabaseActivator {
 			|| ! is_array( $child )
 			|| ! hash_equals( (string) $state['activation_plan_hash'], (string) ( $child['activation_plan_hash'] ?? '' ) )
 			|| ! hash_equals( (string) $state['database_fingerprint'], (string) ( $child['finalize_db_hash'] ?? '' ) )
-			|| (string) $state['options_target'] !== (string) ( $child['options_target'] ?? '' )
+			|| (string) ( $child['options_target'] ?? '' ) !== (string) $state['options_target']
 			|| count( is_array( $child['tables'] ?? null ) ? $child['tables'] : array() ) !== (int) $state['table_count']
 			|| ! $this->target_client_files_untouched( $import )
 		) {
@@ -255,14 +255,14 @@ final class LocalCloneDatabaseActivator {
 			return $this->block( $job_id, $state, 'local-database-rollback-failed' );
 		}
 
-		$now                              = gmdate( DATE_ATOM );
-		$state['status']                  = 'rolled-back';
-		$state['database_swapped']        = false;
-		$state['rollback_available']      = false;
-		$state['active_files_untouched']  = true;
-		$state['target_database_active']  = false;
-		$state['activation_next']         = 'rebuild-finalization-plan';
-		$state['blockers']                = array_values(
+		$now                             = gmdate( DATE_ATOM );
+		$state['status']                 = 'rolled-back';
+		$state['database_swapped']       = false;
+		$state['rollback_available']     = false;
+		$state['active_files_untouched'] = true;
+		$state['target_database_active'] = false;
+		$state['activation_next']        = 'rebuild-finalization-plan';
+		$state['blockers']               = array_values(
 			array_unique(
 				array_merge(
 					is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array(),
@@ -270,8 +270,8 @@ final class LocalCloneDatabaseActivator {
 				)
 			)
 		);
-		$state['rolled_back_at']          = $now;
-		$state['updated_at']              = $now;
+		$state['rolled_back_at']         = $now;
+		$state['updated_at']             = $now;
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
