@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Clone;
 
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
+use wpdb;
 
 /**
  * Freezes the sibling candidate/rollback map before active WordPress file roots move.
@@ -51,6 +52,13 @@ final class ImportFilePromotionPlanner {
 	private ExportWorkspace $workspace;
 
 	/**
+	 * Child import state.
+	 *
+	 * @var ImportStateStore
+	 */
+	private ImportStateStore $import_state;
+
+	/**
 	 * Construct the read-only promotion planner.
 	 *
 	 * @param ImportFilePromotionStateStore|null      $store               Optional promotion journal.
@@ -58,19 +66,22 @@ final class ImportFilePromotionPlanner {
 	 * @param ImportFileStateStore|null               $file_state          Optional file staging state.
 	 * @param ImportFinalizeStateStore|null           $finalize_state      Optional finalization state.
 	 * @param ExportWorkspace|null                    $workspace           Optional private workspace.
+	 * @param ImportStateStore|null                    $import_state        Optional child import state.
 	 */
 	public function __construct(
 		?ImportFilePromotionStateStore $store = null,
 		?ImportDatabaseActivationStateStore $database_activation = null,
 		?ImportFileStateStore $file_state = null,
 		?ImportFinalizeStateStore $finalize_state = null,
-		?ExportWorkspace $workspace = null
+		?ExportWorkspace $workspace = null,
+		?ImportStateStore $import_state = null
 	) {
 		$this->store               = $store ?? new ImportFilePromotionStateStore();
 		$this->database_activation = $database_activation ?? new ImportDatabaseActivationStateStore();
 		$this->file_state          = $file_state ?? new ImportFileStateStore();
 		$this->finalize_state      = $finalize_state ?? new ImportFinalizeStateStore();
 		$this->workspace           = $workspace ?? new ExportWorkspace();
+		$this->import_state        = $import_state ?? new ImportStateStore();
 	}
 
 	/**
@@ -97,7 +108,7 @@ final class ImportFilePromotionPlanner {
 			return $existing;
 		}
 
-		if ( ! $this->sandbox_ready() ) {
+		if ( ! $this->sandbox_ready( $job_id ) ) {
 			return null;
 		}
 
@@ -134,7 +145,7 @@ final class ImportFilePromotionPlanner {
 			return null;
 		}
 
-		$active_roots = $this->active_roots();
+		$active_roots = $this->active_roots( $job_id );
 		if ( null === $active_roots ) {
 			return null;
 		}
@@ -184,7 +195,7 @@ final class ImportFilePromotionPlanner {
 			);
 		}
 
-		$runtime_before = $this->current_runtime();
+		$runtime_before = $this->current_runtime( $job_id );
 		$runtime_target = $this->source_runtime( $job_id );
 		if ( null === $runtime_before || null === $runtime_target ) {
 			return null;
@@ -282,7 +293,12 @@ final class ImportFilePromotionPlanner {
 	 *
 	 * @return array{active_plugins:list<string>,template:string,stylesheet:string}|null
 	 */
-	private function current_runtime(): ?array {
+	private function current_runtime( string $job_id ): ?array {
+		$import = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			return $this->local_current_runtime( $import );
+		}
+
 		$plugins    = get_option( 'active_plugins', array() );
 		$template   = get_option( 'template', '' );
 		$stylesheet = get_option( 'stylesheet', '' );
