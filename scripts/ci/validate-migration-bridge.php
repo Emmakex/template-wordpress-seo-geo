@@ -538,8 +538,8 @@ foreach (
 $local_sandbox_runtime = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeBootstrapper.php' );
 foreach (
 	array(
-		'public const DEFAULT_BATCH_FILES     = 50;',
-		'public const DEFAULT_BATCH_BYTES     = 8388608;',
+		'public const DEFAULT_BATCH_FILES = 50;',
+		'public const DEFAULT_BATCH_BYTES = 8388608;',
 		'$this->ownership->verified_snapshot( $job_id )',
 		'$this->core_runtime->snapshot( $job_id )',
 		'$this->workspace->ensure_local_clone_directory( $target, self::BRIDGE_TARGET_ROOT )',
