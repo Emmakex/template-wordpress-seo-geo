@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.4.1 private local handoff/intake/payload/database acceptance.
+# Phase 10E.2A.5.3.1-5.4.2 private local handoff/intake/payload/database/file acceptance.
 
-printf '[smoke] Checking private same-server local-clone handoff, payload verification and transactional database staging.\n'
+printf '[smoke] Checking private same-server local-clone handoff, database staging and private file staging.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -10,6 +10,7 @@ cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -25,6 +26,9 @@ use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerifier;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestorer;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
@@ -49,7 +53,9 @@ $options = array(
 	LocalCloneTargetPreflightStateStore::OPTION_NAME,
 	LocalClonePayloadVerificationStateStore::OPTION_NAME,
 	LocalCloneDatabaseRestoreStateStore::OPTION_NAME,
+	LocalCloneFileRestoreStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
+	ImportFileStateStore::OPTION_NAME,
 	ImportDatabaseStateStore::OPTION_NAME,
 	ImportPayloadStateStore::OPTION_NAME,
 );
@@ -66,6 +72,7 @@ $handoff   = Plugin::local_clone_package_handoff();
 $target_preflight = Plugin::local_clone_target_preflight();
 $local_payload     = Plugin::local_clone_payload_verifier();
 $local_database    = Plugin::local_clone_database_restorer();
+$local_files       = Plugin::local_clone_file_restorer();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -76,6 +83,7 @@ if (
 	|| ! $target_preflight instanceof LocalCloneTargetPreflight
 	|| ! $local_payload instanceof LocalClonePayloadVerifier
 	|| ! $local_database instanceof LocalCloneDatabaseRestorer
+	|| ! $local_files instanceof LocalCloneFileRestorer
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -164,10 +172,45 @@ $chunk_json = wp_json_encode( $chunk_payload, JSON_UNESCAPED_SLASHES | JSON_UNES
 $chunk_written = is_string( $chunk_json )
 	? $workspace->write( $job_id, $table_dir . '/chunks/000000.json', $chunk_json )
 	: null;
-$upload_written = $workspace->write( $job_id, 'files/uploads/a.txt', 'upload-payload' );
-$plugin_written = $workspace->write( $job_id, 'files/plugins/demo/demo.php', "<?php\n// handoff fixture\n" );
-if ( ! is_array( $schema_written ) || ! is_array( $chunk_written ) || ! is_array( $upload_written ) || ! is_array( $plugin_written ) ) {
-	throw new RuntimeException( 'Could not write local handoff payload fixtures.' );
+$files = array(
+	array( 'root' => 'uploads', 'relative' => '2026/local.txt', 'content' => "local-upload\n" ),
+	array( 'root' => 'plugins', 'relative' => 'sample-local/plugin.php', 'content' => "<?php\n// local staged plugin\n" ),
+	array( 'root' => 'themes', 'relative' => 'sample-local/style.css', 'content' => "body{display:block}\n" ),
+);
+$root_stats = array(
+	'uploads' => array( 'file_count' => 0, 'byte_count' => 0 ),
+	'plugins' => array( 'file_count' => 0, 'byte_count' => 0 ),
+	'themes'  => array( 'file_count' => 0, 'byte_count' => 0 ),
+);
+$total_file_bytes = 0;
+
+foreach ( $files as $file ) {
+	$payload_path = 'files/' . $file['root'] . '/' . $file['relative'];
+	$written      = $workspace->write( $job_id, $payload_path, $file['content'] );
+	if ( ! is_array( $written ) ) {
+		throw new RuntimeException( 'Could not write local file payload fixture: ' . $payload_path );
+	}
+
+	$record = array(
+		'root'          => $file['root'],
+		'relative_path' => $file['relative'],
+		'payload_path'  => $payload_path,
+		'byte_count'    => (int) $written['bytes'],
+		'sha256'        => (string) $written['sha256'],
+		'export_status' => 'copied',
+	);
+	$record_json = wp_json_encode( $record, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n";
+	$record_path = 'files-meta/' . $file['root'] . '/' . hash( 'sha256', $file['relative'] ) . '.json';
+	if ( ! is_array( $workspace->write( $job_id, $record_path, $record_json ) ) ) {
+		throw new RuntimeException( 'Could not write local file record fixture.' );
+	}
+
+	++$root_stats[ $file['root'] ]['file_count'];
+	$root_stats[ $file['root'] ]['byte_count'] += (int) $written['bytes'];
+	$total_file_bytes += (int) $written['bytes'];
+}
+if ( ! is_array( $schema_written ) || ! is_array( $chunk_written ) ) {
+	throw new RuntimeException( 'Could not write local database payload fixtures.' );
 }
 
 $table_meta = array(
@@ -227,11 +270,12 @@ if ( ! is_array( $database_written ) ) {
 $files_manifest = array(
 	'schema_version'              => 1,
 	'payload_class'               => 'files',
-	'file_count'                  => 2,
-	'payload_bytes'               => (int) $upload_written['bytes'] + (int) $plugin_written['bytes'],
+	'file_count'                  => count( $files ),
+	'payload_bytes'               => $total_file_bytes,
 	'roots'                       => array(
-		array( 'id' => 'uploads', 'file_count' => 1, 'byte_count' => (int) $upload_written['bytes'] ),
-		array( 'id' => 'plugins', 'file_count' => 1, 'byte_count' => (int) $plugin_written['bytes'] ),
+		array( 'id' => 'uploads', 'file_count' => $root_stats['uploads']['file_count'], 'byte_count' => $root_stats['uploads']['byte_count'] ),
+		array( 'id' => 'plugins', 'file_count' => $root_stats['plugins']['file_count'], 'byte_count' => $root_stats['plugins']['byte_count'] ),
+		array( 'id' => 'themes', 'file_count' => $root_stats['themes']['file_count'], 'byte_count' => $root_stats['themes']['byte_count'] ),
 	),
 	'source_fingerprint'          => $source_fingerprint,
 	'file_records'                => array(
@@ -318,7 +362,7 @@ $manifest = array(
 		'files'    => array(
 			'manifest_path'   => 'files/manifest.json',
 			'manifest_sha256' => (string) $files_written['sha256'],
-			'file_count'      => 2,
+			'file_count'      => count( $files ),
 			'payload_bytes'   => (int) $files_manifest['payload_bytes'],
 		),
 	),
@@ -357,7 +401,7 @@ $inventory->save(
 			'estimated_bytes' => 4096,
 		),
 		'roots'        => array(),
-		'file_count'   => 2,
+		'file_count'   => count( $files ),
 		'byte_count'   => 4096,
 		'fingerprint'  => $source_fingerprint,
 		'blockers'     => array(),
