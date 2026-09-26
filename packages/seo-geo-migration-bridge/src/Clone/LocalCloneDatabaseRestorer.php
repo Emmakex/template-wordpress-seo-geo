@@ -343,7 +343,7 @@ final class LocalCloneDatabaseRestorer {
 	/**
 	 * Confirm saved parent state still matches current authority.
 	 *
-	 * @param array<string,mixed>                                                                        $state     Parent database state.
+	 * @param array<string,mixed>                                                                       $state     Parent database state.
 	 * @param array{handoff:array<string,mixed>,payload:array<string,mixed>,import:array<string,mixed>} $authority Current authority.
 	 */
 	private function state_matches_authority( array $state, array $authority ): bool {
@@ -416,8 +416,8 @@ final class LocalCloneDatabaseRestorer {
 			return;
 		}
 
-		$blockers   = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
-		$blockers[] = $code;
+		$blockers                        = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
+		$blockers[]                      = $code;
 		$import['status']                = 'blocked';
 		$import['blockers']              = array_values( array_unique( $blockers ) );
 		$import['full_payload_verified'] = false;
