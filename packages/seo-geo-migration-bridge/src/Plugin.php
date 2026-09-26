@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPlanController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBootstrapController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalRuntimeController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBridgeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -36,6 +37,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeBootstrapper;
+use SeoGeo\MigrationBridge\Clone\LocalCloneBridgeStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneBridgeBootstrapper;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -289,6 +292,27 @@ final class Plugin {
 	 * @var AdminCloneLocalRuntimeController|null
 	 */
 	private static ?AdminCloneLocalRuntimeController $local_clone_runtime_controller = null;
+
+	/**
+	 * Local-clone Migration Bridge runtime state store singleton.
+	 *
+	 * @var LocalCloneBridgeStateStore|null
+	 */
+	private static ?LocalCloneBridgeStateStore $local_clone_bridge_state_store = null;
+
+	/**
+	 * Local-clone Migration Bridge runtime bootstrapper singleton.
+	 *
+	 * @var LocalCloneBridgeBootstrapper|null
+	 */
+	private static ?LocalCloneBridgeBootstrapper $local_clone_bridge_bootstrapper = null;
+
+	/**
+	 * Local-clone Migration Bridge runtime controller singleton.
+	 *
+	 * @var AdminCloneLocalBridgeController|null
+	 */
+	private static ?AdminCloneLocalBridgeController $local_clone_bridge_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -625,6 +649,14 @@ final class Plugin {
 			self::$clone_job_store
 		);
 		self::$local_clone_runtime_controller               ??= new AdminCloneLocalRuntimeController( self::$local_clone_runtime_bootstrapper );
+		self::$local_clone_bridge_state_store               ??= new LocalCloneBridgeStateStore();
+		self::$local_clone_bridge_bootstrapper             ??= new LocalCloneBridgeBootstrapper(
+			self::$local_clone_bridge_state_store,
+			self::$local_clone_bootstrapper,
+			self::$local_clone_runtime_state_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_bridge_controller               ??= new AdminCloneLocalBridgeController( self::$local_clone_bridge_bootstrapper );
 		self::$clone_delivery_state_store                   ??= new DeliveryStateStore();
 		self::$clone_package_delivery                       ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
 		self::$clone_delivery_controller                    ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
@@ -696,6 +728,7 @@ final class Plugin {
 		self::$local_clone_plan_controller->boot();
 		self::$local_clone_bootstrap_controller->boot();
 		self::$local_clone_runtime_controller->boot();
+		self::$local_clone_bridge_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -835,6 +868,20 @@ final class Plugin {
 	 */
 	public static function local_clone_runtime_bootstrapper(): ?LocalCloneRuntimeBootstrapper {
 		return self::$local_clone_runtime_bootstrapper;
+	}
+
+	/**
+	 * Return the local-clone Migration Bridge runtime state store.
+	 */
+	public static function local_clone_bridge_state_store(): ?LocalCloneBridgeStateStore {
+		return self::$local_clone_bridge_state_store;
+	}
+
+	/**
+	 * Return the local-clone Migration Bridge runtime bootstrapper.
+	 */
+	public static function local_clone_bridge_bootstrapper(): ?LocalCloneBridgeBootstrapper {
+		return self::$local_clone_bridge_bootstrapper;
 	}
 
 	/**
