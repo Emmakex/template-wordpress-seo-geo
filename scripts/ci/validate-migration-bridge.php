@@ -626,7 +626,7 @@ foreach (
 		"'private-same-server'",
 		"'archive_sha256'",
 		"'handoff_ready'",
-		"'target-intake-preflight'",
+		"'handoff_next'",
 	) as $local_handoff_store_guard
 ) {
 	if ( ! str_contains( $local_handoff_store, $local_handoff_store_guard ) ) {
