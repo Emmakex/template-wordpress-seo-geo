@@ -660,7 +660,16 @@ $target_preflight_child = is_array( $target_preflight_state )
 
 $local_payload_mid = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $local_payload_state = $local_payload_mid;
-for ( $i = 0; $i < 600; ++$i ) {
+$payload_iteration_limit = is_array( $local_payload_state )
+	? max(
+		800,
+		2 * (
+			(int) ( $local_payload_state['archive_entry_count'] ?? 0 )
+			+ (int) ( $local_payload_state['expected_file_count'] ?? 0 )
+		)
+	)
+	: 800;
+for ( $i = 0; $i < $payload_iteration_limit; ++$i ) {
 	if ( is_array( $local_payload_state ) && in_array( $local_payload_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
 		break;
 	}
