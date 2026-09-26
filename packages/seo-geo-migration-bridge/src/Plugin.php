@@ -797,7 +797,7 @@ final class Plugin {
 		self::$clone_import_database_restorer               ??= new ImportDatabaseRestorer( self::$clone_import_database_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_database_controller             ??= new AdminCloneImportDatabaseController( self::$clone_import_database_restorer );
 		self::$local_clone_database_restore_state_store     ??= new LocalCloneDatabaseRestoreStateStore();
-		self::$local_clone_database_restorer               ??= new LocalCloneDatabaseRestorer(
+		self::$local_clone_database_restorer                ??= new LocalCloneDatabaseRestorer(
 			self::$local_clone_database_restore_state_store,
 			self::$local_clone_package_handoff,
 			self::$local_clone_payload_verifier,
@@ -806,7 +806,7 @@ final class Plugin {
 			self::$clone_import_state_store,
 			self::$clone_job_store
 		);
-		self::$local_clone_database_controller             ??= new AdminCloneLocalDatabaseController( self::$local_clone_database_restorer );
+		self::$local_clone_database_controller              ??= new AdminCloneLocalDatabaseController( self::$local_clone_database_restorer );
 		self::$clone_import_file_state_store                ??= new ImportFileStateStore();
 		self::$clone_import_file_restorer                   ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_file_controller                 ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
