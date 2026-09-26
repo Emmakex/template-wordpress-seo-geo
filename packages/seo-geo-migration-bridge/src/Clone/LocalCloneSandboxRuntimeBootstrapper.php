@@ -490,6 +490,7 @@ final class LocalCloneSandboxRuntimeBootstrapper {
 					$target_hash
 				);
 
+				// phpcs:ignore Generic.Formatting.MultipleStatementAlignment.IncorrectWarning -- New cursor group follows a multiline fingerprint assignment.
 				$state['after_name'] = $entry;
 				++$accepted_files;
 				$accepted_bytes += $bytes;
