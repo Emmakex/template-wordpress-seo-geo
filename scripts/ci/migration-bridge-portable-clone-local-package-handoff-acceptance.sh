@@ -749,10 +749,12 @@ $GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$created_table}" );
 
 $local_payload_after_recovery = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $payload_child_after_recovery = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
-$local_database_verified_after_recovery = $local_database->verified_snapshot( $job_id );
+$local_database_verified_before_recovery = $local_database->verified_snapshot( $job_id );
 $local_database_after_recovery = $local_database->advance( $job_id, 10 );
-$local_files_verified_after_recovery = $local_files->verified_snapshot( $job_id );
+$local_database_verified_after_recovery = $local_database->verified_snapshot( $job_id );
+$local_files_verified_before_recovery = $local_files->verified_snapshot( $job_id );
 $local_files_after_recovery = $local_files->advance( $job_id, 1, 1024 * 1024 );
+$local_files_verified_after_recovery = $local_files->verified_snapshot( $job_id );
 $local_rewrite_verified_before_recovery = $local_rewriter->verified_snapshot( $job_id );
 $local_rewrite_after_recovery = $local_rewriter->advance( $job_id, 1 );
 $local_rewrite_verified_after_recovery = $local_rewriter->verified_snapshot( $job_id );
@@ -875,10 +877,12 @@ echo wp_json_encode(
 		'local_payload_after_mutation' => $local_payload_after_mutation,
 		'payload_child_after_mutation' => $payload_child_after_mutation,
 		'local_payload_after_recovery' => $local_payload_after_recovery,
-		'local_database_verified_after_recovery' => is_array( $local_database_verified_after_recovery ),
+		'local_database_verified_before_recovery' => is_array( $local_database_verified_before_recovery ),
 		'local_database_after_recovery' => $local_database_after_recovery,
-		'local_files_verified_after_recovery' => is_array( $local_files_verified_after_recovery ),
+		'local_database_verified_after_recovery' => is_array( $local_database_verified_after_recovery ),
+		'local_files_verified_before_recovery' => is_array( $local_files_verified_before_recovery ),
 		'local_files_after_recovery' => $local_files_after_recovery,
+		'local_files_verified_after_recovery' => is_array( $local_files_verified_after_recovery ),
 		'local_rewrite_verified_before_recovery' => is_array( $local_rewrite_verified_before_recovery ),
 		'local_rewrite_after_recovery' => $local_rewrite_after_recovery,
 		'local_rewrite_verified_after_recovery' => is_array( $local_rewrite_verified_after_recovery ),
