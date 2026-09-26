@@ -162,6 +162,10 @@ final class LocalClonePayloadVerifier {
 		$existing = $this->store->get( $job_id );
 		$target   = $this->target_preflight->verified_snapshot( $job_id );
 		if ( ! is_array( $target ) ) {
+			$this->target_preflight->advance( $job_id );
+			$target = $this->target_preflight->verified_snapshot( $job_id );
+		}
+		if ( ! is_array( $target ) ) {
 			if ( is_array( $existing ) && is_string( $existing['child_import_job_id'] ?? null ) && '' !== $existing['child_import_job_id'] ) {
 				$this->lock_child( (string) $existing['child_import_job_id'], 'local-payload-parent-authority-unavailable' );
 			}
