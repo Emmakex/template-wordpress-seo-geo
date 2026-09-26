@@ -598,7 +598,21 @@ final class PackageDelivery {
 			return null;
 		}
 
-		$this->jobs->transition( $job_id, 'completed' );
+		$job = $this->jobs->get( $job_id );
+		if ( is_array( $job ) && 'export' === ( $job['operation'] ?? null ) ) {
+			$this->jobs->transition( $job_id, 'completed' );
+		} else {
+			$this->jobs->transition( $job_id, 'active', null );
+			$this->jobs->update_progress(
+				$job_id,
+				'integrity',
+				'local-handoff-archive-ready',
+				array(
+					'completed' => (int) $state['verified_file_count'],
+					'total'     => (int) $state['verified_file_count'],
+				)
+			);
+		}
 
 		return $this->store->get( $job_id );
 	}
