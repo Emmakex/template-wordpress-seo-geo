@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.5.4 private local clone acceptance through reversible file promotion.
+# Phase 10E.2A.5.3.1-5.5.5 private local clone acceptance through final target handoff reporting.
 
-printf '[smoke] Checking private same-server local-clone DB activation, reversible file promotion and rollback.\n'
+printf '[smoke] Checking private same-server local-clone final target handoff, rollback and report invalidation.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -15,6 +15,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFilePromotionController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalHandoffController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -40,6 +41,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromoter;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromotionStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneHandoffReporter;
+use SeoGeo\MigrationBridge\Clone\LocalCloneHandoffReportStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFilePromotionStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
@@ -74,6 +77,7 @@ $options = array(
 	LocalCloneFinalizationPlanStateStore::OPTION_NAME,
 	LocalCloneDatabaseActivationStateStore::OPTION_NAME,
 	LocalCloneFilePromotionStateStore::OPTION_NAME,
+	LocalCloneHandoffReportStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
 	ImportFinalizeStateStore::OPTION_NAME,
 	ImportRewriteStateStore::OPTION_NAME,
@@ -99,6 +103,7 @@ $local_rewriter    = Plugin::local_clone_environment_rewriter();
 $local_finalizer   = Plugin::local_clone_finalization_planner();
 $local_activation  = Plugin::local_clone_database_activator();
 $local_promotion   = Plugin::local_clone_file_promoter();
+$local_handoff_reporter = Plugin::local_clone_handoff_reporter();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -114,6 +119,7 @@ if (
 	|| ! $local_finalizer instanceof LocalCloneFinalizationPlanner
 	|| ! $local_activation instanceof LocalCloneDatabaseActivator
 	|| ! $local_promotion instanceof LocalCloneFilePromoter
+	|| ! $local_handoff_reporter instanceof LocalCloneHandoffReporter
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -994,7 +1000,11 @@ $active_plugins_after_file_promotion    = get_option( 'active_plugins', array() 
 $active_template_after_file_promotion   = (string) get_option( 'template', '' );
 $active_stylesheet_after_file_promotion = (string) get_option( 'stylesheet', '' );
 
+$local_handoff_report = $local_handoff_reporter->prepare( $job_id );
+$local_handoff_report_verified = $local_handoff_reporter->verified_snapshot( $job_id );
+
 $local_file_promotion_rolled_back = $local_promotion->rollback( $job_id );
+$local_handoff_report_verified_after_file_rollback = $local_handoff_reporter->verified_snapshot( $job_id );
 $file_promotion_child_after_rollback = '' !== $payload_child_id
 	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
 	: null;
@@ -1098,6 +1108,13 @@ $file_promotion_autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalCloneFilePromotionStateStore::OPTION_NAME
+	)
+);
+
+$handoff_report_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneHandoffReportStateStore::OPTION_NAME
 	)
 );
 
@@ -1246,6 +1263,9 @@ echo wp_json_encode(
 		'active_plugins_after_file_promotion' => $active_plugins_after_file_promotion,
 		'active_template_after_file_promotion' => $active_template_after_file_promotion,
 		'active_stylesheet_after_file_promotion' => $active_stylesheet_after_file_promotion,
+		'local_handoff_report' => $local_handoff_report,
+		'local_handoff_report_verified' => is_array( $local_handoff_report_verified ),
+		'local_handoff_report_verified_after_file_rollback' => is_array( $local_handoff_report_verified_after_file_rollback ),
 		'local_file_promotion_rolled_back' => $local_file_promotion_rolled_back,
 		'file_promotion_child_after_rollback' => $file_promotion_child_after_rollback,
 		'database_activation_child_after_file_rollback' => $database_activation_child_after_file_rollback,
@@ -1314,6 +1334,9 @@ echo wp_json_encode(
 		'local_file_promotion_service_registered' => $local_promotion instanceof LocalCloneFilePromoter,
 		'local_file_promotion_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFilePromotionController::ACTION ),
 		'local_file_promotion_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFilePromotionController::ACTION ),
+		'local_handoff_service_registered' => $local_handoff_reporter instanceof LocalCloneHandoffReporter,
+		'local_handoff_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalHandoffController::ACTION ),
+		'local_handoff_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalHandoffController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
@@ -1323,6 +1346,7 @@ echo wp_json_encode(
 		'finalization_autoload'       => $finalization_autoload,
 		'database_activation_autoload' => $database_activation_autoload,
 		'file_promotion_autoload'      => $file_promotion_autoload,
+		'handoff_report_autoload'      => $handoff_report_autoload,
 		'active_plugins_before'        => $active_plugins_before,
 		'active_plugins_after'         => $active_plugins_after,
 		'active_template_before'       => $active_template_before,
@@ -1930,12 +1954,39 @@ assert payload["active_plugins_after_file_promotion"] == payload["active_plugins
 assert payload["active_template_after_file_promotion"] == payload["active_template_before"], payload
 assert payload["active_stylesheet_after_file_promotion"] == payload["active_stylesheet_before"], payload
 
+final_handoff = payload["local_handoff_report"]
+assert final_handoff is not None, payload
+assert final_handoff["status"] == "ready", payload
+assert final_handoff["handoff_ready"] is True, payload
+assert final_handoff["database_verified"] is True, payload
+assert final_handoff["files_verified"] is True, payload
+assert final_handoff["home_matches"] is True, payload
+assert final_handoff["siteurl_matches"] is True, payload
+assert final_handoff["noindex_ready"] is True, payload
+assert final_handoff["runtime_matches"] is True, payload
+assert final_handoff["bridge_control_ready"] is True, payload
+assert final_handoff["rollback_available"] is True, payload
+assert final_handoff["source_untouched"] is True, payload
+assert final_handoff["target_url"] == handoff["target_url"], payload
+assert final_handoff["target_table_prefix"] == handoff["target_table_prefix"], payload
+assert final_handoff["table_count"] == 2, payload
+assert final_handoff["row_count"] == 10, payload
+assert final_handoff["file_count"] == payload["fixture_file_count"], payload
+assert re.fullmatch(r"[a-f0-9]{64}", final_handoff["runtime_sha256"]), payload
+assert re.fullmatch(r"[a-f0-9]{64}", final_handoff["report_sha256"]), payload
+assert final_handoff["blockers"] == [], payload
+assert "sandbox-noindex-preserved" in final_handoff["advisories"], payload
+assert "rollback-preserved" in final_handoff["advisories"], payload
+assert "production-cutover-not-authorized" in final_handoff["advisories"], payload
+assert payload["local_handoff_report_verified"] is True, payload
+
 file_rolled_back = payload["local_file_promotion_rolled_back"]
 assert file_rolled_back is not None, payload
 assert file_rolled_back["status"] == "rolled-back", payload
 assert file_rolled_back["handoff_ready"] is False, payload
 assert file_rolled_back["rollback_available"] is False, payload
 assert file_rolled_back["promotion_next"] == "database-rollback-or-cleanup", payload
+assert payload["local_handoff_report_verified_after_file_rollback"] is False, payload
 assert payload["target_upload_absent_after_file_rollback"] is True, payload
 assert payload["target_plugin_absent_after_file_rollback"] is True, payload
 assert payload["target_theme_absent_after_file_rollback"] is True, payload
@@ -2040,6 +2091,9 @@ assert payload["local_database_activation_public_controller_absent"] is True, pa
 assert payload["local_file_promotion_service_registered"] is True, payload
 assert payload["local_file_promotion_controller_registered"] is True, payload
 assert payload["local_file_promotion_public_controller_absent"] is True, payload
+assert payload["local_handoff_service_registered"] is True, payload
+assert payload["local_handoff_controller_registered"] is True, payload
+assert payload["local_handoff_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -2091,6 +2145,7 @@ assert payload["rewrite_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["finalization_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["database_activation_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["file_promotion_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["handoff_report_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["active_plugins_after"] == payload["active_plugins_before"], payload
 assert payload["active_template_after"] == payload["active_template_before"], payload
 assert payload["active_stylesheet_after"] == payload["active_stylesheet_before"], payload
