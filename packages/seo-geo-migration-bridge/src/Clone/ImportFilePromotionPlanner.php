@@ -66,7 +66,7 @@ final class ImportFilePromotionPlanner {
 	 * @param ImportFileStateStore|null               $file_state          Optional file staging state.
 	 * @param ImportFinalizeStateStore|null           $finalize_state      Optional finalization state.
 	 * @param ExportWorkspace|null                    $workspace           Optional private workspace.
-	 * @param ImportStateStore|null                    $import_state        Optional child import state.
+	 * @param ImportStateStore|null                   $import_state        Optional child import state.
 	 */
 	public function __construct(
 		?ImportFilePromotionStateStore $store = null,
@@ -291,6 +291,7 @@ final class ImportFilePromotionPlanner {
 	/**
 	 * Return the currently runnable sandbox plugin/theme runtime for rollback.
 	 *
+	 * @param string $job_id Child import job identifier.
 	 * @return array{active_plugins:list<string>,template:string,stylesheet:string}|null
 	 */
 	private function current_runtime( string $job_id ): ?array {
@@ -500,6 +501,7 @@ final class ImportFilePromotionPlanner {
 	/**
 	 * Return current WordPress destination roots.
 	 *
+	 * @param string $job_id Child import job identifier.
 	 * @return array{uploads:string,plugins:string,themes:string}|null
 	 */
 	private function active_roots( string $job_id ): ?array {
@@ -696,7 +698,7 @@ final class ImportFilePromotionPlanner {
 		$prefix = is_string( $import['destination_table_prefix'] ?? null )
 			? $import['destination_table_prefix']
 			: '';
-		$table = $prefix . 'options';
+		$table  = $prefix . 'options';
 		if (
 			1 !== preg_match( '/^[A-Za-z0-9_]+$/', $prefix )
 			|| 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table )
@@ -708,6 +710,7 @@ final class ImportFilePromotionPlanner {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only target option lookup against a validated isolated table.
 		$value = $wpdb->get_var(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Validated identifier cannot be parameterized.
 				"SELECT option_value FROM {$quoted} WHERE option_name = %s LIMIT 1",
 				$name
 			)
