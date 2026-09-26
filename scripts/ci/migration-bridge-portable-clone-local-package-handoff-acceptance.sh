@@ -529,6 +529,31 @@ $target_tables_after_database = $GLOBALS['wpdb']->get_col(
 		$table_pattern_after_database
 	)
 );
+
+$local_files_mid = $local_files->advance( $job_id, 1, 1024 * 1024 );
+$local_files_state = $local_files_mid;
+for ( $i = 0; $i < 180; ++$i ) {
+	if ( is_array( $local_files_state ) && in_array( $local_files_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_files_state = $local_files->advance( $job_id, 1, 1024 * 1024 );
+}
+$local_files_verified = $local_files->verified_snapshot( $job_id );
+$file_child_state = '' !== $payload_child_id ? ( new ImportFileStateStore() )->get( $payload_child_id ) : null;
+$file_staging_root = $local_files->staging_root( $job_id );
+$staged_upload = '' !== $payload_child_id
+	? $workspace->import_staged_file_info( $payload_child_id, 'uploads', '2026/local.txt' )
+	: null;
+$staged_plugin = '' !== $payload_child_id
+	? $workspace->import_staged_file_info( $payload_child_id, 'plugins', 'sample-local/plugin.php' )
+	: null;
+$staged_theme = '' !== $payload_child_id
+	? $workspace->import_staged_file_info( $payload_child_id, 'themes', 'sample-local/style.css' )
+	: null;
+$target_upload_absent_after_files = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_files = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_files = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$target_bridge_present_after_files = is_file( trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php' );
 $job_before_mutation = $jobs->get( $job_id );
 
 $table_pattern = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
@@ -566,6 +591,8 @@ $local_payload_after_recovery = $local_payload->advance( $job_id, 1, 1024 * 1024
 $payload_child_after_recovery = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
 $local_database_verified_after_recovery = $local_database->verified_snapshot( $job_id );
 $local_database_after_recovery = $local_database->advance( $job_id, 10 );
+$local_files_verified_after_recovery = $local_files->verified_snapshot( $job_id );
+$local_files_after_recovery = $local_files->advance( $job_id, 1, 1024 * 1024 );
 $job_after_recovery = $jobs->get( $job_id );
 
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
@@ -573,6 +600,8 @@ if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$local_files_verified_after_archive_tamper = $local_files->verified_snapshot( $job_id );
+$local_files_after_archive_tamper = $local_files->advance( $job_id, 1, 1024 * 1024 );
 $local_database_verified_after_archive_tamper = $local_database->verified_snapshot( $job_id );
 $local_database_after_archive_tamper = $local_database->advance( $job_id, 10 );
 $local_payload_verified_after_archive_tamper = $local_payload->verified_snapshot( $job_id );
@@ -597,6 +626,13 @@ $database_autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalCloneDatabaseRestoreStateStore::OPTION_NAME
+	)
+);
+
+$file_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneFileRestoreStateStore::OPTION_NAME
 	)
 );
 
