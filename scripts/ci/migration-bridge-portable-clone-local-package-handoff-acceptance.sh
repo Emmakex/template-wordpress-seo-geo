@@ -115,6 +115,10 @@ $target_path   = trailingslashit( wp_normalize_path( ABSPATH ) ) . 'nuevaweb-pac
 $target_url    = trailingslashit( home_url( '/nuevaweb-package-handoff/' ) );
 $source_prefix = $GLOBALS['wpdb']->prefix;
 $target_prefix = $source_prefix . 'sghandoff_';
+$source_home   = home_url( '/' );
+$source_site   = site_url( '/' );
+$options_table = $source_prefix . 'options';
+$posts_table   = $source_prefix . 'posts';
 $source_table  = $source_prefix . 'sg_local_demo';
 $quoted_source = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $source_table ) . chr( 96 );
 
@@ -144,34 +148,165 @@ if ( ! is_array( $job ) ) {
 }
 
 $source_fingerprint = hash( 'sha256', 'local-handoff-source:' . $job_id );
-$table_dir          = 'database/tables/' . substr( hash( 'sha256', $source_table ), 0, 20 );
-$schema_sql         = 'CREATE TABLE `' . $source_table . '` ('
-	. '`id` bigint unsigned NOT NULL, '
-	. '`title` varchar(190) NOT NULL, '
-	. 'PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;' . "\n";
-$schema_written = $workspace->write( $job_id, $table_dir . '/schema.sql', $schema_sql );
 
-$chunk_payload = array(
-	'schema_version'   => 1,
-	'table'            => $source_table,
-	'strategy'         => 'primary-key',
-	'cursor_column'    => 'id',
-	'cursor_start_b64' => '',
-	'offset_start'     => 0,
-	'chunk_index'      => 0,
-	'row_count'        => 3,
-	'columns'          => array( 'id', 'title' ),
-	'value_encoding'   => 'base64-or-null',
-	'rows'             => array(
-		array( base64_encode( '1' ), base64_encode( 'alpha' ) ),
-		array( base64_encode( '2' ), base64_encode( 'beta' ) ),
-		array( base64_encode( '3' ), base64_encode( 'gamma' ) ),
+/**
+ * Encode one exported database row.
+ *
+ * @param list<string|null> $values Raw values.
+ * @return list<string|null>
+ */
+$encode_row = static function ( array $values ): array {
+	return array_map(
+		static function ( ?string $value ): ?string {
+			if ( null === $value ) {
+				return null;
+			}
+
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Binary-safe migration fixture encoding.
+			return base64_encode( $value );
+		},
+		$values
+	);
+};
+
+/**
+ * Write one source table schema/chunk and return manifest metadata.
+ *
+ * @param string                  $table      Source table.
+ * @param list<string>            $columns    Exported columns.
+ * @param string                  $id_column  Cursor/primary-key column.
+ * @param list<list<string|null>> $rows       Raw rows.
+ * @param string                  $schema_sql CREATE TABLE statement.
+ * @return array<string,mixed>
+ */
+$write_table = static function (
+	string $table,
+	array $columns,
+	string $id_column,
+	array $rows,
+	string $schema_sql
+) use ( $workspace, $job_id, $encode_row ): array {
+	$table_dir = 'database/tables/' . substr( hash( 'sha256', $table ), 0, 20 );
+	$schema    = $workspace->write( $job_id, $table_dir . '/schema.sql', $schema_sql . "\n" );
+	if ( ! is_array( $schema ) ) {
+		throw new RuntimeException( 'Could not write local rewrite schema fixture.' );
+	}
+
+	$encoded_rows = array_map( $encode_row, $rows );
+	$chunk        = array(
+		'schema_version'   => 1,
+		'table'            => $table,
+		'strategy'         => 'primary-key',
+		'cursor_column'    => $id_column,
+		'cursor_start_b64' => '',
+		'offset_start'     => 0,
+		'chunk_index'      => 0,
+		'row_count'        => count( $encoded_rows ),
+		'columns'          => $columns,
+		'value_encoding'   => 'base64-or-null',
+		'rows'             => $encoded_rows,
+	);
+	$chunk_json = wp_json_encode( $chunk, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	if ( ! is_string( $chunk_json ) ) {
+		throw new RuntimeException( 'Could not encode local rewrite chunk fixture.' );
+	}
+	$chunk_path = $table_dir . '/chunks/000000.json';
+	$written    = $workspace->write( $job_id, $chunk_path, $chunk_json );
+	if ( ! is_array( $written ) ) {
+		throw new RuntimeException( 'Could not write local rewrite chunk fixture.' );
+	}
+
+	return array(
+		'schema_version' => 1,
+		'name'           => $table,
+		'slug'           => substr( hash( 'sha256', $table ), 0, 20 ),
+		'schema'         => array(
+			'path'   => $table_dir . '/schema.sql',
+			'bytes'  => (int) $schema['bytes'],
+			'sha256' => (string) $schema['sha256'],
+		),
+		'strategy'       => 'primary-key',
+		'cursor_column'  => $id_column,
+		'order_columns'  => array(),
+		'columns'        => $columns,
+		'chunks'         => array(
+			array(
+				'index'      => 0,
+				'path'       => $chunk_path,
+				'row_count'  => count( $encoded_rows ),
+				'byte_count' => (int) $written['bytes'],
+				'sha256'     => (string) $written['sha256'],
+			),
+		),
+		'chunk_count'    => 1,
+		'row_count'      => count( $encoded_rows ),
+		'byte_count'     => (int) $written['bytes'],
+		'complete'       => true,
+	);
+};
+
+$serialized_value = serialize( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Fixture intentionally exercises serialization-safe rewrite.
+	array(
+		'url'   => $source_home . 'serialized',
+		'asset' => $source_home . 'wp-content/uploads/2026/local.txt',
+	)
+);
+$json_value = wp_json_encode(
+	array(
+		'url'    => $source_home . 'json',
+		'nested' => array( 'site' => $source_site . 'admin' ),
+	),
+	JSON_UNESCAPED_SLASHES
+);
+if ( ! is_string( $json_value ) ) {
+	throw new RuntimeException( 'Could not encode local rewrite JSON fixture.' );
+}
+
+$options_rows = array(
+	array( '1', 'home', $source_home, 'yes' ),
+	array( '2', 'siteurl', $source_site, 'yes' ),
+	array( '3', 'plain_url', $source_home . 'catalog/item?x=1#top', 'yes' ),
+	array( '4', 'serialized_payload', $serialized_value, 'yes' ),
+	array( '5', 'json_payload', $json_value, 'yes' ),
+	array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context', 'yes' ),
+);
+$posts_rows = array(
+	array(
+		'1',
+		'Visit ' . $source_home . 'about and keep https://external.example.test/reference',
+		'Media ' . $source_home . 'wp-content/uploads/2026/local.txt',
+		'',
 	),
 );
-$chunk_json = wp_json_encode( $chunk_payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
-$chunk_written = is_string( $chunk_json )
-	? $workspace->write( $job_id, $table_dir . '/chunks/000000.json', $chunk_json )
-	: null;
+
+$options_schema = 'CREATE TABLE `' . $options_table . '` ('
+	. '`option_id` bigint unsigned NOT NULL, '
+	. '`option_name` varchar(191) NOT NULL, '
+	. '`option_value` longtext NOT NULL, '
+	. '`autoload` varchar(20) NOT NULL DEFAULT \'yes\', '
+	. 'PRIMARY KEY (`option_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
+$posts_schema = 'CREATE TABLE `' . $posts_table . '` ('
+	. '`ID` bigint unsigned NOT NULL, '
+	. '`post_content` longtext NOT NULL, '
+	. '`post_excerpt` text NOT NULL, '
+	. '`post_content_filtered` longtext NOT NULL, '
+	. 'PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
+
+$options_meta = $write_table(
+	$options_table,
+	array( 'option_id', 'option_name', 'option_value', 'autoload' ),
+	'option_id',
+	$options_rows,
+	$options_schema
+);
+$posts_meta = $write_table(
+	$posts_table,
+	array( 'ID', 'post_content', 'post_excerpt', 'post_content_filtered' ),
+	'ID',
+	$posts_rows,
+	$posts_schema
+);
+
 $files = array(
 	array( 'root' => 'uploads', 'relative' => '2026/local.txt', 'content' => "local-upload\n" ),
 	array( 'root' => 'plugins', 'relative' => 'sample-local/plugin.php', 'content' => "<?php\n// local staged plugin\n" ),
@@ -209,52 +344,21 @@ foreach ( $files as $file ) {
 	$root_stats[ $file['root'] ]['byte_count'] += (int) $written['bytes'];
 	$total_file_bytes += (int) $written['bytes'];
 }
-if ( ! is_array( $schema_written ) || ! is_array( $chunk_written ) ) {
-	throw new RuntimeException( 'Could not write local database payload fixtures.' );
-}
-
-$table_meta = array(
-	'schema_version' => 1,
-	'name'           => $source_table,
-	'slug'           => substr( hash( 'sha256', $source_table ), 0, 20 ),
-	'schema'         => array(
-		'path'   => $table_dir . '/schema.sql',
-		'bytes'  => (int) $schema_written['bytes'],
-		'sha256' => (string) $schema_written['sha256'],
-	),
-	'strategy'       => 'primary-key',
-	'cursor_column'  => 'id',
-	'order_columns'  => array(),
-	'columns'        => array( 'id', 'title' ),
-	'chunks'         => array(
-		array(
-			'index'      => 0,
-			'path'       => $table_dir . '/chunks/000000.json',
-			'row_count'  => 3,
-			'byte_count' => (int) $chunk_written['bytes'],
-			'sha256'     => (string) $chunk_written['sha256'],
-		),
-	),
-	'chunk_count'    => 1,
-	'row_count'      => 3,
-	'byte_count'     => (int) $chunk_written['bytes'],
-	'complete'       => true,
-);
 
 $database_manifest = array(
 	'schema_version'              => 1,
 	'package_id'                  => $job_id,
 	'payload_class'               => 'database',
 	'source'                      => array(
-		'home_url'     => home_url( '/' ),
-		'site_url'     => site_url( '/' ),
+		'home_url'     => $source_home,
+		'site_url'     => $source_site,
 		'table_prefix' => $source_prefix,
 	),
-	'tables'                      => array( $table_meta ),
-	'table_count'                 => 1,
-	'row_count'                   => 3,
-	'payload_bytes'               => (int) $table_meta['byte_count'],
-	'chunk_count'                 => 1,
+	'tables'                      => array( $options_meta, $posts_meta ),
+	'table_count'                 => 2,
+	'row_count'                   => count( $options_rows ) + count( $posts_rows ),
+	'payload_bytes'               => (int) $options_meta['byte_count'] + (int) $posts_meta['byte_count'],
+	'chunk_count'                 => 2,
 	'production_source_read_only' => true,
 	'credentials_in_payload'      => false,
 	'contains_private_site_data'  => true,
@@ -345,8 +449,8 @@ $manifest = array(
 	'package_id'     => $job_id,
 	'operation'      => 'local-clone',
 	'source'         => array(
-		'home_url'           => home_url( '/' ),
-		'site_url'           => site_url( '/' ),
+		'home_url'           => $source_home,
+		'site_url'           => $source_site,
 		'wordpress_version'  => get_bloginfo( 'version' ),
 		'php_version'        => PHP_VERSION,
 		'source_fingerprint' => $source_fingerprint,
@@ -355,8 +459,8 @@ $manifest = array(
 		'database' => array(
 			'manifest_path'   => 'database/manifest.json',
 			'manifest_sha256' => (string) $database_written['sha256'],
-			'row_count'       => 3,
-			'chunk_count'     => 1,
+			'row_count'       => (int) $database_manifest['row_count'],
+			'chunk_count'     => (int) $database_manifest['chunk_count'],
 			'payload_bytes'   => (int) $database_manifest['payload_bytes'],
 		),
 		'files'    => array(
@@ -397,7 +501,7 @@ $inventory->save(
 	array(
 		'status'       => 'complete',
 		'database'     => array(
-			'estimated_rows'  => 3,
+			'estimated_rows'  => (int) $database_manifest['row_count'],
 			'estimated_bytes' => 4096,
 		),
 		'roots'        => array(),
