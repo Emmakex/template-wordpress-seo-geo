@@ -1432,7 +1432,7 @@ assert local_db is not None, payload
 assert local_db["status"] == "ready", payload
 assert local_db["stage"] == "complete", payload
 assert local_db["destination_prefix"] == handoff["target_table_prefix"], payload
-assert local_db["rows_restored"] == 7, payload
+assert local_db["rows_restored"] == 10, payload
 assert local_db["tables_completed"] == 2, payload
 assert local_db["table_count"] == 2, payload
 assert local_db["active_tables_untouched"] is True, payload
@@ -1446,7 +1446,7 @@ db_child = payload["database_child_state"]
 assert db_child is not None, payload
 assert db_child["status"] == "complete", payload
 assert db_child["stage"] == "complete", payload
-assert db_child["rows_restored"] == 7, payload
+assert db_child["rows_restored"] == 10, payload
 assert db_child["tables_completed"] == 2, payload
 assert db_child["active_tables_untouched"] is True, payload
 assert db_child["destination_prefix"] == handoff["target_table_prefix"], payload
@@ -1470,7 +1470,7 @@ for source_name, staging_name in (
     assert not staging_name.startswith(handoff["target_table_prefix"]), payload
 
 options_before = {row["option_name"]: row["option_value"] for row in payload["staging_options_before_rewrite"]}
-assert set(options_before) == {"home", "siteurl", "plain_url", "serialized_payload", "json_payload", "api_token"}, payload
+assert set(options_before) == {"home", "siteurl", "plain_url", "serialized_payload", "json_payload", "api_token", "active_plugins", "template", "stylesheet"}, payload
 assert len(payload["staging_posts_before_rewrite"]) == 1, payload
 assert payload["source_before"] == [{"id": "999", "title": "production-sentinel"}], payload
 assert payload["source_after_database"] == payload["source_before"], payload
@@ -1488,8 +1488,8 @@ local_files = payload["local_files_state"]
 assert local_files is not None, payload
 assert local_files["status"] == "ready", payload
 assert local_files["stage"] == "complete", payload
-assert local_files["file_count"] == 3, payload
-assert local_files["verify_file_count"] == 3, payload
+assert local_files["file_count"] == 4, payload
+assert local_files["verify_file_count"] == 4, payload
 assert local_files["file_count"] == local_files["expected_file_count"], payload
 assert local_files["byte_count"] == local_files["expected_byte_count"], payload
 assert local_files["verify_file_count"] == local_files["expected_file_count"], payload
@@ -1506,8 +1506,8 @@ file_child = payload["file_child_state"]
 assert file_child is not None, payload
 assert file_child["status"] == "complete", payload
 assert file_child["stage"] == "complete", payload
-assert file_child["file_count"] == 3, payload
-assert file_child["verify_file_count"] == 3, payload
+assert file_child["file_count"] == 4, payload
+assert file_child["verify_file_count"] == 4, payload
 assert file_child["active_roots_untouched"] is True, payload
 
 expected_files = {
@@ -1542,7 +1542,7 @@ assert rewrite["target_unactivated"] is True, payload
 assert rewrite["verify_source_urls"] == 0, payload
 assert rewrite["home_rewrites"] == 1, payload
 assert rewrite["siteurl_rewrites"] == 1, payload
-assert rewrite["rows_scanned"] == 7, payload
+assert rewrite["rows_scanned"] == 10, payload
 assert rewrite["rows_changed"] >= 6, payload
 assert rewrite["values_changed"] >= 7, payload
 assert rewrite["same_origin_rewrites"] >= 4, payload
@@ -1599,9 +1599,9 @@ finalization = payload["local_finalization_state"]
 assert finalization is not None, payload
 assert finalization["status"] == "ready", payload
 assert finalization["stage"] == "ready", payload
-assert finalization["database_rows_hashed"] == 7, payload
+assert finalization["database_rows_hashed"] == 10, payload
 assert finalization["database_table_count"] == 2, payload
-assert finalization["files_hashed"] == 3, payload
+assert finalization["files_hashed"] == 4, payload
 assert finalization["files_hashed"] == finalization["expected_file_count"], payload
 assert finalization["file_bytes_hashed"] == finalization["expected_file_bytes"], payload
 assert finalization["sandbox_hardening_ready"] is True, payload
@@ -1618,8 +1618,8 @@ finalization_child = payload["finalization_child_state"]
 assert finalization_child is not None, payload
 assert finalization_child["status"] == "ready", payload
 assert finalization_child["stage"] == "ready", payload
-assert finalization_child["database_rows_hashed"] == 7, payload
-assert finalization_child["files_hashed"] == 3, payload
+assert finalization_child["database_rows_hashed"] == 10, payload
+assert finalization_child["files_hashed"] == 4, payload
 assert finalization_child["activation_allowed"] is True, payload
 assert finalization_child["handoff_ready"] is False, payload
 assert finalization_child["active_tables_untouched"] is True, payload
@@ -1740,7 +1740,7 @@ assert activation_prepared["activation_next"] == "database-activation", payload
 assert activation_prepared["target_table_prefix"] == handoff["target_table_prefix"], payload
 assert activation_prepared["options_target"] == handoff["target_table_prefix"] + "options", payload
 assert activation_prepared["table_count"] == 2, payload
-assert activation_prepared["row_count"] == 7, payload
+assert activation_prepared["row_count"] == 10, payload
 assert activation_prepared["activation_plan_hash"] == activation_recovered["hash"], payload
 assert payload["target_table_count_after_activation_prepare"] == 0, payload
 assert payload["target_upload_absent_after_activation_prepare"] is True, payload
@@ -1756,7 +1756,7 @@ assert activation_active["active_files_untouched"] is True, payload
 assert activation_active["target_database_active"] is True, payload
 assert activation_active["activation_next"] == "file-promotion", payload
 assert activation_active["table_count"] == 2, payload
-assert activation_active["row_count"] == 9, payload
+assert activation_active["row_count"] == 11, payload
 assert activation_active["target_table_prefix"] == handoff["target_table_prefix"], payload
 assert activation_active["options_target"] == payload["target_options_table"], payload
 assert activation_active["activation_plan_hash"] == activation_recovered["hash"], payload
@@ -1771,7 +1771,7 @@ assert activation_child["active_files_untouched"] is True, payload
 assert activation_child["handoff_ready"] is False, payload
 assert activation_child["options_target"] == payload["target_options_table"], payload
 assert len(activation_child["tables"]) == 2, payload
-assert sum(item["row_count"] for item in activation_child["tables"]) == 9, payload
+assert sum(item["row_count"] for item in activation_child["tables"]) == 11, payload
 
 assert payload["target_table_count_after_activation"] == 2, payload
 assert payload["staging_tables_absent_after_activation"] is True, payload
@@ -1783,7 +1783,7 @@ assert payload["active_home_after_activation"] == payload["active_home_before"],
 assert payload["active_siteurl_after_activation"] == payload["active_siteurl_before"], payload
 
 target_options = {row["option_name"]: row["option_value"] for row in payload["target_options_after_activation"]}
-assert len(target_options) == 8, payload
+assert len(target_options) == 10, payload
 assert target_options["home"] == destination_home, payload
 assert target_options["siteurl"] == destination_site, payload
 assert target_options["plain_url"] == destination_home + "catalog/item?x=1#top", payload
@@ -1825,7 +1825,7 @@ assert activation_child_rollback["database_swapped"] is False, payload
 assert activation_child_rollback["rollback_available"] is False, payload
 
 staging_options_rollback = {row["option_name"]: row["option_value"] for row in payload["staging_options_after_activation_rollback"]}
-assert len(staging_options_rollback) == 8, payload
+assert len(staging_options_rollback) == 10, payload
 assert staging_options_rollback["home"] == destination_home, payload
 assert staging_options_rollback["siteurl"] == destination_site, payload
 assert staging_options_rollback["blog_public"] == "0", payload
