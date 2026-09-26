@@ -642,21 +642,36 @@ final class ImportEnvironmentRewriter {
 		);
 
 		foreach ( $maps as $map ) {
-			$source      = (string) $map[0];
-			$destination = (string) $map[1];
-			if ( ! $this->same_origin( $url, $source ) ) {
+			$source                = (string) $map[0];
+			$destination           = (string) $map[1];
+			$source_path           = $this->base_path( $source );
+			$destination_base_path = $this->base_path( $destination );
+			$url_path              = $this->url_path( $url );
+
+			if (
+				$verify
+				&& $this->same_origin( $source, $destination )
+				&& $source_path !== $destination_base_path
+				&& $this->path_under_base( $destination_base_path, $source_path )
+				&& $this->same_origin( $url, $destination )
+				&& $this->path_under_base( $url_path, $destination_base_path )
+			) {
+				return array(
+					'url'   => $url,
+					'state' => $state,
+				);
+			}
+
+			if (
+				! $this->same_origin( $url, $source )
+				|| ! $this->path_under_base( $url_path, $source_path )
+			) {
 				continue;
 			}
 
-			$source_path = $this->base_path( $source );
-			$url_path    = $this->url_path( $url );
-			if ( ! $this->path_under_base( $url_path, $source_path ) ) {
-				continue;
-			}
-
-			$relative         = ltrim( substr( $url_path, strlen( rtrim( $source_path, '/' ) ) ), '/' );
-			$destination_path = $this->join_url_path( $this->base_path( $destination ), $relative );
-			$rebuilt          = $this->rebuild_url( $url, $destination, $destination_path );
+			$relative    = ltrim( substr( $url_path, strlen( rtrim( $source_path, '/' ) ) ), '/' );
+			$mapped_path = $this->join_url_path( $destination_base_path, $relative );
+			$rebuilt     = $this->rebuild_url( $url, $destination, $mapped_path );
 			if ( $rebuilt === $url ) {
 				return array(
 					'url'   => $url,
