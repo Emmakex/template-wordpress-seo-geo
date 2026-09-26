@@ -406,11 +406,18 @@ $local_payload_after_mutation = $local_payload->advance( $job_id, 1, 1024 * 1024
 $payload_child_after_mutation = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
 $GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$created_table}" );
 
+$local_payload_after_recovery = $local_payload->advance( $job_id, 1, 1024 * 1024 );
+$payload_child_after_recovery = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
+$job_after_recovery = $jobs->get( $job_id );
+
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
 if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$local_payload_verified_after_archive_tamper = $local_payload->verified_snapshot( $job_id );
+$local_payload_after_archive_tamper = $local_payload->advance( $job_id, 1, 1024 * 1024 );
+$payload_child_after_archive_tamper = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
 
 $autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
@@ -440,9 +447,15 @@ echo wp_json_encode(
 		'local_payload_verified_after_mutation' => is_array( $local_payload_verified_after_mutation ),
 		'local_payload_after_mutation' => $local_payload_after_mutation,
 		'payload_child_after_mutation' => $payload_child_after_mutation,
+		'local_payload_after_recovery' => $local_payload_after_recovery,
+		'payload_child_after_recovery' => $payload_child_after_recovery,
+		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
+		'local_payload_verified_after_archive_tamper' => is_array( $local_payload_verified_after_archive_tamper ),
+		'local_payload_after_archive_tamper' => $local_payload_after_archive_tamper,
+		'payload_child_after_archive_tamper' => $payload_child_after_archive_tamper,
 		'delivery_info_before_tamper' => $delivery_info,
 		'frozen_manifest_hash'        => $frozen_manifest_hash,
 		'manifest_after_hash'         => $manifest_after_hash,
@@ -580,6 +593,31 @@ assert blocked_child["status"] == "blocked", payload
 assert blocked_child["full_payload_verified"] is False, payload
 assert blocked_child["restore_allowed"] is False, payload
 assert "local-payload-parent-authority-unavailable" in blocked_child["blockers"], payload
+
+recovered_parent = payload["local_payload_after_recovery"]
+assert recovered_parent is not None, payload
+assert recovered_parent["status"] == "ready", payload
+assert recovered_parent["payload_verified"] is True, payload
+assert recovered_parent["child_restore_allowed"] is True, payload
+recovered_child = payload["payload_child_after_recovery"]
+assert recovered_child is not None, payload
+assert recovered_child["status"] == "payload-verified", payload
+assert recovered_child["full_payload_verified"] is True, payload
+assert recovered_child["restore_allowed"] is True, payload
+job_after_recovery = payload["job_after_recovery"]
+assert job_after_recovery["status"] == "active", payload
+assert job_after_recovery["phase"] == "verify", payload
+assert job_after_recovery["cursor"] == "local-payload-verified", payload
+
+assert payload["local_payload_verified_after_archive_tamper"] is False, payload
+archive_blocked_parent = payload["local_payload_after_archive_tamper"]
+assert archive_blocked_parent is not None and archive_blocked_parent["status"] == "blocked", payload
+assert "local-payload-parent-authority-unavailable" in archive_blocked_parent["blockers"], payload
+archive_blocked_child = payload["payload_child_after_archive_tamper"]
+assert archive_blocked_child is not None, payload
+assert archive_blocked_child["status"] == "blocked", payload
+assert archive_blocked_child["full_payload_verified"] is False, payload
+assert archive_blocked_child["restore_allowed"] is False, payload
 
 assert payload["local_payload_service_registered"] is True, payload
 assert payload["local_payload_controller_registered"] is True, payload
