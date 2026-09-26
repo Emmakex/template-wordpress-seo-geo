@@ -72,10 +72,10 @@ final class AdminCloneLocalFinalizationController {
 			}
 		}
 
-		$batch_rows = isset( $_POST['local_clone_finalization_batch_rows'] )
+		$batch_rows        = isset( $_POST['local_clone_finalization_batch_rows'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['local_clone_finalization_batch_rows'] ) ) )
 			: ImportFinalizationPlanner::DEFAULT_BATCH_ROWS;
-		$batch_files = isset( $_POST['local_clone_finalization_batch_files'] )
+		$batch_files     = isset( $_POST['local_clone_finalization_batch_files'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['local_clone_finalization_batch_files'] ) ) )
 			: ImportFinalizationPlanner::DEFAULT_BATCH_FILES;
 		$batch_megabytes = isset( $_POST['local_clone_finalization_batch_megabytes'] )
