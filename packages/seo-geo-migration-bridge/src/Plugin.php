@@ -759,8 +759,8 @@ final class Plugin {
 		self::$clone_import_payload_state_store             ??= new ImportPayloadStateStore();
 		self::$clone_import_payload_verifier                ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_payload_controller              ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
-		self::$local_clone_payload_verification_state_store  ??= new LocalClonePayloadVerificationStateStore();
-		self::$local_clone_payload_verifier                  ??= new LocalClonePayloadVerifier(
+		self::$local_clone_payload_verification_state_store ??= new LocalClonePayloadVerificationStateStore();
+		self::$local_clone_payload_verifier                 ??= new LocalClonePayloadVerifier(
 			self::$local_clone_payload_verification_state_store,
 			self::$local_clone_target_preflight,
 			self::$clone_import_payload_verifier,
@@ -768,7 +768,7 @@ final class Plugin {
 			self::$clone_import_state_store,
 			self::$clone_job_store
 		);
-		self::$local_clone_payload_controller                ??= new AdminCloneLocalPayloadController( self::$local_clone_payload_verifier );
+		self::$local_clone_payload_controller               ??= new AdminCloneLocalPayloadController( self::$local_clone_payload_verifier );
 		self::$clone_import_database_state_store            ??= new ImportDatabaseStateStore();
 		self::$clone_import_database_restorer               ??= new ImportDatabaseRestorer( self::$clone_import_database_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_database_controller             ??= new AdminCloneImportDatabaseController( self::$clone_import_database_restorer );
