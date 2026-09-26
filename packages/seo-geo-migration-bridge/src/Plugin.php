@@ -21,6 +21,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -60,6 +61,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanner;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -481,6 +484,27 @@ final class Plugin {
 	 * @var AdminCloneLocalFinalizationController|null
 	 */
 	private static ?AdminCloneLocalFinalizationController $local_clone_finalization_controller = null;
+
+	/**
+	 * Local-clone database activation state store singleton.
+	 *
+	 * @var LocalCloneDatabaseActivationStateStore|null
+	 */
+	private static ?LocalCloneDatabaseActivationStateStore $local_clone_database_activation_state_store = null;
+
+	/**
+	 * Local-clone reversible database activator singleton.
+	 *
+	 * @var LocalCloneDatabaseActivator|null
+	 */
+	private static ?LocalCloneDatabaseActivator $local_clone_database_activator = null;
+
+	/**
+	 * Local-clone database activation controller singleton.
+	 *
+	 * @var AdminCloneLocalDatabaseActivationController|null
+	 */
+	private static ?AdminCloneLocalDatabaseActivationController $local_clone_database_activation_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -939,8 +963,19 @@ final class Plugin {
 		self::$clone_import_database_activator              ??= new ImportDatabaseActivator(
 			self::$clone_import_database_activation_state_store,
 			self::$clone_import_finalization_planner,
-			self::$clone_import_file_promotion_state_store
+			self::$clone_import_file_promotion_state_store,
+			self::$clone_import_state_store,
+			self::$local_clone_target_preflight
 		);
+		self::$local_clone_database_activation_state_store  ??= new LocalCloneDatabaseActivationStateStore();
+		self::$local_clone_database_activator               ??= new LocalCloneDatabaseActivator(
+			self::$local_clone_database_activation_state_store,
+			self::$local_clone_finalization_planner,
+			self::$clone_import_database_activator,
+			self::$clone_import_state_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_database_activation_controller   ??= new AdminCloneLocalDatabaseActivationController( self::$local_clone_database_activator );
 		self::$clone_import_database_activation_controller  ??= new AdminCloneImportDatabaseActivationController( self::$clone_import_database_activator );
 
 		self::$clone_import_file_promotion_planner    ??= new ImportFilePromotionPlanner(
@@ -983,6 +1018,7 @@ final class Plugin {
 		self::$local_clone_file_controller->boot();
 		self::$local_clone_environment_rewrite_controller->boot();
 		self::$local_clone_finalization_controller->boot();
+		self::$local_clone_database_activation_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -1234,6 +1270,20 @@ final class Plugin {
 	 */
 	public static function local_clone_finalization_planner(): ?LocalCloneFinalizationPlanner {
 		return self::$local_clone_finalization_planner;
+	}
+
+	/**
+	 * Return the local-clone database activation state store.
+	 */
+	public static function local_clone_database_activation_state_store(): ?LocalCloneDatabaseActivationStateStore {
+		return self::$local_clone_database_activation_state_store;
+	}
+
+	/**
+	 * Return the local-clone reversible database activator.
+	 */
+	public static function local_clone_database_activator(): ?LocalCloneDatabaseActivator {
+		return self::$local_clone_database_activator;
 	}
 
 	/**

@@ -13,6 +13,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -34,6 +35,9 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivator;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
@@ -64,6 +68,7 @@ $options = array(
 	LocalCloneFileRestoreStateStore::OPTION_NAME,
 	LocalCloneEnvironmentRewriteStateStore::OPTION_NAME,
 	LocalCloneFinalizationPlanStateStore::OPTION_NAME,
+	LocalCloneDatabaseActivationStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
 	ImportFinalizeStateStore::OPTION_NAME,
 	ImportRewriteStateStore::OPTION_NAME,
@@ -87,6 +92,7 @@ $local_database    = Plugin::local_clone_database_restorer();
 $local_files       = Plugin::local_clone_file_restorer();
 $local_rewriter    = Plugin::local_clone_environment_rewriter();
 $local_finalizer   = Plugin::local_clone_finalization_planner();
+$local_activation  = Plugin::local_clone_database_activator();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -100,6 +106,7 @@ if (
 	|| ! $local_files instanceof LocalCloneFileRestorer
 	|| ! $local_rewriter instanceof LocalCloneEnvironmentRewriter
 	|| ! $local_finalizer instanceof LocalCloneFinalizationPlanner
+	|| ! $local_activation instanceof LocalCloneDatabaseActivator
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -810,6 +817,74 @@ $local_finalization_verified_after_recovery = $local_finalizer->verified_snapsho
 $local_activation_plan_after_recovery = $local_finalizer->activation_plan_snapshot( $job_id );
 $job_after_recovery = $jobs->get( $job_id );
 
+$local_database_activation_prepared = $local_activation->prepare( $job_id );
+$table_pattern_after_prepare = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
+$target_tables_after_activation_prepare = $GLOBALS['wpdb']->get_col(
+	$GLOBALS['wpdb']->prepare(
+		'SHOW TABLES LIKE %s',
+		$table_pattern_after_prepare
+	)
+);
+$target_upload_absent_after_activation_prepare = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_activation_prepare = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_activation_prepare = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+
+$local_database_activation_activated = $local_activation->activate( $job_id );
+$local_database_activation_verified = $local_activation->verified_snapshot( $job_id );
+$database_activation_child_state = '' !== $payload_child_id
+	? ( new ImportDatabaseActivationStateStore() )->get( $payload_child_id )
+	: null;
+
+$target_options_table = $target_prefix . 'options';
+$target_posts_table   = $target_prefix . 'posts';
+$quoted_target_options = $quote_table( $target_options_table );
+$quoted_target_posts   = $quote_table( $target_posts_table );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of activated isolated target options.
+$target_options_after_activation = $GLOBALS['wpdb']->get_results(
+	"SELECT option_id, option_name, option_value FROM {$quoted_target_options} ORDER BY option_id ASC",
+	ARRAY_A
+);
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of activated isolated target posts.
+$target_posts_after_activation = $GLOBALS['wpdb']->get_results(
+	"SELECT ID, post_content, post_excerpt, post_content_filtered FROM {$quoted_target_posts} ORDER BY ID ASC",
+	ARRAY_A
+);
+$target_tables_after_activation = $GLOBALS['wpdb']->get_col(
+	$GLOBALS['wpdb']->prepare(
+		'SHOW TABLES LIKE %s',
+		$GLOBALS['wpdb']->esc_like( $target_prefix ) . '%'
+	)
+);
+$staging_tables_absent_after_activation = ! $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare( 'SHOW TABLES LIKE %s', $options_staging_table )
+)
+	&& ! $GLOBALS['wpdb']->get_var(
+		$GLOBALS['wpdb']->prepare( 'SHOW TABLES LIKE %s', $posts_staging_table )
+	);
+$target_upload_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$source_after_activation = $source_snapshot();
+$active_home_after_activation    = (string) get_option( 'home', '' );
+$active_siteurl_after_activation = (string) get_option( 'siteurl', '' );
+
+$local_database_activation_rolled_back = $local_activation->rollback( $job_id );
+$database_activation_child_after_rollback = '' !== $payload_child_id
+	? ( new ImportDatabaseActivationStateStore() )->get( $payload_child_id )
+	: null;
+$target_tables_after_activation_rollback = $GLOBALS['wpdb']->get_col(
+	$GLOBALS['wpdb']->prepare(
+		'SHOW TABLES LIKE %s',
+		$GLOBALS['wpdb']->esc_like( $target_prefix ) . '%'
+	)
+);
+$staging_options_after_activation_rollback = $read_staged_options();
+$staging_posts_after_activation_rollback   = $read_staged_posts();
+$target_upload_absent_after_activation_rollback = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_activation_rollback = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_activation_rollback = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$source_after_activation_rollback = $source_snapshot();
+
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
 if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
@@ -866,6 +941,13 @@ $finalization_autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalCloneFinalizationPlanStateStore::OPTION_NAME
+	)
+);
+
+$database_activation_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneDatabaseActivationStateStore::OPTION_NAME
 	)
 );
 
@@ -961,6 +1043,35 @@ echo wp_json_encode(
 		'local_finalization_after_recovery' => $local_finalization_after_recovery,
 		'local_finalization_verified_after_recovery' => is_array( $local_finalization_verified_after_recovery ),
 		'local_activation_plan_after_recovery' => $local_activation_plan_after_recovery,
+		'local_database_activation_prepared' => $local_database_activation_prepared,
+		'target_table_count_after_activation_prepare' => is_array( $target_tables_after_activation_prepare ) ? count( $target_tables_after_activation_prepare ) : -1,
+		'target_upload_absent_after_activation_prepare' => $target_upload_absent_after_activation_prepare,
+		'target_plugin_absent_after_activation_prepare' => $target_plugin_absent_after_activation_prepare,
+		'target_theme_absent_after_activation_prepare' => $target_theme_absent_after_activation_prepare,
+		'local_database_activation_activated' => $local_database_activation_activated,
+		'local_database_activation_verified' => is_array( $local_database_activation_verified ),
+		'database_activation_child_state' => $database_activation_child_state,
+		'target_options_table' => $target_options_table,
+		'target_posts_table' => $target_posts_table,
+		'target_options_after_activation' => $target_options_after_activation,
+		'target_posts_after_activation' => $target_posts_after_activation,
+		'target_table_count_after_activation' => is_array( $target_tables_after_activation ) ? count( $target_tables_after_activation ) : -1,
+		'staging_tables_absent_after_activation' => $staging_tables_absent_after_activation,
+		'target_upload_absent_after_activation' => $target_upload_absent_after_activation,
+		'target_plugin_absent_after_activation' => $target_plugin_absent_after_activation,
+		'target_theme_absent_after_activation' => $target_theme_absent_after_activation,
+		'source_after_activation' => $source_after_activation,
+		'active_home_after_activation' => $active_home_after_activation,
+		'active_siteurl_after_activation' => $active_siteurl_after_activation,
+		'local_database_activation_rolled_back' => $local_database_activation_rolled_back,
+		'database_activation_child_after_rollback' => $database_activation_child_after_rollback,
+		'target_table_count_after_activation_rollback' => is_array( $target_tables_after_activation_rollback ) ? count( $target_tables_after_activation_rollback ) : -1,
+		'staging_options_after_activation_rollback' => $staging_options_after_activation_rollback,
+		'staging_posts_after_activation_rollback' => $staging_posts_after_activation_rollback,
+		'target_upload_absent_after_activation_rollback' => $target_upload_absent_after_activation_rollback,
+		'target_plugin_absent_after_activation_rollback' => $target_plugin_absent_after_activation_rollback,
+		'target_theme_absent_after_activation_rollback' => $target_theme_absent_after_activation_rollback,
+		'source_after_activation_rollback' => $source_after_activation_rollback,
 		'payload_child_after_recovery' => $payload_child_after_recovery,
 		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
@@ -1006,6 +1117,9 @@ echo wp_json_encode(
 		'local_finalization_service_registered' => $local_finalizer instanceof LocalCloneFinalizationPlanner,
 		'local_finalization_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFinalizationController::ACTION ),
 		'local_finalization_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFinalizationController::ACTION ),
+		'local_database_activation_service_registered' => $local_activation instanceof LocalCloneDatabaseActivator,
+		'local_database_activation_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalDatabaseActivationController::ACTION ),
+		'local_database_activation_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalDatabaseActivationController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
@@ -1013,6 +1127,7 @@ echo wp_json_encode(
 		'file_autoload'               => $file_autoload,
 		'rewrite_autoload'            => $rewrite_autoload,
 		'finalization_autoload'       => $finalization_autoload,
+		'database_activation_autoload' => $database_activation_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -1445,6 +1560,109 @@ assert job_after_recovery["status"] == "active", payload
 assert job_after_recovery["phase"] == "finalize-preflight", payload
 assert job_after_recovery["cursor"] == "local-finalization-plan-ready", payload
 
+activation_prepared = payload["local_database_activation_prepared"]
+assert activation_prepared is not None, payload
+assert activation_prepared["status"] == "prepared", payload
+assert activation_prepared["database_swapped"] is False, payload
+assert activation_prepared["rollback_available"] is True, payload
+assert activation_prepared["active_files_untouched"] is True, payload
+assert activation_prepared["target_database_active"] is False, payload
+assert activation_prepared["activation_next"] == "database-activation", payload
+assert activation_prepared["target_table_prefix"] == handoff["target_table_prefix"], payload
+assert activation_prepared["options_target"] == handoff["target_table_prefix"] + "options", payload
+assert activation_prepared["table_count"] == 2, payload
+assert activation_prepared["row_count"] == 7, payload
+assert activation_prepared["activation_plan_hash"] == activation_recovered["hash"], payload
+assert payload["target_table_count_after_activation_prepare"] == 0, payload
+assert payload["target_upload_absent_after_activation_prepare"] is True, payload
+assert payload["target_plugin_absent_after_activation_prepare"] is True, payload
+assert payload["target_theme_absent_after_activation_prepare"] is True, payload
+
+activation_active = payload["local_database_activation_activated"]
+assert activation_active is not None, payload
+assert activation_active["status"] == "activated", payload
+assert activation_active["database_swapped"] is True, payload
+assert activation_active["rollback_available"] is True, payload
+assert activation_active["active_files_untouched"] is True, payload
+assert activation_active["target_database_active"] is True, payload
+assert activation_active["activation_next"] == "file-promotion", payload
+assert activation_active["table_count"] == 2, payload
+assert activation_active["row_count"] == 9, payload
+assert activation_active["target_table_prefix"] == handoff["target_table_prefix"], payload
+assert activation_active["options_target"] == payload["target_options_table"], payload
+assert activation_active["activation_plan_hash"] == activation_recovered["hash"], payload
+assert payload["local_database_activation_verified"] is True, payload
+
+activation_child = payload["database_activation_child_state"]
+assert activation_child is not None, payload
+assert activation_child["status"] == "activated", payload
+assert activation_child["database_swapped"] is True, payload
+assert activation_child["rollback_available"] is True, payload
+assert activation_child["active_files_untouched"] is True, payload
+assert activation_child["handoff_ready"] is False, payload
+assert activation_child["options_target"] == payload["target_options_table"], payload
+assert len(activation_child["tables"]) == 2, payload
+assert sum(item["row_count"] for item in activation_child["tables"]) == 9, payload
+
+assert payload["target_table_count_after_activation"] == 2, payload
+assert payload["staging_tables_absent_after_activation"] is True, payload
+assert payload["target_upload_absent_after_activation"] is True, payload
+assert payload["target_plugin_absent_after_activation"] is True, payload
+assert payload["target_theme_absent_after_activation"] is True, payload
+assert payload["source_after_activation"] == payload["source_before"], payload
+assert payload["active_home_after_activation"] == payload["active_home_before"], payload
+assert payload["active_siteurl_after_activation"] == payload["active_siteurl_before"], payload
+
+target_options = {row["option_name"]: row["option_value"] for row in payload["target_options_after_activation"]}
+assert len(target_options) == 8, payload
+assert target_options["home"] == destination_home, payload
+assert target_options["siteurl"] == destination_site, payload
+assert target_options["plain_url"] == destination_home + "catalog/item?x=1#top", payload
+assert target_options["api_token"] == options_before["api_token"], payload
+assert target_options["blog_public"] == "0", payload
+assert "seo-geo-migration-bridge/seo-geo-migration-bridge.php" in target_options["active_plugins"], payload
+assert "sample-local/plugin.php" not in target_options["active_plugins"], payload
+target_json = json.loads(target_options["json_payload"])
+assert target_json["url"] == destination_home + "json", payload
+assert target_json["nested"]["site"] == destination_site + "admin", payload
+assert destination_home + "serialized" in target_options["serialized_payload"], payload
+assert destination_home + "wp-content/uploads/2026/local.txt" in target_options["serialized_payload"], payload
+
+target_posts = payload["target_posts_after_activation"]
+assert len(target_posts) == 1, payload
+assert target_posts[0]["post_content"] == "Visit " + destination_home + "about and keep https://external.example.test/reference", payload
+assert target_posts[0]["post_excerpt"] == "Media " + destination_home + "wp-content/uploads/2026/local.txt", payload
+assert target_posts[0]["post_content_filtered"] == "", payload
+
+rolled_back = payload["local_database_activation_rolled_back"]
+assert rolled_back is not None, payload
+assert rolled_back["status"] == "rolled-back", payload
+assert rolled_back["database_swapped"] is False, payload
+assert rolled_back["rollback_available"] is False, payload
+assert rolled_back["active_files_untouched"] is True, payload
+assert rolled_back["target_database_active"] is False, payload
+assert rolled_back["activation_next"] == "rebuild-finalization-plan", payload
+assert "operator-database-rollback" in rolled_back["blockers"], payload
+assert payload["target_table_count_after_activation_rollback"] == 0, payload
+assert payload["target_upload_absent_after_activation_rollback"] is True, payload
+assert payload["target_plugin_absent_after_activation_rollback"] is True, payload
+assert payload["target_theme_absent_after_activation_rollback"] is True, payload
+assert payload["source_after_activation_rollback"] == payload["source_before"], payload
+
+activation_child_rollback = payload["database_activation_child_after_rollback"]
+assert activation_child_rollback is not None, payload
+assert activation_child_rollback["status"] == "rolled-back", payload
+assert activation_child_rollback["database_swapped"] is False, payload
+assert activation_child_rollback["rollback_available"] is False, payload
+
+staging_options_rollback = {row["option_name"]: row["option_value"] for row in payload["staging_options_after_activation_rollback"]}
+assert len(staging_options_rollback) == 8, payload
+assert staging_options_rollback["home"] == destination_home, payload
+assert staging_options_rollback["siteurl"] == destination_site, payload
+assert staging_options_rollback["blog_public"] == "0", payload
+assert "seo-geo-migration-bridge/seo-geo-migration-bridge.php" in staging_options_rollback["active_plugins"], payload
+assert len(payload["staging_posts_after_activation_rollback"]) == 1, payload
+
 assert payload["local_finalization_verified_after_archive_tamper"] is False, payload
 archive_finalization_blocked = payload["local_finalization_after_archive_tamper"]
 assert archive_finalization_blocked is not None and archive_finalization_blocked["status"] == "blocked", payload
@@ -1490,6 +1708,9 @@ assert payload["local_rewrite_public_controller_absent"] is True, payload
 assert payload["local_finalization_service_registered"] is True, payload
 assert payload["local_finalization_controller_registered"] is True, payload
 assert payload["local_finalization_public_controller_absent"] is True, payload
+assert payload["local_database_activation_service_registered"] is True, payload
+assert payload["local_database_activation_controller_registered"] is True, payload
+assert payload["local_database_activation_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -1539,6 +1760,7 @@ assert payload["database_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["file_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["rewrite_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["finalization_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["database_activation_autoload"] in ("off", "no", "auto-off"), payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
@@ -1554,7 +1776,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone handoff/staging/rewrite/finalization contract is invalid" "immutable package + private staging + serialization-safe rewrite + guarded activation plan + zero target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone reversible database activation contract is invalid" "guarded finalization + atomic DB activation + verified rollback + zero client-file promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone guarded finalization OK: rewritten staging fingerprints and immutable activation/rollback plan verified while target tables and client files remained unactivated.\n'
+printf '[smoke] Local clone reversible database activation OK: guarded plan prepared, isolated target DB atomically activated/verified, client files stayed untouched, and rollback returned tables to staging.\n'

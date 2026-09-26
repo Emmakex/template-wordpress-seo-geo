@@ -44,20 +44,40 @@ final class ImportDatabaseActivator {
 	private ImportFilePromotionStateStore $file_promotion;
 
 	/**
+	 * Child import/destination authority.
+	 *
+	 * @var ImportStateStore
+	 */
+	private ImportStateStore $import_state;
+
+	/**
+	 * Fresh private same-server target authority.
+	 *
+	 * @var LocalCloneTargetPreflight
+	 */
+	private LocalCloneTargetPreflight $local_target_preflight;
+
+	/**
 	 * Construct the reversible database activator.
 	 *
-	 * @param ImportDatabaseActivationStateStore|null $store          Optional workspace journal.
-	 * @param ImportFinalizationPlanner|null          $finalizer      Optional finalization-plan authority.
-	 * @param ImportFilePromotionStateStore|null      $file_promotion Optional file-promotion journal.
+	 * @param ImportDatabaseActivationStateStore|null $store                  Optional workspace journal.
+	 * @param ImportFinalizationPlanner|null          $finalizer              Optional finalization-plan authority.
+	 * @param ImportFilePromotionStateStore|null      $file_promotion         Optional file-promotion journal.
+	 * @param ImportStateStore|null                   $import_state           Optional child import state.
+	 * @param LocalCloneTargetPreflight|null          $local_target_preflight Optional local target authority.
 	 */
 	public function __construct(
 		?ImportDatabaseActivationStateStore $store = null,
 		?ImportFinalizationPlanner $finalizer = null,
-		?ImportFilePromotionStateStore $file_promotion = null
+		?ImportFilePromotionStateStore $file_promotion = null,
+		?ImportStateStore $import_state = null,
+		?LocalCloneTargetPreflight $local_target_preflight = null
 	) {
-		$this->store          = $store ?? new ImportDatabaseActivationStateStore();
-		$this->finalizer      = $finalizer ?? new ImportFinalizationPlanner();
-		$this->file_promotion = $file_promotion ?? new ImportFilePromotionStateStore();
+		$this->store                  = $store ?? new ImportDatabaseActivationStateStore();
+		$this->finalizer              = $finalizer ?? new ImportFinalizationPlanner();
+		$this->file_promotion         = $file_promotion ?? new ImportFilePromotionStateStore();
+		$this->import_state           = $import_state ?? new ImportStateStore();
+		$this->local_target_preflight = $local_target_preflight ?? new LocalCloneTargetPreflight();
 	}
 
 	/**
@@ -68,6 +88,31 @@ final class ImportDatabaseActivator {
 	 */
 	public function snapshot( string $job_id ): ?array {
 		return $this->store->get( $job_id );
+	}
+
+	/**
+	 * Return an activated database only while exact layout/control guards still hold.
+	 *
+	 * @param string $job_id Child import job identifier.
+	 * @return array<string,mixed>|null
+	 */
+	public function verified_snapshot( string $job_id ): ?array {
+		$state = $this->store->get( $job_id );
+		if (
+			! is_array( $state )
+			|| 'activated' !== ( $state['status'] ?? null )
+			|| true !== ( $state['database_swapped'] ?? false )
+			|| true !== ( $state['rollback_available'] ?? false )
+			|| true !== ( $state['active_files_untouched'] ?? false )
+			|| true === ( $state['handoff_ready'] ?? true )
+			|| array() !== ( $state['blockers'] ?? array() )
+			|| ! $this->sandbox_ready( $job_id, true )
+			|| ! $this->verify_activated( $state )
+		) {
+			return null;
+		}
+
+		return $state;
 	}
 
 	/**
@@ -87,7 +132,7 @@ final class ImportDatabaseActivator {
 			return $existing;
 		}
 
-		if ( ! $this->sandbox_ready() ) {
+		if ( ! $this->sandbox_ready( $job_id ) ) {
 			return null;
 		}
 
@@ -146,7 +191,7 @@ final class ImportDatabaseActivator {
 			);
 			$normalized[] = $entry;
 
-			if ( $target === $wpdb->options ) {
+			if ( $target === $this->expected_options_target( $job_id ) ) {
 				$options = $entry;
 			}
 		}
@@ -197,11 +242,11 @@ final class ImportDatabaseActivator {
 		if ( ! is_array( $state ) || ! in_array( $state['status'] ?? null, array( 'prepared', 'activating' ), true ) ) {
 			return $state;
 		}
-		if ( ! $this->sandbox_ready() ) {
-			return $this->block( $job_id, $state, 'database-activation-sandbox-guard-failed', false );
+		$layout = $this->layout( $state );
+		if ( ! $this->sandbox_ready( $job_id, 'activated' === $layout ) ) {
+			return $this->block( $job_id, $state, 'database-activation-sandbox-guard-failed', 'activated' === $layout );
 		}
 
-		$layout = $this->layout( $state );
 		if ( 'activated' === $layout ) {
 			return $this->finish_activation_verification( $job_id, $state );
 		}
@@ -230,6 +275,7 @@ final class ImportDatabaseActivator {
 		}
 
 		$controls = $this->prepare_options_overlay(
+			$job_id,
 			(string) ( $state['options_staging'] ?? '' ),
 			(string) ( $state['options_target'] ?? '' )
 		);
@@ -287,7 +333,7 @@ final class ImportDatabaseActivator {
 			return $state;
 		}
 
-		if ( ! $this->sandbox_ready() ) {
+		if ( ! $this->sandbox_ready( $job_id, true ) ) {
 			return $this->block( $job_id, $state, 'database-rollback-sandbox-guard-failed', true );
 		}
 
@@ -297,11 +343,17 @@ final class ImportDatabaseActivator {
 	/**
 	 * Apply the wp_options control-plane overlay transactionally to staging.
 	 *
+	 * @param string $job_id  Child import job identifier.
 	 * @param string $staging Staging options table.
 	 * @param string $active  Active destination options table.
 	 * @return list<array{name:string,sha256:string,byte_count:int}>|null
 	 */
-	private function prepare_options_overlay( string $staging, string $active ): ?array {
+	private function prepare_options_overlay( string $job_id, string $staging, string $active ): ?array {
+		$import = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			return $this->prepare_local_options_overlay( $staging, $import );
+		}
+
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb ) {
 			return null;
@@ -399,6 +451,83 @@ final class ImportDatabaseActivator {
 		$controls = array();
 		foreach ( array_merge( $control_names, $runtime_names, array( 'blog_public' ) ) as $name ) {
 			$row = $this->option_row( $staging, $name, $staging_columns );
+			if ( null === $row ) {
+				return null;
+			}
+			$controls[] = array(
+				'name'       => $name,
+				'sha256'     => hash( 'sha256', $row['option_value'] ),
+				'byte_count' => strlen( $row['option_value'] ),
+			);
+		}
+
+		return $controls;
+	}
+
+
+	/**
+	 * Apply the isolated local-clone control overlay only to staging.
+	 *
+	 * Client plugins remain disabled until the later file-promotion phase. The
+	 * always-on MU sandbox loader keeps Migration Bridge available independently.
+	 *
+	 * @param string              $staging Staging options table.
+	 * @param array<string,mixed> $import  Child import state.
+	 * @return list<array{name:string,sha256:string,byte_count:int}>|null
+	 */
+	private function prepare_local_options_overlay( string $staging, array $import ): ?array {
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb ) {
+			return null;
+		}
+
+		$columns = $this->table_columns( $staging );
+		if (
+			! in_array( 'option_id', $columns, true )
+			|| ! in_array( 'option_name', $columns, true )
+			|| ! in_array( 'option_value', $columns, true )
+		) {
+			return null;
+		}
+
+		$home = $this->option_row( $staging, 'home', $columns );
+		$site = $this->option_row( $staging, 'siteurl', $columns );
+		if (
+			null === $home
+			|| null === $site
+			|| untrailingslashit( $home['option_value'] ) !== untrailingslashit( (string) ( $import['destination_home_url'] ?? '' ) )
+			|| untrailingslashit( $site['option_value'] ) !== untrailingslashit( (string) ( $import['destination_site_url'] ?? '' ) )
+		) {
+			return null;
+		}
+
+		$bridge = defined( 'SEO_GEO_MIGRATION_BRIDGE_DIR' )
+			? plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' )
+			: 'seo-geo-migration-bridge/seo-geo-migration-bridge.php';
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WordPress active_plugins is a serialized list by contract.
+		$plugins = serialize( array( $bridge ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Transaction mutates only the verified job-owned staging options table.
+		if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+			return null;
+		}
+
+		$ok = $this->upsert_option( $staging, $columns, 'active_plugins', $plugins, 'yes' )
+			&& $this->upsert_option( $staging, $columns, 'blog_public', '0', 'no' );
+		if ( ! $ok ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			return null;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Commits only the verified staging control overlay.
+		if ( false === $wpdb->query( 'COMMIT' ) ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			return null;
+		}
+
+		$controls = array();
+		foreach ( array( 'home', 'siteurl', 'active_plugins', 'blog_public' ) as $name ) {
+			$row = $this->option_row( $staging, $name, $columns );
 			if ( null === $row ) {
 				return null;
 			}
@@ -864,11 +993,68 @@ final class ImportDatabaseActivator {
 
 	/**
 	 * Revalidate the sandbox safety boundary against the currently active DB.
+	 *
+	 * @param string $job_id          Child import job identifier.
+	 * @param bool   $allow_activated Whether the isolated target DB may already be active.
 	 */
-	private function sandbox_ready(): bool {
+	private function sandbox_ready( string $job_id, bool $allow_activated = false ): bool {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb ) {
 			return false;
+		}
+
+		$import = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			$root   = $this->private_same_server_root( $import );
+			$prefix = is_string( $import['destination_table_prefix'] ?? null )
+				? $import['destination_table_prefix']
+				: '';
+			if (
+				null === $root
+				|| 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $prefix )
+				|| $prefix === $wpdb->prefix
+				|| 'subdirectory' !== ( $import['destination_mode'] ?? null )
+				|| true !== ( $import['destination_storage_isolated'] ?? false )
+				|| true !== ( $import['search_visibility_disabled'] ?? false )
+				|| true !== ( $import['outbound_safe'] ?? false )
+				|| true !== ( $import['backups_ready'] ?? false )
+				|| true !== ( $import['target_authorized'] ?? false )
+				|| true !== ( $import['full_payload_verified'] ?? false )
+				|| true !== ( $import['restore_allowed'] ?? false )
+				|| array() !== ( $import['blockers'] ?? array() )
+			) {
+				return false;
+			}
+
+			foreach (
+				array(
+					'wp-config.php',
+					'wp-content',
+					'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php',
+					'wp-content/mu-plugins/seo-geo-migration-sandbox-bootstrap.php',
+				) as $relative
+			) {
+				$path = $this->join_path( $root, $relative );
+				if ( is_link( $path ) || ( 'wp-content' === $relative ? ! is_dir( $path ) : ! is_file( $path ) ) ) {
+					return false;
+				}
+			}
+
+			if ( $allow_activated ) {
+				return true;
+			}
+
+			$parent_id = is_string( $import['local_handoff_parent_job_id'] ?? null )
+				? $import['local_handoff_parent_job_id']
+				: '';
+			$target    = '' !== $parent_id ? $this->local_target_preflight->verified_snapshot( $parent_id ) : null;
+
+			return is_array( $target )
+				&& (string) ( $target['child_import_job_id'] ?? '' ) === $job_id
+				&& hash_equals(
+					(string) ( $target['destination_authority_sha256'] ?? '' ),
+					(string) ( $import['destination_authority_sha256'] ?? '' )
+				);
 		}
 
 		$authorized = defined( ImportPreflight::TARGET_AUTHORIZED_MARKER )
@@ -890,6 +1076,79 @@ final class ImportDatabaseActivator {
 
 		return is_array( $row ) && '0' === $row['option_value'];
 	}
+
+	/**
+	 * Return a verified private same-server child import, when applicable.
+	 *
+	 * @param string $job_id Child import job identifier.
+	 * @return array<string,mixed>|null
+	 */
+	private function private_same_server_import( string $job_id ): ?array {
+		$import = $this->import_state->get( $job_id );
+		if (
+			! is_array( $import )
+			|| 'payload-verified' !== ( $import['status'] ?? null )
+			|| 'private-same-server' !== ( $import['transport'] ?? null )
+			|| ! is_string( $import['local_handoff_parent_job_id'] ?? null )
+			|| '' === $import['local_handoff_parent_job_id']
+		) {
+			return null;
+		}
+
+		return $import;
+	}
+
+	/**
+	 * Resolve the isolated local-clone target root.
+	 *
+	 * @param array<string,mixed> $import Child import state.
+	 */
+	private function private_same_server_root( array $import ): ?string {
+		$root = is_string( $import['destination_root_path'] ?? null )
+			? untrailingslashit( wp_normalize_path( $import['destination_root_path'] ) )
+			: '';
+		if (
+			'' === $root
+			|| ! is_dir( $root )
+			|| is_link( $root )
+			|| untrailingslashit( wp_normalize_path( ABSPATH ) ) === $root
+		) {
+			return null;
+		}
+
+		return $root;
+	}
+
+	/**
+	 * Return the options target for normal or private same-server activation.
+	 *
+	 * @param string $job_id Child import job identifier.
+	 */
+	private function expected_options_target( string $job_id ): string {
+		$import = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			$prefix = is_string( $import['destination_table_prefix'] ?? null )
+				? $import['destination_table_prefix']
+				: '';
+
+			return 1 === preg_match( '/^[A-Za-z0-9_]+$/', $prefix ) ? $prefix . 'options' : '';
+		}
+
+		global $wpdb;
+
+		return $wpdb instanceof wpdb ? (string) $wpdb->options : '';
+	}
+
+	/**
+	 * Join one absolute base and relative path.
+	 *
+	 * @param string $base     Absolute base.
+	 * @param string $relative Relative path.
+	 */
+	private function join_path( string $base, string $relative ): string {
+		return rtrim( wp_normalize_path( $base ), '/' ) . '/' . ltrim( wp_normalize_path( $relative ), '/' );
+	}
+
 
 	/**
 	 * Persist one blocker in the external journal.
