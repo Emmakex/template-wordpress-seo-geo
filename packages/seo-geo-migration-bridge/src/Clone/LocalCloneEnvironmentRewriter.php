@@ -391,7 +391,7 @@ final class LocalCloneEnvironmentRewriter {
 	/**
 	 * Confirm one saved parent state remains bound to current authority.
 	 *
-	 * @param array<string,mixed>              $state     Parent rewrite state.
+	 * @param array<string,mixed>               $state     Parent rewrite state.
 	 * @param array<string,array<string,mixed>> $authority Current authority.
 	 */
 	private function state_matches_authority( array $state, array $authority ): bool {
