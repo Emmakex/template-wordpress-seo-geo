@@ -130,7 +130,7 @@ final class ImportFinalizationPlanner {
 		?ExportWorkspace $workspace = null,
 		?LocalCloneTargetPreflight $local_target_preflight = null
 	) {
-		$this->store                    = $store ?? new ImportFinalizeStateStore();
+		$this->store                  = $store ?? new ImportFinalizeStateStore();
 		$this->import_state           = $import_state ?? new ImportStateStore();
 		$this->payload_state          = $payload_state ?? new ImportPayloadStateStore();
 		$this->database_state         = $database_state ?? new ImportDatabaseStateStore();
