@@ -502,7 +502,23 @@ final class ImportFilePromotionPlanner {
 	 *
 	 * @return array{uploads:string,plugins:string,themes:string}|null
 	 */
-	private function active_roots(): ?array {
+	private function active_roots( string $job_id ): ?array {
+		$import = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			$root = $this->private_same_server_root( $import );
+			if ( null === $root ) {
+				return null;
+			}
+
+			$content = trailingslashit( wp_normalize_path( $root . '/wp-content' ) );
+
+			return array(
+				'uploads' => $content . 'uploads/',
+				'plugins' => $content . 'plugins/',
+				'themes'  => $content . 'themes/',
+			);
+		}
+
 		$uploads = wp_upload_dir( null, false );
 		if ( ! empty( $uploads['error'] ) || '' === $uploads['basedir'] ) {
 			return null;
@@ -523,8 +539,45 @@ final class ImportFilePromotionPlanner {
 
 	/**
 	 * Revalidate the sandbox safety boundary after database activation.
+	 *
+	 * @param string $job_id Child import job identifier.
 	 */
-	private function sandbox_ready(): bool {
+	private function sandbox_ready( string $job_id ): bool {
+		$import = $this->private_same_server_import( $job_id );
+		if ( is_array( $import ) ) {
+			$root = $this->private_same_server_root( $import );
+			if (
+				null === $root
+				|| 'subdirectory' !== ( $import['destination_mode'] ?? null )
+				|| true !== ( $import['destination_storage_isolated'] ?? false )
+				|| true !== ( $import['search_visibility_disabled'] ?? false )
+				|| true !== ( $import['outbound_safe'] ?? false )
+				|| true !== ( $import['backups_ready'] ?? false )
+				|| true !== ( $import['target_authorized'] ?? false )
+				|| true !== ( $import['full_payload_verified'] ?? false )
+				|| true !== ( $import['restore_allowed'] ?? false )
+				|| array() !== ( $import['blockers'] ?? array() )
+			) {
+				return false;
+			}
+
+			foreach (
+				array(
+					'wp-config.php',
+					'wp-content',
+					'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php',
+					'wp-content/mu-plugins/seo-geo-migration-sandbox-bootstrap.php',
+				) as $relative
+			) {
+				$path = wp_normalize_path( $root . '/' . $relative );
+				if ( is_link( $path ) || ( 'wp-content' === $relative ? ! is_dir( $path ) : ! is_file( $path ) ) ) {
+					return false;
+				}
+			}
+
+			return '0' === $this->local_option_value( $import, 'blog_public' );
+		}
+
 		$authorized = defined( ImportPreflight::TARGET_AUTHORIZED_MARKER )
 			&& true === constant( ImportPreflight::TARGET_AUTHORIZED_MARKER );
 
@@ -535,6 +588,132 @@ final class ImportFilePromotionPlanner {
 			&& $authorized
 			&& ( 'subdirectory' !== SandboxGuard::mode() || SandboxGuard::storage_isolated() )
 			&& '0' === (string) get_option( 'blog_public', '1' );
+	}
+
+	/**
+	 * Resolve one private same-server child import.
+	 *
+	 * @param string $job_id Child import job identifier.
+	 * @return array<string,mixed>|null
+	 */
+	private function private_same_server_import( string $job_id ): ?array {
+		$import = $this->import_state->get( $job_id );
+		if (
+			! is_array( $import )
+			|| 'private-same-server' !== ( $import['transport'] ?? null )
+			|| ! is_string( $import['local_handoff_parent_job_id'] ?? null )
+			|| '' === $import['local_handoff_parent_job_id']
+		) {
+			return null;
+		}
+
+		return $import;
+	}
+
+	/**
+	 * Resolve the isolated local-clone root.
+	 *
+	 * @param array<string,mixed> $import Child import state.
+	 */
+	private function private_same_server_root( array $import ): ?string {
+		$root = is_string( $import['destination_root_path'] ?? null )
+			? untrailingslashit( wp_normalize_path( $import['destination_root_path'] ) )
+			: '';
+		if (
+			'' === $root
+			|| ! is_dir( $root )
+			|| is_link( $root )
+			|| untrailingslashit( wp_normalize_path( ABSPATH ) ) === $root
+		) {
+			return null;
+		}
+
+		return $root;
+	}
+
+	/**
+	 * Return the currently active runtime from the isolated target options table.
+	 *
+	 * @param array<string,mixed> $import Child import state.
+	 * @return array{active_plugins:list<string>,template:string,stylesheet:string}|null
+	 */
+	private function local_current_runtime( array $import ): ?array {
+		$plugins_raw = $this->local_option_value( $import, 'active_plugins' );
+		$template    = $this->local_option_value( $import, 'template' );
+		$stylesheet  = $this->local_option_value( $import, 'stylesheet' );
+		if (
+			null === $plugins_raw
+			|| null === $template
+			|| null === $stylesheet
+			|| '' === $template
+			|| '' === $stylesheet
+			|| ! is_serialized( $plugins_raw, false )
+			|| 1 !== preg_match( '/^[A-Za-z0-9._-]+$/', $template )
+			|| 1 !== preg_match( '/^[A-Za-z0-9._-]+$/', $stylesheet )
+		) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Verified WordPress plugin list; classes remain disabled.
+		$plugins = @unserialize( $plugins_raw, array( 'allowed_classes' => false ) );
+		if ( ! is_array( $plugins ) ) {
+			return null;
+		}
+
+		$normalized = array();
+		foreach ( $plugins as $plugin ) {
+			if (
+				! is_string( $plugin )
+				|| '' === $plugin
+				|| 512 < strlen( $plugin )
+				|| str_contains( $plugin, '../' )
+				|| str_starts_with( $plugin, '/' )
+			) {
+				return null;
+			}
+			$normalized[] = wp_normalize_path( $plugin );
+		}
+
+		return array(
+			'active_plugins' => array_values( array_unique( $normalized ) ),
+			'template'       => $template,
+			'stylesheet'     => $stylesheet,
+		);
+	}
+
+	/**
+	 * Read one option directly from the isolated activated options table.
+	 *
+	 * @param array<string,mixed> $import Child import state.
+	 * @param string              $name   Option name.
+	 */
+	private function local_option_value( array $import, string $name ): ?string {
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb ) {
+			return null;
+		}
+
+		$prefix = is_string( $import['destination_table_prefix'] ?? null )
+			? $import['destination_table_prefix']
+			: '';
+		$table = $prefix . 'options';
+		if (
+			1 !== preg_match( '/^[A-Za-z0-9_]+$/', $prefix )
+			|| 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table )
+		) {
+			return null;
+		}
+
+		$quoted = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $table ) . chr( 96 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only target option lookup against a validated isolated table.
+		$value = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$quoted} WHERE option_name = %s LIMIT 1",
+				$name
+			)
+		);
+
+		return is_string( $value ) ? $value : null;
 	}
 
 	/**
