@@ -525,9 +525,9 @@ Implementation sequence:
 - **10E.2A.5.5.2 — guarded finalization plan (complete in 0.8.33):** reuse the accepted `ImportFinalizationPlanner` on the bound private same-server child, revalidate fresh local target authority, fingerprint rewritten DB/file staging, and freeze deterministic activation/rollback table + file maps while creating no target tables, candidates or rollback roots;
 - **10E.2A.5.5.3 — reversible local database activation (complete in 0.8.34):** reuse the accepted atomic `ImportDatabaseActivator` under private same-server authority, freeze a recovery journal before mutation, overlay only isolated staging `wp_options` safety controls, atomically rename all target tables, verify exact row/control evidence and retain explicit rollback while client files remain untouched;
 - **10E.2A.5.5.4 — reversible local file promotion (complete in 0.8.35):** reuse the accepted `ImportFilePromotionPlanner` + `ImportFilePromoter`, bind active/candidate/rollback roots to the isolated target, resolve and apply plugin/theme runtime only through the activated target `wp_options`, verify candidate and active fingerprints independently, keep source WordPress untouched, and preserve explicit file rollback before any final handoff;
-- **10E.2A.5.5.5 — final local target smoke/handoff reporting (0.8.36 candidate):** revalidate the promoted isolated target without mutation, bind active DB/files/runtime/sandbox/rollback evidence into a deterministic bounded handoff SHA-256, preserve noindex + rollback, and invalidate the handoff after any target drift or rollback;
-- **10E.2A.5.5 — local restore/finalization/activation:** complete only after 5.5.5 passes; no production cutover is implied;
-- **10E.2A.6 — Emmake real clone acceptance:** next; exercise the accepted Engine against the real `emmake.com/nuevaweb/` target and record bounded evidence.
+- **10E.2A.5.5.5 — final local target smoke/handoff reporting (complete in 0.8.36):** revalidate the promoted isolated target without mutation, bind active DB/files/runtime/sandbox/rollback evidence into a deterministic bounded handoff SHA-256, preserve noindex + rollback, and invalidate the handoff after any target drift or rollback;
+- **10E.2A.5.5 — local restore/finalization/activation:** complete through 5.5.5; no production cutover is implied;
+- **10E.2A.6 — Emmake real clone acceptance (active):** exercise the accepted 0.8.36 Engine against the real `emmake.com/nuevaweb/` target, confirm independent database/table/file state and production preservation, carry forward the bounded baseline/dependency/review evidence, require Sandbox Migration Lab `ready=true`, and record bounded evidence only.
 
 Deliver:
 
@@ -551,6 +551,17 @@ The 5.3.2.2 payload step reuses `ImportPayloadVerifier` unchanged for extraction
 The 5.4.1 database step reuses `ImportDatabaseRestorer` rather than introducing a second SQL importer. Normal Portable Import retains its existing requirement that the destination prefix equals the active `$wpdb->prefix`. Only a verified `private-same-server` child may instead use the isolated `/nuevaweb/` destination prefix while the source WordPress remains the control plane. Its staging namespace is deliberately chosen so it starts with neither the production prefix nor the future target prefix; therefore fresh local preflight can continue proving that no active `/nuevaweb/` tables exist while transactional staging tables contain the verified rows. Production tables, future target tables, uploads and themes remain untouched. Parent handoff/payload drift revokes child restore eligibility before another local batch may proceed.
 
 ### 10E.2A.6 — Emmake real clone acceptance
+
+Status: **active after Migration Bridge 0.8.36 acceptance**
+
+Accepted Engine identity for this pilot:
+
+- Migration Bridge version: `0.8.36`;
+- accepted main commit: `b78f38016ac0848cd37b75fb608262b289d32ceb`;
+- accepted plugin ZIP SHA-256: `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`;
+- real target: `https://emmake.com/nuevaweb/`;
+- production source remains `https://emmake.com/`;
+- stable release remains blocked until the real-site acceptance record is accepted.
 
 Deliver:
 
