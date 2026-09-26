@@ -2199,7 +2199,19 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.5.5 — final local target smoke/handoff reporting in Migration Bridge 0.8.36.** Migration Bridge 0.8.35 is accepted on `main` at `7a6ba11cd9e8c71138e89e8df5f29f7456d30c79`: the verified private uploads/plugins/themes are promoted only inside the isolated target, target plugin/theme runtime is applied through its own `wp_options`, source WordPress remains unchanged, active roots are re-fingerprinted and explicit file + database rollback is proven. 0.8.36 adds a read-only final target reporter that rechecks activated table row counts, destination URLs, `blog_public=0`, plugin/theme runtime, Migration Bridge control files, active file fingerprint, source isolation and rollback availability, then freezes a reproducible handoff SHA-256. Any target drift or rollback invalidates the handoff. Sandbox hardening and rollback remain preserved. Next: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`**.
+Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** Migration Bridge 0.8.36 is accepted on `main` at `b78f38016ac0848cd37b75fb608262b289d32ceb`: the complete local-clone pipeline now ends in a read-only final target reporter that rechecks activated table row counts, destination URLs, `blog_public=0`, plugin/theme runtime, Migration Bridge control files, active file fingerprint, source isolation and rollback availability, then freezes a reproducible bounded handoff SHA-256. Any target drift or rollback invalidates that handoff. The exact accepted plugin ZIP SHA-256 for the real pilot is `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`. The next operation is no longer another Engine implementation microphase: execute this accepted Engine against the real Emmake production source and isolated `/nuevaweb/` target, preserve production, and record bounded evidence only.
+
+Migration Bridge v0.8.36 / 10E.2A.5.5.5 acceptance evidence:
+
+- PR #162 squash-merged to `main` as `b78f38016ac0848cd37b75fb608262b289d32ceb`;
+- Foundation CI `36259646058` passed;
+- Phase 1 Package CI `36259645907` passed;
+- PHP Quality CI `36259646101` passed;
+- WordPress Smoke CI `36259646020` passed, including final target table/row/runtime/file-fingerprint verification, bounded reproducible handoff SHA-256 and handoff invalidation after file/database rollback;
+- Accessibility & Responsive CI `36259646081` passed;
+- Performance Baseline CI `36259645940` passed;
+- Migration Bridge Release CI `36259646025` passed;
+- accepted plugin ZIP SHA-256: `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`.
 
 Migration Bridge v0.8.35 / 10E.2A.5.5.4 acceptance evidence:
 

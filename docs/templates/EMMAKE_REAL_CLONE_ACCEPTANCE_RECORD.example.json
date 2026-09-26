@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "mode": "seo-geo-emmake-real-clone-acceptance",
+  "site_id": "emmake-com",
+  "source_origin": "https://emmake.com/",
+  "target_origin": "https://emmake.com/nuevaweb/",
+  "migration_bridge": {
+    "version": "0.8.36",
+    "main_commit": "b78f38016ac0848cd37b75fb608262b289d32ceb",
+    "zip_sha256": "1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792"
+  },
+  "source_evidence": {
+    "baseline_ready": true,
+    "dependency_review_complete": true,
+    "reviewed_unknown": 13,
+    "unreviewed_unknown": 0,
+    "bounded_handoff_sha256": "48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b"
+  },
+  "backups": {
+    "database_reference": "",
+    "uploads_reference": "",
+    "captured_at": ""
+  },
+  "clone": {
+    "job_id": "",
+    "final_handoff_report_sha256": "",
+    "database_independent": false,
+    "files_independent": false,
+    "source_untouched": false,
+    "blog_public_zero": false,
+    "noindex_ready": false,
+    "storage_isolated": false,
+    "outbound_safe": false,
+    "backups_ready": false,
+    "rollback_available": false,
+    "target_table_prefix_sha256": "",
+    "target_runtime_sha256": "",
+    "target_active_file_fingerprint": "",
+    "table_count": 0,
+    "row_count": 0,
+    "file_count": 0,
+    "file_bytes": 0
+  },
+  "sandbox_migration_lab": {
+    "ready": false,
+    "reference": ""
+  },
+  "public_leak_checks": {
+    "sandbox_canonical_leak_absent": false,
+    "sandbox_hreflang_leak_absent": false,
+    "sandbox_sitemap_leak_absent": false
+  },
+  "blockers": [
+    "real-clone-execution-pending"
+  ],
+  "decision": "pending",
+  "evidence_captured_at": "",
+  "operator": "",
+  "notes": []
+}
