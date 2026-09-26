@@ -540,8 +540,8 @@ assert payload["autoload"] in ("off", "no", "auto-off"), payload
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
 assert job["status"] == "active", payload
-assert job["phase"] == "verify", payload
-assert job["cursor"] == "local-handoff-ready", payload
+assert job["phase"] == "validate", payload
+assert job["cursor"] == "local-target-preflight-ready", payload
 
 print("ok")
 PY
