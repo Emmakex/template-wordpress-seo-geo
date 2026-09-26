@@ -58,12 +58,12 @@ final class LocalClonePayloadVerifier {
 	/**
 	 * Construct local payload verifier.
 	 *
-	 * @param LocalClonePayloadVerificationStateStore|null $store            Optional parent state store.
+	 * @param LocalClonePayloadVerificationStateStore|null $store           Optional parent state store.
 	 * @param LocalCloneTargetPreflight|null               $target_preflight Optional verified target preflight.
-	 * @param ImportPayloadVerifier|null                    $verifier         Optional existing payload verifier.
-	 * @param ImportPayloadStateStore|null                  $payload_state    Optional child payload state.
-	 * @param ImportStateStore|null                         $import_state     Optional child import state.
-	 * @param CloneJobStore|null                            $jobs             Optional clone job store.
+	 * @param ImportPayloadVerifier|null                   $verifier        Optional existing payload verifier.
+	 * @param ImportPayloadStateStore|null                 $payload_state   Optional child payload state.
+	 * @param ImportStateStore|null                        $import_state    Optional child import state.
+	 * @param CloneJobStore|null                           $jobs            Optional clone job store.
 	 */
 	public function __construct(
 		?LocalClonePayloadVerificationStateStore $store = null,
@@ -344,8 +344,8 @@ final class LocalClonePayloadVerifier {
 			return;
 		}
 
-		$blockers                       = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
-		$blockers[]                     = $code;
+		$blockers                        = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
+		$blockers[]                      = $code;
 		$import['status']                = 'blocked';
 		$import['blockers']              = array_values( array_unique( $blockers ) );
 		$import['full_payload_verified'] = false;
