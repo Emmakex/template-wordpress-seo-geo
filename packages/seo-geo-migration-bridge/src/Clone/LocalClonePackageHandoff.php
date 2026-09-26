@@ -233,7 +233,7 @@ final class LocalClonePackageHandoff {
 		}
 
 		$archive = $this->delivery->download_info( $job_id );
-		if ( ! is_array( $archive ) || ! $this->state_authorized( $job_id, $state ) ) {
+		if ( ! is_array( $archive ) ) {
 			return $this->block( $job_id, $state, 'local-handoff-archive-identity-invalid' );
 		}
 
