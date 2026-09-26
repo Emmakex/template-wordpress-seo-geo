@@ -143,10 +143,20 @@ final class LocalCloneTargetPreflightStateStore {
 		);
 	}
 
+	/**
+	 * Normalize one SHA-256 hash.
+	 *
+	 * @param mixed $hash Raw hash.
+	 */
 	private function normalize_hash( mixed $hash ): string {
 		return is_string( $hash ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $hash ) ? $hash : '';
 	}
 
+	/**
+	 * Normalize one bounded absolute path.
+	 *
+	 * @param mixed $path Raw path.
+	 */
 	private function bounded_path( mixed $path ): string {
 		if ( ! is_string( $path ) ) {
 			return '';
@@ -156,23 +166,45 @@ final class LocalCloneTargetPreflightStateStore {
 		return '' !== $path && 4096 >= strlen( $path ) ? $path : '';
 	}
 
+	/**
+	 * Normalize one bounded URL.
+	 *
+	 * @param mixed $url Raw URL.
+	 */
 	private function bounded_url( mixed $url ): string {
 		return is_string( $url ) && 2048 >= strlen( $url ) ? esc_url_raw( $url ) : '';
 	}
 
+	/**
+	 * Normalize one WordPress table prefix.
+	 *
+	 * @param mixed $prefix Raw prefix.
+	 */
 	private function bounded_prefix( mixed $prefix ): string {
 		return is_string( $prefix ) && 64 >= strlen( $prefix ) && 1 === preg_match( '/^[A-Za-z0-9_]+$/', $prefix ) ? $prefix : '';
 	}
 
+	/**
+	 * Normalize one machine-readable code.
+	 *
+	 * @param mixed $code Raw code.
+	 */
 	private function bounded_code( mixed $code ): string {
 		return is_string( $code ) && 1 === preg_match( '/^[a-z0-9][a-z0-9._-]{0,119}$/', $code ) ? $code : '';
 	}
 
+	/**
+	 * Normalize one clone job identifier.
+	 *
+	 * @param mixed $job_id Raw job identifier.
+	 */
 	private function bounded_job_id( mixed $job_id ): string {
 		return is_string( $job_id ) && $this->valid_job_id( $job_id ) ? $job_id : '';
 	}
 
 	/**
+	 * Normalize blocker codes.
+	 *
 	 * @param mixed $codes Raw codes.
 	 * @return list<string>
 	 */
@@ -191,11 +223,18 @@ final class LocalCloneTargetPreflightStateStore {
 		return array_values( array_unique( $out ) );
 	}
 
+	/**
+	 * Normalize one bounded timestamp.
+	 *
+	 * @param mixed $timestamp Raw timestamp.
+	 */
 	private function bounded_timestamp( mixed $timestamp ): string {
 		return is_string( $timestamp ) ? substr( $timestamp, 0, 40 ) : '';
 	}
 
 	/**
+	 * Keep only the newest bounded states.
+	 *
 	 * @param array<string,array<string,mixed>> $states States.
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -214,6 +253,11 @@ final class LocalCloneTargetPreflightStateStore {
 		return array_slice( $states, 0, self::MAX_STATES, true );
 	}
 
+	/**
+	 * Validate one clone job identifier.
+	 *
+	 * @param string $job_id Job identifier.
+	 */
 	private function valid_job_id( string $job_id ): bool {
 		return 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/', $job_id );
 	}
