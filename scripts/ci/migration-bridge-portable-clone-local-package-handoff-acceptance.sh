@@ -888,8 +888,96 @@ $target_upload_absent_after_activation = ! file_exists( trailingslashit( $target
 $target_plugin_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
 $target_theme_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
 $source_after_activation = $source_snapshot();
-$active_home_after_activation    = (string) get_option( 'home', '' );
-$active_siteurl_after_activation = (string) get_option( 'siteurl', '' );
+$active_home_after_activation       = (string) get_option( 'home', '' );
+$active_siteurl_after_activation    = (string) get_option( 'siteurl', '' );
+$active_plugins_after_activation    = get_option( 'active_plugins', array() );
+$active_template_after_activation   = (string) get_option( 'template', '' );
+$active_stylesheet_after_activation = (string) get_option( 'stylesheet', '' );
+
+$local_file_promotion_prepared = $local_promotion->prepare( $job_id );
+$file_promotion_child_prepared = '' !== $payload_child_id
+	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
+	: null;
+$file_promotion_candidates_absent_after_prepare = true;
+if ( is_array( $file_promotion_child_prepared ) ) {
+	foreach ( (array) ( $file_promotion_child_prepared['roots'] ?? array() ) as $root_plan ) {
+		if (
+			is_array( $root_plan )
+			&& is_string( $root_plan['candidate_path'] ?? null )
+			&& file_exists( untrailingslashit( $root_plan['candidate_path'] ) )
+		) {
+			$file_promotion_candidates_absent_after_prepare = false;
+		}
+	}
+}
+
+$local_file_promotion_candidate = $local_file_promotion_prepared;
+for ( $i = 0; $i < 180; ++$i ) {
+	if ( is_array( $local_file_promotion_candidate ) && in_array( $local_file_promotion_candidate['status'] ?? null, array( 'candidate-ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_file_promotion_candidate = $local_promotion->advance_candidates( $job_id, 1, 1024 * 1024 );
+}
+$file_promotion_child_candidate = '' !== $payload_child_id
+	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
+	: null;
+$target_upload_absent_after_candidates = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_candidates = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_candidates = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$target_bridge_present_after_candidates = is_file( trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php' );
+
+$local_file_promotion_promoted = $local_promotion->promote( $job_id );
+$local_file_promotion_verified_state = $local_file_promotion_promoted;
+for ( $i = 0; $i < 180; ++$i ) {
+	if ( is_array( $local_file_promotion_verified_state ) && in_array( $local_file_promotion_verified_state['status'] ?? null, array( 'verified', 'blocked', 'rolled-back' ), true ) ) {
+		break;
+	}
+	$local_file_promotion_verified_state = $local_promotion->advance_verification( $job_id, 1, 1024 * 1024 );
+}
+$local_file_promotion_verified = $local_promotion->verified_snapshot( $job_id );
+$file_promotion_child_verified = '' !== $payload_child_id
+	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
+	: null;
+$database_activation_child_after_file_promotion = '' !== $payload_child_id
+	? ( new ImportDatabaseActivationStateStore() )->get( $payload_child_id )
+	: null;
+
+$target_upload_after_promotion = trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt';
+$target_plugin_after_promotion = trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php';
+$target_bridge_after_promotion = trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php';
+$target_theme_after_promotion  = trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css';
+$target_upload_content_after_promotion = is_file( $target_upload_after_promotion ) ? file_get_contents( $target_upload_after_promotion ) : false;
+$target_plugin_content_after_promotion = is_file( $target_plugin_after_promotion ) ? file_get_contents( $target_plugin_after_promotion ) : false;
+$target_bridge_hash_after_promotion = is_file( $target_bridge_after_promotion ) ? hash_file( 'sha256', $target_bridge_after_promotion ) : false;
+$target_theme_content_after_promotion = is_file( $target_theme_after_promotion ) ? file_get_contents( $target_theme_after_promotion ) : false;
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of isolated target runtime options.
+$target_options_after_file_promotion = $GLOBALS['wpdb']->get_results(
+	"SELECT option_name, option_value FROM {$quoted_target_options} WHERE option_name IN ('active_plugins','template','stylesheet','blog_public') ORDER BY option_name ASC",
+	ARRAY_A
+);
+$source_after_file_promotion = $source_snapshot();
+$active_home_after_file_promotion       = (string) get_option( 'home', '' );
+$active_siteurl_after_file_promotion    = (string) get_option( 'siteurl', '' );
+$active_plugins_after_file_promotion    = get_option( 'active_plugins', array() );
+$active_template_after_file_promotion   = (string) get_option( 'template', '' );
+$active_stylesheet_after_file_promotion = (string) get_option( 'stylesheet', '' );
+
+$local_file_promotion_rolled_back = $local_promotion->rollback( $job_id );
+$file_promotion_child_after_rollback = '' !== $payload_child_id
+	? ( new ImportFilePromotionStateStore() )->get( $payload_child_id )
+	: null;
+$database_activation_child_after_file_rollback = '' !== $payload_child_id
+	? ( new ImportDatabaseActivationStateStore() )->get( $payload_child_id )
+	: null;
+$target_upload_absent_after_file_rollback = ! file_exists( $target_upload_after_promotion );
+$target_plugin_absent_after_file_rollback = ! file_exists( $target_plugin_after_promotion );
+$target_theme_absent_after_file_rollback = ! file_exists( $target_theme_after_promotion );
+$target_bridge_present_after_file_rollback = is_file( $target_bridge_after_promotion );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of isolated target runtime after file rollback.
+$target_options_after_file_rollback = $GLOBALS['wpdb']->get_results(
+	"SELECT option_name, option_value FROM {$quoted_target_options} WHERE option_name IN ('active_plugins','template','stylesheet','blog_public') ORDER BY option_name ASC",
+	ARRAY_A
+);
 
 $local_database_activation_rolled_back = $local_activation->rollback( $job_id );
 $database_activation_child_after_rollback = '' !== $payload_child_id
