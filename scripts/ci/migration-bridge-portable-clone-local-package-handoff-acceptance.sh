@@ -1062,9 +1062,19 @@ $database_activation_autoload = $GLOBALS['wpdb']->get_var(
 	)
 );
 
+$file_promotion_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneFilePromotionStateStore::OPTION_NAME
+	)
+);
+
 $source_after_all = $source_snapshot();
-$active_home_after    = (string) get_option( 'home', '' );
-$active_siteurl_after = (string) get_option( 'siteurl', '' );
+$active_home_after       = (string) get_option( 'home', '' );
+$active_siteurl_after    = (string) get_option( 'siteurl', '' );
+$active_plugins_after    = get_option( 'active_plugins', array() );
+$active_template_after   = (string) get_option( 'template', '' );
+$active_stylesheet_after = (string) get_option( 'stylesheet', '' );
 
 echo wp_json_encode(
 	array(
@@ -1174,6 +1184,42 @@ echo wp_json_encode(
 		'source_after_activation' => $source_after_activation,
 		'active_home_after_activation' => $active_home_after_activation,
 		'active_siteurl_after_activation' => $active_siteurl_after_activation,
+		'active_plugins_after_activation' => $active_plugins_after_activation,
+		'active_template_after_activation' => $active_template_after_activation,
+		'active_stylesheet_after_activation' => $active_stylesheet_after_activation,
+		'local_file_promotion_prepared' => $local_file_promotion_prepared,
+		'file_promotion_child_prepared' => $file_promotion_child_prepared,
+		'file_promotion_candidates_absent_after_prepare' => $file_promotion_candidates_absent_after_prepare,
+		'local_file_promotion_candidate' => $local_file_promotion_candidate,
+		'file_promotion_child_candidate' => $file_promotion_child_candidate,
+		'target_upload_absent_after_candidates' => $target_upload_absent_after_candidates,
+		'target_plugin_absent_after_candidates' => $target_plugin_absent_after_candidates,
+		'target_theme_absent_after_candidates' => $target_theme_absent_after_candidates,
+		'target_bridge_present_after_candidates' => $target_bridge_present_after_candidates,
+		'local_file_promotion_promoted' => $local_file_promotion_promoted,
+		'local_file_promotion_verified_state' => $local_file_promotion_verified_state,
+		'local_file_promotion_verified' => is_array( $local_file_promotion_verified ),
+		'file_promotion_child_verified' => $file_promotion_child_verified,
+		'database_activation_child_after_file_promotion' => $database_activation_child_after_file_promotion,
+		'target_upload_content_after_promotion' => $target_upload_content_after_promotion,
+		'target_plugin_content_after_promotion' => $target_plugin_content_after_promotion,
+		'target_bridge_hash_after_promotion' => $target_bridge_hash_after_promotion,
+		'target_theme_content_after_promotion' => $target_theme_content_after_promotion,
+		'target_options_after_file_promotion' => $target_options_after_file_promotion,
+		'source_after_file_promotion' => $source_after_file_promotion,
+		'active_home_after_file_promotion' => $active_home_after_file_promotion,
+		'active_siteurl_after_file_promotion' => $active_siteurl_after_file_promotion,
+		'active_plugins_after_file_promotion' => $active_plugins_after_file_promotion,
+		'active_template_after_file_promotion' => $active_template_after_file_promotion,
+		'active_stylesheet_after_file_promotion' => $active_stylesheet_after_file_promotion,
+		'local_file_promotion_rolled_back' => $local_file_promotion_rolled_back,
+		'file_promotion_child_after_rollback' => $file_promotion_child_after_rollback,
+		'database_activation_child_after_file_rollback' => $database_activation_child_after_file_rollback,
+		'target_upload_absent_after_file_rollback' => $target_upload_absent_after_file_rollback,
+		'target_plugin_absent_after_file_rollback' => $target_plugin_absent_after_file_rollback,
+		'target_theme_absent_after_file_rollback' => $target_theme_absent_after_file_rollback,
+		'target_bridge_present_after_file_rollback' => $target_bridge_present_after_file_rollback,
+		'target_options_after_file_rollback' => $target_options_after_file_rollback,
 		'local_database_activation_rolled_back' => $local_database_activation_rolled_back,
 		'database_activation_child_after_rollback' => $database_activation_child_after_rollback,
 		'target_table_count_after_activation_rollback' => is_array( $target_tables_after_activation_rollback ) ? count( $target_tables_after_activation_rollback ) : -1,
@@ -1231,6 +1277,9 @@ echo wp_json_encode(
 		'local_database_activation_service_registered' => $local_activation instanceof LocalCloneDatabaseActivator,
 		'local_database_activation_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalDatabaseActivationController::ACTION ),
 		'local_database_activation_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalDatabaseActivationController::ACTION ),
+		'local_file_promotion_service_registered' => $local_promotion instanceof LocalCloneFilePromoter,
+		'local_file_promotion_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFilePromotionController::ACTION ),
+		'local_file_promotion_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFilePromotionController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
@@ -1239,6 +1288,13 @@ echo wp_json_encode(
 		'rewrite_autoload'            => $rewrite_autoload,
 		'finalization_autoload'       => $finalization_autoload,
 		'database_activation_autoload' => $database_activation_autoload,
+		'file_promotion_autoload'      => $file_promotion_autoload,
+		'active_plugins_before'        => $active_plugins_before,
+		'active_plugins_after'         => $active_plugins_after,
+		'active_template_before'       => $active_template_before,
+		'active_template_after'        => $active_template_after,
+		'active_stylesheet_before'     => $active_stylesheet_before,
+		'active_stylesheet_after'      => $active_stylesheet_after,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
