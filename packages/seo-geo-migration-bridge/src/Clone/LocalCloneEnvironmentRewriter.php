@@ -385,12 +385,12 @@ final class LocalCloneEnvironmentRewriter {
 		}
 
 		return array(
-			'handoff'  => $handoff,
-			'payload'  => $payload,
+			'handoff'       => $handoff,
+			'payload'       => $payload,
 			'database'      => $database,
 			'database_plan' => $database_plan,
 			'files'         => $files,
-			'import'   => $import,
+			'import'        => $import,
 		);
 	}
 
