@@ -67,6 +67,8 @@ No credentials, database dumps, private form submissions or customer data are co
 
 ## 10E.2A.6 real clone acceptance record
 
+Execute the live clone using `docs/EMMAKE_REAL_CLONE_RUNBOOK.md`; do not infer environment-owned filesystem/table-prefix values from repository documentation.
+
 The real execution must update the bounded record at `release/emmake-real-clone-acceptance.json`, whose schema/example is `docs/templates/EMMAKE_REAL_CLONE_ACCEPTANCE_RECORD.example.json`. The repository record may contain identities, counts, hashes, booleans, blocker codes and private-system references, but never credentials, database dumps, uploads, post bodies, customer data or arbitrary option values.
 
 Acceptance requires all of the following at the same time:
