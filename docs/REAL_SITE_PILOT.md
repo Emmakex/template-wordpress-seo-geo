@@ -11,7 +11,10 @@ This document fixes the first real-site acceptance target for the self-contained
 - Candidate main commit: `d3ff8353c08cfce6c796837a74e372ba7daf0073`
 - Candidate ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`
 - Stable decision: `no-go`
-- Pilot status: **production baseline + UNKNOWN review complete; Portable Clone export is accepted through 0.8.14 and Portable Import through serialization-safe staging rewrite in 0.8.19; 0.8.20 finalization preflight is active while `/nuevaweb/` sandbox promotion/acceptance remains pending**n baseline + UNKNOWN review complete; Portable Clone export is accepted through 0.8.14, import intake/preflight through 0.8.15 and full payload verification through 0.8.16; transactional staging database restore is active in 0.8.17, while `/nuevaweb/` sandbox acceptance remains pending**
+- Pilot status: **production baseline + UNKNOWN review complete; Portable Clone Engine implementation accepted through Migration Bridge 0.8.36; real `emmake.com` → `/nuevaweb/` execution and bounded acceptance evidence remain pending**
+- Accepted Migration Bridge version: `0.8.36`
+- Accepted Migration Bridge main commit: `b78f38016ac0848cd37b75fb608262b289d32ceb`
+- Accepted Migration Bridge ZIP SHA-256: `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`
 
 The production Migration Bridge baseline was completed on 2026-09-24 and the operator screen reported `SEO/GEO baseline = Ready`. This is operator-confirmed real-site evidence; no private baseline payload or production credentials are committed to the repository. The dependency summary at that point was `KEEP=4`, `REPLACE=2`, `MIGRATE=1`, `OPTIONAL=0`, `REMOVE-CANDIDATE=0`, `UNKNOWN=13`. The v0.8.5 handoff generated on 2026-09-24 reported 4,311 discovered public resources, 500 captured resources, zero request failures and a truncated baseline by the configured cap. A second v0.8.6 handoff generated at `2026-09-24T19:56:28Z` recorded all 13 UNKNOWN items as explicitly reviewed: 10 operator decisions `KEEP` and 3 `MIGRATE`, with zero unreviewed UNKNOWN items. The bounded handoff file SHA-256 is `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`. These review decisions are planning evidence only and do not authorize production mutation.
 
@@ -25,7 +28,7 @@ Production remains on the current accepted site until a separate sandbox clone p
 
 Production baseline capture and UNKNOWN dependency review are complete. The regenerated privacy-bounded Migration Bridge 0.8.6 handoff records `reviewed_unknown=13`, `unreviewed_unknown=0` and `complete=true`. The three UNKNOWN items marked `MIGRATE` are Classic Editor, Cookie Notice and Kairoseth AI Web Readiness; the remaining ten UNKNOWN items are recorded as operator `KEEP`. These decisions remain separate from raw dependency-graph classifications and do not authorize production mutation. The next accepted operation is to create a distinct non-production clone, carry the bounded review evidence into that clone, satisfy all sandbox isolation guards and run migration/parity/quality acceptance there.
 
-Migration Bridge **0.8.7** established the strict preflight baseline. Migration Bridge **0.8.8** extends that contract so the emmake.com pilot may use the existing same-origin path `https://emmake.com/nuevaweb/` after it is replaced with a complete isolated clone of production. The folder itself is not sufficient evidence of isolation.
+Migration Bridge **0.8.36** is now the accepted Portable Clone Engine build for this pilot. It includes the same-origin subdirectory safety contract introduced in 0.8.8 plus resumable export/import, isolated database/file staging, serialization-safe rewrite, reversible activation/promotion and final read-only handoff reporting. The real `https://emmake.com/nuevaweb/` clone still has to be executed and accepted; the folder itself is never sufficient evidence of isolation.
 
 For this pilot, the selected topology is `subdirectory`. Before migration actions, the clone must preserve the production baseline/dependency/review evidence and satisfy `SEO_GEO_MIGRATION_SANDBOX=true`, `SEO_GEO_MIGRATION_SANDBOX_MODE='subdirectory'`, `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true`, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true`, `SEO_GEO_MIGRATION_BACKUPS_READY=true`, WordPress search visibility disabled, a non-root `/nuevaweb/` home path distinct from the production `/` path, destination Theme active and complete UNKNOWN review. The storage marker is an explicit operator confirmation that the clone does not share mutable database/table state with production.
 
@@ -56,11 +59,30 @@ Before installing the candidate:
 3. set `SEO_GEO_MIGRATION_SANDBOX=true`, `SEO_GEO_MIGRATION_SANDBOX_MODE='subdirectory'`, `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true`, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true` and `SEO_GEO_MIGRATION_BACKUPS_READY=true`;
 4. verify the clone uses isolated database/table state and disable WordPress search-engine visibility in the sandbox;
 5. confirm sandbox URLs cannot become public canonical/hreflang/sitemap targets;
-6. install the temporary Migration Bridge only in the adoption workflow where needed;
-7. install the accepted candidate theme ZIP with the exact SHA-256 above;
+6. install/use Migration Bridge 0.8.36 from the accepted ZIP SHA-256 `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792` and execute the product-owned local-clone workflow;
+7. after the real clone handoff reports ready, install the accepted candidate theme ZIP with the exact Theme SHA-256 above;
 8. record WordPress/PHP versions, active theme, active/must-use plugins, builder dependencies and client-critical integrations.
 
 No credentials, database dumps, private form submissions or customer data are committed to this repository.
+
+## 10E.2A.6 real clone acceptance record
+
+The real execution must use the bounded shape in `docs/templates/EMMAKE_REAL_CLONE_ACCEPTANCE_RECORD.example.json`. The repository record may contain identities, counts, hashes, booleans, blocker codes and private-system references, but never credentials, database dumps, uploads, post bodies, customer data or arbitrary option values.
+
+Acceptance requires all of the following at the same time:
+
+- the product-owned 0.8.36 Engine created/restored the clone into `/nuevaweb/`;
+- target database/table namespace is independent from production;
+- target uploads/plugins/themes are independent mutable copies;
+- production `home`/`siteurl`, runtime and source fingerprints remain unchanged;
+- the final local handoff report is verified and has a bounded SHA-256;
+- `blog_public=0`, noindex/outbound/backups/storage isolation guards remain true;
+- the pre-existing baseline/dependency/UNKNOWN-review evidence survives the clone;
+- Sandbox Migration Lab reports `ready=true`;
+- rollback remains available;
+- no blocker remains.
+
+The stable decision remains `no-go` until this record is accepted and referenced by `release/stable-release-decision.json`.
 
 ## Current-site baseline to capture
 
