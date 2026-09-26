@@ -1970,7 +1970,7 @@ assert final_handoff["source_untouched"] is True, payload
 assert final_handoff["target_url"] == handoff["target_url"], payload
 assert final_handoff["target_table_prefix"] == handoff["target_table_prefix"], payload
 assert final_handoff["table_count"] == 2, payload
-assert final_handoff["row_count"] == 10, payload
+assert final_handoff["row_count"] == 11, payload
 assert final_handoff["file_count"] == payload["fixture_file_count"], payload
 assert re.fullmatch(r"[a-f0-9]{64}", final_handoff["runtime_sha256"]), payload
 assert re.fullmatch(r"[a-f0-9]{64}", final_handoff["report_sha256"]), payload
