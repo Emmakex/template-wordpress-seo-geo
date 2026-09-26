@@ -509,10 +509,12 @@ Implementation sequence:
 
 - **10E.2A.5.1 — destination plan + ownership contract (complete in 0.8.23):** require a completed verified `local-clone` package, freeze the absolute destination path, same-origin/subdirectory URL, isolated table prefix, capacity estimate and package/source fingerprints, reject production/payload overlap and non-empty unowned targets, and perform zero target mutation;
 - **10E.2A.5.2.1 — target ownership + recovery marker (complete in 0.8.24):** immediately revalidate the frozen 5.1 plan and package, claim only the exact empty destination with a deterministic job-bound marker, record whether the job created the directory, reject symlinks/existence drift/tamper, and allow release only while the marker remains the sole target entry; no runtime/database copy occurs yet;
-- **10E.2A.5.2.2.1 — resumable WordPress core runtime copy (0.8.25 candidate):** after verified ownership, copy only `wp-admin`, `wp-includes` and canonical root core files through centralized `ExportWorkspace` mutations; exclude `wp-content`, `wp-config.php` and environment files; then independently verify exact directory topology, file/byte totals and SHA-256 fingerprint before declaring the core runtime ready;
-- **10E.2A.5.2.2.2 — Migration Bridge runtime + isolated config + enforced sandbox hardening:** install the Bridge/control runtime, create the isolated target configuration and active outbound/noindex safeguards without copying client content or duplicating import logic;
-- **10E.2A.5.2.2 — bounded runtime copy + sandbox config/hardening:** active through 5.2.2.1;
-- **10E.2A.5.2 — isolated target bootstrap:** active through 5.2.2.1;
+- **10E.2A.5.2.2.1 — resumable WordPress core runtime copy (complete in 0.8.25):** after verified ownership, copy only `wp-admin`, `wp-includes` and canonical root core files through centralized `ExportWorkspace` mutations; exclude `wp-content`, `wp-config.php` and environment files; then independently verify exact directory topology, file/byte totals and SHA-256 fingerprint before declaring the core runtime ready;
+- **10E.2A.5.2.2.2.1 — Migration Bridge control-runtime copy (0.8.26 candidate):** require accepted core-runtime completion and verified target ownership, create only `wp-content/plugins/seo-geo-migration-bridge/`, copy the current Bridge tree through centralized target mutations in bounded resumable batches, and independently verify exact topology/file/byte/SHA-256 parity while client uploads/themes/other plugins remain absent and database state is untouched;
+- **10E.2A.5.2.2.2.2 — isolated wp-config.php + enforced sandbox hardening:** generate target-only database/configuration state using the frozen isolated table prefix plus fresh salts and explicit sandbox/noindex/outbound/storage isolation markers, never persist credentials in clone state/logs, and prove the target bootstrap can load safely before package handoff;
+- **10E.2A.5.2.2.2 — Migration Bridge runtime + isolated config + enforced sandbox hardening:** active through 5.2.2.2.1;
+- **10E.2A.5.2.2 — bounded runtime copy + sandbox config/hardening:** active through 5.2.2.2.1;
+- **10E.2A.5.2 — isolated target bootstrap:** active through 5.2.2.2.1;
 - **10E.2A.5.3 — local package handoff + sandbox preflight:** hand the already verified package to the accepted import primitives in the target runtime, then require sandbox hardening/preflight before local-clone completion.
 
 Deliver:
@@ -525,6 +527,8 @@ Deliver:
 The 5.1 ready plan is intentionally immutable. Every later mutating step must independently revalidate the frozen path/URL/table-prefix/package hashes and target ownership before writing; a ready planning record is never itself authority to mutate production or a changed destination.
 
 The 5.2.2.1 core-copy contract deliberately uses an allowlist rather than cloning the entire WordPress document root. The target receives no `wp-content`, `wp-config.php`, arbitrary root directories, server configuration or database mutation. Every batch revalidates the ownership marker and frozen package identity; completion requires a fresh second traversal whose target directory topology and file hashes exactly match the accepted core source.
+
+The 5.2.2.2.1 control-runtime contract opens only one new subtree: `wp-content/plugins/seo-geo-migration-bridge/`. It must not restore or create client uploads, themes, unrelated plugins, cache/runtime artifacts or database rows. The Bridge tree is copied from the currently running accepted plugin source, remains job/ownership-bound on every batch and requires an independent second traversal before the control runtime can be considered ready for configuration.
 
 ### 10E.2A.6 — Emmake real clone acceptance
 
