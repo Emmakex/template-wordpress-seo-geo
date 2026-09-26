@@ -2136,8 +2136,8 @@ final class AdminOperatorScreen {
 			: '';
 
 		$key = match ( $status ) {
-			'ready'   => 'clone_local_handoff_ready',
-			'blocked' => 'clone_local_handoff_blocked',
+			'ready'   => 'clone_local_final_handoff_ready',
+			'blocked' => 'clone_local_final_handoff_blocked',
 			default   => null,
 		};
 		if ( null === $key ) {
@@ -2164,8 +2164,8 @@ final class AdminOperatorScreen {
 		$state  = ( new LocalCloneHandoffReportStateStore() )->get( $job_id );
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_handoff_heading' ) ); ?></h3>
-		<p><?php echo esc_html( $this->copy->text( 'clone_local_handoff_help' ) ); ?></p>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_final_handoff_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_final_handoff_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
 			<table class="widefat striped" role="presentation">
@@ -2194,7 +2194,7 @@ final class AdminOperatorScreen {
 		</form>
 
 		<?php if ( 'ready' === $status ) : ?>
-			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next' ) ); ?></p>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_final_handoff_next' ) ); ?></p>
 		<?php endif; ?>
 		<?php
 	}
