@@ -73,6 +73,15 @@ final class LocalCloneTargetPreflight {
 
 	/**
 	 * Construct local target preflight.
+	 *
+	 * @param LocalCloneTargetPreflightStateStore|null   $store           Optional parent state store.
+	 * @param LocalClonePackageHandoff|null              $handoff         Optional verified handoff service.
+	 * @param LocalCloneSandboxRuntimeBootstrapper|null  $sandbox_runtime Optional sandbox runtime service.
+	 * @param PackageDelivery|null                       $delivery        Optional private archive delivery service.
+	 * @param ImportPreflight|null                       $preflight       Optional existing Portable Import preflight.
+	 * @param ImportStateStore|null                      $import_state    Optional child import state store.
+	 * @param CloneJobStore|null                         $jobs            Optional clone job store.
+	 * @param ExportWorkspace|null                       $workspace       Optional private workspace.
 	 */
 	public function __construct(
 		?LocalCloneTargetPreflightStateStore $store = null,
@@ -180,15 +189,15 @@ final class LocalCloneTargetPreflight {
 
 		$authority_hash = $this->destination_authority_hash( $handoff, $sandbox );
 		$context        = array(
-			'parent_job_id'               => $job_id,
-			'target_path'                 => (string) $handoff['target_path'],
-			'target_url'                  => (string) $handoff['target_url'],
-			'target_table_prefix'         => (string) $handoff['target_table_prefix'],
-			'archive_sha256'              => (string) $archive['sha256'],
-			'archive_bytes'               => (int) $archive['bytes'],
-			'package_manifest_sha256'     => (string) $handoff['package_manifest_hash'],
-			'package_checksum'            => (string) $handoff['package_checksum'],
-			'destination_authority_sha256'=> $authority_hash,
+			'parent_job_id'                => $job_id,
+			'target_path'                  => (string) $handoff['target_path'],
+			'target_url'                   => (string) $handoff['target_url'],
+			'target_table_prefix'          => (string) $handoff['target_table_prefix'],
+			'archive_sha256'               => (string) $archive['sha256'],
+			'archive_bytes'                => (int) $archive['bytes'],
+			'package_manifest_sha256'      => (string) $handoff['package_manifest_hash'],
+			'package_checksum'             => (string) $handoff['package_checksum'],
+			'destination_authority_sha256' => $authority_hash,
 		);
 
 		if ( ! $this->target_untouched( $context ) ) {
@@ -428,6 +437,7 @@ final class LocalCloneTargetPreflight {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only isolation guard must inspect the exact target prefix before restore.
 		$tables = $wpdb->get_col(
 			$wpdb->prepare(
 				'SHOW TABLES LIKE %s',
@@ -464,14 +474,14 @@ final class LocalCloneTargetPreflight {
 		$blockers   = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
 		$blockers[] = $code;
 
-		$state['schema_version']   = LocalCloneTargetPreflightStateStore::SCHEMA_VERSION;
-		$state['job_id']           = $job_id;
-		$state['status']           = 'blocked';
-		$state['preflight_ready']  = false;
-		$state['restore_allowed']  = false;
-		$state['blockers']         = array_values( array_unique( array_filter( $blockers, 'is_string' ) ) );
-		$state['started_at']       = (string) ( $state['started_at'] ?? $now );
-		$state['updated_at']       = $now;
+		$state['schema_version']  = LocalCloneTargetPreflightStateStore::SCHEMA_VERSION;
+		$state['job_id']          = $job_id;
+		$state['status']          = 'blocked';
+		$state['preflight_ready'] = false;
+		$state['restore_allowed'] = false;
+		$state['blockers']        = array_values( array_unique( array_filter( $blockers, 'is_string' ) ) );
+		$state['started_at']      = (string) ( $state['started_at'] ?? $now );
+		$state['updated_at']      = $now;
 
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
