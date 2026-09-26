@@ -129,6 +129,7 @@ final class LocalCloneAcceptanceEvidence {
 			return null;
 		}
 
+		ksort( $payload );
 		$canonical = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		if ( ! is_string( $canonical ) ) {
 			return null;
