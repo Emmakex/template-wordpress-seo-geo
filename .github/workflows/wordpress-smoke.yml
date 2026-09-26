@@ -16,6 +16,7 @@ on:
       - 'scripts/ci/migration-bridge-portable-clone-local-plan-acceptance.sh'
       - 'scripts/ci/migration-bridge-portable-clone-local-bootstrap-acceptance.sh'
       - 'scripts/ci/migration-bridge-portable-clone-local-runtime-acceptance.sh'
+      - 'scripts/ci/migration-bridge-portable-clone-local-sandbox-runtime-acceptance.sh'
       - 'scripts/ci/migration-bridge-operator-ui-acceptance.sh'
       - '.github/workflows/wordpress-smoke.yml'
       - 'docs/COMPATIBILITY.md'
@@ -36,6 +37,7 @@ on:
       - 'scripts/ci/migration-bridge-portable-clone-local-plan-acceptance.sh'
       - 'scripts/ci/migration-bridge-portable-clone-local-bootstrap-acceptance.sh'
       - 'scripts/ci/migration-bridge-portable-clone-local-runtime-acceptance.sh'
+      - 'scripts/ci/migration-bridge-portable-clone-local-sandbox-runtime-acceptance.sh'
       - 'scripts/ci/migration-bridge-operator-ui-acceptance.sh'
       - '.github/workflows/wordpress-smoke.yml'
       - 'docs/COMPATIBILITY.md'
@@ -61,7 +63,7 @@ jobs:
         run: docker version
 
       - name: Validate smoke script syntax
-        run: bash -n scripts/ci/wordpress-smoke.sh scripts/ci/migration-bridge-site-analyzer-acceptance.sh scripts/ci/migration-bridge-baseline-acceptance.sh scripts/ci/migration-bridge-dependency-graph-acceptance.sh scripts/ci/migration-bridge-sandbox-lab-acceptance.sh scripts/ci/migration-bridge-migration-engine-acceptance.sh scripts/ci/migration-bridge-parity-acceptance.sh scripts/ci/migration-bridge-cutover-acceptance.sh scripts/ci/migration-bridge-report-acceptance.sh scripts/ci/migration-bridge-portable-clone-local-plan-acceptance.sh scripts/ci/migration-bridge-portable-clone-local-bootstrap-acceptance.sh scripts/ci/migration-bridge-portable-clone-local-runtime-acceptance.sh scripts/ci/migration-bridge-operator-ui-acceptance.sh
+        run: bash -n scripts/ci/wordpress-smoke.sh scripts/ci/migration-bridge-site-analyzer-acceptance.sh scripts/ci/migration-bridge-baseline-acceptance.sh scripts/ci/migration-bridge-dependency-graph-acceptance.sh scripts/ci/migration-bridge-sandbox-lab-acceptance.sh scripts/ci/migration-bridge-migration-engine-acceptance.sh scripts/ci/migration-bridge-parity-acceptance.sh scripts/ci/migration-bridge-cutover-acceptance.sh scripts/ci/migration-bridge-report-acceptance.sh scripts/ci/migration-bridge-portable-clone-local-plan-acceptance.sh scripts/ci/migration-bridge-portable-clone-local-bootstrap-acceptance.sh scripts/ci/migration-bridge-portable-clone-local-runtime-acceptance.sh scripts/ci/migration-bridge-portable-clone-local-sandbox-runtime-acceptance.sh scripts/ci/migration-bridge-operator-ui-acceptance.sh
 
       - name: WordPress 7.1 / PHP 8.2 activation smoke
         run: bash scripts/ci/wordpress-smoke.sh
