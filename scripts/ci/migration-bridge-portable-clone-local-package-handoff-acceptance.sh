@@ -620,18 +620,47 @@ for ( $i = 0; $i < 140; ++$i ) {
 $local_database_verified = $local_database->verified_snapshot( $job_id );
 $local_database_plan = $local_database->staging_plan( $job_id );
 $database_child_state = '' !== $payload_child_id ? ( new ImportDatabaseStateStore() )->get( $payload_child_id ) : null;
-$staging_table = is_array( $local_database_plan )
-	&& is_array( $local_database_plan['tables'] ?? null )
-	&& is_array( $local_database_plan['tables'][0] ?? null )
-	? (string) ( $local_database_plan['tables'][0]['staging_table'] ?? '' )
-	: '';
-$quoted_staging = '' !== $staging_table
-	? chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $staging_table ) . chr( 96 )
-	: '';
-$staging_rows = '' !== $quoted_staging
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of deterministic staging table.
-	? $GLOBALS['wpdb']->get_results( "SELECT id, title FROM {$quoted_staging} ORDER BY id ASC", ARRAY_A )
-	: array();
+
+$staging_by_source = array();
+if ( is_array( $local_database_plan ) && is_array( $local_database_plan['tables'] ?? null ) ) {
+	foreach ( $local_database_plan['tables'] as $table_plan ) {
+		if (
+			is_array( $table_plan )
+			&& is_string( $table_plan['source_table'] ?? null )
+			&& is_string( $table_plan['staging_table'] ?? null )
+		) {
+			$staging_by_source[ $table_plan['source_table'] ] = $table_plan['staging_table'];
+		}
+	}
+}
+$options_staging_table = (string) ( $staging_by_source[ $options_table ] ?? '' );
+$posts_staging_table   = (string) ( $staging_by_source[ $posts_table ] ?? '' );
+$quote_table = static function ( string $table ): string {
+	return chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $table ) . chr( 96 );
+};
+
+$read_staged_options = static function () use ( $options_staging_table, $quote_table ): array {
+	if ( '' === $options_staging_table ) {
+		return array();
+	}
+	$quoted = $quote_table( $options_staging_table );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of deterministic job-owned staging table.
+	$rows = $GLOBALS['wpdb']->get_results( "SELECT option_id, option_name, option_value FROM {$quoted} ORDER BY option_id ASC", ARRAY_A );
+
+	return is_array( $rows ) ? $rows : array();
+};
+$read_staged_posts = static function () use ( $posts_staging_table, $quote_table ): array {
+	if ( '' === $posts_staging_table ) {
+		return array();
+	}
+	$quoted = $quote_table( $posts_staging_table );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of deterministic job-owned staging table.
+	$rows = $GLOBALS['wpdb']->get_results( "SELECT ID, post_content, post_excerpt, post_content_filtered FROM {$quoted} ORDER BY ID ASC", ARRAY_A );
+
+	return is_array( $rows ) ? $rows : array();
+};
+$staging_options_before_rewrite = $read_staged_options();
+$staging_posts_before_rewrite   = $read_staged_posts();
 $source_after_database = $source_snapshot();
 
 $table_pattern_after_database = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
