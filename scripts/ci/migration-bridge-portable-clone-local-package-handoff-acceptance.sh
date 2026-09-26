@@ -667,6 +667,18 @@ echo wp_json_encode(
 		'source_after_database'       => $source_after_database,
 		'source_after_all'            => $source_after_all,
 		'target_table_count_after_database' => is_array( $target_tables_after_database ) ? count( $target_tables_after_database ) : -1,
+		'local_files_mid'             => $local_files_mid,
+		'local_files_state'           => $local_files_state,
+		'local_files_verified'        => is_array( $local_files_verified ),
+		'file_child_state'            => $file_child_state,
+		'file_staging_root'           => $file_staging_root,
+		'staged_upload'               => $staged_upload,
+		'staged_plugin'               => $staged_plugin,
+		'staged_theme'                => $staged_theme,
+		'target_upload_absent_after_files' => $target_upload_absent_after_files,
+		'target_plugin_absent_after_files' => $target_plugin_absent_after_files,
+		'target_theme_absent_after_files' => $target_theme_absent_after_files,
+		'target_bridge_present_after_files' => $target_bridge_present_after_files,
 		'job_before_mutation'         => $job_before_mutation,
 		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
 		'local_payload_verified_after_mutation' => is_array( $local_payload_verified_after_mutation ),
@@ -675,11 +687,15 @@ echo wp_json_encode(
 		'local_payload_after_recovery' => $local_payload_after_recovery,
 		'local_database_verified_after_recovery' => is_array( $local_database_verified_after_recovery ),
 		'local_database_after_recovery' => $local_database_after_recovery,
+		'local_files_verified_after_recovery' => is_array( $local_files_verified_after_recovery ),
+		'local_files_after_recovery' => $local_files_after_recovery,
 		'payload_child_after_recovery' => $payload_child_after_recovery,
 		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
+		'local_files_verified_after_archive_tamper' => is_array( $local_files_verified_after_archive_tamper ),
+		'local_files_after_archive_tamper' => $local_files_after_archive_tamper,
 		'local_database_verified_after_archive_tamper' => is_array( $local_database_verified_after_archive_tamper ),
 		'local_database_after_archive_tamper' => $local_database_after_archive_tamper,
 		'local_payload_verified_after_archive_tamper' => is_array( $local_payload_verified_after_archive_tamper ),
@@ -705,10 +721,14 @@ echo wp_json_encode(
 		'local_database_service_registered' => $local_database instanceof LocalCloneDatabaseRestorer,
 		'local_database_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalDatabaseController::ACTION ),
 		'local_database_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalDatabaseController::ACTION ),
+		'local_files_service_registered' => $local_files instanceof LocalCloneFileRestorer,
+		'local_files_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFileController::ACTION ),
+		'local_files_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFileController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
 		'database_autoload'           => $database_autoload,
+		'file_autoload'               => $file_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -729,6 +749,9 @@ $GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$quoted_source}" );
 
 $workspace->delete_delivery_archive( $job_id );
 $workspace->cleanup( $job_id );
+if ( '' !== $payload_child_id ) {
+	$workspace->cleanup( $payload_child_id );
+}
 $remove_tree( $target_path );
 foreach ( $options as $option ) {
 	delete_option( $option );
