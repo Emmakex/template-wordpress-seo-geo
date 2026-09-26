@@ -91,6 +91,31 @@ final class ImportDatabaseActivator {
 	}
 
 	/**
+	 * Return an activated database only while exact layout/control guards still hold.
+	 *
+	 * @param string $job_id Child import job identifier.
+	 * @return array<string,mixed>|null
+	 */
+	public function verified_snapshot( string $job_id ): ?array {
+		$state = $this->store->get( $job_id );
+		if (
+			! is_array( $state )
+			|| 'activated' !== ( $state['status'] ?? null )
+			|| true !== ( $state['database_swapped'] ?? false )
+			|| true !== ( $state['rollback_available'] ?? false )
+			|| true !== ( $state['active_files_untouched'] ?? false )
+			|| true === ( $state['handoff_ready'] ?? true )
+			|| array() !== ( $state['blockers'] ?? array() )
+			|| ! $this->sandbox_ready( $job_id, true )
+			|| ! $this->verify_activated( $state )
+		) {
+			return null;
+		}
+
+		return $state;
+	}
+
+	/**
 	 * Freeze an exact reversible table map without mutating staging.
 	 *
 	 * The finalization plan is rebound through a fresh read-only gate here. The
