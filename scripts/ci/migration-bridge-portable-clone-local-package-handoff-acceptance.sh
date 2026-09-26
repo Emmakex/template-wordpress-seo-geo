@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1 private same-server local package handoff acceptance.
+# Phase 10E.2A.5.3.1-5.3.2.2 private local handoff/intake/payload acceptance.
 
-printf '[smoke] Checking private same-server local-clone package handoff.\n'
+printf '[smoke] Checking private same-server local-clone handoff, target preflight and payload verification.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
 <?php
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -19,6 +20,9 @@ use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflight;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerifier;
+use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeStateStore;
@@ -39,7 +43,9 @@ $options = array(
 	LocalCloneSandboxRuntimeStateStore::OPTION_NAME,
 	LocalClonePackageHandoffStateStore::OPTION_NAME,
 	LocalCloneTargetPreflightStateStore::OPTION_NAME,
+	LocalClonePayloadVerificationStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
+	ImportPayloadStateStore::OPTION_NAME,
 );
 foreach ( $options as $option ) {
 	delete_option( $option );
@@ -52,6 +58,7 @@ $core      = Plugin::local_clone_runtime_bootstrapper();
 $sandbox   = Plugin::local_clone_sandbox_runtime_bootstrapper();
 $handoff   = Plugin::local_clone_package_handoff();
 $target_preflight = Plugin::local_clone_target_preflight();
+$local_payload     = Plugin::local_clone_payload_verifier();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -60,6 +67,7 @@ if (
 	|| ! $sandbox instanceof LocalCloneSandboxRuntimeBootstrapper
 	|| ! $handoff instanceof LocalClonePackageHandoff
 	|| ! $target_preflight instanceof LocalCloneTargetPreflight
+	|| ! $local_payload instanceof LocalClonePayloadVerifier
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -352,6 +360,21 @@ $target_preflight_child = is_array( $target_preflight_state )
 	? ( new ImportStateStore() )->get( (string) ( $target_preflight_state['child_import_job_id'] ?? '' ) )
 	: null;
 
+$local_payload_mid = $local_payload->advance( $job_id, 1, 1024 * 1024 );
+$local_payload_state = $local_payload_mid;
+for ( $i = 0; $i < 140; ++$i ) {
+	if ( is_array( $local_payload_state ) && in_array( $local_payload_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_payload_state = $local_payload->advance( $job_id, 1, 1024 * 1024 );
+}
+$local_payload_verified = $local_payload->verified_snapshot( $job_id );
+$payload_child_id = is_array( $target_preflight_state ) ? (string) $target_preflight_state['child_import_job_id'] : '';
+$payload_child_import = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
+$payload_child_state = '' !== $payload_child_id ? ( new ImportPayloadStateStore() )->get( $payload_child_id ) : null;
+$target_preflight_after_payload = $target_preflight->verified_snapshot( $job_id );
+$job_before_mutation = $jobs->get( $job_id );
+
 $table_pattern = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
 $target_tables = $GLOBALS['wpdb']->get_col(
 	$GLOBALS['wpdb']->prepare(
@@ -372,21 +395,41 @@ if ( is_array( $target_preflight_child ) && is_array( $target_preflight_state ) 
 }
 
 $target_verified_after_mutation = null;
+$local_payload_verified_after_mutation = null;
+$local_payload_after_mutation = null;
+$payload_child_after_mutation = null;
 $created_table = $target_prefix . 'tamper_guard';
 $GLOBALS['wpdb']->query( "CREATE TABLE {$created_table} (id bigint unsigned NOT NULL)" );
 $target_verified_after_mutation = $target_preflight->verified_snapshot( $job_id );
+$local_payload_verified_after_mutation = $local_payload->verified_snapshot( $job_id );
+$local_payload_after_mutation = $local_payload->advance( $job_id, 1, 1024 * 1024 );
+$payload_child_after_mutation = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
 $GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$created_table}" );
+
+$local_payload_after_recovery = $local_payload->advance( $job_id, 1, 1024 * 1024 );
+$payload_child_after_recovery = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
+$job_after_recovery = $jobs->get( $job_id );
 
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
 if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$local_payload_verified_after_archive_tamper = $local_payload->verified_snapshot( $job_id );
+$local_payload_after_archive_tamper = $local_payload->advance( $job_id, 1, 1024 * 1024 );
+$payload_child_after_archive_tamper = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
 
 $autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalClonePackageHandoffStateStore::OPTION_NAME
+	)
+);
+
+$payload_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalClonePayloadVerificationStateStore::OPTION_NAME
 	)
 );
 
@@ -400,10 +443,26 @@ echo wp_json_encode(
 		'target_preflight_state'      => $target_preflight_state,
 		'target_preflight_verified'   => is_array( $target_preflight_verified ),
 		'target_preflight_child'      => $target_preflight_child,
+		'local_payload_mid'           => $local_payload_mid,
+		'local_payload_state'         => $local_payload_state,
+		'local_payload_verified'      => is_array( $local_payload_verified ),
+		'payload_child_import'        => $payload_child_import,
+		'payload_child_state'         => $payload_child_state,
+		'target_preflight_after_payload' => is_array( $target_preflight_after_payload ),
+		'job_before_mutation'         => $job_before_mutation,
 		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
+		'local_payload_verified_after_mutation' => is_array( $local_payload_verified_after_mutation ),
+		'local_payload_after_mutation' => $local_payload_after_mutation,
+		'payload_child_after_mutation' => $payload_child_after_mutation,
+		'local_payload_after_recovery' => $local_payload_after_recovery,
+		'payload_child_after_recovery' => $payload_child_after_recovery,
+		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
+		'local_payload_verified_after_archive_tamper' => is_array( $local_payload_verified_after_archive_tamper ),
+		'local_payload_after_archive_tamper' => $local_payload_after_archive_tamper,
+		'payload_child_after_archive_tamper' => $payload_child_after_archive_tamper,
 		'delivery_info_before_tamper' => $delivery_info,
 		'frozen_manifest_hash'        => $frozen_manifest_hash,
 		'manifest_after_hash'         => $manifest_after_hash,
@@ -418,8 +477,12 @@ echo wp_json_encode(
 		'sandbox_still_verified'      => is_array( $sandbox->verified_snapshot( $job_id ) ),
 		'controller_registered'       => false !== has_action( 'admin_post_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'target_preflight_service_registered' => $target_preflight instanceof LocalCloneTargetPreflight,
+		'local_payload_service_registered' => $local_payload instanceof LocalClonePayloadVerifier,
+		'local_payload_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalPayloadController::ACTION ),
+		'local_payload_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPayloadController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
+		'payload_autoload'            => $payload_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -493,6 +556,81 @@ assert payload["target_verified_after_mutation"] is False, payload
 assert payload["target_verified_after_child_drift"] is False, payload
 assert payload["target_preflight_service_registered"] is True, payload
 
+mid = payload["local_payload_mid"]
+assert mid is not None, payload
+assert mid["status"] == "running", payload
+assert mid["stage"] in ("extract", "verify"), payload
+
+local_payload = payload["local_payload_state"]
+assert local_payload is not None, payload
+assert local_payload["status"] == "ready", payload
+assert local_payload["stage"] == "complete", payload
+assert local_payload["payload_verified"] is True, payload
+assert local_payload["child_restore_allowed"] is True, payload
+assert local_payload["database_untouched"] is True, payload
+assert local_payload["client_content_untouched"] is True, payload
+assert local_payload["payload_next"] == "database-staging-restore", payload
+assert local_payload["verification_checksum"] == target["package_checksum"], payload
+assert local_payload["verify_file_count"] == local_payload["expected_file_count"], payload
+assert local_payload["verify_byte_count"] == local_payload["expected_byte_count"], payload
+assert local_payload["blockers"] == [], payload
+assert payload["local_payload_verified"] is True, payload
+assert payload["target_preflight_after_payload"] is True, payload
+
+payload_state = payload["payload_child_state"]
+assert payload_state is not None, payload
+assert payload_state["status"] == "complete", payload
+assert payload_state["stage"] == "complete", payload
+assert payload_state["verification_checksum"] == target["package_checksum"], payload
+
+payload_import = payload["payload_child_import"]
+assert payload_import is not None, payload
+assert payload_import["status"] == "payload-verified", payload
+assert payload_import["full_payload_verified"] is True, payload
+assert payload_import["restore_allowed"] is True, payload
+assert payload_import["blockers"] == [], payload
+assert "restore-runtime-guard-required" in payload_import["advisories"], payload
+
+assert payload["local_payload_verified_after_mutation"] is False, payload
+blocked_parent = payload["local_payload_after_mutation"]
+assert blocked_parent is not None and blocked_parent["status"] == "blocked", payload
+assert "local-payload-parent-authority-unavailable" in blocked_parent["blockers"], payload
+blocked_child = payload["payload_child_after_mutation"]
+assert blocked_child is not None, payload
+assert blocked_child["status"] == "blocked", payload
+assert blocked_child["full_payload_verified"] is False, payload
+assert blocked_child["restore_allowed"] is False, payload
+assert "local-payload-parent-authority-unavailable" in blocked_child["blockers"], payload
+
+recovered_parent = payload["local_payload_after_recovery"]
+assert recovered_parent is not None, payload
+assert recovered_parent["status"] == "ready", payload
+assert recovered_parent["payload_verified"] is True, payload
+assert recovered_parent["child_restore_allowed"] is True, payload
+recovered_child = payload["payload_child_after_recovery"]
+assert recovered_child is not None, payload
+assert recovered_child["status"] == "payload-verified", payload
+assert recovered_child["full_payload_verified"] is True, payload
+assert recovered_child["restore_allowed"] is True, payload
+job_after_recovery = payload["job_after_recovery"]
+assert job_after_recovery["status"] == "active", payload
+assert job_after_recovery["phase"] == "verify", payload
+assert job_after_recovery["cursor"] == "local-payload-verified", payload
+
+assert payload["local_payload_verified_after_archive_tamper"] is False, payload
+archive_blocked_parent = payload["local_payload_after_archive_tamper"]
+assert archive_blocked_parent is not None and archive_blocked_parent["status"] == "blocked", payload
+assert "local-payload-parent-authority-unavailable" in archive_blocked_parent["blockers"], payload
+archive_blocked_child = payload["payload_child_after_archive_tamper"]
+assert archive_blocked_child is not None, payload
+assert archive_blocked_child["status"] == "blocked", payload
+assert archive_blocked_child["full_payload_verified"] is False, payload
+assert archive_blocked_child["restore_allowed"] is False, payload
+
+assert payload["local_payload_service_registered"] is True, payload
+assert payload["local_payload_controller_registered"] is True, payload
+assert payload["local_payload_public_controller_absent"] is True, payload
+
 child = payload["target_preflight_child"]
 assert child is not None, payload
 assert child["status"] == "preflight-ready", payload
@@ -536,17 +674,23 @@ assert payload["sandbox_still_verified"] is True, payload
 assert payload["controller_registered"] is True, payload
 assert payload["public_controller_absent"] is True, payload
 assert payload["autoload"] in ("off", "no", "auto-off"), payload
+assert payload["payload_autoload"] in ("off", "no", "auto-off"), payload
+
+job_before_mutation = payload["job_before_mutation"]
+assert job_before_mutation["operation"] == "local-clone", payload
+assert job_before_mutation["status"] == "active", payload
+assert job_before_mutation["phase"] == "verify", payload
+assert job_before_mutation["cursor"] == "local-payload-verified", payload
 
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
-assert job["status"] == "active", payload
-assert job["phase"] == "validate", payload
-assert job["cursor"] == "local-target-preflight-ready", payload
+assert job["status"] == "failed-retryable", payload
+assert job["error_code"] == "local-payload-parent-authority-unavailable", payload
 
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone private package handoff contract is invalid" "immutable package manifest + private hash-bound ZIP + no target import mutation" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone handoff/intake/payload contract is invalid" "immutable package + private preflight/extraction/checksum + no active target restore" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone handoff + target preflight OK: private ZIP frozen, existing import preflight reused against isolated target, restore locked, target mutation/archive tamper invalidated readiness.\n'
+printf '[smoke] Local clone handoff + target preflight + payload verification OK: private extraction resumed, full checksum matched, restore gate opened only for child staging, target stayed untouched, authority drift revoked restore eligibility.\n'

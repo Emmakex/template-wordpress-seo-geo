@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.3.2.1 — target intake + sandbox preflight in Migration Bridge 0.8.28.** Migration Bridge 0.8.27 is accepted on `main` at `e6751252a18913992c0541552012daeb4ed6be3e`: the verified `local-clone` package is now available as a private same-server ZIP whose archive identity remains bound to the frozen package manifest/checksum and verified sandbox runtime. 0.8.28 stages that artifact into a deterministic child `import` job and reuses the existing `ImportPreflight` engine with destination authority derived only from the isolated runtime. The local-clone transport contract remains frozen (`delivery_ready=false`, no public delivery metadata), normal Portable Import behavior remains unchanged, and completion requires package/child-manifest integrity, isolated target guards, zero destination tables/uploads/themes and **`restore_allowed=false`**. The next microphase is bounded payload extraction + full checksum replay before any restore can be authorized.
+Current execution pointer: **10E.2A.5.3.2.2 — private payload extraction + full checksum replay in Migration Bridge 0.8.29.** Migration Bridge 0.8.28 is accepted on `main` at `79f143483c141a03c608e71bc4fe25eef0441b25`: the private same-server handoff now reaches a deterministic child `import` job whose archive/manifests and isolated destination authority pass the existing Portable Import preflight while `restore_allowed=false` and target tables/uploads/themes remain absent. 0.8.29 reuses `ImportPayloadVerifier` for bounded private extraction and exact package-checksum replay, while the parent local-clone state revalidates target/package/archive authority before and after every batch. Only a complete checksum match plus fresh destination preflight may expose **`restore_allowed=true` on the child import job**; this microphase still performs no destination restore. Any parent-authority drift blocks local orchestration and revokes the child restore gate. Next: **10E.2A.5.4.1 — transactional database staging restore**, reusing the accepted Portable Import database restore primitive.
+
+Migration Bridge v0.8.28 / 10E.2A.5.3.2.1 acceptance evidence:
+
+- PR #153 squash-merged to `main` as `79f143483c141a03c608e71bc4fe25eef0441b25`;
+- Foundation CI `36223562540` passed;
+- Phase 1 Package CI `36223562543` passed;
+- PHP Quality CI `36223562584` passed;
+- WordPress Smoke CI `36223562551` passed, including private same-server target intake, existing ImportPreflight reuse, frozen parent/child authority, zero target tables/uploads/themes and drift/tamper rejection;
+- Accessibility & Responsive CI `36223562571` passed;
+- Performance Baseline CI `36223562596` passed;
+- Migration Bridge Release CI `36223562583` passed.
 
 Migration Bridge v0.8.27 / 10E.2A.5.3.1 acceptance evidence:
 
