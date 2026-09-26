@@ -489,6 +489,7 @@ final class LocalCloneSandboxRuntimeBootstrapper {
 					$bytes,
 					$target_hash
 				);
+
 				$state['after_name'] = $entry;
 				++$accepted_files;
 				$accepted_bytes += $bytes;
