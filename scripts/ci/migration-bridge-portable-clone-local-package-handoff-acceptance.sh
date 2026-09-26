@@ -9,6 +9,7 @@ cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -22,6 +23,9 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflight;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerifier;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestorer;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeBootstrapper;
@@ -44,7 +48,9 @@ $options = array(
 	LocalClonePackageHandoffStateStore::OPTION_NAME,
 	LocalCloneTargetPreflightStateStore::OPTION_NAME,
 	LocalClonePayloadVerificationStateStore::OPTION_NAME,
+	LocalCloneDatabaseRestoreStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
+	ImportDatabaseStateStore::OPTION_NAME,
 	ImportPayloadStateStore::OPTION_NAME,
 );
 foreach ( $options as $option ) {
@@ -59,6 +65,7 @@ $sandbox   = Plugin::local_clone_sandbox_runtime_bootstrapper();
 $handoff   = Plugin::local_clone_package_handoff();
 $target_preflight = Plugin::local_clone_target_preflight();
 $local_payload     = Plugin::local_clone_payload_verifier();
+$local_database    = Plugin::local_clone_database_restorer();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -68,6 +75,7 @@ if (
 	|| ! $handoff instanceof LocalClonePackageHandoff
 	|| ! $target_preflight instanceof LocalCloneTargetPreflight
 	|| ! $local_payload instanceof LocalClonePayloadVerifier
+	|| ! $local_database instanceof LocalCloneDatabaseRestorer
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -99,10 +107,28 @@ $target_path   = trailingslashit( wp_normalize_path( ABSPATH ) ) . 'nuevaweb-pac
 $target_url    = trailingslashit( home_url( '/nuevaweb-package-handoff/' ) );
 $source_prefix = $GLOBALS['wpdb']->prefix;
 $target_prefix = $source_prefix . 'sghandoff_';
+$source_table  = $source_prefix . 'sg_local_demo';
+$quoted_source = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $source_table ) . chr( 96 );
 
 $workspace->cleanup( $job_id );
 $workspace->delete_delivery_archive( $job_id );
 $remove_tree( $target_path );
+
+// Test-only production sentinel. Local database staging must never mutate this table.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+$GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$quoted_source}" );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+$GLOBALS['wpdb']->query( "CREATE TABLE {$quoted_source} (id bigint unsigned NOT NULL, title varchar(190) NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4" );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+$GLOBALS['wpdb']->insert( $source_table, array( 'id' => 999, 'title' => 'production-sentinel' ), array( '%d', '%s' ) );
+
+$source_snapshot = static function () use ( $quoted_source ): array {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+	$rows = $GLOBALS['wpdb']->get_results( "SELECT id, title FROM {$quoted_source} ORDER BY id ASC", ARRAY_A );
+
+	return is_array( $rows ) ? $rows : array();
+};
+$source_before = $source_snapshot();
 
 $job = $jobs->create( 'local-clone', $job_id );
 if ( ! is_array( $job ) ) {
@@ -110,14 +136,67 @@ if ( ! is_array( $job ) ) {
 }
 
 $source_fingerprint = hash( 'sha256', 'local-handoff-source:' . $job_id );
+$table_dir          = 'database/tables/' . substr( hash( 'sha256', $source_table ), 0, 20 );
+$schema_sql         = 'CREATE TABLE `' . $source_table . '` ('
+	. '`id` bigint unsigned NOT NULL, '
+	. '`title` varchar(190) NOT NULL, '
+	. 'PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;' . "\n";
+$schema_written = $workspace->write( $job_id, $table_dir . '/schema.sql', $schema_sql );
 
-$schema_written = $workspace->write( $job_id, 'database/schema/users.sql', 'CREATE TABLE fixture_users (id bigint unsigned);' );
-$chunk_written  = $workspace->write( $job_id, 'database/chunks/users-1.json', '[{"id":1}]' );
+$chunk_payload = array(
+	'schema_version'   => 1,
+	'table'            => $source_table,
+	'strategy'         => 'primary-key',
+	'cursor_column'    => 'id',
+	'cursor_start_b64' => '',
+	'offset_start'     => 0,
+	'chunk_index'      => 0,
+	'row_count'        => 3,
+	'columns'          => array( 'id', 'title' ),
+	'value_encoding'   => 'base64-or-null',
+	'rows'             => array(
+		array( base64_encode( '1' ), base64_encode( 'alpha' ) ),
+		array( base64_encode( '2' ), base64_encode( 'beta' ) ),
+		array( base64_encode( '3' ), base64_encode( 'gamma' ) ),
+	),
+);
+$chunk_json = wp_json_encode( $chunk_payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+$chunk_written = is_string( $chunk_json )
+	? $workspace->write( $job_id, $table_dir . '/chunks/000000.json', $chunk_json )
+	: null;
 $upload_written = $workspace->write( $job_id, 'files/uploads/a.txt', 'upload-payload' );
 $plugin_written = $workspace->write( $job_id, 'files/plugins/demo/demo.php', "<?php\n// handoff fixture\n" );
 if ( ! is_array( $schema_written ) || ! is_array( $chunk_written ) || ! is_array( $upload_written ) || ! is_array( $plugin_written ) ) {
 	throw new RuntimeException( 'Could not write local handoff payload fixtures.' );
 }
+
+$table_meta = array(
+	'schema_version' => 1,
+	'name'           => $source_table,
+	'slug'           => substr( hash( 'sha256', $source_table ), 0, 20 ),
+	'schema'         => array(
+		'path'   => $table_dir . '/schema.sql',
+		'bytes'  => (int) $schema_written['bytes'],
+		'sha256' => (string) $schema_written['sha256'],
+	),
+	'strategy'       => 'primary-key',
+	'cursor_column'  => 'id',
+	'order_columns'  => array(),
+	'columns'        => array( 'id', 'title' ),
+	'chunks'         => array(
+		array(
+			'index'      => 0,
+			'path'       => $table_dir . '/chunks/000000.json',
+			'row_count'  => 3,
+			'byte_count' => (int) $chunk_written['bytes'],
+			'sha256'     => (string) $chunk_written['sha256'],
+		),
+	),
+	'chunk_count'    => 1,
+	'row_count'      => 3,
+	'byte_count'     => (int) $chunk_written['bytes'],
+	'complete'       => true,
+);
 
 $database_manifest = array(
 	'schema_version'              => 1,
@@ -128,10 +207,10 @@ $database_manifest = array(
 		'site_url'     => site_url( '/' ),
 		'table_prefix' => $source_prefix,
 	),
-	'tables'                      => array(),
-	'table_count'                 => 0,
-	'row_count'                   => 1,
-	'payload_bytes'               => (int) $schema_written['bytes'] + (int) $chunk_written['bytes'],
+	'tables'                      => array( $table_meta ),
+	'table_count'                 => 1,
+	'row_count'                   => 3,
+	'payload_bytes'               => (int) $table_meta['byte_count'],
 	'chunk_count'                 => 1,
 	'production_source_read_only' => true,
 	'credentials_in_payload'      => false,
@@ -232,7 +311,7 @@ $manifest = array(
 		'database' => array(
 			'manifest_path'   => 'database/manifest.json',
 			'manifest_sha256' => (string) $database_written['sha256'],
-			'row_count'       => 1,
+			'row_count'       => 3,
 			'chunk_count'     => 1,
 			'payload_bytes'   => (int) $database_manifest['payload_bytes'],
 		),
@@ -274,7 +353,7 @@ $inventory->save(
 	array(
 		'status'       => 'complete',
 		'database'     => array(
-			'estimated_rows'  => 1,
+			'estimated_rows'  => 3,
 			'estimated_bytes' => 4096,
 		),
 		'roots'        => array(),
