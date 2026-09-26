@@ -347,7 +347,11 @@ final class LocalCloneHandoffReporter {
 		$tables = is_array( $child_db['tables'] ?? null ) ? array_values( $child_db['tables'] ) : array();
 		$rows   = 0;
 		if ( array() === $tables ) {
-			return array( 'ready' => false, 'table_count' => 0, 'row_count' => 0 );
+			return array(
+				'ready'       => false,
+				'table_count' => 0,
+				'row_count'   => 0,
+			);
 		}
 
 		foreach ( $tables as $table ) {
@@ -370,7 +374,11 @@ final class LocalCloneHandoffReporter {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Read-only final smoke over validated isolated target tables.
 			$actual = $wpdb->get_var( "SELECT COUNT(*) FROM {$quoted}" );
 			if ( null === $actual || (int) $actual !== $expected ) {
-				return array( 'ready' => false, 'table_count' => count( $tables ), 'row_count' => $rows );
+				return array(
+					'ready'       => false,
+					'table_count' => count( $tables ),
+					'row_count'   => $rows,
+				);
 			}
 			$rows += $expected;
 		}
