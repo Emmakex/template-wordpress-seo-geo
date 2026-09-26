@@ -870,14 +870,24 @@ add_filter(
 		unset( $parsed_args );
 
 		$host      = wp_parse_url( $url, PHP_URL_HOST );
-		$home_host = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
-		if (
-			is_string( $host )
-			&& (
-				in_array( strtolower( $host ), array( 'localhost', '127.0.0.1', '::1' ), true )
-				|| ( is_string( $home_host ) && strtolower( $host ) === strtolower( $home_host ) )
-			)
-		) {
+		$url_path  = wp_parse_url( $url, PHP_URL_PATH );
+		$home_url  = home_url( '/' );
+		$home_host = wp_parse_url( $home_url, PHP_URL_HOST );
+		$home_path = wp_parse_url( $home_url, PHP_URL_PATH );
+
+		$is_loopback = is_string( $host )
+			&& in_array( strtolower( $host ), array( 'localhost', '127.0.0.1', '::1' ), true );
+		$is_sandbox_path = is_string( $host )
+			&& is_string( $home_host )
+			&& strtolower( $host ) === strtolower( $home_host )
+			&& is_string( $url_path )
+			&& is_string( $home_path )
+			&& str_starts_with(
+				'/' . ltrim( $url_path, '/' ),
+				trailingslashit( '/' . trim( $home_path, '/' ) )
+			);
+
+		if ( $is_loopback || $is_sandbox_path ) {
 			return $preempt;
 		}
 
