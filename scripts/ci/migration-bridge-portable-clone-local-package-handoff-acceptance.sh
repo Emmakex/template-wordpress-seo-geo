@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.4.2 private local handoff/intake/payload/database/file acceptance.
+# Phase 10E.2A.5.3.1-5.5.1 private local handoff/staging/rewrite acceptance.
 
-printf '[smoke] Checking private same-server local-clone handoff, database staging and private file staging.\n'
+printf '[smoke] Checking private same-server local-clone staging and serialization-safe environment rewrite.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -11,6 +11,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -28,6 +29,9 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestorer;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriter;
+use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
@@ -54,7 +58,9 @@ $options = array(
 	LocalClonePayloadVerificationStateStore::OPTION_NAME,
 	LocalCloneDatabaseRestoreStateStore::OPTION_NAME,
 	LocalCloneFileRestoreStateStore::OPTION_NAME,
+	LocalCloneEnvironmentRewriteStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
+	ImportRewriteStateStore::OPTION_NAME,
 	ImportFileStateStore::OPTION_NAME,
 	ImportDatabaseStateStore::OPTION_NAME,
 	ImportPayloadStateStore::OPTION_NAME,
@@ -73,6 +79,7 @@ $target_preflight = Plugin::local_clone_target_preflight();
 $local_payload     = Plugin::local_clone_payload_verifier();
 $local_database    = Plugin::local_clone_database_restorer();
 $local_files       = Plugin::local_clone_file_restorer();
+$local_rewriter    = Plugin::local_clone_environment_rewriter();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -84,6 +91,7 @@ if (
 	|| ! $local_payload instanceof LocalClonePayloadVerifier
 	|| ! $local_database instanceof LocalCloneDatabaseRestorer
 	|| ! $local_files instanceof LocalCloneFileRestorer
+	|| ! $local_rewriter instanceof LocalCloneEnvironmentRewriter
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
