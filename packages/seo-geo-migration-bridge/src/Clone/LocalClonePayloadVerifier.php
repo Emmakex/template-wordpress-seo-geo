@@ -279,7 +279,7 @@ final class LocalClonePayloadVerifier {
 				'completed' => 'verify' === $state['stage']
 					? (int) $state['verify_file_count']
 					: (int) $state['archive_cursor'],
-				'total'     => 'verify' === ( $state['stage'] ?? null )
+				'total'     => 'verify' === $state['stage']
 					? (int) $state['expected_file_count']
 					: (int) $state['archive_entry_count'],
 			)
