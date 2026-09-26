@@ -23,6 +23,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFilePromotionController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -55,6 +56,7 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromotionStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneHandoffReportStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -172,6 +174,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_local_finalization_result_notice(); ?>
 			<?php $this->render_clone_local_database_activation_result_notice(); ?>
 			<?php $this->render_clone_local_file_promotion_result_notice(); ?>
+			<?php $this->render_clone_local_handoff_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -2107,6 +2110,7 @@ final class AdminOperatorScreen {
 			</form>
 		<?php elseif ( 'verified' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_next' ) ); ?></p>
+			<?php $this->render_clone_local_handoff_section( $job ); ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalFilePromotionController::ACTION ); ?>">
 				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
@@ -2117,6 +2121,80 @@ final class AdminOperatorScreen {
 			</form>
 		<?php elseif ( 'rolled-back' === $status ) : ?>
 			<p class="notice notice-warning inline"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_rolled_back_next' ) ); ?></p>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render final local handoff verification result.
+	 */
+	private function render_clone_local_handoff_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_handoff'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_handoff'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'ready'   => 'clone_local_handoff_ready',
+			'blocked' => 'clone_local_handoff_blocked',
+			default   => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+		?>
+		<div class="<?php echo esc_attr( 'ready' === $status ? 'notice notice-success' : 'notice notice-error' ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render final read-only local target handoff evidence.
+	 *
+	 * @param array<string,mixed> $job Parent local-clone job.
+	 */
+	private function render_clone_local_handoff_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneHandoffReportStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_handoff_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_handoff_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_target_url' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['target_url'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_prefix' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['target_table_prefix'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_database' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['table_count'] ?? 0 ) ); ?> / <?php echo esc_html( (string) (int) ( $state['row_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['file_count'] ?? 0 ) ); ?> / <?php echo esc_html( size_format( (int) ( $state['file_bytes'] ?? 0 ) ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_urls' ) ); ?></th><td><?php echo esc_html( true === ( $state['home_matches'] ?? false ) && true === ( $state['siteurl_matches'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_noindex' ) ); ?></th><td><?php echo esc_html( true === ( $state['noindex_ready'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_runtime' ) ); ?></th><td><?php echo esc_html( true === ( $state['runtime_matches'] ?? false ) && true === ( $state['bridge_control_ready'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_rollback' ) ); ?></th><td><?php echo esc_html( true === ( $state['rollback_available'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_source' ) ); ?></th><td><?php echo esc_html( true === ( $state['source_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_report_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['report_sha256'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalHandoffController::ACTION ); ?>">
+			<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+			<?php wp_nonce_field( AdminCloneLocalHandoffController::NONCE_ACTION . ':' . $job_id ); ?>
+			<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_handoff_refresh_button' : 'clone_local_handoff_button' ), 'secondary', 'submit', false ); ?>
+		</form>
+
+		<?php if ( 'ready' === $status ) : ?>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next' ) ); ?></p>
 		<?php endif; ?>
 		<?php
 	}
