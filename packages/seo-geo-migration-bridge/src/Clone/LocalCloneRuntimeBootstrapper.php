@@ -656,9 +656,12 @@ final class LocalCloneRuntimeBootstrapper {
 			return null;
 		}
 
+		$ownership_target = untrailingslashit( wp_normalize_path( (string) $ownership['target_path'] ) );
+		$plan_target      = untrailingslashit( wp_normalize_path( (string) ( $plan['target_path'] ?? '' ) ) );
+
 		if (
 			! hash_equals( (string) $ownership['plan_hash'], (string) ( $plan['plan_hash'] ?? '' ) )
-			|| ! hash_equals( (string) $ownership['target_path'], (string) ( $plan['target_path'] ?? '' ) )
+			|| ! hash_equals( $ownership_target, $plan_target )
 			|| ! hash_equals( (string) $ownership['target_url'], (string) ( $plan['target_url'] ?? '' ) )
 			|| ! hash_equals( (string) $ownership['target_table_prefix'], (string) ( $plan['target_table_prefix'] ?? '' ) )
 			|| ! hash_equals( (string) ( $ownership['package_checksum'] ?? '' ), (string) ( $package['package_checksum'] ?? '' ) )
