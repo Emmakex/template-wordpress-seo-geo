@@ -609,7 +609,6 @@ final class LocalCloneFilePromoter {
 				|| ! str_starts_with( $candidate, $content )
 				|| ! str_starts_with( $rollback, $content )
 				|| str_starts_with( $staging, $content )
-				|| str_starts_with( $active, trailingslashit( wp_normalize_path( ABSPATH ) ) )
 			) {
 				return false;
 			}
