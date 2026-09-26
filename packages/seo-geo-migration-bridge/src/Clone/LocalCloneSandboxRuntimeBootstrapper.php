@@ -96,6 +96,27 @@ final class LocalCloneSandboxRuntimeBootstrapper {
 	}
 
 	/**
+	 * Return a completed sandbox runtime only while authority/control hashes still match.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @return array<string,mixed>|null
+	 */
+	public function verified_snapshot( string $job_id ): ?array {
+		$state = $this->store->get( $job_id );
+		if (
+			! is_array( $state )
+			|| 'complete' !== ( $state['status'] ?? null )
+			|| true !== ( $state['sandbox_runtime_ready'] ?? false )
+			|| ! $this->state_authorized( $job_id, $state )
+			|| ! $this->control_files_match( $state )
+		) {
+			return null;
+		}
+
+		return $state;
+	}
+
+	/**
 	 * Start the Bridge copy from accepted ownership/core runtime state.
 	 *
 	 * @param string $job_id Clone job identifier.
@@ -672,6 +693,35 @@ final class LocalCloneSandboxRuntimeBootstrapper {
 			&& hash_equals( $target, $current )
 			&& hash_equals( (string) $state['target_url'], (string) $ownership['target_url'] )
 			&& hash_equals( (string) $state['target_table_prefix'], (string) $ownership['target_table_prefix'] );
+	}
+
+	/**
+	 * Verify generated control files without exposing their contents.
+	 *
+	 * @param array<string,mixed> $state Runtime state.
+	 */
+	private function control_files_match( array $state ): bool {
+		$target      = (string) $state['target_path'];
+		$config_path = $this->join_path( $target, self::WP_CONFIG_RELATIVE );
+		$mu_path     = $this->join_path( $target, self::MU_PLUGIN_RELATIVE );
+		if (
+			! is_file( $config_path )
+			|| ! is_readable( $config_path )
+			|| is_link( $config_path )
+			|| ! is_file( $mu_path )
+			|| ! is_readable( $mu_path )
+			|| is_link( $mu_path )
+		) {
+			return false;
+		}
+
+		$config_hash = hash_file( 'sha256', $config_path );
+		$mu_hash     = hash_file( 'sha256', $mu_path );
+
+		return false !== $config_hash
+			&& false !== $mu_hash
+			&& hash_equals( (string) $state['wp_config_sha256'], $config_hash )
+			&& hash_equals( (string) $state['mu_plugin_sha256'], $mu_hash );
 	}
 
 	/**
