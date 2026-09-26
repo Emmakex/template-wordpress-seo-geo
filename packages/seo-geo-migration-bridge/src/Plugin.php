@@ -20,6 +20,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -57,6 +58,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestorer;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriter;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -457,6 +460,27 @@ final class Plugin {
 	 * @var AdminCloneLocalEnvironmentRewriteController|null
 	 */
 	private static ?AdminCloneLocalEnvironmentRewriteController $local_clone_environment_rewrite_controller = null;
+
+	/**
+	 * Local-clone guarded finalization-plan state store singleton.
+	 *
+	 * @var LocalCloneFinalizationPlanStateStore|null
+	 */
+	private static ?LocalCloneFinalizationPlanStateStore $local_clone_finalization_plan_state_store = null;
+
+	/**
+	 * Local-clone guarded finalization planner singleton.
+	 *
+	 * @var LocalCloneFinalizationPlanner|null
+	 */
+	private static ?LocalCloneFinalizationPlanner $local_clone_finalization_planner = null;
+
+	/**
+	 * Local-clone finalization-plan controller singleton.
+	 *
+	 * @var AdminCloneLocalFinalizationController|null
+	 */
+	private static ?AdminCloneLocalFinalizationController $local_clone_finalization_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -895,8 +919,20 @@ final class Plugin {
 			self::$clone_import_file_state_store,
 			self::$clone_import_rewrite_state_store,
 			self::$clone_import_database_restorer,
+			self::$clone_job_store,
+			null,
+			self::$local_clone_target_preflight
+		);
+		self::$local_clone_finalization_plan_state_store    ??= new LocalCloneFinalizationPlanStateStore();
+		self::$local_clone_finalization_planner             ??= new LocalCloneFinalizationPlanner(
+			self::$local_clone_finalization_plan_state_store,
+			self::$local_clone_environment_rewriter,
+			self::$clone_import_finalization_planner,
+			self::$clone_import_finalize_state_store,
+			self::$clone_import_state_store,
 			self::$clone_job_store
 		);
+		self::$local_clone_finalization_controller          ??= new AdminCloneLocalFinalizationController( self::$local_clone_finalization_planner );
 		self::$clone_import_finalize_controller             ??= new AdminCloneImportFinalizeController( self::$clone_import_finalization_planner );
 		self::$clone_import_database_activation_state_store ??= new ImportDatabaseActivationStateStore();
 		self::$clone_import_file_promotion_state_store      ??= new ImportFilePromotionStateStore();
@@ -946,6 +982,7 @@ final class Plugin {
 		self::$local_clone_database_controller->boot();
 		self::$local_clone_file_controller->boot();
 		self::$local_clone_environment_rewrite_controller->boot();
+		self::$local_clone_finalization_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -1183,6 +1220,20 @@ final class Plugin {
 	 */
 	public static function local_clone_environment_rewriter(): ?LocalCloneEnvironmentRewriter {
 		return self::$local_clone_environment_rewriter;
+	}
+
+	/**
+	 * Return the local-clone finalization-plan state store.
+	 */
+	public static function local_clone_finalization_plan_state_store(): ?LocalCloneFinalizationPlanStateStore {
+		return self::$local_clone_finalization_plan_state_store;
+	}
+
+	/**
+	 * Return the local-clone guarded finalization planner.
+	 */
+	public static function local_clone_finalization_planner(): ?LocalCloneFinalizationPlanner {
+		return self::$local_clone_finalization_planner;
 	}
 
 	/**
