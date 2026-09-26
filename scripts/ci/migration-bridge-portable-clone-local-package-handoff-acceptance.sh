@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.5.2 private local handoff/staging/rewrite/finalization acceptance.
+# Phase 10E.2A.5.3.1-5.5.4 private local clone acceptance through reversible file promotion.
 
-printf '[smoke] Checking private same-server local-clone staging, rewrite and guarded finalization plan.\n'
+printf '[smoke] Checking private same-server local-clone DB activation, reversible file promotion and rollback.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -14,6 +14,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFilePromotionController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -37,6 +38,9 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanner;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromoter;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromotionStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFilePromotionStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
@@ -69,6 +73,7 @@ $options = array(
 	LocalCloneEnvironmentRewriteStateStore::OPTION_NAME,
 	LocalCloneFinalizationPlanStateStore::OPTION_NAME,
 	LocalCloneDatabaseActivationStateStore::OPTION_NAME,
+	LocalCloneFilePromotionStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
 	ImportFinalizeStateStore::OPTION_NAME,
 	ImportRewriteStateStore::OPTION_NAME,
@@ -93,6 +98,7 @@ $local_files       = Plugin::local_clone_file_restorer();
 $local_rewriter    = Plugin::local_clone_environment_rewriter();
 $local_finalizer   = Plugin::local_clone_finalization_planner();
 $local_activation  = Plugin::local_clone_database_activator();
+$local_promotion   = Plugin::local_clone_file_promoter();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -107,6 +113,7 @@ if (
 	|| ! $local_rewriter instanceof LocalCloneEnvironmentRewriter
 	|| ! $local_finalizer instanceof LocalCloneFinalizationPlanner
 	|| ! $local_activation instanceof LocalCloneDatabaseActivator
+	|| ! $local_promotion instanceof LocalCloneFilePromoter
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -164,8 +171,11 @@ $source_snapshot = static function () use ( $quoted_source ): array {
 	return is_array( $rows ) ? $rows : array();
 };
 $source_before = $source_snapshot();
-$active_home_before    = (string) get_option( 'home', '' );
-$active_siteurl_before = (string) get_option( 'siteurl', '' );
+$active_home_before       = (string) get_option( 'home', '' );
+$active_siteurl_before    = (string) get_option( 'siteurl', '' );
+$active_plugins_before    = get_option( 'active_plugins', array() );
+$active_template_before   = (string) get_option( 'template', '' );
+$active_stylesheet_before = (string) get_option( 'stylesheet', '' );
 
 $job = $jobs->create( 'local-clone', $job_id );
 if ( ! is_array( $job ) ) {
@@ -287,6 +297,8 @@ if ( ! is_string( $json_value ) ) {
 	throw new RuntimeException( 'Could not encode local rewrite JSON fixture.' );
 }
 
+// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Fixture exercises the WordPress active_plugins contract.
+$client_plugins = serialize( array( 'sample-local/plugin.php' ) );
 $options_rows = array(
 	array( '1', 'home', $source_home, 'yes' ),
 	array( '2', 'siteurl', $source_site, 'yes' ),
@@ -294,6 +306,9 @@ $options_rows = array(
 	array( '4', 'serialized_payload', $serialized_value, 'yes' ),
 	array( '5', 'json_payload', $json_value, 'yes' ),
 	array( '6', 'api_token', 'token-value::' . $source_home . 'credential-context', 'yes' ),
+	array( '7', 'active_plugins', $client_plugins, 'yes' ),
+	array( '8', 'template', 'sample-local', 'yes' ),
+	array( '9', 'stylesheet', 'sample-local', 'yes' ),
 );
 $posts_rows = array(
 	array(
@@ -332,9 +347,17 @@ $posts_meta = $write_table(
 	$posts_schema
 );
 
+$bridge_fixture = defined( 'SEO_GEO_MIGRATION_BRIDGE_DIR' )
+	? file_get_contents( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' )
+	: false;
+if ( ! is_string( $bridge_fixture ) || '' === $bridge_fixture ) {
+	throw new RuntimeException( 'Could not read Migration Bridge runtime fixture.' );
+}
+
 $files = array(
 	array( 'root' => 'uploads', 'relative' => '2026/local.txt', 'content' => "local-upload\n" ),
 	array( 'root' => 'plugins', 'relative' => 'sample-local/plugin.php', 'content' => "<?php\n// local staged plugin\n" ),
+	array( 'root' => 'plugins', 'relative' => 'seo-geo-migration-bridge/seo-geo-migration-bridge.php', 'content' => $bridge_fixture ),
 	array( 'root' => 'themes', 'relative' => 'sample-local/style.css', 'content' => "body{display:block}\n" ),
 );
 $root_stats = array(
