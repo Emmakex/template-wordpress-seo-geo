@@ -181,9 +181,9 @@ final class ImportStateStore {
 	}
 
 	/**
-	 * Normalize one bounded HTTP(S) URL.
+	 * Normalize one bounded absolute path.
 	 *
-	 * @param mixed $url Raw URL.
+	 * @param mixed $path Raw path.
 	 */
 	private function bounded_path( mixed $path ): string {
 		if ( ! is_string( $path ) ) {
