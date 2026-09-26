@@ -264,10 +264,7 @@ final class LocalCloneHandoffReporter {
 			$blockers[] = 'local-handoff-file-fingerprint-mismatch';
 		}
 
-		$rollback_available = true === ( $promotion['rollback_available'] ?? false )
-			&& true === ( $database['rollback_available'] ?? false )
-			&& true === ( $child_files['rollback_available'] ?? false )
-			&& true === ( $child_db['rollback_available'] ?? false );
+		$rollback_available = true === ( $promotion['rollback_available'] ?? false );
 		if ( ! $rollback_available ) {
 			$blockers[] = 'local-handoff-rollback-unavailable';
 		}
