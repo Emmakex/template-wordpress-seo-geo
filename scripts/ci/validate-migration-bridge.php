@@ -103,6 +103,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeBootstrapper.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalSandboxRuntimeController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalClonePackageHandoffStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalClonePackageHandoff.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalPackageHandoffController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
@@ -611,6 +614,115 @@ if ( str_contains( $local_sandbox_runtime_controller, 'admin_post_nopriv_' ) ) {
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
+}
+
+$local_handoff_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalClonePackageHandoffStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_local_clone_package_handoff_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'private-same-server'",
+		"'archive_sha256'",
+		"'handoff_ready'",
+		"'handoff_next'",
+	) as $local_handoff_store_guard
+) {
+	if ( ! str_contains( $local_handoff_store, $local_handoff_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-handoff-state',
+			'Local clone package handoff state must remain bounded, private, hash-bound and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalClonePackageHandoffStateStore.php',
+			$local_handoff_store_guard,
+			'missing'
+		);
+	}
+}
+
+$local_handoff = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalClonePackageHandoff.php' );
+foreach (
+	array(
+		'$this->ownership->verified_snapshot( $job_id )',
+		'$this->sandbox_runtime->verified_snapshot( $job_id )',
+		'$this->delivery->start( $job_id )',
+		'$this->delivery->advance( $job_id, $batch_files, $batch_bytes )',
+		'$this->delivery->download_info( $job_id )',
+		"'private-same-server'",
+		"'target-intake-preflight'",
+		"'local-handoff-authority-drift'",
+		"'local-handoff-archive-identity-invalid'",
+	) as $local_handoff_guard
+) {
+	if ( ! str_contains( $local_handoff, $local_handoff_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-handoff',
+			'Local clone package handoff is missing an upstream-authority, private-archive or integrity binding.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalClonePackageHandoff.php',
+			$local_handoff_guard,
+			'missing'
+		);
+	}
+}
+foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(' ) as $local_handoff_write_call ) {
+	if ( str_contains( $local_handoff, $local_handoff_write_call ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-handoff-filesystem-boundary',
+			'Local clone handoff must reuse the existing package/archive authorities rather than writing files directly.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalClonePackageHandoff.php',
+			'PackageDelivery/ExportWorkspace mutation calls only',
+			$local_handoff_write_call
+		);
+	}
+}
+
+$local_handoff_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalPackageHandoffController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_local_package_handoff_advance';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		"'local_clone_package_handoff_confirm'",
+		'$this->handoff->advance( $job_id, $batch_files, $batch_mb * 1024 * 1024 )',
+	) as $local_handoff_controller_guard
+) {
+	if ( ! str_contains( $local_handoff_controller, $local_handoff_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-handoff-entrypoint',
+			'Local clone package handoff endpoint must remain administrator/job-nonce/bounded-batch and first-run-confirmation gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalPackageHandoffController.php',
+			$local_handoff_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $local_handoff_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-local-handoff-public-endpoint',
+		'Local clone package handoff must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalPackageHandoffController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+$package_delivery = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php' );
+foreach (
+	array(
+		"array( 'export', 'local-clone' )",
+		"if ( 'export' === \$operation )",
+		"'local-handoff-archive-ready'",
+	) as $local_delivery_guard
+) {
+	if ( ! str_contains( $package_delivery, $local_delivery_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-handoff-archive-reuse',
+			'Local handoff must reuse PackageDelivery without rewriting the frozen local-clone manifest or completing the clone job early.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/PackageDelivery.php',
+			$local_delivery_guard,
+			'missing'
+		);
+	}
 }
 
 $database_exporter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php' );
