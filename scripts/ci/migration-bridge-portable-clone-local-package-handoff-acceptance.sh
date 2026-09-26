@@ -941,6 +941,13 @@ $finalization_autoload = $GLOBALS['wpdb']->get_var(
 	)
 );
 
+$database_activation_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneDatabaseActivationStateStore::OPTION_NAME
+	)
+);
+
 $source_after_all = $source_snapshot();
 $active_home_after    = (string) get_option( 'home', '' );
 $active_siteurl_after = (string) get_option( 'siteurl', '' );
@@ -1033,6 +1040,34 @@ echo wp_json_encode(
 		'local_finalization_after_recovery' => $local_finalization_after_recovery,
 		'local_finalization_verified_after_recovery' => is_array( $local_finalization_verified_after_recovery ),
 		'local_activation_plan_after_recovery' => $local_activation_plan_after_recovery,
+		'local_database_activation_prepared' => $local_database_activation_prepared,
+		'target_table_count_after_activation_prepare' => is_array( $target_tables_after_activation_prepare ) ? count( $target_tables_after_activation_prepare ) : -1,
+		'target_upload_absent_after_activation_prepare' => $target_upload_absent_after_activation_prepare,
+		'target_plugin_absent_after_activation_prepare' => $target_plugin_absent_after_activation_prepare,
+		'target_theme_absent_after_activation_prepare' => $target_theme_absent_after_activation_prepare,
+		'local_database_activation_activated' => $local_database_activation_activated,
+		'local_database_activation_verified' => is_array( $local_database_activation_verified ),
+		'database_activation_child_state' => $database_activation_child_state,
+		'target_options_table' => $target_options_table,
+		'target_posts_table' => $target_posts_table,
+		'target_options_after_activation' => $target_options_after_activation,
+		'target_posts_after_activation' => $target_posts_after_activation,
+		'target_table_count_after_activation' => is_array( $target_tables_after_activation ) ? count( $target_tables_after_activation ) : -1,
+		'staging_tables_absent_after_activation' => $staging_tables_absent_after_activation,
+		'target_upload_absent_after_activation' => $target_upload_absent_after_activation,
+		'target_plugin_absent_after_activation' => $target_plugin_absent_after_activation,
+		'target_theme_absent_after_activation' => $target_theme_absent_after_activation,
+		'source_after_activation' => $source_after_activation,
+		'active_home_after_activation' => $active_home_after_activation,
+		'active_siteurl_after_activation' => $active_siteurl_after_activation,
+		'local_database_activation_rolled_back' => $local_database_activation_rolled_back,
+		'target_table_count_after_activation_rollback' => is_array( $target_tables_after_activation_rollback ) ? count( $target_tables_after_activation_rollback ) : -1,
+		'staging_options_after_activation_rollback' => $staging_options_after_activation_rollback,
+		'staging_posts_after_activation_rollback' => $staging_posts_after_activation_rollback,
+		'target_upload_absent_after_activation_rollback' => $target_upload_absent_after_activation_rollback,
+		'target_plugin_absent_after_activation_rollback' => $target_plugin_absent_after_activation_rollback,
+		'target_theme_absent_after_activation_rollback' => $target_theme_absent_after_activation_rollback,
+		'source_after_activation_rollback' => $source_after_activation_rollback,
 		'payload_child_after_recovery' => $payload_child_after_recovery,
 		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
@@ -1078,6 +1113,9 @@ echo wp_json_encode(
 		'local_finalization_service_registered' => $local_finalizer instanceof LocalCloneFinalizationPlanner,
 		'local_finalization_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFinalizationController::ACTION ),
 		'local_finalization_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFinalizationController::ACTION ),
+		'local_database_activation_service_registered' => $local_activation instanceof LocalCloneDatabaseActivator,
+		'local_database_activation_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalDatabaseActivationController::ACTION ),
+		'local_database_activation_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalDatabaseActivationController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
@@ -1085,6 +1123,7 @@ echo wp_json_encode(
 		'file_autoload'               => $file_autoload,
 		'rewrite_autoload'            => $rewrite_autoload,
 		'finalization_autoload'       => $finalization_autoload,
+		'database_activation_autoload' => $database_activation_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
