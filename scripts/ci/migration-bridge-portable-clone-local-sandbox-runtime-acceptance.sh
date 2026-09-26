@@ -190,6 +190,67 @@ $mu_checks = array(
 	'x_robots'        => is_string( $mu ) && str_contains( $mu, 'X-Robots-Tag' ),
 );
 
+$source_home_before_hardening = home_url( '/' );
+if ( ! defined( 'SEO_GEO_MIGRATION_SANDBOX' ) ) {
+	define( 'SEO_GEO_MIGRATION_SANDBOX', true );
+}
+add_filter(
+	'pre_option_home',
+	static function () use ( $target_url ): string {
+		return untrailingslashit( $target_url );
+	},
+	9999
+);
+add_filter(
+	'pre_option_siteurl',
+	static function () use ( $target_url ): string {
+		return untrailingslashit( $target_url );
+	},
+	9999
+);
+
+if ( is_file( $mu_path ) ) {
+	require $mu_path;
+}
+
+$hardening_blog_public = get_option( 'blog_public', '1' );
+$hardening_mail = apply_filters(
+	'pre_wp_mail',
+	null,
+	array(
+		'to'      => 'nobody@example.test',
+		'subject' => 'sandbox',
+		'message' => 'blocked',
+		'headers' => array(),
+	)
+);
+$hardening_external_http = apply_filters(
+	'pre_http_request',
+	false,
+	array(),
+	'https://example.org/seo-geo-sandbox-probe'
+);
+$hardening_source_http = apply_filters(
+	'pre_http_request',
+	false,
+	array(),
+	$source_home_before_hardening
+);
+$hardening_sandbox_http = apply_filters(
+	'pre_http_request',
+	false,
+	array(),
+	trailingslashit( $target_url ) . 'wp-cron.php'
+);
+$hardening_robots = apply_filters(
+	'wp_robots',
+	array(
+		'index'  => true,
+		'follow' => true,
+	)
+);
+$hardening_headers = apply_filters( 'wp_headers', array() );
+
 if ( is_file( $mu_path ) ) {
 	file_put_contents( $mu_path, "\n/* sandbox hardening tamper fixture */\n", FILE_APPEND );
 }
@@ -216,6 +277,17 @@ echo wp_json_encode(
 		'bridge_hash_matches'     => is_string( $source_bridge_hash ) && is_string( $target_bridge_hash ) && hash_equals( $source_bridge_hash, $target_bridge_hash ),
 		'config_checks'           => $config_checks,
 		'mu_checks'               => $mu_checks,
+		'hardening_blog_public'   => $hardening_blog_public,
+		'hardening_mail_blocked'  => false === $hardening_mail,
+		'hardening_external_http_blocked' => $hardening_external_http instanceof WP_Error
+			&& 'seo_geo_migration_sandbox_outbound_blocked' === $hardening_external_http->get_error_code(),
+		'hardening_source_http_blocked' => $hardening_source_http instanceof WP_Error
+			&& 'seo_geo_migration_sandbox_outbound_blocked' === $hardening_source_http->get_error_code(),
+		'hardening_sandbox_http_allowed' => false === $hardening_sandbox_http,
+		'hardening_robots'        => $hardening_robots,
+		'hardening_x_robots'      => is_string( $hardening_headers['X-Robots-Tag'] ?? null )
+			? $hardening_headers['X-Robots-Tag']
+			: '',
 		'target_table_count'      => is_array( $target_tables ) ? count( $target_tables ) : -1,
 		'uploads_absent'          => ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads' ),
 		'themes_absent'           => ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes' ),
@@ -293,6 +365,17 @@ assert payload["bridge_exists"] is True, payload
 assert payload["bridge_hash_matches"] is True, payload
 assert all(payload["config_checks"].values()), payload
 assert all(payload["mu_checks"].values()), payload
+assert str(payload["hardening_blog_public"]) == "0", payload
+assert payload["hardening_mail_blocked"] is True, payload
+assert payload["hardening_external_http_blocked"] is True, payload
+assert payload["hardening_source_http_blocked"] is True, payload
+assert payload["hardening_sandbox_http_allowed"] is True, payload
+assert payload["hardening_robots"].get("noindex") is True, payload
+assert payload["hardening_robots"].get("nofollow") is True, payload
+assert payload["hardening_robots"].get("noarchive") is True, payload
+assert "index" not in payload["hardening_robots"], payload
+assert "follow" not in payload["hardening_robots"], payload
+assert payload["hardening_x_robots"] == "noindex, nofollow, noarchive", payload
 assert payload["target_table_count"] == 0, payload
 assert payload["uploads_absent"] is True, payload
 assert payload["themes_absent"] is True, payload
