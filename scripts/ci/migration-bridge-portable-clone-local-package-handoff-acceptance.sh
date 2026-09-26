@@ -1055,9 +1055,9 @@ assert local_db is not None, payload
 assert local_db["status"] == "ready", payload
 assert local_db["stage"] == "complete", payload
 assert local_db["destination_prefix"] == handoff["target_table_prefix"], payload
-assert local_db["rows_restored"] == 3, payload
-assert local_db["tables_completed"] == 1, payload
-assert local_db["table_count"] == 1, payload
+assert local_db["rows_restored"] == 7, payload
+assert local_db["tables_completed"] == 2, payload
+assert local_db["table_count"] == 2, payload
 assert local_db["active_tables_untouched"] is True, payload
 assert local_db["target_tables_untouched"] is True, payload
 assert local_db["client_content_untouched"] is True, payload
@@ -1069,8 +1069,8 @@ db_child = payload["database_child_state"]
 assert db_child is not None, payload
 assert db_child["status"] == "complete", payload
 assert db_child["stage"] == "complete", payload
-assert db_child["rows_restored"] == 3, payload
-assert db_child["tables_completed"] == 1, payload
+assert db_child["rows_restored"] == 7, payload
+assert db_child["tables_completed"] == 2, payload
 assert db_child["active_tables_untouched"] is True, payload
 assert db_child["destination_prefix"] == handoff["target_table_prefix"], payload
 assert db_child["staging_namespace"] == local_db["staging_namespace"], payload
@@ -1079,18 +1079,22 @@ db_plan = payload["local_database_plan"]
 assert db_plan is not None, payload
 assert db_plan["destination_prefix"] == handoff["target_table_prefix"], payload
 assert db_plan["staging_namespace"] == local_db["staging_namespace"], payload
-assert len(db_plan["tables"]) == 1, payload
-assert db_plan["tables"][0]["source_table"] == payload["source_table"], payload
-assert db_plan["tables"][0]["target_table"] == handoff["target_table_prefix"] + payload["source_table"][len(payload["source_prefix"]):], payload
-assert db_plan["tables"][0]["staging_table"] == payload["staging_table"], payload
-assert not payload["staging_table"].startswith(payload["source_prefix"]), payload
-assert not payload["staging_table"].startswith(handoff["target_table_prefix"]), payload
+assert len(db_plan["tables"]) == 2, payload
+db_tables = {item["source_table"]: item for item in db_plan["tables"]}
+assert set(db_tables) == {payload["options_table"], payload["posts_table"]}, payload
+for source_name, staging_name in (
+    (payload["options_table"], payload["options_staging_table"]),
+    (payload["posts_table"], payload["posts_staging_table"]),
+):
+    table = db_tables[source_name]
+    assert table["staging_table"] == staging_name, payload
+    assert table["target_table"] == handoff["target_table_prefix"] + source_name[len(payload["source_prefix"]):], payload
+    assert not staging_name.startswith(payload["source_prefix"]), payload
+    assert not staging_name.startswith(handoff["target_table_prefix"]), payload
 
-assert payload["staging_rows"] == [
-    {"id": "1", "title": "alpha"},
-    {"id": "2", "title": "beta"},
-    {"id": "3", "title": "gamma"},
-], payload
+options_before = {row["option_name"]: row["option_value"] for row in payload["staging_options_before_rewrite"]}
+assert set(options_before) == {"home", "siteurl", "plain_url", "serialized_payload", "json_payload", "api_token"}, payload
+assert len(payload["staging_posts_before_rewrite"]) == 1, payload
 assert payload["source_before"] == [{"id": "999", "title": "production-sentinel"}], payload
 assert payload["source_after_database"] == payload["source_before"], payload
 assert payload["source_after_all"] == payload["source_before"], payload
@@ -1144,6 +1148,74 @@ assert payload["target_plugin_absent_after_files"] is True, payload
 assert payload["target_theme_absent_after_files"] is True, payload
 assert payload["target_bridge_present_after_files"] is True, payload
 
+rewrite_mid = payload["local_rewrite_mid"]
+assert rewrite_mid is not None, payload
+assert rewrite_mid["status"] == "running", payload
+assert rewrite_mid["stage"] in ("rewrite", "verify"), payload
+
+rewrite = payload["local_rewrite_state"]
+assert rewrite is not None, payload
+assert rewrite["status"] == "ready", payload
+assert rewrite["stage"] == "complete", payload
+assert rewrite["active_tables_untouched"] is True, payload
+assert rewrite["active_roots_untouched"] is True, payload
+assert rewrite["target_unactivated"] is True, payload
+assert rewrite["verify_source_urls"] == 0, payload
+assert rewrite["home_rewrites"] == 1, payload
+assert rewrite["siteurl_rewrites"] == 1, payload
+assert rewrite["rows_scanned"] == 7, payload
+assert rewrite["rows_changed"] >= 6, payload
+assert rewrite["values_changed"] >= 7, payload
+assert rewrite["same_origin_rewrites"] >= 4, payload
+assert rewrite["upload_url_rewrites"] >= 2, payload
+assert rewrite["serialized_values"] >= 1, payload
+assert rewrite["json_values"] >= 1, payload
+assert rewrite["credential_skips"] == 1, payload
+assert rewrite["rewrite_next"] == "finalization-plan", payload
+assert rewrite["blockers"] == [], payload
+assert "credential-values-kept-opaque" in rewrite["advisories"], payload
+assert payload["local_rewrite_verified"] is True, payload
+
+rewrite_child = payload["rewrite_child_state"]
+assert rewrite_child is not None, payload
+assert rewrite_child["status"] == "complete", payload
+assert rewrite_child["stage"] == "complete", payload
+assert rewrite_child["verify_source_urls"] == 0, payload
+assert rewrite_child["active_tables_untouched"] is True, payload
+assert rewrite_child["active_roots_untouched"] is True, payload
+
+source_home = rewrite["source_home_url"]
+source_site = rewrite["source_site_url"]
+destination_home = rewrite["destination_home_url"]
+destination_site = rewrite["destination_site_url"]
+assert destination_home == handoff["target_url"], payload
+assert destination_site == handoff["target_url"], payload
+assert source_home != destination_home, payload
+assert source_site != destination_site, payload
+
+options_after = {row["option_name"]: row["option_value"] for row in payload["staging_options_after_rewrite"]}
+assert options_after["home"] == destination_home, payload
+assert options_after["siteurl"] == destination_site, payload
+assert options_after["plain_url"] == destination_home + "catalog/item?x=1#top", payload
+assert options_after["serialized_payload"] != options_before["serialized_payload"], payload
+assert destination_home + "serialized" in options_after["serialized_payload"], payload
+assert destination_home + "wp-content/uploads/2026/local.txt" in options_after["serialized_payload"], payload
+json_after = json.loads(options_after["json_payload"])
+assert json_after["url"] == destination_home + "json", payload
+assert json_after["nested"]["site"] == destination_site + "admin", payload
+assert options_after["api_token"] == options_before["api_token"], payload
+
+posts_after = payload["staging_posts_after_rewrite"]
+assert len(posts_after) == 1, payload
+assert posts_after[0]["post_content"] == "Visit " + destination_home + "about and keep https://external.example.test/reference", payload
+assert posts_after[0]["post_excerpt"] == "Media " + destination_home + "wp-content/uploads/2026/local.txt", payload
+assert posts_after[0]["post_content_filtered"] == "", payload
+
+assert payload["local_rewrite_verified_after_mutation"] is False, payload
+rewrite_blocked = payload["local_rewrite_after_mutation"]
+assert rewrite_blocked is not None and rewrite_blocked["status"] == "blocked", payload
+assert "local-rewrite-parent-authority-unavailable" in rewrite_blocked["blockers"], payload
+
 assert payload["local_payload_verified_after_mutation"] is False, payload
 blocked_parent = payload["local_payload_after_mutation"]
 assert blocked_parent is not None and blocked_parent["status"] == "blocked", payload
@@ -1174,11 +1246,22 @@ files_recovered = payload["local_files_after_recovery"]
 assert files_recovered is not None and files_recovered["status"] == "ready", payload
 assert files_recovered["stage"] == "complete", payload
 assert files_recovered["private_staging_verified"] is True, payload
+assert payload["local_rewrite_verified_before_recovery"] is False, payload
+rewrite_recovered = payload["local_rewrite_after_recovery"]
+assert rewrite_recovered is not None and rewrite_recovered["status"] == "ready", payload
+assert rewrite_recovered["stage"] == "complete", payload
+assert rewrite_recovered["verify_source_urls"] == 0, payload
+assert payload["local_rewrite_verified_after_recovery"] is True, payload
 
 job_after_recovery = payload["job_after_recovery"]
 assert job_after_recovery["status"] == "active", payload
-assert job_after_recovery["phase"] == "restore-files", payload
-assert job_after_recovery["cursor"] == "local-file-staging-complete", payload
+assert job_after_recovery["phase"] == "rewrite-environment", payload
+assert job_after_recovery["cursor"] == "local-environment-rewrite-complete", payload
+
+assert payload["local_rewrite_verified_after_archive_tamper"] is False, payload
+archive_rewrite_blocked = payload["local_rewrite_after_archive_tamper"]
+assert archive_rewrite_blocked is not None and archive_rewrite_blocked["status"] == "blocked", payload
+assert "local-rewrite-parent-authority-unavailable" in archive_rewrite_blocked["blockers"], payload
 
 assert payload["local_files_verified_after_archive_tamper"] is False, payload
 archive_files_blocked = payload["local_files_after_archive_tamper"]
@@ -1209,6 +1292,9 @@ assert payload["local_database_public_controller_absent"] is True, payload
 assert payload["local_files_service_registered"] is True, payload
 assert payload["local_files_controller_registered"] is True, payload
 assert payload["local_files_public_controller_absent"] is True, payload
+assert payload["local_rewrite_service_registered"] is True, payload
+assert payload["local_rewrite_controller_registered"] is True, payload
+assert payload["local_rewrite_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -1256,12 +1342,13 @@ assert payload["autoload"] in ("off", "no", "auto-off"), payload
 assert payload["payload_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["database_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["file_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["rewrite_autoload"] in ("off", "no", "auto-off"), payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
 assert job_before_mutation["status"] == "active", payload
-assert job_before_mutation["phase"] == "restore-files", payload
-assert job_before_mutation["cursor"] == "local-file-staging-complete", payload
+assert job_before_mutation["phase"] == "rewrite-environment", payload
+assert job_before_mutation["cursor"] == "local-environment-rewrite-complete", payload
 
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
@@ -1271,7 +1358,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone handoff/intake/payload/database/file contract is invalid" "immutable package + DB staging + verified private files + zero active target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone handoff/staging/environment rewrite contract is invalid" "immutable package + private DB/files + serialization-safe rewrite + zero active target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone handoff + database + file staging OK: rows and client files restored only to isolated job-owned staging, production/target roots stayed untouched, authority drift revoked restore eligibility.\n'
+printf '[smoke] Local clone staging + environment rewrite OK: options/posts rewrote safely in job-owned staging, serialized/JSON values verified, sensitive values stayed opaque, target remained unactivated.\n'
