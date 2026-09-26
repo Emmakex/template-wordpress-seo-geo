@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.5.1 private local handoff/staging/rewrite acceptance.
+# Phase 10E.2A.5.3.1-5.5.2 private local handoff/staging/rewrite/finalization acceptance.
 
-printf '[smoke] Checking private same-server local-clone staging and serialization-safe environment rewrite.\n'
+printf '[smoke] Checking private same-server local-clone staging, rewrite and guarded finalization plan.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -12,6 +12,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -31,7 +32,10 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestorer;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanner;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
@@ -59,7 +63,9 @@ $options = array(
 	LocalCloneDatabaseRestoreStateStore::OPTION_NAME,
 	LocalCloneFileRestoreStateStore::OPTION_NAME,
 	LocalCloneEnvironmentRewriteStateStore::OPTION_NAME,
+	LocalCloneFinalizationPlanStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
+	ImportFinalizeStateStore::OPTION_NAME,
 	ImportRewriteStateStore::OPTION_NAME,
 	ImportFileStateStore::OPTION_NAME,
 	ImportDatabaseStateStore::OPTION_NAME,
@@ -80,6 +86,7 @@ $local_payload     = Plugin::local_clone_payload_verifier();
 $local_database    = Plugin::local_clone_database_restorer();
 $local_files       = Plugin::local_clone_file_restorer();
 $local_rewriter    = Plugin::local_clone_environment_rewriter();
+$local_finalizer   = Plugin::local_clone_finalization_planner();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -92,6 +99,7 @@ if (
 	|| ! $local_database instanceof LocalCloneDatabaseRestorer
 	|| ! $local_files instanceof LocalCloneFileRestorer
 	|| ! $local_rewriter instanceof LocalCloneEnvironmentRewriter
+	|| ! $local_finalizer instanceof LocalCloneFinalizationPlanner
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -710,6 +718,22 @@ $local_rewrite_verified = $local_rewriter->verified_snapshot( $job_id );
 $rewrite_child_state = '' !== $payload_child_id ? ( new ImportRewriteStateStore() )->get( $payload_child_id ) : null;
 $staging_options_after_rewrite = $read_staged_options();
 $staging_posts_after_rewrite   = $read_staged_posts();
+
+$local_finalization_mid = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
+$local_finalization_state = $local_finalization_mid;
+for ( $i = 0; $i < 320; ++$i ) {
+	if ( is_array( $local_finalization_state ) && in_array( $local_finalization_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_finalization_state = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
+}
+$local_finalization_verified = $local_finalizer->verified_snapshot( $job_id );
+$local_activation_plan = $local_finalizer->activation_plan_snapshot( $job_id );
+$finalization_child_state = '' !== $payload_child_id ? ( new ImportFinalizeStateStore() )->get( $payload_child_id ) : null;
+$target_upload_absent_after_finalization = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_finalization = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_finalization = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$target_bridge_present_after_finalization = is_file( trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php' );
 $job_before_mutation = $jobs->get( $job_id );
 
 $table_pattern = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
