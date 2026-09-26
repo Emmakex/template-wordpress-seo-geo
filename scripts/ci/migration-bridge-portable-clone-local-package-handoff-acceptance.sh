@@ -1560,6 +1560,109 @@ assert job_after_recovery["status"] == "active", payload
 assert job_after_recovery["phase"] == "finalize-preflight", payload
 assert job_after_recovery["cursor"] == "local-finalization-plan-ready", payload
 
+activation_prepared = payload["local_database_activation_prepared"]
+assert activation_prepared is not None, payload
+assert activation_prepared["status"] == "prepared", payload
+assert activation_prepared["database_swapped"] is False, payload
+assert activation_prepared["rollback_available"] is True, payload
+assert activation_prepared["active_files_untouched"] is True, payload
+assert activation_prepared["target_database_active"] is False, payload
+assert activation_prepared["activation_next"] == "database-activation", payload
+assert activation_prepared["target_table_prefix"] == handoff["target_table_prefix"], payload
+assert activation_prepared["options_target"] == handoff["target_table_prefix"] + "options", payload
+assert activation_prepared["table_count"] == 2, payload
+assert activation_prepared["row_count"] == 7, payload
+assert activation_prepared["activation_plan_hash"] == activation_recovered["hash"], payload
+assert payload["target_table_count_after_activation_prepare"] == 0, payload
+assert payload["target_upload_absent_after_activation_prepare"] is True, payload
+assert payload["target_plugin_absent_after_activation_prepare"] is True, payload
+assert payload["target_theme_absent_after_activation_prepare"] is True, payload
+
+activation_active = payload["local_database_activation_activated"]
+assert activation_active is not None, payload
+assert activation_active["status"] == "activated", payload
+assert activation_active["database_swapped"] is True, payload
+assert activation_active["rollback_available"] is True, payload
+assert activation_active["active_files_untouched"] is True, payload
+assert activation_active["target_database_active"] is True, payload
+assert activation_active["activation_next"] == "file-promotion", payload
+assert activation_active["table_count"] == 2, payload
+assert activation_active["row_count"] == 9, payload
+assert activation_active["target_table_prefix"] == handoff["target_table_prefix"], payload
+assert activation_active["options_target"] == payload["target_options_table"], payload
+assert activation_active["activation_plan_hash"] == activation_recovered["hash"], payload
+assert payload["local_database_activation_verified"] is True, payload
+
+activation_child = payload["database_activation_child_state"]
+assert activation_child is not None, payload
+assert activation_child["status"] == "activated", payload
+assert activation_child["database_swapped"] is True, payload
+assert activation_child["rollback_available"] is True, payload
+assert activation_child["active_files_untouched"] is True, payload
+assert activation_child["handoff_ready"] is False, payload
+assert activation_child["options_target"] == payload["target_options_table"], payload
+assert len(activation_child["tables"]) == 2, payload
+assert sum(item["row_count"] for item in activation_child["tables"]) == 9, payload
+
+assert payload["target_table_count_after_activation"] == 2, payload
+assert payload["staging_tables_absent_after_activation"] is True, payload
+assert payload["target_upload_absent_after_activation"] is True, payload
+assert payload["target_plugin_absent_after_activation"] is True, payload
+assert payload["target_theme_absent_after_activation"] is True, payload
+assert payload["source_after_activation"] == payload["source_before"], payload
+assert payload["active_home_after_activation"] == payload["active_home_before"], payload
+assert payload["active_siteurl_after_activation"] == payload["active_siteurl_before"], payload
+
+target_options = {row["option_name"]: row["option_value"] for row in payload["target_options_after_activation"]}
+assert len(target_options) == 8, payload
+assert target_options["home"] == destination_home, payload
+assert target_options["siteurl"] == destination_site, payload
+assert target_options["plain_url"] == destination_home + "catalog/item?x=1#top", payload
+assert target_options["api_token"] == options_before["api_token"], payload
+assert target_options["blog_public"] == "0", payload
+assert "seo-geo-migration-bridge/seo-geo-migration-bridge.php" in target_options["active_plugins"], payload
+assert "sample-local/plugin.php" not in target_options["active_plugins"], payload
+target_json = json.loads(target_options["json_payload"])
+assert target_json["url"] == destination_home + "json", payload
+assert target_json["nested"]["site"] == destination_site + "admin", payload
+assert destination_home + "serialized" in target_options["serialized_payload"], payload
+assert destination_home + "wp-content/uploads/2026/local.txt" in target_options["serialized_payload"], payload
+
+target_posts = payload["target_posts_after_activation"]
+assert len(target_posts) == 1, payload
+assert target_posts[0]["post_content"] == "Visit " + destination_home + "about and keep https://external.example.test/reference", payload
+assert target_posts[0]["post_excerpt"] == "Media " + destination_home + "wp-content/uploads/2026/local.txt", payload
+assert target_posts[0]["post_content_filtered"] == "", payload
+
+rolled_back = payload["local_database_activation_rolled_back"]
+assert rolled_back is not None, payload
+assert rolled_back["status"] == "rolled-back", payload
+assert rolled_back["database_swapped"] is False, payload
+assert rolled_back["rollback_available"] is False, payload
+assert rolled_back["active_files_untouched"] is True, payload
+assert rolled_back["target_database_active"] is False, payload
+assert rolled_back["activation_next"] == "rebuild-finalization-plan", payload
+assert "operator-database-rollback" in rolled_back["blockers"], payload
+assert payload["target_table_count_after_activation_rollback"] == 0, payload
+assert payload["target_upload_absent_after_activation_rollback"] is True, payload
+assert payload["target_plugin_absent_after_activation_rollback"] is True, payload
+assert payload["target_theme_absent_after_activation_rollback"] is True, payload
+assert payload["source_after_activation_rollback"] == payload["source_before"], payload
+
+activation_child_rollback = payload["database_activation_child_after_rollback"]
+assert activation_child_rollback is not None, payload
+assert activation_child_rollback["status"] == "rolled-back", payload
+assert activation_child_rollback["database_swapped"] is False, payload
+assert activation_child_rollback["rollback_available"] is False, payload
+
+staging_options_rollback = {row["option_name"]: row["option_value"] for row in payload["staging_options_after_activation_rollback"]}
+assert len(staging_options_rollback) == 8, payload
+assert staging_options_rollback["home"] == destination_home, payload
+assert staging_options_rollback["siteurl"] == destination_site, payload
+assert staging_options_rollback["blog_public"] == "0", payload
+assert "seo-geo-migration-bridge/seo-geo-migration-bridge.php" in staging_options_rollback["active_plugins"], payload
+assert len(payload["staging_posts_after_activation_rollback"]) == 1, payload
+
 assert payload["local_finalization_verified_after_archive_tamper"] is False, payload
 archive_finalization_blocked = payload["local_finalization_after_archive_tamper"]
 assert archive_finalization_blocked is not None and archive_finalization_blocked["status"] == "blocked", payload
@@ -1605,6 +1708,9 @@ assert payload["local_rewrite_public_controller_absent"] is True, payload
 assert payload["local_finalization_service_registered"] is True, payload
 assert payload["local_finalization_controller_registered"] is True, payload
 assert payload["local_finalization_public_controller_absent"] is True, payload
+assert payload["local_database_activation_service_registered"] is True, payload
+assert payload["local_database_activation_controller_registered"] is True, payload
+assert payload["local_database_activation_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -1654,6 +1760,7 @@ assert payload["database_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["file_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["rewrite_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["finalization_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["database_activation_autoload"] in ("off", "no", "auto-off"), payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
@@ -1669,7 +1776,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone handoff/staging/rewrite/finalization contract is invalid" "immutable package + private staging + serialization-safe rewrite + guarded activation plan + zero target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone reversible database activation contract is invalid" "guarded finalization + atomic DB activation + verified rollback + zero client-file promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone guarded finalization OK: rewritten staging fingerprints and immutable activation/rollback plan verified while target tables and client files remained unactivated.\n'
+printf '[smoke] Local clone reversible database activation OK: guarded plan prepared, isolated target DB atomically activated/verified, client files stayed untouched, and rollback returned tables to staging.\n'
