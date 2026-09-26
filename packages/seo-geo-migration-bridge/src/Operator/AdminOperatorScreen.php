@@ -21,6 +21,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -51,6 +52,7 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -166,6 +168,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_local_file_result_notice(); ?>
 			<?php $this->render_clone_local_rewrite_result_notice(); ?>
 			<?php $this->render_clone_local_finalization_result_notice(); ?>
+			<?php $this->render_clone_local_database_activation_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -1850,6 +1853,7 @@ final class AdminOperatorScreen {
 
 		<?php if ( 'ready' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_next' ) ); ?></p>
+			<?php $this->render_clone_local_database_activation_section( $job ); ?>
 		<?php else : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalFinalizationController::ACTION ); ?>">
@@ -1881,6 +1885,110 @@ final class AdminOperatorScreen {
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_finalization_continue' : 'clone_local_finalization_start' ), 'secondary', 'submit', false ); ?>
 			</form>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after local database activation actions.
+	 */
+	private function render_clone_local_database_activation_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_database_activation'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_database_activation'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'prepared'    => 'clone_local_database_activation_prepared',
+			'activated'   => 'clone_local_database_activation_activated',
+			'rolled-back' => 'clone_local_database_activation_rolled_back',
+			'blocked'     => 'clone_local_database_activation_blocked',
+			default       => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status
+			? 'notice notice-error'
+			: ( 'prepared' === $status ? 'notice notice-info' : 'notice notice-success' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render reversible local target database activation.
+	 *
+	 * @param array<string,mixed> $job Parent local-clone job.
+	 */
+	private function render_clone_local_database_activation_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneDatabaseActivationStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_child_job' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['child_import_job_id'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_prefix' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['target_table_prefix'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_options' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['options_target'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_tables' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['table_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_rows' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['row_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_plan_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['activation_plan_hash'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_swapped' ) ); ?></th><td><?php echo esc_html( true === ( $state['database_swapped'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_rollback' ) ); ?></th><td><?php echo esc_html( true === ( $state['rollback_available'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_files_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['active_files_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_target_active' ) ); ?></th><td><?php echo esc_html( true === ( $state['target_database_active'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next_label' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['activation_next'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php if ( 'pending' === $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalDatabaseActivationController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<input type="hidden" name="local_database_activation_step" value="prepare">
+				<?php wp_nonce_field( AdminCloneLocalDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_prepare_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( 'clone_local_database_activation_prepare' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'prepared' === $status ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalDatabaseActivationController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<input type="hidden" name="local_database_activation_step" value="activate">
+				<?php wp_nonce_field( AdminCloneLocalDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p><label><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_confirm_label' ) ); ?> <input type="text" name="local_database_activation_confirmation" value="" autocomplete="off" required></label></p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_confirm_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( 'clone_local_database_activation_activate' ), 'primary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'activated' === $status ) : ?>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_next' ) ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalDatabaseActivationController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<input type="hidden" name="local_database_activation_step" value="rollback">
+				<?php wp_nonce_field( AdminCloneLocalDatabaseActivationController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p><label><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_rollback_label' ) ); ?> <input type="text" name="local_database_activation_confirmation" value="" autocomplete="off" required></label></p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_rollback_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( 'clone_local_database_activation_rollback_button' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'rolled-back' === $status ) : ?>
+			<p class="notice notice-warning inline"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_rolled_back_next' ) ); ?></p>
 		<?php endif; ?>
 		<?php
 	}
