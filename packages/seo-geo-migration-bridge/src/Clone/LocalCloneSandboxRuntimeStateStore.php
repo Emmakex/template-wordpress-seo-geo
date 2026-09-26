@@ -122,49 +122,59 @@ final class LocalCloneSandboxRuntimeStateStore {
 		}
 
 		return array(
-			'schema_version'          => self::SCHEMA_VERSION,
-			'job_id'                  => $job_id,
-			'status'                  => $status,
-			'stage'                   => $stage,
-			'plan_hash'               => $this->normalize_hash( $state['plan_hash'] ?? '' ),
-			'ownership_marker_sha256' => $this->normalize_hash( $state['ownership_marker_sha256'] ?? '' ),
-			'core_fingerprint'        => $this->normalize_hash( $state['core_fingerprint'] ?? '' ),
-			'target_path'             => $this->bounded_absolute_path( $state['target_path'] ?? '' ),
-			'target_url'              => $this->bounded_url( $state['target_url'] ?? '' ),
-			'target_table_prefix'     => $this->bounded_prefix( $state['target_table_prefix'] ?? '' ),
-			'bridge_source_root'      => $this->bounded_absolute_path( $state['bridge_source_root'] ?? '' ),
-			'pending_dirs'            => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
-			'current_dir'             => $this->bounded_relative_path( $state['current_dir'] ?? '' ),
-			'after_name'              => $this->bounded_name( $state['after_name'] ?? '' ),
-			'bridge_copy_files'       => max( 0, (int) ( $state['bridge_copy_files'] ?? 0 ) ),
-			'bridge_copy_bytes'       => max( 0, (int) ( $state['bridge_copy_bytes'] ?? 0 ) ),
-			'bridge_copy_fingerprint' => $this->normalize_hash( $state['bridge_copy_fingerprint'] ?? '' ),
-			'bridge_verify_files'     => max( 0, (int) ( $state['bridge_verify_files'] ?? 0 ) ),
-			'bridge_verify_bytes'     => max( 0, (int) ( $state['bridge_verify_bytes'] ?? 0 ) ),
+			'schema_version'            => self::SCHEMA_VERSION,
+			'job_id'                    => $job_id,
+			'status'                    => $status,
+			'stage'                     => $stage,
+			'plan_hash'                 => $this->normalize_hash( $state['plan_hash'] ?? '' ),
+			'ownership_marker_sha256'   => $this->normalize_hash( $state['ownership_marker_sha256'] ?? '' ),
+			'core_fingerprint'          => $this->normalize_hash( $state['core_fingerprint'] ?? '' ),
+			'target_path'               => $this->bounded_absolute_path( $state['target_path'] ?? '' ),
+			'target_url'                => $this->bounded_url( $state['target_url'] ?? '' ),
+			'target_table_prefix'       => $this->bounded_prefix( $state['target_table_prefix'] ?? '' ),
+			'bridge_source_root'        => $this->bounded_absolute_path( $state['bridge_source_root'] ?? '' ),
+			'pending_dirs'              => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
+			'current_dir'               => $this->bounded_relative_path( $state['current_dir'] ?? '' ),
+			'after_name'                => $this->bounded_name( $state['after_name'] ?? '' ),
+			'bridge_copy_files'         => max( 0, (int) ( $state['bridge_copy_files'] ?? 0 ) ),
+			'bridge_copy_bytes'         => max( 0, (int) ( $state['bridge_copy_bytes'] ?? 0 ) ),
+			'bridge_copy_fingerprint'   => $this->normalize_hash( $state['bridge_copy_fingerprint'] ?? '' ),
+			'bridge_verify_files'       => max( 0, (int) ( $state['bridge_verify_files'] ?? 0 ) ),
+			'bridge_verify_bytes'       => max( 0, (int) ( $state['bridge_verify_bytes'] ?? 0 ) ),
 			'bridge_verify_fingerprint' => $this->normalize_hash( $state['bridge_verify_fingerprint'] ?? '' ),
-			'wp_config_sha256'        => $this->normalize_hash( $state['wp_config_sha256'] ?? '' ),
-			'mu_plugin_sha256'        => $this->normalize_hash( $state['mu_plugin_sha256'] ?? '' ),
-			'sandbox_marker_enabled'  => true === ( $state['sandbox_marker_enabled'] ?? false ),
-			'storage_isolated'        => true === ( $state['storage_isolated'] ?? false ),
-			'outbound_blocked'        => true === ( $state['outbound_blocked'] ?? false ),
-			'search_blocked'          => true === ( $state['search_blocked'] ?? false ),
-			'target_authorized'       => true === ( $state['target_authorized'] ?? false ),
-			'backups_ready'           => true === ( $state['backups_ready'] ?? false ),
-			'database_untouched'      => true === ( $state['database_untouched'] ?? false ),
-			'client_content_untouched'=> true === ( $state['client_content_untouched'] ?? false ),
-			'sandbox_runtime_ready'   => true === ( $state['sandbox_runtime_ready'] ?? false ),
-			'bootstrap_next'          => $this->bounded_code( $state['bootstrap_next'] ?? '' ),
-			'blockers'                => $this->normalize_codes( $state['blockers'] ?? array() ),
-			'started_at'              => $this->bounded_timestamp( $state['started_at'] ?? '' ),
-			'updated_at'              => $this->bounded_timestamp( $state['updated_at'] ?? '' ),
-			'completed_at'            => $this->bounded_timestamp( $state['completed_at'] ?? '' ),
+			'wp_config_sha256'          => $this->normalize_hash( $state['wp_config_sha256'] ?? '' ),
+			'mu_plugin_sha256'          => $this->normalize_hash( $state['mu_plugin_sha256'] ?? '' ),
+			'sandbox_marker_enabled'    => true === ( $state['sandbox_marker_enabled'] ?? false ),
+			'storage_isolated'          => true === ( $state['storage_isolated'] ?? false ),
+			'outbound_blocked'          => true === ( $state['outbound_blocked'] ?? false ),
+			'search_blocked'            => true === ( $state['search_blocked'] ?? false ),
+			'target_authorized'         => true === ( $state['target_authorized'] ?? false ),
+			'backups_ready'             => true === ( $state['backups_ready'] ?? false ),
+			'database_untouched'        => true === ( $state['database_untouched'] ?? false ),
+			'client_content_untouched'  => true === ( $state['client_content_untouched'] ?? false ),
+			'sandbox_runtime_ready'     => true === ( $state['sandbox_runtime_ready'] ?? false ),
+			'bootstrap_next'            => $this->bounded_code( $state['bootstrap_next'] ?? '' ),
+			'blockers'                  => $this->normalize_codes( $state['blockers'] ?? array() ),
+			'started_at'                => $this->bounded_timestamp( $state['started_at'] ?? '' ),
+			'updated_at'                => $this->bounded_timestamp( $state['updated_at'] ?? '' ),
+			'completed_at'              => $this->bounded_timestamp( $state['completed_at'] ?? '' ),
 		);
 	}
 
+	/**
+	 * Normalize one SHA-256 value.
+	 *
+	 * @param mixed $hash Raw hash.
+	 */
 	private function normalize_hash( mixed $hash ): string {
 		return is_string( $hash ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $hash ) ? $hash : '';
 	}
 
+	/**
+	 * Normalize one bounded absolute path.
+	 *
+	 * @param mixed $path Raw path.
+	 */
 	private function bounded_absolute_path( mixed $path ): string {
 		if ( ! is_string( $path ) ) {
 			return '';
@@ -175,10 +185,20 @@ final class LocalCloneSandboxRuntimeStateStore {
 		return 4096 >= strlen( $path ) ? $path : '';
 	}
 
+	/**
+	 * Normalize one bounded HTTP(S) URL.
+	 *
+	 * @param mixed $url Raw URL.
+	 */
 	private function bounded_url( mixed $url ): string {
 		return is_string( $url ) && 2048 >= strlen( $url ) ? esc_url_raw( $url ) : '';
 	}
 
+	/**
+	 * Normalize one WordPress table prefix.
+	 *
+	 * @param mixed $prefix Raw prefix.
+	 */
 	private function bounded_prefix( mixed $prefix ): string {
 		return is_string( $prefix )
 			&& 64 >= strlen( $prefix )
@@ -215,6 +235,11 @@ final class LocalCloneSandboxRuntimeStateStore {
 		return array_values( array_unique( $out ) );
 	}
 
+	/**
+	 * Normalize one bounded relative traversal path.
+	 *
+	 * @param mixed $path Raw relative path.
+	 */
 	private function bounded_relative_path( mixed $path ): string {
 		if ( ! is_string( $path ) ) {
 			return '';
@@ -228,6 +253,11 @@ final class LocalCloneSandboxRuntimeStateStore {
 		return $path;
 	}
 
+	/**
+	 * Normalize one bounded directory cursor name.
+	 *
+	 * @param mixed $name Raw name.
+	 */
 	private function bounded_name( mixed $name ): string {
 		if ( ! is_string( $name ) || 255 < strlen( $name ) || str_contains( $name, '/' ) || str_contains( $name, '\\' ) ) {
 			return '';
@@ -236,6 +266,11 @@ final class LocalCloneSandboxRuntimeStateStore {
 		return $name;
 	}
 
+	/**
+	 * Normalize one machine-readable code.
+	 *
+	 * @param mixed $code Raw code.
+	 */
 	private function bounded_code( mixed $code ): string {
 		return is_string( $code ) && 1 === preg_match( '/^[a-z0-9][a-z0-9._-]{0,119}$/', $code ) ? $code : '';
 	}
@@ -262,6 +297,11 @@ final class LocalCloneSandboxRuntimeStateStore {
 		return array_values( array_unique( $out ) );
 	}
 
+	/**
+	 * Normalize one bounded timestamp.
+	 *
+	 * @param mixed $timestamp Raw timestamp.
+	 */
 	private function bounded_timestamp( mixed $timestamp ): string {
 		return is_string( $timestamp ) ? substr( $timestamp, 0, 40 ) : '';
 	}
@@ -288,6 +328,11 @@ final class LocalCloneSandboxRuntimeStateStore {
 		return array_slice( $states, 0, self::MAX_STATES, true );
 	}
 
+	/**
+	 * Validate one clone job identifier.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
 	private function valid_job_id( string $job_id ): bool {
 		return 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/', $job_id );
 	}
