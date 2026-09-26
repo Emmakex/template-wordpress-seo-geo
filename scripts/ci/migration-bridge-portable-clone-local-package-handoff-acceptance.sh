@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1 private same-server local package handoff acceptance.
+# Phase 10E.2A.5.3.1-5.3.2.2 private local handoff/intake/payload acceptance.
 
-printf '[smoke] Checking private same-server local-clone package handoff.\n'
+printf '[smoke] Checking private same-server local-clone handoff, target preflight and payload verification.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -426,6 +426,13 @@ $autoload = $GLOBALS['wpdb']->get_var(
 	)
 );
 
+$payload_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalClonePayloadVerificationStateStore::OPTION_NAME
+	)
+);
+
 echo wp_json_encode(
 	array(
 		'plan'                        => $plan,
@@ -475,6 +482,7 @@ echo wp_json_encode(
 		'local_payload_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPayloadController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
+		'payload_autoload'            => $payload_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -666,6 +674,7 @@ assert payload["sandbox_still_verified"] is True, payload
 assert payload["controller_registered"] is True, payload
 assert payload["public_controller_absent"] is True, payload
 assert payload["autoload"] in ("off", "no", "auto-off"), payload
+assert payload["payload_autoload"] in ("off", "no", "auto-off"), payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
@@ -681,7 +690,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone private package handoff contract is invalid" "immutable package manifest + private hash-bound ZIP + no target import mutation" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone handoff/intake/payload contract is invalid" "immutable package + private preflight/extraction/checksum + no active target restore" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
 printf '[smoke] Local clone handoff + target preflight + payload verification OK: private extraction resumed, full checksum matched, restore gate opened only for child staging, target stayed untouched, authority drift revoked restore eligibility.\n'
