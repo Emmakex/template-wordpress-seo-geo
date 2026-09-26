@@ -730,12 +730,16 @@ if ( is_array( $payload_child_import ) && is_array( $target_preflight_state ) ) 
 }
 
 $target_verified_after_mutation = null;
+$local_rewrite_verified_after_mutation = null;
+$local_rewrite_after_mutation = null;
 $local_payload_verified_after_mutation = null;
 $local_payload_after_mutation = null;
 $payload_child_after_mutation = null;
 $created_table = $target_prefix . 'tamper_guard';
 $GLOBALS['wpdb']->query( "CREATE TABLE {$created_table} (id bigint unsigned NOT NULL)" );
 $target_verified_after_mutation = $target_preflight->verified_snapshot( $job_id );
+$local_rewrite_verified_after_mutation = $local_rewriter->verified_snapshot( $job_id );
+$local_rewrite_after_mutation = $local_rewriter->advance( $job_id, 1 );
 $local_payload_verified_after_mutation = $local_payload->verified_snapshot( $job_id );
 $local_payload_after_mutation = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $payload_child_after_mutation = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
@@ -747,6 +751,9 @@ $local_database_verified_after_recovery = $local_database->verified_snapshot( $j
 $local_database_after_recovery = $local_database->advance( $job_id, 10 );
 $local_files_verified_after_recovery = $local_files->verified_snapshot( $job_id );
 $local_files_after_recovery = $local_files->advance( $job_id, 1, 1024 * 1024 );
+$local_rewrite_verified_before_recovery = $local_rewriter->verified_snapshot( $job_id );
+$local_rewrite_after_recovery = $local_rewriter->advance( $job_id, 1 );
+$local_rewrite_verified_after_recovery = $local_rewriter->verified_snapshot( $job_id );
 $job_after_recovery = $jobs->get( $job_id );
 
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
@@ -754,6 +761,8 @@ if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$local_rewrite_verified_after_archive_tamper = $local_rewriter->verified_snapshot( $job_id );
+$local_rewrite_after_archive_tamper = $local_rewriter->advance( $job_id, 1 );
 $local_files_verified_after_archive_tamper = $local_files->verified_snapshot( $job_id );
 $local_files_after_archive_tamper = $local_files->advance( $job_id, 1, 1024 * 1024 );
 $local_database_verified_after_archive_tamper = $local_database->verified_snapshot( $job_id );
@@ -787,6 +796,13 @@ $file_autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalCloneFileRestoreStateStore::OPTION_NAME
+	)
+);
+
+$rewrite_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneEnvironmentRewriteStateStore::OPTION_NAME
 	)
 );
 
