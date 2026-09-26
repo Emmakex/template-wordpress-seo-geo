@@ -227,13 +227,20 @@ final class LocalCloneTargetPreflight {
 			return $this->block( $job_id, $this->store->get( $job_id ) ?? array(), 'local-target-preflight-validation-failed' );
 		}
 
-		$blockers = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
+		$blockers         = is_array( $import['blockers'] ?? null ) ? $import['blockers'] : array();
+		$import_status    = (string) ( $import['status'] ?? '' );
+		$preflight_ready  = 'preflight-ready' === $import_status
+			&& false === ( $import['full_payload_verified'] ?? false )
+			&& false === ( $import['restore_allowed'] ?? false );
+		$payload_verified = 'payload-verified' === $import_status
+			&& true === ( $import['full_payload_verified'] ?? false )
+			&& true === ( $import['restore_allowed'] ?? false );
+
 		if (
-			'preflight-ready' !== ( $import['status'] ?? null )
+			( ! $preflight_ready && ! $payload_verified )
 			|| array() !== $blockers
 			|| true !== ( $import['manifest_contract_valid'] ?? false )
 			|| true !== ( $import['child_manifest_hashes_valid'] ?? false )
-			|| true === ( $import['restore_allowed'] ?? true )
 			|| ! hash_equals( (string) $handoff['archive_sha256'], (string) $import['archive_sha256'] )
 			|| ! hash_equals( (string) $handoff['package_manifest_hash'], (string) $import['package_manifest_sha256'] )
 			|| ! hash_equals( (string) $handoff['package_checksum'], (string) $import['package_checksum'] )
