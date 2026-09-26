@@ -17,6 +17,9 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalCloneOrchestrator;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflight;
+use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneSandboxRuntimeBootstrapper;
@@ -35,6 +38,8 @@ $options = array(
 	LocalCloneRuntimeStateStore::OPTION_NAME,
 	LocalCloneSandboxRuntimeStateStore::OPTION_NAME,
 	LocalClonePackageHandoffStateStore::OPTION_NAME,
+	LocalCloneTargetPreflightStateStore::OPTION_NAME,
+	ImportStateStore::OPTION_NAME,
 );
 foreach ( $options as $option ) {
 	delete_option( $option );
@@ -46,6 +51,7 @@ $ownership = Plugin::local_clone_bootstrapper();
 $core      = Plugin::local_clone_runtime_bootstrapper();
 $sandbox   = Plugin::local_clone_sandbox_runtime_bootstrapper();
 $handoff   = Plugin::local_clone_package_handoff();
+$target_preflight = Plugin::local_clone_target_preflight();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -53,6 +59,7 @@ if (
 	|| ! $core instanceof LocalCloneRuntimeBootstrapper
 	|| ! $sandbox instanceof LocalCloneSandboxRuntimeBootstrapper
 	|| ! $handoff instanceof LocalClonePackageHandoff
+	|| ! $target_preflight instanceof LocalCloneTargetPreflight
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -94,51 +101,66 @@ if ( ! is_array( $job ) ) {
 	throw new RuntimeException( 'Could not create local handoff fixture job.' );
 }
 
-foreach (
-	array(
-		'database/manifest.json'       => '{"fixture":"database","schema_version":1}',
-		'database/schema/users.sql'    => 'CREATE TABLE fixture_users (id bigint unsigned);',
-		'database/chunks/users-1.json' => '[{"id":1}]',
-		'files/manifest.json'          => '{"fixture":"files","schema_version":1}',
-		'files/uploads/a.txt'          => 'upload-payload',
-		'files/plugins/demo/demo.php'  => "<?php\n// handoff fixture\n",
-	) as $relative => $payload
-) {
-	if ( null === $workspace->write( $job_id, $relative, $payload ) ) {
-		throw new RuntimeException( 'Could not write local handoff fixture payload: ' . $relative );
-	}
+$source_fingerprint = hash( 'sha256', 'local-handoff-source:' . $job_id );
+
+$schema_written = $workspace->write( $job_id, 'database/schema/users.sql', 'CREATE TABLE fixture_users (id bigint unsigned);' );
+$chunk_written  = $workspace->write( $job_id, 'database/chunks/users-1.json', '[{"id":1}]' );
+$upload_written = $workspace->write( $job_id, 'files/uploads/a.txt', 'upload-payload' );
+$plugin_written = $workspace->write( $job_id, 'files/plugins/demo/demo.php', "<?php\n// handoff fixture\n" );
+if ( ! is_array( $schema_written ) || ! is_array( $chunk_written ) || ! is_array( $upload_written ) || ! is_array( $plugin_written ) ) {
+	throw new RuntimeException( 'Could not write local handoff payload fixtures.' );
 }
 
-$source_fingerprint = hash( 'sha256', 'local-handoff-source:' . $job_id );
-$manifest = array(
-	'schema_version' => 1,
-	'mode'           => 'portable-clone-package',
-	'package_id'     => $job_id,
-	'operation'      => 'local-clone',
-	'source'         => array(
-		'home_url'           => home_url( '/' ),
-		'site_url'           => site_url( '/' ),
-		'source_fingerprint' => $source_fingerprint,
+$database_manifest = array(
+	'schema_version'              => 1,
+	'package_id'                  => $job_id,
+	'payload_class'               => 'database',
+	'source'                      => array(
+		'home_url'     => home_url( '/' ),
+		'site_url'     => site_url( '/' ),
+		'table_prefix' => $source_prefix,
 	),
-	'integrity'      => array(
-		'algorithm' => 'sha256',
-		'verified'  => true,
-	),
-	'safety'         => array(
-		'production_source_read_only' => true,
-		'credentials_in_manifest'     => false,
-		'contains_private_site_data'  => true,
-		'repository_safe'             => false,
-		'delivery_ready'              => false,
-	),
+	'tables'                      => array(),
+	'table_count'                 => 0,
+	'row_count'                   => 1,
+	'payload_bytes'               => (int) $schema_written['bytes'] + (int) $chunk_written['bytes'],
+	'chunk_count'                 => 1,
+	'production_source_read_only' => true,
+	'credentials_in_payload'      => false,
+	'contains_private_site_data'  => true,
+	'repository_safe'             => false,
+	'generated_at'                => gmdate( DATE_ATOM ),
 );
-$manifest_json = wp_json_encode( $manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
-if ( ! is_string( $manifest_json ) ) {
-	throw new RuntimeException( 'Could not encode local handoff package manifest.' );
+$database_json = wp_json_encode( $database_manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . "\n";
+$database_written = $workspace->write( $job_id, 'database/manifest.json', $database_json );
+if ( ! is_array( $database_written ) ) {
+	throw new RuntimeException( 'Could not write local handoff database manifest.' );
 }
-$manifest_written = $workspace->write( $job_id, 'package/manifest.json', $manifest_json . "\n" );
-if ( ! is_array( $manifest_written ) ) {
-	throw new RuntimeException( 'Could not write local handoff package manifest.' );
+
+$files_manifest = array(
+	'schema_version'              => 1,
+	'payload_class'               => 'files',
+	'file_count'                  => 2,
+	'payload_bytes'               => (int) $upload_written['bytes'] + (int) $plugin_written['bytes'],
+	'roots'                       => array(
+		array( 'id' => 'uploads', 'file_count' => 1, 'byte_count' => (int) $upload_written['bytes'] ),
+		array( 'id' => 'plugins', 'file_count' => 1, 'byte_count' => (int) $plugin_written['bytes'] ),
+	),
+	'source_fingerprint'          => $source_fingerprint,
+	'file_records'                => array(
+		'format'    => 'one-json-record-per-file',
+		'directory' => 'files-meta/',
+	),
+	'production_source_read_only' => true,
+	'credentials_in_payload'      => false,
+	'contains_private_site_data'  => true,
+	'repository_safe'             => false,
+	'generated_at'                => gmdate( DATE_ATOM ),
+);
+$files_json = wp_json_encode( $files_manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . "\n";
+$files_written = $workspace->write( $job_id, 'files/manifest.json', $files_json );
+if ( ! is_array( $files_written ) ) {
+	throw new RuntimeException( 'Could not write local handoff files manifest.' );
 }
 
 $root = $workspace->root_path( $job_id );
@@ -183,6 +205,59 @@ while ( array() !== $pending ) {
 		++$payload_files;
 		$payload_bytes += (int) $bytes;
 	}
+}
+
+
+$manifest = array(
+	'schema_version' => 1,
+	'mode'           => 'portable-clone-package',
+	'package_id'     => $job_id,
+	'operation'      => 'local-clone',
+	'source'         => array(
+		'home_url'           => home_url( '/' ),
+		'site_url'           => site_url( '/' ),
+		'wordpress_version'  => get_bloginfo( 'version' ),
+		'php_version'        => PHP_VERSION,
+		'source_fingerprint' => $source_fingerprint,
+	),
+	'payload'        => array(
+		'database' => array(
+			'manifest_path'   => 'database/manifest.json',
+			'manifest_sha256' => (string) $database_written['sha256'],
+			'row_count'       => 1,
+			'chunk_count'     => 1,
+			'payload_bytes'   => (int) $database_manifest['payload_bytes'],
+		),
+		'files'    => array(
+			'manifest_path'   => 'files/manifest.json',
+			'manifest_sha256' => (string) $files_written['sha256'],
+			'file_count'      => 2,
+			'payload_bytes'   => (int) $files_manifest['payload_bytes'],
+		),
+	),
+	'integrity'      => array(
+		'algorithm'          => 'sha256',
+		'checksum_contract'  => 'lexicographic-bfs-path+bytes+sha256-v1',
+		'checksum_scope'     => 'workspace-excluding-package-metadata',
+		'payload_file_count' => $payload_files,
+		'payload_bytes'      => $payload_bytes,
+		'package_checksum'   => $checksum,
+		'verification_pass'  => true,
+		'verified'           => true,
+	),
+	'safety'         => array(
+		'production_source_read_only' => true,
+		'credentials_in_manifest'     => false,
+		'contains_private_site_data'  => true,
+		'repository_safe'             => false,
+		'delivery_ready'              => false,
+	),
+	'generated_at'   => gmdate( DATE_ATOM ),
+);
+$manifest_json = wp_json_encode( $manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . "\n";
+$manifest_written = $workspace->write( $job_id, 'package/manifest.json', $manifest_json );
+if ( ! is_array( $manifest_written ) ) {
+	throw new RuntimeException( 'Could not write local handoff package manifest.' );
 }
 
 $now = gmdate( DATE_ATOM );
@@ -271,6 +346,12 @@ $manifest_parsed = is_string( $manifest_after ) ? json_decode( $manifest_after, 
 $manifest_after_hash = is_string( $manifest_after ) ? hash( 'sha256', $manifest_after ) : '';
 $package_after        = $packages->get( $job_id );
 
+$target_preflight_state = $target_preflight->advance( $job_id );
+$target_preflight_verified = $target_preflight->verified_snapshot( $job_id );
+$target_preflight_child = is_array( $target_preflight_state )
+	? ( new ImportStateStore() )->get( (string) ( $target_preflight_state['child_import_job_id'] ?? '' ) )
+	: null;
+
 $table_pattern = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
 $target_tables = $GLOBALS['wpdb']->get_col(
 	$GLOBALS['wpdb']->prepare(
@@ -278,6 +359,23 @@ $target_tables = $GLOBALS['wpdb']->get_col(
 		$table_pattern
 	)
 );
+
+$target_verified_after_child_drift = null;
+if ( is_array( $target_preflight_child ) && is_array( $target_preflight_state ) ) {
+	$child_id = (string) $target_preflight_state['child_import_job_id'];
+	$child_store = new ImportStateStore();
+	$drifted_child = $target_preflight_child;
+	$drifted_child['destination_table_prefix'] = $target_prefix . 'drift_';
+	$child_store->save( $child_id, $drifted_child );
+	$target_verified_after_child_drift = $target_preflight->verified_snapshot( $job_id );
+	$child_store->save( $child_id, $target_preflight_child );
+}
+
+$target_verified_after_mutation = null;
+$created_table = $target_prefix . 'tamper_guard';
+$GLOBALS['wpdb']->query( "CREATE TABLE {$created_table} (id bigint unsigned NOT NULL)" );
+$target_verified_after_mutation = $target_preflight->verified_snapshot( $job_id );
+$GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$created_table}" );
 
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
 if ( '' !== $archive_path && is_file( $archive_path ) ) {
@@ -299,6 +397,11 @@ echo wp_json_encode(
 		'core_state'                  => $core_state,
 		'sandbox_state'               => $sandbox_state,
 		'handoff_state'               => $handoff_state,
+		'target_preflight_state'      => $target_preflight_state,
+		'target_preflight_verified'   => is_array( $target_preflight_verified ),
+		'target_preflight_child'      => $target_preflight_child,
+		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
+		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
 		'delivery_info_before_tamper' => $delivery_info,
@@ -314,6 +417,7 @@ echo wp_json_encode(
 		'themes_absent'               => ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes' ),
 		'sandbox_still_verified'      => is_array( $sandbox->verified_snapshot( $job_id ) ),
 		'controller_registered'       => false !== has_action( 'admin_post_' . AdminCloneLocalPackageHandoffController::ACTION ),
+		'target_preflight_service_registered' => $target_preflight instanceof LocalCloneTargetPreflight,
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'job'                         => $jobs->get( $job_id ),
@@ -370,6 +474,46 @@ assert handoff["archive_bytes"] > 0, payload
 assert re.fullmatch(r"[a-f0-9]{64}", handoff["archive_sha256"]), payload
 assert handoff["blockers"] == [], payload
 
+target = payload["target_preflight_state"]
+assert target is not None, payload
+assert target["status"] == "ready", payload
+assert target["preflight_ready"] is True, payload
+assert target["restore_allowed"] is False, payload
+assert target["database_untouched"] is True, payload
+assert target["client_content_untouched"] is True, payload
+assert target["preflight_next"] == "payload-extraction", payload
+assert target["blockers"] == [], payload
+assert re.fullmatch(r"[a-f0-9]{64}", target["destination_authority_sha256"]), payload
+assert target["handoff_archive_sha256"] == handoff["archive_sha256"], payload
+assert target["handoff_archive_bytes"] == handoff["archive_bytes"], payload
+assert target["package_manifest_sha256"] == handoff["package_manifest_hash"], payload
+assert target["package_checksum"] == handoff["package_checksum"], payload
+assert payload["target_preflight_verified"] is True, payload
+assert payload["target_verified_after_mutation"] is False, payload
+assert payload["target_verified_after_child_drift"] is False, payload
+assert payload["target_preflight_service_registered"] is True, payload
+
+child = payload["target_preflight_child"]
+assert child is not None, payload
+assert child["status"] == "preflight-ready", payload
+assert child["transport"] == "private-same-server", payload
+assert child["local_handoff_parent_job_id"] == handoff["job_id"], payload
+assert child["destination_home_url"] == handoff["target_url"], payload
+assert child["destination_site_url"] == handoff["target_url"], payload
+assert child["destination_table_prefix"] == handoff["target_table_prefix"], payload
+assert child["destination_mode"] == "subdirectory", payload
+assert child["destination_storage_isolated"] is True, payload
+assert child["search_visibility_disabled"] is True, payload
+assert child["outbound_safe"] is True, payload
+assert child["backups_ready"] is True, payload
+assert child["target_authorized"] is True, payload
+assert child["manifest_contract_valid"] is True, payload
+assert child["child_manifest_hashes_valid"] is True, payload
+assert child["full_payload_verified"] is False, payload
+assert child["restore_allowed"] is False, payload
+assert child["blockers"] == [], payload
+assert "full-payload-checksum-pending" in child["advisories"], payload
+
 delivery = payload["delivery_info_before_tamper"]
 assert delivery is not None, payload
 assert delivery["bytes"] == handoff["archive_bytes"], payload
@@ -396,8 +540,8 @@ assert payload["autoload"] in ("off", "no", "auto-off"), payload
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
 assert job["status"] == "active", payload
-assert job["phase"] == "verify", payload
-assert job["cursor"] == "local-handoff-ready", payload
+assert job["phase"] == "validate", payload
+assert job["cursor"] == "local-target-preflight-ready", payload
 
 print("ok")
 PY
@@ -405,4 +549,4 @@ PY
   fail_smoke "local-clone-package-handoff" "Local clone private package handoff contract is invalid" "immutable package manifest + private hash-bound ZIP + no target import mutation" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone package handoff OK: private ZIP built from frozen manifest, hash verified, target tables/client content untouched, archive tamper invalidated readiness.\n'
+printf '[smoke] Local clone handoff + target preflight OK: private ZIP frozen, existing import preflight reused against isolated target, restore locked, target mutation/archive tamper invalidated readiness.\n'

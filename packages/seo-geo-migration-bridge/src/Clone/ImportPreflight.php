@@ -154,6 +154,114 @@ final class ImportPreflight {
 		return $this->store->get( $job_id );
 	}
 
+
+	/**
+	 * Stage one verified private same-server handoff for the existing import validator.
+	 *
+	 * The destination context must come from the already verified local-clone runtime.
+	 * This method never accepts an arbitrary production target and does not restore payload.
+	 *
+	 * @param string              $job_id  Child import job identifier.
+	 * @param string              $source  Absolute readable private ZIP path.
+	 * @param array<string,mixed> $context Verified local destination context.
+	 * @return array<string,mixed>|null
+	 */
+	public function stage_local_handoff( string $job_id, string $source, array $context ): ?array {
+		$job = $this->jobs->get( $job_id );
+		if (
+			is_array( ( new ImportPayloadStateStore() )->get( $job_id ) )
+			|| ! is_array( $job )
+			|| 'import' !== ( $job['operation'] ?? null )
+			|| ! $this->valid_local_handoff_context( $context )
+		) {
+			return null;
+		}
+
+		$archive = $this->workspace->stage_import_archive( $job_id, $source );
+		if ( null === $archive ) {
+			return $this->block(
+				$job_id,
+				$this->store->get( $job_id ) ?? array(),
+				'import-archive-stage-failed',
+				true
+			);
+		}
+
+		if (
+			(int) $context['archive_bytes'] !== (int) $archive['bytes']
+			|| ! hash_equals( (string) $context['archive_sha256'], (string) $archive['sha256'] )
+		) {
+			return $this->block(
+				$job_id,
+				array(),
+				'import-local-handoff-archive-identity-mismatch',
+				false
+			);
+		}
+
+		$now   = gmdate( DATE_ATOM );
+		$state = array(
+			'schema_version'                   => ImportStateStore::SCHEMA_VERSION,
+			'job_id'                           => $job_id,
+			'status'                           => 'staged',
+			'transport'                        => 'private-same-server',
+			'local_handoff_parent_job_id'      => (string) $context['parent_job_id'],
+			'destination_root_path'            => (string) $context['target_path'],
+			'destination_authority_sha256'     => (string) $context['destination_authority_sha256'],
+			'expected_package_manifest_sha256' => (string) $context['package_manifest_sha256'],
+			'expected_package_checksum'        => (string) $context['package_checksum'],
+			'archive_sha256'                   => (string) $archive['sha256'],
+			'archive_bytes'                    => (int) $archive['bytes'],
+			'package_id'                       => '',
+			'package_manifest_sha256'          => '',
+			'package_checksum'                 => '',
+			'payload_file_count'               => 0,
+			'payload_bytes'                    => 0,
+			'archive_entry_count'              => 0,
+			'archive_uncompressed_bytes'       => 0,
+			'source_home_url'                  => '',
+			'source_site_url'                  => '',
+			'source_table_prefix'              => '',
+			'destination_home_url'             => (string) $context['target_url'],
+			'destination_site_url'             => (string) $context['target_url'],
+			'destination_table_prefix'         => (string) $context['target_table_prefix'],
+			'destination_mode'                 => 'subdirectory',
+			'destination_storage_isolated'     => true,
+			'search_visibility_disabled'       => true,
+			'outbound_safe'                    => true,
+			'backups_ready'                    => true,
+			'target_authorized'                => true,
+			'disk_free_bytes'                  => null,
+			'disk_required_bytes'              => 0,
+			'manifest_contract_valid'          => false,
+			'child_manifest_hashes_valid'      => false,
+			'full_payload_verified'            => false,
+			'restore_allowed'                  => false,
+			'blockers'                         => array(),
+			'advisories'                       => array( 'full-payload-checksum-pending' ),
+			'staged_at'                        => $now,
+			'validated_at'                     => '',
+			'updated_at'                       => $now,
+		);
+
+		if ( ! $this->store->save( $job_id, $state ) ) {
+			return null;
+		}
+
+		$this->jobs->transition( $job_id, 'active' );
+		$this->jobs->update_progress(
+			$job_id,
+			'validate',
+			'local-handoff-staged',
+			array(
+				'completed' => 0,
+				'total'     => null,
+			)
+		);
+
+		return $this->store->get( $job_id );
+	}
+
 	/**
 	 * Validate archive topology, manifests and destination isolation without restoring payload.
 	 *
@@ -164,8 +272,9 @@ final class ImportPreflight {
 	 * @return array<string,mixed>|null
 	 */
 	public function validate( string $job_id ): ?array {
-		$job   = $this->jobs->get( $job_id );
-		$state = $this->store->get( $job_id );
+		$job           = $this->jobs->get( $job_id );
+		$state         = $this->store->get( $job_id );
+		$local_handoff = is_array( $state ) && 'private-same-server' === ( $state['transport'] ?? null );
 		if (
 			! is_array( $job )
 			|| 'import' !== ( $job['operation'] ?? null )
@@ -236,12 +345,25 @@ final class ImportPreflight {
 			$files,
 			$package_json,
 			$database_json,
-			$files_json
+			$files_json,
+			$local_handoff
 		);
-		$blockers          = array_merge( $blockers, $contract_blockers );
-		$destination       = $this->destination_report( $package, $database, (int) $archive_info['bytes'] );
-		$blockers          = array_merge( $blockers, $destination['blockers'] );
-		$advisories        = array_merge( $advisories, $destination['advisories'] );
+		if ( $local_handoff ) {
+			$contract_blockers = array_merge(
+				$contract_blockers,
+				$this->local_handoff_binding_blockers( $package, $package_json, $state )
+			);
+		}
+		$blockers    = array_merge( $blockers, $contract_blockers );
+		$destination = $this->destination_report(
+			$package,
+			$database,
+			(int) $archive_info['bytes'],
+			$local_handoff ? $this->local_destination_context( $state ) : null
+		);
+
+		$blockers   = array_merge( $blockers, $destination['blockers'] );
+		$advisories = array_merge( $advisories, $destination['advisories'] );
 
 		$blockers   = array_values( array_unique( $blockers ) );
 		$advisories = array_values( array_unique( $advisories ) );
@@ -275,8 +397,9 @@ final class ImportPreflight {
 		$state['manifest_contract_valid']      = array() === $contract_blockers;
 		$state['child_manifest_hashes_valid']  = ! in_array( 'import-database-manifest-hash-mismatch', $contract_blockers, true )
 			&& ! in_array( 'import-files-manifest-hash-mismatch', $contract_blockers, true );
-		$payload_state                         = ( new ImportPayloadStateStore() )->get( $job_id );
-		$payload_valid                         = array() === $blockers
+
+		$payload_state = ( new ImportPayloadStateStore() )->get( $job_id );
+		$payload_valid = array() === $blockers
 			&& is_array( $payload_state )
 			&& 'complete' === ( $payload_state['status'] ?? null )
 			&& hash_equals(
@@ -392,6 +515,7 @@ final class ImportPreflight {
 	 * @param string|null         $package_json  Raw package manifest.
 	 * @param string|null         $database_json Raw database manifest.
 	 * @param string|null         $files_json    Raw files manifest.
+	 * @param bool                $local_handoff Whether this is a verified private same-server handoff.
 	 * @return list<string>
 	 */
 	private function manifest_contract_blockers(
@@ -400,7 +524,8 @@ final class ImportPreflight {
 		array $files,
 		?string $package_json,
 		?string $database_json,
-		?string $files_json
+		?string $files_json,
+		bool $local_handoff = false
 	): array {
 		$blockers  = array();
 		$source    = is_array( $package['source'] ?? null ) ? $package['source'] : array();
@@ -456,18 +581,30 @@ final class ImportPreflight {
 			|| false !== ( $safety['credentials_in_manifest'] ?? true )
 			|| true !== ( $safety['contains_private_site_data'] ?? false )
 			|| false !== ( $safety['repository_safe'] ?? true )
-			|| true !== ( $safety['delivery_ready'] ?? false )
 		) {
 			$blockers[] = 'import-package-safety-contract-invalid';
 		}
 
-		if (
-			'zip' !== ( $delivery['format'] ?? null )
-			|| true !== ( $delivery['authenticated_only'] ?? false )
-			|| false !== ( $delivery['public_url'] ?? true )
-			|| 24 !== (int) ( $delivery['retention_hours'] ?? 0 )
-		) {
-			$blockers[] = 'import-package-delivery-contract-invalid';
+		if ( $local_handoff ) {
+			if (
+				'local-clone' !== ( $package['operation'] ?? null )
+				|| false !== ( $safety['delivery_ready'] ?? true )
+				|| array_key_exists( 'delivery', $package )
+			) {
+				$blockers[] = 'import-local-handoff-transport-contract-invalid';
+			}
+		} else {
+			if ( true !== ( $safety['delivery_ready'] ?? false ) ) {
+				$blockers[] = 'import-package-safety-contract-invalid';
+			}
+			if (
+				'zip' !== ( $delivery['format'] ?? null )
+				|| true !== ( $delivery['authenticated_only'] ?? false )
+				|| false !== ( $delivery['public_url'] ?? true )
+				|| 24 !== (int) ( $delivery['retention_hours'] ?? 0 )
+			) {
+				$blockers[] = 'import-package-delivery-contract-invalid';
+			}
 		}
 
 		if (
@@ -517,33 +654,37 @@ final class ImportPreflight {
 	/**
 	 * Build read-only destination safety report.
 	 *
-	 * @param array<string,mixed> $package       Package manifest.
-	 * @param array<string,mixed> $database      Database manifest.
-	 * @param int                 $archive_bytes Staged ZIP bytes.
+	 * @param array<string,mixed>      $package         Package manifest.
+	 * @param array<string,mixed>      $database        Database manifest.
+	 * @param int                      $archive_bytes   Staged ZIP bytes.
+	 * @param array<string,mixed>|null $trusted_context Verified private same-server destination context.
 	 * @return array<string,mixed>
 	 */
-	private function destination_report( array $package, array $database, int $archive_bytes ): array {
+	private function destination_report( array $package, array $database, int $archive_bytes, ?array $trusted_context = null ): array {
 		global $wpdb;
 
 		$source        = is_array( $package['source'] ?? null ) ? $package['source'] : array();
 		$integrity     = is_array( $package['integrity'] ?? null ) ? $package['integrity'] : array();
 		$db_source     = is_array( $database['source'] ?? null ) ? $database['source'] : array();
-		$home_url      = home_url( '/' );
-		$site_url      = site_url( '/' );
-		$mode          = SandboxGuard::mode();
-		$storage       = SandboxGuard::storage_isolated();
-		$search_safe   = '0' === (string) get_option( 'blog_public', '1' );
-		$outbound_safe = SandboxGuard::outbound_safe();
-		$backups_ready = SandboxGuard::backups_ready();
-		$authorized    = defined( self::TARGET_AUTHORIZED_MARKER ) && true === constant( self::TARGET_AUTHORIZED_MARKER );
-		$table_prefix  = $wpdb instanceof wpdb ? $wpdb->prefix : '';
+		$trusted       = is_array( $trusted_context );
+		$home_url      = $trusted ? (string) ( $trusted_context['home_url'] ?? '' ) : home_url( '/' );
+		$site_url      = $trusted ? (string) ( $trusted_context['site_url'] ?? '' ) : site_url( '/' );
+		$mode          = $trusted ? (string) ( $trusted_context['mode'] ?? '' ) : SandboxGuard::mode();
+		$storage       = $trusted ? true === ( $trusted_context['storage_isolated'] ?? false ) : SandboxGuard::storage_isolated();
+		$search_safe   = $trusted ? true === ( $trusted_context['search_visibility_disabled'] ?? false ) : '0' === (string) get_option( 'blog_public', '1' );
+		$outbound_safe = $trusted ? true === ( $trusted_context['outbound_safe'] ?? false ) : SandboxGuard::outbound_safe();
+		$backups_ready = $trusted ? true === ( $trusted_context['backups_ready'] ?? false ) : SandboxGuard::backups_ready();
+		$authorized    = $trusted ? true === ( $trusted_context['target_authorized'] ?? false ) : defined( self::TARGET_AUTHORIZED_MARKER ) && true === constant( self::TARGET_AUTHORIZED_MARKER );
+		$table_prefix  = $trusted ? (string) ( $trusted_context['table_prefix'] ?? '' ) : ( $wpdb instanceof wpdb ? $wpdb->prefix : '' );
+		$root_path     = $trusted ? (string) ( $trusted_context['root_path'] ?? '' ) : wp_normalize_path( ABSPATH );
 		$payload_bytes = max( 0, (int) ( $integrity['payload_bytes'] ?? 0 ) );
 		$required      = $payload_bytes + max( self::MIN_FREE_HEADROOM_BYTES, $archive_bytes );
-		$free          = disk_free_space( wp_normalize_path( ABSPATH ) );
+		$free          = '' !== $root_path ? disk_free_space( wp_normalize_path( $root_path ) ) : false;
 		$blockers      = array();
 		$advisories    = array();
+		$sandbox_ready = $trusted ? true === ( $trusted_context['sandbox_enabled'] ?? false ) : SandboxGuard::enabled();
 
-		if ( ! SandboxGuard::enabled() ) {
+		if ( ! $sandbox_ready ) {
 			$blockers[] = 'import-sandbox-marker-missing';
 		}
 		if ( 'invalid' === $mode ) {
@@ -607,7 +748,11 @@ final class ImportPreflight {
 
 		$source_prefix = is_string( $db_source['table_prefix'] ?? null ) ? $db_source['table_prefix'] : '';
 		if ( '' !== $source_prefix && $source_prefix === $table_prefix ) {
-			$advisories[] = 'source-target-table-prefix-equal-confirm-database-isolation';
+			if ( $trusted ) {
+				$blockers[] = 'import-local-table-prefix-not-isolated';
+			} else {
+				$advisories[] = 'source-target-table-prefix-equal-confirm-database-isolation';
+			}
 		}
 
 		return array(
@@ -625,6 +770,88 @@ final class ImportPreflight {
 			'blockers'                   => array_values( array_unique( $blockers ) ),
 			'advisories'                 => array_values( array_unique( $advisories ) ),
 		);
+	}
+
+
+	/**
+	 * Return blockers binding a local handoff package to its frozen parent authority.
+	 *
+	 * @param array<string,mixed> $package      Package manifest.
+	 * @param string|null         $package_json Raw package manifest.
+	 * @param array<string,mixed> $state        Persisted child import state.
+	 * @return list<string>
+	 */
+	private function local_handoff_binding_blockers( array $package, ?string $package_json, array $state ): array {
+		$blockers  = array();
+		$integrity = is_array( $package['integrity'] ?? null ) ? $package['integrity'] : array();
+
+		if (
+			! is_string( $package_json )
+			|| ! $this->valid_hash( $state['expected_package_manifest_sha256'] ?? null )
+			|| ! hash_equals( (string) $state['expected_package_manifest_sha256'], hash( 'sha256', $package_json ) )
+		) {
+			$blockers[] = 'import-local-package-manifest-authority-mismatch';
+		}
+		if (
+			! $this->valid_hash( $state['expected_package_checksum'] ?? null )
+			|| ! $this->valid_hash( $integrity['package_checksum'] ?? null )
+			|| ! hash_equals( (string) $state['expected_package_checksum'], (string) $integrity['package_checksum'] )
+		) {
+			$blockers[] = 'import-local-package-checksum-authority-mismatch';
+		}
+		if (
+			! is_string( $state['local_handoff_parent_job_id'] ?? null )
+			|| ! hash_equals( (string) $state['local_handoff_parent_job_id'], (string) ( $package['package_id'] ?? '' ) )
+		) {
+			$blockers[] = 'import-local-package-parent-mismatch';
+		}
+
+		return array_values( array_unique( $blockers ) );
+	}
+
+	/**
+	 * Rehydrate the verified private same-server destination context.
+	 *
+	 * @param array<string,mixed> $state Persisted child import state.
+	 * @return array<string,mixed>
+	 */
+	private function local_destination_context( array $state ): array {
+		return array(
+			'home_url'                   => (string) ( $state['destination_home_url'] ?? '' ),
+			'site_url'                   => (string) ( $state['destination_site_url'] ?? '' ),
+			'table_prefix'               => (string) ( $state['destination_table_prefix'] ?? '' ),
+			'root_path'                  => (string) ( $state['destination_root_path'] ?? '' ),
+			'mode'                       => (string) ( $state['destination_mode'] ?? '' ),
+			'storage_isolated'           => true === ( $state['destination_storage_isolated'] ?? false ),
+			'search_visibility_disabled' => true === ( $state['search_visibility_disabled'] ?? false ),
+			'outbound_safe'              => true === ( $state['outbound_safe'] ?? false ),
+			'backups_ready'              => true === ( $state['backups_ready'] ?? false ),
+			'target_authorized'          => true === ( $state['target_authorized'] ?? false ),
+			'sandbox_enabled'            => 'private-same-server' === ( $state['transport'] ?? null ),
+		);
+	}
+
+	/**
+	 * Validate one trusted local handoff context before any archive staging occurs.
+	 *
+	 * @param array<string,mixed> $context Raw context.
+	 */
+	private function valid_local_handoff_context( array $context ): bool {
+		foreach ( array( 'parent_job_id', 'target_path', 'target_url', 'target_table_prefix', 'archive_sha256', 'package_manifest_sha256', 'package_checksum', 'destination_authority_sha256' ) as $required ) {
+			if ( ! is_string( $context[ $required ] ?? null ) || '' === $context[ $required ] ) {
+				return false;
+			}
+		}
+
+		return 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/', (string) $context['parent_job_id'] )
+			&& '' !== untrailingslashit( wp_normalize_path( (string) $context['target_path'] ) )
+			&& $this->valid_http_url( $context['target_url'] )
+			&& 1 === preg_match( '/^[A-Za-z0-9_]+$/', (string) $context['target_table_prefix'] )
+			&& $this->valid_hash( $context['archive_sha256'] )
+			&& 0 < (int) ( $context['archive_bytes'] ?? 0 )
+			&& $this->valid_hash( $context['package_manifest_sha256'] )
+			&& $this->valid_hash( $context['package_checksum'] )
+			&& $this->valid_hash( $context['destination_authority_sha256'] );
 	}
 
 	/**

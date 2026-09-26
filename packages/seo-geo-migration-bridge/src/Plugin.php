@@ -15,6 +15,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBootstrapController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalSandboxRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalTargetPreflightController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -42,6 +43,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneSandboxRuntimeStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneSandboxRuntimeBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
+use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflight;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -337,6 +340,27 @@ final class Plugin {
 	 * @var AdminCloneLocalPackageHandoffController|null
 	 */
 	private static ?AdminCloneLocalPackageHandoffController $local_clone_package_handoff_controller = null;
+
+	/**
+	 * Local-clone target intake/preflight state store singleton.
+	 *
+	 * @var LocalCloneTargetPreflightStateStore|null
+	 */
+	private static ?LocalCloneTargetPreflightStateStore $local_clone_target_preflight_state_store = null;
+
+	/**
+	 * Local-clone target intake/preflight service singleton.
+	 *
+	 * @var LocalCloneTargetPreflight|null
+	 */
+	private static ?LocalCloneTargetPreflight $local_clone_target_preflight = null;
+
+	/**
+	 * Local-clone target intake/preflight controller singleton.
+	 *
+	 * @var AdminCloneLocalTargetPreflightController|null
+	 */
+	private static ?AdminCloneLocalTargetPreflightController $local_clone_target_preflight_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -697,6 +721,17 @@ final class Plugin {
 		self::$clone_import_state_store                     ??= new ImportStateStore();
 		self::$clone_import_preflight                       ??= new ImportPreflight( self::$clone_import_state_store, self::$clone_job_store );
 		self::$clone_import_controller                      ??= new AdminCloneImportController( self::$clone_import_preflight );
+		self::$local_clone_target_preflight_state_store     ??= new LocalCloneTargetPreflightStateStore();
+		self::$local_clone_target_preflight                 ??= new LocalCloneTargetPreflight(
+			self::$local_clone_target_preflight_state_store,
+			self::$local_clone_package_handoff,
+			self::$local_clone_sandbox_runtime_bootstrapper,
+			self::$clone_package_delivery,
+			self::$clone_import_preflight,
+			self::$clone_import_state_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_target_preflight_controller      ??= new AdminCloneLocalTargetPreflightController( self::$local_clone_target_preflight );
 		self::$clone_import_payload_state_store             ??= new ImportPayloadStateStore();
 		self::$clone_import_payload_verifier                ??= new ImportPayloadVerifier( self::$clone_import_payload_state_store, self::$clone_import_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_payload_controller              ??= new AdminCloneImportPayloadController( self::$clone_import_payload_verifier );
@@ -764,6 +799,7 @@ final class Plugin {
 		self::$local_clone_runtime_controller->boot();
 		self::$local_clone_sandbox_runtime_controller->boot();
 		self::$local_clone_package_handoff_controller->boot();
+		self::$local_clone_target_preflight_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -931,6 +967,20 @@ final class Plugin {
 	 */
 	public static function local_clone_package_handoff(): ?LocalClonePackageHandoff {
 		return self::$local_clone_package_handoff;
+	}
+
+	/**
+	 * Return the local-clone target intake/preflight state store.
+	 */
+	public static function local_clone_target_preflight_state_store(): ?LocalCloneTargetPreflightStateStore {
+		return self::$local_clone_target_preflight_state_store;
+	}
+
+	/**
+	 * Return the local-clone target intake/preflight service.
+	 */
+	public static function local_clone_target_preflight(): ?LocalCloneTargetPreflight {
+		return self::$local_clone_target_preflight;
 	}
 
 	/**
