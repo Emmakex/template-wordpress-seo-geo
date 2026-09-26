@@ -181,6 +181,7 @@ required_paths=(
   "docs/ROLLBACK_RECOVERY.md"
   "docs/STABLE_RELEASE_DECISION.md"
   "docs/REAL_SITE_PILOT.md"
+  "docs/EMMAKE_REAL_CLONE_RUNBOOK.md"
   "docs/templates/PRODUCTION_ACCEPTANCE_RECORD.example.json"
   "docs/templates/EMMAKE_REAL_CLONE_ACCEPTANCE_RECORD.example.json"
   "CHANGELOG.md"
