@@ -360,6 +360,17 @@ $target_tables = $GLOBALS['wpdb']->get_col(
 	)
 );
 
+$target_verified_after_child_drift = null;
+if ( is_array( $target_preflight_child ) && is_array( $target_preflight_state ) ) {
+	$child_id = (string) $target_preflight_state['child_import_job_id'];
+	$child_store = new ImportStateStore();
+	$drifted_child = $target_preflight_child;
+	$drifted_child['destination_table_prefix'] = $target_prefix . 'drift_';
+	$child_store->save( $child_id, $drifted_child );
+	$target_verified_after_child_drift = $target_preflight->verified_snapshot( $job_id );
+	$child_store->save( $child_id, $target_preflight_child );
+}
+
 $target_verified_after_mutation = null;
 $created_table = $target_prefix . 'tamper_guard';
 $GLOBALS['wpdb']->query( "CREATE TABLE {$created_table} (id bigint unsigned NOT NULL)" );
@@ -390,6 +401,7 @@ echo wp_json_encode(
 		'target_preflight_verified'   => is_array( $target_preflight_verified ),
 		'target_preflight_child'      => $target_preflight_child,
 		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
+		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
 		'delivery_info_before_tamper' => $delivery_info,
@@ -478,6 +490,7 @@ assert target["package_manifest_sha256"] == handoff["package_manifest_hash"], pa
 assert target["package_checksum"] == handoff["package_checksum"], payload
 assert payload["target_preflight_verified"] is True, payload
 assert payload["target_verified_after_mutation"] is False, payload
+assert payload["target_verified_after_child_drift"] is False, payload
 assert payload["target_preflight_service_registered"] is True, payload
 
 child = payload["target_preflight_child"]
