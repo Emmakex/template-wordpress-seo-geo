@@ -361,6 +361,7 @@ final class ImportPreflight {
 			(int) $archive_info['bytes'],
 			$local_handoff ? $this->local_destination_context( $state ) : null
 		);
+
 		$blockers   = array_merge( $blockers, $destination['blockers'] );
 		$advisories = array_merge( $advisories, $destination['advisories'] );
 
@@ -396,6 +397,7 @@ final class ImportPreflight {
 		$state['manifest_contract_valid']      = array() === $contract_blockers;
 		$state['child_manifest_hashes_valid']  = ! in_array( 'import-database-manifest-hash-mismatch', $contract_blockers, true )
 			&& ! in_array( 'import-files-manifest-hash-mismatch', $contract_blockers, true );
+
 		$payload_state = ( new ImportPayloadStateStore() )->get( $job_id );
 		$payload_valid = array() === $blockers
 			&& is_array( $payload_state )
