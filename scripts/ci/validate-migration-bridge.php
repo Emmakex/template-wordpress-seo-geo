@@ -100,6 +100,9 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeBootstrapper.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalRuntimeController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeBootstrapper.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalSandboxRuntimeController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
@@ -393,6 +396,7 @@ foreach (
 		'delete_local_clone_marker( string $target, string $relative, string $expected_sha256 )',
 		'ensure_local_clone_directory( string $target_root, string $relative )',
 		'copy_file_to_local_clone_target( string $source, string $target_root, string $relative )',
+		'write_local_clone_control_file(',
 		'rename_file_promotion_path( string $from, string $to )',
 		"'wp-admin/includes/class-pclzip.php'",
 		'PCLZIP_OPT_REMOVE_PATH',
@@ -500,6 +504,110 @@ if ( str_contains( $local_runtime_controller, 'admin_post_nopriv_' ) ) {
 		'portable-clone-local-runtime-public-endpoint',
 		'Local clone core runtime must never expose an unauthenticated endpoint.',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalRuntimeController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
+}
+
+$local_sandbox_runtime_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_local_clone_sandbox_runtime_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'bridge-copy', 'bridge-verify', 'configure', 'complete'",
+		"'bridge_copy_fingerprint'",
+		"'bridge_verify_fingerprint'",
+		"'wp_config_sha256'",
+		"'mu_plugin_sha256'",
+		"'sandbox_runtime_ready'",
+	) as $local_sandbox_runtime_store_guard
+) {
+	if ( ! str_contains( $local_sandbox_runtime_store, $local_sandbox_runtime_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-sandbox-runtime-state',
+			'Local clone sandbox runtime state must remain versioned, bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeStateStore.php',
+			$local_sandbox_runtime_store_guard,
+			'missing'
+		);
+	}
+}
+
+$local_sandbox_runtime = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeBootstrapper.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_FILES     = 50;',
+		'public const DEFAULT_BATCH_BYTES     = 8388608;',
+		'$this->ownership->verified_snapshot( $job_id )',
+		'$this->core_runtime->snapshot( $job_id )',
+		'$this->workspace->ensure_local_clone_directory( $target, self::BRIDGE_TARGET_ROOT )',
+		'$this->workspace->copy_file_to_local_clone_target( $path, $target, $target_relative )',
+		'$this->workspace->write_local_clone_control_file(',
+		"'wp-content/plugins/seo-geo-migration-bridge'",
+		"'wp-content/mu-plugins/seo-geo-migration-sandbox-bootstrap.php'",
+		"'wp-config.php'",
+		"'SEO_GEO_MIGRATION_SANDBOX'",
+		"'SEO_GEO_MIGRATION_SANDBOX_MODE'",
+		"'SEO_GEO_MIGRATION_STORAGE_ISOLATED'",
+		"'SEO_GEO_MIGRATION_OUTBOUND_SAFE'",
+		"'SEO_GEO_MIGRATION_BACKUPS_READY'",
+		"'SEO_GEO_MIGRATION_IMPORT_TARGET_AUTHORIZED'",
+		"'pre_option_blog_public'",
+		"'pre_wp_mail'",
+		"'pre_http_request'",
+		"'package-handoff'",
+	) as $local_sandbox_runtime_guard
+) {
+	if ( ! str_contains( $local_sandbox_runtime, $local_sandbox_runtime_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-sandbox-runtime',
+			'Local clone sandbox runtime is missing a Bridge/config/hardening safety guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeBootstrapper.php',
+			$local_sandbox_runtime_guard,
+			'missing'
+		);
+	}
+}
+
+foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(', 'mkdir(', 'rmdir(' ) as $local_sandbox_write_call ) {
+	if ( str_contains( $local_sandbox_runtime, $local_sandbox_write_call ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-sandbox-runtime-workspace-boundary',
+			'Local clone sandbox runtime filesystem writes must remain centralized in ExportWorkspace.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneSandboxRuntimeBootstrapper.php',
+			'ExportWorkspace mutation calls only',
+			$local_sandbox_write_call
+		);
+	}
+}
+
+$local_sandbox_runtime_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalSandboxRuntimeController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_local_sandbox_runtime_advance';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		"'local_clone_sandbox_runtime_confirm'",
+		'$this->runtime->advance( $job_id, $batch_files, $batch_mb * 1024 * 1024 )',
+	) as $local_sandbox_runtime_controller_guard
+) {
+	if ( ! str_contains( $local_sandbox_runtime_controller, $local_sandbox_runtime_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-sandbox-runtime-entrypoint',
+			'Local clone sandbox runtime endpoint must remain administrator/job-nonce/bounded-batch and first-run-confirmation gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalSandboxRuntimeController.php',
+			$local_sandbox_runtime_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $local_sandbox_runtime_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-local-sandbox-runtime-public-endpoint',
+		'Local clone sandbox runtime must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalSandboxRuntimeController.php',
 		'authenticated admin_post action only',
 		'admin_post_nopriv_'
 	);
