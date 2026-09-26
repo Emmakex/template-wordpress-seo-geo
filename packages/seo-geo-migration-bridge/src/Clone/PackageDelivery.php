@@ -114,7 +114,7 @@ final class PackageDelivery {
 	}
 
 	/**
-	 * Start authenticated delivery preparation for one completed export package.
+	 * Start private archive preparation for one completed export/local-clone package.
 	 *
 	 * @param string $job_id Clone job identifier.
 	 * @return array<string,mixed>|null
@@ -128,12 +128,13 @@ final class PackageDelivery {
 			return null;
 		}
 
-		$job     = $this->jobs->get( $job_id );
-		$package = $this->package_store->get( $job_id );
-		$root    = $this->workspace->root_path( $job_id );
+		$job       = $this->jobs->get( $job_id );
+		$package   = $this->package_store->get( $job_id );
+		$root      = $this->workspace->root_path( $job_id );
+		$operation = is_array( $job ) && is_string( $job['operation'] ?? null ) ? $job['operation'] : '';
 		if (
 			! is_array( $job )
-			|| 'export' !== ( $job['operation'] ?? null )
+			|| ! in_array( $operation, array( 'export', 'local-clone' ), true )
 			|| ! is_array( $package )
 			|| 'complete' !== ( $package['status'] ?? null )
 			|| 'complete' !== ( $package['stage'] ?? null )
@@ -160,28 +161,37 @@ final class PackageDelivery {
 			return null;
 		}
 
-		$now                                  = gmdate( DATE_ATOM );
-		$manifest['delivery']                 = array(
-			'format'             => 'zip',
-			'authenticated_only' => true,
-			'public_url'         => false,
-			'retention_hours'    => self::RETENTION_HOURS,
-		);
-		$manifest['safety']['delivery_ready'] = true;
-		$manifest['delivery_prepared_at']     = $now;
+		$now           = gmdate( DATE_ATOM );
+		$manifest_hash = $current_manifest_hash;
 
-		$json = wp_json_encode( $manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
-		if ( ! is_string( $json ) ) {
-			return null;
+		if ( 'export' === $operation ) {
+			$manifest['delivery']                 = array(
+				'format'             => 'zip',
+				'authenticated_only' => true,
+				'public_url'         => false,
+				'retention_hours'    => self::RETENTION_HOURS,
+			);
+			$manifest['safety']['delivery_ready'] = true;
+			$manifest['delivery_prepared_at']     = $now;
+
+			$json = wp_json_encode( $manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+			if ( ! is_string( $json ) ) {
+				return null;
+			}
+
+			$written = $this->workspace->write( $job_id, 'package/manifest.json', $json . "\n" );
+			if ( null === $written ) {
+				return null;
+			}
+
+			$manifest_hash                    = (string) $written['sha256'];
+			$package['package_manifest_hash'] = $manifest_hash;
+			if ( ! $this->package_store->save( $job_id, $package ) ) {
+				return null;
+			}
 		}
 
-		$written = $this->workspace->write( $job_id, 'package/manifest.json', $json . "\n" );
-		if ( null === $written ) {
-			return null;
-		}
-
-		$package['package_manifest_hash'] = (string) $written['sha256'];
-		if ( ! $this->package_store->save( $job_id, $package ) || ! $this->workspace->reset_delivery_archive( $job_id ) ) {
+		if ( ! $this->workspace->reset_delivery_archive( $job_id ) ) {
 			return null;
 		}
 
@@ -199,7 +209,7 @@ final class PackageDelivery {
 			'verified_byte_count'   => 0,
 			'verification_checksum' => hash( 'sha256', self::CHECKSUM_SEED ),
 			'package_checksum'      => (string) ( $package['package_checksum'] ?? '' ),
-			'package_manifest_hash' => (string) $written['sha256'],
+			'package_manifest_hash' => $manifest_hash,
 			'archive_sha256'        => '',
 			'archive_bytes'         => 0,
 			'retention_hours'       => self::RETENTION_HOURS,
