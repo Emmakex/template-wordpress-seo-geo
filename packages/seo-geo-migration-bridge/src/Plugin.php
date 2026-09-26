@@ -18,6 +18,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalTargetPreflightController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -51,6 +52,8 @@ use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerifier;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestorer;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestorer;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -409,6 +412,27 @@ final class Plugin {
 	 * @var AdminCloneLocalDatabaseController|null
 	 */
 	private static ?AdminCloneLocalDatabaseController $local_clone_database_controller = null;
+
+	/**
+	 * Local-clone file staging state store singleton.
+	 *
+	 * @var LocalCloneFileRestoreStateStore|null
+	 */
+	private static ?LocalCloneFileRestoreStateStore $local_clone_file_restore_state_store = null;
+
+	/**
+	 * Local-clone private file staging service singleton.
+	 *
+	 * @var LocalCloneFileRestorer|null
+	 */
+	private static ?LocalCloneFileRestorer $local_clone_file_restorer = null;
+
+	/**
+	 * Local-clone file staging controller singleton.
+	 *
+	 * @var AdminCloneLocalFileController|null
+	 */
+	private static ?AdminCloneLocalFileController $local_clone_file_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -809,6 +833,18 @@ final class Plugin {
 		self::$local_clone_database_controller              ??= new AdminCloneLocalDatabaseController( self::$local_clone_database_restorer );
 		self::$clone_import_file_state_store                ??= new ImportFileStateStore();
 		self::$clone_import_file_restorer                   ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
+		self::$local_clone_file_restore_state_store         ??= new LocalCloneFileRestoreStateStore();
+		self::$local_clone_file_restorer                    ??= new LocalCloneFileRestorer(
+			self::$local_clone_file_restore_state_store,
+			self::$local_clone_package_handoff,
+			self::$local_clone_payload_verifier,
+			self::$local_clone_database_restorer,
+			self::$clone_import_file_restorer,
+			self::$clone_import_file_state_store,
+			self::$clone_import_state_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_file_controller                  ??= new AdminCloneLocalFileController( self::$local_clone_file_restorer );
 		self::$clone_import_file_controller                 ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
 		self::$clone_import_rewrite_state_store             ??= new ImportRewriteStateStore();
 		self::$clone_import_environment_rewriter            ??= new ImportEnvironmentRewriter( self::$clone_import_rewrite_state_store, self::$clone_import_state_store, self::$clone_import_database_state_store, self::$clone_import_file_state_store, self::$clone_import_database_restorer, self::$clone_job_store );
@@ -871,6 +907,7 @@ final class Plugin {
 		self::$local_clone_target_preflight_controller->boot();
 		self::$local_clone_payload_controller->boot();
 		self::$local_clone_database_controller->boot();
+		self::$local_clone_file_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -1080,6 +1117,20 @@ final class Plugin {
 	 */
 	public static function local_clone_database_restorer(): ?LocalCloneDatabaseRestorer {
 		return self::$local_clone_database_restorer;
+	}
+
+	/**
+	 * Return the local-clone file staging state store.
+	 */
+	public static function local_clone_file_restore_state_store(): ?LocalCloneFileRestoreStateStore {
+		return self::$local_clone_file_restore_state_store;
+	}
+
+	/**
+	 * Return the local-clone private file staging service.
+	 */
+	public static function local_clone_file_restorer(): ?LocalCloneFileRestorer {
+		return self::$local_clone_file_restorer;
 	}
 
 	/**

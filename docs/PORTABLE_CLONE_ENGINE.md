@@ -518,9 +518,10 @@ Implementation sequence:
 - **10E.2A.5.3.2.2 — private payload extraction + full checksum replay (complete in 0.8.29):** reuse `ImportPayloadVerifier` on the deterministic child job in bounded file/byte batches, keep extraction inside private job storage, revalidate parent local-clone authority before and after progress, require an exact frozen package checksum plus fresh destination preflight before the child restore gate opens, and revoke that gate if target/package/archive authority drifts;
 - **10E.2A.5.3.2 — target intake + sandbox preflight:** complete through 5.3.2.2;
 - **10E.2A.5.3 — local package handoff + sandbox preflight:** complete through 5.3.2.2;
-- **10E.2A.5.4.1 — transactional database staging restore (0.8.30 candidate):** reuse the accepted 10E.2A.4.3 `ImportDatabaseRestorer` on the bound child job, permit the verified private same-server destination prefix without changing the control-plane WordPress prefix, restore rows only into a deterministic namespace that cannot match either production or future target prefixes, and revalidate parent handoff/payload authority before every mutating batch;
-- **10E.2A.5.4 — isolated local restore:** active through 5.4.1; no active target table or file promotion occurs yet;
-- **10E.2A.5.4.2 — private file staging restore:** next; reuse the accepted 10E.2A.4.4 file staging primitive under the same local-clone parent authority.
+- **10E.2A.5.4.1 — transactional database staging restore (complete in 0.8.30):** reuse the accepted 10E.2A.4.3 `ImportDatabaseRestorer` on the bound child job, permit the verified private same-server destination prefix without changing the control-plane WordPress prefix, restore rows only into a deterministic namespace that cannot match either production or future target prefixes, and revalidate parent handoff/payload authority before every mutating batch;
+- **10E.2A.5.4.2 — private file staging restore (0.8.31 candidate):** reuse the accepted 10E.2A.4.4 `ImportFileRestorer` on the same child job, require completed local database staging, copy uploads/plugins/themes only into private job staging, retain per-file `files-meta` hashes plus an independent verification pass, and prove that target client roots remain unpromoted;
+- **10E.2A.5.4 — isolated local restore:** active through 5.4.2; no active target table activation or client-file promotion occurs yet;
+- **10E.2A.5.5.1 — serialization-safe environment rewrite in staging:** next; reuse the accepted Portable Import environment rewrite primitive against verified staging before activation/promotion.
 
 Deliver:
 
@@ -587,3 +588,6 @@ SEO/GEO Manager absorbs the accepted Portable Clone Engine contracts into its mi
 - privacy;
 - dynamic-data protection;
 - rollback/cleanup boundaries.
+
+
+The 5.4.2 file step reuses `ImportFileRestorer` unchanged for bounded copy and independent verification. The local wrapper accepts it only after 5.4.1 database staging remains verified, binds progress to the frozen handoff/payload authority, and keeps the copied uploads/plugins/themes under the deterministic child private workspace. The target-side guard distinguishes the Migration Bridge control plugin installed during sandbox bootstrap from client payload: uploads and themes must remain absent and no plugin other than `seo-geo-migration-bridge` may appear before promotion. Completion therefore means verified private file staging only; environment rewrite, database activation and client-file promotion remain later explicit gates.
