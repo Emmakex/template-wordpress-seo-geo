@@ -14,6 +14,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPlanController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBootstrapController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalSandboxRuntimeController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -39,6 +40,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalCloneSandboxRuntimeStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneSandboxRuntimeBootstrapper;
+use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -313,6 +316,27 @@ final class Plugin {
 	 * @var AdminCloneLocalSandboxRuntimeController|null
 	 */
 	private static ?AdminCloneLocalSandboxRuntimeController $local_clone_sandbox_runtime_controller = null;
+
+	/**
+	 * Local-clone private package handoff state store singleton.
+	 *
+	 * @var LocalClonePackageHandoffStateStore|null
+	 */
+	private static ?LocalClonePackageHandoffStateStore $local_clone_package_handoff_state_store = null;
+
+	/**
+	 * Local-clone private package handoff service singleton.
+	 *
+	 * @var LocalClonePackageHandoff|null
+	 */
+	private static ?LocalClonePackageHandoff $local_clone_package_handoff = null;
+
+	/**
+	 * Local-clone private package handoff controller singleton.
+	 *
+	 * @var AdminCloneLocalPackageHandoffController|null
+	 */
+	private static ?AdminCloneLocalPackageHandoffController $local_clone_package_handoff_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -660,6 +684,16 @@ final class Plugin {
 		self::$clone_delivery_state_store                   ??= new DeliveryStateStore();
 		self::$clone_package_delivery                       ??= new PackageDelivery( self::$clone_delivery_state_store, self::$clone_package_state_store, self::$clone_inventory_store, self::$clone_export_state_store, self::$clone_file_export_state_store, self::$clone_job_store );
 		self::$clone_delivery_controller                    ??= new AdminCloneDeliveryController( self::$clone_package_delivery );
+		self::$local_clone_package_handoff_state_store      ??= new LocalClonePackageHandoffStateStore();
+		self::$local_clone_package_handoff                  ??= new LocalClonePackageHandoff(
+			self::$local_clone_package_handoff_state_store,
+			self::$local_clone_bootstrapper,
+			self::$local_clone_sandbox_runtime_bootstrapper,
+			self::$clone_package_state_store,
+			self::$clone_package_delivery,
+			self::$clone_job_store
+		);
+		self::$local_clone_package_handoff_controller       ??= new AdminCloneLocalPackageHandoffController( self::$local_clone_package_handoff );
 		self::$clone_import_state_store                     ??= new ImportStateStore();
 		self::$clone_import_preflight                       ??= new ImportPreflight( self::$clone_import_state_store, self::$clone_job_store );
 		self::$clone_import_controller                      ??= new AdminCloneImportController( self::$clone_import_preflight );
@@ -729,6 +763,7 @@ final class Plugin {
 		self::$local_clone_bootstrap_controller->boot();
 		self::$local_clone_runtime_controller->boot();
 		self::$local_clone_sandbox_runtime_controller->boot();
+		self::$local_clone_package_handoff_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -882,6 +917,20 @@ final class Plugin {
 	 */
 	public static function local_clone_sandbox_runtime_bootstrapper(): ?LocalCloneSandboxRuntimeBootstrapper {
 		return self::$local_clone_sandbox_runtime_bootstrapper;
+	}
+
+	/**
+	 * Return the local-clone private package handoff state store.
+	 */
+	public static function local_clone_package_handoff_state_store(): ?LocalClonePackageHandoffStateStore {
+		return self::$local_clone_package_handoff_state_store;
+	}
+
+	/**
+	 * Return the local-clone private package handoff service.
+	 */
+	public static function local_clone_package_handoff(): ?LocalClonePackageHandoff {
+		return self::$local_clone_package_handoff;
 	}
 
 	/**
