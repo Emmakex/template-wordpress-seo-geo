@@ -318,6 +318,7 @@ source scripts/ci/migration-bridge-portable-clone-local-plan-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-local-bootstrap-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-local-runtime-acceptance.sh
 source scripts/ci/migration-bridge-portable-clone-local-sandbox-runtime-acceptance.sh
+source scripts/ci/migration-bridge-portable-clone-local-package-handoff-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-handoff-acceptance.sh
 source scripts/ci/migration-bridge-sandbox-lab-acceptance.sh
 source scripts/ci/migration-bridge-migration-engine-acceptance.sh
