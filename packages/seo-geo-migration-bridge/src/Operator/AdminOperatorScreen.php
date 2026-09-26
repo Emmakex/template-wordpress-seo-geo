@@ -2011,6 +2011,7 @@ final class AdminOperatorScreen {
 			'prepared'       => 'clone_local_file_promotion_prepared',
 			'copying'        => 'clone_local_file_promotion_copying',
 			'candidate-ready' => 'clone_local_file_promotion_candidate_ready',
+			'promoting'      => 'clone_local_file_promotion_promoting',
 			'verifying'      => 'clone_local_file_promotion_verifying',
 			'verified'       => 'clone_local_file_promotion_verified',
 			'rolled-back'    => 'clone_local_file_promotion_rolled_back',
