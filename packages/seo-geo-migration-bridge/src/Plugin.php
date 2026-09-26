@@ -23,6 +23,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFilePromotionController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -66,6 +67,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivator;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromotionStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromoter;
+use SeoGeo\MigrationBridge\Clone\LocalCloneHandoffReportStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneHandoffReporter;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -529,6 +532,27 @@ final class Plugin {
 	 * @var AdminCloneLocalFilePromotionController|null
 	 */
 	private static ?AdminCloneLocalFilePromotionController $local_clone_file_promotion_controller = null;
+
+	/**
+	 * Local-clone final handoff report state singleton.
+	 *
+	 * @var LocalCloneHandoffReportStateStore|null
+	 */
+	private static ?LocalCloneHandoffReportStateStore $local_clone_handoff_report_state_store = null;
+
+	/**
+	 * Local-clone final target reporter singleton.
+	 *
+	 * @var LocalCloneHandoffReporter|null
+	 */
+	private static ?LocalCloneHandoffReporter $local_clone_handoff_reporter = null;
+
+	/**
+	 * Local-clone final handoff controller singleton.
+	 *
+	 * @var AdminCloneLocalHandoffController|null
+	 */
+	private static ?AdminCloneLocalHandoffController $local_clone_handoff_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -1030,6 +1054,17 @@ final class Plugin {
 			self::$clone_job_store
 		);
 		self::$local_clone_file_promotion_controller  ??= new AdminCloneLocalFilePromotionController( self::$local_clone_file_promoter );
+		self::$local_clone_handoff_report_state_store ??= new LocalCloneHandoffReportStateStore();
+		self::$local_clone_handoff_reporter           ??= new LocalCloneHandoffReporter(
+			self::$local_clone_handoff_report_state_store,
+			self::$local_clone_file_promoter,
+			self::$local_clone_database_activation_state_store,
+			self::$clone_import_database_activation_state_store,
+			self::$clone_import_file_promotion_state_store,
+			self::$clone_import_state_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_handoff_controller         ??= new AdminCloneLocalHandoffController( self::$local_clone_handoff_reporter );
 		self::$clone_import_file_promotion_controller ??= new AdminCloneImportFilePromotionController( self::$clone_import_file_promoter );
 
 		self::$incremental_baseline_capture ??= new IncrementalBaselineCapture();
@@ -1060,6 +1095,7 @@ final class Plugin {
 		self::$local_clone_finalization_controller->boot();
 		self::$local_clone_database_activation_controller->boot();
 		self::$local_clone_file_promotion_controller->boot();
+		self::$local_clone_handoff_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -1339,6 +1375,20 @@ final class Plugin {
 	 */
 	public static function local_clone_file_promoter(): ?LocalCloneFilePromoter {
 		return self::$local_clone_file_promoter;
+	}
+
+	/**
+	 * Return the local-clone final handoff report state store.
+	 */
+	public static function local_clone_handoff_report_state_store(): ?LocalCloneHandoffReportStateStore {
+		return self::$local_clone_handoff_report_state_store;
+	}
+
+	/**
+	 * Return the local-clone final target reporter.
+	 */
+	public static function local_clone_handoff_reporter(): ?LocalCloneHandoffReporter {
+		return self::$local_clone_handoff_reporter;
 	}
 
 	/**

@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.5.4 — reversible local file promotion in Migration Bridge 0.8.35.** Migration Bridge 0.8.34 is accepted on `main` at `21000d314e29d423ec971479299ce0c1a6f6f6d0`: the isolated target database activates through one atomic reversible table swap, keeps `blog_public=0` + Migration Bridge control runtime, preserves production WordPress and leaves client files untouched. 0.8.35 reuses the accepted file-promotion planner/promoter under private same-server authority: verified private uploads/plugins/themes are copied into same-filesystem candidates, fingerprinted before swap, promoted only inside the isolated target, re-hashed after activation and kept reversible through rollback siblings. The target `wp_options` runtime is updated directly without mutating source WordPress; file rollback restores the control-runtime layout and makes database rollback available again. Next: final local target smoke/handoff reporting.
+Current execution pointer: **10E.2A.5.5.5 — final local target smoke/handoff reporting in Migration Bridge 0.8.36.** Migration Bridge 0.8.35 is accepted on `main` at `7a6ba11cd9e8c71138e89e8df5f29f7456d30c79`: the verified private uploads/plugins/themes are promoted only inside the isolated target, target plugin/theme runtime is applied through its own `wp_options`, source WordPress remains unchanged, active roots are re-fingerprinted and explicit file + database rollback is proven. 0.8.36 adds a read-only final target reporter that rechecks activated table row counts, destination URLs, `blog_public=0`, plugin/theme runtime, Migration Bridge control files, active file fingerprint, source isolation and rollback availability, then freezes a reproducible handoff SHA-256. Any target drift or rollback invalidates the handoff. Sandbox hardening and rollback remain preserved. Next: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`**.
+
+Migration Bridge v0.8.35 / 10E.2A.5.5.4 acceptance evidence:
+
+- PR #161 squash-merged to `main` as `7a6ba11cd9e8c71138e89e8df5f29f7456d30c79`;
+- Foundation CI `36249310270` passed;
+- Phase 1 Package CI `36249310269` passed;
+- PHP Quality CI `36249310268` passed;
+- WordPress Smoke CI `36249310280` passed, including dynamic resumable payload extraction, reversible target DB activation, private candidate construction, uploads/plugins/themes promotion, exact active fingerprint verification, source-runtime preservation, file rollback and database rollback;
+- Accessibility & Responsive CI `36249310296` passed;
+- Performance Baseline CI `36249310266` passed;
+- Migration Bridge Release CI `36249310261` passed.
 
 Migration Bridge v0.8.34 / 10E.2A.5.5.3 acceptance evidence:
 
