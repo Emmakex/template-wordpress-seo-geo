@@ -396,7 +396,7 @@ final class ExportWorkspace {
 			return false;
 		}
 
-		return wp_mkdir_p( $target ) && is_dir( $target ) && ! is_link( $target );
+		return wp_mkdir_p( $target );
 	}
 
 	/**
