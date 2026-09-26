@@ -1017,7 +1017,11 @@ final class ImportFilePromoter {
 			array( '%s' )
 		);
 
-		return false !== $updated && 1 === $updated;
+		if ( false === $updated ) {
+			return false;
+		}
+
+		return 1 === $updated || $this->local_option_value( $table, $name ) === $value;
 	}
 
 	/**
