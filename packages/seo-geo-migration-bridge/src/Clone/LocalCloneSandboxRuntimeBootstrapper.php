@@ -226,7 +226,7 @@ final class LocalCloneSandboxRuntimeBootstrapper {
 		}
 
 		return match ( $state['stage'] ?? null ) {
-			'bridge-copy'   => $this->advance_bridge_copy( $job_id, $state, $batch_files, $batch_bytes ),
+			'bridge-copy'   => $this->advance_bridge_files( $job_id, $state, $batch_files, $batch_bytes ),
 			'bridge-verify' => $this->advance_bridge_verify( $job_id, $state, $batch_files, $batch_bytes ),
 			'configure'     => $this->configure_target( $job_id, $state ),
 			default         => $this->block( $job_id, $state, 'sandbox-runtime-stage-invalid' ),
@@ -242,7 +242,7 @@ final class LocalCloneSandboxRuntimeBootstrapper {
 	 * @param int                 $batch_bytes Byte budget.
 	 * @return array<string,mixed>|null
 	 */
-	private function advance_bridge_copy( string $job_id, array $state, int $batch_files, int $batch_bytes ): ?array {
+	private function advance_bridge_files( string $job_id, array $state, int $batch_files, int $batch_bytes ): ?array {
 		$source         = (string) $state['bridge_source_root'];
 		$target         = (string) $state['target_path'];
 		$accepted_files = 0;
