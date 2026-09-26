@@ -127,6 +127,7 @@ final class LocalCloneEnvironmentRewriteStateStore {
 			'child_import_job_id'          => $this->bounded_job_id( $state['child_import_job_id'] ?? '' ),
 			'destination_authority_sha256' => $this->normalize_hash( $state['destination_authority_sha256'] ?? '' ),
 			'archive_sha256'               => $this->normalize_hash( $state['archive_sha256'] ?? '' ),
+			'package_manifest_sha256'      => $this->normalize_hash( $state['package_manifest_sha256'] ?? '' ),
 			'package_checksum'             => $this->normalize_hash( $state['package_checksum'] ?? '' ),
 			'database_manifest_sha256'     => $this->normalize_hash( $state['database_manifest_sha256'] ?? '' ),
 			'file_manifest_sha256'         => $this->normalize_hash( $state['file_manifest_sha256'] ?? '' ),
