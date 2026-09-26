@@ -111,7 +111,9 @@ final class LocalCloneHandoffReportStateStore {
 			'file_fingerprint'             => $this->hash( $state['file_fingerprint'] ?? '' ),
 			'active_fingerprint'           => $this->hash( $state['active_fingerprint'] ?? '' ),
 			'target_root_sha256'           => $this->hash( $state['target_root_sha256'] ?? '' ),
+			'target_url'                   => $this->url( $state['target_url'] ?? '' ),
 			'target_url_sha256'            => $this->hash( $state['target_url_sha256'] ?? '' ),
+			'runtime_sha256'               => $this->hash( $state['runtime_sha256'] ?? '' ),
 			'target_table_prefix'          => $this->identifier( $state['target_table_prefix'] ?? '' ),
 			'table_count'                  => max( 0, (int) ( $state['table_count'] ?? 0 ) ),
 			'row_count'                    => max( 0, (int) ( $state['row_count'] ?? 0 ) ),
@@ -151,6 +153,22 @@ final class LocalCloneHandoffReportStateStore {
 	 */
 	private function job_id( mixed $value ): string {
 		return is_string( $value ) && 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * Normalize one HTTP(S) URL.
+	 *
+	 * @param mixed $value Raw URL.
+	 */
+	private function url( mixed $value ): string {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		$value  = substr( $value, 0, 2048 );
+		$scheme = wp_parse_url( $value, PHP_URL_SCHEME );
+
+		return in_array( $scheme, array( 'http', 'https' ), true ) ? $value : '';
 	}
 
 	/**
