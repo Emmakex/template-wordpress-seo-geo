@@ -462,6 +462,45 @@ assert handoff["archive_bytes"] > 0, payload
 assert re.fullmatch(r"[a-f0-9]{64}", handoff["archive_sha256"]), payload
 assert handoff["blockers"] == [], payload
 
+target = payload["target_preflight_state"]
+assert target is not None, payload
+assert target["status"] == "ready", payload
+assert target["preflight_ready"] is True, payload
+assert target["restore_allowed"] is False, payload
+assert target["database_untouched"] is True, payload
+assert target["client_content_untouched"] is True, payload
+assert target["preflight_next"] == "payload-extraction", payload
+assert target["blockers"] == [], payload
+assert re.fullmatch(r"[a-f0-9]{64}", target["destination_authority_sha256"]), payload
+assert target["handoff_archive_sha256"] == handoff["archive_sha256"], payload
+assert target["handoff_archive_bytes"] == handoff["archive_bytes"], payload
+assert target["package_manifest_sha256"] == handoff["package_manifest_hash"], payload
+assert target["package_checksum"] == handoff["package_checksum"], payload
+assert payload["target_preflight_verified"] is True, payload
+assert payload["target_verified_after_mutation"] is False, payload
+assert payload["target_preflight_service_registered"] is True, payload
+
+child = payload["target_preflight_child"]
+assert child is not None, payload
+assert child["status"] == "preflight-ready", payload
+assert child["transport"] == "private-same-server", payload
+assert child["local_handoff_parent_job_id"] == handoff["job_id"], payload
+assert child["destination_home_url"] == handoff["target_url"], payload
+assert child["destination_site_url"] == handoff["target_url"], payload
+assert child["destination_table_prefix"] == handoff["target_table_prefix"], payload
+assert child["destination_mode"] == "subdirectory", payload
+assert child["destination_storage_isolated"] is True, payload
+assert child["search_visibility_disabled"] is True, payload
+assert child["outbound_safe"] is True, payload
+assert child["backups_ready"] is True, payload
+assert child["target_authorized"] is True, payload
+assert child["manifest_contract_valid"] is True, payload
+assert child["child_manifest_hashes_valid"] is True, payload
+assert child["full_payload_verified"] is False, payload
+assert child["restore_allowed"] is False, payload
+assert child["blockers"] == [], payload
+assert "full-payload-checksum-pending" in child["advisories"], payload
+
 delivery = payload["delivery_info_before_tamper"]
 assert delivery is not None, payload
 assert delivery["bytes"] == handoff["archive_bytes"], payload
@@ -497,4 +536,4 @@ PY
   fail_smoke "local-clone-package-handoff" "Local clone private package handoff contract is invalid" "immutable package manifest + private hash-bound ZIP + no target import mutation" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone package handoff OK: private ZIP built from frozen manifest, hash verified, target tables/client content untouched, archive tamper invalidated readiness.\n'
+printf '[smoke] Local clone handoff + target preflight OK: private ZIP frozen, existing import preflight reused against isolated target, restore locked, target mutation/archive tamper invalidated readiness.\n'
