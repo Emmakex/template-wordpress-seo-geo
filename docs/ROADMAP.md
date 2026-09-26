@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.2.2.2 — Migration Bridge runtime + isolated configuration + enforced sandbox hardening in Migration Bridge 0.8.26.** Migration Bridge 0.8.25 is accepted on `main` at `3be6a7abbd3176e98a95307dd16fb2b60e1285e1`: the job-owned target now contains a bounded, independently verified WordPress core runtime while `wp-content`, `wp-config.php` and target database tables remain untouched. 0.8.26 installs/verifies only the Migration Bridge control runtime, generates an isolated same-database/different-prefix `wp-config.php`, and installs an always-on MU-plugin that forces noindex/noarchive, blocks outbound mail and external HTTP outside the sandbox path, disables cron/updates and exposes the exact sandbox markers required by Portable Import. Client uploads/themes and destination tables remain absent until the next pointer: **10E.2A.5.3 — local package handoff + sandbox preflight**.
+Current execution pointer: **10E.2A.5.3.1 — private same-server package handoff in Migration Bridge 0.8.27.** Migration Bridge 0.8.26 is accepted on `main` at `dc782712540056f61113bcd15af3e28c0710f04b`: the isolated target now has verified WordPress core, Migration Bridge, same-database/different-prefix configuration and active sandbox hardening while client uploads/themes and destination tables remain absent. 0.8.27 reuses the existing private ZIP builder to assemble the already verified `local-clone` workspace into a same-server handoff artifact **without changing the frozen package manifest/hash contract** or exposing a public/download transport. Every batch revalidates ownership, sandbox control-file hashes and package identity; completion freezes archive bytes/SHA-256 and advances only to **10E.2A.5.3.2 — target intake + sandbox preflight**.
+
+Migration Bridge v0.8.26 / 10E.2A.5.2.2.2 acceptance evidence:
+
+- PR #151 squash-merged to `main` as `dc782712540056f61113bcd15af3e28c0710f04b`;
+- Foundation CI `36220173552` passed;
+- Phase 1 Package CI `36220173550` passed;
+- PHP Quality CI `36220173538` passed;
+- WordPress Smoke CI `36220173527` passed, including Bridge copy/reverification, isolated config/MU hardening, secret-free state, zero target client tables/content and post-completion control-file tamper invalidation;
+- Accessibility & Responsive CI `36220173548` passed;
+- Performance Baseline CI `36220173549` passed;
+- Migration Bridge Release CI `36220173529` passed.
 
 Migration Bridge v0.8.25 / 10E.2A.5.2.2.1 acceptance evidence:
 
@@ -2351,7 +2362,7 @@ Migration Bridge v0.8.7 acceptance evidence:
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 through 10E.2A.5.2.2.1 accepted; 10E.2A.5.2.2.2 isolated Migration Bridge/config/hardening runtime is the 0.8.26 candidate**
+Status: **active — 10E.2A.1 through 10E.2A.5.2.2.2 accepted; 10E.2A.5.3.1 private same-server package handoff is the 0.8.27 candidate**
 
 Purpose:
 
@@ -2384,10 +2395,12 @@ Implementation sequence:
 - **10E.2A.5.1 — Local clone destination plan + ownership contract**: complete in 0.8.23; PR #147 merged as `0da6ec5ed055ada635ad750cd684b7e76982205c`, binding a verified package to an immutable isolated same-server path/URL/table-prefix/capacity contract with zero target mutation;
 - **10E.2A.5.2.1 — Target ownership + recovery marker**: complete in 0.8.24; PR #148 squash-merged as `04f022d63f88f4fea48ad916ce3cc707a89adc77`, with immutable-plan/package revalidation, deterministic ownership marker, safe empty-target release and tamper rejection;
 - **10E.2A.5.2.2.1 — Resumable WordPress core runtime copy**: complete in 0.8.25; PR #149 merged as `3be6a7abbd3176e98a95307dd16fb2b60e1285e1`, with core-only allowlist copy, centralized `ExportWorkspace` mutations, `wp-content`/`wp-config.php` exclusion and an independent topology/bytes/SHA-256 verification pass before `runtime_core_ready=true`;
-- **10E.2A.5.2.2.2 — Migration Bridge runtime + isolated configuration + enforced sandbox hardening**: active in 0.8.26; copy/verify only Migration Bridge control files, generate same-database/different-prefix `wp-config.php` without persisting DB secrets, install an MU-plugin that forces noindex and blocks outbound mail/external HTTP outside the sandbox path, and expose a re-verifiable readiness snapshot while leaving client content and target tables absent;
-- **10E.2A.5.2.2 — Bounded independent WordPress runtime + sandbox config/hardening**: active through 5.2.2.2;
-- **10E.2A.5.2 — Isolated target bootstrap**: active through 5.2.2.2;
-- **10E.2A.5.3 — Local package handoff + sandbox preflight**: planned; hand the verified package to the existing import pipeline in the target runtime and require sandbox hardening/readiness before completion;
+- **10E.2A.5.2.2.2 — Migration Bridge runtime + isolated configuration + enforced sandbox hardening**: complete in 0.8.26; PR #151 squash-merged as `dc782712540056f61113bcd15af3e28c0710f04b`, with independently verified Bridge control runtime, same-database/different-prefix config, active noindex/outbound hardening and control-file tamper invalidation while client content/target tables remain absent;
+- **10E.2A.5.2.2 — Bounded independent WordPress runtime + sandbox config/hardening**: complete through 5.2.2.2;
+- **10E.2A.5.2 — Isolated target bootstrap**: complete through 5.2.2.2;
+- **10E.2A.5.3.1 — Private same-server package handoff**: active in 0.8.27; reuse the existing private ZIP builder for the verified `local-clone` workspace without rewriting the frozen package manifest, keep the job active, bind archive SHA-256/bytes to ownership + sandbox hashes + package identity and expose no public/download transport;
+- **10E.2A.5.3.2 — Target intake + sandbox preflight**: planned; make the private handoff artifact consumable by the isolated target through the accepted Portable Import validation/extraction primitives and require a fresh sandbox preflight before any database/file restore;
+- **10E.2A.5.3 — Local package handoff + sandbox preflight**: active through 5.3.1;
 - **10E.2A.5 — Local clone orchestration**: active; direct production → isolated same-server clone using the same export/import primitives, including `/nuevaweb/`;
 - **10E.2A.6 — Emmake real clone acceptance**: create/verify the actual `emmake.com/nuevaweb/` clone, preserve baseline/dependency/review evidence and require sandbox `ready=true`.
 
