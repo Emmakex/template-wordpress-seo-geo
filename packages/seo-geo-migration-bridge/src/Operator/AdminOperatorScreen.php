@@ -22,6 +22,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseActivationController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFilePromotionController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -53,6 +54,7 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseActivationStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromotionStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -169,6 +171,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_local_rewrite_result_notice(); ?>
 			<?php $this->render_clone_local_finalization_result_notice(); ?>
 			<?php $this->render_clone_local_database_activation_result_notice(); ?>
+			<?php $this->render_clone_local_file_promotion_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -1978,6 +1981,7 @@ final class AdminOperatorScreen {
 			</form>
 		<?php elseif ( 'activated' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_next' ) ); ?></p>
+			<?php $this->render_clone_local_file_promotion_section( $job ); ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalDatabaseActivationController::ACTION ); ?>">
 				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
@@ -1989,6 +1993,129 @@ final class AdminOperatorScreen {
 			</form>
 		<?php elseif ( 'rolled-back' === $status ) : ?>
 			<p class="notice notice-warning inline"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_rolled_back_next' ) ); ?></p>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render local file-promotion result notice.
+	 */
+	private function render_clone_local_file_promotion_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_file_promotion'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_file_promotion'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'prepared'       => 'clone_local_file_promotion_prepared',
+			'copying'        => 'clone_local_file_promotion_copying',
+			'candidate-ready' => 'clone_local_file_promotion_candidate_ready',
+			'verifying'      => 'clone_local_file_promotion_verifying',
+			'verified'       => 'clone_local_file_promotion_verified',
+			'rolled-back'    => 'clone_local_file_promotion_rolled_back',
+			'blocked'        => 'clone_local_file_promotion_blocked',
+			default          => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status
+			? 'notice notice-error'
+			: ( 'rolled-back' === $status ? 'notice notice-warning' : ( 'verified' === $status ? 'notice notice-success' : 'notice notice-info' ) );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render reversible local file-promotion controls.
+	 *
+	 * @param array<string,mixed> $job Parent local-clone job.
+	 */
+	private function render_clone_local_file_promotion_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneFilePromotionStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_child_job' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['child_import_job_id'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['file_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_bytes' ) ); ?></th><td><?php echo esc_html( size_format( (int) ( $state['byte_count'] ?? 0 ) ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_verified_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['verify_file_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_plan_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['activation_plan_hash'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_rollback' ) ); ?></th><td><?php echo esc_html( true === ( $state['rollback_available'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_handoff' ) ); ?></th><td><?php echo esc_html( true === ( $state['handoff_ready'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_source_safe' ) ); ?></th><td><?php echo esc_html( true === ( $state['source_untouched'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next_label' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['promotion_next'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php
+		$step = match ( $status ) {
+			'pending'                      => 'prepare',
+			'prepared', 'copying'          => 'copy',
+			'candidate-ready'              => 'promote',
+			'promoting', 'verifying'       => 'verify',
+			default                        => '',
+		};
+		?>
+		<?php if ( '' !== $step ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalFilePromotionController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<input type="hidden" name="local_clone_file_promotion_step" value="<?php echo esc_attr( $step ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalFilePromotionController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php if ( in_array( $step, array( 'copy', 'verify' ), true ) ) : ?>
+					<p>
+						<label><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_batch_files' ) ); ?>
+							<select name="local_clone_file_promotion_batch_files">
+								<?php foreach ( array( 10, 20, 50, 100, 200, 500 ) as $size ) : ?>
+									<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( ImportFilePromoter::DEFAULT_BATCH_FILES, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+						<label><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_batch_mb' ) ); ?>
+							<select name="local_clone_file_promotion_batch_megabytes">
+								<?php foreach ( array( 4, 8, 16, 32, 64, 128 ) as $mb ) : ?>
+									<option value="<?php echo esc_attr( (string) $mb ); ?>" <?php selected( 16, $mb ); ?>><?php echo esc_html( (string) $mb ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					</p>
+				<?php endif; ?>
+				<?php if ( 'promote' === $step ) : ?>
+					<p><label><input type="checkbox" name="local_clone_file_promotion_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_confirm' ) ); ?></label></p>
+				<?php endif; ?>
+				<?php submit_button( $this->copy->text( 'clone_local_file_promotion_' . $step . '_button' ), 'promote' === $step ? 'primary' : 'secondary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'verified' === $status ) : ?>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_next' ) ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalFilePromotionController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<input type="hidden" name="local_clone_file_promotion_step" value="rollback">
+				<?php wp_nonce_field( AdminCloneLocalFilePromotionController::NONCE_ACTION . ':' . $job_id ); ?>
+				<p><label><input type="checkbox" name="local_clone_file_promotion_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_rollback_confirm' ) ); ?></label></p>
+				<?php submit_button( $this->copy->text( 'clone_local_file_promotion_rollback_button' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php elseif ( 'rolled-back' === $status ) : ?>
+			<p class="notice notice-warning inline"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_rolled_back_next' ) ); ?></p>
 		<?php endif; ?>
 		<?php
 	}
