@@ -63,6 +63,13 @@ final class ImportFilePromoter {
 	private ExportWorkspace $workspace;
 
 	/**
+	 * Child import state.
+	 *
+	 * @var ImportStateStore
+	 */
+	private ImportStateStore $import_state;
+
+	/**
 	 * Construct the reversible file promoter.
 	 *
 	 * @param ImportFilePromotionStateStore|null      $store               Optional promotion journal.
@@ -70,19 +77,22 @@ final class ImportFilePromoter {
 	 * @param ImportDatabaseActivationStateStore|null $database_activation Optional database activation journal.
 	 * @param CloneJobStore|null                      $jobs                Optional clone job store.
 	 * @param ExportWorkspace|null                    $workspace           Optional filesystem mutation boundary.
+	 * @param ImportStateStore|null                   $import_state        Optional child import state.
 	 */
 	public function __construct(
 		?ImportFilePromotionStateStore $store = null,
 		?ImportFilePromotionPlanner $planner = null,
 		?ImportDatabaseActivationStateStore $database_activation = null,
 		?CloneJobStore $jobs = null,
-		?ExportWorkspace $workspace = null
+		?ExportWorkspace $workspace = null,
+		?ImportStateStore $import_state = null
 	) {
 		$this->store               = $store ?? new ImportFilePromotionStateStore();
 		$this->database_activation = $database_activation ?? new ImportDatabaseActivationStateStore();
 		$this->planner             = $planner ?? new ImportFilePromotionPlanner( $this->store, $this->database_activation );
 		$this->jobs                = $jobs ?? new CloneJobStore();
 		$this->workspace           = $workspace ?? new ExportWorkspace();
+		$this->import_state        = $import_state ?? new ImportStateStore();
 	}
 
 	/**
@@ -311,7 +321,7 @@ final class ImportFilePromoter {
 			}
 		}
 
-		if ( ! $this->apply_runtime( $state['runtime_target'] ?? array() ) ) {
+		if ( ! $this->apply_runtime( $job_id, $state['runtime_target'] ?? array() ) ) {
 			return $this->rollback_internal( $job_id, $state, 'file-promotion-source-runtime-activate-failed' );
 		}
 
@@ -545,7 +555,7 @@ final class ImportFilePromoter {
 			|| (int) $state['verify_byte_count'] !== $expected_bytes
 			|| ! $this->same_hash( $state['active_fingerprint'] ?? '', $state['file_fingerprint'] ?? '' )
 			|| ! $this->runtime_ready( $job_id, $state )
-			|| ! $this->runtime_matches( $state['runtime_target'] ?? array() )
+			|| ! $this->runtime_matches( $job_id, $state['runtime_target'] ?? array() )
 		) {
 			return $this->rollback_internal( $job_id, $state, 'file-promotion-final-integrity-failed' );
 		}
@@ -632,7 +642,7 @@ final class ImportFilePromoter {
 			$state['roots'][ $index ]['rollback_ready'] = false;
 		}
 
-		if ( ! $this->apply_runtime( $state['runtime_before'] ?? array() ) ) {
+		if ( ! $this->apply_runtime( $job_id, $state['runtime_before'] ?? array() ) ) {
 			return $this->block( $job_id, $state, 'file-promotion-rollback-runtime-restore-failed' );
 		}
 
@@ -687,7 +697,7 @@ final class ImportFilePromoter {
 			&& $authorized
 			&& ( 'subdirectory' !== SandboxGuard::mode() || SandboxGuard::storage_isolated() )
 			&& '0' === (string) get_option( 'blog_public', '1' )
-			&& $this->options_runtime_schema_ready();
+			&& $this->options_runtime_schema_ready( $job_id );
 	}
 
 	/**
