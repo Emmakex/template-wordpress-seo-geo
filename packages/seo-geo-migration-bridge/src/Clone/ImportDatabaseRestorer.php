@@ -199,14 +199,9 @@ final class ImportDatabaseRestorer {
 		$source   = is_array( $manifest['source'] ?? null ) ? $manifest['source'] : array();
 		$tables   = is_array( $manifest['tables'] ?? null ) ? array_values( $manifest['tables'] ) : array();
 
-		global $wpdb;
-		if ( ! $wpdb instanceof wpdb ) {
-			return null;
-		}
-
 		$source_prefix      = is_string( $source['table_prefix'] ?? null ) ? $source['table_prefix'] : '';
-		$destination_prefix = $wpdb->prefix;
-		$namespace          = $this->staging_namespace( $job_id, $destination_prefix );
+		$destination_prefix = $this->restore_destination_prefix( $fresh );
+		$namespace          = $this->staging_namespace( $job_id, $destination_prefix, $fresh );
 		if (
 			'' === $source_prefix
 			|| (string) ( $fresh['source_table_prefix'] ?? '' ) !== $source_prefix
@@ -622,12 +617,12 @@ final class ImportDatabaseRestorer {
 			return null;
 		}
 
-		global $wpdb;
+		$destination_prefix = $this->restore_destination_prefix( $fresh );
 		if (
-			! $wpdb instanceof wpdb
-			|| (string) ( $state['destination_prefix'] ?? '' ) !== $wpdb->prefix
+			'' === $destination_prefix
+			|| (string) ( $state['destination_prefix'] ?? '' ) !== $destination_prefix
 			|| (string) ( $fresh['source_table_prefix'] ?? '' ) !== (string) ( $state['source_prefix'] ?? '' )
-			|| (string) ( $fresh['destination_table_prefix'] ?? '' ) !== (string) ( $state['destination_prefix'] ?? '' )
+			|| (string) ( $fresh['destination_table_prefix'] ?? '' ) !== $destination_prefix
 			|| ! $this->options_table_transactional()
 		) {
 			return null;
@@ -948,19 +943,82 @@ final class ImportDatabaseRestorer {
 	}
 
 	/**
+	 * Resolve the destination table prefix for the current restore runtime.
+	 *
+	 * Normal Portable Import still requires the active WordPress prefix. A verified
+	 * private same-server handoff may target its isolated sibling prefix without
+	 * mutating the control-plane WordPress runtime prefix.
+	 *
+	 * @param array<string,mixed> $fresh Fresh import preflight state.
+	 */
+	private function restore_destination_prefix( array $fresh ): string {
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb ) {
+			return '';
+		}
+
+		$prefix = is_string( $fresh['destination_table_prefix'] ?? null )
+			? $fresh['destination_table_prefix']
+			: '';
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $prefix ) ) {
+			return '';
+		}
+
+		$local_handoff = 'private-same-server' === ( $fresh['transport'] ?? null )
+			&& is_string( $fresh['local_handoff_parent_job_id'] ?? null )
+			&& '' !== $fresh['local_handoff_parent_job_id'];
+
+		if ( $local_handoff ) {
+			return $prefix !== $wpdb->prefix ? $prefix : '';
+		}
+
+		return $prefix === $wpdb->prefix ? $prefix : '';
+	}
+
+	/**
 	 * Build one job-owned staging namespace.
 	 *
-	 * @param string $job_id             Clone job identifier.
-	 * @param string $destination_prefix Destination prefix.
+	 * Normal imports preserve the existing destination-prefixed namespace. Local
+	 * same-server restores deliberately use a separate namespace that cannot match
+	 * either the production prefix or the future isolated target prefix, so fresh
+	 * local target preflight continues to see zero active destination tables.
+	 *
+	 * @param string              $job_id             Clone job identifier.
+	 * @param string              $destination_prefix Destination prefix.
+	 * @param array<string,mixed> $fresh              Fresh import preflight state.
 	 */
-	private function staging_namespace( string $job_id, string $destination_prefix ): string {
+	private function staging_namespace( string $job_id, string $destination_prefix, array $fresh ): string {
 		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $destination_prefix ) ) {
 			return '';
 		}
 
-		$namespace = $destination_prefix . 'sgm_' . substr( hash( 'sha256', $job_id ), 0, 10 ) . '_';
+		$local_handoff = 'private-same-server' === ( $fresh['transport'] ?? null )
+			&& is_string( $fresh['local_handoff_parent_job_id'] ?? null )
+			&& '' !== $fresh['local_handoff_parent_job_id'];
 
-		return 47 >= strlen( $namespace ) ? $namespace : '';
+		if ( ! $local_handoff ) {
+			$namespace = $destination_prefix . 'sgm_' . substr( hash( 'sha256', $job_id ), 0, 10 ) . '_';
+
+			return 47 >= strlen( $namespace ) ? $namespace : '';
+		}
+
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb ) {
+			return '';
+		}
+
+		$hash = substr( hash( 'sha256', $job_id ), 0, 10 );
+		foreach ( range( 'a', 'z' ) as $lead ) {
+			$namespace = $lead . 'sgml_' . $hash . '_';
+			if (
+				! str_starts_with( $namespace, $wpdb->prefix )
+				&& ! str_starts_with( $namespace, $destination_prefix )
+			) {
+				return $namespace;
+			}
+		}
+
+		return '';
 	}
 
 	/**
