@@ -869,6 +869,9 @@ $active_home_after_activation    = (string) get_option( 'home', '' );
 $active_siteurl_after_activation = (string) get_option( 'siteurl', '' );
 
 $local_database_activation_rolled_back = $local_activation->rollback( $job_id );
+$database_activation_child_after_rollback = '' !== $payload_child_id
+	? ( new ImportDatabaseActivationStateStore() )->get( $payload_child_id )
+	: null;
 $target_tables_after_activation_rollback = $GLOBALS['wpdb']->get_col(
 	$GLOBALS['wpdb']->prepare(
 		'SHOW TABLES LIKE %s',
@@ -1061,6 +1064,7 @@ echo wp_json_encode(
 		'active_home_after_activation' => $active_home_after_activation,
 		'active_siteurl_after_activation' => $active_siteurl_after_activation,
 		'local_database_activation_rolled_back' => $local_database_activation_rolled_back,
+		'database_activation_child_after_rollback' => $database_activation_child_after_rollback,
 		'target_table_count_after_activation_rollback' => is_array( $target_tables_after_activation_rollback ) ? count( $target_tables_after_activation_rollback ) : -1,
 		'staging_options_after_activation_rollback' => $staging_options_after_activation_rollback,
 		'staging_posts_after_activation_rollback' => $staging_posts_after_activation_rollback,
