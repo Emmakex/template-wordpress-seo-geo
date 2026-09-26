@@ -897,8 +897,6 @@ add_filter(
 		$home_host = wp_parse_url( $home_url, PHP_URL_HOST );
 		$home_path = wp_parse_url( $home_url, PHP_URL_PATH );
 
-		$is_loopback = is_string( $host )
-			&& in_array( strtolower( $host ), array( 'localhost', '127.0.0.1', '::1' ), true );
 		$is_sandbox_path = is_string( $host )
 			&& is_string( $home_host )
 			&& strtolower( $host ) === strtolower( $home_host )
@@ -909,7 +907,7 @@ add_filter(
 				trailingslashit( '/' . trim( $home_path, '/' ) )
 			);
 
-		if ( $is_loopback || $is_sandbox_path ) {
+		if ( $is_sandbox_path ) {
 			return $preempt;
 		}
 
