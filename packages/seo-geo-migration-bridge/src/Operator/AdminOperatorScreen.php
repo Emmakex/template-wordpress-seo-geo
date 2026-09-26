@@ -43,7 +43,6 @@ use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
-use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerifier;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -1457,7 +1456,7 @@ final class AdminOperatorScreen {
 
 		<?php if ( 'ready' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_payload_next' ) ); ?></p>
-		<?php elseif ( 'blocked' !== $status ) : ?>
+		<?php else : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalPayloadController::ACTION ); ?>">
 				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
