@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.3.2.2 — private payload extraction + full checksum replay in Migration Bridge 0.8.29.** Migration Bridge 0.8.28 is accepted on `main` at `79f143483c141a03c608e71bc4fe25eef0441b25`: the private same-server handoff now reaches a deterministic child `import` job whose archive/manifests and isolated destination authority pass the existing Portable Import preflight while `restore_allowed=false` and target tables/uploads/themes remain absent. 0.8.29 reuses `ImportPayloadVerifier` for bounded private extraction and exact package-checksum replay, while the parent local-clone state revalidates target/package/archive authority before and after every batch. Only a complete checksum match plus fresh destination preflight may expose **`restore_allowed=true` on the child import job**; this microphase still performs no destination restore. Any parent-authority drift blocks local orchestration and revokes the child restore gate. Next: **10E.2A.5.4.1 — transactional database staging restore**, reusing the accepted Portable Import database restore primitive.
+Current execution pointer: **10E.2A.5.4.1 — transactional database staging restore in Migration Bridge 0.8.30.** Migration Bridge 0.8.29 is accepted on `main` at `68727f84a7def84038ee7f664f879f6eda2efd28`: private payload extraction is resumable, the frozen package checksum is replayed exactly, recovery after temporary destination drift is proven, and archive tamper revokes restore eligibility. 0.8.30 reuses the accepted `ImportDatabaseRestorer` on that verified child import job. Normal Portable Import behavior remains unchanged; only a bound `private-same-server` child may restore toward the isolated `/nuevaweb/` prefix while the source WordPress remains the control plane. Database rows are written exclusively into a deterministic job-owned staging namespace that matches neither the production prefix nor the future target prefix, so production and active `/nuevaweb/` tables remain untouched. Every mutating batch revalidates parent handoff/payload authority and revokes child eligibility on drift. Next: **10E.2A.5.4.2 — private file staging restore**.
+
+Migration Bridge v0.8.29 / 10E.2A.5.3.2.2 acceptance evidence:
+
+- PR #155 squash-merged to `main` as `68727f84a7def84038ee7f664f879f6eda2efd28`;
+- Foundation CI `36225557084` passed;
+- Phase 1 Package CI `36225557130` passed;
+- PHP Quality CI `36225557148` passed;
+- WordPress Smoke CI `36225557104` passed, including resumable private extraction, exact checksum replay, recovery after temporary destination drift and restore-gate revocation after parent archive tamper;
+- Accessibility & Responsive CI `36225557094` passed;
+- Performance Baseline CI `36225557088` passed;
+- Migration Bridge Release CI `36225557097` passed.
 
 Migration Bridge v0.8.28 / 10E.2A.5.3.2.1 acceptance evidence:
 

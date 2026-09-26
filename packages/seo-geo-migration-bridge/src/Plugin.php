@@ -17,6 +17,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalSandboxRuntimeController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalTargetPreflightController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -48,6 +49,8 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflight;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerifier;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestorer;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -385,6 +388,27 @@ final class Plugin {
 	 * @var AdminCloneLocalPayloadController|null
 	 */
 	private static ?AdminCloneLocalPayloadController $local_clone_payload_controller = null;
+
+	/**
+	 * Local-clone database staging state store singleton.
+	 *
+	 * @var LocalCloneDatabaseRestoreStateStore|null
+	 */
+	private static ?LocalCloneDatabaseRestoreStateStore $local_clone_database_restore_state_store = null;
+
+	/**
+	 * Local-clone transactional database staging service singleton.
+	 *
+	 * @var LocalCloneDatabaseRestorer|null
+	 */
+	private static ?LocalCloneDatabaseRestorer $local_clone_database_restorer = null;
+
+	/**
+	 * Local-clone database staging controller singleton.
+	 *
+	 * @var AdminCloneLocalDatabaseController|null
+	 */
+	private static ?AdminCloneLocalDatabaseController $local_clone_database_controller = null;
 
 	/**
 	 * Portable Clone export-state store singleton.
@@ -772,6 +796,17 @@ final class Plugin {
 		self::$clone_import_database_state_store            ??= new ImportDatabaseStateStore();
 		self::$clone_import_database_restorer               ??= new ImportDatabaseRestorer( self::$clone_import_database_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_database_controller             ??= new AdminCloneImportDatabaseController( self::$clone_import_database_restorer );
+		self::$local_clone_database_restore_state_store     ??= new LocalCloneDatabaseRestoreStateStore();
+		self::$local_clone_database_restorer                ??= new LocalCloneDatabaseRestorer(
+			self::$local_clone_database_restore_state_store,
+			self::$local_clone_package_handoff,
+			self::$local_clone_payload_verifier,
+			self::$clone_import_database_restorer,
+			self::$clone_import_database_state_store,
+			self::$clone_import_state_store,
+			self::$clone_job_store
+		);
+		self::$local_clone_database_controller              ??= new AdminCloneLocalDatabaseController( self::$local_clone_database_restorer );
 		self::$clone_import_file_state_store                ??= new ImportFileStateStore();
 		self::$clone_import_file_restorer                   ??= new ImportFileRestorer( self::$clone_import_file_state_store, self::$clone_import_state_store, self::$clone_import_payload_state_store, self::$clone_import_database_state_store, self::$clone_job_store, self::$clone_import_preflight );
 		self::$clone_import_file_controller                 ??= new AdminCloneImportFileController( self::$clone_import_file_restorer );
@@ -835,6 +870,7 @@ final class Plugin {
 		self::$local_clone_package_handoff_controller->boot();
 		self::$local_clone_target_preflight_controller->boot();
 		self::$local_clone_payload_controller->boot();
+		self::$local_clone_database_controller->boot();
 		self::$clone_database_export_controller->boot();
 		self::$clone_file_export_controller->boot();
 		self::$clone_package_controller->boot();
@@ -1030,6 +1066,20 @@ final class Plugin {
 	 */
 	public static function local_clone_payload_verifier(): ?LocalClonePayloadVerifier {
 		return self::$local_clone_payload_verifier;
+	}
+
+	/**
+	 * Return the local-clone database staging state store.
+	 */
+	public static function local_clone_database_restore_state_store(): ?LocalCloneDatabaseRestoreStateStore {
+		return self::$local_clone_database_restore_state_store;
+	}
+
+	/**
+	 * Return the local-clone transactional database staging service.
+	 */
+	public static function local_clone_database_restorer(): ?LocalCloneDatabaseRestorer {
+		return self::$local_clone_database_restorer;
 	}
 
 	/**
