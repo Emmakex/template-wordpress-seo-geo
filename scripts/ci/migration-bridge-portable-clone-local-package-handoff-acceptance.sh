@@ -756,6 +756,8 @@ if ( is_array( $payload_child_import ) && is_array( $target_preflight_state ) ) 
 }
 
 $target_verified_after_mutation = null;
+$local_finalization_verified_after_mutation = null;
+$local_finalization_after_mutation = null;
 $local_rewrite_verified_after_mutation = null;
 $local_rewrite_after_mutation = null;
 $local_payload_verified_after_mutation = null;
@@ -764,6 +766,8 @@ $payload_child_after_mutation = null;
 $created_table = $target_prefix . 'tamper_guard';
 $GLOBALS['wpdb']->query( "CREATE TABLE {$created_table} (id bigint unsigned NOT NULL)" );
 $target_verified_after_mutation = $target_preflight->verified_snapshot( $job_id );
+$local_finalization_verified_after_mutation = $local_finalizer->verified_snapshot( $job_id );
+$local_finalization_after_mutation = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
 $local_rewrite_verified_after_mutation = $local_rewriter->verified_snapshot( $job_id );
 $local_rewrite_after_mutation = $local_rewriter->advance( $job_id, 1 );
 $local_payload_verified_after_mutation = $local_payload->verified_snapshot( $job_id );
@@ -782,6 +786,10 @@ $local_files_verified_after_recovery = $local_files->verified_snapshot( $job_id 
 $local_rewrite_verified_before_recovery = $local_rewriter->verified_snapshot( $job_id );
 $local_rewrite_after_recovery = $local_rewriter->advance( $job_id, 1 );
 $local_rewrite_verified_after_recovery = $local_rewriter->verified_snapshot( $job_id );
+$local_finalization_verified_before_recovery = $local_finalizer->verified_snapshot( $job_id );
+$local_finalization_after_recovery = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
+$local_finalization_verified_after_recovery = $local_finalizer->verified_snapshot( $job_id );
+$local_activation_plan_after_recovery = $local_finalizer->activation_plan_snapshot( $job_id );
 $job_after_recovery = $jobs->get( $job_id );
 
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
@@ -789,6 +797,8 @@ if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$local_finalization_verified_after_archive_tamper = $local_finalizer->verified_snapshot( $job_id );
+$local_finalization_after_archive_tamper = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
 $local_rewrite_verified_after_archive_tamper = $local_rewriter->verified_snapshot( $job_id );
 $local_rewrite_after_archive_tamper = $local_rewriter->advance( $job_id, 1 );
 $local_files_verified_after_archive_tamper = $local_files->verified_snapshot( $job_id );
@@ -831,6 +841,13 @@ $rewrite_autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalCloneEnvironmentRewriteStateStore::OPTION_NAME
+	)
+);
+
+$finalization_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneFinalizationPlanStateStore::OPTION_NAME
 	)
 );
 
@@ -893,8 +910,19 @@ echo wp_json_encode(
 		'local_rewrite_state'         => $local_rewrite_state,
 		'local_rewrite_verified'      => is_array( $local_rewrite_verified ),
 		'rewrite_child_state'         => $rewrite_child_state,
+		'local_finalization_mid'      => $local_finalization_mid,
+		'local_finalization_state'    => $local_finalization_state,
+		'local_finalization_verified' => is_array( $local_finalization_verified ),
+		'local_activation_plan'       => $local_activation_plan,
+		'finalization_child_state'    => $finalization_child_state,
+		'target_upload_absent_after_finalization' => $target_upload_absent_after_finalization,
+		'target_plugin_absent_after_finalization' => $target_plugin_absent_after_finalization,
+		'target_theme_absent_after_finalization' => $target_theme_absent_after_finalization,
+		'target_bridge_present_after_finalization' => $target_bridge_present_after_finalization,
 		'job_before_mutation'         => $job_before_mutation,
 		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
+		'local_finalization_verified_after_mutation' => is_array( $local_finalization_verified_after_mutation ),
+		'local_finalization_after_mutation' => $local_finalization_after_mutation,
 		'local_rewrite_verified_after_mutation' => is_array( $local_rewrite_verified_after_mutation ),
 		'local_rewrite_after_mutation' => $local_rewrite_after_mutation,
 		'local_payload_verified_after_mutation' => is_array( $local_payload_verified_after_mutation ),
@@ -910,11 +938,17 @@ echo wp_json_encode(
 		'local_rewrite_verified_before_recovery' => is_array( $local_rewrite_verified_before_recovery ),
 		'local_rewrite_after_recovery' => $local_rewrite_after_recovery,
 		'local_rewrite_verified_after_recovery' => is_array( $local_rewrite_verified_after_recovery ),
+		'local_finalization_verified_before_recovery' => is_array( $local_finalization_verified_before_recovery ),
+		'local_finalization_after_recovery' => $local_finalization_after_recovery,
+		'local_finalization_verified_after_recovery' => is_array( $local_finalization_verified_after_recovery ),
+		'local_activation_plan_after_recovery' => $local_activation_plan_after_recovery,
 		'payload_child_after_recovery' => $payload_child_after_recovery,
 		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
+		'local_finalization_verified_after_archive_tamper' => is_array( $local_finalization_verified_after_archive_tamper ),
+		'local_finalization_after_archive_tamper' => $local_finalization_after_archive_tamper,
 		'local_rewrite_verified_after_archive_tamper' => is_array( $local_rewrite_verified_after_archive_tamper ),
 		'local_rewrite_after_archive_tamper' => $local_rewrite_after_archive_tamper,
 		'local_files_verified_after_archive_tamper' => is_array( $local_files_verified_after_archive_tamper ),
@@ -950,12 +984,16 @@ echo wp_json_encode(
 		'local_rewrite_service_registered' => $local_rewriter instanceof LocalCloneEnvironmentRewriter,
 		'local_rewrite_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalEnvironmentRewriteController::ACTION ),
 		'local_rewrite_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalEnvironmentRewriteController::ACTION ),
+		'local_finalization_service_registered' => $local_finalizer instanceof LocalCloneFinalizationPlanner,
+		'local_finalization_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFinalizationController::ACTION ),
+		'local_finalization_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFinalizationController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
 		'database_autoload'           => $database_autoload,
 		'file_autoload'               => $file_autoload,
 		'rewrite_autoload'            => $rewrite_autoload,
+		'finalization_autoload'       => $finalization_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
