@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.3.2.2 private local handoff/intake/payload acceptance.
+# Phase 10E.2A.5.3.1-5.4.1 private local handoff/intake/payload/database acceptance.
 
-printf '[smoke] Checking private same-server local-clone handoff, target preflight and payload verification.\n'
+printf '[smoke] Checking private same-server local-clone handoff, payload verification and transactional database staging.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -452,6 +452,39 @@ $payload_child_id = is_array( $target_preflight_state ) ? (string) $target_prefl
 $payload_child_import = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
 $payload_child_state = '' !== $payload_child_id ? ( new ImportPayloadStateStore() )->get( $payload_child_id ) : null;
 $target_preflight_after_payload = $target_preflight->verified_snapshot( $job_id );
+
+$local_database_mid = $local_database->advance( $job_id, 10 );
+$local_database_state = $local_database_mid;
+for ( $i = 0; $i < 140; ++$i ) {
+	if ( is_array( $local_database_state ) && in_array( $local_database_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_database_state = $local_database->advance( $job_id, 10 );
+}
+$local_database_verified = $local_database->verified_snapshot( $job_id );
+$local_database_plan = $local_database->staging_plan( $job_id );
+$database_child_state = '' !== $payload_child_id ? ( new ImportDatabaseStateStore() )->get( $payload_child_id ) : null;
+$staging_table = is_array( $local_database_plan )
+	&& is_array( $local_database_plan['tables'] ?? null )
+	&& is_array( $local_database_plan['tables'][0] ?? null )
+	? (string) ( $local_database_plan['tables'][0]['staging_table'] ?? '' )
+	: '';
+$quoted_staging = '' !== $staging_table
+	? chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $staging_table ) . chr( 96 )
+	: '';
+$staging_rows = '' !== $quoted_staging
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of deterministic staging table.
+	? $GLOBALS['wpdb']->get_results( "SELECT id, title FROM {$quoted_staging} ORDER BY id ASC", ARRAY_A )
+	: array();
+$source_after_database = $source_snapshot();
+
+$table_pattern_after_database = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
+$target_tables_after_database = $GLOBALS['wpdb']->get_col(
+	$GLOBALS['wpdb']->prepare(
+		'SHOW TABLES LIKE %s',
+		$table_pattern_after_database
+	)
+);
 $job_before_mutation = $jobs->get( $job_id );
 
 $table_pattern = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
@@ -463,14 +496,14 @@ $target_tables = $GLOBALS['wpdb']->get_col(
 );
 
 $target_verified_after_child_drift = null;
-if ( is_array( $target_preflight_child ) && is_array( $target_preflight_state ) ) {
+if ( is_array( $payload_child_import ) && is_array( $target_preflight_state ) ) {
 	$child_id = (string) $target_preflight_state['child_import_job_id'];
 	$child_store = new ImportStateStore();
-	$drifted_child = $target_preflight_child;
+	$drifted_child = $payload_child_import;
 	$drifted_child['destination_table_prefix'] = $target_prefix . 'drift_';
 	$child_store->save( $child_id, $drifted_child );
 	$target_verified_after_child_drift = $target_preflight->verified_snapshot( $job_id );
-	$child_store->save( $child_id, $target_preflight_child );
+	$child_store->save( $child_id, $payload_child_import );
 }
 
 $target_verified_after_mutation = null;
@@ -487,6 +520,8 @@ $GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$created_table}" );
 
 $local_payload_after_recovery = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $payload_child_after_recovery = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
+$local_database_verified_after_recovery = $local_database->verified_snapshot( $job_id );
+$local_database_after_recovery = $local_database->advance( $job_id, 10 );
 $job_after_recovery = $jobs->get( $job_id );
 
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
@@ -494,6 +529,8 @@ if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$local_database_verified_after_archive_tamper = $local_database->verified_snapshot( $job_id );
+$local_database_after_archive_tamper = $local_database->advance( $job_id, 10 );
 $local_payload_verified_after_archive_tamper = $local_payload->verified_snapshot( $job_id );
 $local_payload_after_archive_tamper = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $payload_child_after_archive_tamper = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
@@ -509,6 +546,13 @@ $payload_autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalClonePayloadVerificationStateStore::OPTION_NAME
+	)
+);
+
+$database_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneDatabaseRestoreStateStore::OPTION_NAME
 	)
 );
 
