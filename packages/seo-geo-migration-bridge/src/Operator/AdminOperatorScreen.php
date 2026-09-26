@@ -20,6 +20,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneImportPayloadController;
@@ -49,6 +50,7 @@ use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneDatabaseRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
 use SeoGeo\MigrationBridge\Clone\DatabaseExporter;
 use SeoGeo\MigrationBridge\Clone\ExportStateStore;
 use SeoGeo\MigrationBridge\Clone\FileExporter;
@@ -163,6 +165,7 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_local_database_result_notice(); ?>
 			<?php $this->render_clone_local_file_result_notice(); ?>
 			<?php $this->render_clone_local_rewrite_result_notice(); ?>
+			<?php $this->render_clone_local_finalization_result_notice(); ?>
 			<?php $this->render_clone_delivery_result_notice(); ?>
 			<?php $this->render_clone_import_result_notice(); ?>
 			<?php $this->render_clone_import_payload_result_notice(); ?>
@@ -1755,6 +1758,7 @@ final class AdminOperatorScreen {
 
 		<?php if ( 'ready' === $status ) : ?>
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_next' ) ); ?></p>
+			<?php $this->render_clone_local_finalization_section( $job ); ?>
 		<?php else : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalEnvironmentRewriteController::ACTION ); ?>">
@@ -1773,6 +1777,109 @@ final class AdminOperatorScreen {
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_batch_help' ) ); ?></p>
 				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_rewrite_continue' : 'clone_local_rewrite_start' ), 'secondary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a bounded result notice after local guarded finalization-plan batches.
+	 */
+	private function render_clone_local_finalization_result_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice after nonce-verified action.
+		$status = isset( $_GET['seo_geo_clone_local_finalization'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same bounded result value.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_finalization'] ) )
+			: '';
+
+		$key = match ( $status ) {
+			'running' => 'clone_local_finalization_running',
+			'ready'   => 'clone_local_finalization_ready',
+			'blocked' => 'clone_local_finalization_blocked',
+			default   => null,
+		};
+		if ( null === $key ) {
+			return;
+		}
+
+		$class = 'blocked' === $status ? 'notice notice-error' : ( 'ready' === $status ? 'notice notice-success' : 'notice notice-info' );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render guarded local finalization planning.
+	 *
+	 * @param array<string,mixed> $job Parent local-clone job.
+	 */
+	private function render_clone_local_finalization_section( array $job ): void {
+		$job_id = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
+		if ( '' === $job_id ) {
+			return;
+		}
+
+		$state  = ( new LocalCloneFinalizationPlanStateStore() )->get( $job_id );
+		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
+		?>
+		<h3><?php echo esc_html( $this->copy->text( 'clone_local_finalization_heading' ) ); ?></h3>
+		<p><?php echo esc_html( $this->copy->text( 'clone_local_finalization_help' ) ); ?></p>
+
+		<?php if ( is_array( $state ) ) : ?>
+			<table class="widefat striped" role="presentation">
+				<tbody>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_stage' ) ); ?></th><td><code><?php echo esc_html( $stage ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_child_job' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['child_import_job_id'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_db_rows' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['database_rows_hashed'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_db_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['database_fingerprint'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_files' ) ); ?></th><td><?php echo esc_html( (string) (int) ( $state['files_hashed'] ?? 0 ) . ' / ' . (string) (int) ( $state['expected_file_count'] ?? 0 ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_bytes' ) ); ?></th><td><?php echo esc_html( size_format( (int) ( $state['file_bytes_hashed'] ?? 0 ) ) . ' / ' . size_format( (int) ( $state['expected_file_bytes'] ?? 0 ) ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_file_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['file_fingerprint'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_plan_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['activation_plan_hash'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_rollback' ) ); ?></th><td><?php echo esc_html( true === ( $state['rollback_plan_ready'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_target' ) ); ?></th><td><?php echo esc_html( true === ( $state['target_unactivated'] ?? false ) ? $this->copy->text( 'yes' ) : $this->copy->text( 'no' ) ); ?></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next_label' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['finalization_next'] ?? '' ) ); ?></code></td></tr>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_blockers' ) ); ?></th><td><code><?php echo esc_html( array() === ( $state['blockers'] ?? array() ) ? $this->copy->text( 'clone_import_none' ) : implode( ', ', (array) $state['blockers'] ) ); ?></code></td></tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
+
+		<?php if ( 'ready' === $status ) : ?>
+			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_next' ) ); ?></p>
+		<?php else : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalFinalizationController::ACTION ); ?>">
+				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+				<?php wp_nonce_field( AdminCloneLocalFinalizationController::NONCE_ACTION . ':' . $job_id ); ?>
+				<?php if ( ! is_array( $state ) ) : ?>
+					<p><label><input type="checkbox" name="local_clone_finalization_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_finalization_confirm' ) ); ?></label></p>
+				<?php endif; ?>
+				<p>
+					<label for="seo-geo-local-finalize-rows"><strong><?php echo esc_html( $this->copy->text( 'clone_local_finalization_rows_label' ) ); ?></strong></label>
+					<select id="seo-geo-local-finalize-rows" name="local_clone_finalization_batch_rows">
+						<?php foreach ( array( 25, 50, 100, 200, 500, 1000 ) as $rows ) : ?>
+							<option value="<?php echo esc_attr( (string) $rows ); ?>" <?php selected( ImportFinalizationPlanner::DEFAULT_BATCH_ROWS, $rows ); ?>><?php echo esc_html( (string) $rows ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<label for="seo-geo-local-finalize-files"><strong><?php echo esc_html( $this->copy->text( 'clone_local_finalization_files_label' ) ); ?></strong></label>
+					<select id="seo-geo-local-finalize-files" name="local_clone_finalization_batch_files">
+						<?php foreach ( array( 25, 50, 100, 200, 500 ) as $files ) : ?>
+							<option value="<?php echo esc_attr( (string) $files ); ?>" <?php selected( ImportFinalizationPlanner::DEFAULT_BATCH_FILES, $files ); ?>><?php echo esc_html( (string) $files ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<label for="seo-geo-local-finalize-mb"><strong><?php echo esc_html( $this->copy->text( 'clone_local_finalization_mb_label' ) ); ?></strong></label>
+					<select id="seo-geo-local-finalize-mb" name="local_clone_finalization_batch_megabytes">
+						<?php foreach ( array( 4, 8, 16, 32, 64, 128 ) as $megabytes ) : ?>
+							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 16, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_batch_help' ) ); ?></p>
+				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_finalization_continue' : 'clone_local_finalization_start' ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
 		<?php

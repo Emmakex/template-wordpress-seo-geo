@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Phase 10E.2A.5.3.1-5.5.1 private local handoff/staging/rewrite acceptance.
+# Phase 10E.2A.5.3.1-5.5.2 private local handoff/staging/rewrite/finalization acceptance.
 
-printf '[smoke] Checking private same-server local-clone staging and serialization-safe environment rewrite.\n'
+printf '[smoke] Checking private same-server local-clone staging, rewrite and guarded finalization plan.\n'
 
 LOCAL_HANDOFF_RUNNER="$TMP_DIR/portable-clone-local-package-handoff-runner.php"
 cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
@@ -12,6 +12,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalDatabaseController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFileController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalEnvironmentRewriteController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalFinalizationController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -31,7 +32,10 @@ use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestorer;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFileRestoreStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriter;
 use SeoGeo\MigrationBridge\Clone\LocalCloneEnvironmentRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanner;
+use SeoGeo\MigrationBridge\Clone\LocalCloneFinalizationPlanStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportRewriteStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportFinalizeStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportFileStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportDatabaseStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
@@ -59,7 +63,9 @@ $options = array(
 	LocalCloneDatabaseRestoreStateStore::OPTION_NAME,
 	LocalCloneFileRestoreStateStore::OPTION_NAME,
 	LocalCloneEnvironmentRewriteStateStore::OPTION_NAME,
+	LocalCloneFinalizationPlanStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
+	ImportFinalizeStateStore::OPTION_NAME,
 	ImportRewriteStateStore::OPTION_NAME,
 	ImportFileStateStore::OPTION_NAME,
 	ImportDatabaseStateStore::OPTION_NAME,
@@ -80,6 +86,7 @@ $local_payload     = Plugin::local_clone_payload_verifier();
 $local_database    = Plugin::local_clone_database_restorer();
 $local_files       = Plugin::local_clone_file_restorer();
 $local_rewriter    = Plugin::local_clone_environment_rewriter();
+$local_finalizer   = Plugin::local_clone_finalization_planner();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -92,6 +99,7 @@ if (
 	|| ! $local_database instanceof LocalCloneDatabaseRestorer
 	|| ! $local_files instanceof LocalCloneFileRestorer
 	|| ! $local_rewriter instanceof LocalCloneEnvironmentRewriter
+	|| ! $local_finalizer instanceof LocalCloneFinalizationPlanner
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -710,6 +718,40 @@ $local_rewrite_verified = $local_rewriter->verified_snapshot( $job_id );
 $rewrite_child_state = '' !== $payload_child_id ? ( new ImportRewriteStateStore() )->get( $payload_child_id ) : null;
 $staging_options_after_rewrite = $read_staged_options();
 $staging_posts_after_rewrite   = $read_staged_posts();
+
+$local_finalization_mid = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
+$local_finalization_state = $local_finalization_mid;
+for ( $i = 0; $i < 320; ++$i ) {
+	if ( is_array( $local_finalization_state ) && in_array( $local_finalization_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_finalization_state = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
+}
+$local_finalization_verified = $local_finalizer->verified_snapshot( $job_id );
+$local_activation_plan = $local_finalizer->activation_plan_snapshot( $job_id );
+$finalization_child_state = '' !== $payload_child_id ? ( new ImportFinalizeStateStore() )->get( $payload_child_id ) : null;
+$target_upload_absent_after_finalization = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_finalization = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_finalization = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$target_bridge_present_after_finalization = is_file( trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php' );
+$planned_activation_paths_absent = true;
+if ( is_array( $local_activation_plan ) && is_array( $local_activation_plan['plan']['files']['roots'] ?? null ) ) {
+	foreach ( $local_activation_plan['plan']['files']['roots'] as $planned_root ) {
+		if ( ! is_array( $planned_root ) ) {
+			$planned_activation_paths_absent = false;
+			break;
+		}
+		foreach ( array( 'candidate_root', 'rollback_root' ) as $planned_key ) {
+			$planned_path = is_string( $planned_root[ $planned_key ] ?? null )
+				? untrailingslashit( wp_normalize_path( $planned_root[ $planned_key ] ) )
+				: '';
+			if ( '' === $planned_path || file_exists( $planned_path ) || is_link( $planned_path ) ) {
+				$planned_activation_paths_absent = false;
+				break 2;
+			}
+		}
+	}
+}
 $job_before_mutation = $jobs->get( $job_id );
 
 $table_pattern = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
@@ -732,6 +774,8 @@ if ( is_array( $payload_child_import ) && is_array( $target_preflight_state ) ) 
 }
 
 $target_verified_after_mutation = null;
+$local_finalization_verified_after_mutation = null;
+$local_finalization_after_mutation = null;
 $local_rewrite_verified_after_mutation = null;
 $local_rewrite_after_mutation = null;
 $local_payload_verified_after_mutation = null;
@@ -740,6 +784,8 @@ $payload_child_after_mutation = null;
 $created_table = $target_prefix . 'tamper_guard';
 $GLOBALS['wpdb']->query( "CREATE TABLE {$created_table} (id bigint unsigned NOT NULL)" );
 $target_verified_after_mutation = $target_preflight->verified_snapshot( $job_id );
+$local_finalization_verified_after_mutation = $local_finalizer->verified_snapshot( $job_id );
+$local_finalization_after_mutation = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
 $local_rewrite_verified_after_mutation = $local_rewriter->verified_snapshot( $job_id );
 $local_rewrite_after_mutation = $local_rewriter->advance( $job_id, 1 );
 $local_payload_verified_after_mutation = $local_payload->verified_snapshot( $job_id );
@@ -758,6 +804,10 @@ $local_files_verified_after_recovery = $local_files->verified_snapshot( $job_id 
 $local_rewrite_verified_before_recovery = $local_rewriter->verified_snapshot( $job_id );
 $local_rewrite_after_recovery = $local_rewriter->advance( $job_id, 1 );
 $local_rewrite_verified_after_recovery = $local_rewriter->verified_snapshot( $job_id );
+$local_finalization_verified_before_recovery = $local_finalizer->verified_snapshot( $job_id );
+$local_finalization_after_recovery = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
+$local_finalization_verified_after_recovery = $local_finalizer->verified_snapshot( $job_id );
+$local_activation_plan_after_recovery = $local_finalizer->activation_plan_snapshot( $job_id );
 $job_after_recovery = $jobs->get( $job_id );
 
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
@@ -765,6 +815,8 @@ if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$local_finalization_verified_after_archive_tamper = $local_finalizer->verified_snapshot( $job_id );
+$local_finalization_after_archive_tamper = $local_finalizer->advance( $job_id, 1, 1, 1024 * 1024 );
 $local_rewrite_verified_after_archive_tamper = $local_rewriter->verified_snapshot( $job_id );
 $local_rewrite_after_archive_tamper = $local_rewriter->advance( $job_id, 1 );
 $local_files_verified_after_archive_tamper = $local_files->verified_snapshot( $job_id );
@@ -807,6 +859,13 @@ $rewrite_autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalCloneEnvironmentRewriteStateStore::OPTION_NAME
+	)
+);
+
+$finalization_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalCloneFinalizationPlanStateStore::OPTION_NAME
 	)
 );
 
@@ -869,8 +928,20 @@ echo wp_json_encode(
 		'local_rewrite_state'         => $local_rewrite_state,
 		'local_rewrite_verified'      => is_array( $local_rewrite_verified ),
 		'rewrite_child_state'         => $rewrite_child_state,
+		'local_finalization_mid'      => $local_finalization_mid,
+		'local_finalization_state'    => $local_finalization_state,
+		'local_finalization_verified' => is_array( $local_finalization_verified ),
+		'local_activation_plan'       => $local_activation_plan,
+		'finalization_child_state'    => $finalization_child_state,
+		'target_upload_absent_after_finalization' => $target_upload_absent_after_finalization,
+		'target_plugin_absent_after_finalization' => $target_plugin_absent_after_finalization,
+		'target_theme_absent_after_finalization' => $target_theme_absent_after_finalization,
+		'target_bridge_present_after_finalization' => $target_bridge_present_after_finalization,
+		'planned_activation_paths_absent' => $planned_activation_paths_absent,
 		'job_before_mutation'         => $job_before_mutation,
 		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
+		'local_finalization_verified_after_mutation' => is_array( $local_finalization_verified_after_mutation ),
+		'local_finalization_after_mutation' => $local_finalization_after_mutation,
 		'local_rewrite_verified_after_mutation' => is_array( $local_rewrite_verified_after_mutation ),
 		'local_rewrite_after_mutation' => $local_rewrite_after_mutation,
 		'local_payload_verified_after_mutation' => is_array( $local_payload_verified_after_mutation ),
@@ -886,11 +957,17 @@ echo wp_json_encode(
 		'local_rewrite_verified_before_recovery' => is_array( $local_rewrite_verified_before_recovery ),
 		'local_rewrite_after_recovery' => $local_rewrite_after_recovery,
 		'local_rewrite_verified_after_recovery' => is_array( $local_rewrite_verified_after_recovery ),
+		'local_finalization_verified_before_recovery' => is_array( $local_finalization_verified_before_recovery ),
+		'local_finalization_after_recovery' => $local_finalization_after_recovery,
+		'local_finalization_verified_after_recovery' => is_array( $local_finalization_verified_after_recovery ),
+		'local_activation_plan_after_recovery' => $local_activation_plan_after_recovery,
 		'payload_child_after_recovery' => $payload_child_after_recovery,
 		'job_after_recovery'          => $job_after_recovery,
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
+		'local_finalization_verified_after_archive_tamper' => is_array( $local_finalization_verified_after_archive_tamper ),
+		'local_finalization_after_archive_tamper' => $local_finalization_after_archive_tamper,
 		'local_rewrite_verified_after_archive_tamper' => is_array( $local_rewrite_verified_after_archive_tamper ),
 		'local_rewrite_after_archive_tamper' => $local_rewrite_after_archive_tamper,
 		'local_files_verified_after_archive_tamper' => is_array( $local_files_verified_after_archive_tamper ),
@@ -926,12 +1003,16 @@ echo wp_json_encode(
 		'local_rewrite_service_registered' => $local_rewriter instanceof LocalCloneEnvironmentRewriter,
 		'local_rewrite_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalEnvironmentRewriteController::ACTION ),
 		'local_rewrite_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalEnvironmentRewriteController::ACTION ),
+		'local_finalization_service_registered' => $local_finalizer instanceof LocalCloneFinalizationPlanner,
+		'local_finalization_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalFinalizationController::ACTION ),
+		'local_finalization_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalFinalizationController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
 		'payload_autoload'            => $payload_autoload,
 		'database_autoload'           => $database_autoload,
 		'file_autoload'               => $file_autoload,
 		'rewrite_autoload'            => $rewrite_autoload,
+		'finalization_autoload'       => $finalization_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -1225,6 +1306,83 @@ assert posts_after[0]["post_content"] == "Visit " + destination_home + "about an
 assert posts_after[0]["post_excerpt"] == "Media " + destination_home + "wp-content/uploads/2026/local.txt", payload
 assert posts_after[0]["post_content_filtered"] == "", payload
 
+finalization_mid = payload["local_finalization_mid"]
+assert finalization_mid is not None, payload
+assert finalization_mid["status"] == "running", payload
+assert finalization_mid["stage"] in ("database-fingerprint", "file-fingerprint"), payload
+
+finalization = payload["local_finalization_state"]
+assert finalization is not None, payload
+assert finalization["status"] == "ready", payload
+assert finalization["stage"] == "ready", payload
+assert finalization["database_rows_hashed"] == 7, payload
+assert finalization["database_table_count"] == 2, payload
+assert finalization["files_hashed"] == 3, payload
+assert finalization["files_hashed"] == finalization["expected_file_count"], payload
+assert finalization["file_bytes_hashed"] == finalization["expected_file_bytes"], payload
+assert finalization["sandbox_hardening_ready"] is True, payload
+assert finalization["rollback_plan_ready"] is True, payload
+assert finalization["activation_plan_ready"] is True, payload
+assert finalization["target_unactivated"] is True, payload
+assert finalization["finalization_next"] == "database-activation", payload
+assert finalization["blockers"] == [], payload
+for key in ("database_fingerprint", "file_fingerprint", "activation_plan_hash"):
+    assert re.fullmatch(r"[a-f0-9]{64}", finalization[key]), payload
+assert payload["local_finalization_verified"] is True, payload
+
+finalization_child = payload["finalization_child_state"]
+assert finalization_child is not None, payload
+assert finalization_child["status"] == "ready", payload
+assert finalization_child["stage"] == "ready", payload
+assert finalization_child["database_rows_hashed"] == 7, payload
+assert finalization_child["files_hashed"] == 3, payload
+assert finalization_child["activation_allowed"] is True, payload
+assert finalization_child["handoff_ready"] is False, payload
+assert finalization_child["active_tables_untouched"] is True, payload
+assert finalization_child["active_roots_untouched"] is True, payload
+assert finalization_child["blockers"] == [], payload
+
+activation = payload["local_activation_plan"]
+assert activation is not None, payload
+assert activation["hash"] == finalization["activation_plan_hash"], payload
+assert activation["database_fingerprint"] == finalization["database_fingerprint"], payload
+assert activation["file_fingerprint"] == finalization["file_fingerprint"], payload
+activation_plan = activation["plan"]
+assert activation_plan["schema_version"] == 1, payload
+assert activation_plan["job_id"] == finalization["child_import_job_id"], payload
+assert activation_plan["policy"]["active_mutation_in_this_phase"] is False, payload
+assert activation_plan["policy"]["rollback_required_before_swap"] is True, payload
+assert activation_plan["policy"]["final_handoff_ready"] is False, payload
+assert activation_plan["database"]["destination_prefix"] == handoff["target_table_prefix"], payload
+activation_tables = activation_plan["database"]["tables"]
+assert len(activation_tables) == 2, payload
+for table in activation_tables:
+    assert table["target_exists"] is False, payload
+    assert table["target_table"].startswith(handoff["target_table_prefix"]), payload
+    assert not table["staging_table"].startswith(handoff["target_table_prefix"]), payload
+    assert table["rollback_table"].startswith(handoff["target_table_prefix"] + "sgmrb_"), payload
+    assert table["row_count"] >= 1, payload
+
+activation_roots = activation_plan["files"]["roots"]
+assert len(activation_roots) == 3, payload
+assert {root["id"] for root in activation_roots} == {"uploads", "plugins", "themes"}, payload
+target_root = handoff["target_path"].rstrip("/")
+for root in activation_roots:
+    expected_active = target_root + "/wp-content/" + root["id"] + "/"
+    assert root["active_root"] == expected_active, payload
+    assert root["candidate_root"].startswith(target_root + "/wp-content/." + root["id"] + ".seo-geo-next-"), payload
+    assert root["rollback_root"].startswith(target_root + "/wp-content/." + root["id"] + ".seo-geo-rollback-"), payload
+assert payload["planned_activation_paths_absent"] is True, payload
+assert payload["target_upload_absent_after_finalization"] is True, payload
+assert payload["target_plugin_absent_after_finalization"] is True, payload
+assert payload["target_theme_absent_after_finalization"] is True, payload
+assert payload["target_bridge_present_after_finalization"] is True, payload
+
+assert payload["local_finalization_verified_after_mutation"] is False, payload
+finalization_blocked = payload["local_finalization_after_mutation"]
+assert finalization_blocked is not None and finalization_blocked["status"] == "blocked", payload
+assert "local-finalize-parent-authority-unavailable" in finalization_blocked["blockers"], payload
+
 assert payload["local_rewrite_verified_after_mutation"] is False, payload
 rewrite_blocked = payload["local_rewrite_after_mutation"]
 assert rewrite_blocked is not None and rewrite_blocked["status"] == "blocked", payload
@@ -1270,11 +1428,27 @@ assert rewrite_recovered is not None and rewrite_recovered["status"] == "ready",
 assert rewrite_recovered["stage"] == "complete", payload
 assert rewrite_recovered["verify_source_urls"] == 0, payload
 assert payload["local_rewrite_verified_after_recovery"] is True, payload
+assert payload["local_finalization_verified_before_recovery"] is False, payload
+finalization_recovered = payload["local_finalization_after_recovery"]
+assert finalization_recovered is not None and finalization_recovered["status"] == "ready", payload
+assert finalization_recovered["stage"] == "ready", payload
+assert finalization_recovered["activation_plan_ready"] is True, payload
+assert finalization_recovered["target_unactivated"] is True, payload
+assert finalization_recovered["blockers"] == [], payload
+assert payload["local_finalization_verified_after_recovery"] is True, payload
+activation_recovered = payload["local_activation_plan_after_recovery"]
+assert activation_recovered is not None, payload
+assert activation_recovered["hash"] == finalization_recovered["activation_plan_hash"], payload
 
 job_after_recovery = payload["job_after_recovery"]
 assert job_after_recovery["status"] == "active", payload
-assert job_after_recovery["phase"] == "rewrite-environment", payload
-assert job_after_recovery["cursor"] == "local-environment-rewrite-complete", payload
+assert job_after_recovery["phase"] == "finalize-preflight", payload
+assert job_after_recovery["cursor"] == "local-finalization-plan-ready", payload
+
+assert payload["local_finalization_verified_after_archive_tamper"] is False, payload
+archive_finalization_blocked = payload["local_finalization_after_archive_tamper"]
+assert archive_finalization_blocked is not None and archive_finalization_blocked["status"] == "blocked", payload
+assert "local-finalize-parent-authority-unavailable" in archive_finalization_blocked["blockers"], payload
 
 assert payload["local_rewrite_verified_after_archive_tamper"] is False, payload
 archive_rewrite_blocked = payload["local_rewrite_after_archive_tamper"]
@@ -1313,6 +1487,9 @@ assert payload["local_files_public_controller_absent"] is True, payload
 assert payload["local_rewrite_service_registered"] is True, payload
 assert payload["local_rewrite_controller_registered"] is True, payload
 assert payload["local_rewrite_public_controller_absent"] is True, payload
+assert payload["local_finalization_service_registered"] is True, payload
+assert payload["local_finalization_controller_registered"] is True, payload
+assert payload["local_finalization_public_controller_absent"] is True, payload
 
 child = payload["target_preflight_child"]
 assert child is not None, payload
@@ -1361,12 +1538,13 @@ assert payload["payload_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["database_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["file_autoload"] in ("off", "no", "auto-off"), payload
 assert payload["rewrite_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["finalization_autoload"] in ("off", "no", "auto-off"), payload
 
 job_before_mutation = payload["job_before_mutation"]
 assert job_before_mutation["operation"] == "local-clone", payload
 assert job_before_mutation["status"] == "active", payload
-assert job_before_mutation["phase"] == "rewrite-environment", payload
-assert job_before_mutation["cursor"] == "local-environment-rewrite-complete", payload
+assert job_before_mutation["phase"] == "finalize-preflight", payload
+assert job_before_mutation["cursor"] == "local-finalization-plan-ready", payload
 
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
@@ -1376,7 +1554,7 @@ assert job["error_code"] == "local-payload-parent-authority-unavailable", payloa
 print("ok")
 PY
 )"; then
-  fail_smoke "local-clone-package-handoff" "Local clone handoff/staging/environment rewrite contract is invalid" "immutable package + private DB/files + serialization-safe rewrite + zero active target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
+  fail_smoke "local-clone-package-handoff" "Local clone handoff/staging/rewrite/finalization contract is invalid" "immutable package + private staging + serialization-safe rewrite + guarded activation plan + zero target promotion" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone staging + environment rewrite OK: options/posts rewrote safely in job-owned staging, serialized/JSON values verified, sensitive values stayed opaque, target remained unactivated.\n'
+printf '[smoke] Local clone guarded finalization OK: rewritten staging fingerprints and immutable activation/rollback plan verified while target tables and client files remained unactivated.\n'
