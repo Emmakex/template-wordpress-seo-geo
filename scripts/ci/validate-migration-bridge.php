@@ -91,6 +91,15 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventory.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DestinationSafetyPlanner.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneOrchestrator.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalPlanController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBootstrapStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneBootstrapper.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalBootstrapController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeStateStore.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeBootstrapper.php',
+	MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalRuntimeController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportStateStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/ExportWorkspace.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php',
@@ -379,6 +388,11 @@ foreach (
 		'delete_import_archive( string $job_id )',
 		'prepare_file_promotion_candidate( string $candidate )',
 		'copy_file_to_promotion_candidate( string $source, string $target )',
+		'prepare_local_clone_target( string $target )',
+		'write_local_clone_marker( string $target, string $relative, string $content )',
+		'delete_local_clone_marker( string $target, string $relative, string $expected_sha256 )',
+		'ensure_local_clone_directory( string $target_root, string $relative )',
+		'copy_file_to_local_clone_target( string $source, string $target_root, string $relative )',
 		'rename_file_promotion_path( string $from, string $to )',
 		"'wp-admin/includes/class-pclzip.php'",
 		'PCLZIP_OPT_REMOVE_PATH',
@@ -393,6 +407,102 @@ foreach (
 			'missing'
 		);
 	}
+}
+
+$local_runtime_store = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeStateStore.php' );
+foreach (
+	array(
+		"public const OPTION_NAME    = 'seo_geo_migration_local_clone_runtime_state_v1';",
+		'public const SCHEMA_VERSION = 1;',
+		"add_option( self::OPTION_NAME, \$states, '', false )",
+		'update_option( self::OPTION_NAME, $states, false )',
+		"'core-copy', 'core-verify', 'core-complete'",
+		"'copy_fingerprint'",
+		"'verify_fingerprint'",
+		"'wp_content_untouched'",
+		"'runtime_core_ready'",
+	) as $local_runtime_store_guard
+) {
+	if ( ! str_contains( $local_runtime_store, $local_runtime_store_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-runtime-state',
+			'Local clone core runtime state must remain versioned, bounded, resumable and non-autoloaded.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeStateStore.php',
+			$local_runtime_store_guard,
+			'missing'
+		);
+	}
+}
+
+$local_runtime = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeBootstrapper.php' );
+foreach (
+	array(
+		'public const DEFAULT_BATCH_FILES = 25;',
+		'public const DEFAULT_BATCH_BYTES = 8388608;',
+		'$this->ownership->verified_snapshot( $job_id )',
+		'$this->workspace->ensure_local_clone_directory( $target, $relative )',
+		'$this->workspace->copy_file_to_local_clone_target( $path, $target, $relative )',
+		"'wp-admin'",
+		"'wp-includes'",
+		"'wp-settings.php'",
+		"'core-copy'",
+		"'core-verify'",
+		"'runtime-target-entry-drift'",
+		"'runtime-core-integrity-mismatch'",
+		"'bridge-config-hardening'",
+	) as $local_runtime_guard
+) {
+	if ( ! str_contains( $local_runtime, $local_runtime_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-runtime',
+			'Local clone core runtime bootstrap is missing an ownership, resumability or second-pass integrity guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeBootstrapper.php',
+			$local_runtime_guard,
+			'missing'
+		);
+	}
+}
+if (
+	str_contains( $local_runtime, "'wp-content'" )
+	|| str_contains( $local_runtime, "'wp-config.php'" )
+) {
+	fail_migration_bridge(
+		'portable-clone-local-runtime-scope',
+		'10E.2A.5.2.1 must copy WordPress core only and must not authorize wp-content or wp-config.php.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/LocalCloneRuntimeBootstrapper.php',
+		'core allowlist without wp-content/wp-config.php',
+		'forbidden runtime scope marker'
+	);
+}
+
+$local_runtime_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalRuntimeController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_migration_clone_local_runtime_advance';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION . ':' . \$job_id )",
+		"'local_clone_runtime_confirm'",
+		'$this->runtime->advance( $job_id, $batch_files, $batch_mb * 1024 * 1024 )',
+	) as $local_runtime_controller_guard
+) {
+	if ( ! str_contains( $local_runtime_controller, $local_runtime_controller_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-local-runtime-entrypoint',
+			'Local clone core runtime endpoint must remain administrator/job-nonce/bounded-batch and first-run-confirmation gated.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalRuntimeController.php',
+			$local_runtime_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $local_runtime_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'portable-clone-local-runtime-public-endpoint',
+		'Local clone core runtime must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneLocalRuntimeController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
 }
 
 $database_exporter = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/DatabaseExporter.php' );
