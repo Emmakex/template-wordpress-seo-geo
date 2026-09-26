@@ -695,6 +695,19 @@ $target_upload_absent_after_files = ! file_exists( trailingslashit( $target_path
 $target_plugin_absent_after_files = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
 $target_theme_absent_after_files = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
 $target_bridge_present_after_files = is_file( trailingslashit( $target_path ) . 'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php' );
+
+$local_rewrite_mid = $local_rewriter->advance( $job_id, 1 );
+$local_rewrite_state = $local_rewrite_mid;
+for ( $i = 0; $i < 220; ++$i ) {
+	if ( is_array( $local_rewrite_state ) && in_array( $local_rewrite_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$local_rewrite_state = $local_rewriter->advance( $job_id, 1 );
+}
+$local_rewrite_verified = $local_rewriter->verified_snapshot( $job_id );
+$rewrite_child_state = '' !== $payload_child_id ? ( new ImportRewriteStateStore() )->get( $payload_child_id ) : null;
+$staging_options_after_rewrite = $read_staged_options();
+$staging_posts_after_rewrite   = $read_staged_posts();
 $job_before_mutation = $jobs->get( $job_id );
 
 $table_pattern = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
