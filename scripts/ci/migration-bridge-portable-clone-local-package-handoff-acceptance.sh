@@ -361,6 +361,27 @@ $files = array(
 	array( 'root' => 'plugins', 'relative' => 'seo-geo-migration-bridge/seo-geo-migration-bridge.php', 'content' => $bridge_fixture ),
 	array( 'root' => 'themes', 'relative' => 'sample-local/style.css', 'content' => "body{display:block}\n" ),
 );
+
+$bridge_src = SEO_GEO_MIGRATION_BRIDGE_DIR . 'src';
+$bridge_iterator = new RecursiveIteratorIterator(
+	new RecursiveDirectoryIterator( $bridge_src, FilesystemIterator::SKIP_DOTS )
+);
+foreach ( $bridge_iterator as $bridge_file ) {
+	if ( ! $bridge_file->isFile() || $bridge_file->isLink() ) {
+		continue;
+	}
+	$absolute = wp_normalize_path( $bridge_file->getPathname() );
+	$relative = ltrim( substr( $absolute, strlen( wp_normalize_path( SEO_GEO_MIGRATION_BRIDGE_DIR ) ) ), '/' );
+	$content  = file_get_contents( $absolute );
+	if ( ! is_string( $content ) ) {
+		throw new RuntimeException( 'Could not read Migration Bridge source fixture.' );
+	}
+	$files[] = array(
+		'root'     => 'plugins',
+		'relative' => 'seo-geo-migration-bridge/' . $relative,
+		'content'  => $content,
+	);
+}
 $root_stats = array(
 	'uploads' => array( 'file_count' => 0, 'byte_count' => 0 ),
 	'plugins' => array( 'file_count' => 0, 'byte_count' => 0 ),
@@ -714,7 +735,7 @@ $target_tables_after_database = $GLOBALS['wpdb']->get_col(
 
 $local_files_mid = $local_files->advance( $job_id, 1, 1024 * 1024 );
 $local_files_state = $local_files_mid;
-for ( $i = 0; $i < 180; ++$i ) {
+for ( $i = 0; $i < 600; ++$i ) {
 	if ( is_array( $local_files_state ) && in_array( $local_files_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
 		break;
 	}
@@ -913,7 +934,7 @@ if ( is_array( $file_promotion_child_prepared ) ) {
 }
 
 $local_file_promotion_candidate = $local_file_promotion_prepared;
-for ( $i = 0; $i < 180; ++$i ) {
+for ( $i = 0; $i < 600; ++$i ) {
 	if ( is_array( $local_file_promotion_candidate ) && in_array( $local_file_promotion_candidate['status'] ?? null, array( 'candidate-ready', 'blocked' ), true ) ) {
 		break;
 	}
@@ -929,7 +950,7 @@ $target_bridge_present_after_candidates = is_file( trailingslashit( $target_path
 
 $local_file_promotion_promoted = $local_promotion->promote( $job_id );
 $local_file_promotion_verified_state = $local_file_promotion_promoted;
-for ( $i = 0; $i < 180; ++$i ) {
+for ( $i = 0; $i < 600; ++$i ) {
 	if ( is_array( $local_file_promotion_verified_state ) && in_array( $local_file_promotion_verified_state['status'] ?? null, array( 'verified', 'blocked', 'rolled-back' ), true ) ) {
 		break;
 	}
