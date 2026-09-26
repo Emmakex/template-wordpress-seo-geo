@@ -276,7 +276,7 @@ final class LocalClonePayloadVerifier {
 			'verify',
 			$valid ? 'local-payload-verified' : 'local-payload-' . (string) $state['stage'],
 			array(
-				'completed' => 'verify' === ( $state['stage'] ?? null )
+				'completed' => 'verify' === $state['stage']
 					? (int) $state['verify_file_count']
 					: (int) $state['archive_cursor'],
 				'total'     => 'verify' === ( $state['stage'] ?? null )
