@@ -646,7 +646,7 @@ final class ImportFinalizationPlanner {
 			return null;
 		}
 
-		$activation = $this->activation_plan( $job_id, $database_plan, $file_roots );
+		$activation = $this->activation_plan( $job_id, $database_plan, $file_roots, $import );
 		if ( null === $activation ) {
 			return null;
 		}
@@ -684,6 +684,42 @@ final class ImportFinalizationPlanner {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb ) {
 			return false;
+		}
+
+		if ( $this->private_same_server_import( $import ) ) {
+			$root   = $this->private_same_server_root( $import );
+			$prefix = is_string( $import['destination_table_prefix'] ?? null )
+				? $import['destination_table_prefix']
+				: '';
+			if (
+				null === $root
+				|| 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $prefix )
+				|| $prefix === $wpdb->prefix
+				|| 'subdirectory' !== ( $import['destination_mode'] ?? null )
+				|| true !== ( $import['destination_storage_isolated'] ?? false )
+				|| true !== ( $import['search_visibility_disabled'] ?? false )
+				|| true !== ( $import['outbound_safe'] ?? false )
+				|| true !== ( $import['backups_ready'] ?? false )
+				|| true !== ( $import['target_authorized'] ?? false )
+			) {
+				return false;
+			}
+
+			foreach (
+				array(
+					'wp-config.php',
+					'wp-content',
+					'wp-content/plugins/seo-geo-migration-bridge/seo-geo-migration-bridge.php',
+					'wp-content/mu-plugins/seo-geo-migration-sandbox-bootstrap.php',
+				) as $relative
+			) {
+				$path = $this->join_path( $root, $relative );
+				if ( is_link( $path ) || ( 'wp-content' === $relative ? ! is_dir( $path ) : ! is_file( $path ) ) ) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		$authorized = defined( ImportPreflight::TARGET_AUTHORIZED_MARKER )
@@ -772,10 +808,12 @@ final class ImportFinalizationPlanner {
 	 * @param array  $database_plan Database staging plan.
 	 * @param array  $file_roots    File roots.
 	 * @phpstan-param array<string,mixed> $database_plan
+	 * @param array  $import        Import destination state.
 	 * @phpstan-param list<array{id:string,file_count:int,byte_count:int}> $file_roots
+	 * @phpstan-param array<string,mixed> $import
 	 * @return array{plan:array<string,mixed>,hash:string}|null
 	 */
-	private function activation_plan( string $job_id, array $database_plan, array $file_roots ): ?array {
+	private function activation_plan( string $job_id, array $database_plan, array $file_roots, array $import ): ?array {
 		$token  = substr( hash( 'sha256', $job_id ), 0, 10 );
 		$tables = array();
 
@@ -809,7 +847,7 @@ final class ImportFinalizationPlanner {
 		foreach ( $file_roots as $root ) {
 			$root_id = (string) $root['id'];
 			$staged  = $this->staged_root( $job_id, $root_id );
-			$active  = $this->active_root( $root_id );
+			$active  = $this->active_root( $root_id, $import );
 			if ( null === $staged || null === $active || is_link( $active ) ) {
 				return null;
 			}
@@ -993,7 +1031,20 @@ final class ImportFinalizationPlanner {
 	 *
 	 * @param string $root_id Root ID.
 	 */
-	private function active_root( string $root_id ): ?string {
+	private function active_root( string $root_id, array $import ): ?string {
+		if ( ! in_array( $root_id, array( 'uploads', 'plugins', 'themes' ), true ) ) {
+			return null;
+		}
+
+		if ( $this->private_same_server_import( $import ) ) {
+			$root = $this->private_same_server_root( $import );
+			if ( null === $root ) {
+				return null;
+			}
+
+			return wp_normalize_path( $this->join_path( $root, 'wp-content/' . $root_id ) );
+		}
+
 		if ( 'uploads' === $root_id ) {
 			$uploads = wp_upload_dir( null, false );
 			$basedir = $uploads['basedir'];
@@ -1003,13 +1054,46 @@ final class ImportFinalizationPlanner {
 		if ( 'plugins' === $root_id ) {
 			return defined( 'WP_PLUGIN_DIR' ) && is_dir( WP_PLUGIN_DIR ) ? wp_normalize_path( WP_PLUGIN_DIR ) : null;
 		}
-		if ( 'themes' === $root_id ) {
-			$themes = get_theme_root();
 
-			return is_dir( $themes ) ? wp_normalize_path( $themes ) : null;
+		$themes = get_theme_root();
+
+		return is_dir( $themes ) ? wp_normalize_path( $themes ) : null;
+	}
+
+	/**
+	 * Whether this child import is bound to a private same-server local clone.
+	 *
+	 * @param array<string,mixed> $import Import state.
+	 */
+	private function private_same_server_import( array $import ): bool {
+		return 'private-same-server' === ( $import['transport'] ?? null )
+			&& is_string( $import['local_handoff_parent_job_id'] ?? null )
+			&& '' !== $import['local_handoff_parent_job_id'];
+	}
+
+	/**
+	 * Resolve the isolated local-clone destination root without following a symlink.
+	 *
+	 * @param array<string,mixed> $import Import state.
+	 */
+	private function private_same_server_root( array $import ): ?string {
+		if ( ! $this->private_same_server_import( $import ) ) {
+			return null;
 		}
 
-		return null;
+		$root = is_string( $import['destination_root_path'] ?? null )
+			? untrailingslashit( wp_normalize_path( $import['destination_root_path'] ) )
+			: '';
+		if (
+			'' === $root
+			|| ! is_dir( $root )
+			|| is_link( $root )
+			|| untrailingslashit( wp_normalize_path( ABSPATH ) ) === $root
+		) {
+			return null;
+		}
+
+		return $root;
 	}
 
 	/**
