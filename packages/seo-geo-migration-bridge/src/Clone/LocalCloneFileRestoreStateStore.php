@@ -42,7 +42,7 @@ final class LocalCloneFileRestoreStateStore {
 		}
 
 		$normalized = $this->normalize_state( $job_id, $state );
-		if ( null === $normalized ) {
+		if ( null = $normalized ) {
 			return false;
 		}
 
@@ -50,11 +50,11 @@ final class LocalCloneFileRestoreStateStore {
 		$states[ $job_id ] = $normalized;
 		$states            = $this->bounded_states( $states );
 
-		if ( false === get_option( self::OPTION_NAME, false ) ) {
+		if ( false = get_option( self::OPTION_NAME, false ) ) {
 			return add_option( self::OPTION_NAME, $states, '', false );
 		}
 
-		return update_option( self::OPTION_NAME, $states, false ) || $states === $this->all();
+		return update_option( self::OPTION_NAME, $states, false ) || $states = $this->all();
 	}
 
 	/**
@@ -70,7 +70,7 @@ final class LocalCloneFileRestoreStateStore {
 
 		unset( $states[ $job_id ] );
 
-		return update_option( self::OPTION_NAME, $states, false ) || $states === $this->all();
+		return update_option( self::OPTION_NAME, $states, false ) || $states = $this->all();
 	}
 
 	/**
@@ -121,31 +121,31 @@ final class LocalCloneFileRestoreStateStore {
 		}
 
 		return array(
-			'schema_version'               => self::SCHEMA_VERSION,
-			'job_id'                       => $job_id,
-			'status'                       => $status,
-			'stage'                        => $stage,
-			'child_import_job_id'          => $this->bounded_job_id( $state['child_import_job_id'] ?? '' ),
-			'destination_authority_sha256' => $this->normalize_hash( $state['destination_authority_sha256'] ?? '' ),
-			'archive_sha256'               => $this->normalize_hash( $state['archive_sha256'] ?? '' ),
-			'package_manifest_sha256'      => $this->normalize_hash( $state['package_manifest_sha256'] ?? '' ),
-			'package_checksum'             => $this->normalize_hash( $state['package_checksum'] ?? '' ),
-			'files_manifest_sha256'        => $this->normalize_hash( $state['files_manifest_sha256'] ?? '' ),
-			'staging_root_sha256'          => $this->normalize_hash( $state['staging_root_sha256'] ?? '' ),
-			'file_count'                   => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
-			'byte_count'                   => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
-			'verify_file_count'            => max( 0, (int) ( $state['verify_file_count'] ?? 0 ) ),
-			'verify_byte_count'            => max( 0, (int) ( $state['verify_byte_count'] ?? 0 ) ),
-			'expected_file_count'          => max( 0, (int) ( $state['expected_file_count'] ?? 0 ) ),
-			'expected_byte_count'          => max( 0, (int) ( $state['expected_byte_count'] ?? 0 ) ),
-			'active_roots_untouched'       => true === ( $state['active_roots_untouched'] ?? false ),
-			'target_client_roots_untouched' => true === ( $state['target_client_roots_untouched'] ?? false ),
-			'private_staging_verified'     => true === ( $state['private_staging_verified'] ?? false ),
-			'file_next'                    => $this->bounded_code( $state['file_next'] ?? '' ),
-			'blockers'                     => $this->normalize_codes( $state['blockers'] ?? array() ),
-			'started_at'                   => $this->bounded_timestamp( $state['started_at'] ?? '' ),
-			'updated_at'                   => $this->bounded_timestamp( $state['updated_at'] ?? '' ),
-			'ready_at'                     => $this->bounded_timestamp( $state['ready_at'] ?? '' ),
+			'schema_version'                => self::SCHEMA_VERSION,
+			'job_id'                        => $job_id,
+			'status'                        => $status,
+			'stage'                         => $stage,
+			'child_import_job_id'           => $this->bounded_job_id( $state['child_import_job_id'] ?? '' ),
+			'destination_authority_sha256'  => $this->normalize_hash( $state['destination_authority_sha256'] ?? '' ),
+			'archive_sha256'                => $this->normalize_hash( $state['archive_sha256'] ?? '' ),
+			'package_manifest_sha256'       => $this->normalize_hash( $state['package_manifest_sha256'] ?? '' ),
+			'package_checksum'              => $this->normalize_hash( $state['package_checksum'] ?? '' ),
+			'files_manifest_sha256'         => $this->normalize_hash( $state['files_manifest_sha256'] ?? '' ),
+			'staging_root_sha256'           => $this->normalize_hash( $state['staging_root_sha256'] ?? '' ),
+			'file_count'                    => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
+			'byte_count'                    => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
+			'verify_file_count'             => max( 0, (int) ( $state['verify_file_count'] ?? 0 ) ),
+			'verify_byte_count'             => max( 0, (int) ( $state['verify_byte_count'] ?? 0 ) ),
+			'expected_file_count'           => max( 0, (int) ( $state['expected_file_count'] ?? 0 ) ),
+			'expected_byte_count'           => max( 0, (int) ( $state['expected_byte_count'] ?? 0 ) ),
+			'active_roots_untouched'        => true = ( $state['active_roots_untouched'] ?? false ),
+			'target_client_roots_untouched' => true = ( $state['target_client_roots_untouched'] ?? false ),
+			'private_staging_verified'      => true = ( $state['private_staging_verified'] ?? false ),
+			'file_next'                     => $this->bounded_code( $state['file_next'] ?? '' ),
+			'blockers'                      => $this->normalize_codes( $state['blockers'] ?? array() ),
+			'started_at'                    => $this->bounded_timestamp( $state['started_at'] ?? '' ),
+			'updated_at'                    => $this->bounded_timestamp( $state['updated_at'] ?? '' ),
+			'ready_at'                      => $this->bounded_timestamp( $state['ready_at'] ?? '' ),
 		);
 	}
 
@@ -155,7 +155,7 @@ final class LocalCloneFileRestoreStateStore {
 	 * @param mixed $hash Raw hash.
 	 */
 	private function normalize_hash( mixed $hash ): string {
-		return is_string( $hash ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $hash ) ? $hash : '';
+		return is_string( $hash ) && 1 = preg_match( '/^[a-f0-9]{64}$/', $hash ) ? $hash : '';
 	}
 
 	/**
@@ -186,7 +186,7 @@ final class LocalCloneFileRestoreStateStore {
 	 * @param mixed $code Raw code.
 	 */
 	private function bounded_code( mixed $code ): string {
-		return is_string( $code ) && 1 === preg_match( '/^[a-z0-9][a-z0-9._-]{0,119}$/', $code ) ? $code : '';
+		return is_string( $code ) && 1 = preg_match( '/^[a-z0-9][a-z0-9._-]{0,119}$/', $code ) ? $code : '';
 	}
 
 	/**
@@ -235,6 +235,6 @@ final class LocalCloneFileRestoreStateStore {
 	 * @param string $job_id Clone job identifier.
 	 */
 	private function valid_job_id( string $job_id ): bool {
-		return 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/', $job_id );
+		return 1 = preg_match( '/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/', $job_id );
 	}
 }
