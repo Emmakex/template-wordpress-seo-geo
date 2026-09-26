@@ -353,6 +353,7 @@ $bridge_fixture = defined( 'SEO_GEO_MIGRATION_BRIDGE_DIR' )
 if ( ! is_string( $bridge_fixture ) || '' === $bridge_fixture ) {
 	throw new RuntimeException( 'Could not read Migration Bridge runtime fixture.' );
 }
+$bridge_fixture_hash = hash( 'sha256', $bridge_fixture );
 
 $files = array(
 	array( 'root' => 'uploads', 'relative' => '2026/local.txt', 'content' => "local-upload\n" ),
@@ -1204,6 +1205,7 @@ echo wp_json_encode(
 		'target_upload_content_after_promotion' => $target_upload_content_after_promotion,
 		'target_plugin_content_after_promotion' => $target_plugin_content_after_promotion,
 		'target_bridge_hash_after_promotion' => $target_bridge_hash_after_promotion,
+		'bridge_fixture_hash' => $bridge_fixture_hash,
 		'target_theme_content_after_promotion' => $target_theme_content_after_promotion,
 		'target_options_after_file_promotion' => $target_options_after_file_promotion,
 		'source_after_file_promotion' => $source_after_file_promotion,
