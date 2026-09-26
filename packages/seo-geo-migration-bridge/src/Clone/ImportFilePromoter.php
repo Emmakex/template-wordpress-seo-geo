@@ -963,7 +963,7 @@ final class ImportFilePromoter {
 		$prefix = is_string( $import['destination_table_prefix'] ?? null )
 			? $import['destination_table_prefix']
 			: '';
-		$table = $prefix . 'options';
+		$table  = $prefix . 'options';
 
 		return 1 === preg_match( '/^[A-Za-z0-9_]+$/', $prefix )
 			&& 1 === preg_match( '/^[A-Za-z0-9_]+$/', $table )
@@ -987,6 +987,7 @@ final class ImportFilePromoter {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Read-only option lookup against a validated isolated table.
 		$value = $wpdb->get_var(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Validated identifier cannot be parameterized.
 				"SELECT option_value FROM {$quoted} WHERE option_name = %s LIMIT 1",
 				$name
 			)
