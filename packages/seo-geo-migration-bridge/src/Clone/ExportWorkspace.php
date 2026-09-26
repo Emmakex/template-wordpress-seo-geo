@@ -428,7 +428,7 @@ final class ExportWorkspace {
 			return null;
 		}
 
-		$expected_hash = hash( 'sha256', $content );
+		$expected_hash  = hash( 'sha256', $content );
 		$expected_bytes = strlen( $content );
 		if ( file_exists( $target ) ) {
 			if ( ! is_file( $target ) || ! is_readable( $target ) || is_link( $target ) ) {
