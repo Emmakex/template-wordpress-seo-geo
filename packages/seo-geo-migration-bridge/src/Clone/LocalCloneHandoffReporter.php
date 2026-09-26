@@ -67,13 +67,13 @@ final class LocalCloneHandoffReporter {
 	/**
 	 * Construct reporter.
 	 *
-	 * @param LocalCloneHandoffReportStateStore|null    $store          Optional report store.
-	 * @param LocalCloneFilePromoter|null               $files          Optional file authority.
+	 * @param LocalCloneHandoffReportStateStore|null      $store          Optional report store.
+	 * @param LocalCloneFilePromoter|null                 $files          Optional file authority.
 	 * @param LocalCloneDatabaseActivationStateStore|null $database       Optional parent DB journal.
-	 * @param ImportDatabaseActivationStateStore|null   $child_database Optional child DB journal.
-	 * @param ImportFilePromotionStateStore|null        $child_files    Optional child file journal.
-	 * @param ImportStateStore|null                     $imports        Optional child import state.
-	 * @param CloneJobStore|null                        $jobs           Optional parent clone jobs.
+	 * @param ImportDatabaseActivationStateStore|null     $child_database Optional child DB journal.
+	 * @param ImportFilePromotionStateStore|null          $child_files    Optional child file journal.
+	 * @param ImportStateStore|null                       $imports        Optional child import state.
+	 * @param CloneJobStore|null                          $jobs           Optional parent clone jobs.
 	 */
 	public function __construct(
 		?LocalCloneHandoffReportStateStore $store = null,
@@ -172,10 +172,10 @@ final class LocalCloneHandoffReporter {
 			return $this->blocked( $job_id, 'local-handoff-file-promotion-not-verified' );
 		}
 
-		$database = $this->database->get( $job_id );
-		$child_id = (string) ( $promotion['child_import_job_id'] ?? '' );
-		$import   = '' !== $child_id ? $this->imports->get( $child_id ) : null;
-		$child_db = '' !== $child_id ? $this->child_database->get( $child_id ) : null;
+		$database    = $this->database->get( $job_id );
+		$child_id    = (string) ( $promotion['child_import_job_id'] ?? '' );
+		$import      = '' !== $child_id ? $this->imports->get( $child_id ) : null;
+		$child_db    = '' !== $child_id ? $this->child_database->get( $child_id ) : null;
 		$child_files = '' !== $child_id ? $this->child_files->get( $child_id ) : null;
 
 		if (
@@ -220,10 +220,10 @@ final class LocalCloneHandoffReporter {
 			return $this->blocked( $job_id, 'local-handoff-identity-mismatch', $promotion );
 		}
 
-		$root = is_string( $import['destination_root_path'] ?? null )
+		$root   = is_string( $import['destination_root_path'] ?? null )
 			? untrailingslashit( wp_normalize_path( $import['destination_root_path'] ) )
 			: '';
-		$url = is_string( $import['destination_home_url'] ?? null ) ? $import['destination_home_url'] : '';
+		$url    = is_string( $import['destination_home_url'] ?? null ) ? $import['destination_home_url'] : '';
 		$prefix = is_string( $import['destination_table_prefix'] ?? null ) ? $import['destination_table_prefix'] : '';
 		if (
 			'' === $root
@@ -304,12 +304,12 @@ final class LocalCloneHandoffReporter {
 			'rollback_available'           => $rollback_available,
 			'source_untouched'             => $source_untouched,
 		);
-		$encoded = wp_json_encode( $evidence, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$encoded  = wp_json_encode( $evidence, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		if ( ! is_string( $encoded ) ) {
 			return null;
 		}
 
-		$ready = array() === $blockers;
+		$ready    = array() === $blockers;
 
 		return $evidence + array(
 			'status'        => $ready ? 'ready' : 'blocked',
@@ -337,7 +337,11 @@ final class LocalCloneHandoffReporter {
 	private function database_ready( array $child_db, string $prefix ): array {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb ) {
-			return array( 'ready' => false, 'table_count' => 0, 'row_count' => 0 );
+			return array(
+				'ready'       => false,
+				'table_count' => 0,
+				'row_count'   => 0,
+			);
 		}
 
 		$tables = is_array( $child_db['tables'] ?? null ) ? array_values( $child_db['tables'] ) : array();
@@ -355,7 +359,11 @@ final class LocalCloneHandoffReporter {
 				|| 1 !== preg_match( '/^[A-Za-z0-9_$-]+$/', $name )
 				|| 0 > $expected
 			) {
-				return array( 'ready' => false, 'table_count' => count( $tables ), 'row_count' => $rows );
+				return array(
+					'ready'       => false,
+					'table_count' => count( $tables ),
+					'row_count'   => $rows,
+				);
 			}
 
 			$quoted = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $name ) . chr( 96 );
@@ -384,24 +392,26 @@ final class LocalCloneHandoffReporter {
 	 */
 	private function runtime_ready( array $child_files, mixed $options_name, array $import ): array {
 		$empty = array(
-			'home_matches'   => false,
+			'home_matches'    => false,
 			'siteurl_matches' => false,
-			'noindex_ready'  => false,
+			'noindex_ready'   => false,
 			'runtime_matches' => false,
-			'runtime_sha256' => '',
+			'runtime_sha256'  => '',
 		);
 		if ( ! is_string( $options_name ) || 1 !== preg_match( '/^[A-Za-z0-9_$-]+$/', $options_name ) ) {
 			return $empty;
 		}
 
-		$home       = $this->option_value( $options_name, 'home' );
-		$siteurl    = $this->option_value( $options_name, 'siteurl' );
-		$blog_public = $this->option_value( $options_name, 'blog_public' );
-		$plugins_raw = $this->option_value( $options_name, 'active_plugins' );
-		$template    = $this->option_value( $options_name, 'template' );
-		$stylesheet  = $this->option_value( $options_name, 'stylesheet' );
-		$runtime     = is_array( $child_files['runtime_target'] ?? null ) ? $child_files['runtime_target'] : array();
-		$expected_plugins = is_array( $runtime['active_plugins'] ?? null ) ? array_values( $runtime['active_plugins'] ) : array();
+		$home                = $this->option_value( $options_name, 'home' );
+		$siteurl             = $this->option_value( $options_name, 'siteurl' );
+		$blog_public         = $this->option_value( $options_name, 'blog_public' );
+		$plugins_raw         = $this->option_value( $options_name, 'active_plugins' );
+		$template            = $this->option_value( $options_name, 'template' );
+		$stylesheet          = $this->option_value( $options_name, 'stylesheet' );
+		$runtime             = is_array( $child_files['runtime_target'] ?? null ) ? $child_files['runtime_target'] : array();
+		$expected_plugins    = is_array( $runtime['active_plugins'] ?? null ) ? array_values( $runtime['active_plugins'] ) : array();
+		$expected_template   = (string) ( $runtime['template'] ?? '' );
+		$expected_stylesheet = (string) ( $runtime['stylesheet'] ?? '' );
 
 		$actual_plugins = null;
 		if ( is_string( $plugins_raw ) && is_serialized( $plugins_raw, false ) ) {
@@ -411,10 +421,10 @@ final class LocalCloneHandoffReporter {
 
 		$runtime_evidence = array(
 			'active_plugins' => $expected_plugins,
-			'template'       => (string) ( $runtime['template'] ?? '' ),
-			'stylesheet'     => (string) ( $runtime['stylesheet'] ?? '' ),
+			'template'       => $expected_template,
+			'stylesheet'     => $expected_stylesheet,
 		);
-		$runtime_json = wp_json_encode( $runtime_evidence, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$runtime_json     = wp_json_encode( $runtime_evidence, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 
 		return array(
 			'home_matches'    => is_string( $home ) && untrailingslashit( $home ) === untrailingslashit( (string) ( $import['destination_home_url'] ?? '' ) ),
@@ -422,14 +432,16 @@ final class LocalCloneHandoffReporter {
 			'noindex_ready'   => '0' === $blog_public && true === ( $import['search_visibility_disabled'] ?? false ),
 			'runtime_matches' => is_array( $actual_plugins )
 				&& array_values( $actual_plugins ) === $expected_plugins
-				&& (string) $template === (string) ( $runtime['template'] ?? '' )
-				&& (string) $stylesheet === (string) ( $runtime['stylesheet'] ?? '' ),
+				&& $template === $expected_template
+				&& $stylesheet === $expected_stylesheet,
 			'runtime_sha256'  => is_string( $runtime_json ) ? hash( 'sha256', $runtime_json ) : '',
 		);
 	}
 
 	/**
 	 * Confirm target control plane files remain present and non-symlinked.
+	 *
+	 * @param string $root Isolated target root.
 	 */
 	private function bridge_control_ready( string $root ): bool {
 		foreach (
@@ -460,11 +472,11 @@ final class LocalCloneHandoffReporter {
 			return null;
 		}
 
-		$quoted = chr( 96 ) . str_replace( chr( 96 ), chr( 96 ) . chr( 96 ), $table ) . chr( 96 );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Read-only final target option smoke over validated table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only final target option smoke over validated table.
 		$value = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT option_value FROM {$quoted} WHERE option_name = %s LIMIT 1",
+				'SELECT option_value FROM %i WHERE option_name = %s LIMIT 1',
+				$table,
 				$name
 			)
 		);
