@@ -817,6 +817,71 @@ $local_finalization_verified_after_recovery = $local_finalizer->verified_snapsho
 $local_activation_plan_after_recovery = $local_finalizer->activation_plan_snapshot( $job_id );
 $job_after_recovery = $jobs->get( $job_id );
 
+$local_database_activation_prepared = $local_activation->prepare( $job_id );
+$table_pattern_after_prepare = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
+$target_tables_after_activation_prepare = $GLOBALS['wpdb']->get_col(
+	$GLOBALS['wpdb']->prepare(
+		'SHOW TABLES LIKE %s',
+		$table_pattern_after_prepare
+	)
+);
+$target_upload_absent_after_activation_prepare = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_activation_prepare = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_activation_prepare = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+
+$local_database_activation_activated = $local_activation->activate( $job_id );
+$local_database_activation_verified = $local_activation->verified_snapshot( $job_id );
+$database_activation_child_state = '' !== $payload_child_id
+	? ( new ImportDatabaseActivationStateStore() )->get( $payload_child_id )
+	: null;
+
+$target_options_table = $target_prefix . 'options';
+$target_posts_table   = $target_prefix . 'posts';
+$quoted_target_options = $quote_table( $target_options_table );
+$quoted_target_posts   = $quote_table( $target_posts_table );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of activated isolated target options.
+$target_options_after_activation = $GLOBALS['wpdb']->get_results(
+	"SELECT option_id, option_name, option_value FROM {$quoted_target_options} ORDER BY option_id ASC",
+	ARRAY_A
+);
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Test-only read of activated isolated target posts.
+$target_posts_after_activation = $GLOBALS['wpdb']->get_results(
+	"SELECT ID, post_content, post_excerpt, post_content_filtered FROM {$quoted_target_posts} ORDER BY ID ASC",
+	ARRAY_A
+);
+$target_tables_after_activation = $GLOBALS['wpdb']->get_col(
+	$GLOBALS['wpdb']->prepare(
+		'SHOW TABLES LIKE %s',
+		$GLOBALS['wpdb']->esc_like( $target_prefix ) . '%'
+	)
+);
+$staging_tables_absent_after_activation = ! $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare( 'SHOW TABLES LIKE %s', $options_staging_table )
+)
+	&& ! $GLOBALS['wpdb']->get_var(
+		$GLOBALS['wpdb']->prepare( 'SHOW TABLES LIKE %s', $posts_staging_table )
+	);
+$target_upload_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_activation = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$source_after_activation = $source_snapshot();
+$active_home_after_activation    = (string) get_option( 'home', '' );
+$active_siteurl_after_activation = (string) get_option( 'siteurl', '' );
+
+$local_database_activation_rolled_back = $local_activation->rollback( $job_id );
+$target_tables_after_activation_rollback = $GLOBALS['wpdb']->get_col(
+	$GLOBALS['wpdb']->prepare(
+		'SHOW TABLES LIKE %s',
+		$GLOBALS['wpdb']->esc_like( $target_prefix ) . '%'
+	)
+);
+$staging_options_after_activation_rollback = $read_staged_options();
+$staging_posts_after_activation_rollback   = $read_staged_posts();
+$target_upload_absent_after_activation_rollback = ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads/2026/local.txt' );
+$target_plugin_absent_after_activation_rollback = ! file_exists( trailingslashit( $target_path ) . 'wp-content/plugins/sample-local/plugin.php' );
+$target_theme_absent_after_activation_rollback = ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes/sample-local/style.css' );
+$source_after_activation_rollback = $source_snapshot();
+
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
 if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
