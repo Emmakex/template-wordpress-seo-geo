@@ -318,7 +318,7 @@ final class LocalCloneBridgeBootstrapper {
 					$bytes,
 					$hash
 				);
-				$state['after_name'] = $entry;
+				$state['after_name']       = $entry;
 				++$accepted_files;
 				$accepted_bytes += $bytes;
 
