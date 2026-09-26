@@ -2199,7 +2199,19 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.5.1 — serialization-safe environment rewrite in Migration Bridge 0.8.32.** Migration Bridge 0.8.31 is accepted on `main` at `afa69a7a541511dff3f7f5877007dab00c67e449`: uploads/plugins/themes restore only into verified private child staging, per-file `files-meta` hashes replay successfully, and the isolated target receives no client payload before promotion. 0.8.32 reuses the accepted `ImportEnvironmentRewriter` on that same verified child job only after database + file staging remain valid. Source-environment URLs are rewritten exclusively inside job-owned staging tables with safe PHP serialization/JSON handling, credential-like options remain opaque, and a second pass must report zero remaining rewritable source URLs. Active WordPress `home`/`siteurl`, production tables and target client roots remain untouched. Next: **10E.2A.5.5.2 — guarded finalization plan** before any database activation or file promotion.
+Current execution pointer: **10E.2A.5.5.2 — guarded finalization plan in Migration Bridge 0.8.33.** Migration Bridge 0.8.32 is accepted on `main` at `7e30ddf168ae1f7b5f9beae5c945c2f04a7ed5b1`: serialization-safe local rewrite covers plain URLs, JSON and PHP serialized values, preserves credential-like values, proves same-origin subdirectory rewrites are idempotent, and leaves production/target active state untouched. 0.8.33 reuses the accepted `ImportFinalizationPlanner` on the same verified private child, revalidates local target authority before each batch, fingerprints the rewritten database and private files, and freezes the exact activation/rollback map for the isolated target without creating target tables or client-file candidates. Next: **10E.2A.5.5.3 — reversible local database activation**; file promotion remains a later explicit gate.
+
+Migration Bridge v0.8.32 / 10E.2A.5.5.1 acceptance evidence:
+
+- PR #158 squash-merged to `main` as `7e30ddf168ae1f7b5f9beae5c945c2f04a7ed5b1`;
+- Foundation CI `36231200157` passed;
+- Phase 1 Package CI `36231200164` passed;
+- PHP Quality CI `36231200155` passed;
+- WordPress Smoke CI `36231200207` passed, including plain/JSON/PHP-serialized rewrites, same-origin subdirectory idempotence, sensitive-value opacity, recovery and parent tamper rejection;
+- Accessibility & Responsive CI `36231200153` passed;
+- Performance Baseline CI `36231200147` passed;
+- Migration Bridge Release CI `36231200151` passed;
+- post-merge verification on `7e30ddf168ae1f7b5f9beae5c945c2f04a7ed5b1` completed 7/7 green.
 
 Migration Bridge v0.8.31 / 10E.2A.5.4.2 acceptance evidence:
 
