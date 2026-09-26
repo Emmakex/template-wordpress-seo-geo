@@ -313,9 +313,9 @@ final class LocalClonePayloadVerification {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, string $code, bool $retryable ): ?array {
-		$existing = $this->store->get( $job_id ) ?? array();
-		$now      = gmdate( DATE_ATOM );
-		$blockers = is_array( $existing['blockers'] ?? null ) ? $existing['blockers'] : array();
+		$existing   = $this->store->get( $job_id ) ?? array();
+		$now        = gmdate( DATE_ATOM );
+		$blockers   = is_array( $existing['blockers'] ?? null ) ? $existing['blockers'] : array();
 		$blockers[] = $code;
 
 		$existing['schema_version']   = LocalClonePayloadVerificationStateStore::SCHEMA_VERSION;
