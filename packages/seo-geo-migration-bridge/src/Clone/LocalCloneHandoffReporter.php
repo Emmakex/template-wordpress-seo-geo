@@ -309,7 +309,7 @@ final class LocalCloneHandoffReporter {
 			return null;
 		}
 
-		$ready    = array() === $blockers;
+		$ready = array() === $blockers;
 
 		return $evidence + array(
 			'status'        => $ready ? 'ready' : 'blocked',
