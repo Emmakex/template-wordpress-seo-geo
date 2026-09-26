@@ -382,6 +382,7 @@ foreach ( $bridge_iterator as $bridge_file ) {
 		'content'  => $content,
 	);
 }
+$fixture_file_count = count( $files );
 $root_stats = array(
 	'uploads' => array( 'file_count' => 0, 'byte_count' => 0 ),
 	'plugins' => array( 'file_count' => 0, 'byte_count' => 0 ),
@@ -1227,6 +1228,7 @@ echo wp_json_encode(
 		'target_plugin_content_after_promotion' => $target_plugin_content_after_promotion,
 		'target_bridge_hash_after_promotion' => $target_bridge_hash_after_promotion,
 		'bridge_fixture_hash' => $bridge_fixture_hash,
+		'fixture_file_count' => $fixture_file_count,
 		'target_theme_content_after_promotion' => $target_theme_content_after_promotion,
 		'target_options_after_file_promotion' => $target_options_after_file_promotion,
 		'source_after_file_promotion' => $source_after_file_promotion,
@@ -1509,8 +1511,8 @@ local_files = payload["local_files_state"]
 assert local_files is not None, payload
 assert local_files["status"] == "ready", payload
 assert local_files["stage"] == "complete", payload
-assert local_files["file_count"] == 4, payload
-assert local_files["verify_file_count"] == 4, payload
+assert local_files["file_count"] == payload["fixture_file_count"], payload
+assert local_files["verify_file_count"] == payload["fixture_file_count"], payload
 assert local_files["file_count"] == local_files["expected_file_count"], payload
 assert local_files["byte_count"] == local_files["expected_byte_count"], payload
 assert local_files["verify_file_count"] == local_files["expected_file_count"], payload
@@ -1527,8 +1529,8 @@ file_child = payload["file_child_state"]
 assert file_child is not None, payload
 assert file_child["status"] == "complete", payload
 assert file_child["stage"] == "complete", payload
-assert file_child["file_count"] == 4, payload
-assert file_child["verify_file_count"] == 4, payload
+assert file_child["file_count"] == payload["fixture_file_count"], payload
+assert file_child["verify_file_count"] == payload["fixture_file_count"], payload
 assert file_child["active_roots_untouched"] is True, payload
 
 expected_files = {
@@ -1622,7 +1624,7 @@ assert finalization["status"] == "ready", payload
 assert finalization["stage"] == "ready", payload
 assert finalization["database_rows_hashed"] == 10, payload
 assert finalization["database_table_count"] == 2, payload
-assert finalization["files_hashed"] == 4, payload
+assert finalization["files_hashed"] == payload["fixture_file_count"], payload
 assert finalization["files_hashed"] == finalization["expected_file_count"], payload
 assert finalization["file_bytes_hashed"] == finalization["expected_file_bytes"], payload
 assert finalization["sandbox_hardening_ready"] is True, payload
@@ -1640,7 +1642,7 @@ assert finalization_child is not None, payload
 assert finalization_child["status"] == "ready", payload
 assert finalization_child["stage"] == "ready", payload
 assert finalization_child["database_rows_hashed"] == 10, payload
-assert finalization_child["files_hashed"] == 4, payload
+assert finalization_child["files_hashed"] == payload["fixture_file_count"], payload
 assert finalization_child["activation_allowed"] is True, payload
 assert finalization_child["handoff_ready"] is False, payload
 assert finalization_child["active_tables_untouched"] is True, payload
@@ -1853,7 +1855,7 @@ for root in promotion_child_prepared["roots"]:
 promotion_candidate = payload["local_file_promotion_candidate"]
 assert promotion_candidate is not None, payload
 assert promotion_candidate["status"] == "candidate-ready", payload
-assert promotion_candidate["file_count"] == 4, payload
+assert promotion_candidate["file_count"] == payload["fixture_file_count"], payload
 assert promotion_candidate["copy_fingerprint"] == promotion_candidate["file_fingerprint"], payload
 assert promotion_candidate["promotion_next"] == "promote-files", payload
 assert payload["target_upload_absent_after_candidates"] is True, payload
@@ -1864,7 +1866,7 @@ assert payload["target_bridge_present_after_candidates"] is True, payload
 promotion_child_candidate = payload["file_promotion_child_candidate"]
 assert promotion_child_candidate is not None, payload
 assert promotion_child_candidate["status"] == "candidate-ready", payload
-assert promotion_child_candidate["file_count"] == 4, payload
+assert promotion_child_candidate["file_count"] == payload["fixture_file_count"], payload
 assert promotion_child_candidate["copy_fingerprint"] == promotion_child_candidate["file_fingerprint"], payload
 assert all(root["candidate_ready"] is True for root in promotion_child_candidate["roots"]), payload
 
@@ -1876,8 +1878,8 @@ assert promotion_swapped["source_untouched"] is True, payload
 promotion_verified = payload["local_file_promotion_verified_state"]
 assert promotion_verified is not None, payload
 assert promotion_verified["status"] == "verified", payload
-assert promotion_verified["file_count"] == 4, payload
-assert promotion_verified["verify_file_count"] == 4, payload
+assert promotion_verified["file_count"] == payload["fixture_file_count"], payload
+assert promotion_verified["verify_file_count"] == payload["fixture_file_count"], payload
 assert promotion_verified["active_fingerprint"] == promotion_verified["file_fingerprint"], payload
 assert promotion_verified["rollback_available"] is True, payload
 assert promotion_verified["handoff_ready"] is True, payload
@@ -1888,8 +1890,8 @@ assert payload["local_file_promotion_verified"] is True, payload
 promotion_child_verified = payload["file_promotion_child_verified"]
 assert promotion_child_verified is not None, payload
 assert promotion_child_verified["status"] == "verified", payload
-assert promotion_child_verified["file_count"] == 4, payload
-assert promotion_child_verified["verify_file_count"] == 4, payload
+assert promotion_child_verified["file_count"] == payload["fixture_file_count"], payload
+assert promotion_child_verified["verify_file_count"] == payload["fixture_file_count"], payload
 assert promotion_child_verified["active_fingerprint"] == promotion_child_verified["file_fingerprint"], payload
 assert promotion_child_verified["handoff_ready"] is True, payload
 assert promotion_child_verified["rollback_available"] is True, payload
