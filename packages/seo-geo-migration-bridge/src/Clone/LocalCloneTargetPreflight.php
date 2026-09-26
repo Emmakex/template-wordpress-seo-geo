@@ -120,12 +120,40 @@ final class LocalCloneTargetPreflight {
 	 * @return array<string,mixed>|null
 	 */
 	public function verified_snapshot( string $job_id ): ?array {
+		$state = $this->verified_authority_snapshot( $job_id );
+		if ( ! is_array( $state ) ) {
+			return null;
+		}
+
+		$child_id = (string) $state['child_import_job_id'];
+		$import   = $this->import_state->get( $child_id );
+		if (
+			! is_array( $import )
+			|| 'preflight-ready' !== ( $import['status'] ?? null )
+			|| true === ( $import['restore_allowed'] ?? true )
+			|| array() !== ( $import['blockers'] ?? array() )
+		) {
+			return null;
+		}
+
+		return $state;
+	}
+
+	/**
+	 * Return frozen target authority while the parent sandbox/archive binding remains intact.
+	 *
+	 * Unlike verified_snapshot(), this remains valid after the child import advances from
+	 * preflight-ready to payload-verified. It still requires zero target tables/uploads/themes.
+	 *
+	 * @param string $job_id Parent local-clone job identifier.
+	 * @return array<string,mixed>|null
+	 */
+	public function verified_authority_snapshot( string $job_id ): ?array {
 		$state = $this->store->get( $job_id );
 		if (
 			! is_array( $state )
 			|| 'ready' !== ( $state['status'] ?? null )
 			|| true !== ( $state['preflight_ready'] ?? false )
-			|| true === ( $state['restore_allowed'] ?? true )
 		) {
 			return null;
 		}
@@ -141,9 +169,7 @@ final class LocalCloneTargetPreflight {
 		if (
 			! is_array( $import )
 			|| ! $this->child_state_matches_authority( $import, $state, $authority )
-			|| 'preflight-ready' !== ( $import['status'] ?? null )
 			|| 'private-same-server' !== ( $import['transport'] ?? null )
-			|| true === ( $import['restore_allowed'] ?? true )
 			|| array() !== ( $import['blockers'] ?? array() )
 			|| ! is_array( $archive )
 			|| ! hash_equals( (string) $state['import_archive_sha256'], (string) $archive['sha256'] )
