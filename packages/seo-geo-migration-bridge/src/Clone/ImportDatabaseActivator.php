@@ -993,6 +993,9 @@ final class ImportDatabaseActivator {
 
 	/**
 	 * Revalidate the sandbox safety boundary against the currently active DB.
+	 *
+	 * @param string $job_id          Child import job identifier.
+	 * @param bool   $allow_activated Whether the isolated target DB may already be active.
 	 */
 	private function sandbox_ready( string $job_id, bool $allow_activated = false ): bool {
 		global $wpdb;
@@ -1044,7 +1047,7 @@ final class ImportDatabaseActivator {
 			$parent_id = is_string( $import['local_handoff_parent_job_id'] ?? null )
 				? $import['local_handoff_parent_job_id']
 				: '';
-			$target = '' !== $parent_id ? $this->local_target_preflight->verified_snapshot( $parent_id ) : null;
+			$target    = '' !== $parent_id ? $this->local_target_preflight->verified_snapshot( $parent_id ) : null;
 
 			return is_array( $target )
 				&& (string) ( $target['child_import_job_id'] ?? '' ) === $job_id
