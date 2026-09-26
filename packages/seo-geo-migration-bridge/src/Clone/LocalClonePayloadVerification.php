@@ -205,9 +205,9 @@ final class LocalClonePayloadVerification {
 		}
 
 		if ( 'blocked' === ( $payload['status'] ?? null ) ) {
-			$blockers = is_array( $payload['blockers'] ?? null ) ? $payload['blockers'] : array();
-			$code     = is_string( $blockers[0] ?? null ) ? (string) $blockers[0] : 'local-payload-verification-blocked';
-			$child    = $this->jobs->get( $child_id );
+			$blockers  = is_array( $payload['blockers'] ?? null ) ? $payload['blockers'] : array();
+			$code      = is_string( $blockers[0] ?? null ) ? (string) $blockers[0] : 'local-payload-verification-blocked';
+			$child     = $this->jobs->get( $child_id );
 			$retryable = ! is_array( $child ) || 'failed-terminal' !== ( $child['status'] ?? null );
 
 			return $this->block( $job_id, $code, $retryable );
