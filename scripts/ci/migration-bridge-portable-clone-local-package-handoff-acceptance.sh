@@ -8,6 +8,7 @@ cat >"$LOCAL_HANDOFF_RUNNER" <<'PHP'
 <?php
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPackageHandoffController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneLocalPayloadVerificationController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\DeliveryStateStore;
@@ -19,6 +20,9 @@ use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoff;
 use SeoGeo\MigrationBridge\Clone\LocalClonePackageHandoffStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflight;
 use SeoGeo\MigrationBridge\Clone\LocalCloneTargetPreflightStateStore;
+use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerification;
+use SeoGeo\MigrationBridge\Clone\LocalClonePayloadVerificationStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
 use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalCloneRuntimeStateStore;
@@ -39,6 +43,8 @@ $options = array(
 	LocalCloneSandboxRuntimeStateStore::OPTION_NAME,
 	LocalClonePackageHandoffStateStore::OPTION_NAME,
 	LocalCloneTargetPreflightStateStore::OPTION_NAME,
+	LocalClonePayloadVerificationStateStore::OPTION_NAME,
+	ImportPayloadStateStore::OPTION_NAME,
 	ImportStateStore::OPTION_NAME,
 );
 foreach ( $options as $option ) {
@@ -52,6 +58,7 @@ $core      = Plugin::local_clone_runtime_bootstrapper();
 $sandbox   = Plugin::local_clone_sandbox_runtime_bootstrapper();
 $handoff   = Plugin::local_clone_package_handoff();
 $target_preflight = Plugin::local_clone_target_preflight();
+$payload_verification = Plugin::local_clone_payload_verification();
 if (
 	! $jobs instanceof CloneJobStore
 	|| ! $planner instanceof LocalCloneOrchestrator
@@ -60,6 +67,7 @@ if (
 	|| ! $sandbox instanceof LocalCloneSandboxRuntimeBootstrapper
 	|| ! $handoff instanceof LocalClonePackageHandoff
 	|| ! $target_preflight instanceof LocalCloneTargetPreflight
+	|| ! $payload_verification instanceof LocalClonePayloadVerification
 ) {
 	throw new RuntimeException( 'Local clone handoff services are unavailable.' );
 }
@@ -377,16 +385,58 @@ $GLOBALS['wpdb']->query( "CREATE TABLE {$created_table} (id bigint unsigned NOT 
 $target_verified_after_mutation = $target_preflight->verified_snapshot( $job_id );
 $GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$created_table}" );
 
+$payload_mid = $payload_verification->advance( $job_id, 1, 1024 * 1024 );
+$payload_state = $payload_mid;
+for ( $i = 0; $i < 140; ++$i ) {
+	if ( ! is_array( $payload_state ) || in_array( $payload_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
+		break;
+	}
+	$payload_state = $payload_verification->advance( $job_id, 1, 1024 * 1024 );
+}
+
+$payload_verified = $payload_verification->verified_snapshot( $job_id );
+$payload_child_id = is_array( $payload_state ) ? (string) ( $payload_state['child_import_job_id'] ?? '' ) : '';
+$payload_child_import = '' !== $payload_child_id ? ( new ImportStateStore() )->get( $payload_child_id ) : null;
+$payload_child_state  = '' !== $payload_child_id ? ( new ImportPayloadStateStore() )->get( $payload_child_id ) : null;
+
+$table_pattern_after_payload = $GLOBALS['wpdb']->esc_like( $target_prefix ) . '%';
+$target_tables_after_payload = $GLOBALS['wpdb']->get_col(
+	$GLOBALS['wpdb']->prepare(
+		'SHOW TABLES LIKE %s',
+		$table_pattern_after_payload
+	)
+);
+
+$payload_verified_after_mutation = null;
+$payload_guard_table = $target_prefix . 'payload_tamper_guard';
+$GLOBALS['wpdb']->query( "CREATE TABLE {$payload_guard_table} (id bigint unsigned NOT NULL)" );
+$payload_verified_after_mutation = $payload_verification->verified_snapshot( $job_id );
+$GLOBALS['wpdb']->query( "DROP TABLE IF EXISTS {$payload_guard_table}" );
+
 $archive_path = is_array( $delivery_info ) ? (string) $delivery_info['path'] : '';
 if ( '' !== $archive_path && is_file( $archive_path ) ) {
 	file_put_contents( $archive_path, "tamper", FILE_APPEND );
 }
 $verified_after_tamper = $handoff->verified_snapshot( $job_id );
+$payload_verified_after_archive_tamper = $payload_verification->verified_snapshot( $job_id );
 
 $autoload = $GLOBALS['wpdb']->get_var(
 	$GLOBALS['wpdb']->prepare(
 		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
 		LocalClonePackageHandoffStateStore::OPTION_NAME
+	)
+);
+
+$payload_parent_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		LocalClonePayloadVerificationStateStore::OPTION_NAME
+	)
+);
+$payload_child_autoload = $GLOBALS['wpdb']->get_var(
+	$GLOBALS['wpdb']->prepare(
+		"SELECT autoload FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s",
+		ImportPayloadStateStore::OPTION_NAME
 	)
 );
 
@@ -402,6 +452,13 @@ echo wp_json_encode(
 		'target_preflight_child'      => $target_preflight_child,
 		'target_verified_after_mutation' => is_array( $target_verified_after_mutation ),
 		'target_verified_after_child_drift' => is_array( $target_verified_after_child_drift ),
+		'payload_mid'                  => $payload_mid,
+		'payload_state'                => $payload_state,
+		'payload_verified'             => is_array( $payload_verified ),
+		'payload_child_import'         => $payload_child_import,
+		'payload_child_state'          => $payload_child_state,
+		'payload_verified_after_mutation' => is_array( $payload_verified_after_mutation ),
+		'payload_verified_after_archive_tamper' => is_array( $payload_verified_after_archive_tamper ),
 		'verified_before'             => is_array( $verified_before ),
 		'verified_after_tamper'       => is_array( $verified_after_tamper ),
 		'delivery_info_before_tamper' => $delivery_info,
@@ -413,13 +470,19 @@ echo wp_json_encode(
 		'manifest_delivery_ready'     => is_array( $manifest_parsed ) ? (bool) ( $manifest_parsed['safety']['delivery_ready'] ?? true ) : true,
 		'manifest_has_delivery'       => is_array( $manifest_parsed ) && array_key_exists( 'delivery', $manifest_parsed ),
 		'target_table_count'          => is_array( $target_tables ) ? count( $target_tables ) : -1,
+		'target_table_count_after_payload' => is_array( $target_tables_after_payload ) ? count( $target_tables_after_payload ) : -1,
 		'uploads_absent'              => ! file_exists( trailingslashit( $target_path ) . 'wp-content/uploads' ),
 		'themes_absent'               => ! file_exists( trailingslashit( $target_path ) . 'wp-content/themes' ),
 		'sandbox_still_verified'      => is_array( $sandbox->verified_snapshot( $job_id ) ),
 		'controller_registered'       => false !== has_action( 'admin_post_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'target_preflight_service_registered' => $target_preflight instanceof LocalCloneTargetPreflight,
+		'payload_verification_service_registered' => $payload_verification instanceof LocalClonePayloadVerification,
+		'payload_controller_registered' => false !== has_action( 'admin_post_' . AdminCloneLocalPayloadVerificationController::ACTION ),
+		'payload_public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPayloadVerificationController::ACTION ),
 		'public_controller_absent'    => false === has_action( 'admin_post_nopriv_' . AdminCloneLocalPackageHandoffController::ACTION ),
 		'autoload'                    => $autoload,
+		'payload_parent_autoload'     => $payload_parent_autoload,
+		'payload_child_autoload'      => $payload_child_autoload,
 		'job'                         => $jobs->get( $job_id ),
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -514,6 +577,48 @@ assert child["restore_allowed"] is False, payload
 assert child["blockers"] == [], payload
 assert "full-payload-checksum-pending" in child["advisories"], payload
 
+mid = payload["payload_mid"]
+assert mid is not None, payload
+assert mid["status"] in ("running", "ready"), payload
+
+local_payload = payload["payload_state"]
+assert local_payload is not None, payload
+assert local_payload["status"] == "ready", payload
+assert local_payload["payload_status"] == "complete", payload
+assert local_payload["payload_stage"] == "complete", payload
+assert local_payload["payload_verified"] is True, payload
+assert local_payload["restore_eligible"] is True, payload
+assert local_payload["database_untouched"] is True, payload
+assert local_payload["client_content_untouched"] is True, payload
+assert local_payload["payload_next"] == "staging-restore", payload
+assert local_payload["blockers"] == [], payload
+assert local_payload["verify_file_count"] == local_payload["expected_file_count"], payload
+assert local_payload["verify_byte_count"] == local_payload["expected_byte_count"], payload
+assert local_payload["verification_checksum"] == handoff["package_checksum"], payload
+assert payload["payload_verified"] is True, payload
+assert payload["payload_verified_after_mutation"] is False, payload
+assert payload["payload_verified_after_archive_tamper"] is False, payload
+assert payload["payload_verification_service_registered"] is True, payload
+assert payload["payload_controller_registered"] is True, payload
+assert payload["payload_public_controller_absent"] is True, payload
+
+payload_child = payload["payload_child_state"]
+assert payload_child is not None, payload
+assert payload_child["status"] == "complete", payload
+assert payload_child["stage"] == "complete", payload
+assert payload_child["blockers"] == [], payload
+assert payload_child["verification_checksum"] == handoff["package_checksum"], payload
+
+payload_import = payload["payload_child_import"]
+assert payload_import is not None, payload
+assert payload_import["status"] == "payload-verified", payload
+assert payload_import["transport"] == "private-same-server", payload
+assert payload_import["full_payload_verified"] is True, payload
+assert payload_import["restore_allowed"] is True, payload
+assert payload_import["blockers"] == [], payload
+assert "full-payload-checksum-pending" not in payload_import["advisories"], payload
+assert "restore-runtime-guard-required" in payload_import["advisories"], payload
+
 delivery = payload["delivery_info_before_tamper"]
 assert delivery is not None, payload
 assert delivery["bytes"] == handoff["archive_bytes"], payload
@@ -530,18 +635,21 @@ assert payload["manifest_delivery_ready"] is False, payload
 assert payload["manifest_has_delivery"] is False, payload
 
 assert payload["target_table_count"] == 0, payload
+assert payload["target_table_count_after_payload"] == 0, payload
 assert payload["uploads_absent"] is True, payload
 assert payload["themes_absent"] is True, payload
 assert payload["sandbox_still_verified"] is True, payload
 assert payload["controller_registered"] is True, payload
 assert payload["public_controller_absent"] is True, payload
 assert payload["autoload"] in ("off", "no", "auto-off"), payload
+assert payload["payload_parent_autoload"] in ("off", "no", "auto-off"), payload
+assert payload["payload_child_autoload"] in ("off", "no", "auto-off"), payload
 
 job = payload["job"]
 assert job["operation"] == "local-clone", payload
 assert job["status"] == "active", payload
-assert job["phase"] == "validate", payload
-assert job["cursor"] == "local-target-preflight-ready", payload
+assert job["phase"] == "verify", payload
+assert job["cursor"] == "local-payload-verified", payload
 
 print("ok")
 PY
@@ -549,4 +657,4 @@ PY
   fail_smoke "local-clone-package-handoff" "Local clone private package handoff contract is invalid" "immutable package manifest + private hash-bound ZIP + no target import mutation" "${LOCAL_HANDOFF_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone handoff + target preflight OK: private ZIP frozen, existing import preflight reused against isolated target, restore locked, target mutation/archive tamper invalidated readiness.\n'
+printf '[smoke] Local clone handoff + target preflight + payload verification OK: private ZIP frozen, ImportPreflight/ImportPayloadVerifier reused, checksum verified, restore eligibility unlocked only after full replay, destination tables/uploads/themes still untouched.\n'
