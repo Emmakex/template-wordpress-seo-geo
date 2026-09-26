@@ -18,16 +18,32 @@ final class AdminCloneLocalHandoffController {
 	public const ACTION       = 'seo_geo_migration_clone_local_handoff';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_local_handoff';
 
+	/**
+	 * Final local handoff reporter.
+	 *
+	 * @var LocalCloneHandoffReporter
+	 */
 	private LocalCloneHandoffReporter $reporter;
 
+	/**
+	 * Construct controller.
+	 *
+	 * @param LocalCloneHandoffReporter|null $reporter Optional final handoff reporter.
+	 */
 	public function __construct( ?LocalCloneHandoffReporter $reporter = null ) {
 		$this->reporter = $reporter ?? new LocalCloneHandoffReporter();
 	}
 
+	/**
+	 * Register authenticated admin endpoint.
+	 */
 	public function boot(): void {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle' ) );
 	}
 
+	/**
+	 * Verify and persist one read-only final local target handoff report.
+	 */
 	public function handle(): never {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die(
