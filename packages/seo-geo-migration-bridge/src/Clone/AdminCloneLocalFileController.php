@@ -71,13 +71,13 @@ final class AdminCloneLocalFileController {
 			}
 		}
 
-		$batch_files = isset( $_POST['local_clone_files_batch_size'] )
+		$batch_files     = isset( $_POST['local_clone_files_batch_size'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['local_clone_files_batch_size'] ) ) )
 			: ImportFileRestorer::DEFAULT_BATCH_FILES;
 		$batch_megabytes = isset( $_POST['local_clone_files_batch_megabytes'] )
 			? absint( sanitize_text_field( wp_unslash( $_POST['local_clone_files_batch_megabytes'] ) ) )
 			: 8;
-		$batch_bytes = $batch_megabytes * 1024 * 1024;
+		$batch_bytes     = $batch_megabytes * 1024 * 1024;
 
 		$result = $this->restorer->advance( $job_id, $batch_files, $batch_bytes );
 		if ( ! is_array( $result ) ) {
