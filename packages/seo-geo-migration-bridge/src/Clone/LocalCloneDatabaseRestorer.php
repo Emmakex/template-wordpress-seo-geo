@@ -399,7 +399,6 @@ final class LocalCloneDatabaseRestorer {
 		global $wpdb;
 		return $wpdb instanceof wpdb
 			&& 1 === preg_match( '/^[A-Za-z0-9_]+$/', $staging_namespace )
-			&& '' !== $staging_namespace
 			&& ! str_starts_with( $staging_namespace, $wpdb->prefix )
 			&& ! str_starts_with( $staging_namespace, $target_prefix );
 	}
