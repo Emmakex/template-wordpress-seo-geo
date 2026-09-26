@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.3.1 — private same-server package handoff in Migration Bridge 0.8.27.** Migration Bridge 0.8.26 is accepted on `main` at `dc782712540056f61113bcd15af3e28c0710f04b`: the isolated target now has verified WordPress core, Migration Bridge, same-database/different-prefix configuration and active sandbox hardening while client uploads/themes and destination tables remain absent. 0.8.27 reuses the existing private ZIP builder to assemble the already verified `local-clone` workspace into a same-server handoff artifact **without changing the frozen package manifest/hash contract** or exposing a public/download transport. Every batch revalidates ownership, sandbox control-file hashes and package identity; completion freezes archive bytes/SHA-256 and advances only to **10E.2A.5.3.2 — target intake + sandbox preflight**.
+Current execution pointer: **10E.2A.5.3.2.1 — target intake + sandbox preflight in Migration Bridge 0.8.28.** Migration Bridge 0.8.27 is accepted on `main` at `e6751252a18913992c0541552012daeb4ed6be3e`: the verified `local-clone` package is now available as a private same-server ZIP whose archive identity remains bound to the frozen package manifest/checksum and verified sandbox runtime. 0.8.28 stages that artifact into a deterministic child `import` job and reuses the existing `ImportPreflight` engine with destination authority derived only from the isolated runtime. The local-clone transport contract remains frozen (`delivery_ready=false`, no public delivery metadata), normal Portable Import behavior remains unchanged, and completion requires package/child-manifest integrity, isolated target guards, zero destination tables/uploads/themes and **`restore_allowed=false`**. The next microphase is bounded payload extraction + full checksum replay before any restore can be authorized.
+
+Migration Bridge v0.8.27 / 10E.2A.5.3.1 acceptance evidence:
+
+- PR #152 squash-merged to `main` as `e6751252a18913992c0541552012daeb4ed6be3e`;
+- Foundation CI `36221474944` passed;
+- Phase 1 Package CI `36221474873` passed;
+- PHP Quality CI `36221474834` passed;
+- WordPress Smoke CI `36221474887` passed, including immutable local-clone manifest, private hash-bound ZIP, zero target tables/uploads/themes and archive-tamper invalidation;
+- Accessibility & Responsive CI `36221474899` passed;
+- Performance Baseline CI `36221474991` passed;
+- Migration Bridge Release CI `36221474881` passed.
 
 Migration Bridge v0.8.26 / 10E.2A.5.2.2.2 acceptance evidence:
 
