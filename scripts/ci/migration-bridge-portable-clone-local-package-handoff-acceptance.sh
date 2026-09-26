@@ -660,7 +660,7 @@ $target_preflight_child = is_array( $target_preflight_state )
 
 $local_payload_mid = $local_payload->advance( $job_id, 1, 1024 * 1024 );
 $local_payload_state = $local_payload_mid;
-for ( $i = 0; $i < 140; ++$i ) {
+for ( $i = 0; $i < 600; ++$i ) {
 	if ( is_array( $local_payload_state ) && in_array( $local_payload_state['status'] ?? null, array( 'ready', 'blocked' ), true ) ) {
 		break;
 	}
