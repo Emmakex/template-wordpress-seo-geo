@@ -149,6 +149,8 @@ $source_snapshot = static function () use ( $quoted_source ): array {
 	return is_array( $rows ) ? $rows : array();
 };
 $source_before = $source_snapshot();
+$active_home_before    = (string) get_option( 'home', '' );
+$active_siteurl_before = (string) get_option( 'siteurl', '' );
 
 $job = $jobs->create( 'local-clone', $job_id );
 if ( ! is_array( $job ) ) {
@@ -807,6 +809,8 @@ $rewrite_autoload = $GLOBALS['wpdb']->get_var(
 );
 
 $source_after_all = $source_snapshot();
+$active_home_after    = (string) get_option( 'home', '' );
+$active_siteurl_after = (string) get_option( 'siteurl', '' );
 
 echo wp_json_encode(
 	array(
@@ -842,6 +846,10 @@ echo wp_json_encode(
 		'source_before'               => $source_before,
 		'source_after_database'       => $source_after_database,
 		'source_after_all'            => $source_after_all,
+		'active_home_before'          => $active_home_before,
+		'active_home_after'           => $active_home_after,
+		'active_siteurl_before'       => $active_siteurl_before,
+		'active_siteurl_after'        => $active_siteurl_after,
 		'target_table_count_after_database' => is_array( $target_tables_after_database ) ? count( $target_tables_after_database ) : -1,
 		'local_files_mid'             => $local_files_mid,
 		'local_files_state'           => $local_files_state,
@@ -1098,6 +1106,8 @@ assert len(payload["staging_posts_before_rewrite"]) == 1, payload
 assert payload["source_before"] == [{"id": "999", "title": "production-sentinel"}], payload
 assert payload["source_after_database"] == payload["source_before"], payload
 assert payload["source_after_all"] == payload["source_before"], payload
+assert payload["active_home_after"] == payload["active_home_before"], payload
+assert payload["active_siteurl_after"] == payload["active_siteurl_before"], payload
 assert payload["target_table_count_after_database"] == 0, payload
 
 files_mid = payload["local_files_mid"]
