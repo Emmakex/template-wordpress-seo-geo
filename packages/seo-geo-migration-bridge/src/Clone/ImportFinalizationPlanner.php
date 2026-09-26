@@ -107,15 +107,15 @@ final class ImportFinalizationPlanner {
 	/**
 	 * Construct planner.
 	 *
-	 * @param ImportFinalizeStateStore|null $store             Optional finalization state store.
-	 * @param ImportStateStore|null         $import_state      Optional Portable Import state store.
-	 * @param ImportPayloadStateStore|null  $payload_state     Optional payload verification state store.
-	 * @param ImportDatabaseStateStore|null $database_state    Optional database staging state store.
-	 * @param ImportFileStateStore|null     $file_state        Optional file staging state store.
-	 * @param ImportRewriteStateStore|null  $rewrite_state     Optional environment rewrite state store.
-	 * @param ImportDatabaseRestorer|null   $database_restorer Optional database staging-plan dependency.
-	 * @param CloneJobStore|null            $jobs              Optional clone job store.
-	 * @param ExportWorkspace|null          $workspace              Optional private import workspace.
+	 * @param ImportFinalizeStateStore|null  $store             Optional finalization state store.
+	 * @param ImportStateStore|null          $import_state      Optional Portable Import state store.
+	 * @param ImportPayloadStateStore|null   $payload_state     Optional payload verification state store.
+	 * @param ImportDatabaseStateStore|null  $database_state    Optional database staging state store.
+	 * @param ImportFileStateStore|null      $file_state        Optional file staging state store.
+	 * @param ImportRewriteStateStore|null   $rewrite_state     Optional environment rewrite state store.
+	 * @param ImportDatabaseRestorer|null    $database_restorer Optional database staging-plan dependency.
+	 * @param CloneJobStore|null             $jobs              Optional clone job store.
+	 * @param ExportWorkspace|null           $workspace              Optional private import workspace.
 	 * @param LocalCloneTargetPreflight|null $local_target_preflight Optional verified local target authority.
 	 */
 	public function __construct(
@@ -130,13 +130,13 @@ final class ImportFinalizationPlanner {
 		?ExportWorkspace $workspace = null,
 		?LocalCloneTargetPreflight $local_target_preflight = null
 	) {
-		$this->store             = $store ?? new ImportFinalizeStateStore();
-		$this->import_state      = $import_state ?? new ImportStateStore();
-		$this->payload_state     = $payload_state ?? new ImportPayloadStateStore();
-		$this->database_state    = $database_state ?? new ImportDatabaseStateStore();
-		$this->file_state        = $file_state ?? new ImportFileStateStore();
-		$this->rewrite_state     = $rewrite_state ?? new ImportRewriteStateStore();
-		$this->jobs              = $jobs ?? new CloneJobStore();
+		$this->store                    = $store ?? new ImportFinalizeStateStore();
+		$this->import_state           = $import_state ?? new ImportStateStore();
+		$this->payload_state          = $payload_state ?? new ImportPayloadStateStore();
+		$this->database_state         = $database_state ?? new ImportDatabaseStateStore();
+		$this->file_state             = $file_state ?? new ImportFileStateStore();
+		$this->rewrite_state          = $rewrite_state ?? new ImportRewriteStateStore();
+		$this->jobs                   = $jobs ?? new CloneJobStore();
 		$this->workspace              = $workspace ?? new ExportWorkspace();
 		$this->local_target_preflight = $local_target_preflight ?? new LocalCloneTargetPreflight();
 		$this->database_restorer      = $database_restorer ?? new ImportDatabaseRestorer(
@@ -1051,7 +1051,8 @@ final class ImportFinalizationPlanner {
 	/**
 	 * Resolve one active WordPress content root.
 	 *
-	 * @param string $root_id Root ID.
+	 * @param string              $root_id Root ID.
+	 * @param array<string,mixed> $import  Import state.
 	 */
 	private function active_root( string $root_id, array $import ): ?string {
 		if ( ! in_array( $root_id, array( 'uploads', 'plugins', 'themes' ), true ) ) {
