@@ -2199,7 +2199,19 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.5.4.2 — private file staging restore in Migration Bridge 0.8.31.** Migration Bridge 0.8.30 is accepted on `main` at `d46268d675eaa13be1f0938ca47a1bfb6458befe`: database rows restore transactionally only into a job-owned staging namespace that cannot match production or the future isolated target prefix, while production sentinels and active `/nuevaweb/` tables remain untouched. 0.8.31 reuses the accepted `ImportFileRestorer` on the same verified child import job, requires completed local database staging, copies uploads/plugins/themes only into private child staging, and preserves the existing per-file `files-meta` integrity + independent verification contract. The target keeps only the preinstalled Migration Bridge control runtime; no client uploads/themes/plugins are promoted. Every batch revalidates handoff/payload/database authority and revokes child eligibility on drift. Next: **10E.2A.5.5.1 — serialization-safe environment rewrite in staging**.
+Current execution pointer: **10E.2A.5.5.1 — serialization-safe environment rewrite in Migration Bridge 0.8.32.** Migration Bridge 0.8.31 is accepted on `main` at `afa69a7a541511dff3f7f5877007dab00c67e449`: uploads/plugins/themes restore only into verified private child staging, per-file `files-meta` hashes replay successfully, and the isolated target receives no client payload before promotion. 0.8.32 reuses the accepted `ImportEnvironmentRewriter` on that same verified child job only after database + file staging remain valid. Source-environment URLs are rewritten exclusively inside job-owned staging tables with safe PHP serialization/JSON handling, credential-like options remain opaque, and a second pass must report zero remaining rewritable source URLs. Active WordPress `home`/`siteurl`, production tables and target client roots remain untouched. Next: **10E.2A.5.5.2 — guarded finalization plan** before any database activation or file promotion.
+
+Migration Bridge v0.8.31 / 10E.2A.5.4.2 acceptance evidence:
+
+- PR #157 squash-merged to `main` as `afa69a7a541511dff3f7f5877007dab00c67e449`;
+- Foundation CI `36229128780` passed;
+- Phase 1 Package CI `36229128763` passed;
+- PHP Quality CI `36229128725` passed;
+- WordPress Smoke CI `36229128760` passed, including real uploads/plugins/themes private staging, per-file hash/byte verification, zero client-file promotion and drift/tamper recovery guards;
+- Accessibility & Responsive CI `36229128822` passed;
+- Performance Baseline CI `36229128743` passed;
+- Migration Bridge Release CI `36229128744` passed;
+- post-merge verification on `afa69a7a541511dff3f7f5877007dab00c67e449` also completed 7/7 green.
 
 Migration Bridge v0.8.30 / 10E.2A.5.4.1 acceptance evidence:
 
