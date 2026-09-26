@@ -132,10 +132,10 @@ final class LocalCloneFinalizationPlanner {
 			|| true !== ( $child['active_roots_untouched'] ?? false )
 			|| array() !== ( $child['blockers'] ?? array() )
 			|| ! is_array( $plan )
-			|| ! hash_equals( (string) $state['activation_plan_hash'], (string) ( $plan['hash'] ?? '' ) )
-			|| ! hash_equals( (string) $state['database_fingerprint'], (string) ( $plan['database_fingerprint'] ?? '' ) )
-			|| ! hash_equals( (string) $state['file_fingerprint'], (string) ( $plan['file_fingerprint'] ?? '' ) )
-			|| ! $this->local_plan_valid( $plan['plan'] ?? null, $authority['import'] )
+			|| ! hash_equals( (string) $state['activation_plan_hash'], (string) $plan['hash'] )
+			|| ! hash_equals( (string) $state['database_fingerprint'], (string) $plan['database_fingerprint'] )
+			|| ! hash_equals( (string) $state['file_fingerprint'], (string) $plan['file_fingerprint'] )
+			|| ! $this->local_plan_valid( $plan['plan'], $authority['import'] )
 		) {
 			return null;
 		}
@@ -244,7 +244,7 @@ final class LocalCloneFinalizationPlanner {
 				|| true !== ( $child['activation_allowed'] ?? false )
 				|| true === ( $child['handoff_ready'] ?? true )
 				|| ! is_array( $plan )
-				|| ! $this->local_plan_valid( $plan['plan'] ?? null, $fresh['import'] )
+				|| ! $this->local_plan_valid( $plan['plan'], $fresh['import'] )
 			)
 		) {
 			return $this->block( $job_id, $existing ?? array(), 'local-finalize-plan-verification-failed' );
@@ -263,9 +263,9 @@ final class LocalCloneFinalizationPlanner {
 			'package_checksum'             => (string) $fresh['rewrite']['package_checksum'],
 			'database_manifest_sha256'     => (string) $fresh['rewrite']['database_manifest_sha256'],
 			'file_manifest_sha256'         => (string) $fresh['rewrite']['file_manifest_sha256'],
-			'database_fingerprint'         => $complete ? (string) ( $plan['database_fingerprint'] ?? '' ) : (string) ( $child['database_fingerprint'] ?? '' ),
-			'file_fingerprint'             => $complete ? (string) ( $plan['file_fingerprint'] ?? '' ) : (string) ( $child['file_fingerprint'] ?? '' ),
-			'activation_plan_hash'         => $complete ? (string) ( $plan['hash'] ?? '' ) : (string) ( $child['activation_plan_hash'] ?? '' ),
+			'database_fingerprint'         => $complete ? (string) $plan['database_fingerprint'] : (string) ( $child['database_fingerprint'] ?? '' ),
+			'file_fingerprint'             => $complete ? (string) $plan['file_fingerprint'] : (string) ( $child['file_fingerprint'] ?? '' ),
+			'activation_plan_hash'         => $complete ? (string) $plan['hash'] : (string) ( $child['activation_plan_hash'] ?? '' ),
 			'database_rows_hashed'         => (int) ( $child['database_rows_hashed'] ?? 0 ),
 			'database_table_count'         => (int) ( $child['database_table_count'] ?? 0 ),
 			'files_hashed'                 => (int) ( $child['files_hashed'] ?? 0 ),
