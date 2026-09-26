@@ -245,7 +245,7 @@ final class LocalCloneEnvironmentRewriter {
 			true !== ( $rewrite['active_tables_untouched'] ?? false )
 			|| true !== ( $rewrite['active_roots_untouched'] ?? false )
 			|| ! hash_equals(
-				(string) $fresh['database']['database_manifest_sha256'],
+				(string) $fresh['database_plan']['database_manifest_sha256'],
 				(string) ( $rewrite['database_manifest_sha256'] ?? '' )
 			)
 			|| ! hash_equals(
@@ -291,7 +291,7 @@ final class LocalCloneEnvironmentRewriter {
 			'archive_sha256'               => (string) $fresh['handoff']['archive_sha256'],
 			'package_manifest_sha256'      => (string) $fresh['handoff']['package_manifest_hash'],
 			'package_checksum'             => (string) $fresh['handoff']['package_checksum'],
-			'database_manifest_sha256'     => (string) $fresh['database']['database_manifest_sha256'],
+			'database_manifest_sha256'     => (string) $fresh['database_plan']['database_manifest_sha256'],
 			'file_manifest_sha256'         => (string) $fresh['files']['files_manifest_sha256'],
 			'source_home_url'              => (string) $fresh['import']['source_home_url'],
 			'source_site_url'              => (string) $fresh['import']['source_site_url'],
@@ -354,6 +354,11 @@ final class LocalCloneEnvironmentRewriter {
 			return null;
 		}
 
+		$database_plan = $this->database->staging_plan( $job_id );
+		if ( ! is_array( $database_plan ) ) {
+			return null;
+		}
+
 		$child_id = (string) ( $payload['child_import_job_id'] ?? '' );
 		$import   = '' !== $child_id ? $this->import_state->get( $child_id ) : null;
 		if (
@@ -382,8 +387,9 @@ final class LocalCloneEnvironmentRewriter {
 		return array(
 			'handoff'  => $handoff,
 			'payload'  => $payload,
-			'database' => $database,
-			'files'    => $files,
+			'database'      => $database,
+			'database_plan' => $database_plan,
+			'files'         => $files,
 			'import'   => $import,
 		);
 	}
@@ -400,7 +406,7 @@ final class LocalCloneEnvironmentRewriter {
 			&& hash_equals( (string) $state['archive_sha256'], (string) $authority['handoff']['archive_sha256'] )
 			&& hash_equals( (string) $state['package_manifest_sha256'], (string) $authority['handoff']['package_manifest_hash'] )
 			&& hash_equals( (string) $state['package_checksum'], (string) $authority['handoff']['package_checksum'] )
-			&& hash_equals( (string) $state['database_manifest_sha256'], (string) $authority['database']['database_manifest_sha256'] )
+			&& hash_equals( (string) $state['database_manifest_sha256'], (string) $authority['database_plan']['database_manifest_sha256'] )
 			&& hash_equals( (string) $state['file_manifest_sha256'], (string) $authority['files']['files_manifest_sha256'] )
 			&& $this->same_url( (string) $state['source_home_url'], (string) $authority['import']['source_home_url'] )
 			&& $this->same_url( (string) $state['source_site_url'], (string) $authority['import']['source_site_url'] )
