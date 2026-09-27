@@ -104,16 +104,14 @@ $roots = array(
 );
 
 $fingerprint = hash( 'sha256', 'seo-geo-portable-clone-inventory-v1' );
-foreach ( array( 'uploads', 'plugins', 'themes' ) as $root_id ) {
+$ordered_files = array(
+	'uploads' => array( 'a-photo.jpg', 'b-data.bin', '2026/09/c-photo.jpg' ),
+	'plugins' => array( 'alpha.php', 'beta.css' ),
+	'themes'  => array( 'theme.css', 'z-template.html' ),
+);
+foreach ( $ordered_files as $root_id => $relative_paths ) {
 	$prefix = $fixture . '/' . $root_id . '/';
-	$accepted = array();
-	foreach ( $files as $relative => $bytes ) {
-		if ( str_starts_with( $relative, $root_id . '/' ) ) {
-			$accepted[ substr( $relative, strlen( $root_id ) + 1 ) ] = $bytes;
-		}
-	}
-	ksort( $accepted, SORT_STRING );
-	foreach ( $accepted as $relative => $bytes ) {
+	foreach ( $relative_paths as $relative ) {
 		$path = $prefix . $relative;
 		$record = 'file|' . $root_id . '|' . wp_normalize_path( $relative ) . '|' . (string) filesize( $path ) . '|' . hash_file( 'sha256', $path );
 		$fingerprint = hash( 'sha256', $fingerprint . "\n" . $record );
