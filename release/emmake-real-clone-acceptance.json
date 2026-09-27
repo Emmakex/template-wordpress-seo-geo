@@ -5,9 +5,9 @@
   "source_origin": "https://emmake.com/",
   "target_origin": "https://emmake.com/nuevaweb/",
   "migration_bridge": {
-    "version": "0.8.39",
-    "main_commit": "5aa64d6f599c7ce16af671c2cc449c1eef2eb0dc",
-    "zip_sha256": "70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146"
+    "version": "0.8.40",
+    "main_commit": "42bb7cd025385d365eea1b39f4d65c482a5f529c",
+    "zip_sha256": "9392862f952e8d85be2c57cce22492d1f2ff63e98cef982ec276b2b3aa53f1dc"
   },
   "source_evidence": {
     "baseline_ready": true,
@@ -57,7 +57,7 @@
   "evidence_captured_at": "",
   "operator": "",
   "notes": [
-    "Migration Bridge 0.8.39 supersedes 0.8.38 for the Emmake pilot and fixes one-click automatic file-export continuation while retaining durable in-request checkpoints and diagnostics.",
-    "Real execution evidence remains pending and must be recorded only from observed production/sandbox results."
+    "Migration Bridge 0.8.40 supersedes 0.8.39 for the Emmake pilot. It preserves automatic continuation and durable checkpoints, and can finalize an already-complete file snapshot when only the aggregate live-source fingerprint drifted while file counts and bytes still match.",
+    "Structural count/byte drift remains terminal. Real execution evidence remains pending and must be recorded only from observed production/sandbox results."
   ]
 }
