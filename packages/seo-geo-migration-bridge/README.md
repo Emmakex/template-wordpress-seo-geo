@@ -332,3 +332,6 @@ Migration Bridge 0.8.38 hardens real-site file export after the Emmake pilot sho
 
 
 Migration Bridge 0.8.39 fixes the browser-side continuation of one-click automatic file export. WordPress `submit_button()` uses `name="submit"` by default, which shadows the native form `submit()` method in DOM form collections; the previous automatic chain therefore completed the first request but could fail before the second. The automatic control now uses a non-conflicting button name plus `requestSubmit()` with a native prototype fallback, while manual batch behavior remains unchanged.
+
+
+Migration Bridge 0.8.41 completes the live-source drift recovery path introduced in 0.8.40. Package integrity now accepts a file export whose aggregate inventory fingerprint differs only when the exporter has explicitly recorded a verified drift snapshot with identical file/byte totals. In that case the package binds to the exported snapshot fingerprint, retains the original inventory fingerprint as provenance in the package manifest, and continues through the same two-pass workspace integrity verification. Unrecorded fingerprint mismatch or structural count/byte drift remains blocked.
