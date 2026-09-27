@@ -187,6 +187,12 @@ if ( ! $database_ok ) {
 	throw new RuntimeException( 'Could not save completed database export fixture.' );
 }
 
+$drifted_upload = 'source-upload-z';
+if ( strlen( $drifted_upload ) !== strlen( $files['uploads/a-photo.jpg'] ) ) {
+	throw new RuntimeException( 'Drift fixture must preserve the original byte count.' );
+}
+file_put_contents( $fixture . '/uploads/a-photo.jpg', $drifted_upload );
+
 $state = $exporter->start( $job_id );
 if ( ! is_array( $state ) || 'running' !== $state['status'] ) {
 	throw new RuntimeException( 'Could not start file export.' );
@@ -253,10 +259,10 @@ echo wp_json_encode(
 		'interrupted' => $interrupted,
 		'checkpointed_file_count' => (int) ( $checkpointed_state['file_count'] ?? 0 ),
 		'manifest' => $manifest,
-		'copied_upload_matches' => $copied_upload === $files['uploads/a-photo.jpg'],
+		'copied_upload_matches' => $copied_upload === $drifted_upload,
 		'excluded_cache_absent' => null === $excluded_cache,
 		'excluded_log_absent' => null === $excluded_log,
-		'source_upload_unchanged' => file_get_contents( $fixture . '/uploads/a-photo.jpg' ) === $files['uploads/a-photo.jpg'],
+		'source_upload_matches_drift' => file_get_contents( $fixture . '/uploads/a-photo.jpg' ) === $drifted_upload,
 		'file_export_state_autoload' => $autoload,
 		'controller_registered' => false !== has_action( 'admin_post_' . AdminCloneFileExportController::ACTION ),
 	),
@@ -305,6 +311,8 @@ assert payload["interrupted"] is True
 assert payload["checkpointed_file_count"] >= 1
 assert state["checkpoint_count"] >= 3
 assert state["last_action"] == "complete"
+assert state["source_drift_detected"] is True
+assert state["inventory_fingerprint_match"] is False
 assert isinstance(state["recent_events"], list)
 assert any("file-copied" in event for event in state["recent_events"])
 assert payload["file_export_state_autoload"] in ("off", "no", "auto-off")
@@ -312,13 +320,16 @@ assert payload["controller_registered"] is True
 assert payload["copied_upload_matches"] is True
 assert payload["excluded_cache_absent"] is True
 assert payload["excluded_log_absent"] is True
-assert payload["source_upload_unchanged"] is True
+assert payload["source_upload_matches_drift"] is True
 
 assert manifest["schema_version"] == 1
 assert manifest["payload_class"] == "files"
 assert manifest["file_count"] == 7
 assert manifest["payload_bytes"] == state["byte_count"]
 assert manifest["source_fingerprint"] == state["export_fingerprint"]
+assert manifest["inventory_fingerprint_match"] is False
+assert manifest["source_drift_detected"] is True
+assert manifest["inventory_fingerprint"] != manifest["source_fingerprint"]
 assert [root["id"] for root in manifest["roots"]] == ["uploads", "plugins", "themes"]
 assert manifest["file_records"]["format"] == "one-json-record-per-file"
 assert manifest["production_source_read_only"] is True
@@ -332,7 +343,7 @@ assert "fixture alpha" not in serialized
 print("ok")
 PY
 )"; then
-  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 reconciled private file copies with durable interruption recovery, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
+  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 verified private file copies with durable interruption recovery, live-source drift capture, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Clone file export OK: 7 accepted files copied with durable mid-request checkpoints; nested traversal and interruption recovery passed; exclusions preserved; source unchanged.\n'
+printf '[smoke] Portable Clone file export OK: 7 accepted files copied with durable mid-request checkpoints; nested traversal, interruption recovery and same-size live-source drift capture passed; exclusions preserved.\n'
