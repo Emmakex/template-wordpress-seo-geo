@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.44 finalizes fully traversed, exact-file-count snapshots even when a live source changed byte totals during export; byte drift is recorded and the private workspace is subsequently verified by package integrity.
+
 - Migration Bridge 0.8.43 restores the finalization action for completed legacy drift-blocked exports even when normalized blocker metadata is missing, using the terminal last-action code plus exact file/byte totals.
 
 - Migration Bridge 0.8.42 adds explicit saved-job selection so retained Portable Clone progress can be reopened instead of being hidden by a newer job.

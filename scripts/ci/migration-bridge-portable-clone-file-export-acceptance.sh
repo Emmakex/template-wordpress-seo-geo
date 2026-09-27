@@ -187,9 +187,9 @@ if ( ! $database_ok ) {
 	throw new RuntimeException( 'Could not save completed database export fixture.' );
 }
 
-$drifted_upload = 'source-upload-z';
-if ( strlen( $drifted_upload ) !== strlen( $files['uploads/a-photo.jpg'] ) ) {
-	throw new RuntimeException( 'Drift fixture must preserve the original byte count.' );
+$drifted_upload = 'source-upload-expanded-live';
+if ( strlen( $drifted_upload ) === strlen( $files['uploads/a-photo.jpg'] ) ) {
+	throw new RuntimeException( 'Drift fixture must change the original byte count.' );
 }
 file_put_contents( $fixture . '/uploads/a-photo.jpg', $drifted_upload );
 
@@ -327,7 +327,7 @@ assert state["schema_version"] == 1
 assert state["status"] == "complete"
 assert state["file_count"] == 7
 assert state["inventory_file_count"] == 7
-assert state["byte_count"] == state["inventory_byte_count"]
+assert state["byte_count"] != state["inventory_byte_count"]
 assert re.fullmatch(r"[a-f0-9]{64}", state["export_fingerprint"])
 assert re.fullmatch(r"[a-f0-9]{64}", state["files_manifest_hash"])
 assert state["blockers"] == []
@@ -340,6 +340,7 @@ assert state["checkpoint_count"] >= 3
 assert state["last_action"] == "complete"
 assert state["source_drift"] is True
 assert state["inventory_hash_match"] is False
+assert state["inventory_byte_match"] is False
 assert isinstance(state["recent_events"], list)
 assert any("file-copied" in event for event in state["recent_events"])
 assert payload["file_export_state_autoload"] in ("off", "no", "auto-off")
@@ -355,6 +356,9 @@ assert manifest["file_count"] == 7
 assert manifest["payload_bytes"] == state["byte_count"]
 assert manifest["source_fingerprint"] == state["export_fingerprint"]
 assert manifest["inventory_hash_match"] is False
+assert manifest["inventory_byte_match"] is False
+assert manifest["inventory_payload_bytes"] == state["inventory_byte_count"]
+assert manifest["payload_bytes"] != manifest["inventory_payload_bytes"]
 assert manifest["source_drift"] is True
 assert manifest["inventory_fingerprint"] != manifest["source_fingerprint"]
 assert [root["id"] for root in manifest["roots"]] == ["uploads", "plugins", "themes"]
@@ -370,7 +374,7 @@ assert "fixture alpha" not in serialized
 print("ok")
 PY
 )"; then
-  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 verified private file copies with durable interruption recovery, legacy blocked-state recovery without recopy, live-source drift capture, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
+  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 verified private file copies with durable interruption recovery, legacy blocked-state recovery without recopy, live-source byte drift capture, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
 fi
 
 printf '[smoke] Portable Clone file export OK: 7 accepted files copied with durable mid-request checkpoints; nested traversal, interruption recovery, legacy blocked-state recovery without recopy and same-size live-source drift capture passed; exclusions preserved.\n'

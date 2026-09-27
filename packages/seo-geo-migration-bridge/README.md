@@ -341,3 +341,6 @@ Migration Bridge 0.8.42 adds explicit operator access to retained Portable Clone
 
 
 Migration Bridge 0.8.43 fixes recovery visibility for legacy real-site jobs whose terminal `last_action` is `source-files-changed-since-inventory` but whose normalized `blockers` list is empty or contains additional historical entries. A blocked export is now recoverable when file and byte totals are both non-zero and exactly complete, and the drift reason is present either as the last action or among blocker codes. The engine applies the same predicate, so the displayed recovery button and server-side authorization cannot disagree.
+
+
+Migration Bridge 0.8.44 fixes the remaining real-site finalization edge case: WordPress displays file bytes with rounded units, so a live site can show 608 MB / 608 MB while the exact exported and inventory byte totals differ. Recovery no longer requires byte-for-byte equality with the old inventory. It requires the terminal source-drift reason, exact completed file count, and completed traversal of all payload roots. The exported snapshot keeps its actual byte count, records inventory byte mismatch as source drift, and package integrity then re-hashes and validates the private workspace against each per-file export record before the clone can continue.

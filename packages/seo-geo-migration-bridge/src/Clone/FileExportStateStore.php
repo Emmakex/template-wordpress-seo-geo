@@ -138,6 +138,9 @@ final class FileExportStateStore {
 			'inventory_hash_match' => array_key_exists( 'inventory_hash_match', $state )
 				? true === $state['inventory_hash_match']
 				: true,
+			'inventory_byte_match' => array_key_exists( 'inventory_byte_match', $state )
+				? true === $state['inventory_byte_match']
+				: true,
 			'request_sequence'     => max( 0, (int) ( $state['request_sequence'] ?? 0 ) ),
 			'request_files'        => max( 0, (int) ( $state['request_files'] ?? 0 ) ),
 			'request_bytes'        => max( 0, (int) ( $state['request_bytes'] ?? 0 ) ),

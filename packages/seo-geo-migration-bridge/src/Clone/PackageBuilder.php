@@ -144,7 +144,6 @@ final class PackageBuilder {
 			&& true === ( $files['source_drift'] ?? false )
 			&& false === ( $files['inventory_hash_match'] ?? true )
 			&& (int) ( $files['file_count'] ?? -1 ) === (int) ( $inventory['file_count'] ?? -2 )
-			&& (int) ( $files['byte_count'] ?? -1 ) === (int) ( $inventory['byte_count'] ?? -2 )
 		);
 
 		if (
