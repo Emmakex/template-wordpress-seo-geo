@@ -332,3 +332,6 @@ Migration Bridge 0.8.38 hardens real-site file export after the Emmake pilot sho
 
 
 Migration Bridge 0.8.39 fixes the browser-side continuation of one-click automatic file export. WordPress `submit_button()` uses `name="submit"` by default, which shadows the native form `submit()` method in DOM form collections; the previous automatic chain therefore completed the first request but could fail before the second. The automatic control now uses a non-conflicting button name plus `requestSubmit()` with a native prototype fallback, while manual batch behavior remains unchanged.
+
+
+Migration Bridge 0.8.41 restores explicit operator access to retained Portable Clone jobs after real-site testing showed that a newer job can visually hide an older, highly advanced export. The Tools screen now lists saved jobs and allows the operator to open a specific existing job by ID without creating, resetting or mutating it. This preserves the exact 0.8.39/0.8.40 resumable state model and makes previously completed file-export progress visible again when it is still present in WordPress state.
