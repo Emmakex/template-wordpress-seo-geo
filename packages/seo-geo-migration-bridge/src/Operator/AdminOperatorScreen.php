@@ -678,17 +678,29 @@ final class AdminOperatorScreen {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result notice value.
 			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_file_export'] ) )
 			: '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only mode hint for the result notice.
+		$mode = isset( $_GET['file_export_mode'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only mode hint.
+			? sanitize_key( wp_unslash( $_GET['file_export_mode'] ) )
+			: '';
 
 		$key = match ( $status ) {
 			'complete' => 'clone_file_export_complete',
-			'running'  => 'clone_file_export_running',
+			'running'  => 'auto' === $mode ? 'clone_file_export_auto_running' : 'clone_file_export_running',
+			'paused'   => 'clone_file_export_auto_paused',
+			'stalled'  => 'clone_file_export_auto_stalled',
 			'blocked'  => 'clone_file_export_blocked',
 			default    => null,
 		};
 		if ( null === $key ) {
 			return;
 		}
-		$class = 'blocked' === $status ? 'notice notice-error' : 'notice notice-success';
+		$class = match ( $status ) {
+			'blocked' => 'notice notice-error',
+			'paused'  => 'notice notice-warning',
+			'stalled' => 'notice notice-warning',
+			default   => 'notice notice-success',
+		};
 		?>
 		<div class="<?php echo esc_attr( $class ); ?> is-dismissible">
 			<p><?php echo esc_html( $this->copy->text( $key ) ); ?></p>
@@ -706,9 +718,52 @@ final class AdminOperatorScreen {
 		if ( '' === $job_id ) {
 			return;
 		}
+
 		$export = ( new FileExportStateStore() )->get( $job_id );
 		$status = is_array( $export ) ? (string) ( $export['status'] ?? 'pending' ) : 'pending';
 		$button = 'pending' === $status ? 'clone_file_export_start' : 'clone_file_export_continue';
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result status controls automatic continuation only after a successful batch.
+		$request_status = isset( $_GET['seo_geo_clone_file_export'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result status.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_file_export'] ) )
+			: '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only mode controls automatic continuation after a nonce-verified action.
+		$request_mode = isset( $_GET['file_export_mode'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only automatic continuation hint.
+			? sanitize_key( wp_unslash( $_GET['file_export_mode'] ) )
+			: '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded automatic cycle counter.
+		$auto_cycle = isset( $_GET['file_export_auto_cycle'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only cycle counter.
+			? min( AdminCloneFileExportController::MAX_AUTO_CYCLES, absint( sanitize_text_field( wp_unslash( $_GET['file_export_auto_cycle'] ) ) ) )
+			: 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only persisted manual batch preference.
+		$selected_files = isset( $_GET['file_batch_size'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only manual batch preference.
+			? absint( sanitize_text_field( wp_unslash( $_GET['file_batch_size'] ) ) )
+			: FileExporter::DEFAULT_BATCH_FILES;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only persisted manual byte preference.
+		$selected_megabytes = isset( $_GET['file_batch_megabytes'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only manual byte preference.
+			? absint( sanitize_text_field( wp_unslash( $_GET['file_batch_megabytes'] ) ) )
+			: 8;
+
+		$allowed_files = array( 5, 10, 25, 50, 100, 200 );
+		if ( ! in_array( $selected_files, $allowed_files, true ) ) {
+			$selected_files = FileExporter::DEFAULT_BATCH_FILES;
+		}
+		$allowed_megabytes = array( 1, 4, 8, 16, 32, 64 );
+		if ( ! in_array( $selected_megabytes, $allowed_megabytes, true ) ) {
+			$selected_megabytes = 8;
+		}
+
+		$auto_resume = (
+			'auto' === $request_mode
+			&& 'running' === $request_status
+			&& 'running' === $status
+			&& $auto_cycle < AdminCloneFileExportController::MAX_AUTO_CYCLES
+		);
 		?>
 		<h3><?php echo esc_html( $this->copy->text( 'clone_file_export_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_file_export_help' ) ); ?></p>
@@ -736,27 +791,59 @@ final class AdminOperatorScreen {
 		</table>
 
 		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneFileExportController::ACTION ); ?>">
-				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
-				<?php wp_nonce_field( AdminCloneFileExportController::NONCE_ACTION . ':' . $job_id ); ?>
-				<p>
-					<label for="seo-geo-clone-file-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_file_batch_label' ) ); ?></strong></label>
-					<select id="seo-geo-clone-file-batch" name="file_batch_size">
-						<?php foreach ( array( 5, 10, 25, 50, 100, 200 ) as $size ) : ?>
-							<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( FileExporter::DEFAULT_BATCH_FILES, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
-						<?php endforeach; ?>
-					</select>
-					<label for="seo-geo-clone-file-megabytes"><strong><?php echo esc_html( $this->copy->text( 'clone_file_megabytes_label' ) ); ?></strong></label>
-					<select id="seo-geo-clone-file-megabytes" name="file_batch_megabytes">
-						<?php foreach ( array( 1, 4, 8, 16, 32, 64 ) as $megabytes ) : ?>
-							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 8, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
-						<?php endforeach; ?>
-					</select>
-				</p>
-				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_file_batch_help' ) ); ?></p>
-				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
-			</form>
+			<div style="margin-top:16px;padding:16px;border:1px solid #c3c4c7;background:#fff;">
+				<h4 style="margin-top:0;"><?php echo esc_html( $this->copy->text( 'clone_file_export_auto_heading' ) ); ?></h4>
+				<p><?php echo esc_html( $this->copy->text( 'clone_file_export_auto_help' ) ); ?></p>
+				<form id="seo-geo-clone-file-export-auto" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneFileExportController::ACTION ); ?>">
+					<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+					<input type="hidden" name="file_export_mode" value="auto">
+					<input type="hidden" name="file_export_auto_cycle" value="<?php echo esc_attr( (string) ( $auto_resume ? $auto_cycle : 0 ) ); ?>">
+					<?php wp_nonce_field( AdminCloneFileExportController::NONCE_ACTION . ':' . $job_id ); ?>
+					<?php submit_button( $this->copy->text( 'clone_file_export_auto_start' ), 'primary', 'submit', false ); ?>
+				</form>
+				<?php if ( $auto_resume ) : ?>
+					<p class="description"><?php echo esc_html( sprintf( $this->copy->text( 'clone_file_export_auto_cycle' ), $auto_cycle ) ); ?></p>
+					<script>
+						window.setTimeout(
+							function () {
+								var form = document.getElementById('seo-geo-clone-file-export-auto');
+								if (form) {
+									form.submit();
+								}
+							},
+							350
+						);
+					</script>
+				<?php endif; ?>
+			</div>
+
+			<div style="margin-top:16px;padding:16px;border:1px solid #c3c4c7;background:#fff;">
+				<h4 style="margin-top:0;"><?php echo esc_html( $this->copy->text( 'clone_file_export_batch_heading' ) ); ?></h4>
+				<p><?php echo esc_html( $this->copy->text( 'clone_file_export_batch_help' ) ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneFileExportController::ACTION ); ?>">
+					<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+					<input type="hidden" name="file_export_mode" value="batch">
+					<?php wp_nonce_field( AdminCloneFileExportController::NONCE_ACTION . ':' . $job_id ); ?>
+					<p>
+						<label for="seo-geo-clone-file-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_file_batch_label' ) ); ?></strong></label>
+						<select id="seo-geo-clone-file-batch" name="file_batch_size">
+							<?php foreach ( $allowed_files as $size ) : ?>
+								<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( $selected_files, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<label for="seo-geo-clone-file-megabytes"><strong><?php echo esc_html( $this->copy->text( 'clone_file_megabytes_label' ) ); ?></strong></label>
+						<select id="seo-geo-clone-file-megabytes" name="file_batch_megabytes">
+							<?php foreach ( $allowed_megabytes as $megabytes ) : ?>
+								<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( $selected_megabytes, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</p>
+					<p class="description"><?php echo esc_html( $this->copy->text( 'clone_file_batch_help' ) ); ?></p>
+					<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
+				</form>
+			</div>
 		<?php elseif ( 'complete' === $status ) : ?>
 			<?php $this->render_clone_package_section( $job ); ?>
 		<?php endif; ?>

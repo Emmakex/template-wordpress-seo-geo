@@ -12,11 +12,17 @@ namespace SeoGeo\MigrationBridge\Clone;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
 
 /**
- * Advances one bounded resumable file-export batch.
+ * Advances resumable file-export batches in manual or one-click automatic mode.
  */
 final class AdminCloneFileExportController {
 	public const ACTION       = 'seo_geo_migration_clone_file_export';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_file_export';
+
+	private const MODE_BATCH           = 'batch';
+	private const MODE_AUTO            = 'auto';
+	private const AUTO_BATCH_FILES     = 100;
+	private const AUTO_BATCH_MEGABYTES = 16;
+	public const MAX_AUTO_CYCLES       = 500;
 
 	/**
 	 * Resumable file exporter.
@@ -39,7 +45,7 @@ final class AdminCloneFileExportController {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle' ) );
 	}
 
-	/** Advance one bounded file-export batch. */
+	/** Advance one file-export request. */
 	public function handle(): never {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die(
@@ -54,14 +60,32 @@ final class AdminCloneFileExportController {
 			: '';
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
-		$batch_files     = isset( $_POST['file_batch_size'] )
-			? absint( sanitize_text_field( wp_unslash( $_POST['file_batch_size'] ) ) )
-			: FileExporter::DEFAULT_BATCH_FILES;
-		$batch_megabytes = isset( $_POST['file_batch_megabytes'] )
-			? absint( sanitize_text_field( wp_unslash( $_POST['file_batch_megabytes'] ) ) )
-			: 8;
-		$batch_bytes     = $batch_megabytes * 1024 * 1024;
+		$mode = isset( $_POST['file_export_mode'] )
+			? sanitize_key( wp_unslash( $_POST['file_export_mode'] ) )
+			: self::MODE_BATCH;
+		if ( ! in_array( $mode, array( self::MODE_BATCH, self::MODE_AUTO ), true ) ) {
+			$mode = self::MODE_BATCH;
+		}
 
+		$auto_cycle = isset( $_POST['file_export_auto_cycle'] )
+			? min( self::MAX_AUTO_CYCLES, absint( sanitize_text_field( wp_unslash( $_POST['file_export_auto_cycle'] ) ) ) )
+			: 0;
+
+		if ( self::MODE_AUTO === $mode ) {
+			$batch_files     = self::AUTO_BATCH_FILES;
+			$batch_megabytes = self::AUTO_BATCH_MEGABYTES;
+			$auto_cycle      = min( self::MAX_AUTO_CYCLES, $auto_cycle + 1 );
+		} else {
+			$batch_files     = isset( $_POST['file_batch_size'] )
+				? absint( sanitize_text_field( wp_unslash( $_POST['file_batch_size'] ) ) )
+				: FileExporter::DEFAULT_BATCH_FILES;
+			$batch_megabytes = isset( $_POST['file_batch_megabytes'] )
+				? absint( sanitize_text_field( wp_unslash( $_POST['file_batch_megabytes'] ) ) )
+				: 8;
+		}
+		$batch_bytes = $batch_megabytes * 1024 * 1024;
+
+		$before = $this->exporter->snapshot( $job_id );
 		$result = $this->exporter->advance( $job_id, $batch_files, $batch_bytes );
 		if ( ! is_array( $result ) ) {
 			wp_die(
@@ -71,14 +95,55 @@ final class AdminCloneFileExportController {
 			);
 		}
 
+		$status = (string) ( $result['status'] ?? 'running' );
+		if (
+			self::MODE_AUTO === $mode
+			&& 'running' === $status
+			&& is_array( $before )
+			&& hash_equals( $this->progress_signature( $before ), $this->progress_signature( $result ) )
+		) {
+			$status = 'stalled';
+		} elseif ( self::MODE_AUTO === $mode && 'running' === $status && self::MAX_AUTO_CYCLES <= $auto_cycle ) {
+			$status = 'paused';
+		}
+
 		$redirect = add_query_arg(
 			array(
-				'seo_geo_clone_file_export' => (string) ( $result['status'] ?? 'running' ),
+				'seo_geo_clone_file_export' => $status,
 				'clone_job_id'              => $job_id,
+				'file_export_mode'          => $mode,
+				'file_export_auto_cycle'    => $auto_cycle,
+				'file_batch_size'           => $batch_files,
+				'file_batch_megabytes'      => $batch_megabytes,
 			),
 			admin_url( 'tools.php?page=' . AdminOperatorScreen::PAGE_SLUG )
 		);
 		wp_safe_redirect( $redirect );
 		exit;
+	}
+
+
+	/**
+	 * Build a bounded signature that changes when traversal or copied-file progress changes.
+	 *
+	 * @param array<string,mixed> $state File-export state.
+	 */
+	private function progress_signature( array $state ): string {
+		$pending = is_array( $state['pending_dirs'] ?? null ) ? array_values( $state['pending_dirs'] ) : array();
+		$first   = is_string( $pending[0] ?? null ) ? $pending[0] : '';
+		$last    = is_string( $pending[ count( $pending ) - 1 ] ?? null ) ? $pending[ count( $pending ) - 1 ] : '';
+		$payload = array(
+			'root_index'    => (int) ( $state['root_index'] ?? 0 ),
+			'current_dir'   => (string) ( $state['current_dir'] ?? '' ),
+			'after_name'    => (string) ( $state['after_name'] ?? '' ),
+			'pending_count' => count( $pending ),
+			'pending_first' => $first,
+			'pending_last'  => $last,
+			'file_count'    => (int) ( $state['file_count'] ?? 0 ),
+			'byte_count'    => (int) ( $state['byte_count'] ?? 0 ),
+		);
+		$json    = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+
+		return hash( 'sha256', is_string( $json ) ? $json : '' );
 	}
 }
