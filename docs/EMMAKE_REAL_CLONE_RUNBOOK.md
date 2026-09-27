@@ -10,13 +10,13 @@ Use exactly:
 
 - source origin: `https://emmake.com/`;
 - isolated target origin: `https://emmake.com/nuevaweb/`;
-- Migration Bridge: `0.8.36`;
-- accepted Migration Bridge main commit: `b78f38016ac0848cd37b75fb608262b289d32ceb`;
-- accepted Migration Bridge ZIP SHA-256: `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`;
+- Migration Bridge: `0.8.37`;
+- accepted Migration Bridge main commit: `d83d4ad2f5e4a9b06451e196f666b70572b023e2`;
+- accepted Migration Bridge ZIP SHA-256: `6bcb319ea56081b93a95a3d4f50d17764ff339316c5627593dc7748fe28a1712`;
 - bounded source handoff SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - acceptance record: `release/emmake-real-clone-acceptance.json`.
 
-Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above.
+Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.37 supersedes 0.8.36 for the Emmake pilot after the real-site file-export test exposed the need for one-click automatic continuation and explicit manual-batch mode.
 
 ## Operator-only inputs required before execution
 
