@@ -10,13 +10,13 @@ Use exactly:
 
 - source origin: `https://emmake.com/`;
 - isolated target origin: `https://emmake.com/nuevaweb/`;
-- Migration Bridge: `0.8.42`;
-- accepted Migration Bridge main commit: `9462386bc5d956a1938a785e6959658a502a4187`;
-- accepted Migration Bridge ZIP SHA-256: `4f0e32943abe31d6453fb2cc2f97f27b5d5130660643141a9ff067550c22c57e`;
+- Migration Bridge: `0.8.43`;
+- accepted Migration Bridge main commit: `5723fb9cf2fa0821c042eea6a6f39a3dbe9f60c0`;
+- accepted Migration Bridge ZIP SHA-256: `b586b668f620338b7fc0aaab7b33d5990b8e16535c2c2ff96e312118d2a2d3af`;
 - bounded source handoff SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - acceptance record: `release/emmake-real-clone-acceptance.json`.
 
-Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.42 is the current Emmake pilot artifact. The user-supplied 0.8.39 ZIP (`70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`) is preserved as the confirmed last-good real-export baseline that reached 20,256/20,256 files and 608/608 MB. 0.8.42 layers the accepted fingerprint-drift/package-integrity recovery on top of that baseline and adds explicit selection of retained clone jobs so advanced progress cannot be hidden by a newer job. Structural count/byte drift remains terminal.
+Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.43 is the current Emmake pilot artifact. The user-supplied 0.8.39 ZIP (`70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`) is preserved as the confirmed last-good real-export baseline that reached 20,256/20,256 files and 608/608 MB. 0.8.43 layers the accepted fingerprint-drift/package-integrity recovery on top of that baseline, keeps explicit retained-job selection, and restores the finalization action for the real 100%-copied legacy state even when normalized blocker metadata is missing. Structural count/byte drift remains terminal.
 
 ## Operator-only inputs required before execution
 
