@@ -10,13 +10,13 @@ Use exactly:
 
 - source origin: `https://emmake.com/`;
 - isolated target origin: `https://emmake.com/nuevaweb/`;
-- Migration Bridge: `0.8.39`;
-- accepted Migration Bridge main commit: `5aa64d6f599c7ce16af671c2cc449c1eef2eb0dc`;
-- accepted Migration Bridge ZIP SHA-256: `70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`;
+- Migration Bridge: `0.8.40`;
+- accepted Migration Bridge main commit: `42bb7cd025385d365eea1b39f4d65c482a5f529c`;
+- accepted Migration Bridge ZIP SHA-256: `9392862f952e8d85be2c57cce22492d1f2ff63e98cef982ec276b2b3aa53f1dc`;
 - bounded source handoff SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - acceptance record: `release/emmake-real-clone-acceptance.json`.
 
-Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.39 supersedes 0.8.38 for the Emmake pilot. It retains the durable in-request checkpoints and diagnostics and fixes the browser-side automatic continuation chain so one click can advance successive safe batches.
+Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.40 supersedes 0.8.39 for the Emmake pilot. It retains durable in-request checkpoints, diagnostics and automatic continuation, and adds safe recovery for a fully copied export that was blocked only because the live source fingerprint changed while file counts and bytes remained identical. Structural count/byte drift remains terminal.
 
 ## Operator-only inputs required before execution
 
