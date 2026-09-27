@@ -51,6 +51,13 @@ final class LocalCloneOrchestrator {
 	private CloneJobStore $jobs;
 
 	/**
+	 * Completed file-export state used to authorize accepted live-source drift.
+	 *
+	 * @var FileExportStateStore
+	 */
+	private FileExportStateStore $file_export_state;
+
+	/**
 	 * Construct the destination-plan orchestrator.
 	 *
 	 * @param LocalCloneStateStore|null     $store           Optional local-clone state store.
@@ -58,19 +65,22 @@ final class LocalCloneOrchestrator {
 	 * @param PackageStateStore|null        $package_state   Optional verified package state store.
 	 * @param CloneInventoryStore|null      $inventory_state Optional source inventory state store.
 	 * @param CloneJobStore|null            $jobs            Optional clone job store.
+	 * @param FileExportStateStore|null     $file_export_state Optional completed file-export state store.
 	 */
 	public function __construct(
 		?LocalCloneStateStore $store = null,
 		?DestinationSafetyPlanner $planner = null,
 		?PackageStateStore $package_state = null,
 		?CloneInventoryStore $inventory_state = null,
-		?CloneJobStore $jobs = null
+		?CloneJobStore $jobs = null,
+		?FileExportStateStore $file_export_state = null
 	) {
-		$this->store           = $store ?? new LocalCloneStateStore();
-		$this->planner         = $planner ?? new DestinationSafetyPlanner();
-		$this->package_state   = $package_state ?? new PackageStateStore();
-		$this->inventory_state = $inventory_state ?? new CloneInventoryStore();
-		$this->jobs            = $jobs ?? new CloneJobStore();
+		$this->store             = $store ?? new LocalCloneStateStore();
+		$this->planner           = $planner ?? new DestinationSafetyPlanner();
+		$this->package_state     = $package_state ?? new PackageStateStore();
+		$this->inventory_state   = $inventory_state ?? new CloneInventoryStore();
+		$this->jobs              = $jobs ?? new CloneJobStore();
+		$this->file_export_state = $file_export_state ?? new FileExportStateStore();
 	}
 
 	/**
@@ -122,7 +132,7 @@ final class LocalCloneOrchestrator {
 			|| ! $this->valid_hash( $package['source_fingerprint'] ?? null )
 			|| ! is_array( $inventory )
 			|| 'complete' !== ( $inventory['status'] ?? null )
-			|| ! hash_equals( (string) $package['source_fingerprint'], (string) ( $inventory['fingerprint'] ?? '' ) )
+			|| ! $this->source_snapshot_matches( $job_id, $package, $inventory )
 		) {
 			return null;
 		}
@@ -244,6 +254,50 @@ final class LocalCloneOrchestrator {
 		}
 
 		return $this->store->get( $job_id );
+	}
+
+	/**
+	 * Accept the original inventory fingerprint or the explicitly verified drift snapshot.
+	 *
+	 * The package builder already allows source drift only when the file exporter
+	 * completed every root with the exact inventory file count and recorded the
+	 * exported fingerprint. Recheck that evidence here so a completed drift package
+	 * can continue into the local-clone stages without weakening identity checks.
+	 *
+	 * @param string              $job_id    Clone job identifier.
+	 * @param array<string,mixed> $package   Verified package state.
+	 * @param array<string,mixed> $inventory Completed source inventory.
+	 */
+	private function source_snapshot_matches( string $job_id, array $package, array $inventory ): bool {
+		$package_fingerprint   = (string) ( $package['source_fingerprint'] ?? '' );
+		$inventory_fingerprint = (string) ( $inventory['fingerprint'] ?? '' );
+		if ( ! $this->valid_hash( $package_fingerprint ) || ! $this->valid_hash( $inventory_fingerprint ) ) {
+			return false;
+		}
+
+		if ( hash_equals( $package_fingerprint, $inventory_fingerprint ) ) {
+			return true;
+		}
+
+		$files = $this->file_export_state->get( $job_id );
+		if (
+			! is_array( $files )
+			|| 'complete' !== ( $files['status'] ?? null )
+			|| true !== ( $files['source_drift'] ?? false )
+			|| false !== ( $files['inventory_hash_match'] ?? true )
+			|| ! $this->valid_hash( $files['export_fingerprint'] ?? null )
+			|| ! $this->valid_hash( $files['files_manifest_hash'] ?? null )
+			|| ! hash_equals( $package_fingerprint, (string) $files['export_fingerprint'] )
+			|| ! hash_equals( (string) ( $package['files_manifest_hash'] ?? '' ), (string) $files['files_manifest_hash'] )
+			|| (int) ( $files['file_count'] ?? -1 ) !== (int) ( $inventory['file_count'] ?? -2 )
+			|| (int) ( $files['inventory_file_count'] ?? -1 ) !== (int) ( $inventory['file_count'] ?? -2 )
+			|| 0 >= (int) ( $files['root_count'] ?? 0 )
+			|| (int) ( $files['root_index'] ?? -1 ) < (int) ( $files['root_count'] ?? 0 )
+		) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

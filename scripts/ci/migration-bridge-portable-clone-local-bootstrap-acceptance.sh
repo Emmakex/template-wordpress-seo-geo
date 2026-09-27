@@ -10,6 +10,7 @@ cat >"$LOCAL_BOOTSTRAP_RUNNER" <<'PHP'
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalBootstrapController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
+use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalCloneOrchestrator;
@@ -21,6 +22,7 @@ $options = array(
 	CloneJobStore::OPTION_NAME,
 	CloneInventoryStore::OPTION_NAME,
 	PackageStateStore::OPTION_NAME,
+	FileExportStateStore::OPTION_NAME,
 	LocalCloneStateStore::OPTION_NAME,
 	LocalCloneBootstrapStateStore::OPTION_NAME,
 );
@@ -41,14 +43,17 @@ if (
 
 $inventories = new CloneInventoryStore();
 $packages    = new PackageStateStore();
+$file_states = new FileExportStateStore();
 
-$seed = static function ( string $job_id ) use ( $jobs, $inventories, $packages ): void {
+$seed = static function ( string $job_id, bool $drift = false ) use ( $jobs, $inventories, $packages, $file_states ): void {
 	$job = $jobs->create( 'local-clone', $job_id );
 	if ( ! is_array( $job ) ) {
 		throw new RuntimeException( 'Could not create local clone fixture job.' );
 	}
 
-	$fingerprint = hash( 'sha256', 'local-bootstrap-source:' . $job_id );
+	$inventory_fingerprint = hash( 'sha256', 'local-bootstrap-source:' . $job_id );
+	$package_fingerprint   = $drift ? hash( 'sha256', 'local-bootstrap-export:' . $job_id ) : $inventory_fingerprint;
+	$files_manifest_hash   = hash( 'sha256', 'files:' . $job_id );
 	$inventories->save(
 		$job_id,
 		array(
@@ -60,7 +65,7 @@ $seed = static function ( string $job_id ) use ( $jobs, $inventories, $packages 
 			'roots'        => array(),
 			'file_count'   => 2,
 			'byte_count'   => 2048,
-			'fingerprint'  => $fingerprint,
+			'fingerprint'  => $inventory_fingerprint,
 			'blockers'     => array(),
 			'completed_at' => gmdate( DATE_ATOM ),
 			'updated_at'   => gmdate( DATE_ATOM ),
@@ -77,13 +82,33 @@ $seed = static function ( string $job_id ) use ( $jobs, $inventories, $packages 
 			'verify_byte_count'      => 4096,
 			'package_checksum'       => hash( 'sha256', 'package:' . $job_id ),
 			'verification_checksum'  => hash( 'sha256', 'package:' . $job_id ),
-			'source_fingerprint'     => $fingerprint,
+			'source_fingerprint'     => $package_fingerprint,
 			'database_manifest_hash' => hash( 'sha256', 'database:' . $job_id ),
-			'files_manifest_hash'    => hash( 'sha256', 'files:' . $job_id ),
+			'files_manifest_hash'    => $files_manifest_hash,
 			'package_manifest_hash'  => hash( 'sha256', 'manifest:' . $job_id ),
 			'blockers'               => array(),
 			'completed_at'           => gmdate( DATE_ATOM ),
 			'updated_at'             => gmdate( DATE_ATOM ),
+		)
+	);
+	$file_states->save(
+		$job_id,
+		array(
+			'status'               => 'complete',
+			'root_index'           => 3,
+			'root_count'           => 3,
+			'file_count'           => 2,
+			'byte_count'           => 2048,
+			'inventory_file_count' => 2,
+			'inventory_byte_count' => $drift ? 3072 : 2048,
+			'export_fingerprint'   => $package_fingerprint,
+			'files_manifest_hash'  => $files_manifest_hash,
+			'source_drift'         => $drift,
+			'inventory_hash_match' => ! $drift,
+			'inventory_byte_match' => ! $drift,
+			'blockers'             => array(),
+			'completed_at'         => gmdate( DATE_ATOM ),
+			'updated_at'           => gmdate( DATE_ATOM ),
 		)
 	);
 };
@@ -92,7 +117,7 @@ global $wpdb;
 $source_prefix = $wpdb->prefix;
 
 $created_job = 'local-bootstrap-fixture-0001';
-$seed( $created_job );
+$seed( $created_job, true );
 $created_path = trailingslashit( wp_normalize_path( ABSPATH ) ) . 'nuevaweb-bootstrap-created';
 $created_url  = trailingslashit( home_url( '/nuevaweb-bootstrap-created/' ) );
 $created_plan = $planner->prepare( $created_job, $created_path, $created_url, $source_prefix . 'sgboot1_', true );
@@ -222,6 +247,7 @@ assert claimed["blockers"] == []
 assert claimed["marker_relative_path"] == ".seo-geo-migration-local-clone-owner.php"
 assert re.fullmatch(r"[a-f0-9]{64}", claimed["marker_sha256"])
 assert payload["claimed_again"]["marker_sha256"] == claimed["marker_sha256"]
+assert payload["created_plan"]["source_fingerprint"] == claimed["source_fingerprint"]
 assert payload["created_entries"] == [".seo-geo-migration-local-clone-owner.php"]
 
 marker = payload["marker_content"]
@@ -262,4 +288,4 @@ PY
   fail_smoke "local-clone-bootstrap" "Local clone ownership bootstrap contract is invalid" "job-owned target marker + safe release + tamper rejection" "${LOCAL_BOOTSTRAP_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone ownership bootstrap OK: exact frozen target claimed, deterministic marker verified, safe release bounded, tamper rejected; no runtime/database copy.\n'
+printf '[smoke] Local clone ownership bootstrap OK: exact/verified-drift frozen target claimed, deterministic marker verified, safe release bounded, tamper rejected; no runtime/database copy.\n'
