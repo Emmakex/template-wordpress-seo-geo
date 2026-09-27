@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.47 makes the large private same-server handoff observable and practical: it exposes saved file/byte/cursor progress, adds a progress bar, and adds bounded automatic continuation (500 files / 32 MB per request) with stall and cycle-limit guards. Existing 0.8.46 handoff state resumes in place; no package rebuild or export restart is required.
+
 - Migration Bridge 0.8.46 carries the already accepted live-source drift authority from package integrity into local-clone destination planning, target ownership and core-runtime bootstrap. Exact inventory identity remains accepted, while a differing exported fingerprint is allowed only when the completed file-export state proves the same recorded drift snapshot and manifest.
 
 - Migration Bridge 0.8.45 fixes package-integrity validation for legitimate exported `index.php` and `.htaccess` files by checking per-file export evidence before generated workspace guards; a retained `package-exported-payload-mismatch` can be safely retried from its saved cursor and genuine tampering still blocks.

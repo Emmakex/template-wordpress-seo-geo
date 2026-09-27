@@ -1516,6 +1516,8 @@ final class AdminOperatorScreen {
 			'building' => 'clone_local_handoff_building',
 			'ready'    => 'clone_local_handoff_ready',
 			'blocked'  => 'clone_local_handoff_blocked',
+			'paused'   => 'clone_local_handoff_auto_paused',
+			'stalled'  => 'clone_local_handoff_auto_stalled',
 			default    => null,
 		};
 		if ( null === $key ) {
@@ -1541,17 +1543,88 @@ final class AdminOperatorScreen {
 			return;
 		}
 
-		$state  = ( new LocalClonePackageHandoffStateStore() )->get( $job_id );
-		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+		$state    = ( new LocalClonePackageHandoffStateStore() )->get( $job_id );
+		$delivery = ( new DeliveryStateStore() )->get( $job_id );
+		$package  = ( new PackageStateStore() )->get( $job_id );
+		$status   = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
+
+		$verified_files = is_array( $delivery ) ? (int) ( $delivery['verified_file_count'] ?? 0 ) : 0;
+		$verified_bytes = is_array( $delivery ) ? (int) ( $delivery['verified_byte_count'] ?? 0 ) : 0;
+		$archived_files = is_array( $delivery ) ? (int) ( $delivery['archive_file_count'] ?? 0 ) : 0;
+		$archived_bytes = is_array( $delivery ) ? (int) ( $delivery['archive_source_bytes'] ?? 0 ) : 0;
+		$total_files    = is_array( $package ) ? max( 0, (int) ( $package['payload_file_count'] ?? 0 ) ) : 0;
+		$total_bytes    = is_array( $package ) ? max( 0, (int) ( $package['payload_byte_count'] ?? 0 ) ) : 0;
+		$file_pct       = 0 < $total_files ? min( 100, round( ( $verified_files / $total_files ) * 100, 2 ) ) : 0;
+		$byte_pct       = 0 < $total_bytes ? min( 100, round( ( $verified_bytes / $total_bytes ) * 100, 2 ) ) : 0;
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result status controls automatic continuation after a nonce-verified action.
+		$request_status = isset( $_GET['seo_geo_clone_local_package_handoff'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result status.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_local_package_handoff'] ) )
+			: '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only mode controls automatic continuation.
+		$request_mode = isset( $_GET['handoff_mode'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only automatic continuation hint.
+			? sanitize_key( wp_unslash( $_GET['handoff_mode'] ) )
+			: '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded automatic cycle counter.
+		$auto_cycle = isset( $_GET['handoff_auto_cycle'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only cycle counter.
+			? min( AdminCloneLocalPackageHandoffController::MAX_AUTO_CYCLES, absint( sanitize_text_field( wp_unslash( $_GET['handoff_auto_cycle'] ) ) ) )
+			: 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only persisted manual batch preference.
+		$selected_files = isset( $_GET['handoff_batch_files'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only manual batch preference.
+			? absint( sanitize_text_field( wp_unslash( $_GET['handoff_batch_files'] ) ) )
+			: LocalClonePackageHandoff::DEFAULT_BATCH_FILES;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only persisted manual byte preference.
+		$selected_megabytes = isset( $_GET['handoff_batch_megabytes'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only manual byte preference.
+			? absint( sanitize_text_field( wp_unslash( $_GET['handoff_batch_megabytes'] ) ) )
+			: 16;
+
+		$allowed_files = array( 25, 50, 100, 200, 500 );
+		if ( ! in_array( $selected_files, $allowed_files, true ) ) {
+			$selected_files = LocalClonePackageHandoff::DEFAULT_BATCH_FILES;
+		}
+		$allowed_megabytes = array( 4, 8, 16, 32, 64, 128 );
+		if ( ! in_array( $selected_megabytes, $allowed_megabytes, true ) ) {
+			$selected_megabytes = 16;
+		}
+
+		$auto_resume = (
+			'auto' === $request_mode
+			&& 'building' === $request_status
+			&& 'building' === $status
+			&& $auto_cycle < AdminCloneLocalPackageHandoffController::MAX_AUTO_CYCLES
+		);
 		?>
 		<h3><?php echo esc_html( $this->copy->text( 'clone_local_handoff_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_handoff_help' ) ); ?></p>
+
+		<?php if ( is_array( $delivery ) && 'building' === $status ) : ?>
+			<div style="margin:14px 0 18px;padding:16px;border:1px solid #c3c4c7;background:#fff;">
+				<p style="margin-top:0;"><strong><?php echo esc_html( $this->copy->text( 'clone_local_handoff_files_progress' ) ); ?></strong>
+					<?php echo esc_html( (string) $verified_files . ' / ' . (string) $total_files . ' (' . number_format_i18n( $file_pct, 2 ) . '%)' ); ?></p>
+				<progress value="<?php echo esc_attr( (string) $file_pct ); ?>" max="100" style="width:100%;height:20px;"><?php echo esc_html( (string) $file_pct ); ?>%</progress>
+				<p><strong><?php echo esc_html( $this->copy->text( 'clone_local_handoff_bytes_progress' ) ); ?></strong>
+					<?php echo esc_html( size_format( $verified_bytes ) . ' / ' . size_format( $total_bytes ) . ' (' . number_format_i18n( $byte_pct, 2 ) . '%)' ); ?></p>
+				<progress value="<?php echo esc_attr( (string) $byte_pct ); ?>" max="100" style="width:100%;height:20px;"><?php echo esc_html( (string) $byte_pct ); ?>%</progress>
+			</div>
+		<?php endif; ?>
 
 		<?php if ( is_array( $state ) ) : ?>
 			<table class="widefat striped" role="presentation">
 				<tbody>
 					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th><td><code><?php echo esc_html( $status ); ?></code></td></tr>
 					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_transport' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['transport'] ?? '' ) ); ?></code></td></tr>
+					<?php if ( is_array( $delivery ) && 'building' === $status ) : ?>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_archived_files' ) ); ?></th><td><?php echo esc_html( (string) $archived_files ); ?></td></tr>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_archived_bytes' ) ); ?></th><td><?php echo esc_html( size_format( $archived_bytes ) ); ?></td></tr>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_verified_files' ) ); ?></th><td><?php echo esc_html( (string) $verified_files . ' / ' . (string) $total_files ); ?></td></tr>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_cursor' ) ); ?></th><td><code><?php echo esc_html( (string) ( $delivery['current_dir'] ?? '' ) . ( '' !== (string) ( $delivery['after_name'] ?? '' ) ? ' / ' . (string) $delivery['after_name'] : '' ) ); ?></code></td></tr>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_updated_at' ) ); ?></th><td><code><?php echo esc_html( (string) ( $delivery['updated_at'] ?? '' ) ); ?></code></td></tr>
+					<?php endif; ?>
 					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_archive_bytes' ) ); ?></th><td><?php echo esc_html( size_format( (int) ( $state['archive_bytes'] ?? 0 ) ) ); ?></td></tr>
 					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_archive_hash' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['archive_sha256'] ?? '' ) ); ?></code></td></tr>
 					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next_label' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['handoff_next'] ?? '' ) ); ?></code></td></tr>
@@ -1564,34 +1637,72 @@ final class AdminOperatorScreen {
 			<p class="notice notice-success inline"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_next' ) ); ?></p>
 			<?php $this->render_clone_local_target_preflight_section( $job ); ?>
 		<?php elseif ( 'blocked' !== $status ) : ?>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalPackageHandoffController::ACTION ); ?>">
-				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
-				<?php wp_nonce_field( AdminCloneLocalPackageHandoffController::NONCE_ACTION . ':' . $job_id ); ?>
-				<?php if ( ! is_array( $state ) ) : ?>
-					<p><label><input type="checkbox" name="local_clone_package_handoff_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_handoff_confirm' ) ); ?></label></p>
+			<div style="margin-top:16px;padding:16px;border:1px solid #c3c4c7;background:#fff;">
+				<h4 style="margin-top:0;"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_auto_heading' ) ); ?></h4>
+				<p><?php echo esc_html( $this->copy->text( 'clone_local_handoff_auto_help' ) ); ?></p>
+				<form id="seo-geo-local-handoff-auto" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalPackageHandoffController::ACTION ); ?>">
+					<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+					<input type="hidden" name="handoff_mode" value="auto">
+					<input type="hidden" name="handoff_auto_cycle" value="<?php echo esc_attr( (string) ( $auto_resume ? $auto_cycle : 0 ) ); ?>">
+					<?php wp_nonce_field( AdminCloneLocalPackageHandoffController::NONCE_ACTION . ':' . $job_id ); ?>
+					<?php if ( ! is_array( $state ) ) : ?>
+						<p><label><input type="checkbox" name="local_clone_package_handoff_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_handoff_confirm' ) ); ?></label></p>
+					<?php endif; ?>
+					<?php submit_button( $this->copy->text( 'clone_local_handoff_auto_start' ), 'primary', 'seo_geo_auto_handoff', false ); ?>
+				</form>
+				<?php if ( $auto_resume ) : ?>
+					<p class="description"><?php echo esc_html( sprintf( $this->copy->text( 'clone_local_handoff_auto_cycle' ), $auto_cycle ) ); ?></p>
+					<script>
+						window.setTimeout(
+							function () {
+								var form = document.getElementById('seo-geo-local-handoff-auto');
+								if (form) {
+									if (typeof form.requestSubmit === 'function') {
+										form.requestSubmit();
+									} else {
+										HTMLFormElement.prototype.submit.call(form);
+									}
+								}
+							},
+							350
+						);
+					</script>
 				<?php endif; ?>
-				<p>
-					<label for="seo-geo-local-handoff-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_local_handoff_batch_label' ) ); ?></strong></label>
-					<select id="seo-geo-local-handoff-batch" name="handoff_batch_files">
-						<?php foreach ( array( 25, 50, 100, 200, 500 ) as $size ) : ?>
-							<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( LocalClonePackageHandoff::DEFAULT_BATCH_FILES, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
-						<?php endforeach; ?>
-					</select>
-					<label for="seo-geo-local-handoff-mb"><strong><?php echo esc_html( $this->copy->text( 'clone_local_handoff_mb_label' ) ); ?></strong></label>
-					<select id="seo-geo-local-handoff-mb" name="handoff_batch_megabytes">
-						<?php foreach ( array( 4, 8, 16, 32, 64, 128 ) as $megabytes ) : ?>
-							<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( 16, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
-						<?php endforeach; ?>
-					</select>
-				</p>
-				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_batch_help' ) ); ?></p>
-				<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_handoff_continue' : 'clone_local_handoff_start' ), 'secondary', 'submit', false ); ?>
-			</form>
+			</div>
+
+			<div style="margin-top:16px;padding:16px;border:1px solid #c3c4c7;background:#fff;">
+				<h4 style="margin-top:0;"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_batch_heading' ) ); ?></h4>
+				<p><?php echo esc_html( $this->copy->text( 'clone_local_handoff_batch_mode_help' ) ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneLocalPackageHandoffController::ACTION ); ?>">
+					<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+					<input type="hidden" name="handoff_mode" value="batch">
+					<?php wp_nonce_field( AdminCloneLocalPackageHandoffController::NONCE_ACTION . ':' . $job_id ); ?>
+					<?php if ( ! is_array( $state ) ) : ?>
+						<p><label><input type="checkbox" name="local_clone_package_handoff_confirm" value="1" required> <?php echo esc_html( $this->copy->text( 'clone_local_handoff_confirm' ) ); ?></label></p>
+					<?php endif; ?>
+					<p>
+						<label for="seo-geo-local-handoff-batch"><strong><?php echo esc_html( $this->copy->text( 'clone_local_handoff_batch_label' ) ); ?></strong></label>
+						<select id="seo-geo-local-handoff-batch" name="handoff_batch_files">
+							<?php foreach ( $allowed_files as $size ) : ?>
+								<option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( $selected_files, $size ); ?>><?php echo esc_html( (string) $size ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<label for="seo-geo-local-handoff-mb"><strong><?php echo esc_html( $this->copy->text( 'clone_local_handoff_mb_label' ) ); ?></strong></label>
+						<select id="seo-geo-local-handoff-mb" name="handoff_batch_megabytes">
+							<?php foreach ( $allowed_megabytes as $megabytes ) : ?>
+								<option value="<?php echo esc_attr( (string) $megabytes ); ?>" <?php selected( $selected_megabytes, $megabytes ); ?>><?php echo esc_html( (string) $megabytes ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</p>
+					<p class="description"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_batch_help' ) ); ?></p>
+					<?php submit_button( $this->copy->text( is_array( $state ) ? 'clone_local_handoff_continue' : 'clone_local_handoff_start' ), 'secondary', 'submit', false ); ?>
+				</form>
+			</div>
 		<?php endif; ?>
 		<?php
 	}
-
 
 	/**
 	 * Render a bounded result notice after private local target intake/preflight.
