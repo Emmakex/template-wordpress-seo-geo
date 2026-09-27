@@ -13,9 +13,9 @@ RECORD_FILE = ROOT / "release/emmake-real-clone-acceptance.json"
 STABLE_FILE = ROOT / "release/stable-release-decision.json"
 
 EXPECTED_BRIDGE = {
-    "version": "0.8.36",
-    "main_commit": "b78f38016ac0848cd37b75fb608262b289d32ceb",
-    "zip_sha256": "1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792",
+    "version": "0.8.38",
+    "main_commit": "ef1e54dbf1f2ecff197de47a72429336b803f0b5",
+    "zip_sha256": "72de9be333b840b0291cb79bdc2c846119862e5eef703781fd27450c9528e485",
 }
 EXPECTED_SOURCE = {
     "baseline_ready": True,
@@ -103,7 +103,7 @@ def main() -> int:
         "Migration Bridge identity",
     )
     if bridge != EXPECTED_BRIDGE:
-        fail("Real-clone acceptance must use the exact accepted Migration Bridge 0.8.36 artifact")
+        fail("Real-clone acceptance must use the exact accepted Migration Bridge 0.8.38 artifact")
 
     source = exact_keys(
         record["source_evidence"],
@@ -187,7 +187,7 @@ def main() -> int:
             fail("Pending real-clone acceptance cannot fabricate a stable real-site reference")
         print(
             "Emmake real-clone acceptance gate OK: decision=pending, "
-            "accepted Engine=0.8.36, live clone execution still required."
+            "accepted Engine=0.8.38, live clone execution still required."
         )
         return 0
 
