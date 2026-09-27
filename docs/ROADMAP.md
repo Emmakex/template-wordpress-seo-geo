@@ -2199,7 +2199,17 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** Migration Bridge 0.8.36 is accepted on `main` at `b78f38016ac0848cd37b75fb608262b289d32ceb`: the complete local-clone pipeline now ends in a read-only final target reporter that rechecks activated table row counts, destination URLs, `blog_public=0`, plugin/theme runtime, Migration Bridge control files, active file fingerprint, source isolation and rollback availability, then freezes a reproducible bounded handoff SHA-256. Any target drift or rollback invalidates that handoff. The exact accepted plugin ZIP SHA-256 for the real pilot is `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`. The next operation is no longer another Engine implementation microphase: execute this accepted Engine against the real Emmake production source and isolated `/nuevaweb/` target, preserve production, and record bounded evidence only.
+Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** Migration Bridge 0.8.40 is the accepted pilot artifact on `main` at `42bb7cd025385d365eea1b39f4d65c482a5f529c`, with deterministic installable ZIP SHA-256 `9392862f952e8d85be2c57cce22492d1f2ff63e98cef982ec276b2b3aa53f1dc`. The real-site file export reached 20,256 / 20,256 files and 608 MB / 608 MB. Under 0.8.39 it stopped only at the final aggregate source-fingerprint reconciliation while counts and bytes matched; 0.8.40 keeps structural count/byte drift terminal but records fingerprint-only live-source drift and can finalize the already copied per-file hash-verified snapshot without copying the 608 MB payload again. The next operator action is to install 0.8.40 over the existing Bridge, use the explicit verified-snapshot recovery action, then continue package integrity and the remaining isolated `/nuevaweb/` clone sequence. Production remains the source of truth and real acceptance evidence remains pending until the observed clone/handoff completes.
+
+Migration Bridge v0.8.40 / 10E.2A.6 real-pilot recovery evidence:
+
+- real operator run reached `20,256 / 20,256` copied files and `608 MB / 608 MB` before the final fingerprint-only blocker;
+- PR #172 final candidate `7f16b434d2a4f753b282f77be01756ad56d314df` passed Foundation `36309745395`, Migration Bridge Release `36309745416`, WordPress Smoke `36309745418`, Phase 1 Package `36309745388`, Release Artifact `36309745378`, PHP Quality `36309745377`, Accessibility/Responsive `36309745391` and Performance `36309745385`;
+- PR #172 squash-merged to `main` as `42bb7cd025385d365eea1b39f4d65c482a5f529c`;
+- post-merge `main` passed Foundation `36309948973`, Migration Bridge Release `36309948938`, Phase 1 Package `36309948939`, Release Artifact `36309948953`, PHP Quality `36309948965`, Accessibility/Responsive `36309948977`, Performance `36309948987` and WordPress Smoke `36309948933`;
+- WordPress Smoke includes same-size live-source content drift capture plus recovery of the exact legacy 0.8.39 `source-files-changed-since-inventory` blocked state without recopying payload;
+- accepted plugin ZIP SHA-256: `9392862f952e8d85be2c57cce22492d1f2ff63e98cef982ec276b2b3aa53f1dc`;
+- the bounded Emmake runbook and pending acceptance identity were rebound to 0.8.40 on PR #173; no completed real-clone evidence was fabricated.
 
 Migration Bridge v0.8.36 / 10E.2A.5.5.5 acceptance evidence:
 
