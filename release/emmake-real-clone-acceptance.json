@@ -5,9 +5,9 @@
   "source_origin": "https://emmake.com/",
   "target_origin": "https://emmake.com/nuevaweb/",
   "migration_bridge": {
-    "version": "0.8.43",
-    "main_commit": "5723fb9cf2fa0821c042eea6a6f39a3dbe9f60c0",
-    "zip_sha256": "b586b668f620338b7fc0aaab7b33d5990b8e16535c2c2ff96e312118d2a2d3af"
+    "version": "0.8.44",
+    "main_commit": "e9b5ccac08a836f47bfbf1c3d41cbceabf58e14d",
+    "zip_sha256": "782c0df395a3bdf284af72c9c589a0a38f6d3faa8c6dcb3300488ee303ec7b4f"
   },
   "source_evidence": {
     "baseline_ready": true,
@@ -57,8 +57,8 @@
   "evidence_captured_at": "",
   "operator": "",
   "notes": [
-    "Migration Bridge 0.8.43 is the current accepted pilot artifact. The user-supplied 0.8.39 ZIP remains the confirmed last-good real-export provenance baseline for the 20,256-file / 608 MB snapshot.",
-    "0.8.43 preserves retained-job selection and the fingerprint-drift/package-integrity recovery, and restores the finalization action when the terminal last_action is source-files-changed-since-inventory even if legacy blockers metadata is absent.",
+    "Migration Bridge 0.8.44 is the current accepted pilot artifact. The user-supplied 0.8.39 ZIP remains the confirmed last-good real-export provenance baseline for the 20,256-file / 608 MB snapshot.",
+    "0.8.44 recovers a fully traversed exact-file-count snapshot even when live-source byte totals changed during the export; byte drift is recorded and package integrity re-hashes the private workspace against per-file records before continuation.",
     "Real execution evidence remains pending and must be recorded only from observed production/sandbox results."
   ]
 }
