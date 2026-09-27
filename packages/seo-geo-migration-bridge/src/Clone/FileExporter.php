@@ -513,9 +513,9 @@ final class FileExporter {
 			return $this->block( $job_id, $state, 'source-files-structure-changed-since-inventory', false );
 		}
 
-		$inventory_bytes  = (int) ( $inventory['byte_count'] ?? -1 );
-		$exported_bytes   = (int) ( $state['byte_count'] ?? 0 );
-		$byte_count_match = 0 <= $inventory_bytes && $exported_bytes === $inventory_bytes;
+		$inventory_bytes   = (int) ( $inventory['byte_count'] ?? -1 );
+		$exported_bytes    = (int) ( $state['byte_count'] ?? 0 );
+		$byte_count_match  = 0 <= $inventory_bytes && $exported_bytes === $inventory_bytes;
 		$fingerprint_match = hash_equals(
 			(string) ( $inventory['fingerprint'] ?? '' ),
 			(string) ( $state['export_fingerprint'] ?? '' )
@@ -555,7 +555,7 @@ final class FileExporter {
 			'inventory_fingerprint'       => (string) ( $inventory['fingerprint'] ?? '' ),
 			'inventory_hash_match'        => $fingerprint_match,
 			'inventory_byte_match'        => $byte_count_match,
-			'inventory_payload_bytes'      => max( 0, $inventory_bytes ),
+			'inventory_payload_bytes'     => max( 0, $inventory_bytes ),
 			'source_drift'                => true === $state['source_drift'],
 			'file_records'                => array(
 				'format'    => 'one-json-record-per-file',
@@ -690,8 +690,8 @@ final class FileExporter {
 			'source-files-changed-since-inventory' === $last_action
 			|| in_array( 'source-files-changed-since-inventory', $blockers, true )
 		);
-		$root_count = max( 0, (int) ( $state['root_count'] ?? 0 ) );
-		$root_index = max( 0, (int) ( $state['root_index'] ?? 0 ) );
+		$root_count        = max( 0, (int) ( $state['root_count'] ?? 0 ) );
+		$root_index        = max( 0, (int) ( $state['root_index'] ?? 0 ) );
 
 		return $has_drift_blocker
 			&& 0 < (int) ( $inventory['file_count'] ?? 0 )
