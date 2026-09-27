@@ -96,32 +96,45 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 		throw new RuntimeException( 'Could not write database manifest fixture.' );
 	}
 
-	$file = $workspace->write( $job_id, 'files/uploads/a.txt', 'portable-file-payload' );
-	if ( ! is_array( $file ) ) {
-		throw new RuntimeException( 'Could not write file payload fixture.' );
-	}
-	$inventory_file_bytes = $drift ? (int) $file['bytes'] + 17 : (int) $file['bytes'];
-	$file_record = array(
-		'root' => 'uploads',
-		'relative_path' => 'a.txt',
-		'payload_path' => 'files/uploads/a.txt',
-		'byte_count' => $file['bytes'],
-		'sha256' => $file['sha256'],
-		'export_status' => 'copied',
+	$file_payloads = array(
+		'a.txt' => 'portable-file-payload',
+		'index.php' => "<?php\n// Real exported WordPress index payload.\necho 'fixture';\n",
+		'.htaccess' => "RewriteEngine On\nRewriteRule ^fixture$ index.php [L]\n",
 	);
-	$record_path = 'files-meta/uploads/' . hash( 'sha256', 'a.txt' ) . '.json';
-	$workspace->write( $job_id, $record_path, wp_json_encode( $file_record ) . "\n" );
+	$payload_files = array();
+	$payload_bytes = 0;
+	foreach ( $file_payloads as $relative_path => $contents ) {
+		$file = $workspace->write( $job_id, 'files/uploads/' . $relative_path, $contents );
+		if ( ! is_array( $file ) ) {
+			throw new RuntimeException( 'Could not write file payload fixture: ' . $relative_path );
+		}
+
+		$payload_files[ $relative_path ] = $file;
+		$payload_bytes += (int) $file['bytes'];
+		$file_record = array(
+			'root' => 'uploads',
+			'relative_path' => $relative_path,
+			'payload_path' => 'files/uploads/' . $relative_path,
+			'byte_count' => $file['bytes'],
+			'sha256' => $file['sha256'],
+			'export_status' => 'copied',
+		);
+		$record_path = 'files-meta/uploads/' . hash( 'sha256', $relative_path ) . '.json';
+		$workspace->write( $job_id, $record_path, wp_json_encode( $file_record ) . "\n" );
+	}
+	$payload_file_count = count( $payload_files );
+	$inventory_file_bytes = $drift ? $payload_bytes + 17 : $payload_bytes;
 
 	$file_manifest = array(
 		'schema_version' => 1,
 		'payload_class' => 'files',
-		'file_count' => 1,
-		'payload_bytes' => $file['bytes'],
+		'file_count' => $payload_file_count,
+		'payload_bytes' => $payload_bytes,
 		'roots' => array(
 			array(
 				'id' => 'uploads',
-				'file_count' => 1,
-				'byte_count' => $file['bytes'],
+				'file_count' => $payload_file_count,
+				'byte_count' => $payload_bytes,
 			),
 		),
 		'source_fingerprint' => $source_fingerprint,
@@ -166,7 +179,7 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 			'pending_dirs' => array(),
 			'current_dir' => '',
 			'after_name' => '',
-			'file_count' => 1,
+			'file_count' => $payload_file_count,
 			'byte_count' => $inventory_file_bytes,
 			'excluded_count' => 0,
 			'symlink_count' => 0,
@@ -217,9 +230,9 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 			'pending_dirs' => array(),
 			'current_dir' => '',
 			'after_name' => '',
-			'file_count' => 1,
-			'byte_count' => $file['bytes'],
-			'inventory_file_count' => 1,
+			'file_count' => $payload_file_count,
+			'byte_count' => $payload_bytes,
+			'inventory_file_count' => $payload_file_count,
 			'inventory_byte_count' => $inventory_file_bytes,
 			'export_fingerprint' => $source_fingerprint,
 			'files_manifest_hash' => $files_written['sha256'],
@@ -236,7 +249,7 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 	return array(
 		'source_fingerprint' => $source_fingerprint,
 		'inventory_fingerprint' => $inventory_fingerprint,
-		'file_bytes' => $file['bytes'],
+		'file_bytes' => $payload_bytes,
 		'inventory_file_bytes' => $inventory_file_bytes,
 	);
 };
@@ -316,6 +329,7 @@ if ( ! is_array( $bad_state ) || 'verify' !== ( $bad_state['stage'] ?? null ) ) 
 }
 $workspace->write( $bad_job_id, 'files/uploads/a.txt', 'tampered-after-build-pass' );
 $bad_state = $builder->advance( $bad_job_id, 50, 64 * 1024 * 1024 );
+$bad_retry_state = $builder->advance( $bad_job_id, 50, 64 * 1024 * 1024 );
 
 echo wp_json_encode(
 	array(
@@ -329,6 +343,7 @@ echo wp_json_encode(
 		'package_state_autoload' => $autoload,
 		'controller_registered' => false !== has_action( 'admin_post_' . AdminClonePackageController::ACTION ),
 		'negative_state' => $bad_state,
+		'negative_retry_state' => $bad_retry_state,
 	),
 	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 );
@@ -365,6 +380,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 state = payload["state"]
 manifest = payload["manifest"]
 negative = payload["negative_state"]
+negative_retry = payload["negative_retry_state"]
 drift_fixture = payload["drift_fixture"]
 drift_state = payload["drift_state"]
 drift_manifest = payload["drift_manifest"]
@@ -413,10 +429,12 @@ assert payload["unrecorded_start_is_null"] is True
 
 assert negative["status"] == "blocked"
 assert "package-exported-payload-mismatch" in negative["blockers"]
+assert negative_retry["status"] == "blocked"
+assert "package-exported-payload-mismatch" in negative_retry["blockers"]
 print("ok")
 PY
 )"; then
-  fail_smoke "clone-package-contract" "Portable Clone package manifest/integrity contract is invalid" "two-pass verified checksum plus accepted fingerprint/byte-drift snapshot plus unrecorded-drift rejection plus tamper blocker" "${PACKAGE_ASSERTION:-python assertion failed}"
+  fail_smoke "clone-package-contract" "Portable Clone package manifest/integrity contract is invalid" "two-pass verified checksum plus real index/.htaccess payloads plus accepted fingerprint/byte-drift snapshot plus resumable mismatch retry plus tamper blocker" "${PACKAGE_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Clone package integrity OK: deterministic checksum reproduced across two bounded passes; exact and accepted fingerprint/byte-drift package manifests verified; tampered payload blocked.\n'
+printf '[smoke] Portable Clone package integrity OK: deterministic checksum reproduced across two bounded passes; real exported index.php/.htaccess payloads and accepted fingerprint/byte-drift manifests verified; tampered payload remains blocked after retry.\n'

@@ -217,8 +217,29 @@ final class PackageBuilder {
 		$batch_bytes = max( self::MIN_BATCH_BYTES, min( self::MAX_BATCH_BYTES, $batch_bytes ) );
 		$state       = $this->store->get( $job_id ) ?? $this->start( $job_id );
 
-		if ( ! is_array( $state ) || in_array( $state['status'] ?? null, array( 'complete', 'blocked' ), true ) ) {
+		if ( ! is_array( $state ) || 'complete' === ( $state['status'] ?? null ) ) {
 			return $state;
+		}
+
+		if ( 'blocked' === ( $state['status'] ?? null ) ) {
+			if ( ! $this->recoverable_payload_mismatch( $state ) ) {
+				return $state;
+			}
+
+			$state['status']     = 'running';
+			$state['blockers']   = array_values(
+				array_diff(
+					is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array(),
+					array( 'package-exported-payload-mismatch' )
+				)
+			);
+			$state['updated_at'] = gmdate( DATE_ATOM );
+
+			if ( ! $this->store->save( $job_id, $state ) ) {
+				return null;
+			}
+
+			$this->jobs->transition( $job_id, 'active', null );
 		}
 
 		$root = $this->workspace_root( $job_id );
@@ -528,10 +549,6 @@ final class PackageBuilder {
 	 * @param string $hash     Current SHA-256.
 	 */
 	private function payload_record_valid( string $job_id, string $relative, int $bytes, string $hash ): bool {
-		if ( in_array( basename( $relative ), array( '.htaccess', 'index.php' ), true ) ) {
-			return $this->workspace_guard_valid( $relative, $bytes, $hash );
-		}
-
 		if ( 'database/manifest.json' === $relative ) {
 			$state = $this->database_export->get( $job_id );
 
@@ -563,6 +580,10 @@ final class PackageBuilder {
 				&& (string) ( $record['payload_path'] ?? '' ) === $relative
 				&& (int) ( $record['byte_count'] ?? -1 ) === $bytes
 				&& hash_equals( (string) ( $record['sha256'] ?? '' ), $hash );
+		}
+
+		if ( in_array( basename( $relative ), array( '.htaccess', 'index.php' ), true ) ) {
+			return $this->workspace_guard_valid( $relative, $bytes, $hash );
 		}
 
 		if ( str_starts_with( $relative, 'database/' ) && ( str_ends_with( $relative, '/schema.sql' ) || str_contains( $relative, '/chunks/' ) ) ) {
@@ -704,6 +725,24 @@ final class PackageBuilder {
 		$root = $base . $job_id . '/';
 
 		return is_dir( $root ) && str_starts_with( $root, $base ) ? $root : null;
+	}
+
+	/**
+	 * Whether a blocked payload mismatch may be retried from the saved cursor.
+	 *
+	 * Retrying is safe because package integrity is read-only over the private
+	 * workspace. A genuine mismatch immediately blocks again; a mismatch caused
+	 * by a validator bug can continue without rebuilding the exported snapshot.
+	 *
+	 * @param array<string,mixed> $state Package state.
+	 */
+	private function recoverable_payload_mismatch( array $state ): bool {
+		$blockers = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$stage    = (string) ( $state['stage'] ?? '' );
+
+		return 'blocked' === ( $state['status'] ?? null )
+			&& in_array( 'package-exported-payload-mismatch', $blockers, true )
+			&& in_array( $stage, array( 'build', 'verify' ), true );
 	}
 
 	/**
