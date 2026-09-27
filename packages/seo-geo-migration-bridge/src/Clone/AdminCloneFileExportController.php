@@ -18,11 +18,11 @@ final class AdminCloneFileExportController {
 	public const ACTION       = 'seo_geo_migration_clone_file_export';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_file_export';
 
-	private const MODE_BATCH          = 'batch';
-	private const MODE_AUTO           = 'auto';
-	private const AUTO_BATCH_FILES    = 100;
+	private const MODE_BATCH           = 'batch';
+	private const MODE_AUTO            = 'auto';
+	private const AUTO_BATCH_FILES     = 100;
 	private const AUTO_BATCH_MEGABYTES = 16;
-	public const MAX_AUTO_CYCLES      = 500;
+	public const MAX_AUTO_CYCLES       = 500;
 
 	/**
 	 * Resumable file exporter.
