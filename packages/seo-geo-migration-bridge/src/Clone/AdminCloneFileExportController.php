@@ -142,7 +142,7 @@ final class AdminCloneFileExportController {
 			'file_count'    => (int) ( $state['file_count'] ?? 0 ),
 			'byte_count'    => (int) ( $state['byte_count'] ?? 0 ),
 		);
-		$json = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$json    = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 
 		return hash( 'sha256', is_string( $json ) ? $json : '' );
 	}
