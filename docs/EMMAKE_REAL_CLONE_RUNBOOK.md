@@ -10,13 +10,13 @@ Use exactly:
 
 - source origin: `https://emmake.com/`;
 - isolated target origin: `https://emmake.com/nuevaweb/`;
-- Migration Bridge: `0.8.46`;
-- accepted Migration Bridge main commit: `b836fe57c651ec4e0883369878aecae0647ed12d`;
-- accepted Migration Bridge ZIP SHA-256: `e5157b9d5dd02ea3fa9c6568af643095670e0b5f3faf1fb0dd165432ddbe8bb6`;
+- Migration Bridge: `0.8.47`;
+- accepted Migration Bridge main commit: `1463598522d10131641297e4167e5b267227ddc6`;
+- accepted Migration Bridge ZIP SHA-256: `e04fd29eb350c4bac0c91f3fe5f56b6908eb9474b8bee1302e0e6841906f18a4`;
 - bounded source handoff SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - acceptance record: `release/emmake-real-clone-acceptance.json`.
 
-Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.46 is the current Emmake pilot artifact. The user-supplied 0.8.39 ZIP (`70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`) remains the confirmed real-export provenance baseline. 0.8.44 recovered its fully traversed live-source drift snapshot, and 0.8.45 carried that snapshot through package integrity. The real package then completed successfully with 45,216 workspace files / 686 MB, package checksum `ffa4d12183143a9172e0c879b9d7e5d375a5f1ee9112a08461228f0b58527580` and manifest SHA-256 `810ff0b63fcc639c2011de13035b3a74e5ee1fbfb6acd9240aab97ee245839e4`. The next destination-plan request exposed another downstream identity mismatch: local planning still required the package source fingerprint to equal the old inventory fingerprint exactly, so it returned the generic `The local clone destination plan could not be prepared from the verified package.` before destination safety checks ran. 0.8.46 carries the same verified drift authority through destination planning, target ownership and core-runtime bootstrap while preserving exact manifest/count/root traversal checks. Install 0.8.46 over the current plugin, reopen the same retained job and retry **Validar y congelar plan de destino**; do not create a new clone, rebuild the package or repeat file export.
+Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.47 is the current Emmake pilot artifact. The retained real job has already completed package integrity (45,216 workspace files / 686 MB), frozen the isolated `/nuevaweb/` destination, claimed target ownership, copied/verified WordPress core, and completed sandbox control hardening. It is now in the private same-server package handoff. In 0.8.46 the underlying resumable ZIP builder advanced in bounded 100-file batches, but the parent handoff screen exposed only the final ZIP size/hash, so repeated clicks still displayed `building` / `0 B` and made progress invisible. 0.8.47 reads the persisted delivery checkpoint, shows verified file/byte progress plus the current cursor, and adds bounded automatic continuation at 500 files / 32 MB per request with stall and cycle-limit guards. Install 0.8.47 over the current plugin, reopen the same retained job and use **Continuar handoff automáticamente**. Do not create a new clone, rebuild the package, repeat file export, or reset the existing handoff.
 
 ## Operator-only inputs required before execution
 
