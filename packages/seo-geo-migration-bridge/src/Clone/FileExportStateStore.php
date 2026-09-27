@@ -199,7 +199,7 @@ final class FileExportStateStore {
 			}
 			$normalized[] = substr( $event, 0, 500 );
 		}
-		return array_values( $normalized );
+		return $normalized;
 	}
 
 	/**
