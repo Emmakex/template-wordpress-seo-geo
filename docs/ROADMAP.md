@@ -2199,7 +2199,18 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** The user-supplied Migration Bridge 0.8.39 ZIP SHA-256 `70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146` remains the confirmed last-good real-export provenance baseline for the run that reached 20,256 / 20,256 files and 608 MB / 608 MB. Migration Bridge 0.8.43 is accepted on `main` at `5723fb9cf2fa0821c042eea6a6f39a3dbe9f60c0`, installable ZIP SHA-256 `b586b668f620338b7fc0aaab7b33d5990b8e16535c2c2ff96e312118d2a2d3af`. It preserves retained-job selection and fingerprint-drift/package-integrity recovery, and specifically restores the missing finalization action for the recovered 100%-copied state when `last_action=source-files-changed-since-inventory` but normalized blocker metadata is absent. The next operator action is to install 0.8.43 over the current plugin, reopen the recovered Emmake job, click the restored verified-snapshot finalization action, and then continue package integrity on that same job. Do not create a new clone.
+Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** The user-supplied Migration Bridge 0.8.39 ZIP SHA-256 `70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146` remains the confirmed last-good real-export provenance baseline for the run that reached 20,256 / 20,256 files and 608 MB / 608 MB. Migration Bridge 0.8.44 is accepted on `main` at `e9b5ccac08a836f47bfbf1c3d41cbceabf58e14d`, installable ZIP SHA-256 `782c0df395a3bdf284af72c9c589a0a38f6d3faa8c6dcb3300488ee303ec7b4f`. The remaining missing-button root cause was exact byte drift hidden by WordPress' rounded `608 MB / 608 MB` display: v0.8.44 no longer requires equality with the old inventory byte total. Recovery requires the terminal `source-files-changed-since-inventory` reason, exact completed file count, and completed traversal of all payload roots. The copied snapshot keeps its actual byte count and records source drift; package integrity then re-hashes the private workspace against per-file export records before continuation. The next operator action is to install 0.8.44 over the current plugin, reopen the recovered Emmake job, use the restored finalization action, and continue package integrity on that same job. Do not create a new clone.
+
+Migration Bridge v0.8.44 / 10E.2A.6 live-byte-drift recovery evidence:
+
+- observed real operator state remains `blocked`, `20,256 / 20,256` files, rounded `608 MB / 608 MB`, `last_action=source-files-changed-since-inventory`;
+- v0.8.44 treats completed traversal + exact file count as the structural completion gate and records exact byte mismatch as source drift instead of forcing a 608 MB recopy;
+- package integrity accepts that drift only when it is explicitly recorded and then performs a fresh two-pass workspace checksum plus per-file record validation;
+- acceptance fixtures now change source byte totals, recover without incrementing copied-file count/request sequence, and verify that the drifted package completes integrity;
+- PR #181 passed all eight CI gates before merge and squash-merged to `main` as `e9b5ccac08a836f47bfbf1c3d41cbceabf58e14d`;
+- post-merge `main` repeated all eight CI gates successfully;
+- accepted installable v0.8.44 ZIP SHA-256: `782c0df395a3bdf284af72c9c589a0a38f6d3faa8c6dcb3300488ee303ec7b4f`;
+- real clone acceptance remains pending until the recovered job finalizes and completes package integrity plus the isolated `/nuevaweb/` flow.
 
 Migration Bridge v0.8.43 / 10E.2A.6 finalization-button recovery evidence:
 
