@@ -5,9 +5,9 @@
   "source_origin": "https://emmake.com/",
   "target_origin": "https://emmake.com/nuevaweb/",
   "migration_bridge": {
-    "version": "0.8.42",
-    "main_commit": "9462386bc5d956a1938a785e6959658a502a4187",
-    "zip_sha256": "4f0e32943abe31d6453fb2cc2f97f27b5d5130660643141a9ff067550c22c57e"
+    "version": "0.8.43",
+    "main_commit": "5723fb9cf2fa0821c042eea6a6f39a3dbe9f60c0",
+    "zip_sha256": "b586b668f620338b7fc0aaab7b33d5990b8e16535c2c2ff96e312118d2a2d3af"
   },
   "source_evidence": {
     "baseline_ready": true,
@@ -57,6 +57,6 @@
   "evidence_captured_at": "",
   "operator": "",
   "notes": [
-    "Migration Bridge 0.8.42 is the current pilot artifact; the confirmed real-export provenance baseline is the user-supplied 0.8.39 ZIP 70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146. Record live evidence only after observing the real clone run."
+    "Migration Bridge 0.8.43 is the current pilot artifact; it preserves the 0.8.39 real-export provenance baseline and restores finalization for the recovered 100%-copied drift-blocked state. Record live evidence only after observing the real clone run."
   ]
 }
