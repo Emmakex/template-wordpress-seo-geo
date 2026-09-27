@@ -10,13 +10,13 @@ Use exactly:
 
 - source origin: `https://emmake.com/`;
 - isolated target origin: `https://emmake.com/nuevaweb/`;
-- Migration Bridge: `0.8.43`;
-- accepted Migration Bridge main commit: `5723fb9cf2fa0821c042eea6a6f39a3dbe9f60c0`;
-- accepted Migration Bridge ZIP SHA-256: `b586b668f620338b7fc0aaab7b33d5990b8e16535c2c2ff96e312118d2a2d3af`;
+- Migration Bridge: `0.8.44`;
+- accepted Migration Bridge main commit: `e9b5ccac08a836f47bfbf1c3d41cbceabf58e14d`;
+- accepted Migration Bridge ZIP SHA-256: `782c0df395a3bdf284af72c9c589a0a38f6d3faa8c6dcb3300488ee303ec7b4f`;
 - bounded source handoff SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - acceptance record: `release/emmake-real-clone-acceptance.json`.
 
-Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.43 is the current Emmake pilot artifact. The user-supplied 0.8.39 ZIP (`70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`) is preserved as the confirmed last-good real-export baseline that reached 20,256/20,256 files and 608/608 MB. 0.8.43 layers the accepted fingerprint-drift/package-integrity recovery on top of that baseline, keeps explicit retained-job selection, and restores the finalization action for the real 100%-copied legacy state even when normalized blocker metadata is missing. Structural count/byte drift remains terminal.
+Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.44 is the current Emmake pilot artifact. The user-supplied 0.8.39 ZIP (`70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`) is preserved as the confirmed last-good real-export baseline that reached 20,256/20,256 files and 608/608 MB. 0.8.44 keeps retained-job selection and the accepted fingerprint-drift/package-integrity recovery, and fixes the remaining real-site edge case where rounded UI totals can show 608 MB / 608 MB while exact byte totals differ. Recovery now requires the terminal drift reason, exact completed file count and completed traversal of every payload root. Byte drift is recorded in the exported snapshot and the private workspace is re-hashed by package integrity before continuation. File-count drift remains terminal.
 
 ## Operator-only inputs required before execution
 
