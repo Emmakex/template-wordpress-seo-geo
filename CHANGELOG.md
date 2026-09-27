@@ -18,6 +18,7 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 - Clean-install onboarding now accepts the absence of migration handoff metadata.
 - Browser acceptance now validates the final self-contained zero-plugin distribution shape instead of relying on the transitional standalone Core plugin.
 - Migration Bridge 0.8.39 fixes one-click automatic file export continuation by avoiding the WordPress submit-button name collision and using browser-safe resubmission.
+- Migration Bridge 0.8.40 finalizes a fully copied, per-file hash-verified snapshot when only the aggregate live-source fingerprint drifted, keeps count/byte drift terminal, and can recover an already-blocked 0.8.39 export without recopying the payload.
 
 ### Release policy
 
