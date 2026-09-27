@@ -815,7 +815,8 @@ final class AdminOperatorScreen {
 				</tr>
 				<tr>
 					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_request_summary' ) ); ?></th>
-					<td><?php
+					<td>
+						<?php
 						echo esc_html(
 							sprintf(
 								$this->copy->text( 'clone_file_export_request_summary_value' ),
@@ -826,7 +827,8 @@ final class AdminOperatorScreen {
 								(int) ( $export['request_elapsed_ms'] ?? 0 )
 							)
 						);
-					?></td>
+						?>
+					</td>
 				</tr>
 				<tr>
 					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_checkpoints' ) ); ?></th>
