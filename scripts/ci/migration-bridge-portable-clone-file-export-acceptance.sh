@@ -243,7 +243,8 @@ $recovery_file_count_before = (int) ( $state['file_count'] ?? 0 );
 $recovery_request_sequence_before = (int) ( $state['request_sequence'] ?? 0 );
 $legacy_blocked_state = $state;
 $legacy_blocked_state['status'] = 'blocked';
-$legacy_blocked_state['blockers'] = array( 'source-files-changed-since-inventory' );
+$legacy_blocked_state['blockers'] = array();
+// Real 0.8.39 state can retain the terminal last_action while blockers metadata is absent after normalization/job recovery.
 $legacy_blocked_state['last_action'] = 'source-files-changed-since-inventory';
 $legacy_blocked_state['source_drift'] = false;
 $legacy_blocked_state['inventory_hash_match'] = true;
@@ -281,6 +282,7 @@ echo wp_json_encode(
 		'interrupted' => $interrupted,
 		'checkpointed_file_count' => (int) ( $checkpointed_state['file_count'] ?? 0 ),
 		'legacy_block_recovered_without_recopy' => $legacy_block_recovered_without_recopy,
+		'legacy_blocker_metadata_missing' => array() === ( $legacy_blocked_state['blockers'] ?? null ),
 		'manifest' => $manifest,
 		'copied_upload_matches' => $copied_upload === $drifted_upload,
 		'excluded_cache_absent' => null === $excluded_cache,
@@ -333,6 +335,7 @@ assert payload["steps"] >= 3
 assert payload["interrupted"] is True
 assert payload["checkpointed_file_count"] >= 1
 assert payload["legacy_block_recovered_without_recopy"] is True
+assert payload["legacy_blocker_metadata_missing"] is True
 assert state["checkpoint_count"] >= 3
 assert state["last_action"] == "complete"
 assert state["source_drift"] is True
