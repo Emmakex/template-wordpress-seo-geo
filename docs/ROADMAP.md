@@ -2199,7 +2199,20 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** The user-supplied Migration Bridge 0.8.39 ZIP SHA-256 `70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146` remains the confirmed last-good real-export provenance baseline for the run that reached 20,256 / 20,256 files and 608 MB / 608 MB. Migration Bridge 0.8.44 is accepted on `main` at `e9b5ccac08a836f47bfbf1c3d41cbceabf58e14d`, installable ZIP SHA-256 `782c0df395a3bdf284af72c9c589a0a38f6d3faa8c6dcb3300488ee303ec7b4f`. The remaining missing-button case was traced to rounded byte totals: the UI can show 608 MB / 608 MB while exact exported and inventory bytes differ. Recovery now requires the terminal source-drift reason, exact completed file count and completed traversal of all payload roots; exact byte equality with the old inventory is no longer required. The exported snapshot records byte drift and package integrity re-hashes the private workspace against per-file records before continuation. The next operator action is to install 0.8.44 over the current plugin, reopen the same recovered Emmake job and use the restored verified-snapshot finalization action. Do not create a new clone.
+Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** The user-supplied Migration Bridge 0.8.39 ZIP SHA-256 `70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146` remains the confirmed last-good real-export provenance baseline for the run that reached 20,256 / 20,256 files and 608 MB / 608 MB. Migration Bridge 0.8.45 is accepted on `main` at `e3c8e86a2cfb5e75ed2f1e204c47a4affd920716`, installable ZIP SHA-256 `224d489f7d2df25f9d613f21733368116e3ceb0c7964812fc319b27c192f2bf6`. The recovered 0.8.44 snapshot advanced into package integrity and the real operator state then blocked during `build` after hashing 20,581 workspace files / 8 MB, with package checksum `4f5c369a21ac9fb762d5827fcc0a933cd87648cf6eb2c4fe25044dd6c733b227`. Root cause was a validator ordering bug: legitimate exported `index.php` and `.htaccess` files were tested as generated guards before their per-file export records. 0.8.45 validates exported payload records first and makes this retained mismatch safely retryable from the saved cursor; actual tampering still re-blocks. The next operator action is to install 0.8.45 over the current plugin, reopen the same recovered Emmake job and use **Continue package integrity**. Do not create a new clone and do not repeat the file export.
+
+Migration Bridge v0.8.45 / 10E.2A.6 package-integrity payload-guard recovery evidence:
+
+- observed real package-integrity state after the 0.8.44 snapshot recovery: `status=blocked`, `stage=build`, 20,581 workspace files hashed, 8 MB hashed, checksum `4f5c369a21ac9fb762d5827fcc0a933cd87648cf6eb2c4fe25044dd6c733b227`;
+- root cause: `PackageBuilder::payload_record_valid()` classified any basename `index.php` or `.htaccess` as a generated workspace guard before consulting `files-meta/`, so a legitimate copied WordPress/plugin/theme payload with either name produced `package-exported-payload-mismatch`;
+- 0.8.45 validates `files/...` payload evidence first and uses deterministic guard validation only when no exported payload record exists;
+- blocked `package-exported-payload-mismatch` states can retry from their saved package cursor; a genuine byte/hash mismatch immediately blocks again;
+- acceptance fixtures now include non-guard exported `index.php` and `.htaccess` payloads and prove tampered payloads remain blocked after retry;
+- PR #184 passed all eight CI gates before merge;
+- PR #184 squash-merged to `main` as `e3c8e86a2cfb5e75ed2f1e204c47a4affd920716`;
+- post-merge `main` repeated all eight CI gates successfully;
+- accepted installable v0.8.45 ZIP SHA-256: `224d489f7d2df25f9d613f21733368116e3ceb0c7964812fc319b27c192f2bf6`;
+- real clone acceptance remains pending until the retained job completes package integrity and the isolated `/nuevaweb/` flow.
 
 Migration Bridge v0.8.44 / 10E.2A.6 live-byte-drift recovery evidence:
 
