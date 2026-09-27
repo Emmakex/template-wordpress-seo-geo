@@ -1064,6 +1064,11 @@ final class AdminOperatorScreen {
 		$package = ( new PackageStateStore() )->get( $job_id );
 		$status  = is_array( $package ) ? (string) ( $package['status'] ?? 'pending' ) : 'pending';
 		$stage   = is_array( $package ) ? (string) ( $package['stage'] ?? 'pending' ) : 'pending';
+		$blockers = is_array( $package['blockers'] ?? null ) ? $package['blockers'] : array();
+		$recoverable_payload_mismatch = (
+			'blocked' === $status
+			&& in_array( 'package-exported-payload-mismatch', $blockers, true )
+		);
 		$button  = 'pending' === $status ? 'clone_package_start' : 'clone_package_continue';
 		$files   = 'verify' === $stage
 			? (int) ( $package['verify_file_count'] ?? 0 )
@@ -1107,7 +1112,7 @@ final class AdminOperatorScreen {
 			</tbody>
 		</table>
 
-		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
+		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) || $recoverable_payload_mismatch ) : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminClonePackageController::ACTION ); ?>">
 				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
