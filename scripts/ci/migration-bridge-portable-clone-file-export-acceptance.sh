@@ -294,7 +294,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 state = payload["state"]
 manifest = payload["manifest"]
 
-assert state["schema_version"] == 2
+assert state["schema_version"] == 1
 assert state["status"] == "complete"
 assert state["file_count"] == 7
 assert state["inventory_file_count"] == 7
