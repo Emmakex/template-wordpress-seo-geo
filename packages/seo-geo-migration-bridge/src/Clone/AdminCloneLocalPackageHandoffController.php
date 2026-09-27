@@ -17,6 +17,7 @@ use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
 final class AdminCloneLocalPackageHandoffController {
 	public const ACTION       = 'seo_geo_migration_clone_local_package_handoff_advance';
 	public const NONCE_ACTION = 'seo_geo_migration_clone_local_package_handoff';
+
 	public const MAX_AUTO_CYCLES = 200;
 
 	private const MODE_BATCH           = 'batch';
@@ -42,7 +43,7 @@ final class AdminCloneLocalPackageHandoffController {
 	 * Construct controller.
 	 *
 	 * @param LocalClonePackageHandoff|null $handoff        Optional handoff service.
-	 * @param DeliveryStateStore|null        $delivery_state Optional delivery state.
+	 * @param DeliveryStateStore|null       $delivery_state Optional delivery state.
 	 */
 	public function __construct(
 		?LocalClonePackageHandoff $handoff = null,
@@ -174,7 +175,7 @@ final class AdminCloneLocalPackageHandoffController {
 			'verified_file_count'  => (int) ( $state['verified_file_count'] ?? 0 ),
 			'verified_byte_count'  => (int) ( $state['verified_byte_count'] ?? 0 ),
 		);
-		$json = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$json    = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 
 		return hash( 'sha256', is_string( $json ) ? $json : '' );
 	}
