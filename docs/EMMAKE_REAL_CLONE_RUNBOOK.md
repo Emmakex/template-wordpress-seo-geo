@@ -10,13 +10,13 @@ Use exactly:
 
 - source origin: `https://emmake.com/`;
 - isolated target origin: `https://emmake.com/nuevaweb/`;
-- Migration Bridge: `0.8.38`;
-- accepted Migration Bridge main commit: `ef1e54dbf1f2ecff197de47a72429336b803f0b5`;
-- accepted Migration Bridge ZIP SHA-256: `72de9be333b840b0291cb79bdc2c846119862e5eef703781fd27450c9528e485`;
+- Migration Bridge: `0.8.39`;
+- accepted Migration Bridge main commit: `5aa64d6f599c7ce16af671c2cc449c1eef2eb0dc`;
+- accepted Migration Bridge ZIP SHA-256: `70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`;
 - bounded source handoff SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - acceptance record: `release/emmake-real-clone-acceptance.json`.
 
-Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.38 supersedes the earlier pilot artifact after the real-site file-export test showed that both automatic and manual requests needed durable in-request checkpoints, explicit traversal diagnostics and resumable progress across hosting timeouts.
+Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.39 supersedes 0.8.38 for the Emmake pilot. It retains the durable in-request checkpoints and diagnostics and fixes the browser-side automatic continuation chain so one click can advance successive safe batches.
 
 ## Operator-only inputs required before execution
 
