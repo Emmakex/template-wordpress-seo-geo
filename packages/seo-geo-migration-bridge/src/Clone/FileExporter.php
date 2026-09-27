@@ -551,8 +551,8 @@ final class FileExporter {
 			'roots'                       => $root_summaries,
 			'source_fingerprint'          => (string) $state['export_fingerprint'],
 			'inventory_fingerprint'       => (string) ( $inventory['fingerprint'] ?? '' ),
-			'inventory_hash_match'         => $fingerprint_match,
-			'source_drift'                 => ! $fingerprint_match,
+			'inventory_hash_match'        => $fingerprint_match,
+			'source_drift'                => ! $fingerprint_match,
 			'file_records'                => array(
 				'format'    => 'one-json-record-per-file',
 				'directory' => 'files-meta/',
