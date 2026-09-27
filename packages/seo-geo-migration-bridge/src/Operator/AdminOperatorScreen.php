@@ -873,7 +873,7 @@ final class AdminOperatorScreen {
 					<input type="hidden" name="file_export_mode" value="auto">
 					<input type="hidden" name="file_export_auto_cycle" value="<?php echo esc_attr( (string) ( $auto_resume ? $auto_cycle : 0 ) ); ?>">
 					<?php wp_nonce_field( AdminCloneFileExportController::NONCE_ACTION . ':' . $job_id ); ?>
-					<?php submit_button( $this->copy->text( 'clone_file_export_auto_start' ), 'primary', 'submit', false ); ?>
+					<?php submit_button( $this->copy->text( 'clone_file_export_auto_start' ), 'primary', 'seo_geo_auto_export', false ); ?>
 				</form>
 				<?php if ( $auto_resume ) : ?>
 					<p class="description"><?php echo esc_html( sprintf( $this->copy->text( 'clone_file_export_auto_cycle' ), $auto_cycle ) ); ?></p>
@@ -882,7 +882,11 @@ final class AdminOperatorScreen {
 							function () {
 								var form = document.getElementById('seo-geo-clone-file-export-auto');
 								if (form) {
-									form.submit();
+									if (typeof form.requestSubmit === 'function') {
+										form.requestSubmit();
+									} else {
+										HTMLFormElement.prototype.submit.call(form);
+									}
 								}
 							},
 							350

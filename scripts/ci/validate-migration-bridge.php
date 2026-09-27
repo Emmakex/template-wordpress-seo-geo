@@ -2678,6 +2678,35 @@ foreach (
 	}
 }
 
+foreach (
+	array(
+		"submit_button( \$this->copy->text( 'clone_file_export_auto_start' ), 'primary', 'seo_geo_auto_export', false )",
+		"typeof form.requestSubmit === 'function'",
+		'form.requestSubmit();',
+		'HTMLFormElement.prototype.submit.call(form);',
+	) as $auto_export_chain_guard
+) {
+	if ( ! str_contains( $operator_screen, $auto_export_chain_guard ) ) {
+		fail_migration_bridge(
+			'operator-file-export-auto-chain',
+			'Automatic file export must use a non-shadowing submit control and a browser-safe resubmission path.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+			$auto_export_chain_guard,
+			'missing'
+		);
+	}
+}
+
+if ( str_contains( $operator_screen, 'form.submit();' ) ) {
+	fail_migration_bridge(
+		'operator-file-export-shadowed-submit',
+		'Automatic file export must not call form.submit() because a named submit control can shadow the native method.',
+		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+		'no form.submit() automatic continuation',
+		'form.submit();'
+	);
+}
+
 $strictly_read_only_operator_files = array(
 	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php',
 	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorStatus.php',
