@@ -381,10 +381,10 @@ final class FileExporter {
 				$state['last_action']        = 'file-copied';
 				$state['last_progress_at']   = gmdate( DATE_ATOM );
 				++$accepted_files;
-				$accepted_bytes         += (int) $copied['bytes'];
-				$state['request_files']  = $accepted_files;
-				$state['request_bytes']  = $accepted_bytes;
-				$state                   = $this->append_event(
+				$accepted_bytes        += (int) $copied['bytes'];
+				$state['request_files'] = $accepted_files;
+				$state['request_bytes'] = $accepted_bytes;
+				$state                  = $this->append_event(
 					$state,
 					'file-copied',
 					$root_id,
