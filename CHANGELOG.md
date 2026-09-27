@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.46 carries the already accepted live-source drift authority from package integrity into local-clone destination planning, target ownership and core-runtime bootstrap. Exact inventory identity remains accepted, while a differing exported fingerprint is allowed only when the completed file-export state proves the same recorded drift snapshot and manifest.
+
 - Migration Bridge 0.8.45 fixes package-integrity validation for legitimate exported `index.php` and `.htaccess` files by checking per-file export evidence before generated workspace guards; a retained `package-exported-payload-mismatch` can be safely retried from its saved cursor and genuine tampering still blocks.
 
 - Migration Bridge 0.8.44 finalizes fully traversed, exact-file-count snapshots even when a live source changed byte totals during export; byte drift is recorded and the private workspace is subsequently verified by package integrity.
