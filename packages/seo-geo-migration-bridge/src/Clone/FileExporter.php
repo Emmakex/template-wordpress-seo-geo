@@ -381,9 +381,9 @@ final class FileExporter {
 				$state['last_action']        = 'file-copied';
 				$state['last_progress_at']   = gmdate( DATE_ATOM );
 				++$accepted_files;
-				$accepted_bytes += (int) $copied['bytes'];
-				$state['request_files'] = $accepted_files;
-				$state['request_bytes'] = $accepted_bytes;
+				$accepted_bytes         += (int) $copied['bytes'];
+				$state['request_files']  = $accepted_files;
+				$state['request_bytes']  = $accepted_bytes;
 				$state                   = $this->append_event(
 					$state,
 					'file-copied',
@@ -677,7 +677,7 @@ final class FileExporter {
 		if ( '' !== $detail ) {
 			$parts[] = substr( $detail, 0, 180 );
 		}
-		$events[]              = implode( ' | ', $parts );
+		$events[]               = implode( ' | ', $parts );
 		$state['recent_events'] = array_slice( $events, -self::MAX_RECENT_EVENTS );
 
 		return $state;
