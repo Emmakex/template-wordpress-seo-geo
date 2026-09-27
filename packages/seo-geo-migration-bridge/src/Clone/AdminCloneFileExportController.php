@@ -133,14 +133,15 @@ final class AdminCloneFileExportController {
 		$first   = is_string( $pending[0] ?? null ) ? $pending[0] : '';
 		$last    = is_string( $pending[ count( $pending ) - 1 ] ?? null ) ? $pending[ count( $pending ) - 1 ] : '';
 		$payload = array(
-			'root_index'    => (int) ( $state['root_index'] ?? 0 ),
-			'current_dir'   => (string) ( $state['current_dir'] ?? '' ),
-			'after_name'    => (string) ( $state['after_name'] ?? '' ),
-			'pending_count' => count( $pending ),
-			'pending_first' => $first,
-			'pending_last'  => $last,
-			'file_count'    => (int) ( $state['file_count'] ?? 0 ),
-			'byte_count'    => (int) ( $state['byte_count'] ?? 0 ),
+			'root_index'       => (int) ( $state['root_index'] ?? 0 ),
+			'current_dir'      => (string) ( $state['current_dir'] ?? '' ),
+			'after_name'       => (string) ( $state['after_name'] ?? '' ),
+			'directory_active' => true === ( $state['directory_active'] ?? false ),
+			'pending_count'    => count( $pending ),
+			'pending_first'    => $first,
+			'pending_last'     => $last,
+			'file_count'       => (int) ( $state['file_count'] ?? 0 ),
+			'byte_count'       => (int) ( $state['byte_count'] ?? 0 ),
 		);
 		$json    = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 

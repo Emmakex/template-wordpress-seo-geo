@@ -20,8 +20,13 @@ final class FileExporter {
 	public const MAX_BATCH_BYTES     = 67108864;
 	public const DEFAULT_BATCH_BYTES = 8388608;
 
-	private const MAX_PENDING_DIRECTORIES = 50000;
-	private const MAX_ENTRY_OPERATIONS    = 4000;
+	private const MAX_PENDING_DIRECTORIES         = 50000;
+	private const MAX_ENTRY_OPERATIONS            = 4000;
+	private const TRAVERSAL_CHECKPOINT_OPERATIONS = 250;
+	private const FILE_CHECKPOINT_INTERVAL        = 5;
+	private const REQUEST_TIME_BUDGET_SECONDS     = 8.0;
+	private const LARGE_FILE_NOTICE_BYTES         = 8388608;
+	private const MAX_RECENT_EVENTS               = 40;
 
 	/**
 	 * Resumable file-export state store.
@@ -132,35 +137,47 @@ final class FileExporter {
 			'pending_dirs'         => array( '' ),
 			'current_dir'          => '',
 			'after_name'           => '',
+			'directory_active'     => false,
 			'file_count'           => 0,
 			'byte_count'           => 0,
 			'inventory_file_count' => (int) ( $inventory['file_count'] ?? 0 ),
 			'inventory_byte_count' => (int) ( $inventory['byte_count'] ?? 0 ),
 			'export_fingerprint'   => $this->database_fingerprint_prefix( $inventory ),
 			'files_manifest_hash'  => '',
+			'request_sequence'     => 0,
+			'request_files'        => 0,
+			'request_bytes'        => 0,
+			'request_operations'   => 0,
+			'request_elapsed_ms'   => 0,
+			'checkpoint_count'     => 0,
+			'last_root'            => '',
+			'last_path'            => '',
+			'last_action'          => 'ready',
+			'last_file_size'       => 0,
+			'recent_events'        => array(),
 			'blockers'             => array(),
+			'request_started_at'   => '',
+			'last_progress_at'     => $now,
 			'started_at'           => $now,
 			'updated_at'           => $now,
 			'completed_at'         => '',
 		);
+		$state = $this->append_event( $state, 'ready', '', '', 'file export initialized' );
 
-		if ( ! $this->store->save( $job_id, $state ) ) {
+		if ( ! $this->save_checkpoint( $job_id, $state ) ) {
 			return null;
 		}
-		$this->jobs->update_progress(
-			$job_id,
-			'files',
-			'0:',
-			array(
-				'completed' => 0,
-				'total'     => (int) ( $inventory['file_count'] ?? 0 ),
-			)
-		);
+		$this->update_job_progress( $job_id, $state );
+
 		return $this->store->get( $job_id );
 	}
 
 	/**
 	 * Advance one bounded file-export batch.
+	 *
+	 * Progress is checkpointed during the request rather than only at its end.
+	 * That makes a shared-hosting timeout resume from the last durable cursor
+	 * instead of replaying the same batch forever.
 	 *
 	 * @param string $job_id      Clone job identifier.
 	 * @param int    $batch_files Maximum accepted files copied this request.
@@ -185,13 +202,38 @@ final class FileExporter {
 			return $this->block( $job_id, $state, 'file-export-inventory-unavailable', false );
 		}
 
+		$request_started             = microtime( true );
+		$state['request_sequence']   = (int) ( $state['request_sequence'] ?? 0 ) + 1;
+		$state['request_files']      = 0;
+		$state['request_bytes']      = 0;
+		$state['request_operations'] = 0;
+		$state['request_elapsed_ms'] = 0;
+		$state['request_started_at'] = gmdate( DATE_ATOM );
+		$state['last_action']        = 'request-start';
+		$state                       = $this->append_event(
+			$state,
+			'request-start',
+			(string) ( $state['last_root'] ?? '' ),
+			(string) ( $state['last_path'] ?? '' ),
+			'request #' . (string) $state['request_sequence']
+		);
+		if ( ! $this->save_checkpoint( $job_id, $state ) ) {
+			return null;
+		}
+
 		$accepted_files = 0;
 		$accepted_bytes = 0;
 		$operations     = 0;
 
 		while ( $accepted_files < $batch_files && $operations < self::MAX_ENTRY_OPERATIONS ) {
+			if ( $this->time_budget_reached( $request_started ) && $operations > 0 ) {
+				$state = $this->append_event( $state, 'request-budget', (string) ( $state['last_root'] ?? '' ), (string) ( $state['last_path'] ?? '' ), 'safe request time budget reached' );
+				break;
+			}
+
 			$root_index = (int) ( $state['root_index'] ?? 0 );
 			if ( $root_index >= count( $roots ) ) {
+				$state['request_elapsed_ms'] = $this->elapsed_ms( $request_started );
 				return $this->complete_files( $job_id, $state, $inventory, $roots );
 			}
 
@@ -202,14 +244,22 @@ final class FileExporter {
 				return $this->block( $job_id, $state, 'file-export-root-unavailable', false );
 			}
 
-			$pending = is_array( $state['pending_dirs'] ?? null ) ? $state['pending_dirs'] : array();
-			if ( '' === (string) ( $state['current_dir'] ?? '' ) && '' === (string) ( $state['after_name'] ?? '' ) ) {
+			$state['last_root'] = $root_id;
+			$pending            = is_array( $state['pending_dirs'] ?? null ) ? $state['pending_dirs'] : array();
+			if ( true !== ( $state['directory_active'] ?? false ) ) {
 				if ( array() === $pending ) {
 					$state = $this->advance_root( $state );
+					if ( ! $this->save_checkpoint( $job_id, $state ) ) {
+						return null;
+					}
 					continue;
 				}
-				$state['current_dir']  = (string) array_shift( $pending );
-				$state['pending_dirs'] = $pending;
+				$state['current_dir']      = (string) array_shift( $pending );
+				$state['pending_dirs']     = $pending;
+				$state['directory_active'] = true;
+				$state['after_name']       = '';
+				$state['last_path']        = (string) $state['current_dir'];
+				$state['last_action']      = 'directory-start';
 			}
 
 			$current_dir = (string) ( $state['current_dir'] ?? '' );
@@ -226,12 +276,25 @@ final class FileExporter {
 				if ( '.' === $entry || '..' === $entry || ( '' !== $after_name && strcmp( $entry, $after_name ) <= 0 ) ) {
 					continue;
 				}
+				if ( $this->time_budget_reached( $request_started ) && $operations > 0 ) {
+					$dir_finished = false;
+					$state        = $this->append_event( $state, 'request-budget', $root_id, (string) ( $state['last_path'] ?? '' ), 'safe request time budget reached' );
+					break;
+				}
+
 				++$operations;
-				$relative = '' === $current_dir ? $entry : $current_dir . '/' . $entry;
-				$path     = $this->join_path( $base, $relative );
+				$state['request_operations'] = $operations;
+				$relative                    = '' === $current_dir ? $entry : $current_dir . '/' . $entry;
+				$path                        = $this->join_path( $base, $relative );
+				$state['last_root']          = $root_id;
+				$state['last_path']          = wp_normalize_path( $relative );
 
 				if ( $this->excluded( $relative, is_dir( $path ) ) ) {
-					$state['after_name'] = $entry;
+					$state['after_name']  = $entry;
+					$state['last_action'] = 'excluded';
+					if ( ! $this->checkpoint_traversal_if_due( $job_id, $state, $operations ) ) {
+						return null;
+					}
 					if ( $operations >= self::MAX_ENTRY_OPERATIONS ) {
 						$dir_finished = false;
 						break;
@@ -240,7 +303,11 @@ final class FileExporter {
 				}
 
 				if ( is_link( $path ) ) {
-					$state['after_name'] = $entry;
+					$state['after_name']  = $entry;
+					$state['last_action'] = 'symlink-skipped';
+					if ( ! $this->checkpoint_traversal_if_due( $job_id, $state, $operations ) ) {
+						return null;
+					}
 					continue;
 				}
 
@@ -249,9 +316,14 @@ final class FileExporter {
 					if ( count( $pending ) >= self::MAX_PENDING_DIRECTORIES ) {
 						return $this->block( $job_id, $state, 'file-export-directory-queue-limit', false );
 					}
-					$pending[]             = $relative;
-					$state['pending_dirs'] = $pending;
-					$state['after_name']   = $entry;
+					$pending[]               = $relative;
+					$state['pending_dirs']   = $pending;
+					$state['after_name']     = $entry;
+					$state['last_action']    = 'directory-queued';
+					$state['last_file_size'] = 0;
+					if ( ! $this->checkpoint_traversal_if_due( $job_id, $state, $operations ) ) {
+						return null;
+					}
 					if ( $operations >= self::MAX_ENTRY_OPERATIONS ) {
 						$dir_finished = false;
 						break;
@@ -261,6 +333,19 @@ final class FileExporter {
 
 				if ( ! is_file( $path ) || ! is_readable( $path ) ) {
 					return $this->block( $job_id, $state, 'file-export-source-unreadable', true );
+				}
+
+				$source_size = filesize( $path );
+				if ( false === $source_size ) {
+					return $this->block( $job_id, $state, 'file-export-source-size-failed', true );
+				}
+				$state['last_action']    = 'copy-start';
+				$state['last_file_size'] = (int) $source_size;
+				if ( (int) $source_size >= self::LARGE_FILE_NOTICE_BYTES ) {
+					$state = $this->append_event( $state, 'large-file-start', $root_id, $relative, size_format( (int) $source_size ) );
+					if ( ! $this->save_checkpoint( $job_id, $state ) ) {
+						return null;
+					}
 				}
 
 				$payload_path = 'files/' . $root_id . '/' . ltrim( wp_normalize_path( $relative ), '/' );
@@ -293,13 +378,36 @@ final class FileExporter {
 				$state['file_count']         = (int) ( $state['file_count'] ?? 0 ) + 1;
 				$state['byte_count']         = (int) ( $state['byte_count'] ?? 0 ) + (int) $copied['bytes'];
 				$state['after_name']         = $entry;
+				$state['last_action']        = 'file-copied';
+				$state['last_progress_at']   = gmdate( DATE_ATOM );
 				++$accepted_files;
-				$accepted_bytes += (int) $copied['bytes'];
+				$accepted_bytes        += (int) $copied['bytes'];
+				$state['request_files'] = $accepted_files;
+				$state['request_bytes'] = $accepted_bytes;
+				$state                  = $this->append_event(
+					$state,
+					'file-copied',
+					$root_id,
+					$relative,
+					size_format( (int) $copied['bytes'] )
+				);
+
+				if (
+					1 === $accepted_files
+					|| 0 === $accepted_files % self::FILE_CHECKPOINT_INTERVAL
+					|| $this->time_budget_reached( $request_started )
+				) {
+					$state['request_elapsed_ms'] = $this->elapsed_ms( $request_started );
+					if ( ! $this->save_checkpoint( $job_id, $state ) ) {
+						return null;
+					}
+				}
 
 				if (
 					$accepted_files >= $batch_files
 					|| $accepted_bytes >= $batch_bytes
 					|| $operations >= self::MAX_ENTRY_OPERATIONS
+					|| $this->time_budget_reached( $request_started )
 				) {
 					$dir_finished = false;
 					break;
@@ -307,14 +415,30 @@ final class FileExporter {
 			}
 
 			if ( $dir_finished ) {
-				$state['current_dir'] = '';
-				$state['after_name']  = '';
+				$state['current_dir']      = '';
+				$state['after_name']       = '';
+				$state['directory_active'] = false;
+				$state['last_action']      = 'directory-complete';
+				$state                     = $this->append_event( $state, 'directory-complete', $root_id, $current_dir, 'directory traversal complete' );
 			}
 
 			if ( $accepted_files > 0 && $accepted_bytes >= $batch_bytes ) {
 				break;
 			}
 		}
+
+		$state['request_files']      = $accepted_files;
+		$state['request_bytes']      = $accepted_bytes;
+		$state['request_operations'] = $operations;
+		$state['request_elapsed_ms'] = $this->elapsed_ms( $request_started );
+		$state['last_action']        = 'request-complete';
+		$state                       = $this->append_event(
+			$state,
+			'request-complete',
+			(string) ( $state['last_root'] ?? '' ),
+			(string) ( $state['last_path'] ?? '' ),
+			(string) $accepted_files . ' files / ' . size_format( $accepted_bytes ) . ' / ' . (string) $operations . ' entries'
+		);
 
 		return $this->persist_progress( $job_id, $state );
 	}
@@ -397,36 +521,83 @@ final class FileExporter {
 
 		$state['status']              = 'complete';
 		$state['files_manifest_hash'] = (string) $written['sha256'];
+		$state['last_action']         = 'complete';
 		$state['updated_at']          = gmdate( DATE_ATOM );
 		$state['completed_at']        = $state['updated_at'];
-		if ( ! $this->store->save( $job_id, $state ) ) {
+		$state                        = $this->append_event( $state, 'complete', (string) ( $state['last_root'] ?? '' ), (string) ( $state['last_path'] ?? '' ), 'source inventory reconciled exactly' );
+		if ( ! $this->save_checkpoint( $job_id, $state ) ) {
 			return null;
 		}
-		$this->jobs->update_progress(
-			$job_id,
-			'files',
-			'complete',
-			array(
-				'completed' => (int) $state['file_count'],
-				'total'     => (int) $state['inventory_file_count'],
-			)
-		);
+		$this->update_job_progress( $job_id, $state, 'complete' );
+
 		return $this->store->get( $job_id );
 	}
 
 	/**
-	 * Persist bounded file-export progress.
+	 * Save a durable traversal checkpoint without requiring the whole request to finish.
+	 *
+	 * @param string              $job_id Clone job identifier.
+	 * @param array<string,mixed> $state  File-export state.
+	 */
+	private function save_checkpoint( string $job_id, array &$state ): bool {
+		$state['checkpoint_count'] = (int) ( $state['checkpoint_count'] ?? 0 ) + 1;
+		$state['updated_at']       = gmdate( DATE_ATOM );
+
+		return $this->store->save( $job_id, $state );
+	}
+
+	/**
+	 * Save directory-only traversal progress periodically.
+	 *
+	 * @param string              $job_id    Clone job identifier.
+	 * @param array<string,mixed> $state     File-export state.
+	 * @param int                 $operations Current request entry operations.
+	 */
+	private function checkpoint_traversal_if_due( string $job_id, array &$state, int $operations ): bool {
+		if ( 0 === $operations % self::TRAVERSAL_CHECKPOINT_OPERATIONS ) {
+			$state['request_operations'] = $operations;
+			$state['last_action']        = 'traversal-checkpoint';
+			$state                       = $this->append_event(
+				$state,
+				'traversal-checkpoint',
+				(string) ( $state['last_root'] ?? '' ),
+				(string) ( $state['last_path'] ?? '' ),
+				(string) $operations . ' entries inspected'
+			);
+
+			return $this->save_checkpoint( $job_id, $state );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Persist bounded file-export progress at the end of a successful request.
 	 *
 	 * @param string              $job_id Clone job identifier.
 	 * @param array<string,mixed> $state  File-export state.
 	 * @return array<string,mixed>|null
 	 */
 	private function persist_progress( string $job_id, array $state ): ?array {
-		$state['updated_at'] = gmdate( DATE_ATOM );
-		if ( ! $this->store->save( $job_id, $state ) ) {
+		if ( ! $this->save_checkpoint( $job_id, $state ) ) {
 			return null;
 		}
-		$cursor = (string) (int) ( $state['root_index'] ?? 0 ) . ':' . (string) ( $state['current_dir'] ?? '' ) . ':' . (string) ( $state['after_name'] ?? '' );
+		$this->update_job_progress( $job_id, $state );
+
+		return $this->store->get( $job_id );
+	}
+
+	/**
+	 * Update the high-level clone job cursor.
+	 *
+	 * @param string              $job_id Clone job identifier.
+	 * @param array<string,mixed> $state  File-export state.
+	 * @param string|null         $cursor_override Optional fixed cursor.
+	 */
+	private function update_job_progress( string $job_id, array $state, ?string $cursor_override = null ): void {
+		$cursor = null !== $cursor_override
+			? $cursor_override
+			: (string) (int) ( $state['root_index'] ?? 0 ) . ':' . (string) ( $state['current_dir'] ?? '' ) . ':' . (string) ( $state['after_name'] ?? '' );
 		$this->jobs->update_progress(
 			$job_id,
 			'files',
@@ -436,7 +607,6 @@ final class FileExporter {
 				'total'     => (int) ( $state['inventory_file_count'] ?? 0 ),
 			)
 		);
-		return $this->store->get( $job_id );
 	}
 
 	/**
@@ -449,13 +619,21 @@ final class FileExporter {
 	 * @return array<string,mixed>|null
 	 */
 	private function block( string $job_id, array $state, string $code, bool $retryable ): ?array {
-		$blockers            = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
-		$blockers[]          = $code;
-		$state['blockers']   = array_values( array_unique( $blockers ) );
-		$state['status']     = 'blocked';
-		$state['updated_at'] = gmdate( DATE_ATOM );
-		$this->store->save( $job_id, $state );
+		$blockers             = is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array();
+		$blockers[]           = $code;
+		$state['blockers']    = array_values( array_unique( $blockers ) );
+		$state['status']      = 'blocked';
+		$state['last_action'] = $code;
+		$state                = $this->append_event(
+			$state,
+			$code,
+			(string) ( $state['last_root'] ?? '' ),
+			(string) ( $state['last_path'] ?? '' ),
+			$retryable ? 'retryable blocker' : 'terminal blocker'
+		);
+		$this->save_checkpoint( $job_id, $state );
 		$this->jobs->transition( $job_id, $retryable ? 'failed-retryable' : 'failed-terminal', $code );
+
 		return $this->store->get( $job_id );
 	}
 
@@ -466,11 +644,61 @@ final class FileExporter {
 	 * @return array<string,mixed>
 	 */
 	private function advance_root( array $state ): array {
-		$state['root_index']   = (int) ( $state['root_index'] ?? 0 ) + 1;
-		$state['pending_dirs'] = array( '' );
-		$state['current_dir']  = '';
-		$state['after_name']   = '';
+		$state['root_index']       = (int) ( $state['root_index'] ?? 0 ) + 1;
+		$state['pending_dirs']     = array( '' );
+		$state['current_dir']      = '';
+		$state['after_name']       = '';
+		$state['directory_active'] = false;
+		$state['last_path']        = '';
+		$state['last_action']      = 'root-advance';
+
 		return $state;
+	}
+
+	/**
+	 * Append one bounded administrator diagnostic line.
+	 *
+	 * @param array<string,mixed> $state  File-export state.
+	 * @param string              $code   Event code.
+	 * @param string              $root   Payload root identifier.
+	 * @param string              $path   Root-relative path.
+	 * @param string              $detail Bounded event detail.
+	 * @return array<string,mixed>
+	 */
+	private function append_event( array $state, string $code, string $root, string $path, string $detail ): array {
+		$events = is_array( $state['recent_events'] ?? null ) ? $state['recent_events'] : array();
+		$parts  = array( '[' . gmdate( 'H:i:s' ) . ']', $code );
+		if ( '' !== $root ) {
+			$parts[] = 'root=' . $root;
+		}
+		if ( '' !== $path ) {
+			$parts[] = 'path=' . substr( wp_normalize_path( $path ), 0, 240 );
+		}
+		if ( '' !== $detail ) {
+			$parts[] = substr( $detail, 0, 180 );
+		}
+		$events[]               = implode( ' | ', $parts );
+		$state['recent_events'] = array_slice( $events, -self::MAX_RECENT_EVENTS );
+
+		return $state;
+	}
+
+	/**
+	 * Return whether the conservative request time budget has been reached.
+	 *
+	 * @param float $started_at microtime(true) request start.
+	 */
+	private function time_budget_reached( float $started_at ): bool {
+		return ( microtime( true ) - $started_at ) >= self::REQUEST_TIME_BUDGET_SECONDS;
+	}
+
+	/**
+	 * Return elapsed milliseconds since request start.
+	 *
+	 * @param float $started_at microtime(true) request start.
+	 */
+	private function elapsed_ms( float $started_at ): int {
+		return max( 0, (int) round( ( microtime( true ) - $started_at ) * 1000 ) );
 	}
 
 	/**
@@ -508,6 +736,7 @@ final class FileExporter {
 			return true;
 		}
 		$basename = basename( $normalized );
+
 		return ! $is_dir && (
 			'.ds_store' === $basename
 			|| str_ends_with( $basename, '.log' )

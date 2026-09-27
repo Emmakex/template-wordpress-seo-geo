@@ -723,6 +723,16 @@ final class AdminOperatorScreen {
 		$status = is_array( $export ) ? (string) ( $export['status'] ?? 'pending' ) : 'pending';
 		$button = 'pending' === $status ? 'clone_file_export_start' : 'clone_file_export_continue';
 
+		$file_count = (int) ( $export['file_count'] ?? 0 );
+		$file_total = (int) ( $export['inventory_file_count'] ?? 0 );
+		$byte_count = (int) ( $export['byte_count'] ?? 0 );
+		$byte_total = (int) ( $export['inventory_byte_count'] ?? 0 );
+		$file_pct   = 0 < $file_total ? min( 100, round( ( $file_count / $file_total ) * 100, 2 ) ) : 0;
+		$byte_pct   = 0 < $byte_total ? min( 100, round( ( $byte_count / $byte_total ) * 100, 2 ) ) : 0;
+		$events     = is_array( $export['recent_events'] ?? null )
+			? array_values( array_filter( $export['recent_events'], 'is_string' ) )
+			: array();
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result status controls automatic continuation only after a successful batch.
 		$request_status = isset( $_GET['seo_geo_clone_file_export'] )
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result status.
@@ -749,7 +759,7 @@ final class AdminOperatorScreen {
 			? absint( sanitize_text_field( wp_unslash( $_GET['file_batch_megabytes'] ) ) )
 			: 8;
 
-		$allowed_files = array( 5, 10, 25, 50, 100, 200 );
+		$allowed_files = array( 1, 5, 10, 25, 50, 100, 200 );
 		if ( ! in_array( $selected_files, $allowed_files, true ) ) {
 			$selected_files = FileExporter::DEFAULT_BATCH_FILES;
 		}
@@ -767,6 +777,16 @@ final class AdminOperatorScreen {
 		?>
 		<h3><?php echo esc_html( $this->copy->text( 'clone_file_export_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_file_export_help' ) ); ?></p>
+
+		<div style="margin:14px 0 18px;padding:16px;border:1px solid #c3c4c7;background:#fff;">
+			<p style="margin-top:0;"><strong><?php echo esc_html( $this->copy->text( 'clone_file_export_files_progress' ) ); ?></strong>
+				<?php echo esc_html( (string) $file_count . ' / ' . (string) $file_total . ' (' . number_format_i18n( $file_pct, 2 ) . '%)' ); ?></p>
+			<progress value="<?php echo esc_attr( (string) $file_pct ); ?>" max="100" style="width:100%;height:20px;"><?php echo esc_html( (string) $file_pct ); ?>%</progress>
+			<p><strong><?php echo esc_html( $this->copy->text( 'clone_file_export_bytes_progress' ) ); ?></strong>
+				<?php echo esc_html( size_format( $byte_count ) . ' / ' . size_format( $byte_total ) . ' (' . number_format_i18n( $byte_pct, 2 ) . '%)' ); ?></p>
+			<progress value="<?php echo esc_attr( (string) $byte_pct ); ?>" max="100" style="width:100%;height:20px;"><?php echo esc_html( (string) $byte_pct ); ?>%</progress>
+		</div>
+
 		<table class="widefat striped" role="presentation">
 			<tbody>
 				<tr>
@@ -775,12 +795,51 @@ final class AdminOperatorScreen {
 				</tr>
 				<tr>
 					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_file_export_files' ) ); ?></th>
-					<td><?php echo esc_html( (string) (int) ( $export['file_count'] ?? 0 ) . ' / ' . (string) (int) ( $export['inventory_file_count'] ?? 0 ) ); ?></td>
+					<td><?php echo esc_html( (string) $file_count . ' / ' . (string) $file_total ); ?></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_file_export_bytes' ) ); ?></th>
-					<td><?php echo esc_html( size_format( (int) ( $export['byte_count'] ?? 0 ) ) . ' / ' . size_format( (int) ( $export['inventory_byte_count'] ?? 0 ) ) ); ?></td>
+					<td><?php echo esc_html( size_format( $byte_count ) . ' / ' . size_format( $byte_total ) ); ?></td>
 				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_last_action' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $export['last_action'] ?? '' ) ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_current_root' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $export['last_root'] ?? '' ) ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_current_path' ) ); ?></th>
+					<td><code><?php echo esc_html( (string) ( $export['last_path'] ?? '' ) ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_request_summary' ) ); ?></th>
+					<td>
+						<?php
+						echo esc_html(
+							sprintf(
+								$this->copy->text( 'clone_file_export_request_summary_value' ),
+								(int) ( $export['request_sequence'] ?? 0 ),
+								(int) ( $export['request_files'] ?? 0 ),
+								size_format( (int) ( $export['request_bytes'] ?? 0 ) ),
+								(int) ( $export['request_operations'] ?? 0 ),
+								(int) ( $export['request_elapsed_ms'] ?? 0 )
+							)
+						);
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_checkpoints' ) ); ?></th>
+					<td><?php echo esc_html( (string) (int) ( $export['checkpoint_count'] ?? 0 ) ); ?></td>
+				</tr>
+				<?php if ( 0 < (int) ( $export['last_file_size'] ?? 0 ) ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_last_file_size' ) ); ?></th>
+						<td><?php echo esc_html( size_format( (int) $export['last_file_size'] ) ); ?></td>
+					</tr>
+				<?php endif; ?>
 				<?php if ( 'complete' === $status ) : ?>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_files_manifest' ) ); ?></th>
@@ -789,6 +848,20 @@ final class AdminOperatorScreen {
 				<?php endif; ?>
 			</tbody>
 		</table>
+
+		<div style="margin-top:16px;padding:16px;border:1px solid #c3c4c7;background:#111;color:#f0f0f1;">
+			<h4 style="margin:0 0 10px;color:#fff;"><?php echo esc_html( $this->copy->text( 'clone_file_export_log_heading' ) ); ?></h4>
+			<p style="margin-top:0;color:#c3c4c7;"><?php echo esc_html( $this->copy->text( 'clone_file_export_log_help' ) ); ?></p>
+			<div style="max-height:300px;overflow:auto;font-family:monospace;white-space:pre-wrap;word-break:break-word;">
+				<?php if ( array() === $events ) : ?>
+					<?php echo esc_html( $this->copy->text( 'clone_file_export_log_empty' ) ); ?>
+				<?php else : ?>
+					<?php foreach ( array_reverse( $events ) as $event ) : ?>
+						<div><?php echo esc_html( $event ); ?></div>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+		</div>
 
 		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
 			<div style="margin-top:16px;padding:16px;border:1px solid #c3c4c7;background:#fff;">

@@ -41,19 +41,25 @@ $remove_tree = static function ( string $root ): void {
 
 $remove_tree( $fixture );
 wp_mkdir_p( $fixture . '/uploads/cache' );
+wp_mkdir_p( $fixture . '/uploads/2026/09' );
 wp_mkdir_p( $fixture . '/plugins' );
 wp_mkdir_p( $fixture . '/themes' );
 
 $files = array(
 	'uploads/a-photo.jpg'   => 'source-upload-a',
 	'uploads/b-data.bin'    => "source-upload-b\x00binary",
+	'uploads/2026/09/c-photo.jpg' => 'nested-source-upload-c',
 	'plugins/alpha.php'     => "<?php\n// fixture alpha\n",
 	'plugins/beta.css'      => '.fixture{display:block}',
 	'themes/theme.css'      => 'body{font-family:sans-serif}',
 	'themes/z-template.html'=> '<main>fixture</main>',
 );
 foreach ( $files as $relative => $bytes ) {
-	file_put_contents( $fixture . '/' . $relative, $bytes );
+	$target = $fixture . '/' . $relative;
+	if ( ! is_dir( dirname( $target ) ) ) {
+		wp_mkdir_p( dirname( $target ) );
+	}
+	file_put_contents( $target, $bytes );
 }
 file_put_contents( $fixture . '/uploads/cache/ignored.txt', 'excluded-cache' );
 file_put_contents( $fixture . '/plugins/source-debug.log', 'excluded-log' );
@@ -77,8 +83,8 @@ $roots = array(
 	array(
 		'id' => 'uploads',
 		'path' => $fixture . '/uploads',
-		'file_count' => 2,
-		'byte_count' => strlen( $files['uploads/a-photo.jpg'] ) + strlen( $files['uploads/b-data.bin'] ),
+		'file_count' => 3,
+		'byte_count' => strlen( $files['uploads/a-photo.jpg'] ) + strlen( $files['uploads/b-data.bin'] ) + strlen( $files['uploads/2026/09/c-photo.jpg'] ),
 		'read_only' => true,
 	),
 	array(
@@ -98,16 +104,14 @@ $roots = array(
 );
 
 $fingerprint = hash( 'sha256', 'seo-geo-portable-clone-inventory-v1' );
-foreach ( array( 'uploads', 'plugins', 'themes' ) as $root_id ) {
+$ordered_files = array(
+	'uploads' => array( 'a-photo.jpg', 'b-data.bin', '2026/09/c-photo.jpg' ),
+	'plugins' => array( 'alpha.php', 'beta.css' ),
+	'themes'  => array( 'theme.css', 'z-template.html' ),
+);
+foreach ( $ordered_files as $root_id => $relative_paths ) {
 	$prefix = $fixture . '/' . $root_id . '/';
-	$accepted = array();
-	foreach ( $files as $relative => $bytes ) {
-		if ( str_starts_with( $relative, $root_id . '/' ) ) {
-			$accepted[ substr( $relative, strlen( $root_id ) + 1 ) ] = $bytes;
-		}
-	}
-	ksort( $accepted, SORT_STRING );
-	foreach ( $accepted as $relative => $bytes ) {
+	foreach ( $relative_paths as $relative ) {
 		$path = $prefix . $relative;
 		$record = 'file|' . $root_id . '|' . wp_normalize_path( $relative ) . '|' . (string) filesize( $path ) . '|' . hash_file( 'sha256', $path );
 		$fingerprint = hash( 'sha256', $fingerprint . "\n" . $record );
@@ -188,6 +192,35 @@ if ( ! is_array( $state ) || 'running' !== $state['status'] ) {
 	throw new RuntimeException( 'Could not start file export.' );
 }
 
+$interrupted = false;
+$interrupt_once = true;
+$interrupt = static function ( string $option, mixed $old_value, mixed $value ) use ( &$interrupt_once, &$interrupted, $job_id ): void {
+	unset( $old_value );
+	if ( ! $interrupt_once || FileExportStateStore::OPTION_NAME !== $option || ! is_array( $value ) ) {
+		return;
+	}
+	$candidate = is_array( $value[ $job_id ] ?? null ) ? $value[ $job_id ] : array();
+	if ( 1 <= (int) ( $candidate['file_count'] ?? 0 ) ) {
+		$interrupt_once = false;
+		$interrupted = true;
+		throw new RuntimeException( 'simulated-file-export-request-interruption' );
+	}
+};
+add_action( 'updated_option', $interrupt, 10, 3 );
+try {
+	$exporter->advance( $job_id, 7, 1024 * 1024 );
+} catch ( RuntimeException $exception ) {
+	if ( 'simulated-file-export-request-interruption' !== $exception->getMessage() ) {
+		throw $exception;
+	}
+}
+remove_action( 'updated_option', $interrupt, 10 );
+$checkpointed_state = $exporter->snapshot( $job_id );
+if ( ! $interrupted || ! is_array( $checkpointed_state ) || 1 > (int) ( $checkpointed_state['file_count'] ?? 0 ) ) {
+	throw new RuntimeException( 'File export did not retain a durable checkpoint across the simulated interruption.' );
+}
+$state = $checkpointed_state;
+
 $steps = 0;
 while ( 'complete' !== ( $state['status'] ?? null ) && 20 > $steps ) {
 	$state = $exporter->advance( $job_id, 2, 1024 * 1024 );
@@ -217,6 +250,8 @@ echo wp_json_encode(
 	array(
 		'state' => $state,
 		'steps' => $steps,
+		'interrupted' => $interrupted,
+		'checkpointed_file_count' => (int) ( $checkpointed_state['file_count'] ?? 0 ),
 		'manifest' => $manifest,
 		'copied_upload_matches' => $copied_upload === $files['uploads/a-photo.jpg'],
 		'excluded_cache_absent' => null === $excluded_cache,
@@ -259,13 +294,19 @@ manifest = payload["manifest"]
 
 assert state["schema_version"] == 1
 assert state["status"] == "complete"
-assert state["file_count"] == 6
-assert state["inventory_file_count"] == 6
+assert state["file_count"] == 7
+assert state["inventory_file_count"] == 7
 assert state["byte_count"] == state["inventory_byte_count"]
 assert re.fullmatch(r"[a-f0-9]{64}", state["export_fingerprint"])
 assert re.fullmatch(r"[a-f0-9]{64}", state["files_manifest_hash"])
 assert state["blockers"] == []
 assert payload["steps"] >= 3
+assert payload["interrupted"] is True
+assert payload["checkpointed_file_count"] >= 1
+assert state["checkpoint_count"] >= 3
+assert state["last_action"] == "complete"
+assert isinstance(state["recent_events"], list)
+assert any("file-copied" in event for event in state["recent_events"])
 assert payload["file_export_state_autoload"] in ("off", "no", "auto-off")
 assert payload["controller_registered"] is True
 assert payload["copied_upload_matches"] is True
@@ -275,7 +316,7 @@ assert payload["source_upload_unchanged"] is True
 
 assert manifest["schema_version"] == 1
 assert manifest["payload_class"] == "files"
-assert manifest["file_count"] == 6
+assert manifest["file_count"] == 7
 assert manifest["payload_bytes"] == state["byte_count"]
 assert manifest["source_fingerprint"] == state["export_fingerprint"]
 assert [root["id"] for root in manifest["roots"]] == ["uploads", "plugins", "themes"]
@@ -291,7 +332,7 @@ assert "fixture alpha" not in serialized
 print("ok")
 PY
 )"; then
-  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "6 reconciled private file copies with hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
+  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 reconciled private file copies with durable interruption recovery, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Clone file export OK: 6 accepted files copied in resumable batches; exclusions preserved; file counts/bytes/fingerprint reconciled; source unchanged.\n'
+printf '[smoke] Portable Clone file export OK: 7 accepted files copied with durable mid-request checkpoints; nested traversal and interruption recovery passed; exclusions preserved; source unchanged.\n'

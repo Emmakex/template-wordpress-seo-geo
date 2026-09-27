@@ -326,3 +326,6 @@ Migration Bridge 0.8.36 implements phase 10E.2A.5.5.5 with final local target sm
 
 
 Migration Bridge 0.8.37 improves the real-site file-export operator flow discovered during the Emmake pilot. The resumable exporter now exposes two explicit choices: **one-click automatic** mode, which keeps issuing safe bounded 100-file / 16 MB requests until completion, and **manual batch** mode, which preserves the existing operator-selected file/byte limits. Automatic mode remains resumable, keeps the same integrity contract, stops after a bounded safety-cycle limit, and never turns the 20k+ file export into one unbounded PHP request.
+
+
+Migration Bridge 0.8.38 hardens real-site file export after the Emmake pilot showed both automatic and manual modes could appear stuck on the same durable count. The exporter now checkpoints traversal during the request, persists the first copied file and every small copy interval, uses an explicit active-directory cursor, applies a conservative per-request time budget, and records bounded operator diagnostics. The Tools screen adds file/byte progress bars plus a recent-event log with root-relative paths, last action, last file size, request duration and checkpoint count. Version 1 file-export state remains resumable through the version 2 state normalizer.

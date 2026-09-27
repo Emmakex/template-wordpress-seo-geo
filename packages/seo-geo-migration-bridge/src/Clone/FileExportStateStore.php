@@ -16,6 +16,7 @@ final class FileExportStateStore {
 	public const OPTION_NAME    = 'seo_geo_migration_clone_file_export_state_v1';
 	public const SCHEMA_VERSION = 1;
 	private const MAX_STATES    = 20;
+	private const MAX_EVENTS    = 40;
 
 	/**
 	 * Return one normalized file-export state.
@@ -91,6 +92,9 @@ final class FileExportStateStore {
 	/**
 	 * Normalize one stored file-export state.
 	 *
+	 * The extended state is deliberately backward-compatible with existing states so a
+	 * real export already in progress can resume after upgrading the plugin.
+	 *
 	 * @param string              $job_id Clone job identifier.
 	 * @param array<string,mixed> $state  Raw state.
 	 * @return array<string,mixed>|null
@@ -111,6 +115,7 @@ final class FileExportStateStore {
 		if ( '' !== $manifest_hash && 1 !== preg_match( '/^[a-f0-9]{64}$/', $manifest_hash ) ) {
 			$manifest_hash = '';
 		}
+
 		return array(
 			'schema_version'       => self::SCHEMA_VERSION,
 			'job_id'               => $job_id,
@@ -120,13 +125,29 @@ final class FileExportStateStore {
 			'pending_dirs'         => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
 			'current_dir'          => is_string( $state['current_dir'] ?? null ) ? $this->bounded_path( $state['current_dir'] ) : '',
 			'after_name'           => is_string( $state['after_name'] ?? null ) ? $this->bounded_name( $state['after_name'] ) : '',
+			'directory_active'     => array_key_exists( 'directory_active', $state )
+				? true === $state['directory_active']
+				: ( '' !== (string) ( $state['current_dir'] ?? '' ) || '' !== (string) ( $state['after_name'] ?? '' ) ),
 			'file_count'           => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
 			'byte_count'           => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
 			'inventory_file_count' => max( 0, (int) ( $state['inventory_file_count'] ?? 0 ) ),
 			'inventory_byte_count' => max( 0, (int) ( $state['inventory_byte_count'] ?? 0 ) ),
 			'export_fingerprint'   => $fingerprint,
 			'files_manifest_hash'  => $manifest_hash,
+			'request_sequence'     => max( 0, (int) ( $state['request_sequence'] ?? 0 ) ),
+			'request_files'        => max( 0, (int) ( $state['request_files'] ?? 0 ) ),
+			'request_bytes'        => max( 0, (int) ( $state['request_bytes'] ?? 0 ) ),
+			'request_operations'   => max( 0, (int) ( $state['request_operations'] ?? 0 ) ),
+			'request_elapsed_ms'   => max( 0, (int) ( $state['request_elapsed_ms'] ?? 0 ) ),
+			'checkpoint_count'     => max( 0, (int) ( $state['checkpoint_count'] ?? 0 ) ),
+			'last_root'            => $this->normalize_root_id( $state['last_root'] ?? '' ),
+			'last_path'            => is_string( $state['last_path'] ?? null ) ? $this->bounded_path( $state['last_path'] ) : '',
+			'last_action'          => $this->normalize_code( $state['last_action'] ?? '' ),
+			'last_file_size'       => max( 0, (int) ( $state['last_file_size'] ?? 0 ) ),
+			'recent_events'        => $this->normalize_events( $state['recent_events'] ?? array() ),
 			'blockers'             => $this->normalize_codes( $state['blockers'] ?? array() ),
+			'request_started_at'   => is_string( $state['request_started_at'] ?? null ) ? substr( $state['request_started_at'], 0, 40 ) : '',
+			'last_progress_at'     => is_string( $state['last_progress_at'] ?? null ) ? substr( $state['last_progress_at'], 0, 40 ) : '',
 			'started_at'           => is_string( $state['started_at'] ?? null ) ? substr( $state['started_at'], 0, 40 ) : '',
 			'updated_at'           => is_string( $state['updated_at'] ?? null ) ? substr( $state['updated_at'], 0, 40 ) : '',
 			'completed_at'         => is_string( $state['completed_at'] ?? null ) ? substr( $state['completed_at'], 0, 40 ) : '',
@@ -158,6 +179,30 @@ final class FileExportStateStore {
 	}
 
 	/**
+	 * Normalize bounded event lines.
+	 *
+	 * @param mixed $events Raw event lines.
+	 * @return list<string>
+	 */
+	private function normalize_events( mixed $events ): array {
+		if ( ! is_array( $events ) ) {
+			return array();
+		}
+		$normalized = array();
+		foreach ( array_slice( $events, -self::MAX_EVENTS ) as $event ) {
+			if ( ! is_string( $event ) ) {
+				continue;
+			}
+			$event = trim( preg_replace( '/[\r\n\t]+/', ' ', $event ) ?? '' );
+			if ( '' === $event ) {
+				continue;
+			}
+			$normalized[] = substr( $event, 0, 500 );
+		}
+		return $normalized;
+	}
+
+	/**
 	 * Normalize bounded blocker codes.
 	 *
 	 * @param mixed $codes Raw codes.
@@ -169,16 +214,37 @@ final class FileExportStateStore {
 		}
 		$normalized = array();
 		foreach ( array_slice( $codes, 0, 50 ) as $code ) {
-			if ( ! is_string( $code ) || 1 !== preg_match( '/^[a-z0-9][a-z0-9._-]{0,119}$/', $code ) ) {
-				continue;
+			$code = $this->normalize_code( $code );
+			if ( '' !== $code ) {
+				$normalized[] = $code;
 			}
-			$normalized[] = $code;
 		}
 		return array_values( array_unique( $normalized ) );
 	}
 
 	/**
-	 * Bound one relative directory path.
+	 * Normalize one bounded machine code.
+	 *
+	 * @param mixed $code Raw code.
+	 */
+	private function normalize_code( mixed $code ): string {
+		if ( ! is_string( $code ) || 1 !== preg_match( '/^[a-z0-9][a-z0-9._-]{0,119}$/', $code ) ) {
+			return '';
+		}
+		return $code;
+	}
+
+	/**
+	 * Normalize one known payload root identifier.
+	 *
+	 * @param mixed $root Raw root identifier.
+	 */
+	private function normalize_root_id( mixed $root ): string {
+		return is_string( $root ) && in_array( $root, array( 'uploads', 'plugins', 'themes' ), true ) ? $root : '';
+	}
+
+	/**
+	 * Bound one relative directory/file path.
 	 *
 	 * @param string $path Relative path.
 	 */
