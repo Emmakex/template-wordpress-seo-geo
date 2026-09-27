@@ -134,13 +134,13 @@ final class PackageBuilder {
 
 		$inventory_fingerprint = (string) ( $inventory['fingerprint'] ?? '' );
 		$source_fingerprint    = (string) ( $files['export_fingerprint'] ?? '' );
-		$fingerprint_match     = (
-			1 === preg_match( '/^[a-f0-9]{64}$/', $inventory_fingerprint )
-			&& 1 === preg_match( '/^[a-f0-9]{64}$/', $source_fingerprint )
-			&& hash_equals( $inventory_fingerprint, $source_fingerprint )
-		);
-		$drift_snapshot = (
-			! $fingerprint_match
+		$inventory_valid       = 1 === preg_match( '/^[a-f0-9]{64}$/', $inventory_fingerprint );
+		$source_valid          = 1 === preg_match( '/^[a-f0-9]{64}$/', $source_fingerprint );
+		$fingerprint_match     = $inventory_valid && $source_valid && hash_equals( $inventory_fingerprint, $source_fingerprint );
+		$drift_snapshot        = (
+			$inventory_valid
+			&& $source_valid
+			&& ! $fingerprint_match
 			&& true === ( $files['source_drift'] ?? false )
 			&& false === ( $files['inventory_hash_match'] ?? true )
 			&& (int) ( $files['file_count'] ?? -1 ) === (int) ( $inventory['file_count'] ?? -2 )
@@ -148,7 +148,7 @@ final class PackageBuilder {
 		);
 
 		if (
-			1 !== preg_match( '/^[a-f0-9]{64}$/', $source_fingerprint )
+			! $source_valid
 			|| ( ! $fingerprint_match && ! $drift_snapshot )
 			|| ! $this->child_manifest_matches( $job_id, 'database/manifest.json', (string) ( $database['database_manifest_hash'] ?? '' ) )
 			|| ! $this->child_manifest_matches( $job_id, 'files/manifest.json', (string) ( $files['files_manifest_hash'] ?? '' ) )
