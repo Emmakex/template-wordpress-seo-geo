@@ -515,6 +515,7 @@ final class FileExporter {
 			(string) ( $inventory['fingerprint'] ?? '' ),
 			(string) ( $state['export_fingerprint'] ?? '' )
 		);
+
 		$state['inventory_fingerprint_match'] = $fingerprint_match;
 		$state['source_drift_detected']       = ! $fingerprint_match;
 		if ( ! $fingerprint_match ) {
