@@ -635,7 +635,7 @@ final class AdminOperatorScreen {
 					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th>
 					<td><code><?php echo esc_html( $status ); ?></code></td>
 				</tr>
-				<?php if ( true === ( $export['source_drift_detected'] ?? false ) ) : ?>
+				<?php if ( true === ( $export['source_drift'] ?? false ) ) : ?>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_source_drift' ) ); ?></th>
 						<td><strong><?php echo esc_html( $this->copy->text( 'clone_file_export_source_drift_captured' ) ); ?></strong></td>
