@@ -60,6 +60,13 @@ final class LocalCloneBootstrapper {
 	private CloneJobStore $jobs;
 
 	/**
+	 * Completed file-export state used to authorize accepted live-source drift.
+	 *
+	 * @var FileExportStateStore
+	 */
+	private FileExportStateStore $file_export;
+
+	/**
 	 * Portable Clone filesystem mutation authority.
 	 *
 	 * @var ExportWorkspace
@@ -74,8 +81,9 @@ final class LocalCloneBootstrapper {
 	 * @param DestinationSafetyPlanner|null      $planner   Optional destination planner.
 	 * @param PackageStateStore|null             $packages  Optional package state store.
 	 * @param CloneInventoryStore|null           $inventory Optional inventory state store.
-	 * @param CloneJobStore|null                 $jobs      Optional clone job store.
-	 * @param ExportWorkspace|null               $workspace Optional filesystem mutation authority.
+	 * @param CloneJobStore|null                 $jobs        Optional clone job store.
+	 * @param ExportWorkspace|null               $workspace   Optional filesystem mutation authority.
+	 * @param FileExportStateStore|null          $file_export Optional completed file-export state store.
 	 */
 	public function __construct(
 		?LocalCloneBootstrapStateStore $store = null,
@@ -84,15 +92,17 @@ final class LocalCloneBootstrapper {
 		?PackageStateStore $packages = null,
 		?CloneInventoryStore $inventory = null,
 		?CloneJobStore $jobs = null,
-		?ExportWorkspace $workspace = null
+		?ExportWorkspace $workspace = null,
+		?FileExportStateStore $file_export = null
 	) {
-		$this->store     = $store ?? new LocalCloneBootstrapStateStore();
-		$this->plans     = $plans ?? new LocalCloneStateStore();
-		$this->planner   = $planner ?? new DestinationSafetyPlanner();
-		$this->packages  = $packages ?? new PackageStateStore();
-		$this->inventory = $inventory ?? new CloneInventoryStore();
-		$this->jobs      = $jobs ?? new CloneJobStore();
-		$this->workspace = $workspace ?? new ExportWorkspace();
+		$this->store       = $store ?? new LocalCloneBootstrapStateStore();
+		$this->plans       = $plans ?? new LocalCloneStateStore();
+		$this->planner     = $planner ?? new DestinationSafetyPlanner();
+		$this->packages    = $packages ?? new PackageStateStore();
+		$this->inventory   = $inventory ?? new CloneInventoryStore();
+		$this->jobs        = $jobs ?? new CloneJobStore();
+		$this->workspace   = $workspace ?? new ExportWorkspace();
+		$this->file_export = $file_export ?? new FileExportStateStore();
 	}
 
 	/**
@@ -440,7 +450,50 @@ final class LocalCloneBootstrapper {
 			&& hash_equals( (string) ( $plan['package_checksum'] ?? '' ), (string) ( $package['package_checksum'] ?? '' ) )
 			&& hash_equals( (string) ( $plan['package_manifest_hash'] ?? '' ), (string) ( $package['package_manifest_hash'] ?? '' ) )
 			&& hash_equals( (string) ( $plan['source_fingerprint'] ?? '' ), (string) ( $package['source_fingerprint'] ?? '' ) )
-			&& hash_equals( (string) ( $plan['source_fingerprint'] ?? '' ), (string) ( $inventory['fingerprint'] ?? '' ) );
+			&& $this->source_snapshot_matches( $job_id, $package, $inventory );
+	}
+
+	/**
+	 * Accept exact inventory identity or the explicitly verified live-source drift snapshot.
+	 *
+	 * @param string              $job_id    Clone job identifier.
+	 * @param array<string,mixed> $package   Verified package state.
+	 * @param array<string,mixed> $inventory Completed source inventory.
+	 */
+	private function source_snapshot_matches( string $job_id, array $package, array $inventory ): bool {
+		$package_fingerprint   = (string) ( $package['source_fingerprint'] ?? '' );
+		$inventory_fingerprint = (string) ( $inventory['fingerprint'] ?? '' );
+		if ( ! $this->valid_hash( $package_fingerprint ) || ! $this->valid_hash( $inventory_fingerprint ) ) {
+			return false;
+		}
+
+		if ( hash_equals( $package_fingerprint, $inventory_fingerprint ) ) {
+			return true;
+		}
+
+		$files = $this->file_export->get( $job_id );
+
+		return is_array( $files )
+			&& 'complete' === ( $files['status'] ?? null )
+			&& true === ( $files['source_drift'] ?? false )
+			&& false === ( $files['inventory_hash_match'] ?? true )
+			&& $this->valid_hash( $files['export_fingerprint'] ?? null )
+			&& $this->valid_hash( $files['files_manifest_hash'] ?? null )
+			&& hash_equals( $package_fingerprint, (string) $files['export_fingerprint'] )
+			&& hash_equals( (string) ( $package['files_manifest_hash'] ?? '' ), (string) $files['files_manifest_hash'] )
+			&& (int) ( $files['file_count'] ?? -1 ) === (int) ( $inventory['file_count'] ?? -2 )
+			&& (int) ( $files['inventory_file_count'] ?? -1 ) === (int) ( $inventory['file_count'] ?? -2 )
+			&& 0 < (int) ( $files['root_count'] ?? 0 )
+			&& (int) ( $files['root_index'] ?? -1 ) >= (int) ( $files['root_count'] ?? 0 );
+	}
+
+	/**
+	 * Validate one SHA-256 value.
+	 *
+	 * @param mixed $hash Raw hash.
+	 */
+	private function valid_hash( mixed $hash ): bool {
+		return is_string( $hash ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $hash );
 	}
 
 	/**
