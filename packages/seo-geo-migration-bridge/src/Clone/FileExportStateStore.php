@@ -125,6 +125,9 @@ final class FileExportStateStore {
 			'pending_dirs'         => $this->normalize_paths( $state['pending_dirs'] ?? array() ),
 			'current_dir'          => is_string( $state['current_dir'] ?? null ) ? $this->bounded_path( $state['current_dir'] ) : '',
 			'after_name'           => is_string( $state['after_name'] ?? null ) ? $this->bounded_name( $state['after_name'] ) : '',
+			'directory_active'     => array_key_exists( 'directory_active', $state )
+				? true === $state['directory_active']
+				: ( '' !== (string) ( $state['current_dir'] ?? '' ) || '' !== (string) ( $state['after_name'] ?? '' ) ),
 			'file_count'           => max( 0, (int) ( $state['file_count'] ?? 0 ) ),
 			'byte_count'           => max( 0, (int) ( $state['byte_count'] ?? 0 ) ),
 			'inventory_file_count' => max( 0, (int) ( $state['inventory_file_count'] ?? 0 ) ),
