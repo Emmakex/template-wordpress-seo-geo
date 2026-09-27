@@ -688,6 +688,7 @@ final class AdminOperatorScreen {
 			'complete' => 'clone_file_export_complete',
 			'running'  => 'auto' === $mode ? 'clone_file_export_auto_running' : 'clone_file_export_running',
 			'paused'   => 'clone_file_export_auto_paused',
+			'stalled'  => 'clone_file_export_auto_stalled',
 			'blocked'  => 'clone_file_export_blocked',
 			default    => null,
 		};
@@ -697,6 +698,7 @@ final class AdminOperatorScreen {
 		$class = match ( $status ) {
 			'blocked' => 'notice notice-error',
 			'paused'  => 'notice notice-warning',
+			'stalled' => 'notice notice-warning',
 			default   => 'notice notice-success',
 		};
 		?>
@@ -721,6 +723,11 @@ final class AdminOperatorScreen {
 		$status = is_array( $export ) ? (string) ( $export['status'] ?? 'pending' ) : 'pending';
 		$button = 'pending' === $status ? 'clone_file_export_start' : 'clone_file_export_continue';
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result status controls automatic continuation only after a successful batch.
+		$request_status = isset( $_GET['seo_geo_clone_file_export'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only result status.
+			? sanitize_key( wp_unslash( $_GET['seo_geo_clone_file_export'] ) )
+			: '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only mode controls automatic continuation after a nonce-verified action.
 		$request_mode = isset( $_GET['file_export_mode'] )
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only automatic continuation hint.
@@ -753,6 +760,7 @@ final class AdminOperatorScreen {
 
 		$auto_resume = (
 			'auto' === $request_mode
+			&& 'running' === $request_status
 			&& 'running' === $status
 			&& $auto_cycle < AdminCloneFileExportController::MAX_AUTO_CYCLES
 		);
