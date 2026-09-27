@@ -847,6 +847,24 @@ foreach ( array( 'file_put_contents(', 'fwrite(', 'copy(', 'rename(', 'unlink(',
 	}
 }
 
+foreach (
+	array(
+		"'source-files-changed-since-inventory' === \$last_action",
+		"in_array( 'source-files-changed-since-inventory', \$blockers, true )",
+		'private function recoverable_inventory_drift(',
+	) as $file_export_recovery_engine_guard
+) {
+	if ( ! str_contains( $file_exporter, $file_export_recovery_engine_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-export-recovery-engine',
+			'Server-side recovery authorization must match the operator recovery predicate for legacy drift-blocked exports.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/FileExporter.php',
+			$file_export_recovery_engine_guard,
+			'missing'
+		);
+	}
+}
+
 $file_export_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/AdminCloneFileExportController.php' );
 foreach (
 	array(
@@ -2723,6 +2741,26 @@ foreach (
 			'Portable Clone operator UI must keep retained jobs selectable without creating or resetting state.',
 			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
 			$saved_job_resume_guard,
+			'missing'
+		);
+	}
+}
+
+foreach (
+	array(
+		"'source-files-changed-since-inventory' === \$last_action",
+		"in_array( 'source-files-changed-since-inventory', \$blockers, true )",
+		"0 < \$file_total",
+		"0 < \$byte_total",
+		"'clone_file_export_drift_recovery_button'",
+	) as $file_export_recovery_ui_guard
+) {
+	if ( ! str_contains( $operator_screen, $file_export_recovery_ui_guard ) ) {
+		fail_migration_bridge(
+			'portable-clone-file-export-recovery-ui',
+			'Completed legacy drift-blocked exports must expose a safe finalization action even when blocker metadata was normalized away.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+			$file_export_recovery_ui_guard,
 			'missing'
 		);
 	}

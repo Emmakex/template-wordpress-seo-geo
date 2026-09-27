@@ -792,9 +792,16 @@ final class AdminOperatorScreen {
 			: array();
 
 		$blockers          = is_array( $export['blockers'] ?? null ) ? array_values( $export['blockers'] ) : array();
+		$last_action       = (string) ( $export['last_action'] ?? '' );
+		$has_drift_blocker = (
+			'source-files-changed-since-inventory' === $last_action
+			|| in_array( 'source-files-changed-since-inventory', $blockers, true )
+		);
 		$recoverable_drift = (
 			'blocked' === $status
-			&& array( 'source-files-changed-since-inventory' ) === $blockers
+			&& $has_drift_blocker
+			&& 0 < $file_total
+			&& 0 < $byte_total
 			&& $file_count === $file_total
 			&& $byte_count === $byte_total
 		);
