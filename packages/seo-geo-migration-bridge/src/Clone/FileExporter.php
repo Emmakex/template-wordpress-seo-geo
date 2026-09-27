@@ -680,8 +680,8 @@ final class FileExporter {
 	 * @param array<string,mixed> $inventory Completed source inventory.
 	 */
 	private function recoverable_inventory_drift( array $state, array $inventory ): bool {
-		$blockers    = is_array( $state['blockers'] ?? null ) ? array_values( $state['blockers'] ) : array();
-		$last_action = (string) ( $state['last_action'] ?? '' );
+		$blockers          = is_array( $state['blockers'] ?? null ) ? array_values( $state['blockers'] ) : array();
+		$last_action       = (string) ( $state['last_action'] ?? '' );
 		$has_drift_blocker = (
 			'source-files-changed-since-inventory' === $last_action
 			|| in_array( 'source-files-changed-since-inventory', $blockers, true )
