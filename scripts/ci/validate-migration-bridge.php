@@ -2709,12 +2709,12 @@ if ( str_contains( $operator_screen, 'form.submit();' ) ) {
 
 foreach (
 	array(
-		"$jobs  = array_values( $store->all() );",
-		"isset( $_GET['clone_job_id'] )",
+		'$jobs  = array_values( $store->all() );',
+		'isset( $_GET[\'clone_job_id\'] )',
 		'name="clone_job_id"',
-		"'clone_resume_heading'",
-		"'clone_resume_button'",
-		"$this->render_clone_inventory_section( $selected );",
+		'\'clone_resume_heading\'',
+		'\'clone_resume_button\'',
+		'$this->render_clone_inventory_section( $selected );',
 	) as $saved_job_resume_guard
 ) {
 	if ( ! str_contains( $operator_screen, $saved_job_resume_guard ) ) {
