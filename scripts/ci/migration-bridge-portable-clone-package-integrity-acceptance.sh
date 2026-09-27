@@ -33,13 +33,14 @@ if ( ! $jobs instanceof CloneJobStore || ! $builder instanceof PackageBuilder ) 
 
 $workspace = new ExportWorkspace();
 
-$prepare = static function ( string $job_id ) use ( $jobs, $workspace, $wpdb ): array {
+$prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, $workspace, $wpdb ): array {
 	$job = $jobs->create( 'export', $job_id );
 	if ( ! is_array( $job ) ) {
 		throw new RuntimeException( 'Could not create package fixture job.' );
 	}
 
-	$source_fingerprint = hash( 'sha256', 'package-source-' . $job_id );
+	$inventory_fingerprint = hash( 'sha256', 'package-inventory-' . $job_id );
+	$source_fingerprint = $drift ? hash( 'sha256', 'package-export-snapshot-' . $job_id ) : $inventory_fingerprint;
 
 	$schema = $workspace->write( $job_id, 'database/tables/table-a/schema.sql', "CREATE TABLE fixture (id bigint);\n" );
 	$chunk = $workspace->write( $job_id, 'database/tables/table-a/chunks/000000.json', '{"rows":[["MQ=="]]}');
@@ -123,6 +124,9 @@ $prepare = static function ( string $job_id ) use ( $jobs, $workspace, $wpdb ): 
 			),
 		),
 		'source_fingerprint' => $source_fingerprint,
+		'inventory_fingerprint' => $inventory_fingerprint,
+		'inventory_hash_match' => ! $drift,
+		'source_drift' => $drift,
 		'file_records' => array(
 			'format' => 'one-json-record-per-file',
 			'directory' => 'files-meta/',
@@ -164,7 +168,7 @@ $prepare = static function ( string $job_id ) use ( $jobs, $workspace, $wpdb ): 
 			'excluded_count' => 0,
 			'symlink_count' => 0,
 			'unreadable_count' => 0,
-			'fingerprint' => $source_fingerprint,
+			'fingerprint' => $inventory_fingerprint,
 			'blockers' => array(),
 			'started_at' => $now,
 			'updated_at' => $now,
@@ -216,6 +220,8 @@ $prepare = static function ( string $job_id ) use ( $jobs, $workspace, $wpdb ): 
 			'inventory_byte_count' => $file['bytes'],
 			'export_fingerprint' => $source_fingerprint,
 			'files_manifest_hash' => $files_written['sha256'],
+			'source_drift' => $drift,
+			'inventory_hash_match' => ! $drift,
 			'blockers' => array(),
 			'started_at' => $now,
 			'updated_at' => $now,
@@ -225,6 +231,7 @@ $prepare = static function ( string $job_id ) use ( $jobs, $workspace, $wpdb ): 
 
 	return array(
 		'source_fingerprint' => $source_fingerprint,
+		'inventory_fingerprint' => $inventory_fingerprint,
 		'file_bytes' => $file['bytes'],
 	);
 };
@@ -250,6 +257,40 @@ if ( 'complete' !== ( $state['status'] ?? null ) ) {
 
 $manifest_json = $workspace->read( $job_id, 'package/manifest.json' );
 $manifest = is_string( $manifest_json ) ? json_decode( $manifest_json, true ) : null;
+
+$drift_job_id = 'clone-package-drift-0003';
+$drift_fixture = $prepare( $drift_job_id, true );
+$drift_state = $builder->start( $drift_job_id );
+if ( ! is_array( $drift_state ) || 'running' !== ( $drift_state['status'] ?? null ) ) {
+	throw new RuntimeException( 'Could not start package integrity for an accepted drift snapshot.' );
+}
+$drift_steps = 0;
+while ( 'complete' !== ( $drift_state['status'] ?? null ) && 80 > $drift_steps ) {
+	$drift_state = $builder->advance( $drift_job_id, 4, 1024 * 1024 );
+	if ( ! is_array( $drift_state ) ) {
+		throw new RuntimeException( 'Drift package integrity step failed.' );
+	}
+	++$drift_steps;
+}
+if ( 'complete' !== ( $drift_state['status'] ?? null ) ) {
+	throw new RuntimeException( 'Drift package integrity did not complete: ' . wp_json_encode( $drift_state ) );
+}
+$drift_manifest_json = $workspace->read( $drift_job_id, 'package/manifest.json' );
+$drift_manifest = is_string( $drift_manifest_json ) ? json_decode( $drift_manifest_json, true ) : null;
+
+$unrecorded_job_id = 'clone-package-unrecorded-drift-0004';
+$prepare( $unrecorded_job_id );
+$unrecorded_inventory_store = new CloneInventoryStore();
+$unrecorded_inventory = $unrecorded_inventory_store->get( $unrecorded_job_id );
+if ( ! is_array( $unrecorded_inventory ) ) {
+	throw new RuntimeException( 'Could not load unrecorded drift inventory fixture.' );
+}
+$unrecorded_inventory['fingerprint'] = hash( 'sha256', 'unrecorded-package-drift' );
+if ( ! $unrecorded_inventory_store->save( $unrecorded_job_id, $unrecorded_inventory ) ) {
+	throw new RuntimeException( 'Could not save unrecorded drift inventory fixture.' );
+}
+$unrecorded_start = $builder->start( $unrecorded_job_id );
+
 $autoload = $wpdb->get_var(
 	$wpdb->prepare(
 		"SELECT autoload FROM {$wpdb->options} WHERE option_name = %s",
@@ -276,6 +317,10 @@ echo wp_json_encode(
 		'state' => $state,
 		'steps' => $steps,
 		'manifest' => $manifest,
+		'drift_fixture' => $drift_fixture,
+		'drift_state' => $drift_state,
+		'drift_manifest' => $drift_manifest,
+		'unrecorded_start_is_null' => null === $unrecorded_start,
 		'package_state_autoload' => $autoload,
 		'controller_registered' => false !== has_action( 'admin_post_' . AdminClonePackageController::ACTION ),
 		'negative_state' => $bad_state,
@@ -284,6 +329,8 @@ echo wp_json_encode(
 );
 
 $workspace->cleanup( $job_id );
+$workspace->cleanup( $drift_job_id );
+$workspace->cleanup( $unrecorded_job_id );
 $workspace->cleanup( $bad_job_id );
 delete_option( CloneJobStore::OPTION_NAME );
 delete_option( CloneInventoryStore::OPTION_NAME );
@@ -313,6 +360,9 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 state = payload["state"]
 manifest = payload["manifest"]
 negative = payload["negative_state"]
+drift_fixture = payload["drift_fixture"]
+drift_state = payload["drift_state"]
+drift_manifest = payload["drift_manifest"]
 
 assert state["schema_version"] == 1
 assert state["status"] == "complete"
@@ -345,12 +395,22 @@ assert manifest["safety"]["credentials_in_manifest"] is False
 assert manifest["safety"]["repository_safe"] is False
 assert manifest["safety"]["delivery_ready"] is False
 
+assert drift_state["status"] == "complete"
+assert drift_state["stage"] == "complete"
+assert drift_state["source_fingerprint"] == drift_fixture["source_fingerprint"]
+assert drift_fixture["source_fingerprint"] != drift_fixture["inventory_fingerprint"]
+assert drift_manifest["source"]["source_fingerprint"] == drift_fixture["source_fingerprint"]
+assert drift_manifest["source"]["inventory_fingerprint"] == drift_fixture["inventory_fingerprint"]
+assert drift_manifest["source"]["source_drift"] is True
+assert drift_manifest["integrity"]["verified"] is True
+assert payload["unrecorded_start_is_null"] is True
+
 assert negative["status"] == "blocked"
 assert "package-exported-payload-mismatch" in negative["blockers"]
 print("ok")
 PY
 )"; then
-  fail_smoke "clone-package-contract" "Portable Clone package manifest/integrity contract is invalid" "two-pass verified checksum plus tamper blocker" "${PACKAGE_ASSERTION:-python assertion failed}"
+  fail_smoke "clone-package-contract" "Portable Clone package manifest/integrity contract is invalid" "two-pass verified checksum plus accepted drift snapshot plus unrecorded-drift rejection plus tamper blocker" "${PACKAGE_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Clone package integrity OK: deterministic checksum reproduced across two bounded passes; package manifest verified; tampered payload blocked.\n'
+printf '[smoke] Portable Clone package integrity OK: deterministic checksum reproduced across two bounded passes; exact and accepted-drift package manifests verified; tampered payload blocked.\n'
