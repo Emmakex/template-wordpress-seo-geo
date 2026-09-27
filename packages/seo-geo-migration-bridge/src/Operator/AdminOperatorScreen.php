@@ -797,13 +797,15 @@ final class AdminOperatorScreen {
 			'source-files-changed-since-inventory' === $last_action
 			|| in_array( 'source-files-changed-since-inventory', $blockers, true )
 		);
+		$root_index        = (int) ( $export['root_index'] ?? 0 );
+		$root_count        = (int) ( $export['root_count'] ?? 0 );
 		$recoverable_drift = (
 			'blocked' === $status
 			&& $has_drift_blocker
 			&& 0 < $file_total
-			&& 0 < $byte_total
 			&& $file_count === $file_total
-			&& $byte_count === $byte_total
+			&& 0 < $root_count
+			&& $root_index >= $root_count
 		);
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result status controls automatic continuation only after a successful batch.
