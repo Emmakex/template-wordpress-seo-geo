@@ -134,6 +134,10 @@ final class FileExportStateStore {
 			'inventory_byte_count' => max( 0, (int) ( $state['inventory_byte_count'] ?? 0 ) ),
 			'export_fingerprint'   => $fingerprint,
 			'files_manifest_hash'  => $manifest_hash,
+			'source_drift_detected' => true === ( $state['source_drift_detected'] ?? false ),
+			'inventory_fingerprint_match' => array_key_exists( 'inventory_fingerprint_match', $state )
+				? true === $state['inventory_fingerprint_match']
+				: true,
 			'request_sequence'     => max( 0, (int) ( $state['request_sequence'] ?? 0 ) ),
 			'request_files'        => max( 0, (int) ( $state['request_files'] ?? 0 ) ),
 			'request_bytes'        => max( 0, (int) ( $state['request_bytes'] ?? 0 ) ),
