@@ -10,6 +10,7 @@ cat >"$LOCAL_RUNTIME_RUNNER" <<'PHP'
 use SeoGeo\MigrationBridge\Clone\AdminCloneLocalRuntimeController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
+use SeoGeo\MigrationBridge\Clone\FileExportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneBootstrapper;
 use SeoGeo\MigrationBridge\Clone\LocalCloneOrchestrator;
@@ -23,6 +24,7 @@ $options = array(
 	CloneJobStore::OPTION_NAME,
 	CloneInventoryStore::OPTION_NAME,
 	PackageStateStore::OPTION_NAME,
+	FileExportStateStore::OPTION_NAME,
 	LocalCloneStateStore::OPTION_NAME,
 	LocalCloneBootstrapStateStore::OPTION_NAME,
 	LocalCloneRuntimeStateStore::OPTION_NAME,
@@ -46,6 +48,7 @@ if (
 
 $inventories = new CloneInventoryStore();
 $packages    = new PackageStateStore();
+$file_states = new FileExportStateStore();
 
 $remove_tree = static function ( string $path ): void {
 	if ( ! is_dir( $path ) ) {
@@ -65,13 +68,15 @@ $remove_tree = static function ( string $path ): void {
 	@rmdir( $path );
 };
 
-$seed = static function ( string $job_id ) use ( $jobs, $inventories, $packages ): void {
+$seed = static function ( string $job_id, bool $drift = false ) use ( $jobs, $inventories, $packages, $file_states ): void {
 	$job = $jobs->create( 'local-clone', $job_id );
 	if ( ! is_array( $job ) ) {
 		throw new RuntimeException( 'Could not create local clone runtime fixture job.' );
 	}
 
-	$fingerprint = hash( 'sha256', 'local-runtime-source:' . $job_id );
+	$inventory_fingerprint = hash( 'sha256', 'local-runtime-source:' . $job_id );
+	$package_fingerprint   = $drift ? hash( 'sha256', 'local-runtime-export:' . $job_id ) : $inventory_fingerprint;
+	$files_manifest_hash   = hash( 'sha256', 'files:' . $job_id );
 	$inventories->save(
 		$job_id,
 		array(
@@ -83,7 +88,7 @@ $seed = static function ( string $job_id ) use ( $jobs, $inventories, $packages 
 			'roots'        => array(),
 			'file_count'   => 2,
 			'byte_count'   => 2048,
-			'fingerprint'  => $fingerprint,
+			'fingerprint'  => $inventory_fingerprint,
 			'blockers'     => array(),
 			'completed_at' => gmdate( DATE_ATOM ),
 			'updated_at'   => gmdate( DATE_ATOM ),
@@ -100,13 +105,33 @@ $seed = static function ( string $job_id ) use ( $jobs, $inventories, $packages 
 			'verify_byte_count'      => 4096,
 			'package_checksum'       => hash( 'sha256', 'package:' . $job_id ),
 			'verification_checksum'  => hash( 'sha256', 'package:' . $job_id ),
-			'source_fingerprint'     => $fingerprint,
+			'source_fingerprint'     => $package_fingerprint,
 			'database_manifest_hash' => hash( 'sha256', 'database:' . $job_id ),
-			'files_manifest_hash'    => hash( 'sha256', 'files:' . $job_id ),
+			'files_manifest_hash'    => $files_manifest_hash,
 			'package_manifest_hash'  => hash( 'sha256', 'manifest:' . $job_id ),
 			'blockers'               => array(),
 			'completed_at'           => gmdate( DATE_ATOM ),
 			'updated_at'             => gmdate( DATE_ATOM ),
+		)
+	);
+	$file_states->save(
+		$job_id,
+		array(
+			'status'               => 'complete',
+			'root_index'           => 3,
+			'root_count'           => 3,
+			'file_count'           => 2,
+			'byte_count'           => 2048,
+			'inventory_file_count' => 2,
+			'inventory_byte_count' => $drift ? 3072 : 2048,
+			'export_fingerprint'   => $package_fingerprint,
+			'files_manifest_hash'  => $files_manifest_hash,
+			'source_drift'         => $drift,
+			'inventory_hash_match' => ! $drift,
+			'inventory_byte_match' => ! $drift,
+			'blockers'             => array(),
+			'completed_at'         => gmdate( DATE_ATOM ),
+			'updated_at'           => gmdate( DATE_ATOM ),
 		)
 	);
 };
@@ -117,7 +142,7 @@ $source_prefix = $wpdb->prefix;
 $success_job  = 'local-runtime-fixture-0001';
 $success_path = trailingslashit( wp_normalize_path( ABSPATH ) ) . 'nuevaweb-runtime-success';
 $remove_tree( $success_path );
-$seed( $success_job );
+$seed( $success_job, true );
 $success_plan = $planner->prepare(
 	$success_job,
 	$success_path,
@@ -226,6 +251,7 @@ assert payload["success_plan"] is not None, payload
 assert payload["success_plan"]["status"] == "ready", payload
 assert payload["success_claim"] is not None, payload
 assert payload["success_claim"]["status"] == "claimed", payload
+assert payload["success_plan"]["source_fingerprint"] == payload["success_claim"]["source_fingerprint"], payload
 assert success is not None, payload
 assert success["status"] == "complete", payload
 assert success["stage"] == "core-complete"
@@ -273,4 +299,4 @@ PY
   fail_smoke "local-clone-runtime" "Local clone WordPress core runtime contract is invalid" "bounded copy + second-pass SHA-256 verification + tamper rejection" "${LOCAL_RUNTIME_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Local clone WordPress core runtime OK: bounded copy/verification matched, wp-content/config untouched, tamper rejected.\n'
+printf '[smoke] Local clone WordPress core runtime OK: verified drift authority carried through bounded copy/verification, wp-content/config untouched, tamper rejected.\n'
