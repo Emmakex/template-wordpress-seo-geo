@@ -133,8 +133,8 @@ final class AdminCloneFileExportController {
 		$first   = is_string( $pending[0] ?? null ) ? $pending[0] : '';
 		$last    = is_string( $pending[ count( $pending ) - 1 ] ?? null ) ? $pending[ count( $pending ) - 1 ] : '';
 		$payload = array(
-			'root_index'    => (int) ( $state['root_index'] ?? 0 ),
-			'current_dir'   => (string) ( $state['current_dir'] ?? '' ),
+			'root_index'       => (int) ( $state['root_index'] ?? 0 ),
+			'current_dir'      => (string) ( $state['current_dir'] ?? '' ),
 			'after_name'       => (string) ( $state['after_name'] ?? '' ),
 			'directory_active' => true === ( $state['directory_active'] ?? false ),
 			'pending_count'    => count( $pending ),
