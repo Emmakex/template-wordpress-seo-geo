@@ -1061,19 +1061,19 @@ final class AdminOperatorScreen {
 			return;
 		}
 
-		$package = ( new PackageStateStore() )->get( $job_id );
-		$status  = is_array( $package ) ? (string) ( $package['status'] ?? 'pending' ) : 'pending';
-		$stage   = is_array( $package ) ? (string) ( $package['stage'] ?? 'pending' ) : 'pending';
-		$blockers = is_array( $package['blockers'] ?? null ) ? $package['blockers'] : array();
+		$package                      = ( new PackageStateStore() )->get( $job_id );
+		$status                       = is_array( $package ) ? (string) ( $package['status'] ?? 'pending' ) : 'pending';
+		$stage                        = is_array( $package ) ? (string) ( $package['stage'] ?? 'pending' ) : 'pending';
+		$blockers                     = is_array( $package['blockers'] ?? null ) ? $package['blockers'] : array();
 		$recoverable_payload_mismatch = (
 			'blocked' === $status
 			&& in_array( 'package-exported-payload-mismatch', $blockers, true )
 		);
-		$button  = 'pending' === $status ? 'clone_package_start' : 'clone_package_continue';
-		$files   = 'verify' === $stage
+		$button                       = 'pending' === $status ? 'clone_package_start' : 'clone_package_continue';
+		$files                        = 'verify' === $stage
 			? (int) ( $package['verify_file_count'] ?? 0 )
 			: (int) ( $package['payload_file_count'] ?? 0 );
-		$bytes   = 'verify' === $stage
+		$bytes                        = 'verify' === $stage
 			? (int) ( $package['verify_byte_count'] ?? 0 )
 			: (int) ( $package['payload_byte_count'] ?? 0 );
 		?>
