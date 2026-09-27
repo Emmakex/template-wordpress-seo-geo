@@ -10,13 +10,13 @@ Use exactly:
 
 - source origin: `https://emmake.com/`;
 - isolated target origin: `https://emmake.com/nuevaweb/`;
-- Migration Bridge: `0.8.40`;
-- accepted Migration Bridge main commit: `42bb7cd025385d365eea1b39f4d65c482a5f529c`;
-- accepted Migration Bridge ZIP SHA-256: `9392862f952e8d85be2c57cce22492d1f2ff63e98cef982ec276b2b3aa53f1dc`;
+- Migration Bridge: `0.8.42`;
+- accepted Migration Bridge main commit: `9462386bc5d956a1938a785e6959658a502a4187`;
+- accepted Migration Bridge ZIP SHA-256: `4f0e32943abe31d6453fb2cc2f97f27b5d5130660643141a9ff067550c22c57e`;
 - bounded source handoff SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - acceptance record: `release/emmake-real-clone-acceptance.json`.
 
-Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.40 supersedes 0.8.39 for the Emmake pilot. It retains durable in-request checkpoints, diagnostics and automatic continuation, and adds safe recovery for a fully copied export that was blocked only because the live source fingerprint changed while file counts and bytes remained identical. Structural count/byte drift remains terminal.
+Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.42 is the current Emmake pilot artifact. The user-supplied 0.8.39 ZIP (`70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`) is preserved as the confirmed last-good real-export baseline that reached 20,256/20,256 files and 608/608 MB. 0.8.42 layers the accepted fingerprint-drift/package-integrity recovery on top of that baseline and adds explicit selection of retained clone jobs so advanced progress cannot be hidden by a newer job. Structural count/byte drift remains terminal.
 
 ## Operator-only inputs required before execution
 

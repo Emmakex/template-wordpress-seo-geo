@@ -2199,7 +2199,17 @@ Deliverables:
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
 - execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
 
-Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** Migration Bridge 0.8.40 is the accepted pilot artifact on `main` at `42bb7cd025385d365eea1b39f4d65c482a5f529c`, with deterministic installable ZIP SHA-256 `9392862f952e8d85be2c57cce22492d1f2ff63e98cef982ec276b2b3aa53f1dc`. The real-site file export reached 20,256 / 20,256 files and 608 MB / 608 MB. Under 0.8.39 it stopped only at the final aggregate source-fingerprint reconciliation while counts and bytes matched; 0.8.40 keeps structural count/byte drift terminal but records fingerprint-only live-source drift and can finalize the already copied per-file hash-verified snapshot without copying the 608 MB payload again. The next operator action is to install 0.8.40 over the existing Bridge, use the explicit verified-snapshot recovery action, then continue package integrity and the remaining isolated `/nuevaweb/` clone sequence. Production remains the source of truth and real acceptance evidence remains pending until the observed clone/handoff completes.
+Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** The user-supplied Migration Bridge 0.8.39 ZIP SHA-256 `70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146` is the confirmed last-good real-export baseline and is preserved as source-of-truth provenance for the run that reached 20,256 / 20,256 files and 608 MB / 608 MB. Migration Bridge 0.8.42 is now accepted on `main` at `9462386bc5d956a1938a785e6959658a502a4187`, installable ZIP SHA-256 `4f0e32943abe31d6453fb2cc2f97f27b5d5130660643141a9ff067550c22c57e`. It includes the accepted fingerprint-only live-source drift recovery, carries that authority through package integrity, and adds explicit selection of retained Portable Clone jobs so a newer job cannot visually hide older advanced progress. The next operator action is to install 0.8.42 over the current plugin, open the saved job corresponding to the completed Emmake export, and continue from its retained state rather than creating a new clone. If that saved job is absent, stop and recover state from the private workspace before any new export.
+
+Migration Bridge v0.8.42 / 10E.2A.6 saved-job recovery evidence:
+
+- confirmed provenance baseline: user-supplied 0.8.39 ZIP SHA-256 `70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`;
+- PR #177 passed Foundation, Package, PHP Quality, WordPress Smoke, Accessibility/Responsive, Performance, Migration Bridge Release and Release Artifact CI before merge;
+- PR #177 squash-merged to `main` as `9462386bc5d956a1938a785e6959658a502a4187`;
+- post-merge `main` repeated all eight gates successfully;
+- accepted installable v0.8.42 ZIP SHA-256: `4f0e32943abe31d6453fb2cc2f97f27b5d5130660643141a9ff067550c22c57e`;
+- saved-job selection is read-only: opening a retained job does not create, reset or mutate it;
+- the real clone acceptance remains pending until the selected retained job proceeds through package integrity and the remaining isolated `/nuevaweb/` flow.
 
 Migration Bridge v0.8.40 / 10E.2A.6 real-pilot recovery evidence:
 
