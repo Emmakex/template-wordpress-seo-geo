@@ -338,3 +338,6 @@ Migration Bridge 0.8.41 completes the live-source drift recovery path introduced
 
 
 Migration Bridge 0.8.42 adds explicit operator access to retained Portable Clone jobs after real-site testing showed that a newer job can visually hide an older advanced export. The Tools screen lists saved jobs and allows the operator to open a specific existing job by ID without creating, resetting or mutating it. It is layered on top of the accepted 0.8.41 package-integrity drift-snapshot path, so both the completed Emmake file snapshot and later package-integrity recovery remain preserved.
+
+
+Migration Bridge 0.8.43 fixes recovery visibility for legacy real-site jobs whose terminal `last_action` is `source-files-changed-since-inventory` but whose normalized `blockers` list is empty or contains additional historical entries. A blocked export is now recoverable when file and byte totals are both non-zero and exactly complete, and the drift reason is present either as the last action or among blocker codes. The engine applies the same predicate, so the displayed recovery button and server-side authorization cannot disagree.
