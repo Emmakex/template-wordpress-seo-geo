@@ -100,6 +100,7 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 	if ( ! is_array( $file ) ) {
 		throw new RuntimeException( 'Could not write file payload fixture.' );
 	}
+	$inventory_file_bytes = $drift ? (int) $file['bytes'] + 17 : (int) $file['bytes'];
 	$file_record = array(
 		'root' => 'uploads',
 		'relative_path' => 'a.txt',
@@ -126,6 +127,8 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 		'source_fingerprint' => $source_fingerprint,
 		'inventory_fingerprint' => $inventory_fingerprint,
 		'inventory_hash_match' => ! $drift,
+		'inventory_byte_match' => ! $drift,
+		'inventory_payload_bytes' => $inventory_file_bytes,
 		'source_drift' => $drift,
 		'file_records' => array(
 			'format' => 'one-json-record-per-file',
@@ -164,7 +167,7 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 			'current_dir' => '',
 			'after_name' => '',
 			'file_count' => 1,
-			'byte_count' => $file['bytes'],
+			'byte_count' => $inventory_file_bytes,
 			'excluded_count' => 0,
 			'symlink_count' => 0,
 			'unreadable_count' => 0,
@@ -217,11 +220,12 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 			'file_count' => 1,
 			'byte_count' => $file['bytes'],
 			'inventory_file_count' => 1,
-			'inventory_byte_count' => $file['bytes'],
+			'inventory_byte_count' => $inventory_file_bytes,
 			'export_fingerprint' => $source_fingerprint,
 			'files_manifest_hash' => $files_written['sha256'],
 			'source_drift' => $drift,
 			'inventory_hash_match' => ! $drift,
+			'inventory_byte_match' => ! $drift,
 			'blockers' => array(),
 			'started_at' => $now,
 			'updated_at' => $now,
@@ -233,6 +237,7 @@ $prepare = static function ( string $job_id, bool $drift = false ) use ( $jobs, 
 		'source_fingerprint' => $source_fingerprint,
 		'inventory_fingerprint' => $inventory_fingerprint,
 		'file_bytes' => $file['bytes'],
+		'inventory_file_bytes' => $inventory_file_bytes,
 	);
 };
 
@@ -399,6 +404,7 @@ assert drift_state["status"] == "complete"
 assert drift_state["stage"] == "complete"
 assert drift_state["source_fingerprint"] == drift_fixture["source_fingerprint"]
 assert drift_fixture["source_fingerprint"] != drift_fixture["inventory_fingerprint"]
+assert drift_fixture["file_bytes"] != drift_fixture["inventory_file_bytes"]
 assert drift_manifest["source"]["source_fingerprint"] == drift_fixture["source_fingerprint"]
 assert drift_manifest["source"]["inventory_fingerprint"] == drift_fixture["inventory_fingerprint"]
 assert drift_manifest["source"]["source_drift"] is True
@@ -410,7 +416,7 @@ assert "package-exported-payload-mismatch" in negative["blockers"]
 print("ok")
 PY
 )"; then
-  fail_smoke "clone-package-contract" "Portable Clone package manifest/integrity contract is invalid" "two-pass verified checksum plus accepted drift snapshot plus unrecorded-drift rejection plus tamper blocker" "${PACKAGE_ASSERTION:-python assertion failed}"
+  fail_smoke "clone-package-contract" "Portable Clone package manifest/integrity contract is invalid" "two-pass verified checksum plus accepted fingerprint/byte-drift snapshot plus unrecorded-drift rejection plus tamper blocker" "${PACKAGE_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Clone package integrity OK: deterministic checksum reproduced across two bounded passes; exact and accepted-drift package manifests verified; tampered payload blocked.\n'
+printf '[smoke] Portable Clone package integrity OK: deterministic checksum reproduced across two bounded passes; exact and accepted fingerprint/byte-drift package manifests verified; tampered payload blocked.\n'
