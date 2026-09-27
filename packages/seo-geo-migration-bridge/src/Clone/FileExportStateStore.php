@@ -14,7 +14,7 @@ namespace SeoGeo\MigrationBridge\Clone;
  */
 final class FileExportStateStore {
 	public const OPTION_NAME    = 'seo_geo_migration_clone_file_export_state_v1';
-	public const SCHEMA_VERSION = 2;
+	public const SCHEMA_VERSION = 1;
 	private const MAX_STATES    = 20;
 	private const MAX_EVENTS    = 40;
 
@@ -92,7 +92,7 @@ final class FileExportStateStore {
 	/**
 	 * Normalize one stored file-export state.
 	 *
-	 * Version 2 is deliberately backward-compatible with version 1 states so a
+	 * The extended state is deliberately backward-compatible with existing states so a
 	 * real export already in progress can resume after upgrading the plugin.
 	 *
 	 * @param string              $job_id Clone job identifier.
