@@ -206,17 +206,22 @@ final class FileExporter {
 			if ( ! $this->recoverable_inventory_drift( $state, $inventory ) ) {
 				return $state;
 			}
-			$state['status']                      = 'running';
-			$state['blockers']                    = array_values(
+			$state['status'] = 'running';
+
+			$state['blockers'] = array_values(
 				array_diff(
 					is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array(),
 					array( 'source-files-changed-since-inventory' )
 				)
 			);
-			$state['source_drift']       = true;
+
+			$state['source_drift'] = true;
+
 			$state['inventory_hash_match'] = false;
-			$state['last_action']                 = 'source-drift-recovery';
-			$state                                = $this->append_event(
+
+			$state['last_action'] = 'source-drift-recovery';
+
+			$state = $this->append_event(
 				$state,
 				'source-drift-recovery',
 				(string) ( $state['last_root'] ?? '' ),
@@ -517,7 +522,8 @@ final class FileExporter {
 		);
 
 		$state['inventory_hash_match'] = $fingerprint_match;
-		$state['source_drift']       = ! $fingerprint_match;
+
+		$state['source_drift'] = ! $fingerprint_match;
 		if ( ! $fingerprint_match ) {
 			$state = $this->append_event(
 				$state,
@@ -545,8 +551,8 @@ final class FileExporter {
 			'roots'                       => $root_summaries,
 			'source_fingerprint'          => (string) $state['export_fingerprint'],
 			'inventory_fingerprint'       => (string) ( $inventory['fingerprint'] ?? '' ),
-			'inventory_hash_match' => $fingerprint_match,
-			'source_drift'       => ! $fingerprint_match,
+			'inventory_hash_match'         => $fingerprint_match,
+			'source_drift'                 => ! $fingerprint_match,
 			'file_records'                => array(
 				'format'    => 'one-json-record-per-file',
 				'directory' => 'files-meta/',
