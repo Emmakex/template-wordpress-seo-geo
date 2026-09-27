@@ -10,13 +10,13 @@ Use exactly:
 
 - source origin: `https://emmake.com/`;
 - isolated target origin: `https://emmake.com/nuevaweb/`;
-- Migration Bridge: `0.8.44`;
-- accepted Migration Bridge main commit: `e9b5ccac08a836f47bfbf1c3d41cbceabf58e14d`;
-- accepted Migration Bridge ZIP SHA-256: `782c0df395a3bdf284af72c9c589a0a38f6d3faa8c6dcb3300488ee303ec7b4f`;
+- Migration Bridge: `0.8.45`;
+- accepted Migration Bridge main commit: `e3c8e86a2cfb5e75ed2f1e204c47a4affd920716`;
+- accepted Migration Bridge ZIP SHA-256: `224d489f7d2df25f9d613f21733368116e3ceb0c7964812fc319b27c192f2bf6`;
 - bounded source handoff SHA-256: `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`;
 - acceptance record: `release/emmake-real-clone-acceptance.json`.
 
-Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.44 is the current Emmake pilot artifact. The user-supplied 0.8.39 ZIP (`70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`) is preserved as the confirmed last-good real-export baseline that reached 20,256/20,256 files and 608/608 MB. 0.8.44 keeps retained-job selection and the accepted fingerprint-drift/package-integrity recovery, and fixes the remaining real-site edge case where rounded UI totals can show 608 MB / 608 MB while exact byte totals differ. Recovery now requires the terminal drift reason, exact completed file count and completed traversal of every payload root. Byte drift is recorded in the exported snapshot and the private workspace is re-hashed by package integrity before continuation. File-count drift remains terminal.
+Do not rebuild the plugin locally for this pilot. Use the accepted artifact identity above. Version 0.8.45 is the current Emmake pilot artifact. The user-supplied 0.8.39 ZIP (`70060e4e767b0a3699ed1878d2e9c2e57c7c6d35a8be0e7abb59073b4cf39146`) is preserved as the confirmed last-good real-export baseline that reached 20,256/20,256 files and 608/608 MB. 0.8.44 recovered that fully traversed snapshot despite live-source byte drift. The subsequent real package-integrity pass exposed a separate validator false positive: legitimate exported `index.php` and `.htaccess` payloads were being checked as generated workspace guards before their per-file evidence. 0.8.45 validates exported payload evidence first, keeps guard fallback for generated files, and permits the retained `package-exported-payload-mismatch` state to retry from its saved cursor. A genuine byte/hash mismatch still blocks immediately. Install 0.8.45 over the current plugin, reopen the same retained Emmake job, and use **Continue package integrity**; do not create a new clone or re-export the files.
 
 ## Operator-only inputs required before execution
 
