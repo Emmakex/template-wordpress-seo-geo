@@ -239,6 +239,28 @@ if ( 'complete' !== ( $state['status'] ?? null ) ) {
 	throw new RuntimeException( 'File export did not complete within bounded fixture steps: ' . wp_json_encode( $state ) );
 }
 
+$recovery_file_count_before = (int) ( $state['file_count'] ?? 0 );
+$recovery_request_sequence_before = (int) ( $state['request_sequence'] ?? 0 );
+$legacy_blocked_state = $state;
+$legacy_blocked_state['status'] = 'blocked';
+$legacy_blocked_state['blockers'] = array( 'source-files-changed-since-inventory' );
+$legacy_blocked_state['last_action'] = 'source-files-changed-since-inventory';
+$legacy_blocked_state['source_drift'] = false;
+$legacy_blocked_state['inventory_hash_match'] = true;
+$legacy_blocked_state['files_manifest_hash'] = '';
+if ( ! ( new FileExportStateStore() )->save( $job_id, $legacy_blocked_state ) ) {
+	throw new RuntimeException( 'Could not persist legacy blocked file-export fixture.' );
+}
+$jobs->transition( $job_id, 'failed-terminal', 'source-files-changed-since-inventory' );
+$state = $exporter->advance( $job_id, 7, 1024 * 1024 );
+if ( ! is_array( $state ) || 'complete' !== ( $state['status'] ?? null ) ) {
+	throw new RuntimeException( 'Could not recover fingerprint-only legacy blocked export.' );
+}
+$legacy_block_recovered_without_recopy = (
+	$recovery_file_count_before === (int) ( $state['file_count'] ?? -1 )
+	&& $recovery_request_sequence_before === (int) ( $state['request_sequence'] ?? -1 )
+);
+
 $workspace = new ExportWorkspace();
 $manifest_json = $workspace->read( $job_id, 'files/manifest.json' );
 $manifest = is_string( $manifest_json ) ? json_decode( $manifest_json, true ) : null;
@@ -258,6 +280,7 @@ echo wp_json_encode(
 		'steps' => $steps,
 		'interrupted' => $interrupted,
 		'checkpointed_file_count' => (int) ( $checkpointed_state['file_count'] ?? 0 ),
+		'legacy_block_recovered_without_recopy' => $legacy_block_recovered_without_recopy,
 		'manifest' => $manifest,
 		'copied_upload_matches' => $copied_upload === $drifted_upload,
 		'excluded_cache_absent' => null === $excluded_cache,
@@ -309,6 +332,7 @@ assert state["blockers"] == []
 assert payload["steps"] >= 3
 assert payload["interrupted"] is True
 assert payload["checkpointed_file_count"] >= 1
+assert payload["legacy_block_recovered_without_recopy"] is True
 assert state["checkpoint_count"] >= 3
 assert state["last_action"] == "complete"
 assert state["source_drift"] is True
@@ -343,7 +367,7 @@ assert "fixture alpha" not in serialized
 print("ok")
 PY
 )"; then
-  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 verified private file copies with durable interruption recovery, live-source drift capture, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
+  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 verified private file copies with durable interruption recovery, legacy blocked-state recovery without recopy, live-source drift capture, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Clone file export OK: 7 accepted files copied with durable mid-request checkpoints; nested traversal, interruption recovery and same-size live-source drift capture passed; exclusions preserved.\n'
+printf '[smoke] Portable Clone file export OK: 7 accepted files copied with durable mid-request checkpoints; nested traversal, interruption recovery, legacy blocked-state recovery without recopy and same-size live-source drift capture passed; exclusions preserved.\n'
