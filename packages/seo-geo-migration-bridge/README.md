@@ -329,3 +329,6 @@ Migration Bridge 0.8.37 improves the real-site file-export operator flow discove
 
 
 Migration Bridge 0.8.38 hardens real-site file export after the Emmake pilot showed both automatic and manual modes could appear stuck on the same durable count. The exporter now checkpoints traversal during the request, persists the first copied file and every small copy interval, uses an explicit active-directory cursor, applies a conservative per-request time budget, and records bounded operator diagnostics. The Tools screen adds file/byte progress bars plus a recent-event log with root-relative paths, last action, last file size, request duration and checkpoint count. Version 1 file-export state remains resumable through the version 2 state normalizer.
+
+
+Migration Bridge 0.8.39 fixes the browser-side continuation of one-click automatic file export. WordPress `submit_button()` uses `name="submit"` by default, which shadows the native form `submit()` method in DOM form collections; the previous automatic chain therefore completed the first request but could fail before the second. The automatic control now uses a non-conflicting button name plus `requestSubmit()` with a native prototype fallback, while manual batch behavior remains unchanged.
