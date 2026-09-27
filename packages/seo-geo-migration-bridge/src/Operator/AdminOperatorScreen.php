@@ -548,7 +548,20 @@ final class AdminOperatorScreen {
 			</tbody>
 		</table>
 
-		<?php if ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
+		<?php if ( $recoverable_drift ) : ?>
+			<div style="margin-top:16px;padding:16px;border:1px solid #dba617;background:#fff8e5;">
+				<h4 style="margin-top:0;"><?php echo esc_html( $this->copy->text( 'clone_file_export_drift_recovery_heading' ) ); ?></h4>
+				<p><?php echo esc_html( $this->copy->text( 'clone_file_export_drift_recovery_help' ) ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneFileExportController::ACTION ); ?>">
+					<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+					<input type="hidden" name="file_export_mode" value="auto">
+					<input type="hidden" name="file_export_auto_cycle" value="0">
+					<?php wp_nonce_field( AdminCloneFileExportController::NONCE_ACTION . ':' . $job_id ); ?>
+					<?php submit_button( $this->copy->text( 'clone_file_export_drift_recovery_button' ), 'primary', 'seo_geo_drift_recovery', false ); ?>
+				</form>
+			</div>
+		<?php elseif ( ! in_array( $status, array( 'complete', 'blocked' ), true ) ) : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneInventoryController::ACTION ); ?>">
 				<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
@@ -622,6 +635,12 @@ final class AdminOperatorScreen {
 					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th>
 					<td><code><?php echo esc_html( $status ); ?></code></td>
 				</tr>
+				<?php if ( true === ( $export['source_drift_detected'] ?? false ) ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_file_export_source_drift' ) ); ?></th>
+						<td><strong><?php echo esc_html( $this->copy->text( 'clone_file_export_source_drift_captured' ) ); ?></strong></td>
+					</tr>
+				<?php endif; ?>
 				<tr>
 					<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_export_tables_done' ) ); ?></th>
 					<td><?php echo esc_html( (string) (int) ( $export['tables_completed'] ?? 0 ) . ' / ' . (string) (int) ( $export['table_count'] ?? 0 ) ); ?></td>
@@ -732,6 +751,14 @@ final class AdminOperatorScreen {
 		$events     = is_array( $export['recent_events'] ?? null )
 			? array_values( array_filter( $export['recent_events'], 'is_string' ) )
 			: array();
+
+		$blockers = is_array( $export['blockers'] ?? null ) ? array_values( $export['blockers'] ) : array();
+		$recoverable_drift = (
+			'blocked' === $status
+			&& array( 'source-files-changed-since-inventory' ) === $blockers
+			&& $file_count === $file_total
+			&& $byte_count === $byte_total
+		);
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result status controls automatic continuation only after a successful batch.
 		$request_status = isset( $_GET['seo_geo_clone_file_export'] )
