@@ -22,7 +22,7 @@ final class AdminCloneFileExportController {
 	private const MODE_AUTO           = 'auto';
 	private const AUTO_BATCH_FILES    = 100;
 	private const AUTO_BATCH_MEGABYTES = 16;
-	private const MAX_AUTO_CYCLES     = 500;
+	public const MAX_AUTO_CYCLES      = 500;
 
 	/**
 	 * Resumable file exporter.
