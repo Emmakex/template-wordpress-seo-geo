@@ -311,8 +311,8 @@ assert payload["interrupted"] is True
 assert payload["checkpointed_file_count"] >= 1
 assert state["checkpoint_count"] >= 3
 assert state["last_action"] == "complete"
-assert state["source_drift_detected"] is True
-assert state["inventory_fingerprint_match"] is False
+assert state["source_drift"] is True
+assert state["inventory_hash_match"] is False
 assert isinstance(state["recent_events"], list)
 assert any("file-copied" in event for event in state["recent_events"])
 assert payload["file_export_state_autoload"] in ("off", "no", "auto-off")
@@ -327,8 +327,8 @@ assert manifest["payload_class"] == "files"
 assert manifest["file_count"] == 7
 assert manifest["payload_bytes"] == state["byte_count"]
 assert manifest["source_fingerprint"] == state["export_fingerprint"]
-assert manifest["inventory_fingerprint_match"] is False
-assert manifest["source_drift_detected"] is True
+assert manifest["inventory_hash_match"] is False
+assert manifest["source_drift"] is True
 assert manifest["inventory_fingerprint"] != manifest["source_fingerprint"]
 assert [root["id"] for root in manifest["roots"]] == ["uploads", "plugins", "themes"]
 assert manifest["file_records"]["format"] == "one-json-record-per-file"
