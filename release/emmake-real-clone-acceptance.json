@@ -5,9 +5,9 @@
   "source_origin": "https://emmake.com/",
   "target_origin": "https://emmake.com/nuevaweb/",
   "migration_bridge": {
-    "version": "0.8.36",
-    "main_commit": "b78f38016ac0848cd37b75fb608262b289d32ceb",
-    "zip_sha256": "1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792"
+    "version": "0.8.38",
+    "main_commit": "ef1e54dbf1f2ecff197de47a72429336b803f0b5",
+    "zip_sha256": "72de9be333b840b0291cb79bdc2c846119862e5eef703781fd27450c9528e485"
   },
   "source_evidence": {
     "baseline_ready": true,
@@ -56,5 +56,8 @@
   "decision": "pending",
   "evidence_captured_at": "",
   "operator": "",
-  "notes": []
+  "notes": [
+    "Migration Bridge 0.8.38 supersedes the earlier pilot artifact after the real-site file export test. Durable in-request checkpoints, progress bars and bounded diagnostics are now required for the Emmake acceptance run.",
+    "Real execution evidence remains pending and must be recorded only from observed production/sandbox results."
+  ]
 }
