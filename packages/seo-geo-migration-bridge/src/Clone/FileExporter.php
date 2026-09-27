@@ -192,7 +192,7 @@ final class FileExporter {
 		$batch_files = max( self::MIN_BATCH_FILES, min( self::MAX_BATCH_FILES, $batch_files ) );
 		$batch_bytes = max( self::MIN_BATCH_BYTES, min( self::MAX_BATCH_BYTES, $batch_bytes ) );
 		$state       = $this->store->get( $job_id ) ?? $this->start( $job_id );
-		if ( ! is_array( $state ) || in_array( $state['status'] ?? null, array( 'complete', 'blocked' ), true ) ) {
+		if ( ! is_array( $state ) || 'complete' === ( $state['status'] ?? null ) ) {
 			return $state;
 		}
 
@@ -200,6 +200,39 @@ final class FileExporter {
 		$roots     = is_array( $inventory['roots'] ?? null ) ? array_values( $inventory['roots'] ) : array();
 		if ( ! is_array( $inventory ) || 'complete' !== ( $inventory['status'] ?? null ) || array() === $roots ) {
 			return $this->block( $job_id, $state, 'file-export-inventory-unavailable', false );
+		}
+
+		if ( 'blocked' === ( $state['status'] ?? null ) ) {
+			if ( ! $this->recoverable_inventory_drift( $state, $inventory ) ) {
+				return $state;
+			}
+			$state['status'] = 'running';
+
+			$state['blockers'] = array_values(
+				array_diff(
+					is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array(),
+					array( 'source-files-changed-since-inventory' )
+				)
+			);
+
+			$state['source_drift'] = true;
+
+			$state['inventory_hash_match'] = false;
+
+			$state['last_action'] = 'source-drift-recovery';
+
+			$state = $this->append_event(
+				$state,
+				'source-drift-recovery',
+				(string) ( $state['last_root'] ?? '' ),
+				(string) ( $state['last_path'] ?? '' ),
+				'completed copy retained; final exported snapshot is authoritative'
+			);
+			if ( ! $this->save_checkpoint( $job_id, $state ) ) {
+				return null;
+			}
+			$this->jobs->transition( $job_id, 'active', null );
+			return $this->complete_files( $job_id, $state, $inventory, $roots );
 		}
 
 		$request_started             = microtime( true );
@@ -479,9 +512,26 @@ final class FileExporter {
 		if (
 			(int) ( $state['file_count'] ?? 0 ) !== (int) ( $inventory['file_count'] ?? -1 )
 			|| (int) ( $state['byte_count'] ?? 0 ) !== (int) ( $inventory['byte_count'] ?? -1 )
-			|| ! hash_equals( (string) ( $inventory['fingerprint'] ?? '' ), (string) ( $state['export_fingerprint'] ?? '' ) )
 		) {
-			return $this->block( $job_id, $state, 'source-files-changed-since-inventory', false );
+			return $this->block( $job_id, $state, 'source-files-structure-changed-since-inventory', false );
+		}
+
+		$fingerprint_match = hash_equals(
+			(string) ( $inventory['fingerprint'] ?? '' ),
+			(string) ( $state['export_fingerprint'] ?? '' )
+		);
+
+		$state['inventory_hash_match'] = $fingerprint_match;
+
+		$state['source_drift'] = ! $fingerprint_match;
+		if ( ! $fingerprint_match ) {
+			$state = $this->append_event(
+				$state,
+				'source-drift-captured',
+				(string) ( $state['last_root'] ?? '' ),
+				(string) ( $state['last_path'] ?? '' ),
+				'counts and bytes match; exported per-file verified snapshot accepted'
+			);
 		}
 
 		$root_summaries = array();
@@ -500,6 +550,9 @@ final class FileExporter {
 			'payload_bytes'               => (int) $state['byte_count'],
 			'roots'                       => $root_summaries,
 			'source_fingerprint'          => (string) $state['export_fingerprint'],
+			'inventory_fingerprint'       => (string) ( $inventory['fingerprint'] ?? '' ),
+			'inventory_hash_match'        => $fingerprint_match,
+			'source_drift'                => ! $fingerprint_match,
 			'file_records'                => array(
 				'format'    => 'one-json-record-per-file',
 				'directory' => 'files-meta/',
@@ -524,7 +577,13 @@ final class FileExporter {
 		$state['last_action']         = 'complete';
 		$state['updated_at']          = gmdate( DATE_ATOM );
 		$state['completed_at']        = $state['updated_at'];
-		$state                        = $this->append_event( $state, 'complete', (string) ( $state['last_root'] ?? '' ), (string) ( $state['last_path'] ?? '' ), 'source inventory reconciled exactly' );
+		$state                        = $this->append_event(
+			$state,
+			'complete',
+			(string) ( $state['last_root'] ?? '' ),
+			(string) ( $state['last_path'] ?? '' ),
+			$fingerprint_match ? 'source inventory reconciled exactly' : 'verified exported snapshot completed with source drift recorded'
+		);
 		if ( ! $this->save_checkpoint( $job_id, $state ) ) {
 			return null;
 		}
@@ -607,6 +666,24 @@ final class FileExporter {
 				'total'     => (int) ( $state['inventory_file_count'] ?? 0 ),
 			)
 		);
+	}
+
+	/**
+	 * Whether a previously terminal fingerprint-only mismatch can be finalized safely.
+	 *
+	 * Counts and bytes must already match the completed source inventory. The private
+	 * workspace contains one hash-verified copy and one metadata record per exported
+	 * file, so a fingerprint-only difference is retained as drift evidence instead of
+	 * forcing a second 600+ MB copy.
+	 *
+	 * @param array<string,mixed> $state     File-export state.
+	 * @param array<string,mixed> $inventory Completed source inventory.
+	 */
+	private function recoverable_inventory_drift( array $state, array $inventory ): bool {
+		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( $state['blockers'] ) : array();
+		return array( 'source-files-changed-since-inventory' ) === $blockers
+			&& (int) ( $state['file_count'] ?? -1 ) === (int) ( $inventory['file_count'] ?? -2 )
+			&& (int) ( $state['byte_count'] ?? -1 ) === (int) ( $inventory['byte_count'] ?? -2 );
 	}
 
 	/**

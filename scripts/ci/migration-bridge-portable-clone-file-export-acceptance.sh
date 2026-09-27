@@ -187,6 +187,12 @@ if ( ! $database_ok ) {
 	throw new RuntimeException( 'Could not save completed database export fixture.' );
 }
 
+$drifted_upload = 'source-upload-z';
+if ( strlen( $drifted_upload ) !== strlen( $files['uploads/a-photo.jpg'] ) ) {
+	throw new RuntimeException( 'Drift fixture must preserve the original byte count.' );
+}
+file_put_contents( $fixture . '/uploads/a-photo.jpg', $drifted_upload );
+
 $state = $exporter->start( $job_id );
 if ( ! is_array( $state ) || 'running' !== $state['status'] ) {
 	throw new RuntimeException( 'Could not start file export.' );
@@ -233,6 +239,28 @@ if ( 'complete' !== ( $state['status'] ?? null ) ) {
 	throw new RuntimeException( 'File export did not complete within bounded fixture steps: ' . wp_json_encode( $state ) );
 }
 
+$recovery_file_count_before = (int) ( $state['file_count'] ?? 0 );
+$recovery_request_sequence_before = (int) ( $state['request_sequence'] ?? 0 );
+$legacy_blocked_state = $state;
+$legacy_blocked_state['status'] = 'blocked';
+$legacy_blocked_state['blockers'] = array( 'source-files-changed-since-inventory' );
+$legacy_blocked_state['last_action'] = 'source-files-changed-since-inventory';
+$legacy_blocked_state['source_drift'] = false;
+$legacy_blocked_state['inventory_hash_match'] = true;
+$legacy_blocked_state['files_manifest_hash'] = '';
+if ( ! ( new FileExportStateStore() )->save( $job_id, $legacy_blocked_state ) ) {
+	throw new RuntimeException( 'Could not persist legacy blocked file-export fixture.' );
+}
+$jobs->transition( $job_id, 'failed-terminal', 'source-files-changed-since-inventory' );
+$state = $exporter->advance( $job_id, 7, 1024 * 1024 );
+if ( ! is_array( $state ) || 'complete' !== ( $state['status'] ?? null ) ) {
+	throw new RuntimeException( 'Could not recover fingerprint-only legacy blocked export.' );
+}
+$legacy_block_recovered_without_recopy = (
+	$recovery_file_count_before === (int) ( $state['file_count'] ?? -1 )
+	&& $recovery_request_sequence_before === (int) ( $state['request_sequence'] ?? -1 )
+);
+
 $workspace = new ExportWorkspace();
 $manifest_json = $workspace->read( $job_id, 'files/manifest.json' );
 $manifest = is_string( $manifest_json ) ? json_decode( $manifest_json, true ) : null;
@@ -252,11 +280,12 @@ echo wp_json_encode(
 		'steps' => $steps,
 		'interrupted' => $interrupted,
 		'checkpointed_file_count' => (int) ( $checkpointed_state['file_count'] ?? 0 ),
+		'legacy_block_recovered_without_recopy' => $legacy_block_recovered_without_recopy,
 		'manifest' => $manifest,
-		'copied_upload_matches' => $copied_upload === $files['uploads/a-photo.jpg'],
+		'copied_upload_matches' => $copied_upload === $drifted_upload,
 		'excluded_cache_absent' => null === $excluded_cache,
 		'excluded_log_absent' => null === $excluded_log,
-		'source_upload_unchanged' => file_get_contents( $fixture . '/uploads/a-photo.jpg' ) === $files['uploads/a-photo.jpg'],
+		'source_upload_matches_drift' => file_get_contents( $fixture . '/uploads/a-photo.jpg' ) === $drifted_upload,
 		'file_export_state_autoload' => $autoload,
 		'controller_registered' => false !== has_action( 'admin_post_' . AdminCloneFileExportController::ACTION ),
 	),
@@ -303,8 +332,11 @@ assert state["blockers"] == []
 assert payload["steps"] >= 3
 assert payload["interrupted"] is True
 assert payload["checkpointed_file_count"] >= 1
+assert payload["legacy_block_recovered_without_recopy"] is True
 assert state["checkpoint_count"] >= 3
 assert state["last_action"] == "complete"
+assert state["source_drift"] is True
+assert state["inventory_hash_match"] is False
 assert isinstance(state["recent_events"], list)
 assert any("file-copied" in event for event in state["recent_events"])
 assert payload["file_export_state_autoload"] in ("off", "no", "auto-off")
@@ -312,13 +344,16 @@ assert payload["controller_registered"] is True
 assert payload["copied_upload_matches"] is True
 assert payload["excluded_cache_absent"] is True
 assert payload["excluded_log_absent"] is True
-assert payload["source_upload_unchanged"] is True
+assert payload["source_upload_matches_drift"] is True
 
 assert manifest["schema_version"] == 1
 assert manifest["payload_class"] == "files"
 assert manifest["file_count"] == 7
 assert manifest["payload_bytes"] == state["byte_count"]
 assert manifest["source_fingerprint"] == state["export_fingerprint"]
+assert manifest["inventory_hash_match"] is False
+assert manifest["source_drift"] is True
+assert manifest["inventory_fingerprint"] != manifest["source_fingerprint"]
 assert [root["id"] for root in manifest["roots"]] == ["uploads", "plugins", "themes"]
 assert manifest["file_records"]["format"] == "one-json-record-per-file"
 assert manifest["production_source_read_only"] is True
@@ -332,7 +367,7 @@ assert "fixture alpha" not in serialized
 print("ok")
 PY
 )"; then
-  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 reconciled private file copies with durable interruption recovery, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
+  fail_smoke "clone-file-export-contract" "Portable Clone file export contract is invalid" "7 verified private file copies with durable interruption recovery, legacy blocked-state recovery without recopy, live-source drift capture, hashes and exclusions" "${FILE_EXPORT_ASSERTION:-python assertion failed}"
 fi
 
-printf '[smoke] Portable Clone file export OK: 7 accepted files copied with durable mid-request checkpoints; nested traversal and interruption recovery passed; exclusions preserved; source unchanged.\n'
+printf '[smoke] Portable Clone file export OK: 7 accepted files copied with durable mid-request checkpoints; nested traversal, interruption recovery, legacy blocked-state recovery without recopy and same-size live-source drift capture passed; exclusions preserved.\n'
