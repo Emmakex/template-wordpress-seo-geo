@@ -5,9 +5,9 @@
   "source_origin": "https://emmake.com/",
   "target_origin": "https://emmake.com/nuevaweb/",
   "migration_bridge": {
-    "version": "0.8.44",
-    "main_commit": "e9b5ccac08a836f47bfbf1c3d41cbceabf58e14d",
-    "zip_sha256": "782c0df395a3bdf284af72c9c589a0a38f6d3faa8c6dcb3300488ee303ec7b4f"
+    "version": "0.8.45",
+    "main_commit": "e3c8e86a2cfb5e75ed2f1e204c47a4affd920716",
+    "zip_sha256": "224d489f7d2df25f9d613f21733368116e3ceb0c7964812fc319b27c192f2bf6"
   },
   "source_evidence": {
     "baseline_ready": true,
@@ -57,8 +57,9 @@
   "evidence_captured_at": "",
   "operator": "",
   "notes": [
-    "Migration Bridge 0.8.44 is the current accepted pilot artifact. The user-supplied 0.8.39 ZIP remains the confirmed last-good real-export provenance baseline for the 20,256-file / 608 MB snapshot.",
-    "0.8.44 recovers a fully traversed exact-file-count snapshot even when live-source byte totals changed during the export; byte drift is recorded and package integrity re-hashes the private workspace against per-file records before continuation.",
+    "Migration Bridge 0.8.45 is the current accepted pilot artifact. The user-supplied 0.8.39 ZIP remains the confirmed last-good real-export provenance baseline for the 20,256-file / 608 MB snapshot.",
+    "0.8.44 recovered the fully traversed exact-file-count snapshot despite live-source byte drift; the following real package-integrity pass reached a retained package-exported-payload-mismatch during build.",
+    "0.8.45 fixes the package-integrity false positive for legitimate exported index.php/.htaccess payloads and safely retries the retained mismatch from its saved cursor; genuine tampering remains blocked.",
     "Real execution evidence remains pending and must be recorded only from observed production/sandbox results."
   ]
 }
