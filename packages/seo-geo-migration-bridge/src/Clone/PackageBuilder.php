@@ -132,10 +132,24 @@ final class PackageBuilder {
 			return $existing;
 		}
 
-		$source_fingerprint = (string) ( $inventory['fingerprint'] ?? '' );
+		$inventory_fingerprint = (string) ( $inventory['fingerprint'] ?? '' );
+		$source_fingerprint    = (string) ( $files['export_fingerprint'] ?? '' );
+		$fingerprint_match     = (
+			1 === preg_match( '/^[a-f0-9]{64}$/', $inventory_fingerprint )
+			&& 1 === preg_match( '/^[a-f0-9]{64}$/', $source_fingerprint )
+			&& hash_equals( $inventory_fingerprint, $source_fingerprint )
+		);
+		$drift_snapshot = (
+			! $fingerprint_match
+			&& true === ( $files['source_drift'] ?? false )
+			&& false === ( $files['inventory_hash_match'] ?? true )
+			&& (int) ( $files['file_count'] ?? -1 ) === (int) ( $inventory['file_count'] ?? -2 )
+			&& (int) ( $files['byte_count'] ?? -1 ) === (int) ( $inventory['byte_count'] ?? -2 )
+		);
+
 		if (
 			1 !== preg_match( '/^[a-f0-9]{64}$/', $source_fingerprint )
-			|| ! hash_equals( $source_fingerprint, (string) ( $files['export_fingerprint'] ?? '' ) )
+			|| ( ! $fingerprint_match && ! $drift_snapshot )
 			|| ! $this->child_manifest_matches( $job_id, 'database/manifest.json', (string) ( $database['database_manifest_hash'] ?? '' ) )
 			|| ! $this->child_manifest_matches( $job_id, 'files/manifest.json', (string) ( $files['files_manifest_hash'] ?? '' ) )
 			|| null === $this->workspace_root( $job_id )
@@ -383,10 +397,11 @@ final class PackageBuilder {
 			return $this->block( $job_id, $state, 'package-integrity-verification-failed', false );
 		}
 
-		$job      = $this->jobs->get( $job_id );
-		$database = $this->database_export->get( $job_id );
-		$files    = $this->file_export->get( $job_id );
-		if ( ! is_array( $job ) || ! is_array( $database ) || ! is_array( $files ) ) {
+		$job       = $this->jobs->get( $job_id );
+		$inventory = $this->inventory->get( $job_id );
+		$database  = $this->database_export->get( $job_id );
+		$files     = $this->file_export->get( $job_id );
+		if ( ! is_array( $job ) || ! is_array( $inventory ) || ! is_array( $database ) || ! is_array( $files ) ) {
 			return $this->block( $job_id, $state, 'package-state-dependency-missing', false );
 		}
 
@@ -396,11 +411,13 @@ final class PackageBuilder {
 			'package_id'     => $job_id,
 			'operation'      => (string) ( $job['operation'] ?? '' ),
 			'source'         => array(
-				'home_url'           => home_url( '/' ),
-				'site_url'           => site_url( '/' ),
-				'wordpress_version'  => get_bloginfo( 'version' ),
-				'php_version'        => PHP_VERSION,
-				'source_fingerprint' => (string) $state['source_fingerprint'],
+				'home_url'              => home_url( '/' ),
+				'site_url'              => site_url( '/' ),
+				'wordpress_version'     => get_bloginfo( 'version' ),
+				'php_version'           => PHP_VERSION,
+				'source_fingerprint'    => (string) $state['source_fingerprint'],
+				'inventory_fingerprint' => (string) ( $inventory['fingerprint'] ?? '' ),
+				'source_drift'          => true === ( $files['source_drift'] ?? false ),
 			),
 			'payload'        => array(
 				'database' => array(
