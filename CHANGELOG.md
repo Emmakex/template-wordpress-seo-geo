@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.42 adds explicit saved-job selection so retained Portable Clone progress can be reopened instead of being hidden by a newer job.
+
 ### Added
 
 - Self-contained WordPress block theme with native technical SEO/GEO runtime and zero required plugins.

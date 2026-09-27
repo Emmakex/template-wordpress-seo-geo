@@ -335,3 +335,6 @@ Migration Bridge 0.8.39 fixes the browser-side continuation of one-click automat
 
 
 Migration Bridge 0.8.41 completes the live-source drift recovery path introduced in 0.8.40. Package integrity now accepts a file export whose aggregate inventory fingerprint differs only when the exporter has explicitly recorded a verified drift snapshot with identical file/byte totals. In that case the package binds to the exported snapshot fingerprint, retains the original inventory fingerprint as provenance in the package manifest, and continues through the same two-pass workspace integrity verification. Unrecorded fingerprint mismatch or structural count/byte drift remains blocked.
+
+
+Migration Bridge 0.8.42 adds explicit operator access to retained Portable Clone jobs after real-site testing showed that a newer job can visually hide an older advanced export. The Tools screen lists saved jobs and allows the operator to open a specific existing job by ID without creating, resetting or mutating it. It is layered on top of the accepted 0.8.41 package-integrity drift-snapshot path, so both the completed Emmake file snapshot and later package-integrity recovery remain preserved.

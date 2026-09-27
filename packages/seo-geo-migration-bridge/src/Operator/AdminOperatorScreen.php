@@ -405,7 +405,32 @@ final class AdminOperatorScreen {
 	 * Render Phase 10E.2A.1 planning-only Portable Clone controls.
 	 */
 	private function render_clone_planning_section(): void {
-		$latest = ( new CloneJobStore() )->latest();
+		$store = new CloneJobStore();
+		$jobs  = array_values( $store->all() );
+		usort(
+			$jobs,
+			static fn( array $left, array $right ): int => strcmp(
+				(string) ( $right['updated_at'] ?? '' ),
+				(string) ( $left['updated_at'] ?? '' )
+			)
+		);
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only job selection; no state mutation occurs.
+		$requested_job_id = isset( $_GET['clone_job_id'] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Same read-only selector value.
+			? sanitize_text_field( wp_unslash( $_GET['clone_job_id'] ) )
+			: '';
+		$selected = null;
+		foreach ( $jobs as $job ) {
+			if ( '' !== $requested_job_id && hash_equals( (string) ( $job['job_id'] ?? '' ), $requested_job_id ) ) {
+				$selected = $job;
+				break;
+			}
+		}
+		if ( null === $selected && array() !== $jobs ) {
+			$selected = $jobs[0];
+		}
+
 		?>
 		<h2><?php echo esc_html( $this->copy->text( 'clone_heading' ) ); ?></h2>
 		<p><?php echo esc_html( $this->copy->text( 'clone_help' ) ); ?></p>
@@ -414,31 +439,64 @@ final class AdminOperatorScreen {
 			<?php $this->render_clone_job_form( 'export', 'clone_export_button' ); ?>
 			<?php $this->render_clone_job_form( 'import', 'clone_import_button' ); ?>
 		</div>
-		<?php if ( is_array( $latest ) ) : ?>
-			<h3><?php echo esc_html( $this->copy->text( 'clone_latest_heading' ) ); ?></h3>
+
+		<?php if ( 1 < count( $jobs ) ) : ?>
+			<div style="margin:16px 0;padding:16px;border:1px solid #c3c4c7;background:#fff;">
+				<h3 style="margin-top:0;"><?php echo esc_html( $this->copy->text( 'clone_resume_heading' ) ); ?></h3>
+				<p><?php echo esc_html( $this->copy->text( 'clone_resume_help' ) ); ?></p>
+				<form method="get" action="<?php echo esc_url( admin_url( 'tools.php' ) ); ?>">
+					<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>">
+					<label for="seo-geo-clone-job-select"><strong><?php echo esc_html( $this->copy->text( 'clone_resume_label' ) ); ?></strong></label>
+					<select id="seo-geo-clone-job-select" name="clone_job_id" style="max-width:100%;min-width:520px;">
+						<?php foreach ( $jobs as $job ) : ?>
+							<?php
+							$job_id   = (string) ( $job['job_id'] ?? '' );
+							$counters = is_array( $job['counters'] ?? null ) ? $job['counters'] : array();
+							$done     = (int) ( $counters['completed'] ?? 0 );
+							$total    = $counters['total'] ?? null;
+							$progress = null === $total ? (string) $done : $done . '/' . (string) (int) $total;
+							$label    = sprintf(
+								'%1$s · %2$s · %3$s · %4$s · %5$s',
+								$job_id,
+								(string) ( $job['operation'] ?? '' ),
+								(string) ( $job['phase'] ?? '' ),
+								(string) ( $job['status'] ?? '' ),
+								$progress
+							);
+							?>
+							<option value="<?php echo esc_attr( $job_id ); ?>" <?php selected( (string) ( $selected['job_id'] ?? '' ), $job_id ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<?php submit_button( $this->copy->text( 'clone_resume_button' ), 'secondary', 'seo_geo_clone_resume', false ); ?>
+				</form>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( is_array( $selected ) ) : ?>
+			<h3><?php echo esc_html( $this->copy->text( 'clone_selected_heading' ) ); ?></h3>
 			<table class="widefat striped" role="presentation">
 				<tbody>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_job_id' ) ); ?></th>
-						<td><code><?php echo esc_html( (string) ( $latest['job_id'] ?? '' ) ); ?></code></td>
+						<td><code><?php echo esc_html( (string) ( $selected['job_id'] ?? '' ) ); ?></code></td>
 					</tr>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_operation' ) ); ?></th>
-						<td><code><?php echo esc_html( (string) ( $latest['operation'] ?? '' ) ); ?></code></td>
+						<td><code><?php echo esc_html( (string) ( $selected['operation'] ?? '' ) ); ?></code></td>
 					</tr>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_phase' ) ); ?></th>
-						<td><code><?php echo esc_html( (string) ( $latest['phase'] ?? '' ) ); ?></code></td>
+						<td><code><?php echo esc_html( (string) ( $selected['phase'] ?? '' ) ); ?></code></td>
 					</tr>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_status' ) ); ?></th>
-						<td><code><?php echo esc_html( (string) ( $latest['status'] ?? '' ) ); ?></code></td>
+						<td><code><?php echo esc_html( (string) ( $selected['status'] ?? '' ) ); ?></code></td>
 					</tr>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'label_clone_progress' ) ); ?></th>
 						<td>
 							<?php
-							$counters = is_array( $latest['counters'] ?? null ) ? $latest['counters'] : array();
+							$counters = is_array( $selected['counters'] ?? null ) ? $selected['counters'] : array();
 							$done     = (int) ( $counters['completed'] ?? 0 );
 							$total    = $counters['total'] ?? null;
 							echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total );
@@ -447,10 +505,10 @@ final class AdminOperatorScreen {
 					</tr>
 				</tbody>
 			</table>
-			<?php if ( in_array( $latest['operation'] ?? null, array( 'local-clone', 'export' ), true ) ) : ?>
-				<?php $this->render_clone_inventory_section( $latest ); ?>
-			<?php elseif ( 'import' === ( $latest['operation'] ?? null ) ) : ?>
-				<?php $this->render_clone_import_section( $latest ); ?>
+			<?php if ( in_array( $selected['operation'] ?? null, array( 'local-clone', 'export' ), true ) ) : ?>
+				<?php $this->render_clone_inventory_section( $selected ); ?>
+			<?php elseif ( 'import' === ( $selected['operation'] ?? null ) ) : ?>
+				<?php $this->render_clone_import_section( $selected ); ?>
 			<?php endif; ?>
 		<?php endif; ?>
 		<?php

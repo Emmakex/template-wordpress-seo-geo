@@ -2707,6 +2707,27 @@ if ( str_contains( $operator_screen, 'form.submit();' ) ) {
 	);
 }
 
+foreach (
+	array(
+		'$jobs  = array_values( $store->all() );',
+		'isset( $_GET[\'clone_job_id\'] )',
+		'name="clone_job_id"',
+		'\'clone_resume_heading\'',
+		'\'clone_resume_button\'',
+		'$this->render_clone_inventory_section( $selected );',
+	) as $saved_job_resume_guard
+) {
+	if ( ! str_contains( $operator_screen, $saved_job_resume_guard ) ) {
+		fail_migration_bridge(
+			'operator-saved-job-resume',
+			'Portable Clone operator UI must keep retained jobs selectable without creating or resetting state.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+			$saved_job_resume_guard,
+			'missing'
+		);
+	}
+}
+
 $strictly_read_only_operator_files = array(
 	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php',
 	MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorStatus.php',
