@@ -15,8 +15,8 @@ use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
  * Capability/nonce-gated same-server package handoff batches.
  */
 final class AdminCloneLocalPackageHandoffController {
-	public const ACTION          = 'seo_geo_migration_clone_local_package_handoff_advance';
-	public const NONCE_ACTION    = 'seo_geo_migration_clone_local_package_handoff';
+	public const ACTION       = 'seo_geo_migration_clone_local_package_handoff_advance';
+	public const NONCE_ACTION = 'seo_geo_migration_clone_local_package_handoff';
 	public const MAX_AUTO_CYCLES = 200;
 
 	private const MODE_BATCH           = 'batch';
