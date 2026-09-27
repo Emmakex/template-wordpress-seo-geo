@@ -85,6 +85,7 @@ final class AdminCloneFileExportController {
 		}
 		$batch_bytes = $batch_megabytes * 1024 * 1024;
 
+		$before = $this->exporter->snapshot( $job_id );
 		$result = $this->exporter->advance( $job_id, $batch_files, $batch_bytes );
 		if ( ! is_array( $result ) ) {
 			wp_die(
@@ -95,7 +96,14 @@ final class AdminCloneFileExportController {
 		}
 
 		$status = (string) ( $result['status'] ?? 'running' );
-		if ( self::MODE_AUTO === $mode && 'running' === $status && self::MAX_AUTO_CYCLES <= $auto_cycle ) {
+		if (
+			self::MODE_AUTO === $mode
+			&& 'running' === $status
+			&& is_array( $before )
+			&& hash_equals( $this->progress_signature( $before ), $this->progress_signature( $result ) )
+		) {
+			$status = 'stalled';
+		} elseif ( self::MODE_AUTO === $mode && 'running' === $status && self::MAX_AUTO_CYCLES <= $auto_cycle ) {
 			$status = 'paused';
 		}
 
@@ -112,5 +120,30 @@ final class AdminCloneFileExportController {
 		);
 		wp_safe_redirect( $redirect );
 		exit;
+	}
+
+
+	/**
+	 * Build a bounded signature that changes when traversal or copied-file progress changes.
+	 *
+	 * @param array<string,mixed> $state File-export state.
+	 */
+	private function progress_signature( array $state ): string {
+		$pending = is_array( $state['pending_dirs'] ?? null ) ? array_values( $state['pending_dirs'] ) : array();
+		$first   = is_string( $pending[0] ?? null ) ? $pending[0] : '';
+		$last    = is_string( $pending[ count( $pending ) - 1 ] ?? null ) ? $pending[ count( $pending ) - 1 ] : '';
+		$payload = array(
+			'root_index'    => (int) ( $state['root_index'] ?? 0 ),
+			'current_dir'   => (string) ( $state['current_dir'] ?? '' ),
+			'after_name'    => (string) ( $state['after_name'] ?? '' ),
+			'pending_count' => count( $pending ),
+			'pending_first' => $first,
+			'pending_last'  => $last,
+			'file_count'    => (int) ( $state['file_count'] ?? 0 ),
+			'byte_count'    => (int) ( $state['byte_count'] ?? 0 ),
+		);
+		$json = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+
+		return hash( 'sha256', is_string( $json ) ? $json : '' );
 	}
 }
