@@ -226,7 +226,7 @@ final class PackageBuilder {
 				return $state;
 			}
 
-			$state['status'] = 'running';
+			$state['status']   = 'running';
 			$state['blockers'] = array_values(
 				array_diff(
 					is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array(),
