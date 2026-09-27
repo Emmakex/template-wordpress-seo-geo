@@ -226,8 +226,8 @@ final class PackageBuilder {
 				return $state;
 			}
 
-			$state['status']   = 'running';
-			$state['blockers'] = array_values(
+			$state['status']     = 'running';
+			$state['blockers']   = array_values(
 				array_diff(
 					is_array( $state['blockers'] ?? null ) ? $state['blockers'] : array(),
 					array( 'package-exported-payload-mismatch' )
