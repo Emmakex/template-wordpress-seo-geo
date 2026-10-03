@@ -46,7 +46,7 @@ final class ContactFormRuntime {
 		register_block_type(
 			self::BLOCK_NAME,
 			array(
-				'api_version'     => 3,
+				'api_version'     => '3',
 				'attributes'      => array(
 					'formId' => array(
 						'type' => 'string',
@@ -204,7 +204,7 @@ final class ContactFormRuntime {
 			/* translators: 1: site name, 2: page title. */
 			__( '[%1$s] Contact form: %2$s', 'seo-geo-theme' ),
 			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
-			wp_strip_all_tags( is_string( $page_title ) ? $page_title : '' )
+			wp_strip_all_tags( $page_title )
 		);
 
 		$body = implode( "\n\n", $lines );
