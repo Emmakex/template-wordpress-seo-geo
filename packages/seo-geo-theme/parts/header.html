@@ -1,14 +1,17 @@
-<!-- wp:group {"layout":{"type":"constrained"}} -->
-<div class="wp-block-group">
-	<!-- wp:group {"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between"}} -->
-	<div class="wp-block-group">
-		<!-- wp:site-title {"level":0} /-->
-
-		<!-- wp:group {"tagName":"nav","layout":{"type":"flex","flexWrap":"wrap"}} -->
-		<nav class="wp-block-group">
-			<!-- wp:page-list /-->
-		</nav>
+<!-- wp:group {"className":"seo-geo-site-header","layout":{"type":"default"}} -->
+<div class="wp-block-group seo-geo-site-header">
+	<!-- wp:group {"align":"wide","className":"seo-geo-site-header__inner","layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
+	<div class="wp-block-group alignwide seo-geo-site-header__inner">
+		<!-- wp:group {"className":"seo-geo-site-brand","layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
+		<div class="wp-block-group seo-geo-site-brand">
+			<!-- wp:site-logo {"width":54,"shouldSyncIcon":false} /-->
+			<!-- wp:site-title {"level":0,"isLink":true} /-->
+		</div>
 		<!-- /wp:group -->
+
+		<!-- wp:navigation {"overlayMenu":"mobile","className":"seo-geo-primary-nav","layout":{"type":"flex","justifyContent":"right","flexWrap":"wrap"}} -->
+			<!-- wp:page-list /-->
+		<!-- /wp:navigation -->
 	</div>
 	<!-- /wp:group -->
 </div>
