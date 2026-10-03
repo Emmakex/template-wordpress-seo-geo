@@ -8,3 +8,41 @@ Requires at least: 7.1
 Requires PHP: 8.2
 Text Domain: seo-geo-theme
 */
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+}
+
+a {
+	text-underline-offset: 0.16em;
+	text-decoration-thickness: 0.08em;
+}
+
+a:hover {
+	text-decoration-thickness: 0.13em;
+}
+
+:where(a, button, input, textarea, select, summary):focus-visible {
+	outline: 3px solid #2563eb;
+	outline-offset: 3px;
+}
+
+.seo-geo-contact-form-honeypot {
+	position: absolute !important;
+	left: -10000px !important;
+	width: 1px !important;
+	height: 1px !important;
+	overflow: hidden !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+}
