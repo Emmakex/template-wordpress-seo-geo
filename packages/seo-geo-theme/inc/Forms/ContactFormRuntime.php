@@ -162,11 +162,12 @@ final class ContactFormRuntime {
 			$this->redirect( $return_url, $form_id, 'failed' );
 		}
 
-		// Values are sanitized below according to the stored, trusted field type.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$submitted = isset( $_POST['seo_geo_fields'] ) && is_array( $_POST['seo_geo_fields'] )
-			? wp_unslash( $_POST['seo_geo_fields'] )
-			: array();
+		$submitted = array();
+		if ( isset( $_POST['seo_geo_fields'] ) && is_array( $_POST['seo_geo_fields'] ) ) {
+			// Values are sanitized below according to the stored, trusted field type.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$submitted = wp_unslash( $_POST['seo_geo_fields'] );
+		}
 
 		$fields   = is_array( $config['fields'] ?? null ) ? $config['fields'] : array();
 		$lines    = array();
@@ -198,14 +199,17 @@ final class ContactFormRuntime {
 		}
 
 		$page_title = get_the_title( $post_id );
-		$subject    = sprintf(
+
+		$subject = sprintf(
 			/* translators: 1: site name, 2: page title. */
 			__( '[%1$s] Contact form: %2$s', 'seo-geo-theme' ),
 			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 			wp_strip_all_tags( is_string( $page_title ) ? $page_title : '' )
 		);
-		$body       = implode( "\n\n", $lines );
-		$headers    = array();
+
+		$body = implode( "\n\n", $lines );
+
+		$headers = array();
 
 		if ( '' !== $reply_to ) {
 			$headers[] = 'Reply-To: ' . $reply_to;
