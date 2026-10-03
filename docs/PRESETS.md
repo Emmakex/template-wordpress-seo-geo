@@ -82,6 +82,20 @@ The distributable theme bundles preset data under `/presets`. `inc/presets.php` 
 
 Phase 7A does not create pages automatically. It establishes the validated content map and runtime registry that Phase 9 onboarding will use to create/configure site content with explicit administrator intent.
 
+### Corporate visual system v1
+
+The real-site sandbox acceptance phase now implements the first full preset visual system on top of the existing declarative Corporate contract.
+
+- the neutral Theme remains visually minimal;
+- `assets/css/presets/corporate.css` loads only when `seo_geo_active_preset=corporate`;
+- the active preset exposes the stable body class `seo-geo-preset-corporate`;
+- the Corporate stylesheet owns the professional-services header/navigation, content shell, cards, migrated-content presentation, native forms, blog/archive cards, footer and responsive behavior;
+- no Emmake-specific text, URLs or private client facts are hardcoded into the stylesheet;
+- activating Local Business, Publisher, Ecommerce or SaaS/Digital Product does not inherit Corporate visual behavior;
+- each remaining preset will receive its own visual system through the same isolated runtime contract instead of forking the Theme.
+
+The first field target for Corporate v1 is the already migrated `emmake.com/nuevaweb/` sandbox. Emmake is an acceptance fixture for the reusable Corporate preset, not a client-specific Theme fork.
+
 ## Local Business
 
 ### Core pages
