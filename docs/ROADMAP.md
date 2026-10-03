@@ -2106,7 +2106,7 @@ Evidence:
 
 ### Microphase 10E — Stable release decision
 
-Status: **active — stable NO-GO; emmake.com sandbox/production acceptance pending**
+Status: **active — stable NO-GO; real clone complete, Theme sandbox/parity + production acceptance pending**
 
 Deliverables:
 
@@ -2168,13 +2168,15 @@ Evidence:
 
 ### Microphase 10E.2 — Emmake baseline review and sandbox handoff
 
-Status: **active — production baseline + UNKNOWN review complete; Portable Clone Engine now precedes sandbox acceptance**
+Status: **active — real clone completed; Theme sandbox migration/parity acceptance is next**
 
 Purpose:
 
 Turn the accepted production baseline into explicit dependency review and a privacy-bounded sandbox handoff before any destination-theme migration.
 
 Current real-site evidence:
+
+- **2026-10-03 field milestone:** Migration Bridge 1.0.8 completed the product-owned `https://emmake.com/` → `https://emmake.com/nuevaweb/` clone. Persistent 10-step packaging, 48 MiB multipart transport, destination reconstruction and safe activation completed, and operator verification confirmed that `/nuevaweb/` renders the Emmake site instead of the clean WordPress fixture. Bounded evidence: `release/emmake-clone-field-milestone-20261003.json`. This closes the practical clone-transport/activation hurdle; Theme installation/parity/quality and production acceptance remain pending.
 
 - emmake.com baseline reported `Ready` on 2026-09-24;
 - dependency summary: KEEP=4, REPLACE=2, MIGRATE=1, OPTIONAL=0, REMOVE-CANDIDATE=0, UNKNOWN=13;
