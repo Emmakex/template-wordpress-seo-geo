@@ -24,7 +24,7 @@ The accepted repository candidate is `d3ff8353c08cfce6c796837a74e372ba7daf0073`,
 
 PR #111 candidate and post-merge `main` both passed all seven triggered gates. The detailed pilot sequence is documented in `docs/REAL_SITE_PILOT.md`.
 
-The pilot remains `sandbox acceptance pending`; therefore the stable decision remains **NO-GO**.
+The real clone to `https://emmake.com/nuevaweb/` was field-verified on 2026-10-03 using Migration Bridge 1.0.8. That removes the practical clone-transport blocker, but the Theme candidate still needs sandbox migration/parity/quality acceptance and the public production origin still needs Phase 10D verification. Therefore the stable decision remains **NO-GO**.
 
 ## Product-portfolio boundary
 
