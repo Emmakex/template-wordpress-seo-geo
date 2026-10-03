@@ -633,7 +633,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 
 		$fields = array();
 		foreach ( $children as $child ) {
-			if ( ! is_array( $child ) || 'et_pb_contact_field' !== ( $child['tag'] ?? '' ) ) {
+			if ( 'et_pb_contact_field' !== ( $child['tag'] ?? '' ) ) {
 				continue;
 			}
 
