@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "mode": "seo-geo-emmake-divi-migration-field-milestone",
+  "site_id": "emmake-com",
+  "sandbox_origin": "https://emmake.com/nuevaweb/",
+  "observed_date": "2026-10-03",
+  "observed": {
+    "divi_resources_total": 11,
+    "divi_resources_converted": 11,
+    "divi_resources_ready": 0,
+    "divi_resources_blocked": 0,
+    "per_resource_rollback_available": true,
+    "intentional_legacy_omissions": [
+      "et_pb_signup",
+      "et_pb_sidebar"
+    ],
+    "contact_page_path": "/nuevaweb/contacto/",
+    "contact_form_native_runtime_rendered": true,
+    "contact_form_success_state_observed": true,
+    "contact_form_test_email_delivered": true
+  },
+  "not_claimed_by_this_record": [
+    "final-visual-parity",
+    "seo-geo-parity",
+    "accessibility-performance-accepted",
+    "production-cutover",
+    "production-acceptance"
+  ],
+  "stable_release_effect": "no-go-remains",
+  "next_gate": "sandbox-visual-seo-geo-quality-parity"
+}
