@@ -27,6 +27,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		'et_pb_image',
 		'et_pb_divider',
 		'et_pb_spacer',
+		'et_pb_fullwidth_header',
 	);
 
 	/**
@@ -37,7 +38,9 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	private const STRUCTURAL_TAGS = array(
 		'et_pb_section',
 		'et_pb_row',
+		'et_pb_row_inner',
 		'et_pb_column',
+		'et_pb_column_inner',
 	);
 
 	/**
@@ -278,8 +281,9 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			'et_pb_button'  => $this->button_block( $attrs ),
 			'et_pb_image'   => $this->image_block( $attrs ),
 			'et_pb_divider' => '<!-- wp:separator --><hr class="wp-block-separator has-alpha-channel-opacity"/><!-- /wp:separator -->',
-			'et_pb_spacer'  => '<!-- wp:spacer {"height":"32px"} --><div style="height:32px" aria-hidden="true" class="wp-block-spacer"></div><!-- /wp:spacer -->',
-			default         => throw new RuntimeException( 'Unsupported Divi module reached transform.' ),
+			'et_pb_spacer'           => '<!-- wp:spacer {"height":"32px"} --><div style="height:32px" aria-hidden="true" class="wp-block-spacer"></div><!-- /wp:spacer -->',
+			'et_pb_fullwidth_header' => $this->fullwidth_header_block( $attrs, $children ),
+			default                  => throw new RuntimeException( 'Unsupported Divi module reached transform.' ),
 		};
 	}
 
@@ -352,6 +356,84 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		$class      = 0 < $id ? ' class="wp-image-' . $id . '"' : '';
 
 		return '<!-- wp:image' . $attrs_json . ' --><figure class="wp-block-image size-full"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt ) . '"' . $class . '/></figure><!-- /wp:image -->';
+	}
+
+	/**
+	 * Render a Divi fullwidth header into conservative native blocks.
+	 *
+	 * The visual layout is intentionally not reproduced exactly. The migration
+	 * preserves visible title/subhead/body/button/background-image facts so the
+	 * resource no longer depends on Divi shortcode rendering.
+	 *
+	 * @param array<string,mixed>       $attrs    Module attributes.
+	 * @param list<array<string,mixed>> $children Module children.
+	 */
+	private function fullwidth_header_block( array $attrs, array $children ): string {
+		$title   = $this->first_string_attr( $attrs, array( 'title' ) );
+		$subhead = $this->first_string_attr( $attrs, array( 'subhead' ) );
+		$body    = trim( $this->children_text( $children ) );
+		$image   = $this->first_string_attr( $attrs, array( 'background_image' ) );
+		$blocks  = array();
+
+		if ( '' !== $image ) {
+			$blocks[] = '<!-- wp:image {"sizeSlug":"full","linkDestination":"none","className":"seo-geo-migrated-divi-header-image"} --><figure class="wp-block-image size-full seo-geo-migrated-divi-header-image"><img src="' . esc_url( $image ) . '" alt=""/></figure><!-- /wp:image -->';
+		}
+		if ( '' !== $title ) {
+			$blocks[] = '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">' . esc_html( wp_strip_all_tags( $title ) ) . '</h1><!-- /wp:heading -->';
+		}
+		if ( '' !== $subhead ) {
+			$blocks[] = '<!-- wp:paragraph --><p>' . esc_html( wp_strip_all_tags( $subhead ) ) . '</p><!-- /wp:paragraph -->';
+		}
+		if ( '' !== $body ) {
+			$blocks[] = $this->html_block( $body );
+		}
+
+		$button_one = $this->header_button_block( $attrs, 'one' );
+		if ( '' !== $button_one ) {
+			$blocks[] = $button_one;
+		}
+		$button_two = $this->header_button_block( $attrs, 'two' );
+		if ( '' !== $button_two ) {
+			$blocks[] = $button_two;
+		}
+
+		return '<!-- wp:group {"className":"seo-geo-migrated-divi-fullwidth-header"} --><div class="wp-block-group seo-geo-migrated-divi-fullwidth-header">' . implode( "\n", $blocks ) . '</div><!-- /wp:group -->';
+	}
+
+	/**
+	 * Render one fullwidth-header button when configured.
+	 *
+	 * @param array<string,mixed> $attrs Module attributes.
+	 * @param string              $slot  Button slot: one or two.
+	 */
+	private function header_button_block( array $attrs, string $slot ): string {
+		$text = $this->first_string_attr( $attrs, array( 'button_' . $slot . '_text' ) );
+		if ( '' === $text ) {
+			return '';
+		}
+
+		$url = $this->first_string_attr( $attrs, array( 'button_' . $slot . '_url' ) );
+		if ( '' === $url ) {
+			$url = '#';
+		}
+
+		return '<!-- wp:buttons --><div class="wp-block-buttons"><!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="' . esc_url( $url ) . '">' . esc_html( wp_strip_all_tags( $text ) ) . '</a></div><!-- /wp:button --></div><!-- /wp:buttons -->';
+	}
+
+	/**
+	 * Return the first non-empty string attribute from an allowlist.
+	 *
+	 * @param array<string,mixed> $attrs Module attributes.
+	 * @param list<string>        $keys  Candidate keys.
+	 */
+	private function first_string_attr( array $attrs, array $keys ): string {
+		foreach ( $keys as $key ) {
+			if ( isset( $attrs[ $key ] ) && is_string( $attrs[ $key ] ) && '' !== trim( $attrs[ $key ] ) ) {
+				return trim( $attrs[ $key ] );
+			}
+		}
+
+		return '';
 	}
 
 	/**
