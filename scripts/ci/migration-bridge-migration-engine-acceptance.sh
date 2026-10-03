@@ -97,7 +97,7 @@ $divi_id = wp_insert_post(
 		'post_status'  => 'publish',
 		'post_title'   => 'Divi Migration Fixture',
 		'post_name'    => 'divi-migration-fixture',
-		'post_content' => '[et_pb_section][et_pb_fullwidth_header title="What we do" subhead="How we do it" background_image="https://example.test/header.jpg" button_one_text="Primary" button_one_url="/primary/" button_two_text="Secondary" button_two_url="/secondary/"]Header body.[/et_pb_fullwidth_header][et_pb_row_inner][et_pb_column_inner][et_pb_text]<p>Migrated Divi body.</p>[/et_pb_text][et_pb_button button_text="Learn more" button_url="/learn-more/"][/et_pb_button][/et_pb_column_inner][/et_pb_row_inner][/et_pb_section]',
+		'post_content' => '[et_pb_section][et_pb_fullwidth_header title="What we do" subhead="How we do it" background_image="https://example.test/header.jpg" button_one_text="Primary" button_one_url="/primary/" button_two_text="Secondary" button_two_url="/secondary/"]Header body.[/et_pb_fullwidth_header][et_pb_row_inner][et_pb_column_inner][et_pb_text]<p>Migrated Divi body.</p>[/et_pb_text][et_pb_button button_text="Learn more" button_url="/learn-more/"][/et_pb_button][et_pb_blurb title="Blurb title" url="/blurb/"]Blurb body.[/et_pb_blurb][et_pb_accordion][et_pb_accordion_item title="FAQ item"]FAQ body.[/et_pb_accordion_item][/et_pb_accordion][et_pb_counters][et_pb_counter title="Progress" percent="75"][/et_pb_counter][/et_pb_counters][et_pb_circle_counter title="Circle" number="60"][/et_pb_circle_counter][et_pb_number_counter title="Number" number="42"][/et_pb_number_counter][et_pb_testimonial author="Jane Doe" job_title="CEO" company_name="Acme" portrait_url="https://example.test/jane.jpg"]Great service.[/et_pb_testimonial][et_pb_social_media_follow][et_pb_social_media_follow_network social_network="linkedin" url="https://linkedin.com/company/example"][/et_pb_social_media_follow_network][/et_pb_social_media_follow][et_pb_blog posts_number="3" show_date="on" show_thumbnail="on" show_excerpt="on"][/et_pb_blog][/et_pb_column_inner][/et_pb_row_inner][/et_pb_section]',
 	)
 );
 update_post_meta( $divi_id, 'et_pb_use_builder', 'on' );
@@ -344,6 +344,20 @@ assert "Secondary" in after["divi"]["content"]
 assert "<!-- wp:html -->" in after["divi"]["content"]
 assert "Migrated Divi body." in after["divi"]["content"]
 assert "<!-- wp:buttons -->" in after["divi"]["content"]
+assert "seo-geo-migrated-divi-blurb" in after["divi"]["content"]
+assert "Blurb title" in after["divi"]["content"]
+assert "Blurb body." in after["divi"]["content"]
+assert "<!-- wp:details -->" in after["divi"]["content"]
+assert "FAQ item" in after["divi"]["content"]
+assert "FAQ body." in after["divi"]["content"]
+assert "75%" in after["divi"]["content"]
+assert "60%" in after["divi"]["content"]
+assert "42" in after["divi"]["content"]
+assert "seo-geo-migrated-divi-testimonial" in after["divi"]["content"]
+assert "Jane Doe" in after["divi"]["content"]
+assert "Great service." in after["divi"]["content"]
+assert "https://linkedin.com/company/example" in after["divi"]["content"]
+assert "<!-- wp:latest-posts" in after["divi"]["content"]
 assert after["divi"]["builder_mode"] == "off"
 assert after["divi"]["backup_exists"] is True
 assert after["divi"]["backup_sha256"]
