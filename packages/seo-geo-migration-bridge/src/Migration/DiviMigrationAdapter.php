@@ -574,7 +574,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		if ( 1 > $count ) {
 			$count = 6;
 		}
-		$count = min( 20, $count );
+		$count  = min( 20, $count );
 		$config = array(
 			'postsToShow'             => $count,
 			'displayPostDate'         => 'off' !== strtolower( $this->first_string_attr( $attrs, array( 'show_date' ) ) ),
@@ -582,7 +582,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			'displayPostContent'      => 'off' !== strtolower( $this->first_string_attr( $attrs, array( 'show_excerpt' ) ) ),
 			'displayPostContentRadio' => 'excerpt',
 		);
-		$json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
+		$json   = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
 
 		return '<!-- wp:latest-posts ' . ( is_string( $json ) ? $json : '{}' ) . ' /-->';
 	}
