@@ -97,7 +97,7 @@ $divi_id = wp_insert_post(
 		'post_status'  => 'publish',
 		'post_title'   => 'Divi Migration Fixture',
 		'post_name'    => 'divi-migration-fixture',
-		'post_content' => '[et_pb_section][et_pb_row][et_pb_column][et_pb_text]<p>Migrated Divi body.</p>[/et_pb_text][et_pb_button button_text="Learn more" button_url="/learn-more/"][/et_pb_button][/et_pb_column][/et_pb_row][/et_pb_section]',
+		'post_content' => '[et_pb_section][et_pb_fullwidth_header title="What we do" subhead="How we do it" background_image="https://example.test/header.jpg" button_one_text="Primary" button_one_url="/primary/" button_two_text="Secondary" button_two_url="/secondary/"]Header body.[/et_pb_fullwidth_header][et_pb_row_inner][et_pb_column_inner][et_pb_text]<p>Migrated Divi body.</p>[/et_pb_text][et_pb_button button_text="Learn more" button_url="/learn-more/"][/et_pb_button][/et_pb_column_inner][/et_pb_row_inner][/et_pb_section]',
 	)
 );
 update_post_meta( $divi_id, 'et_pb_use_builder', 'on' );
@@ -333,6 +333,14 @@ assert after["elementor"]["state_exists"] is True
 assert after["divi"]["id"] == ids["divi"]
 assert after["divi"]["post_name"] == "divi-migration-fixture"
 assert urllib.parse.urlparse(after["divi"]["permalink"]).path == urllib.parse.urlparse(report["before"]["divi_permalink"]).path
+assert "<!-- wp:group" in after["divi"]["content"]
+assert "seo-geo-migrated-divi-fullwidth-header" in after["divi"]["content"]
+assert "What we do" in after["divi"]["content"]
+assert "How we do it" in after["divi"]["content"]
+assert "Header body." in after["divi"]["content"]
+assert "header.jpg" in after["divi"]["content"]
+assert "Primary" in after["divi"]["content"]
+assert "Secondary" in after["divi"]["content"]
 assert "<!-- wp:html -->" in after["divi"]["content"]
 assert "Migrated Divi body." in after["divi"]["content"]
 assert "<!-- wp:buttons -->" in after["divi"]["content"]
