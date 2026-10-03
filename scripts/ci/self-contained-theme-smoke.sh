@@ -153,6 +153,7 @@ for required_file in \
   "${BUILT_THEME}/inc/seo-geo-core/src/Geo/MarkdownAlternatePresenter.php" \
   "${BUILT_THEME}/inc/presets.php" \
   "${BUILT_THEME}/inc/setup.php" \
+  "${BUILT_THEME}/inc/Forms/ContactFormRuntime.php" \
   "${BUILT_THEME}/inc/Setup/SetupConfigurationContract.php" \
   "${BUILT_THEME}/inc/Setup/MigrationHandoffReader.php" \
   "${BUILT_THEME}/inc/Setup/SetupCompatibilityDetector.php" \
@@ -249,6 +250,47 @@ if docker exec "$WP_CONTAINER" test -d /var/www/html/wp-content/plugins/seo-geo-
   fail_smoke "plugin-absent" "SEO GEO Core plugin directory must not be installed" "plugin directory absent" "directory exists"
 fi
 
+printf '[self-contained] Checking Theme-owned migrated contact-form runtime.\n'
+FORM_PAGE_ID="$(wp_cli post create --post_type=page --post_status=publish --post_title='Native Contact Form Fixture' --post_name='native-contact-form-fixture' --post_content='<!-- wp:seo-geo/contact-form {"formId":"divi-form-1"} /-->' --porcelain 2>/dev/null | tr -d '\r\n')"
+[[ "$FORM_PAGE_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "contact-form-page" "Could not create native contact-form fixture" "numeric page ID" "$FORM_PAGE_ID"
+
+wp_cli eval "update_post_meta( ${FORM_PAGE_ID}, '_seo_geo_contact_forms_v1', array(
+  'divi-form-1' => array(
+    'schema_version' => 1,
+    'recipient' => 'private-recipient@example.test',
+    'button_text' => 'Send fixture',
+    'success_message' => 'Fixture sent',
+    'fields' => array(
+      array( 'id' => 'name', 'label' => 'Name', 'type' => 'text', 'required' => true ),
+      array( 'id' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => true ),
+      array( 'id' => 'message', 'label' => 'Message', 'type' => 'textarea', 'required' => true )
+    )
+  )
+), true );" >/dev/null \
+  || fail_smoke "contact-form-meta" "Could not configure native contact-form fixture" "form metadata written" "failed"
+
+CONTACT_FORM_BODY="${TMP_DIR}/native-contact-form.html"
+curl -fsS "${BASE_URL}/native-contact-form-fixture/" -o "$CONTACT_FORM_BODY" \
+  || fail_smoke "contact-form-request" "Could not request native contact-form fixture" "HTTP 2xx" "curl failed"
+
+grep -Fq 'class="seo-geo-contact-form"' "$CONTACT_FORM_BODY" \
+  || fail_smoke "contact-form-render" "Theme did not render the migrated contact form" "native form markup" "form class absent"
+grep -Fq 'name="seo_geo_fields[name]"' "$CONTACT_FORM_BODY" \
+  || fail_smoke "contact-form-name" "Name field missing from migrated contact form" "name input" "missing"
+grep -Fq 'name="seo_geo_fields[email]"' "$CONTACT_FORM_BODY" \
+  || fail_smoke "contact-form-email" "Email field missing from migrated contact form" "email input" "missing"
+grep -Fq 'name="seo_geo_fields[message]"' "$CONTACT_FORM_BODY" \
+  || fail_smoke "contact-form-message" "Message field missing from migrated contact form" "message textarea" "missing"
+grep -Fq 'Send fixture' "$CONTACT_FORM_BODY" \
+  || fail_smoke "contact-form-button" "Migrated contact-form button text was not preserved" "Send fixture" "missing"
+grep -Fq '_seo_geo_contact_nonce' "$CONTACT_FORM_BODY" \
+  || fail_smoke "contact-form-nonce" "Native contact form missed CSRF nonce" "nonce input" "missing"
+if grep -Fq 'private-recipient@example.test' "$CONTACT_FORM_BODY"; then
+  fail_smoke "contact-form-recipient-leak" "Native contact form exposed its recipient email in public HTML" "recipient remains private in post meta" "recipient found in HTML"
+fi
+
+printf '[self-contained] Native contact-form runtime OK: zero-plugin dynamic form renders fields + nonce without exposing recipient.\n'
 printf '[self-contained] Checking Phase 9A read-only setup foundation.\n'
 SETUP_CLEAN_JSON="$(wp_cli eval 'echo wp_json_encode( seo_geo_theme_setup_plan(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );' 2>/dev/null | tr -d '\r\n')" \
   || fail_smoke "setup-plan-clean" "Could not generate clean-install setup plan" "JSON setup plan" "wp eval failed"

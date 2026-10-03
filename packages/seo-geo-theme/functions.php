@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once get_template_directory() . '/inc/seo-geo-core/bootstrap.php';
 require_once get_template_directory() . '/inc/presets.php';
 require_once get_template_directory() . '/inc/setup.php';
+require_once get_template_directory() . '/inc/Forms/ContactFormRuntime.php';
 
 /**
  * Load project-owned translations.
@@ -56,3 +57,19 @@ function seo_geo_theme_focusable_main_landmark( string $block_content, array $bl
 	return $processor->get_updated_html();
 }
 add_filter( 'render_block_core/group', 'seo_geo_theme_focusable_main_landmark', 10, 2 );
+
+
+/**
+ * Register the Theme-owned native contact-form runtime used by migrated pages.
+ */
+function seo_geo_theme_contact_form_runtime(): \SeoGeo\Theme\Forms\ContactFormRuntime {
+	static $runtime = null;
+
+	if ( ! $runtime instanceof \SeoGeo\Theme\Forms\ContactFormRuntime ) {
+		$runtime = new \SeoGeo\Theme\Forms\ContactFormRuntime();
+	}
+
+	return $runtime;
+}
+
+seo_geo_theme_contact_form_runtime()->register();

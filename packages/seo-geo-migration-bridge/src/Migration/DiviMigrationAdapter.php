@@ -17,6 +17,25 @@ use WP_Post;
  */
 final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	/**
+	 * Theme-owned native contact-form metadata.
+	 */
+	private const CONTACT_FORMS_META = '_seo_geo_contact_forms_v1';
+
+	/**
+	 * Contact forms collected during one transform.
+	 *
+	 * @var array<string,array<string,mixed>>
+	 */
+	private array $contact_forms = array();
+
+	/**
+	 * Contact-form sequence for stable block IDs.
+	 *
+	 * @var int
+	 */
+	private int $contact_form_index = 0;
+
+	/**
 	 * Supported Divi module tags.
 	 *
 	 * @var list<string>
@@ -36,6 +55,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		'et_pb_testimonial',
 		'et_pb_social_media_follow_network',
 		'et_pb_blog',
+		'et_pb_contact_form',
+		'et_pb_contact_field',
 	);
 
 	/**
@@ -119,15 +140,23 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			throw new RuntimeException( 'Divi shortcode tree is invalid.' );
 		}
 
+		$this->contact_forms      = array();
+		$this->contact_form_index = 0;
+
 		$blocks = array();
 		$this->render_nodes( $tree, $blocks );
 
+		$update_meta = array(
+			'et_pb_use_builder' => 'off',
+		);
+		if ( array() !== $this->contact_forms ) {
+			$update_meta[ self::CONTACT_FORMS_META ] = $this->contact_forms;
+		}
+
 		return array(
-			'content'     => implode( "\n\n", $blocks ),
+			'content'     => implode( "\n\n", array_filter( $blocks ) ),
 			'delete_meta' => array(),
-			'update_meta' => array(
-				'et_pb_use_builder' => 'off',
-			),
+			'update_meta' => $update_meta,
 		);
 	}
 
@@ -302,6 +331,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			'et_pb_testimonial'               => $this->testimonial_block( $attrs, $children ),
 			'et_pb_social_media_follow_network' => $this->social_network_block( $attrs ),
 			'et_pb_blog'                      => $this->blog_block( $attrs ),
+			'et_pb_contact_form'              => $this->contact_form_block( $attrs, $children ),
+			'et_pb_contact_field'             => '',
 			default                           => throw new RuntimeException( 'Unsupported Divi module reached transform.' ),
 		};
 	}
@@ -585,6 +616,86 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		$json   = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
 
 		return '<!-- wp:latest-posts ' . ( is_string( $json ) ? $json : '{}' ) . ' /-->';
+	}
+
+	/**
+	 * Convert one Divi contact form into the Theme-owned dynamic block.
+	 *
+	 * @param array<string,mixed>       $attrs    Form attributes.
+	 * @param list<array<string,mixed>> $children Form field nodes.
+	 * @throws RuntimeException When the legacy form cannot be represented safely.
+	 */
+	private function contact_form_block( array $attrs, array $children ): string {
+		$recipient = sanitize_email( $this->first_string_attr( $attrs, array( 'email' ) ) );
+		if ( ! is_email( $recipient ) ) {
+			throw new RuntimeException( 'Divi contact form has no valid recipient.' );
+		}
+
+		$fields = array();
+		foreach ( $children as $child ) {
+			if ( 'et_pb_contact_field' !== ( $child['tag'] ?? '' ) ) {
+				continue;
+			}
+
+			$field_attrs = isset( $child['attrs'] ) && is_array( $child['attrs'] ) ? $child['attrs'] : array();
+			$field_id    = sanitize_key( $this->first_string_attr( $field_attrs, array( 'field_id' ) ) );
+			$label       = $this->first_string_attr( $field_attrs, array( 'field_title' ) );
+			$type        = $this->contact_field_type( $field_attrs );
+
+			if ( '' === $field_id || '' === $label || null === $type ) {
+				throw new RuntimeException( 'Divi contact form contains an unsupported field.' );
+			}
+
+			$fields[] = array(
+				'id'       => $field_id,
+				'label'    => wp_strip_all_tags( $label ),
+				'type'     => $type,
+				'required' => 'off' !== strtolower( $this->first_string_attr( $field_attrs, array( 'required_mark' ) ) ),
+			);
+		}
+
+		if ( array() === $fields ) {
+			throw new RuntimeException( 'Divi contact form has no migratable fields.' );
+		}
+
+		++$this->contact_form_index;
+		$form_id                         = 'divi-form-' . $this->contact_form_index;
+		$this->contact_forms[ $form_id ] = array(
+			'schema_version'  => 1,
+			'recipient'       => $recipient,
+			'button_text'     => wp_strip_all_tags( $this->first_string_attr( $attrs, array( 'submit_button_text' ) ) ),
+			'success_message' => wp_strip_all_tags( $this->first_string_attr( $attrs, array( 'success_message' ) ) ),
+			'fields'          => $fields,
+		);
+
+		$block_attrs = wp_json_encode(
+			array( 'formId' => $form_id ),
+			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+		);
+
+		return '<!-- wp:seo-geo/contact-form ' . ( is_string( $block_attrs ) ? $block_attrs : '{}' ) . ' /-->';
+	}
+
+	/**
+	 * Normalize supported Divi field types.
+	 *
+	 * @param array<string,mixed> $attrs Field attributes.
+	 */
+	private function contact_field_type( array $attrs ): ?string {
+		$type = strtolower( $this->first_string_attr( $attrs, array( 'field_type' ) ) );
+		$id   = strtolower( $this->first_string_attr( $attrs, array( 'field_id' ) ) );
+
+		if ( 'email' === $type || str_contains( $id, 'email' ) || str_contains( $id, 'correo' ) ) {
+			return 'email';
+		}
+		if ( 'text' === $type || str_contains( $id, 'message' ) || str_contains( $id, 'mensaje' ) ) {
+			return 'textarea';
+		}
+		if ( 'input' === $type || '' === $type ) {
+			return str_contains( $id, 'web' ) || str_contains( $id, 'url' ) ? 'url' : 'text';
+		}
+
+		return null;
 	}
 
 	/**
