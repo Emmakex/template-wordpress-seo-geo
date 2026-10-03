@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "mode": "seo-geo-emmake-clone-field-milestone",
+  "site_id": "emmake-com",
+  "source_origin": "https://emmake.com/",
+  "target_origin": "https://emmake.com/nuevaweb/",
+  "observed_date": "2026-10-03",
+  "migration_bridge_artifact": {
+    "version": "1.0.8",
+    "zip_sha256": "c8713e8cb2714364fc5f804dcb33213f220a6ab010497c22b5f52f6f1ed475e2"
+  },
+  "observed": {
+    "persistent_packaging_completed": true,
+    "package_chunks_completed": 10,
+    "multipart_transport_used": true,
+    "multipart_integrity_verification": true,
+    "destination_reconstruction_completed": true,
+    "destination_activation_completed": true,
+    "clean_wordpress_fixture_replaced": true,
+    "target_publicly_renders_emmake_clone": true,
+    "operator_confirmed_functional_clone": true
+  },
+  "not_claimed_by_this_record": [
+    "sandbox-storage-isolation-proof",
+    "theme-candidate-installed",
+    "seo-geo-parity-accepted",
+    "accessibility-performance-accepted",
+    "production-cutover",
+    "production-acceptance"
+  ],
+  "stable_release_effect": "no-go-remains",
+  "next_gate": "theme-sandbox-migration-and-parity"
+}
