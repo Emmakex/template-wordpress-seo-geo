@@ -4,6 +4,9 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Field milestone (2026-10-03): Migration Bridge 1.0.8 completed a real `emmake.com` → `/nuevaweb/` clone after persistent 10-step packaging, 48 MiB multipart transport, verified reconstruction and safe destination activation. This proves the clone transport/activation path in the pilot environment; Theme sandbox migration/parity and production acceptance remain separate pending gates.
+
+
 - Migration Bridge 0.8.47 makes the large private same-server handoff observable and practical: it exposes saved file/byte/cursor progress, adds a progress bar, and adds bounded automatic continuation (500 files / 32 MB per request) with stall and cycle-limit guards. Existing 0.8.46 handoff state resumes in place; no package rebuild or export restart is required.
 
 - Migration Bridge 0.8.46 carries the already accepted live-source drift authority from package integrity into local-clone destination planning, target ownership and core-runtime bootstrap. Exact inventory identity remains accepted, while a differing exported fingerprint is allowed only when the completed file-export state proves the same recorded drift snapshot and manifest.

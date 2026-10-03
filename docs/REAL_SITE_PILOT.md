@@ -1,6 +1,6 @@
 # Phase 10E real-site pilot — emmake.com
 
-This document fixes the first real-site acceptance target for the self-contained SEO/GEO theme without claiming acceptance before the sandbox and production gates are actually executed.
+This document fixes the first real-site acceptance target for the self-contained SEO/GEO theme and records the successful real-clone field milestone without confusing it with Theme sandbox acceptance or production acceptance.
 
 ## Pilot identity
 
@@ -11,12 +11,30 @@ This document fixes the first real-site acceptance target for the self-contained
 - Candidate main commit: `d3ff8353c08cfce6c796837a74e372ba7daf0073`
 - Candidate ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`
 - Stable decision: `no-go`
-- Pilot status: **production baseline + UNKNOWN review complete; Portable Clone Engine implementation accepted through Migration Bridge 0.8.36; real `emmake.com` → `/nuevaweb/` execution and bounded acceptance evidence remain pending**
+- Pilot status: **real product-owned clone `emmake.com` → `/nuevaweb/` completed and visually verified on 2026-10-03 with field-tested Migration Bridge 1.0.8; Theme sandbox migration/parity acceptance and production cutover remain pending**
 - Accepted Migration Bridge version: `0.8.36`
 - Accepted Migration Bridge main commit: `b78f38016ac0848cd37b75fb608262b289d32ceb`
 - Accepted Migration Bridge ZIP SHA-256: `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`
 
 The production Migration Bridge baseline was completed on 2026-09-24 and the operator screen reported `SEO/GEO baseline = Ready`. This is operator-confirmed real-site evidence; no private baseline payload or production credentials are committed to the repository. The dependency summary at that point was `KEEP=4`, `REPLACE=2`, `MIGRATE=1`, `OPTIONAL=0`, `REMOVE-CANDIDATE=0`, `UNKNOWN=13`. The v0.8.5 handoff generated on 2026-09-24 reported 4,311 discovered public resources, 500 captured resources, zero request failures and a truncated baseline by the configured cap. A second v0.8.6 handoff generated at `2026-09-24T19:56:28Z` recorded all 13 UNKNOWN items as explicitly reviewed: 10 operator decisions `KEEP` and 3 `MIGRATE`, with zero unreviewed UNKNOWN items. The bounded handoff file SHA-256 is `48b87fed7c8b09be9778f0e62045c0eb8bcf23b35186883ee9f0629a19431d4b`. These review decisions are planning evidence only and do not authorize production mutation.
+
+## 2026-10-03 real-clone field milestone
+
+The product-owned clone path has now been executed successfully in the selected pilot environment:
+
+- source: `https://emmake.com/`;
+- destination: `https://emmake.com/nuevaweb/`;
+- field-tested Migration Bridge artifact: `1.0.8`;
+- installable ZIP SHA-256: `c8713e8cb2714364fc5f804dcb33213f220a6ab010497c22b5f52f6f1ed475e2`;
+- persistent packaging completed through 10/10 saved chunks;
+- the large final package was transported as physical multipart files with per-part SHA-256 verification;
+- multipart upload/reconstruction completed on the destination;
+- destination activation completed and the source URLs were rewritten to the `/nuevaweb/` target;
+- operator verification confirmed that the public destination stopped showing the clean WordPress `Hello world!` installation and rendered the Emmake site instead.
+
+Bounded field evidence for this milestone is stored at `release/emmake-clone-field-milestone-20261003.json`.
+
+This milestone proves the practical clone **transport + destination activation** path. It does **not** by itself claim sandbox-storage isolation, Theme candidate acceptance, SEO/GEO parity, accessibility/performance acceptance or a production cutover. The next accepted operation is Theme migration and parity testing on the working `/nuevaweb/` sandbox clone.
 
 ## Non-negotiable boundary
 
@@ -28,7 +46,7 @@ Production remains on the current accepted site until a separate sandbox clone p
 
 Production baseline capture and UNKNOWN dependency review are complete. The regenerated privacy-bounded Migration Bridge 0.8.6 handoff records `reviewed_unknown=13`, `unreviewed_unknown=0` and `complete=true`. The three UNKNOWN items marked `MIGRATE` are Classic Editor, Cookie Notice and Kairoseth AI Web Readiness; the remaining ten UNKNOWN items are recorded as operator `KEEP`. These decisions remain separate from raw dependency-graph classifications and do not authorize production mutation. The next accepted operation is to create a distinct non-production clone, carry the bounded review evidence into that clone, satisfy all sandbox isolation guards and run migration/parity/quality acceptance there.
 
-Migration Bridge **0.8.36** is now the accepted Portable Clone Engine build for this pilot. It includes the same-origin subdirectory safety contract introduced in 0.8.8 plus resumable export/import, isolated database/file staging, serialization-safe rewrite, reversible activation/promotion and final read-only handoff reporting. The real `https://emmake.com/nuevaweb/` clone still has to be executed and accepted; the folder itself is never sufficient evidence of isolation.
+Migration Bridge **0.8.36** is now the accepted Portable Clone Engine build for this pilot. It includes the same-origin subdirectory safety contract introduced in 0.8.8 plus resumable export/import, isolated database/file staging, serialization-safe rewrite, reversible activation/promotion and final read-only handoff reporting. The real `https://emmake.com/nuevaweb/` clone has now been executed and visually verified. That observation proves transport/activation, while the remaining sandbox-isolation and Theme parity evidence must still be collected before the sandbox can be accepted.
 
 For this pilot, the selected topology is `subdirectory`. Before migration actions, the clone must preserve the production baseline/dependency/review evidence and satisfy `SEO_GEO_MIGRATION_SANDBOX=true`, `SEO_GEO_MIGRATION_SANDBOX_MODE='subdirectory'`, `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true`, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true`, `SEO_GEO_MIGRATION_BACKUPS_READY=true`, WordPress search visibility disabled, a non-root `/nuevaweb/` home path distinct from the production `/` path, destination Theme active and complete UNKNOWN review. The storage marker is an explicit operator confirmation that the clone does not share mutable database/table state with production.
 
