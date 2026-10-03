@@ -82,6 +82,20 @@ The distributable theme bundles preset data under `/presets`. `inc/presets.php` 
 
 Phase 7A does not create pages automatically. It establishes the validated content map and runtime registry that Phase 9 onboarding will use to create/configure site content with explicit administrator intent.
 
+### Corporate visual system v1
+
+The real-site sandbox acceptance phase now implements the first full preset visual system on top of the existing declarative Corporate contract.
+
+- the neutral Theme remains visually minimal;
+- `assets/css/presets/corporate.css` loads only when `seo_geo_active_preset=corporate`;
+- the active preset exposes the stable body class `seo-geo-preset-corporate`;
+- the Corporate stylesheet owns the professional-services header/navigation, content shell, cards, migrated-content presentation, native forms, blog/archive cards, footer and responsive behavior;
+- no Emmake-specific text, URLs or private client facts are hardcoded into the stylesheet;
+- activating Local Business, Publisher, Ecommerce or SaaS/Digital Product does not inherit Corporate visual behavior;
+- each remaining preset will receive its own visual system through the same isolated runtime contract instead of forking the Theme.
+
+The first field target for Corporate v1 is the already migrated `emmake.com/nuevaweb/` sandbox. Emmake is an acceptance fixture for the reusable Corporate preset, not a client-specific Theme fork.
+
 ## Local Business
 
 ### Core pages
@@ -339,6 +353,30 @@ Cross-preset guarantees:
 - activation never invents or silently enables identity/business/editorial/commerce/product facts;
 - onboarding may later consume the declarative maps, but automatic page creation is outside Phase 7;
 - Ecommerce remains zero-plugin safe and WooCommerce remains a preferred future provider rather than a supported combination until its adapter is implemented and accepted.
+
+## Visual systems rollout
+
+The five preset contracts are already shipped. Their full visual systems are implemented in the same order as the preset roadmap and **must not be replaced by client-specific Theme forks**:
+
+1. **Corporate** — visual system v1 in active implementation/real-site acceptance using `emmake.com/nuevaweb/`;
+2. **Local Business** — next after Corporate acceptance;
+3. **Publisher** — after Local Business;
+4. **Ecommerce** — after Publisher, while retaining the existing commerce-provider ownership boundaries;
+5. **SaaS / Digital Product** — after Ecommerce.
+
+Every visual preset must satisfy the same acceptance contract:
+
+- activate only through the allowlisted `seo_geo_active_preset` authority;
+- own an isolated stylesheet under `assets/css/presets/<preset>.css`;
+- expose a stable preset body class;
+- reuse the shared Theme templates, blocks, SEO/GEO Core and native runtimes;
+- never mutate page IDs, slugs, canonical URLs or content merely because the visual preset changes;
+- never hardcode client-specific copy, customer facts or credentials;
+- remain responsive and keyboard accessible;
+- pass Foundation, PHP Quality, WordPress Smoke, Accessibility/Responsive, Performance, Native Multilingual, Self-contained Theme and Release Artifact CI;
+- prove cross-preset isolation before merge.
+
+A real client/sandbox may act as an acceptance fixture for a preset, but the resulting visual system remains reusable and preset-owned.
 
 ## Future presets
 
