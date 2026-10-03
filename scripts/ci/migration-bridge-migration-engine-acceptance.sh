@@ -223,7 +223,7 @@ echo wp_json_encode(
 				'state_exists'  => metadata_exists( 'post', $divi_id, MigrationEngine::STATE_META ),
 				'contact_forms' => array(
 					'count'                => count( $divi_contact_forms ),
-					'recipient_configured' => is_email( (string) ( $divi_contact_form['recipient'] ?? '' ) ),
+					'recipient_configured' => false !== is_email( (string) ( $divi_contact_form['recipient'] ?? '' ) ),
 					'recipient_sha256'     => hash( 'sha256', (string) ( $divi_contact_form['recipient'] ?? '' ) ),
 					'button_text'          => (string) ( $divi_contact_form['button_text'] ?? '' ),
 					'success_message'      => (string) ( $divi_contact_form['success_message'] ?? '' ),
