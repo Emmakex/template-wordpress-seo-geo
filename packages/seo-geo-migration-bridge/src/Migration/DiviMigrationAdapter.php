@@ -28,6 +28,14 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		'et_pb_divider',
 		'et_pb_spacer',
 		'et_pb_fullwidth_header',
+		'et_pb_blurb',
+		'et_pb_accordion_item',
+		'et_pb_circle_counter',
+		'et_pb_counter',
+		'et_pb_number_counter',
+		'et_pb_testimonial',
+		'et_pb_social_media_follow_network',
+		'et_pb_blog',
 	);
 
 	/**
@@ -41,6 +49,9 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		'et_pb_row_inner',
 		'et_pb_column',
 		'et_pb_column_inner',
+		'et_pb_accordion',
+		'et_pb_counters',
+		'et_pb_social_media_follow',
 	);
 
 	/**
@@ -282,8 +293,16 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			'et_pb_image'   => $this->image_block( $attrs ),
 			'et_pb_divider' => '<!-- wp:separator --><hr class="wp-block-separator has-alpha-channel-opacity"/><!-- /wp:separator -->',
 			'et_pb_spacer'           => '<!-- wp:spacer {"height":"32px"} --><div style="height:32px" aria-hidden="true" class="wp-block-spacer"></div><!-- /wp:spacer -->',
-			'et_pb_fullwidth_header' => $this->fullwidth_header_block( $attrs, $children ),
-			default                  => throw new RuntimeException( 'Unsupported Divi module reached transform.' ),
+			'et_pb_fullwidth_header'          => $this->fullwidth_header_block( $attrs, $children ),
+			'et_pb_blurb'                     => $this->blurb_block( $attrs, $children ),
+			'et_pb_accordion_item'            => $this->accordion_item_block( $attrs, $children ),
+			'et_pb_circle_counter'            => $this->counter_block( $attrs, 'circle' ),
+			'et_pb_counter'                   => $this->counter_block( $attrs, 'bar' ),
+			'et_pb_number_counter'            => $this->counter_block( $attrs, 'number' ),
+			'et_pb_testimonial'               => $this->testimonial_block( $attrs, $children ),
+			'et_pb_social_media_follow_network' => $this->social_network_block( $attrs ),
+			'et_pb_blog'                      => $this->blog_block( $attrs ),
+			default                           => throw new RuntimeException( 'Unsupported Divi module reached transform.' ),
 		};
 	}
 
@@ -435,6 +454,137 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Render a Divi blurb as a native group.
+	 *
+	 * @param array<string,mixed>       $attrs    Module attributes.
+	 * @param list<array<string,mixed>> $children Module children.
+	 */
+	private function blurb_block( array $attrs, array $children ): string {
+		$title = $this->first_string_attr( $attrs, array( 'title' ) );
+		$url   = $this->first_string_attr( $attrs, array( 'url' ) );
+		$image = $this->first_string_attr( $attrs, array( 'image' ) );
+		$body  = trim( $this->children_text( $children ) );
+		$parts = array();
+
+		if ( '' !== $image ) {
+			$parts[] = '<!-- wp:image {"sizeSlug":"full","linkDestination":"none"} --><figure class="wp-block-image size-full"><img src="' . esc_url( $image ) . '" alt=""/></figure><!-- /wp:image -->';
+		}
+		if ( '' !== $title ) {
+			$title_html = esc_html( wp_strip_all_tags( $title ) );
+			if ( '' !== $url ) {
+				$title_html = '<a href="' . esc_url( $url ) . '">' . $title_html . '</a>';
+			}
+			$parts[] = '<!-- wp:heading {"level":3} --><h3 class="wp-block-heading">' . $title_html . '</h3><!-- /wp:heading -->';
+		}
+		if ( '' !== $body ) {
+			$parts[] = $this->html_block( $body );
+		}
+
+		return '<!-- wp:group {"className":"seo-geo-migrated-divi-blurb"} --><div class="wp-block-group seo-geo-migrated-divi-blurb">' . implode( "\n", $parts ) . '</div><!-- /wp:group -->';
+	}
+
+	/**
+	 * Render a Divi accordion item as the native Details block.
+	 *
+	 * @param array<string,mixed>       $attrs    Module attributes.
+	 * @param list<array<string,mixed>> $children Module children.
+	 */
+	private function accordion_item_block( array $attrs, array $children ): string {
+		$title = $this->first_string_attr( $attrs, array( 'title' ) );
+		$body  = trim( $this->children_text( $children ) );
+		if ( '' === $title ) {
+			$title = 'Information';
+		}
+
+		return '<!-- wp:details --><details class="wp-block-details"><summary>' . esc_html( wp_strip_all_tags( $title ) ) . '</summary>' . wp_kses_post( $body ) . '</details><!-- /wp:details -->';
+	}
+
+	/**
+	 * Render a visual Divi counter as durable native text content.
+	 *
+	 * @param array<string,mixed> $attrs Module attributes.
+	 * @param string              $kind  Counter kind.
+	 */
+	private function counter_block( array $attrs, string $kind ): string {
+		$title  = $this->first_string_attr( $attrs, array( 'title' ) );
+		$number = $this->first_string_attr( $attrs, array( 'number', 'percent' ) );
+		if ( '' === $number ) {
+			$number = '0';
+		}
+		$suffix = in_array( $kind, array( 'bar', 'circle' ), true ) ? '%' : '';
+
+		return '<!-- wp:group {"className":"seo-geo-migrated-divi-counter"} --><div class="wp-block-group seo-geo-migrated-divi-counter"><!-- wp:heading {"level":3} --><h3 class="wp-block-heading">' . esc_html( $number . $suffix ) . '</h3><!-- /wp:heading -->' . ( '' !== $title ? '<!-- wp:paragraph --><p>' . esc_html( wp_strip_all_tags( $title ) ) . '</p><!-- /wp:paragraph -->' : '' ) . '</div><!-- /wp:group -->';
+	}
+
+	/**
+	 * Render a Divi testimonial with visible quote and attribution.
+	 *
+	 * @param array<string,mixed>       $attrs    Module attributes.
+	 * @param list<array<string,mixed>> $children Module children.
+	 */
+	private function testimonial_block( array $attrs, array $children ): string {
+		$quote    = trim( $this->children_text( $children ) );
+		$author   = $this->first_string_attr( $attrs, array( 'author' ) );
+		$job      = $this->first_string_attr( $attrs, array( 'job_title' ) );
+		$company  = $this->first_string_attr( $attrs, array( 'company_name' ) );
+		$portrait = $this->first_string_attr( $attrs, array( 'portrait_url' ) );
+		$parts    = array();
+
+		if ( '' !== $portrait ) {
+			$parts[] = '<!-- wp:image {"width":"96px","height":"96px","scale":"cover","sizeSlug":"full","linkDestination":"none"} --><figure class="wp-block-image size-full is-resized"><img src="' . esc_url( $portrait ) . '" alt="" style="object-fit:cover;width:96px;height:96px"/></figure><!-- /wp:image -->';
+		}
+		if ( '' !== $quote ) {
+			$parts[] = '<!-- wp:quote --><blockquote class="wp-block-quote">' . wp_kses_post( $quote ) . '</blockquote><!-- /wp:quote -->';
+		}
+		$credit = trim( implode( ' · ', array_filter( array( $author, $job, $company ) ) ) );
+		if ( '' !== $credit ) {
+			$parts[] = '<!-- wp:paragraph --><p><strong>' . esc_html( wp_strip_all_tags( $credit ) ) . '</strong></p><!-- /wp:paragraph -->';
+		}
+
+		return '<!-- wp:group {"className":"seo-geo-migrated-divi-testimonial"} --><div class="wp-block-group seo-geo-migrated-divi-testimonial">' . implode( "\n", $parts ) . '</div><!-- /wp:group -->';
+	}
+
+	/**
+	 * Render a Divi social follow network as a normal durable link.
+	 *
+	 * @param array<string,mixed> $attrs Module attributes.
+	 */
+	private function social_network_block( array $attrs ): string {
+		$network = $this->first_string_attr( $attrs, array( 'social_network' ) );
+		$url     = $this->first_string_attr( $attrs, array( 'url' ) );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$label = '' !== $network ? ucfirst( str_replace( array( '_', '-' ), ' ', $network ) ) : 'Social network';
+
+		return '<!-- wp:paragraph {"className":"seo-geo-migrated-divi-social-link"} --><p class="seo-geo-migrated-divi-social-link"><a href="' . esc_url( $url ) . '" rel="me noopener">' . esc_html( $label ) . '</a></p><!-- /wp:paragraph -->';
+	}
+
+	/**
+	 * Render a Divi blog module using WordPress native Latest Posts.
+	 *
+	 * @param array<string,mixed> $attrs Module attributes.
+	 */
+	private function blog_block( array $attrs ): string {
+		$count = absint( $this->first_string_attr( $attrs, array( 'posts_number' ) ) );
+		if ( 1 > $count ) {
+			$count = 6;
+		}
+		$count = min( 20, $count );
+		$config = array(
+			'postsToShow'             => $count,
+			'displayPostDate'         => 'off' !== strtolower( $this->first_string_attr( $attrs, array( 'show_date' ) ) ),
+			'displayFeaturedImage'    => 'off' !== strtolower( $this->first_string_attr( $attrs, array( 'show_thumbnail' ) ) ),
+			'displayPostContent'      => 'off' !== strtolower( $this->first_string_attr( $attrs, array( 'show_excerpt' ) ) ),
+			'displayPostContentRadio' => 'excerpt',
+		);
+		$json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
+
+		return '<!-- wp:latest-posts ' . ( is_string( $json ) ? $json : '{}' ) . ' /-->';
 	}
 
 	/**
