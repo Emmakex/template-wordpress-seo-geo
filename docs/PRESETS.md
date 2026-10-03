@@ -354,6 +354,30 @@ Cross-preset guarantees:
 - onboarding may later consume the declarative maps, but automatic page creation is outside Phase 7;
 - Ecommerce remains zero-plugin safe and WooCommerce remains a preferred future provider rather than a supported combination until its adapter is implemented and accepted.
 
+## Visual systems rollout
+
+The five preset contracts are already shipped. Their full visual systems are implemented in the same order as the preset roadmap and **must not be replaced by client-specific Theme forks**:
+
+1. **Corporate** — visual system v1 in active implementation/real-site acceptance using `emmake.com/nuevaweb/`;
+2. **Local Business** — next after Corporate acceptance;
+3. **Publisher** — after Local Business;
+4. **Ecommerce** — after Publisher, while retaining the existing commerce-provider ownership boundaries;
+5. **SaaS / Digital Product** — after Ecommerce.
+
+Every visual preset must satisfy the same acceptance contract:
+
+- activate only through the allowlisted `seo_geo_active_preset` authority;
+- own an isolated stylesheet under `assets/css/presets/<preset>.css`;
+- expose a stable preset body class;
+- reuse the shared Theme templates, blocks, SEO/GEO Core and native runtimes;
+- never mutate page IDs, slugs, canonical URLs or content merely because the visual preset changes;
+- never hardcode client-specific copy, customer facts or credentials;
+- remain responsive and keyboard accessible;
+- pass Foundation, PHP Quality, WordPress Smoke, Accessibility/Responsive, Performance, Native Multilingual, Self-contained Theme and Release Artifact CI;
+- prove cross-preset isolation before merge.
+
+A real client/sandbox may act as an acceptance fixture for a preset, but the resulting visual system remains reusable and preset-owned.
+
 ## Future presets
 
 Potential presets such as travel, professional services, education, events or NGO/fundraising should only be added when they express a repeatable information architecture and acceptance contract. They should compose primitives from the existing theme/Core rather than introduce parallel SEO stacks.
