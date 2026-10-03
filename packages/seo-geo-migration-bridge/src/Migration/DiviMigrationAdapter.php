@@ -424,7 +424,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 * Return the first non-empty string attribute from an allowlist.
 	 *
 	 * @param array<string,mixed> $attrs Module attributes.
-	 * @param list<string>        $keys  Candidate keys.
+	 * @param array               $keys  Candidate keys.
+	 * @phpstan-param list<string> $keys
 	 */
 	private function first_string_attr( array $attrs, array $keys ): string {
 		foreach ( $keys as $key ) {
