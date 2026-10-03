@@ -11,7 +11,7 @@ This document fixes the first real-site acceptance target for the self-contained
 - Candidate main commit: `d3ff8353c08cfce6c796837a74e372ba7daf0073`
 - Candidate ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`
 - Stable decision: `no-go`
-- Pilot status: **real product-owned clone `emmake.com` → `/nuevaweb/` completed and visually verified on 2026-10-03 with field-tested Migration Bridge 1.0.8; Theme sandbox migration/parity acceptance and production cutover remain pending**
+- Pilot status: **real product-owned clone completed; 11/11 Divi resources migrated to native blocks with 0 blockers and functional Contact form delivery verified; visual/SEO-GEO/quality parity and production cutover remain pending**
 - Accepted Migration Bridge version: `0.8.36`
 - Accepted Migration Bridge main commit: `b78f38016ac0848cd37b75fb608262b289d32ceb`
 - Accepted Migration Bridge ZIP SHA-256: `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`
@@ -35,6 +35,23 @@ The product-owned clone path has now been executed successfully in the selected 
 Bounded field evidence for this milestone is stored at `release/emmake-clone-field-milestone-20261003.json`.
 
 This milestone proves the practical clone **transport + destination activation** path. It does **not** by itself claim sandbox-storage isolation, Theme candidate acceptance, SEO/GEO parity, accessibility/performance acceptance or a production cutover. The next accepted operation is Theme migration and parity testing on the working `/nuevaweb/` sandbox clone.
+
+## 2026-10-03 Divi-to-native migration field milestone
+
+The working `/nuevaweb/` clone has now completed its builder-content migration:
+
+- 11 resources containing Divi `et_pb_*` content were inventoried;
+- all 11 resources were migrated to native WordPress/Theme-owned blocks;
+- final Migration Bridge operator summary: `11 resources`, `0 ready`, `0 blocked`, `11 converted`;
+- every converted resource retained a per-resource **Rollback Divi** path;
+- two legacy modules (`et_pb_signup`, `et_pb_sidebar`) were intentionally omitted by operator decision rather than treated as unresolved blockers;
+- the Contact page was migrated to the Theme-owned native contact-form runtime;
+- the migrated Contact form rendered its Name, Email and Message fields, returned the configured success message after submission, and delivered the test email successfully to the configured recipient;
+- the Contact resource kept its destination URL path under `/nuevaweb/contacto/`.
+
+Bounded evidence for this milestone is stored at `release/emmake-divi-migration-field-milestone-20261003.json`.
+
+This closes the **Divi dependency migration** hurdle for the sandbox. It does not claim final visual parity, SEO/GEO parity, accessibility/performance acceptance or production cutover. The next accepted operation is the visual/quality parity pass on the fully native sandbox content.
 
 ## Non-negotiable boundary
 
