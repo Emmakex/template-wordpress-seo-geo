@@ -2168,13 +2168,15 @@ Evidence:
 
 ### Microphase 10E.2 — Emmake baseline review and sandbox handoff
 
-Status: **active — real clone completed; Theme sandbox migration/parity acceptance is next**
+Status: **active — real clone + 11/11 Divi-to-native migration completed; visual/SEO-GEO/quality parity is next**
 
 Purpose:
 
 Turn the accepted production baseline into explicit dependency review and a privacy-bounded sandbox handoff before any destination-theme migration.
 
 Current real-site evidence:
+
+- **2026-10-03 Divi migration milestone:** the `/nuevaweb/` sandbox reached `11 resources / 11 converted / 0 blocked`. Two operator-approved legacy omissions (`et_pb_signup`, `et_pb_sidebar`) were recorded rather than silently dropped; per-resource rollback remained available. The migrated Contact page rendered the Theme-owned native form, displayed the configured success state and delivered a real test email successfully. Bounded evidence: `release/emmake-divi-migration-field-milestone-20261003.json`. This closes the builder-content migration hurdle; visual parity, SEO/GEO parity, accessibility/performance and production acceptance remain pending.
 
 - **2026-10-03 field milestone:** Migration Bridge 1.0.8 completed the product-owned `https://emmake.com/` → `https://emmake.com/nuevaweb/` clone. Persistent 10-step packaging, 48 MiB multipart transport, destination reconstruction and safe activation completed, and operator verification confirmed that `/nuevaweb/` renders the Emmake site instead of the clean WordPress fixture. Bounded evidence: `release/emmake-clone-field-milestone-20261003.json`. This closes the practical clone-transport/activation hurdle; Theme installation/parity/quality and production acceptance remain pending.
 
