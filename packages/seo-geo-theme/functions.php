@@ -64,7 +64,8 @@ add_action( 'wp_enqueue_scripts', 'seo_geo_theme_enqueue_styles' );
 /**
  * Expose the active allowlisted preset as a stable frontend body class.
  *
- * @param list<string> $classes Existing body classes.
+ * @param array $classes Existing body classes.
+ * @phpstan-param list<string> $classes
  * @return list<string>
  */
 function seo_geo_theme_preset_body_class( array $classes ): array {
