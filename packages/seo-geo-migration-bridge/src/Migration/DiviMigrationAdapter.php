@@ -30,6 +30,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 
 	/**
 	 * Contact-form sequence for stable block IDs.
+	 *
+	 * @var int
 	 */
 	private int $contact_form_index = 0;
 
@@ -657,7 +659,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		}
 
 		++$this->contact_form_index;
-		$form_id = 'divi-form-' . $this->contact_form_index;
+		$form_id                         = 'divi-form-' . $this->contact_form_index;
 		$this->contact_forms[ $form_id ] = array(
 			'schema_version'  => 1,
 			'recipient'       => $recipient,
