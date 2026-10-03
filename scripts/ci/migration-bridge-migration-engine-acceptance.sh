@@ -97,7 +97,7 @@ $divi_id = wp_insert_post(
 		'post_status'  => 'publish',
 		'post_title'   => 'Divi Migration Fixture',
 		'post_name'    => 'divi-migration-fixture',
-		'post_content' => '[et_pb_section][et_pb_fullwidth_header title="What we do" subhead="How we do it" background_image="https://example.test/header.jpg" button_one_text="Primary" button_one_url="/primary/" button_two_text="Secondary" button_two_url="/secondary/"]Header body.[/et_pb_fullwidth_header][et_pb_row_inner][et_pb_column_inner][et_pb_text]<p>Migrated Divi body.</p>[/et_pb_text][et_pb_button button_text="Learn more" button_url="/learn-more/"][/et_pb_button][et_pb_blurb title="Blurb title" url="/blurb/"]Blurb body.[/et_pb_blurb][et_pb_accordion][et_pb_accordion_item title="FAQ item"]FAQ body.[/et_pb_accordion_item][/et_pb_accordion][et_pb_counters][et_pb_counter title="Progress" percent="75"][/et_pb_counter][/et_pb_counters][et_pb_circle_counter title="Circle" number="60"][/et_pb_circle_counter][et_pb_number_counter title="Number" number="42"][/et_pb_number_counter][et_pb_testimonial author="Jane Doe" job_title="CEO" company_name="Acme" portrait_url="https://example.test/jane.jpg"]Great service.[/et_pb_testimonial][et_pb_social_media_follow][et_pb_social_media_follow_network social_network="linkedin" url="https://linkedin.com/company/example"][/et_pb_social_media_follow_network][/et_pb_social_media_follow][et_pb_blog posts_number="3" show_date="on" show_thumbnail="on" show_excerpt="on"][/et_pb_blog][/et_pb_column_inner][/et_pb_row_inner][/et_pb_section]',
+		'post_content' => '[et_pb_section][et_pb_fullwidth_header title="What we do" subhead="How we do it" background_image="https://example.test/header.jpg" button_one_text="Primary" button_one_url="/primary/" button_two_text="Secondary" button_two_url="/secondary/"]Header body.[/et_pb_fullwidth_header][et_pb_row_inner][et_pb_column_inner][et_pb_text]<p>Migrated Divi body.</p>[/et_pb_text][et_pb_button button_text="Learn more" button_url="/learn-more/"][/et_pb_button][et_pb_blurb title="Blurb title" url="/blurb/"]Blurb body.[/et_pb_blurb][et_pb_accordion][et_pb_accordion_item title="FAQ item"]FAQ body.[/et_pb_accordion_item][/et_pb_accordion][et_pb_counters][et_pb_counter title="Progress" percent="75"][/et_pb_counter][/et_pb_counters][et_pb_circle_counter title="Circle" number="60"][/et_pb_circle_counter][et_pb_number_counter title="Number" number="42"][/et_pb_number_counter][et_pb_testimonial author="Jane Doe" job_title="CEO" company_name="Acme" portrait_url="https://example.test/jane.jpg"]Great service.[/et_pb_testimonial][et_pb_social_media_follow][et_pb_social_media_follow_network social_network="linkedin" url="https://linkedin.com/company/example"][/et_pb_social_media_follow_network][/et_pb_social_media_follow][et_pb_blog posts_number="3" show_date="on" show_thumbnail="on" show_excerpt="on"][/et_pb_blog][et_pb_contact_form email="contact@example.test" submit_button_text="Send now" success_message="Thanks from migrated form"][et_pb_contact_field field_id="Name" field_title="Name" field_type="input" required_mark="on"][/et_pb_contact_field][et_pb_contact_field field_id="Email" field_title="Email" field_type="email" required_mark="on"][/et_pb_contact_field][et_pb_contact_field field_id="Message" field_title="Message" field_type="text" required_mark="on"][/et_pb_contact_field][/et_pb_contact_form][/et_pb_column_inner][/et_pb_row_inner][/et_pb_section]',
 	)
 );
 update_post_meta( $divi_id, 'et_pb_use_builder', 'on' );
@@ -171,6 +171,10 @@ $theme_after = array(
 
 $elementor_backup = get_post_meta( $elementor_id, MigrationEngine::BACKUP_META, true );
 $divi_backup      = get_post_meta( $divi_id, MigrationEngine::BACKUP_META, true );
+$divi_contact_forms = get_post_meta( $divi_id, '_seo_geo_contact_forms_v1', true );
+$divi_contact_forms = is_array( $divi_contact_forms ) ? $divi_contact_forms : array();
+$divi_contact_form  = is_array( $divi_contact_forms['divi-form-1'] ?? null ) ? $divi_contact_forms['divi-form-1'] : array();
+$divi_contact_fields = is_array( $divi_contact_form['fields'] ?? null ) ? $divi_contact_form['fields'] : array();
 
 echo wp_json_encode(
 	array(
@@ -217,6 +221,15 @@ echo wp_json_encode(
 				'backup_exists' => is_array( $divi_backup ),
 				'backup_sha256' => is_array( $divi_backup ) && is_string( $divi_backup['sha256'] ?? null ) ? $divi_backup['sha256'] : null,
 				'state_exists'  => metadata_exists( 'post', $divi_id, MigrationEngine::STATE_META ),
+				'contact_forms' => array(
+					'count'                => count( $divi_contact_forms ),
+					'recipient_configured' => is_email( (string) ( $divi_contact_form['recipient'] ?? '' ) ),
+					'recipient_sha256'     => hash( 'sha256', (string) ( $divi_contact_form['recipient'] ?? '' ) ),
+					'button_text'          => (string) ( $divi_contact_form['button_text'] ?? '' ),
+					'success_message'      => (string) ( $divi_contact_form['success_message'] ?? '' ),
+					'field_ids'            => array_values( array_map( static fn( array $field ): string => (string) ( $field['id'] ?? '' ), $divi_contact_fields ) ),
+					'field_types'          => array_values( array_map( static fn( array $field ): string => (string) ( $field['type'] ?? '' ), $divi_contact_fields ) ),
+				),
 			),
 			'unsupported' => array(
 				'id'             => $unsupported_after?->ID,
@@ -358,6 +371,15 @@ assert "Jane Doe" in after["divi"]["content"]
 assert "Great service." in after["divi"]["content"]
 assert "https://linkedin.com/company/example" in after["divi"]["content"]
 assert "<!-- wp:latest-posts" in after["divi"]["content"]
+assert '<!-- wp:seo-geo/contact-form {"formId":"divi-form-1"} /-->' in after["divi"]["content"]
+forms = after["divi"]["contact_forms"]
+assert forms["count"] == 1
+assert forms["recipient_configured"] is True
+assert forms["recipient_sha256"] == __import__("hashlib").sha256(b"contact@example.test").hexdigest()
+assert forms["button_text"] == "Send now"
+assert forms["success_message"] == "Thanks from migrated form"
+assert forms["field_ids"] == ["name", "email", "message"]
+assert forms["field_types"] == ["text", "email", "textarea"]
 assert after["divi"]["builder_mode"] == "off"
 assert after["divi"]["backup_exists"] is True
 assert after["divi"]["backup_sha256"]
