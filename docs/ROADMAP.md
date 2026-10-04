@@ -2168,13 +2168,15 @@ Evidence:
 
 ### Microphase 10E.2 — Emmake baseline review and sandbox handoff
 
-Status: **active — real clone + 11/11 Divi-to-native migration completed; visual/SEO-GEO/quality parity is next**
+Status: **active — Corporate applied successfully; visual acceptance is next, then SEO-GEO/quality parity**
 
 Purpose:
 
 Turn the accepted production baseline into explicit dependency review and a privacy-bounded sandbox handoff before any destination-theme migration.
 
 Current real-site evidence:
+
+- **2026-10-04 Corporate application milestone:** the reusable `corporate` preset validated and applied successfully on `/nuevaweb/` with `es=es_ES`, native routing disabled, `organization` identity, inherited crawler policy and `llms.txt`/Markdown disabled. The transaction completed atomically after the registered-default option-write fix. Yoast remained an advisory compatibility warning only. Bounded evidence: `release/emmake-corporate-preset-application-20261004.json`. Next gate: Corporate visual acceptance on Home desktop, Contact desktop and Home mobile.
 
 - **2026-10-03 Divi migration milestone:** the `/nuevaweb/` sandbox reached `11 resources / 11 converted / 0 blocked`. Two operator-approved legacy omissions (`et_pb_signup`, `et_pb_sidebar`) were recorded rather than silently dropped; per-resource rollback remained available. The migrated Contact page rendered the Theme-owned native form, displayed the configured success state and delivered a real test email successfully. Bounded evidence: `release/emmake-divi-migration-field-milestone-20261003.json`. This closes the builder-content migration hurdle; visual parity, SEO/GEO parity, accessibility/performance and production acceptance remain pending.
 
