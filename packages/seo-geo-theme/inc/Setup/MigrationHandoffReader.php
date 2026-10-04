@@ -16,7 +16,11 @@ final class MigrationHandoffReader {
 	/**
 	 * Stable option written by Phase 8H.
 	 */
-	public const OPTION_NAME       = 'seo_geo_migration_report_v1';
+	public const OPTION_NAME = 'seo_geo_migration_report_v1';
+
+	/**
+	 * Stable reset-first cleanup report written by Migration Bridge.
+	 */
 	public const RESET_OPTION_NAME = 'seo_geo_clone_reset_report_v1';
 
 	/**
