@@ -225,7 +225,7 @@ final class CorporateThemeBootstrap {
 		}
 
 		$parts = preg_split( '/[_-]/', $locale );
-		$code  = is_array( $parts ) && isset( $parts[0] ) ? strtolower( (string) $parts[0] ) : '';
+		$code  = is_array( $parts ) ? strtolower( (string) $parts[0] ) : '';
 		if ( 1 !== preg_match( '/^[a-z]{2,3}$/', $code ) ) {
 			return null;
 		}
