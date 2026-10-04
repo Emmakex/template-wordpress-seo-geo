@@ -92,6 +92,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/RescueManifest.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CloneResetEngine.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateThemeBootstrap.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
@@ -3165,6 +3166,8 @@ foreach (
 		"SandboxGuard::enabled()",
 		"'rescue-manifest-required'",
 		"'target-theme-not-installed'",
+		"'target-theme-self-contained-runtime-required'",
+		'target_theme_runtime_ready',
 		"'dependency_review_needed' => false",
 		"'content_delete_allowed'   => false",
 		"'manifest_delete_allowed'  => false",
@@ -3189,6 +3192,33 @@ foreach (
 	}
 }
 
+$corporate_bootstrap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateThemeBootstrap.php' );
+foreach (
+	array(
+		"public const REPORT_OPTION = 'seo_geo_corporate_bootstrap_report_v1';",
+		"public const PRESET        = 'corporate';",
+		"'theme_setup_authority'      => 'theme-owned-setup-executor'",
+		"'site_entity_type'            => 'organization'",
+		"'confirm_identity'            => true",
+		"'crawler_policy'              => array()",
+		"'llms_txt_enabled'            => false",
+		"'markdown_alternates_enabled' => false",
+		'\\seo_geo_theme_apply_setup( $candidate, true )',
+		"'organization_fact_inferred'",
+		"'local_business_inferred'",
+	) as $bootstrap_guard
+) {
+	if ( ! str_contains( $corporate_bootstrap, $bootstrap_guard ) ) {
+		fail_migration_bridge(
+			'corporate-bootstrap-contract',
+			'Corporate bootstrap must delegate to Theme setup, require explicit Organization confirmation and keep GEO opt-ins conservative.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateThemeBootstrap.php',
+			$bootstrap_guard,
+			'missing'
+		);
+	}
+}
+
 $rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
 foreach (
 	array(
@@ -3200,6 +3230,9 @@ foreach (
 		"'seo_geo_reset_apply_clone_runtime'",
 		"check_admin_referer( self::RESET_NONCE_ACTION )",
 		"'reset-clone-runtime'",
+		"'seo_geo_reset_apply_corporate_bootstrap'",
+		"check_admin_referer( self::BOOTSTRAP_NONCE_ACTION )",
+		"'bootstrap-corporate-theme'",
 	) as $rescue_controller_guard
 ) {
 	if ( ! str_contains( $rescue_controller, $rescue_controller_guard ) ) {
@@ -3218,6 +3251,8 @@ foreach (
 		'AdminRescueManifestController',
 		'RescueManifest',
 		'CloneResetEngine',
+		'CorporateThemeBootstrap',
+		'public static function corporate_theme_bootstrap()',
 		'public static function clone_reset_engine()',
 		'self::$rescue_manifest_controller->boot()',
 		'public static function rescue_manifest()',

@@ -109,7 +109,8 @@ echo wp_json_encode(
 		'plan' => $plan,
 		'result' => $result,
 		'state' => array(
-			'target_theme_active' => 'seo-geo-theme' === get_stylesheet(),
+			'target_theme_active'   => 'seo-geo-theme' === get_stylesheet(),
+			'embedded_core_exists'  => file_exists( get_stylesheet_directory() . '/inc/seo-geo-core/src/Runtime.php' ),
 			'legacy_plugin_exists' => file_exists( $legacy_plugin_dir ),
 			'legacy_theme_exists'  => is_dir( $legacy_theme_dir ),
 			'core_plugin_exists'   => file_exists( WP_PLUGIN_DIR . '/seo-geo-core' ),
@@ -176,6 +177,7 @@ assert result["safety"]["production_mutation"] is False
 assert not result["errors"]
 
 assert state["target_theme_active"] is True
+assert state["embedded_core_exists"] is True
 assert state["legacy_plugin_exists"] is False
 assert state["legacy_theme_exists"] is False
 assert state["core_plugin_exists"] is False

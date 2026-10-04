@@ -161,12 +161,12 @@ docker cp packages/seo-geo-core/. "$WP_CONTAINER":/var/www/html/wp-content/plugi
   || fail_smoke "plugin-copy" "Could not copy SEO GEO Core into WordPress" "plugin copied" "docker cp failed" "docker cp plugin"
 docker cp packages/seo-geo-migration-bridge/. "$WP_CONTAINER":/var/www/html/wp-content/plugins/seo-geo-migration-bridge/ \
   || fail_smoke "migration-bridge-copy" "Could not copy SEO/GEO Migration Bridge into WordPress" "migration bridge copied" "docker cp failed" "docker cp migration bridge"
-docker cp packages/seo-geo-theme/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
-  || fail_smoke "theme-copy" "Could not copy SEO GEO Starter into WordPress" "theme copied" "docker cp failed" "docker cp theme"
-docker exec "$WP_CONTAINER" mkdir -p /var/www/html/wp-content/themes/seo-geo-theme/presets \
-  || fail_smoke "theme-preset-dir" "Could not create bundled preset directory" "theme preset directory created" "mkdir failed" "docker exec mkdir"
-docker cp presets/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/presets/ \
-  || fail_smoke "theme-preset-copy" "Could not copy bundled presets into WordPress theme fixture" "theme presets copied" "docker cp failed" "docker cp presets"
+
+SELF_CONTAINED_THEME="$TMP_DIR/seo-geo-theme"
+bash scripts/build-theme-package.sh "$SELF_CONTAINED_THEME" \
+  || fail_smoke "theme-build" "Could not assemble self-contained SEO/GEO Theme" "embedded Core + presets assembled" "theme build failed" "build-theme-package.sh"
+docker cp "$SELF_CONTAINED_THEME/." "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
+  || fail_smoke "theme-copy" "Could not copy self-contained SEO/GEO Theme into WordPress" "theme copied" "docker cp failed" "docker cp theme"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-core \
   /var/www/html/wp-content/plugins/seo-geo-migration-bridge \
@@ -360,6 +360,7 @@ source scripts/ci/migration-bridge-cutover-acceptance.sh
 source scripts/ci/migration-bridge-report-acceptance.sh
 source scripts/ci/migration-bridge-operator-ui-acceptance.sh
 source scripts/ci/migration-bridge-clone-reset-acceptance.sh
+source scripts/ci/migration-bridge-corporate-bootstrap-acceptance.sh
 
 printf '[smoke] Checking runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
@@ -370,4 +371,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_smoke "runtime-php" "PHP runtime emitted a fatal, warning, notice or uncaught error" "no PHP runtime diagnostics" "$MATCH" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; Phase 8B public baseline capture/persistence passed; Phase 8C dependency graph passed; bounded dependency review planning passed; Reset/Rebuild Rescue Manifest passed; Portable Clone 10E.2A.1 contract passed; 10E.2A.2 read-only source inventory/destination planning passed; 10E.2A.3.1 resumable private database export passed; 10E.2A.3.2 resumable private file export passed; 10E.2A.3.3 package manifest/integrity passed; 10E.2A.3.4 authenticated delivery/retention passed; 10E.2A.4.1 Portable Import preflight passed; 10E.2A.4.2 private extraction/full payload checksum passed; 10E.2A.4.3 transactional staging database restore passed; 10E.2A.4.4 verified staging-file restore passed; 10E.2A.4.5 serialization-safe environment rewrite passed; 10E.2A.4.6.1 read-only finalization preflight passed; 10E.2A.4.6.2 reversible atomic database activation/rollback passed; Phase 8D sandbox lab passed; Phase 8E Migration Engine passed; Native Replatform Composer draft/source invariants passed; Phase 8F SEO/GEO parity engine passed; Phase 8G safe cutover/rollback passed; Phase 8H migration report passed; Phase 8I operator UI passed; reset-first Clone Reset Engine passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"
+printf 'WordPress smoke OK: WordPress 7.1 / PHP 8.2 fixture installed; source plugin + Migration Bridge + theme active; 7/7 theme patterns registered; native SEO authority=%s; canonical/meta/robots contract healthy; Phase 8A analyzer read-only acceptance passed; Phase 8B public baseline capture/persistence passed; Phase 8C dependency graph passed; bounded dependency review planning passed; Reset/Rebuild Rescue Manifest passed; Portable Clone 10E.2A.1 contract passed; 10E.2A.2 read-only source inventory/destination planning passed; 10E.2A.3.1 resumable private database export passed; 10E.2A.3.2 resumable private file export passed; 10E.2A.3.3 package manifest/integrity passed; 10E.2A.3.4 authenticated delivery/retention passed; 10E.2A.4.1 Portable Import preflight passed; 10E.2A.4.2 private extraction/full payload checksum passed; 10E.2A.4.3 transactional staging database restore passed; 10E.2A.4.4 verified staging-file restore passed; 10E.2A.4.5 serialization-safe environment rewrite passed; 10E.2A.4.6.1 read-only finalization preflight passed; 10E.2A.4.6.2 reversible atomic database activation/rollback passed; Phase 8D sandbox lab passed; Phase 8E Migration Engine passed; Native Replatform Composer draft/source invariants passed; Phase 8F SEO/GEO parity engine passed; Phase 8G safe cutover/rollback passed; Phase 8H migration report passed; Phase 8I operator UI passed; reset-first Clone Reset Engine passed; Corporate Theme bootstrap passed; frontend/admin requests healthy; language=%s; seo-provider=%s.\n' "$SEO_AUTHORITY" "$PROVIDER" "$SEO_PROVIDER"

@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.51 adds **Theme + Corporate preset bootstrap** for reset-first rebuilds: a completed Clone Reset is recognized by the Theme as a clean handoff, stale migration reports no longer re-block setup, Corporate configuration is applied only through the Theme-owned SetupExecutor, Organization identity requires explicit administrator confirmation, GEO discovery opt-ins remain conservative by default, and Clone Reset now blocks unless the installed target Theme contains its embedded Core runtime.
+
 - Migration Bridge 0.8.50 adds **Clone Reset Engine v1**: after a Rescue Manifest exists, the clone switches to the SEO/GEO Theme, removes every non-kept plugin and non-target theme, clears Divi/Elementor generated presentation caches, widget assignments, rewrite rules and object cache, while proving rescued post content and the manifest remain unchanged. Migration Bridge retains itself until handoff; business plugins survive only when explicitly kept.
 
 - Migration Bridge 0.8.49 introduces **Reset & Rebuild / Rescue Manifest v1**: a dedicated full-redesign path that captures pages/posts, URL identity, content fingerprints, useful SEO metadata, links and media without requiring UNKNOWN dependency review or mutating content/theme/plugin state. The existing Migration Bridge screen links directly to this reset-first path.

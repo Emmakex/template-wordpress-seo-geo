@@ -55,8 +55,11 @@ final class SetupPlanner {
 		$active_preset = \seo_geo_theme_active_preset_id();
 		$presets       = $this->presets();
 
-		$site_mode = true === ( $handoff['valid'] ?? false ) ? 'migrated' : 'clean';
-		$warnings  = $compatibility['warnings'];
+		$handoff_source = is_string( $handoff['source'] ?? null ) ? $handoff['source'] : '';
+		$site_mode      = true === ( $handoff['valid'] ?? false )
+			? ( 'reset-rebuild-handoff-v1' === $handoff_source ? 'reset-rebuild' : 'migrated' )
+			: 'clean';
+		$warnings       = $compatibility['warnings'];
 
 		if ( true === ( $handoff['available'] ?? false ) && true !== ( $handoff['valid'] ?? false ) ) {
 			$warnings[] = array(

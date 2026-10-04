@@ -59,8 +59,11 @@ final class CloneResetEngine {
 		if ( ! is_array( $saved ) || '' === (string) ( $saved['manifest_sha256'] ?? '' ) ) {
 			$blockers[] = 'rescue-manifest-required';
 		}
-		if ( ! isset( $themes[ self::TARGET_THEME ] ) ) {
+		$target_theme = $themes[ self::TARGET_THEME ] ?? null;
+		if ( ! $target_theme instanceof \WP_Theme ) {
 			$blockers[] = 'target-theme-not-installed';
+		} elseif ( ! $this->target_theme_runtime_ready( $target_theme ) ) {
+			$blockers[] = 'target-theme-self-contained-runtime-required';
 		}
 
 		$plugin_keep   = array();
@@ -402,6 +405,18 @@ final class CloneResetEngine {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Confirm the target Theme can run after the standalone Core plugin is removed.
+	 *
+	 * @param \WP_Theme $theme Installed target Theme.
+	 */
+	private function target_theme_runtime_ready( \WP_Theme $theme ): bool {
+		$root = $theme->get_stylesheet_directory();
+
+		return is_readable( $root . '/inc/seo-geo-core/src/Runtime.php' )
+			&& is_readable( $root . '/inc/seo-geo-core/src/Integrations/RuntimeIntegrationDetector.php' );
 	}
 
 	/**

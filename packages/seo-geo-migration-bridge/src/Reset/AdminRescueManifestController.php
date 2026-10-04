@@ -15,19 +15,26 @@ use WP_Error;
  * Provides Rescue Manifest + Clone Reset Engine actions.
  */
 final class AdminRescueManifestController {
-	public const PAGE_SLUG          = 'seo-geo-reset-rebuild';
-	public const ACTION             = 'seo_geo_reset_capture_rescue_manifest';
-	public const NONCE_ACTION       = 'seo_geo_reset_capture_rescue_manifest';
-	public const RESET_ACTION       = 'seo_geo_reset_apply_clone_runtime';
-	public const RESET_NONCE_ACTION = 'seo_geo_reset_apply_clone_runtime';
+	public const PAGE_SLUG              = 'seo-geo-reset-rebuild';
+	public const ACTION                 = 'seo_geo_reset_capture_rescue_manifest';
+	public const NONCE_ACTION           = 'seo_geo_reset_capture_rescue_manifest';
+	public const RESET_ACTION           = 'seo_geo_reset_apply_clone_runtime';
+	public const RESET_NONCE_ACTION     = 'seo_geo_reset_apply_clone_runtime';
+	public const BOOTSTRAP_ACTION       = 'seo_geo_reset_apply_corporate_bootstrap';
+	public const BOOTSTRAP_NONCE_ACTION = 'seo_geo_reset_apply_corporate_bootstrap';
 
 	/**
 	 * Construct the reset-first administrator controller.
 	 *
-	 * @param RescueManifest   $manifest Rescue manifest service.
-	 * @param CloneResetEngine $reset    Clone reset service.
+	 * @param RescueManifest          $manifest  Rescue manifest service.
+	 * @param CloneResetEngine        $reset     Clone reset service.
+	 * @param CorporateThemeBootstrap $bootstrap Corporate Theme bootstrap service.
 	 */
-	public function __construct( private RescueManifest $manifest, private CloneResetEngine $reset ) {
+	public function __construct(
+		private RescueManifest $manifest,
+		private CloneResetEngine $reset,
+		private CorporateThemeBootstrap $bootstrap
+	) {
 	}
 
 	/**
@@ -37,6 +44,7 @@ final class AdminRescueManifestController {
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_capture' ) );
 		add_action( 'admin_post_' . self::RESET_ACTION, array( $this, 'handle_reset' ) );
+		add_action( 'admin_post_' . self::BOOTSTRAP_ACTION, array( $this, 'handle_bootstrap' ) );
 	}
 
 	/**
@@ -60,9 +68,11 @@ final class AdminRescueManifestController {
 			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
 		}
 
-		$saved  = $this->manifest->saved();
-		$plan   = $this->reset->plan();
-		$report = $this->reset->report();
+		$saved            = $this->manifest->saved();
+		$plan             = $this->reset->plan();
+		$report           = $this->reset->report();
+		$bootstrap_plan   = $this->bootstrap->plan();
+		$bootstrap_report = $this->bootstrap->report();
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'SEO/GEO Reset & Rebuild', 'seo-geo-migration-bridge' ); ?></h1>
@@ -154,6 +164,45 @@ final class AdminRescueManifestController {
 					<?php submit_button( __( 'Reset clone runtime', 'seo-geo-migration-bridge' ), 'delete', 'submit', false ); ?>
 				</form>
 			<?php endif; ?>
+
+			<h2><?php echo esc_html__( 'Step 3 — Bootstrap Theme + Corporate preset', 'seo-geo-migration-bridge' ); ?></h2>
+			<p><?php echo esc_html__( 'Apply the Corporate preset through the Theme-owned setup authority. Language comes from the active WordPress locale; crawler policy stays inherited; llms.txt and Markdown alternatives remain off until we decide otherwise.', 'seo-geo-migration-bridge' ); ?></p>
+
+			<?php if ( is_array( $bootstrap_report ) ) : ?>
+				<div class="notice notice-success inline">
+					<p>
+						<strong><?php echo esc_html__( 'Corporate bootstrap:', 'seo-geo-migration-bridge' ); ?></strong>
+						<?php echo esc_html( (string) ( $bootstrap_report['status'] ?? '' ) ); ?>
+						—
+						<code><?php echo esc_html( (string) ( $bootstrap_report['report_sha256'] ?? '' ) ); ?></code>
+					</p>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( true !== ( $bootstrap_plan['ready'] ?? false ) ) : ?>
+				<div class="notice notice-warning inline">
+					<p><strong><?php echo esc_html__( 'Corporate bootstrap is not ready:', 'seo-geo-migration-bridge' ); ?></strong></p>
+					<p><code><?php echo esc_html( implode( ', ', is_array( $bootstrap_plan['blockers'] ?? null ) ? $bootstrap_plan['blockers'] : array() ) ); ?></code></p>
+				</div>
+			<?php else : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( self::BOOTSTRAP_ACTION ); ?>">
+					<input type="hidden" name="confirm" value="bootstrap-corporate-theme">
+					<?php wp_nonce_field( self::BOOTSTRAP_NONCE_ACTION ); ?>
+					<label style="display:block;margin:1rem 0;">
+						<input type="checkbox" name="confirm_identity" value="1" required>
+						<?php echo esc_html__( 'I confirm that the current WordPress site title identifies the organization represented by this site.', 'seo-geo-migration-bridge' ); ?>
+					</label>
+					<p>
+						<strong><?php echo esc_html__( 'Preset:', 'seo-geo-migration-bridge' ); ?></strong>
+						<code>corporate</code>
+						·
+						<strong><?php echo esc_html__( 'Theme:', 'seo-geo-migration-bridge' ); ?></strong>
+						<code><?php echo esc_html( CloneResetEngine::TARGET_THEME ); ?></code>
+					</p>
+					<?php submit_button( __( 'Apply Corporate bootstrap', 'seo-geo-migration-bridge' ), 'primary', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -209,6 +258,31 @@ final class AdminRescueManifestController {
 		}
 
 		$this->redirect( 'clone-reset-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
+	}
+
+
+	/**
+	 * Apply the Corporate Theme bootstrap through Theme-owned setup.
+	 */
+	public function handle_bootstrap(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::BOOTSTRAP_NONCE_ACTION );
+
+		$confirm = isset( $_POST['confirm'] ) ? sanitize_key( wp_unslash( $_POST['confirm'] ) ) : '';
+		if ( 'bootstrap-corporate-theme' !== $confirm ) {
+			wp_die( esc_html__( 'Corporate bootstrap was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$confirm_identity = '1' === filter_input( INPUT_POST, 'confirm_identity', FILTER_SANITIZE_NUMBER_INT );
+		$result           = $this->bootstrap->apply( $confirm_identity );
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect( 'corporate-bootstrap-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
 	}
 
 	/**

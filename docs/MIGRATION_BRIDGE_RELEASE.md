@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.50`;
+- current plugin version: `0.8.51`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -50,6 +50,22 @@ The workflow additionally runs PHP syntax validation for every plugin PHP file.
 - `seo-geo-migration-bridge.zip.sha256`.
 
 This artifact is an installation candidate for controlled client analysis. It is not a declaration that a real client migration is accepted.
+
+## Version 0.8.51 — Theme + Corporate bootstrap
+
+0.8.51 completes the reset-first handoff from Migration Bridge into the Theme configuration authority.
+
+After Clone Reset v1 (which now refuses to remove the standalone Core unless the installed SEO/GEO Theme contains its embedded Core runtime):
+
+1. the Theme recognizes the completed reset report as a clean `reset-rebuild-handoff-v1`;
+2. the old migration-report option may remain as historical evidence but no longer overrides the newer reset state;
+3. the operator explicitly confirms Organization identity;
+4. Migration Bridge delegates Corporate setup to `seo_geo_theme_apply_setup()`;
+5. the Theme persists the Corporate preset, single-language native configuration, Organization identity and conservative GEO defaults;
+6. a second identical apply is idempotent;
+7. pages/posts, rescued content and active plugin set remain unchanged by bootstrap.
+
+This phase does not create the new Home yet. It establishes the clean Theme/preset authority that 10E.4D uses for page reconstruction.
 
 ## emmake.com use
 
