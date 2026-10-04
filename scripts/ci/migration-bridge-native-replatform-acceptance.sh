@@ -12,6 +12,7 @@ cat >"$REPLATFORM_RUNNER" <<'PHP'
 
 use SeoGeo\MigrationBridge\Plugin;
 use SeoGeo\MigrationBridge\Replatform\NativeCompositionService;
+use SeoGeo\MigrationBridge\Replatform\ReviewedRemapApplier;
 
 wp_set_current_user( 1 );
 update_option( 'seo_geo_active_preset', 'corporate', false );
@@ -46,6 +47,11 @@ if ( ! $composer instanceof NativeCompositionService ) {
 	throw new RuntimeException( 'Native Replatform composer did not initialize.' );
 }
 
+$applier = Plugin::native_replatform_remap_applier();
+if ( ! $applier instanceof ReviewedRemapApplier ) {
+	throw new RuntimeException( 'Reviewed Remap applier did not initialize.' );
+}
+
 $plan   = $composer->plan( 'home', 'corporate' );
 $first  = $composer->create_draft( 'home', 'corporate' );
 $second = $composer->create_draft( 'home', 'corporate' );
@@ -58,8 +64,70 @@ if ( is_wp_error( $second ) ) {
 }
 
 $draft_id = (int) ( $first['draft_id'] ?? 0 );
-$draft    = get_post( $draft_id );
+
+$remap_assets = is_array( $plan['content_remap']['assets'] ?? null ) ? $plan['content_remap']['assets'] : array();
+$value_unit_id = '';
+foreach ( is_array( $remap_assets['units'] ?? null ) ? $remap_assets['units'] : array() as $unit ) {
+	if ( is_array( $unit ) && isset( $unit['id'], $unit['text'] ) && is_string( $unit['id'] ) && is_string( $unit['text'] ) && str_contains( $unit['text'], 'Preserved source copy' ) ) {
+		$value_unit_id = $unit['id'];
+		break;
+	}
+}
+
+$internal_link_id = '';
+$evidence_link_id = '';
+foreach ( is_array( $remap_assets['links'] ?? null ) ? $remap_assets['links'] : array() as $link ) {
+	if ( ! is_array( $link ) || ! isset( $link['id'], $link['url'] ) || ! is_string( $link['id'] ) || ! is_string( $link['url'] ) ) {
+		continue;
+	}
+	if ( '/services/' === $link['url'] ) {
+		$internal_link_id = $link['id'];
+	}
+	if ( 'https://example.org/evidence' === $link['url'] ) {
+		$evidence_link_id = $link['id'];
+	}
+}
+
+if ( '' === $value_unit_id || '' === $internal_link_id || '' === $evidence_link_id ) {
+	throw new RuntimeException( 'Reviewed Remap source fixture assets were not discovered.' );
+}
+
+$reviewed_selections = array(
+	'value-proposition' => array(
+		'units' => array( $value_unit_id ),
+	),
+	'verified-proof' => array(
+		'links' => array( $evidence_link_id ),
+	),
+	'primary-cta' => array(
+		'links' => array( $internal_link_id ),
+	),
+);
+
+$blocked_sensitive = $applier->plan( $draft_id, $reviewed_selections, array() );
+$invalid_candidate = $applier->plan(
+	$draft_id,
+	array(
+		'value-proposition' => array(
+			'units' => array( 'u-not-a-candidate' ),
+		),
+	),
+	array()
+);
+$apply_plan = $applier->plan( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
+$apply_first = $applier->apply( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
+if ( is_wp_error( $apply_first ) ) {
+	throw new RuntimeException( $apply_first->get_error_code() . ': ' . $apply_first->get_error_message() );
+}
+$apply_second = $applier->apply( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
+if ( is_wp_error( $apply_second ) ) {
+	throw new RuntimeException( $apply_second->get_error_code() . ': ' . $apply_second->get_error_message() );
+}
+
+$draft        = get_post( $draft_id );
 $source_after = get_post( $home_id );
+$ledger       = get_post_meta( $draft_id, ReviewedRemapApplier::LEDGER_META, true );
+$backup       = get_post_meta( $draft_id, ReviewedRemapApplier::BACKUP_META, true );
 
 echo wp_json_encode(
 	array(
@@ -70,6 +138,7 @@ echo wp_json_encode(
 			'page_key'       => $plan['page_key'] ?? null,
 			'source'         => $plan['source'] ?? null,
 			'patterns'       => $plan['patterns'] ?? null,
+			'remap_slots'    => $plan['remap_slots'] ?? null,
 			'content_remap'  => $plan['content_remap'] ?? null,
 			'plan_sha256'    => $plan['plan_sha256'] ?? null,
 			'existing_draft' => $plan['existing_draft'] ?? null,
@@ -78,6 +147,17 @@ echo wp_json_encode(
 		),
 		'first' => $first,
 		'second' => $second,
+		'blocked_sensitive' => $blocked_sensitive,
+		'invalid_candidate' => $invalid_candidate,
+		'apply_plan' => $apply_plan,
+		'apply_first' => $apply_first,
+		'apply_second' => $apply_second,
+		'ledger' => $ledger,
+		'backup' => array(
+			'schema_version' => is_array( $backup ) ? ( $backup['schema_version'] ?? null ) : null,
+			'sha256'         => is_array( $backup ) ? ( $backup['sha256'] ?? null ) : null,
+			'has_content'    => is_array( $backup ) && isset( $backup['content'] ) && is_string( $backup['content'] ) && '' !== $backup['content'],
+		),
 		'draft' => array(
 			'id'             => $draft?->ID,
 			'status'         => $draft?->post_status,
@@ -153,6 +233,14 @@ expected_patterns = [
     "seo-geo-theme/cta",
 ]
 assert plan["patterns"] == expected_patterns
+expected_remap_slots = [
+    {"section": "value-proposition", "after_pattern": "seo-geo-theme/corporate-native-hero"},
+    {"section": "service-overview", "after_pattern": "seo-geo-theme/corporate-native-capabilities"},
+    {"section": "organization-context", "after_pattern": "seo-geo-theme/corporate-case-study"},
+    {"section": "verified-proof", "after_pattern": "seo-geo-theme/corporate-native-proof"},
+    {"section": "primary-cta", "after_pattern": "seo-geo-theme/cta"},
+]
+assert plan["remap_slots"] == expected_remap_slots
 assert len(plan["plan_sha256"]) == 64
 
 remap = plan["content_remap"]
@@ -186,6 +274,48 @@ assert links["/services/"]["kind"] == "internal"
 assert links["https://example.org/evidence"]["internal"] is False
 assert links["https://example.org/evidence"]["kind"] == "external"
 
+blocked = report["blocked_sensitive"]
+assert blocked["ready"] is False
+assert "section-verification-required:verified-proof" in blocked["blockers"]
+
+invalid = report["invalid_candidate"]
+assert invalid["ready"] is False
+assert "asset-not-candidate:value-proposition:u-not-a-candidate" in invalid["blockers"]
+
+apply_plan = report["apply_plan"]
+assert apply_plan["ready"] is True
+assert apply_plan["mode"] == "reviewed-remap-apply-plan"
+assert apply_plan["existing"] is False
+assert apply_plan["verified_sections"] == ["verified-proof"]
+assert apply_plan["safety"] == {
+    "sandbox_only": True,
+    "draft_only": True,
+    "source_post_mutation": False,
+    "candidate_only": True,
+    "sensitive_requires_verification": True,
+    "public_post_creation": False,
+}
+
+applied = report["apply_first"]
+replayed = report["apply_second"]
+assert applied["status"] == "applied"
+assert replayed["status"] == "existing"
+assert applied["draft_id"] == replayed["draft_id"]
+assert applied["selection_sha256"] == replayed["selection_sha256"]
+assert applied["safety"]["source_unchanged"] is True
+assert applied["safety"]["draft_only"] is True
+assert applied["safety"]["public_mutation"] is False
+
+ledger = report["ledger"]
+assert ledger["selection_sha256"] == applied["selection_sha256"]
+assert ledger["source_id"] == report["source"]["id"]
+assert ledger["verified_sections"] == ["verified-proof"]
+assert len(ledger["before_sha256"]) == 64
+assert len(ledger["after_sha256"]) == 64
+assert report["backup"]["schema_version"] == 1
+assert len(report["backup"]["sha256"]) == 64
+assert report["backup"]["has_content"] is True
+
 first = report["first"]
 second = report["second"]
 assert first["status"] == "created"
@@ -217,7 +347,14 @@ assert "seo-geo-corporate-native-capabilities" in draft["content"]
 assert "seo-geo-corporate-native-proof" in draft["content"]
 assert "seo-geo-corporate-native-process" in draft["content"]
 assert "seo-geo-corporate-native-insights" in draft["content"]
-assert "Preserved source copy" not in draft["content"]
+assert "Preserved source copy" in draft["content"]
+assert "https://example.org/evidence" in draft["content"]
+assert "/services/" in draft["content"]
+assert "seo-geo-remap-slot:value-proposition" not in draft["content"]
+assert "seo-geo-remap-slot:verified-proof" not in draft["content"]
+assert "seo-geo-remap-slot:primary-cta" not in draft["content"]
+assert "seo-geo-remap-slot:service-overview" in draft["content"]
+assert "seo-geo-remap-slot:organization-context" in draft["content"]
 
 source = report["source"]
 assert source["status"] == "publish"
@@ -233,4 +370,4 @@ PY
   fail_smoke "native-replatform-assertions" "Native Replatform composer violated draft/source/composition invariants" "all assertions pass" "assertion failure"
 fi
 
-printf '[smoke] Native Replatform Composer OK: native draft created once, source URL/content untouched, Content Remap inventory/candidates are provenance-bound, evidence remains manual-review and public mutation remains locked.\n'
+printf '[smoke] Native Replatform Composer OK: native draft created once, reviewed candidate-only remap applied idempotently to deterministic slots, evidence required explicit verification, source remained untouched and public mutation stayed locked.\n'
