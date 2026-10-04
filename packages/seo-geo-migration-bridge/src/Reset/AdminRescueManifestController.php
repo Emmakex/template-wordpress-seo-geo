@@ -15,13 +15,13 @@ use WP_Error;
  * Provides Rescue Manifest + Clone Reset Engine actions.
  */
 final class AdminRescueManifestController {
-	public const PAGE_SLUG               = 'seo-geo-reset-rebuild';
-	public const ACTION                  = 'seo_geo_reset_capture_rescue_manifest';
-	public const NONCE_ACTION            = 'seo_geo_reset_capture_rescue_manifest';
-	public const RESET_ACTION            = 'seo_geo_reset_apply_clone_runtime';
-	public const RESET_NONCE_ACTION      = 'seo_geo_reset_apply_clone_runtime';
-	public const BOOTSTRAP_ACTION        = 'seo_geo_reset_apply_corporate_bootstrap';
-	public const BOOTSTRAP_NONCE_ACTION  = 'seo_geo_reset_apply_corporate_bootstrap';
+	public const PAGE_SLUG                = 'seo-geo-reset-rebuild';
+	public const ACTION                   = 'seo_geo_reset_capture_rescue_manifest';
+	public const NONCE_ACTION             = 'seo_geo_reset_capture_rescue_manifest';
+	public const RESET_ACTION             = 'seo_geo_reset_apply_clone_runtime';
+	public const RESET_NONCE_ACTION       = 'seo_geo_reset_apply_clone_runtime';
+	public const BOOTSTRAP_ACTION         = 'seo_geo_reset_apply_corporate_bootstrap';
+	public const BOOTSTRAP_NONCE_ACTION   = 'seo_geo_reset_apply_corporate_bootstrap';
 	public const CLEAN_HOME_ACTION        = 'seo_geo_reset_create_clean_home';
 	public const CLEAN_HOME_NONCE_ACTION  = 'seo_geo_reset_create_clean_home';
 	public const CONTENT_KIT_ACTION       = 'seo_geo_reset_save_home_content_kit';
@@ -34,12 +34,12 @@ final class AdminRescueManifestController {
 	/**
 	 * Construct the reset-first administrator controller.
 	 *
-	 * @param RescueManifest          $manifest   Rescue manifest service.
-	 * @param CloneResetEngine        $reset      Clone reset service.
-	 * @param CorporateThemeBootstrap $bootstrap  Corporate Theme bootstrap service.
-	 * @param CleanHomeRebuilder       $clean_home Clean Corporate Home draft builder.
-	 * @param CorporateHomeContentKit  $content_kit Structured Home content service.
-	 * @param NativeHomeHydrator       $hydrator Native Home hydrator.
+	 * @param RescueManifest          $manifest    Rescue manifest service.
+	 * @param CloneResetEngine        $reset       Clone reset service.
+	 * @param CorporateThemeBootstrap $bootstrap   Corporate Theme bootstrap service.
+	 * @param CleanHomeRebuilder      $clean_home  Clean Corporate Home draft builder.
+	 * @param CorporateHomeContentKit $content_kit Structured Home content service.
+	 * @param NativeHomeHydrator      $hydrator    Native Home hydrator.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
@@ -339,11 +339,18 @@ final class AdminRescueManifestController {
 					<tr>
 						<th scope="row">
 							<label for="seo-geo-slot-<?php echo esc_attr( $slot_id ); ?>"><?php echo esc_html( ucwords( str_replace( '-', ' ', $slot_id ) ) ); ?></label>
-							<?php if ( $required ) : ?><span aria-label="<?php echo esc_attr__( 'Required', 'seo-geo-migration-bridge' ); ?>"> *</span><?php endif; ?>
+							<?php if ( $required ) : ?>
+								<span aria-label="<?php echo esc_attr__( 'Required', 'seo-geo-migration-bridge' ); ?>"> *</span>
+							<?php endif; ?>
 						</th>
 						<td>
 							<?php if ( '' !== $verification ) : ?>
-								<p class="description"><?php echo esc_html( sprintf( __( 'Evidence group: %s', 'seo-geo-migration-bridge' ), $verification ) ); ?></p>
+								<p class="description">
+									<?php
+									/* translators: %s: evidence verification group name. */
+									echo esc_html( sprintf( __( 'Evidence group: %s', 'seo-geo-migration-bridge' ), $verification ) );
+									?>
+								</p>
 							<?php endif; ?>
 							<?php if ( 'link' === $type ) : ?>
 								<?php $link = is_array( $current_value ) ? $current_value : array(); ?>
@@ -519,7 +526,8 @@ final class AdminRescueManifestController {
 			if ( ! is_string( $slot_id ) || ! is_scalar( $raw_list ) ) {
 				continue;
 			}
-			$values[ $slot_id ] = preg_split( '/\r\n|\r|\n/', (string) $raw_list ) ?: array();
+			$list_items         = preg_split( '/\r\n|\r|\n/', (string) $raw_list );
+			$values[ $slot_id ] = is_array( $list_items ) ? $list_items : array();
 		}
 
 		$groups = array();
