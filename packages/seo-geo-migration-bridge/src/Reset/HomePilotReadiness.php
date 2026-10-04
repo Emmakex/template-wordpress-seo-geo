@@ -123,20 +123,20 @@ final class HomePilotReadiness {
 			$blockers[] = 'seo-review-required-before-browser-qa';
 		}
 
-		$content                = $draft instanceof WP_Post ? (string) $draft->post_content : '';
-		$legacy_markers         = $this->legacy_markers( $content );
+		$content                       = $draft instanceof WP_Post ? (string) $draft->post_content : '';
+		$legacy_markers                = $this->legacy_markers( $content );
 		$checks['legacy_builder_free'] = array() === $legacy_markers;
 		if ( ! $checks['legacy_builder_free'] ) {
 			$blockers[] = 'legacy-builder-markup-detected';
 		}
 
-		$placeholder_markers    = $this->placeholder_markers( $content );
+		$placeholder_markers                    = $this->placeholder_markers( $content );
 		$checks['preset_placeholders_removed'] = array() === $placeholder_markers;
 		if ( ! $checks['preset_placeholders_removed'] ) {
 			$blockers[] = 'preset-placeholder-content-detected';
 		}
 
-		$verified_groups = is_array( $hydration_plan['verified_groups'] ?? null ) ? $hydration_plan['verified_groups'] : array();
+		$verified_groups    = is_array( $hydration_plan['verified_groups'] ?? null ) ? $hydration_plan['verified_groups'] : array();
 		$unverified_enabled = array_values(
 			array_keys(
 				array_filter(
@@ -205,7 +205,7 @@ final class HomePilotReadiness {
 		}
 
 		foreach ( is_array( $manifest['resources'] ?? null ) ? $manifest['resources'] : array() as $resource ) {
-			if ( ! is_array( $resource ) || $source_id !== (int) ( $resource['id'] ?? 0 ) ) {
+			if ( ! is_array( $resource ) || (int) ( $resource['id'] ?? 0 ) !== $source_id ) {
 				continue;
 			}
 
@@ -229,14 +229,14 @@ final class HomePilotReadiness {
 	 */
 	private function legacy_markers( string $content ): array {
 		$patterns = array(
-			'et_pb_'         => '/\bet_pb_[a-z0-9_-]+/i',
-			'divi-shortcode' => '/\[\/?et_pb_[^\]]*\]/i',
-			'elementor'      => '/(?:data-elementor-|\belementor-[a-z0-9_-]+)/i',
-			'visual-composer' => '/(?:\[\/?vc_[^\]]*\]|\bwpb_[a-z0-9_-]+)/i',
-			'fusion-builder' => '/(?:\[\/?fusion_[^\]]*\]|\bfusion-builder\b)/i',
-			'beaver-builder' => '/\bfl-builder-[a-z0-9_-]+/i',
+			'et_pb_'           => '/\bet_pb_[a-z0-9_-]+/i',
+			'divi-shortcode'   => '/\[\/?et_pb_[^\]]*\]/i',
+			'elementor'        => '/(?:data-elementor-|\belementor-[a-z0-9_-]+)/i',
+			'visual-composer'  => '/(?:\[\/?vc_[^\]]*\]|\bwpb_[a-z0-9_-]+)/i',
+			'fusion-builder'   => '/(?:\[\/?fusion_[^\]]*\]|\bfusion-builder\b)/i',
+			'beaver-builder'   => '/\bfl-builder-[a-z0-9_-]+/i',
 		);
-		$found = array();
+		$found    = array();
 
 		foreach ( $patterns as $label => $pattern ) {
 			if ( 1 === preg_match( $pattern, $content ) ) {
@@ -264,7 +264,7 @@ final class HomePilotReadiness {
 			'Primary action',
 			'Secondary action',
 		);
-		$found = array();
+		$found   = array();
 
 		foreach ( $needles as $needle ) {
 			if ( str_contains( $content, $needle ) ) {
