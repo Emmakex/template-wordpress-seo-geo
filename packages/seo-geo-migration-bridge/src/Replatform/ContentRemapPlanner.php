@@ -218,7 +218,7 @@ final class ContentRemapPlanner {
 		}
 
 		$processor = new WP_HTML_Tag_Processor( $html );
-		while ( $processor->next_tag( 'a' ) ) {
+		while ( $processor->next_tag( array( 'tag_name' => 'A' ) ) ) {
 			if ( count( $links ) >= self::MAX_LINKS ) {
 				break;
 			}
@@ -259,7 +259,7 @@ final class ContentRemapPlanner {
 		$attachment_id = isset( $attrs['id'] ) ? (int) $attrs['id'] : 0;
 		$processor     = new WP_HTML_Tag_Processor( $html );
 
-		while ( $processor->next_tag( 'img' ) ) {
+		while ( $processor->next_tag( array( 'tag_name' => 'IMG' ) ) ) {
 			if ( count( $media ) >= self::MAX_MEDIA ) {
 				break;
 			}
