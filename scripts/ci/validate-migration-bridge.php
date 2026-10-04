@@ -296,6 +296,11 @@ foreach (
 		"'reviewed-remap-apply-plan'",
 		"'reviewed-remap-apply'",
 		"'reviewed-remap-rollback'",
+		"'reviewed-remap-evidence'",
+		"'post_body_exported'      => false",
+		"'backup_body_exported'    => false",
+		"'credentials_exported'    => false",
+		"'public_source_mutation'  => false",
 		"'section-verification-required:'",
 		"'asset-not-candidate:'",
 		"'native-slot-marker-count:'",
@@ -371,6 +376,12 @@ foreach (
 		'check_admin_referer( self::rollback_nonce_action( $draft_id ) )',
 		"'rollback-reviewed-remap'",
 		'admin_post_' . "' . self::ROLLBACK_ACTION",
+		"'seo_geo_native_replatform_review_evidence'",
+		'check_admin_referer( self::evidence_nonce_action( $draft_id ) )',
+		"'download-reviewed-evidence'",
+		'admin_post_' . "' . self::EVIDENCE_ACTION",
+		"'Content-Type: application/json; charset='",
+		"'Content-Disposition: attachment; filename=\\\"seo-geo-native-review-evidence-'",
 	) as $native_replatform_controller_guard
 ) {
 	if ( ! str_contains( $native_replatform_controller, $native_replatform_controller_guard ) ) {
