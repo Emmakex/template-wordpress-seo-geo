@@ -15,8 +15,10 @@ use WP_Error;
  * Validates and persists reviewed Home content independently from legacy layout.
  */
 final class CorporateHomeContentKit {
-	public const OPTION = 'seo_geo_corporate_home_content_kit_v1';
-	public const MODEL  = 'corporate-home-v1';
+	public const OPTION                   = 'seo_geo_corporate_home_content_kit_v1';
+	public const MODEL                    = 'corporate-home-v1';
+	public const BLUEPRINT_MODE           = 'corporate-home-content-blueprint';
+	public const BLUEPRINT_SCHEMA_VERSION = 1;
 
 	/**
 	 * Return the Theme-owned content model.
@@ -43,6 +45,153 @@ final class CorporateHomeContentKit {
 		$value = get_option( self::OPTION, null );
 
 		return is_array( $value ) ? $value : null;
+	}
+
+	/**
+	 * Validate one portable reviewed Content Blueprint without binding it to a draft.
+	 *
+	 * Blueprints deliberately contain no WordPress post IDs, source IDs, plan hashes,
+	 * kit hashes or timestamps. Those runtime identities are bound only on import.
+	 *
+	 * @param array<string,mixed> $blueprint Portable reviewed content.
+	 * @return array<string,mixed>|WP_Error
+	 */
+	public function validate_blueprint( array $blueprint ): array|WP_Error {
+		$model = $this->model();
+		if ( ! is_array( $model ) || 1 !== ( $model['schema_version'] ?? null ) ) {
+			return new WP_Error( 'seo_geo_home_content_model_unavailable', 'Corporate Home content model v1 is unavailable.' );
+		}
+
+		$allowed_keys = array( 'schema_version', 'mode', 'model', 'locale', 'values', 'verified_groups' );
+		foreach ( array_keys( $blueprint ) as $key ) {
+			if ( ! in_array( $key, $allowed_keys, true ) ) {
+				return new WP_Error( 'seo_geo_home_blueprint_runtime_identity', 'Content Blueprint contains an unsupported or runtime-bound top-level field.' );
+			}
+		}
+
+		if (
+			self::BLUEPRINT_SCHEMA_VERSION !== ( $blueprint['schema_version'] ?? null )
+			|| self::BLUEPRINT_MODE !== ( $blueprint['mode'] ?? null )
+			|| self::MODEL !== ( $blueprint['model'] ?? null )
+		) {
+			return new WP_Error( 'seo_geo_home_blueprint_contract_invalid', 'Content Blueprint schema, mode or model is invalid.' );
+		}
+
+		$locale        = is_scalar( $blueprint['locale'] ?? null ) ? sanitize_text_field( (string) $blueprint['locale'] ) : '';
+		$active_locale = $this->active_locale();
+		if ( '' === $locale || ! hash_equals( $active_locale, $locale ) ) {
+			return new WP_Error( 'seo_geo_home_blueprint_locale_mismatch', 'Content Blueprint locale does not match the active Corporate preset locale.' );
+		}
+
+		$raw_values = is_array( $blueprint['values'] ?? null ) ? $blueprint['values'] : array();
+		$raw_groups = is_array( $blueprint['verified_groups'] ?? null ) ? $blueprint['verified_groups'] : array();
+
+		$allowed_groups = array( 'hero-proof', 'proof', 'case-study' );
+		foreach ( array_keys( $raw_groups ) as $group ) {
+			if ( ! is_string( $group ) || ! in_array( $group, $allowed_groups, true ) ) {
+				return new WP_Error( 'seo_geo_home_blueprint_unknown_group', 'Content Blueprint contains an unknown evidence verification group.' );
+			}
+		}
+
+		$groups = array(
+			'hero-proof' => true === ( $raw_groups['hero-proof'] ?? false ),
+			'proof'      => true === ( $raw_groups['proof'] ?? false ),
+			'case-study' => true === ( $raw_groups['case-study'] ?? false ),
+		);
+		$values = array();
+		$errors = array();
+
+		$slots      = is_array( $model['slots'] ?? null ) ? $model['slots'] : array();
+		$slot_types = array();
+		foreach ( $slots as $slot ) {
+			if ( ! is_array( $slot ) || ! is_string( $slot['id'] ?? null ) || ! is_string( $slot['type'] ?? null ) ) {
+				return new WP_Error( 'seo_geo_home_content_model_invalid', 'Corporate Home content model contains an invalid slot.' );
+			}
+
+			$slot_types[ $slot['id'] ] = $slot['type'];
+		}
+
+		foreach ( array_keys( $raw_values ) as $slot_id ) {
+			if ( ! is_string( $slot_id ) || ! array_key_exists( $slot_id, $slot_types ) ) {
+				return new WP_Error( 'seo_geo_home_blueprint_unknown_slot', 'Content Blueprint contains an unknown semantic slot.' );
+			}
+		}
+
+		foreach ( $slots as $slot ) {
+			$id                 = (string) $slot['id'];
+			$type               = (string) $slot['type'];
+			$verification       = true === ( $slot['requires_verification'] ?? false );
+			$verification_group = is_string( $slot['verification_group'] ?? null ) ? $slot['verification_group'] : '';
+			$group_verified     = '' !== $verification_group && true === ( $groups[ $verification_group ] ?? false );
+			$required           = true === ( $slot['required'] ?? false ) || ( $verification && $group_verified );
+			$value              = $this->normalize_value( $type, $raw_values[ $id ] ?? null );
+
+			if ( $required && $this->empty_value( $type, $value ) ) {
+				$errors[] = 'required:' . $id;
+			}
+
+			if ( ! $this->empty_value( $type, $value ) ) {
+				$values[ $id ] = $value;
+			}
+		}
+
+		if ( array() !== $errors ) {
+			return new WP_Error(
+				'seo_geo_home_blueprint_incomplete',
+				'Corporate Home Content Blueprint is incomplete: ' . implode( ', ', $errors )
+			);
+		}
+
+		$material = array(
+			'schema_version'  => self::BLUEPRINT_SCHEMA_VERSION,
+			'mode'            => self::BLUEPRINT_MODE,
+			'model'           => self::MODEL,
+			'locale'          => $locale,
+			'values'          => $values,
+			'verified_groups' => $groups,
+		);
+
+		$material['blueprint_sha256'] = $this->hash_material( $material );
+
+		return $material;
+	}
+
+	/**
+	 * Import one portable Content Blueprint and bind it to the current clean Home.
+	 *
+	 * @param array<string,mixed> $blueprint Portable reviewed content.
+	 * @param int                 $draft_id  Current clean Home draft ID.
+	 * @param string              $plan_sha  Current clean Home plan SHA-256.
+	 * @return array<string,mixed>|WP_Error
+	 */
+	public function import_blueprint( array $blueprint, int $draft_id, string $plan_sha ): array|WP_Error {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error( 'seo_geo_home_content_forbidden', 'Administrator capability is required.' );
+		}
+
+		$validated_blueprint = $this->validate_blueprint( $blueprint );
+		if ( $validated_blueprint instanceof WP_Error ) {
+			return $validated_blueprint;
+		}
+
+		$validated = $this->validate(
+			array(
+				'draft_id'        => $draft_id,
+				'plan_sha256'     => $plan_sha,
+				'values'          => $validated_blueprint['values'],
+				'verified_groups' => $validated_blueprint['verified_groups'],
+			)
+		);
+		if ( $validated instanceof WP_Error ) {
+			return $validated;
+		}
+
+		unset( $validated['kit_sha256'] );
+		$validated['input_mode']       = 'blueprint';
+		$validated['blueprint_sha256'] = (string) $validated_blueprint['blueprint_sha256'];
+		$validated['kit_sha256']       = $this->hash_material( $validated );
+
+		return $this->persist( $validated );
 	}
 
 	/**
@@ -119,10 +268,7 @@ final class CorporateHomeContentKit {
 			'verified_groups' => $groups,
 		);
 
-		$material['kit_sha256'] = hash(
-			'sha256',
-			(string) wp_json_encode( $material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
-		);
+		$material['kit_sha256'] = $this->hash_material( $material );
 
 		return $material;
 	}
@@ -143,10 +289,39 @@ final class CorporateHomeContentKit {
 			return $validated;
 		}
 
+		return $this->persist( $validated );
+	}
+
+	/**
+	 * Persist one already validated Content Kit without changing its identity hash.
+	 *
+	 * @param array<string,mixed> $validated Validated Content Kit.
+	 * @return array<string,mixed>
+	 */
+	private function persist( array $validated ): array {
 		$validated['saved_at'] = gmdate( DATE_ATOM );
 		update_option( self::OPTION, $validated, false );
 
 		return $validated;
+	}
+
+	/**
+	 * Hash one deterministic reviewed-content material array.
+	 *
+	 * @param array<string,mixed> $material Hash input.
+	 */
+	private function hash_material( array $material ): string {
+		return hash(
+			'sha256',
+			(string) wp_json_encode( $material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+		);
+	}
+
+	/**
+	 * Resolve the active Corporate preset locale.
+	 */
+	private function active_locale(): string {
+		return function_exists( 'seo_geo_theme_preset_locale' ) ? (string) \seo_geo_theme_preset_locale() : get_locale();
 	}
 
 	/**

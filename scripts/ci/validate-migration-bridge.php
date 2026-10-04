@@ -97,6 +97,8 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/NativeHomeHydrator.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
+	'examples/content-blueprints/emmake-home.es_ES.json',
+	'scripts/ci/migration-bridge-home-content-blueprint-acceptance.sh',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
@@ -3253,10 +3255,17 @@ foreach (
 $home_content_kit = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php' );
 foreach (
 	array(
-		"public const OPTION = 'seo_geo_corporate_home_content_kit_v1';",
-		"public const MODEL  = 'corporate-home-v1';",
-		"'mode'            => 'corporate-home-content-kit'",
+		"seo_geo_corporate_home_content_kit_v1",
+		"corporate-home-v1",
+		"corporate-home-content-kit",
+		"corporate-home-content-blueprint",
+		"public function validate_blueprint(",
+		"public function import_blueprint(",
+		"seo_geo_home_blueprint_runtime_identity",
+		"seo_geo_home_blueprint_locale_mismatch",
+		"seo_geo_home_blueprint_unknown_slot",
 		"'verified_groups'",
+		"'blueprint_sha256'",
 		"'kit_sha256'",
 		"'seo_geo_home_content_incomplete'",
 		"'hero-proof'",
@@ -3270,6 +3279,98 @@ foreach (
 			MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php',
 			$home_content_guard,
 			'missing'
+		);
+	}
+}
+
+$emmake_blueprint_path = 'examples/content-blueprints/emmake-home.es_ES.json';
+$emmake_blueprint      = json_decode( (string) file_get_contents( $emmake_blueprint_path ), true );
+if ( ! is_array( $emmake_blueprint ) ) {
+	fail_migration_bridge(
+		'emmake-home-blueprint-json',
+		'Emmake Home Content Blueprint must be valid JSON.',
+		$emmake_blueprint_path,
+		'valid JSON object',
+		json_last_error_msg()
+	);
+}
+
+foreach (
+	array(
+		'schema_version' => 1,
+		'mode'           => 'corporate-home-content-blueprint',
+		'model'          => 'corporate-home-v1',
+		'locale'         => 'es_ES',
+	) as $blueprint_key => $blueprint_expected
+) {
+	if ( ( $emmake_blueprint[ $blueprint_key ] ?? null ) !== $blueprint_expected ) {
+		fail_migration_bridge(
+			'emmake-home-blueprint-contract',
+			'Emmake Home Content Blueprint metadata must stay portable, model-bound and Spanish.',
+			$emmake_blueprint_path,
+			$blueprint_expected,
+			$emmake_blueprint[ $blueprint_key ] ?? null
+		);
+	}
+}
+
+$emmake_blueprint_groups = is_array( $emmake_blueprint['verified_groups'] ?? null ) ? $emmake_blueprint['verified_groups'] : array();
+foreach ( array( 'hero-proof', 'proof', 'case-study' ) as $blueprint_group ) {
+	if ( true === ( $emmake_blueprint_groups[ $blueprint_group ] ?? false ) ) {
+		fail_migration_bridge(
+			'emmake-home-blueprint-evidence',
+			'Emmake reference blueprint must not enable unverified evidence groups.',
+			$emmake_blueprint_path,
+			false,
+			true
+		);
+	}
+}
+
+$corporate_content_map = json_decode( (string) file_get_contents( 'presets/corporate/content-map.json' ), true );
+$corporate_model       = is_array( $corporate_content_map )
+	? ( $corporate_content_map['native_content_models']['corporate-home-v1'] ?? null )
+	: null;
+if ( ! is_array( $corporate_model ) ) {
+	fail_migration_bridge(
+		'emmake-home-blueprint-model',
+		'Corporate Home model must be available to validate the Emmake reference blueprint.',
+		'presets/corporate/content-map.json',
+		'corporate-home-v1',
+		'missing'
+	);
+}
+
+$emmake_blueprint_values = is_array( $emmake_blueprint['values'] ?? null ) ? $emmake_blueprint['values'] : array();
+foreach ( is_array( $corporate_model['slots'] ?? null ) ? $corporate_model['slots'] : array() as $blueprint_slot ) {
+	if ( ! is_array( $blueprint_slot ) || true !== ( $blueprint_slot['required'] ?? false ) || ! is_string( $blueprint_slot['id'] ?? null ) ) {
+		continue;
+	}
+
+	$blueprint_slot_id = $blueprint_slot['id'];
+	$blueprint_value   = $emmake_blueprint_values[ $blueprint_slot_id ] ?? null;
+	$blueprint_empty   = null === $blueprint_value
+		|| '' === $blueprint_value
+		|| ( is_array( $blueprint_value ) && array() === $blueprint_value );
+	if ( $blueprint_empty ) {
+		fail_migration_bridge(
+			'emmake-home-blueprint-required-slot',
+			'Emmake reference blueprint must populate every required Corporate Home slot.',
+			$emmake_blueprint_path,
+			$blueprint_slot_id,
+			'missing'
+		);
+	}
+}
+
+foreach ( array_keys( $emmake_blueprint ) as $blueprint_top_key ) {
+	if ( in_array( $blueprint_top_key, array( 'draft_id', 'source_id', 'plan_sha256', 'kit_sha256', 'saved_at' ), true ) ) {
+		fail_migration_bridge(
+			'emmake-home-blueprint-runtime-identity',
+			'Portable blueprints must not carry environment-bound WordPress identity.',
+			$emmake_blueprint_path,
+			'no runtime identity fields',
+			$blueprint_top_key
 		);
 	}
 }
@@ -3321,6 +3422,10 @@ foreach (
 		"'seo_geo_reset_save_home_content_kit'",
 		"check_admin_referer( self::CONTENT_KIT_NONCE_ACTION )",
 		"'save-home-content-kit'",
+		"'seo_geo_reset_import_home_content_blueprint'",
+		"check_admin_referer( self::BLUEPRINT_NONCE_ACTION )",
+		"'import-home-content-blueprint'",
+		"MAX_BLUEPRINT_BYTES",
 		"'seo_geo_reset_hydrate_home'",
 		"check_admin_referer( self::HYDRATE_NONCE_ACTION )",
 		"'hydrate-clean-home'",

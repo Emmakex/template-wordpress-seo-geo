@@ -2721,7 +2721,7 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **active — Home scaffold + semantic contract accepted; Content Kit + Native Hydrator v1 is the current gate**
+Status: **active — Home scaffold + Content Kit/hydrator accepted; Portable Content Blueprint + real Emmake Home is the current gate**
 
 Home scaffold milestone:
 
@@ -2761,7 +2761,7 @@ Accepted contract:
 
 #### 10E.4D.2 — Content Kit + Native Hydrator v1
 
-Status: **active — Migration Bridge 0.8.53 candidate; current execution pointer**
+Status: **accepted — PR #223 / 8 of 8 CI gates green / merge `a9b8bf1cca642485284020baed15a7d6c322d34e`**
 
 Candidate behavior:
 
@@ -2777,9 +2777,46 @@ Candidate behavior:
 - make identical replay idempotent;
 - provide exact rollback to the preset scaffold.
 
+Accepted behavior:
+
+- reviewed text/link/list content is persisted independently from legacy layout;
+- evidence-sensitive groups remain explicit and incomplete evidence is rejected;
+- native hydration targets semantic slot classes and omits unverified sections;
+- hydration is idempotent, drift-protected and exactly reversible;
+- indented/nested native leaf blocks are hydrated without depending on formatting whitespace;
+- all 8 repository gates passed after the CTA indentation regression was fixed.
+
+#### 10E.4D.3 — Portable Content Blueprint + real Emmake Home v1
+
+Status: **active — Migration Bridge 0.8.54 candidate; current execution pointer**
+
+Goal:
+
+Make reviewed semantic Home content portable between environments and use Emmake as the first real reference payload without hard-coding Emmake into the product runtime.
+
+Candidate behavior:
+
+- portable `corporate-home-content-blueprint` schema bound to `corporate-home-v1`;
+- blueprint contains locale, semantic values and evidence flags only;
+- WordPress draft/source IDs, plan hashes, kit hashes and timestamps are forbidden in portable input;
+- unknown semantic slots and verification groups are rejected;
+- locale must match the active Corporate preset locale;
+- required fields are validated before import;
+- normalized blueprint receives deterministic SHA-256 identity;
+- import binds the portable content to the current clean Home draft + plan and reuses the accepted Content Kit validator;
+- identical import produces the same blueprint and Content Kit identities;
+- Emmake `es_ES` reference blueprint preserves its public service pillars and methodology;
+- all Emmake hero-proof/proof/case-study groups remain disabled until evidence is explicitly reviewed;
+- Native Hydrator remains the only writer to the clean draft;
+- source page, front-page assignment and plugin set remain unchanged.
+
 Next only after acceptance:
 
-- populate the Content Kit with **real Emmake content**, review the private Home preview and run Home-specific SEO/GEO/accessibility/performance QA before any replacement of the current front page.
+- install/update Migration Bridge 0.8.54 on `emmake.com/nuevaweb/`;
+- import `examples/content-blueprints/emmake-home.es_ES.json`;
+- hydrate and visually review the private Corporate Home;
+- run Home-specific SEO/GEO, accessibility and performance QA;
+- only then decide whether the rebuilt Home is eligible to replace the current front page.
 
 Rebuild in this order:
 

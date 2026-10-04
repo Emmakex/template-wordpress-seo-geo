@@ -2,6 +2,26 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Portable Home Content Blueprint + Emmake reference content — 0.8.54
+
+Step 5 now accepts a portable reviewed **Content Blueprint** in addition to manual Content Kit editing.
+
+A blueprint:
+
+- uses schema `corporate-home-content-blueprint` + model `corporate-home-v1`;
+- contains only locale, semantic values and evidence-verification flags;
+- carries no WordPress post IDs, source IDs, plan hashes, kit hashes or timestamps;
+- rejects unknown semantic slots and verification groups;
+- must match the active Corporate preset locale;
+- must populate every required field before import;
+- is normalized and SHA-256 fingerprinted before it is bound to the current clean Home draft;
+- is then validated through the same Content Kit contract used by manual editing;
+- produces a deterministic Content Kit identity when the same blueprint is imported again.
+
+The repository includes `examples/content-blueprints/emmake-home.es_ES.json` as the first real-site reference. It reorganizes existing public Emmake positioning around marketing digital, investigación de mercado digital, análisis de datos and inteligencia de negocio, with all proof/case-study groups deliberately disabled until evidence is explicitly reviewed.
+
+This portable shape is also the handoff contract intended for the future SEO/GEO Manager: content can be prepared/reviewed outside the page layout and imported without carrying environment identity.
+
 ## Corporate Home Content Kit + Native Hydrator — 0.8.53
 
 After the clean Corporate Home draft exists, **Tools → SEO/GEO Reset & Rebuild** exposes Step 5.

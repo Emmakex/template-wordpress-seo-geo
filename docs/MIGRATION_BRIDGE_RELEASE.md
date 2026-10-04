@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.53`;
+- current plugin version: `0.8.54`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -50,6 +50,25 @@ The workflow additionally runs PHP syntax validation for every plugin PHP file.
 - `seo-geo-migration-bridge.zip.sha256`.
 
 This artifact is an installation candidate for controlled client analysis. It is not a declaration that a real client migration is accepted.
+
+## Version 0.8.54 — Portable Home Content Blueprint + Emmake reference content
+
+0.8.54 makes reviewed Home content portable across environments without carrying WordPress runtime identity.
+
+1. a Content Blueprint contains only schema/model, locale, semantic values and evidence flags;
+2. `draft_id`, `source_id`, plan SHA, kit SHA and timestamps are forbidden in the portable input;
+3. unknown semantic slots and evidence groups are rejected;
+4. locale must match the active Corporate preset locale;
+5. required fields are validated before the blueprint can be imported;
+6. normalized blueprint material receives a deterministic SHA-256;
+7. import binds the portable data to the current clean Home draft + plan and then reuses the accepted Content Kit validation;
+8. identical re-import preserves the same blueprint and Content Kit identity;
+9. the accepted Native Hydrator remains the only writer to the clean draft;
+10. source content, front-page assignment and plugins remain unchanged.
+
+The first real reference payload is `examples/content-blueprints/emmake-home.es_ES.json`. It uses the existing public Emmake service pillars and methodology while leaving hero proof, proof and case-study verification disabled.
+
+The next field gate is to install 0.8.54 on `emmake.com/nuevaweb/`, import this blueprint into the clean Corporate Home, hydrate the private draft and run visual + SEO/GEO + accessibility + performance review before any front-page replacement.
 
 ## Version 0.8.53 — Corporate Home Content Kit + Native Hydrator
 
