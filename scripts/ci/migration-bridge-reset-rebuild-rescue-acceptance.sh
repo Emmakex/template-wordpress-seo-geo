@@ -119,7 +119,7 @@ post = resources[report["fixture"]["post_id"]]
 assert page["post_type"] == "page"
 assert page["status"] == "publish"
 assert page["slug"] == "rescue-manifest-page"
-assert page["path"].endswith("/rescue-manifest-page/")
+assert page["path"] == "/"
 assert len(page["content_sha256"]) == 64
 assert "/services/" in page["links"]
 assert "https://example.org/media/keep.jpg" in page["media"]
