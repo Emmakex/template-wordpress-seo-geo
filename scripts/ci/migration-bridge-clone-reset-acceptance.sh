@@ -173,7 +173,7 @@ assert result["safety"]["content_unchanged"] is True
 assert result["safety"]["target_theme_active"] is True
 assert result["safety"]["bridge_active"] is True
 assert result["safety"]["production_mutation"] is False
-assert result["errors"] == {}
+assert not result["errors"]
 
 assert state["target_theme_active"] is True
 assert state["legacy_plugin_exists"] is False
