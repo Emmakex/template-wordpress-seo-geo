@@ -390,7 +390,7 @@ final class NativeCompositionService {
 	/**
 	 * Compose registered patterns with inert reviewed-remap markers.
 	 *
-	 * @param array<int,mixed>               $patterns         Ordered pattern slugs.
+	 * @param array<int,mixed>                $patterns         Ordered pattern slugs.
 	 * @param array<string,string>            $pattern_contents Registered pattern content.
 	 * @param array<int,array<string,string>> $slots            Reviewed remap slots.
 	 */
