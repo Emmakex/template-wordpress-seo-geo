@@ -151,16 +151,8 @@ final class HomePilotReadiness {
 
 		$verified_groups = is_array( $hydration_plan['verified_groups'] ?? null ) ? $hydration_plan['verified_groups'] : array();
 
-		$unverified_enabled = array_values(
-			array_keys(
-				array_filter(
-					$verified_groups,
-					static fn( mixed $value ): bool => true === $value
-				)
-			)
-		);
-		$checks['evidence_groups_reviewed'] = array() === $unverified_enabled;
-		if ( array() !== $unverified_enabled ) {
+		$checks['evidence_groups_reviewed'] = ! in_array( true, array_values( $verified_groups ), true );
+		if ( ! $checks['evidence_groups_reviewed'] ) {
 			$warnings[] = 'verified-evidence-groups-require-field-review';
 		}
 
