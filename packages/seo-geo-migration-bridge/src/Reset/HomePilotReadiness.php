@@ -123,14 +123,14 @@ final class HomePilotReadiness {
 			$blockers[] = 'seo-review-required-before-browser-qa';
 		}
 
-		$content        = $draft instanceof WP_Post ? (string) $draft->post_content : '';
-		$legacy_markers = $this->legacy_markers( $content );
+		$content                = $draft instanceof WP_Post ? (string) $draft->post_content : '';
+		$legacy_markers         = $this->legacy_markers( $content );
 		$checks['legacy_builder_free'] = array() === $legacy_markers;
 		if ( ! $checks['legacy_builder_free'] ) {
 			$blockers[] = 'legacy-builder-markup-detected';
 		}
 
-		$placeholder_markers = $this->placeholder_markers( $content );
+		$placeholder_markers    = $this->placeholder_markers( $content );
 		$checks['preset_placeholders_removed'] = array() === $placeholder_markers;
 		if ( ! $checks['preset_placeholders_removed'] ) {
 			$blockers[] = 'preset-placeholder-content-detected';
@@ -224,14 +224,15 @@ final class HomePilotReadiness {
 	 * Detect presentation-runtime debris that must not enter the clean Home.
 	 *
 	 * @param string $content Hydrated block content.
-	 * @return list<string>
+	 * @return array
+	 * @phpstan-return list<string>
 	 */
 	private function legacy_markers( string $content ): array {
 		$patterns = array(
 			'et_pb_'         => '/\bet_pb_[a-z0-9_-]+/i',
 			'divi-shortcode' => '/\[\/?et_pb_[^\]]*\]/i',
 			'elementor'      => '/(?:data-elementor-|\belementor-[a-z0-9_-]+)/i',
-			'visual-composer'=> '/(?:\[\/?vc_[^\]]*\]|\bwpb_[a-z0-9_-]+)/i',
+			'visual-composer' => '/(?:\[\/?vc_[^\]]*\]|\bwpb_[a-z0-9_-]+)/i',
 			'fusion-builder' => '/(?:\[\/?fusion_[^\]]*\]|\bfusion-builder\b)/i',
 			'beaver-builder' => '/\bfl-builder-[a-z0-9_-]+/i',
 		);
@@ -250,7 +251,8 @@ final class HomePilotReadiness {
 	 * Detect known untouched preset placeholder copy.
 	 *
 	 * @param string $content Hydrated block content.
-	 * @return list<string>
+	 * @return array
+	 * @phpstan-return list<string>
 	 */
 	private function placeholder_markers( string $content ): array {
 		$needles = array(
