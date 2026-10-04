@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "mode": "seo-geo-emmake-corporate-preset-application",
+  "site_id": "emmake-com",
+  "sandbox_origin": "https://emmake.com/nuevaweb/",
+  "observed_date": "2026-10-04",
+  "observed": {
+    "active_preset": "corporate",
+    "language_map": "es=es_ES",
+    "native_routing": "disabled",
+    "entity_type": "organization",
+    "crawler_policy": "inherit",
+    "llms_txt": "off",
+    "markdown_alternatives": "off",
+    "setup_applied_successfully": true,
+    "configuration_fingerprint_present": true,
+    "setup_report_fingerprint_present": true,
+    "advisory_warnings": [
+      "compatibility:external-seo-provider:yoast"
+    ]
+  },
+  "not_claimed_by_this_record": [
+    "corporate-visual-accepted",
+    "seo-geo-ownership-parity",
+    "accessibility-performance-accepted",
+    "production-cutover",
+    "production-acceptance"
+  ],
+  "stable_release_effect": "no-go-remains",
+  "next_gate": "corporate-visual-acceptance"
+}
