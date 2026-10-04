@@ -251,7 +251,7 @@ assert applied["safety"]["source_content_unchanged"] is True
 assert applied["safety"]["rollback_available"] is True
 
 hydrated = content["hydrated"]
-for expected in (
+expected_fragments = (
     "Digital growth systems",
     "Three capabilities, one operating system",
     "Digital platforms",
@@ -260,8 +260,9 @@ for expected in (
     "Turn the next digital bottleneck into a working system",
     "Talk to our team",
     'href="/contact/"',
-):
-    assert expected in hydrated
+)
+missing_fragments = [fragment for fragment in expected_fragments if fragment not in hydrated]
+assert not missing_fragments, f"missing hydrated fragments: {missing_fragments}"
 
 for forbidden in (
     "seo-geo-corporate-native-hero__proof",
