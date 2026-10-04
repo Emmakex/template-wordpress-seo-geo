@@ -89,6 +89,23 @@ It is **not** responsible for preserving builder-era visual parity.
 
 This workflow is the commercial product path. Migration is the one-time bridge into a continuously improvable WordPress platform.
 
+## Native Replatform Composer
+
+The first write-capable rebuild step is intentionally **draft-only**.
+
+For an accepted sandbox, the composer:
+
+- reads the active preset's page composition;
+- resolves the preserved source page;
+- records source ID, URL path and content fingerprint;
+- assembles only registered Theme/preset-native patterns;
+- creates a non-public draft replacement;
+- records a deterministic plan fingerprint;
+- reuses an equivalent draft instead of creating duplicates;
+- never rewrites the source page, its slug or its public URL.
+
+The draft is a destination canvas. Content remapping is a separate step and must distinguish preserved facts from proposed presentation copy. Missing evidence must remain missing/manual-review; the system must not fabricate credentials, outcomes, testimonials, locations, prices or other factual claims.
+
 ## Acceptance model
 
 A replatform is accepted when:
