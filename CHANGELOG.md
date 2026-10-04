@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.54 adds **Portable Home Content Blueprint v1**: portable locale/model-bound semantic content without runtime IDs or plan hashes, strict unknown-slot/group rejection, deterministic blueprint fingerprinting, import through the existing Content Kit validation, and the first real Emmake `es_ES` Home blueprint with all unverified evidence groups disabled.
+
 - Migration Bridge 0.8.53 adds **Corporate Home Content Kit + Native Hydrator v1**: typed semantic content bound to `corporate-home-v1`, explicit evidence verification groups, deterministic block-slot hydration, omission of unverified proof/case-study sections, draft-drift detection, idempotent replay and exact scaffold rollback.
 
 - Corporate Home adds **native content contract v1**: stable semantic slot IDs across EN/ES patterns and the base CTA, typed required/optional fields, explicit verification groups for proof/case-study material, and `omit-unless-verified` policy so future hydration/Manager workflows never depend on placeholder strings or legacy block positions.
