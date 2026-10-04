@@ -157,6 +157,7 @@ final class MigrationHandoffReader {
 	 * Return an invalid-handoff state.
 	 *
 	 * @param string $reason Validation reason.
+	 * @param string $source Handoff source identifier.
 	 * @return array<string,mixed>
 	 */
 	private function invalid( string $reason, string $source = 'migration-bridge-handoff-v1' ): array {
