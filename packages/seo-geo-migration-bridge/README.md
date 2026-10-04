@@ -2,6 +2,25 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Theme + Corporate preset bootstrap — 0.8.51
+
+After Clone Reset completes, **Tools → SEO/GEO Reset & Rebuild** exposes Step 3.
+
+The bootstrap:
+
+- requires the completed clone-reset report;
+- requires `seo-geo-theme` to be active;
+- delegates all SEO/GEO setup writes to the Theme-owned `SetupExecutor`;
+- applies the `corporate` preset;
+- seeds one native language from the active WordPress locale with prefix routing disabled;
+- configures Organization identity only after an explicit administrator confirmation that the WordPress site title represents the organization;
+- keeps LocalBusiness inference disabled;
+- keeps crawler policy inherited;
+- keeps `llms.txt` and Markdown alternates disabled by default;
+- creates no pages and mutates no plugins.
+
+The Theme's migration-handoff reader also recognizes a verified completed Clone Reset as `reset-rebuild-handoff-v1`. This means stale legacy migration-report state cannot re-block the clean rebuild after its runtime dependencies were intentionally removed.
+
 ## Clone Reset Engine — 0.8.50
 
 After the Rescue Manifest is saved, **Tools → SEO/GEO Reset & Rebuild** exposes Step 2: Clone Reset Engine.
