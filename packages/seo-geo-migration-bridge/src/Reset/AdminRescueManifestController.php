@@ -523,7 +523,7 @@ final class AdminRescueManifestController {
 		$lists      = is_array( $raw_lists ) ? $raw_lists : array();
 
 		foreach ( $lists as $slot_id => $raw_list ) {
-			if ( ! is_string( $slot_id ) || ! is_scalar( $raw_list ) ) {
+			if ( ! is_string( $slot_id ) || ! is_string( $raw_list ) ) {
 				continue;
 			}
 			$list_items         = preg_split( '/\r\n|\r|\n/', (string) $raw_list );
