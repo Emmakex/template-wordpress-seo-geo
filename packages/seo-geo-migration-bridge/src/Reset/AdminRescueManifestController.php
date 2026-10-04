@@ -41,15 +41,15 @@ final class AdminRescueManifestController {
 	/**
 	 * Construct the reset-first administrator controller.
 	 *
-	 * @param RescueManifest          $manifest    Rescue manifest service.
-	 * @param CloneResetEngine        $reset       Clone reset service.
-	 * @param CorporateThemeBootstrap $bootstrap   Corporate Theme bootstrap service.
+	 * @param RescueManifest              $manifest    Rescue manifest service.
+	 * @param CloneResetEngine            $reset       Clone reset service.
+	 * @param CorporateThemeBootstrap     $bootstrap   Corporate Theme bootstrap service.
 	 * @param CleanHomeRebuilder          $clean_home  Clean Corporate Home draft builder.
 	 * @param CleanCorporatePageRebuilder $clean_pages Clean Corporate inner-page builder.
 	 * @param CorporateHomeContentKit     $content_kit Structured Home content service.
-	 * @param NativeHomeHydrator      $hydrator    Native Home hydrator.
-	 * @param HomeSeoHandoff          $seo_handoff Native SEO handoff service.
-	 * @param HomePilotReadiness      $readiness   Field-pilot readiness gate.
+	 * @param NativeHomeHydrator          $hydrator    Native Home hydrator.
+	 * @param HomeSeoHandoff              $seo_handoff Native SEO handoff service.
+	 * @param HomePilotReadiness          $readiness   Field-pilot readiness gate.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
