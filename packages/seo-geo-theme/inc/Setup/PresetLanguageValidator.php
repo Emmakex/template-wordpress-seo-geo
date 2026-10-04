@@ -77,9 +77,12 @@ final class PresetLanguageValidator {
 				? array_values( array_filter( $preset_multilingual['baseline_locales'], 'is_string' ) )
 				: array();
 
-			foreach ( $baseline_locales as $baseline_locale ) {
-				if ( ! in_array( $baseline_locale, $configured_locales, true ) ) {
-					$warnings[] = 'preset-baseline-locale-not-configured:' . $baseline_locale;
+			foreach ( $configured_locales as $configured_locale ) {
+				if (
+					array() !== $baseline_locales
+					&& ! in_array( $configured_locale, $baseline_locales, true )
+				) {
+					$warnings[] = 'configured-locale-outside-preset-baseline:' . $configured_locale;
 				}
 			}
 
