@@ -16,16 +16,18 @@ use WP_Post;
  * Applies a reviewed Content Kit to the semantic slots of the clean Home draft.
  */
 final class NativeHomeHydrator {
-	public const BACKUP_META       = '_seo_geo_clean_home_pre_hydration_content_v1';
-	public const BACKUP_SHA_META   = '_seo_geo_clean_home_pre_hydration_sha256_v1';
-	public const KIT_SHA_META      = '_seo_geo_clean_home_content_kit_sha256_v1';
-	public const APPLIED_SHA_META  = '_seo_geo_clean_home_hydrated_sha256_v1';
-	public const APPLIED_AT_META   = '_seo_geo_clean_home_hydrated_at_v1';
-	public const CONTENT_STATE     = 'content-hydrated-v1';
-	public const SCAFFOLD_STATE    = 'preset-scaffold';
+	public const BACKUP_META      = '_seo_geo_clean_home_pre_hydration_content_v1';
+	public const BACKUP_SHA_META  = '_seo_geo_clean_home_pre_hydration_sha256_v1';
+	public const KIT_SHA_META     = '_seo_geo_clean_home_content_kit_sha256_v1';
+	public const APPLIED_SHA_META = '_seo_geo_clean_home_hydrated_sha256_v1';
+	public const APPLIED_AT_META  = '_seo_geo_clean_home_hydrated_at_v1';
+	public const CONTENT_STATE    = 'content-hydrated-v1';
+	public const SCAFFOLD_STATE   = 'preset-scaffold';
 
 	/**
-	 * @param CleanHomeRebuilder       $builder Clean Home builder.
+	 * Construct the native Home hydrator.
+	 *
+	 * @param CleanHomeRebuilder      $builder Clean Home builder.
 	 * @param CorporateHomeContentKit $kit     Structured Content Kit.
 	 */
 	public function __construct(
@@ -102,23 +104,23 @@ final class NativeHomeHydrator {
 		sort( $blockers );
 
 		return array(
-			'schema_version' => 1,
-			'mode'           => 'corporate-home-native-hydration-plan',
-			'ready'          => array() === $blockers,
-			'blockers'       => $blockers,
-			'draft_id'       => $draft_id,
-			'kit_sha256'     => is_array( $saved ) ? (string) ( $saved['kit_sha256'] ?? '' ) : '',
-			'state'          => $state,
-			'scaffold_sha256' => hash( 'sha256', $scaffold ),
-			'hydrated_sha256' => hash( 'sha256', $hydrated ),
+			'schema_version'   => 1,
+			'mode'             => 'corporate-home-native-hydration-plan',
+			'ready'            => array() === $blockers,
+			'blockers'         => $blockers,
+			'draft_id'         => $draft_id,
+			'kit_sha256'       => is_array( $saved ) ? (string) ( $saved['kit_sha256'] ?? '' ) : '',
+			'state'            => $state,
+			'scaffold_sha256'  => hash( 'sha256', $scaffold ),
+			'hydrated_sha256'  => hash( 'sha256', $hydrated ),
 			'hydrated_content' => $hydrated,
-			'verified_groups' => is_array( $saved['verified_groups'] ?? null ) ? $saved['verified_groups'] : array(),
-			'safety'         => array(
-				'source_post_mutation'   => false,
+			'verified_groups'  => is_array( $saved['verified_groups'] ?? null ) ? $saved['verified_groups'] : array(),
+			'safety'           => array(
+				'source_post_mutation'          => false,
 				'front_page_assignment_change' => false,
-				'legacy_layout_input'    => false,
-				'rollback_available'     => true,
-				'draft_only'             => true,
+				'legacy_layout_input'           => false,
+				'rollback_available'            => true,
+				'draft_only'                    => true,
 			),
 		);
 	}
@@ -149,8 +151,8 @@ final class NativeHomeHydrator {
 
 		$hydrated     = (string) $plan['hydrated_content'];
 		$hydrated_sha = (string) $plan['hydrated_sha256'];
-		$current_sha   = hash( 'sha256', (string) $draft->post_content );
-		$current_kit   = (string) get_post_meta( $draft_id, self::KIT_SHA_META, true );
+		$current_sha  = hash( 'sha256', (string) $draft->post_content );
+		$current_kit  = (string) get_post_meta( $draft_id, self::KIT_SHA_META, true );
 
 		if ( hash_equals( $current_sha, $hydrated_sha ) && hash_equals( $current_kit, (string) $plan['kit_sha256'] ) ) {
 			return array(
@@ -389,17 +391,22 @@ final class NativeHomeHydrator {
 
 	/**
 	 * Resolve one semantic slot ID from a class list.
+	 *
+	 * @param string $class_names Block class list.
 	 */
-	private function slot_id( string $class ): ?string {
-		if ( 1 !== preg_match( '/(?:^|\s)seo-geo-content-slot--([a-z0-9-]+)(?:\s|$)/', $class, $match ) ) {
+	private function slot_id( string $class_names ): ?string {
+		if ( 1 !== preg_match( '/(?:^|\s)seo-geo-content-slot--([a-z0-9-]+)(?:\s|$)/', $class_names, $matches ) ) {
 			return null;
 		}
 
-		return $match[1];
+		return $matches[1];
 	}
 
 	/**
 	 * Replace the textual contents of one leaf HTML element.
+	 *
+	 * @param string $html Leaf block HTML.
+	 * @param string $text Reviewed text.
 	 */
 	private function replace_element_text( string $html, string $text ): string {
 		return (string) preg_replace(
@@ -412,12 +419,16 @@ final class NativeHomeHydrator {
 
 	/**
 	 * Replace one semantic link label and destination.
+	 *
+	 * @param string $html  Leaf block HTML.
+	 * @param string $label Reviewed link label.
+	 * @param string $url   Reviewed link URL.
 	 */
 	private function replace_link( string $html, string $label, string $url ): string {
 		return (string) preg_replace_callback(
 			'#<a\b([^>]*)>(.*?)</a>#is',
-			static function ( array $match ) use ( $label, $url ): string {
-				$attrs = (string) $match[1];
+			static function ( array $matches ) use ( $label, $url ): string {
+				$attrs = (string) $matches[1];
 				if ( 1 === preg_match( '/\bhref=(["\']).*?\1/i', $attrs ) ) {
 					$attrs = (string) preg_replace( '/\bhref=(["\']).*?\1/i', 'href="' . esc_attr( $url ) . '"', $attrs, 1 );
 				} else {
@@ -434,6 +445,7 @@ final class NativeHomeHydrator {
 	/**
 	 * Replace one semantic list.
 	 *
+	 * @param string           $html  Leaf list HTML.
 	 * @param array<int,mixed> $items Reviewed list items.
 	 */
 	private function replace_list( string $html, array $items ): string {
@@ -455,6 +467,8 @@ final class NativeHomeHydrator {
 
 	/**
 	 * Confirm the rescued source content is still unchanged.
+	 *
+	 * @param int $draft_id Clean Home draft ID.
 	 */
 	private function source_unchanged( int $draft_id ): bool {
 		$source_id  = (int) get_post_meta( $draft_id, CleanHomeRebuilder::SOURCE_ID_META, true );
