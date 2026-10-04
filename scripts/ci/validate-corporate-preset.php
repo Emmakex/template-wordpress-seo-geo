@@ -440,6 +440,155 @@ if (
 	);
 }
 
+$required_native_services_patterns = array(
+	'seo-geo-theme/corporate-native-capabilities',
+	'seo-geo-theme/corporate-native-process',
+	'seo-geo-theme/corporate-native-proof',
+	'seo-geo-theme/faq',
+	'seo-geo-theme/cta',
+);
+
+$corporate_services_model = $content['native_content_models']['corporate-services-v1'] ?? null;
+$expected_services_slots = array(
+	'capabilities-heading',
+	'capabilities-intro',
+	'capability-1-title',
+	'capability-1-body',
+	'capability-1-link',
+	'capability-2-title',
+	'capability-2-body',
+	'capability-2-link',
+	'capability-3-title',
+	'capability-3-body',
+	'capability-3-link',
+	'process-heading',
+	'process-intro',
+	'process-1-title',
+	'process-1-body',
+	'process-2-title',
+	'process-2-body',
+	'process-3-title',
+	'process-3-body',
+	'proof-heading',
+	'proof-1-title',
+	'proof-1-body',
+	'proof-2-title',
+	'proof-2-body',
+	'proof-3-title',
+	'proof-3-body',
+	'faq-heading',
+	'faq-intro',
+	'faq-1-question',
+	'faq-1-answer',
+	'faq-2-question',
+	'faq-2-answer',
+	'faq-3-question',
+	'faq-3-answer',
+	'final-cta-heading',
+	'final-cta-body',
+	'final-cta-button',
+);
+
+if (
+	! is_array( $corporate_services_model )
+	|| 1 !== ( $corporate_services_model['schema_version'] ?? null )
+	|| 'services' !== ( $corporate_services_model['page_key'] ?? null )
+	|| 'seo-geo-content-slot--' !== ( $corporate_services_model['slot_prefix'] ?? null )
+) {
+	fail_corporate_preset(
+		'services-content-model',
+		'Corporate Services must expose its own stable native content model.',
+		CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-services-v1',
+		'schema_version=1, page_key=services, stable slot prefix',
+		$corporate_services_model
+	);
+}
+
+$services_model_slots    = is_array( $corporate_services_model['slots'] ?? null ) ? $corporate_services_model['slots'] : array();
+$services_model_slot_ids = array();
+foreach ( $services_model_slots as $slot ) {
+	if (
+		! is_array( $slot )
+		|| ! is_string( $slot['id'] ?? null )
+		|| ! in_array( $slot['type'] ?? null, array( 'text', 'link', 'list' ), true )
+		|| ! is_bool( $slot['required'] ?? null )
+		|| isset( $services_model_slot_ids[ $slot['id'] ] )
+	) {
+		fail_corporate_preset(
+			'services-content-slot',
+			'Corporate Services content slots must have unique IDs, supported types and an explicit required flag.',
+			CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-services-v1.slots',
+			'unique id + text/link/list + required boolean',
+			$slot
+		);
+	}
+
+	$services_model_slot_ids[ $slot['id'] ] = true;
+
+	if (
+		true === ( $slot['requires_verification'] ?? false )
+		&& 'proof' !== ( $slot['verification_group'] ?? null )
+	) {
+		fail_corporate_preset(
+			'services-content-verification',
+			'Every evidence-sensitive Corporate Services slot must belong to the proof verification group.',
+			CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-services-v1.slots.' . $slot['id'],
+			'verification_group=proof',
+			$slot
+		);
+	}
+}
+
+if ( array_keys( $services_model_slot_ids ) !== $expected_services_slots ) {
+	fail_corporate_preset(
+		'services-content-slot-set',
+		'Corporate Services native content slot set/order is not canonical.',
+		CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-services-v1.slots',
+		json_encode( $expected_services_slots ),
+		array_keys( $services_model_slot_ids )
+	);
+}
+
+$services_section_policy = $corporate_services_model['section_policy'] ?? null;
+$expected_services_section_policy = array(
+	array(
+		'section_class'      => 'seo-geo-corporate-native-proof',
+		'mode'               => 'omit-unless-verified',
+		'verification_group' => 'proof',
+	),
+	array(
+		'section_class' => 'seo-geo-native-faq',
+		'mode'          => 'omit-unless-populated',
+		'content_group' => 'faq',
+	),
+);
+if ( ! is_array( $services_section_policy ) || array_values( $services_section_policy ) !== $expected_services_section_policy ) {
+	fail_corporate_preset(
+		'services-content-section-policy',
+		'Corporate Services proof must require verification and FAQ must be omitted rather than filled with generic placeholder content.',
+		CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-services-v1.section_policy',
+		json_encode( $expected_services_section_policy ),
+		$services_section_policy
+	);
+}
+
+$services_model_safety = $corporate_services_model['safety'] ?? null;
+if (
+	! is_array( $services_model_safety )
+	|| false !== ( $services_model_safety['legacy_layout_input'] ?? null )
+	|| false !== ( $services_model_safety['fabricated_evidence_allowed'] ?? null )
+	|| true !== ( $services_model_safety['unverified_optional_sections_omitted'] ?? null )
+	|| true !== ( $services_model_safety['faq_filler_forbidden'] ?? null )
+) {
+	fail_corporate_preset(
+		'services-content-safety',
+		'Corporate Services must exclude legacy layout input, fabricated evidence and filler FAQ content.',
+		CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-services-v1.safety',
+		'legacy_layout_input=false, fabricated_evidence_allowed=false, optional sections omitted, faq_filler_forbidden=true',
+		$services_model_safety
+	);
+}
+
 $required_native_home_remap_slots = array(
 	array(
 		'section'       => 'value-proposition',
@@ -510,6 +659,26 @@ foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
 				CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.home.content_contract.native_content_model',
 				'corporate-home-v1',
 				$content_contract['native_content_model'] ?? null
+			);
+		}
+
+		if ( 'services' === $page['key'] && 'corporate-services-v1' !== ( $content_contract['native_content_model'] ?? null ) ) {
+			fail_corporate_preset(
+				'native-services-content-model-ref',
+				'Corporate Services locale contract must reference the canonical Services native content model.',
+				CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.services.content_contract.native_content_model',
+				'corporate-services-v1',
+				$content_contract['native_content_model'] ?? null
+			);
+		}
+
+		if ( 'services' === $page['key'] && array_values( $page['patterns'] ?? array() ) !== $required_native_services_patterns ) {
+			fail_corporate_preset(
+				'native-services-composition',
+				'Corporate Services must use the canonical native composition.',
+				CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.services.patterns',
+				json_encode( $required_native_services_patterns ),
+				$page['patterns'] ?? null
 			);
 		}
 
@@ -631,6 +800,78 @@ foreach ( array( 'final-cta-heading', 'final-cta-body', 'final-cta-button' ) as 
 			$count
 		);
 	}
+}
+
+$services_slot_prefix = 'seo-geo-content-slot--';
+$services_preset_slot_ids = array_values(
+	array_filter(
+		$expected_services_slots,
+		static fn( string $slot_id ): bool => ! str_starts_with( $slot_id, 'faq-' ) && ! str_starts_with( $slot_id, 'final-cta-' )
+	)
+);
+$services_slot_occurrences = array_fill_keys( $services_preset_slot_ids, 0 );
+foreach ( $pattern_rows as $pattern ) {
+	if ( ! is_array( $pattern ) ) {
+		continue;
+	}
+
+	foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
+		$markup = is_array( $pattern['locales'][ $locale ] ?? null )
+			? (string) ( $pattern['locales'][ $locale ]['content'] ?? '' )
+			: '';
+
+		foreach ( $services_preset_slot_ids as $slot_id ) {
+			$services_slot_occurrences[ $slot_id ] += substr_count( $markup, $services_slot_prefix . $slot_id );
+		}
+	}
+}
+
+foreach ( $services_slot_occurrences as $slot_id => $count ) {
+	if ( 4 !== $count ) {
+		fail_corporate_preset(
+			'services-content-slot-marker',
+			'Every localized Corporate Services preset slot must exist once per locale as a block attribute + HTML class.',
+			CORPORATE_PRESET_DIR . '/patterns.json',
+			$slot_id . ' marker count=4 across EN/ES',
+			$count
+		);
+	}
+}
+
+$faq_path   = CORPORATE_THEME_DIR . '/patterns/faq.php';
+$faq_markup = is_file( $faq_path ) ? (string) file_get_contents( $faq_path ) : '';
+foreach ( array( 'faq-heading', 'faq-intro', 'faq-1-answer', 'faq-2-answer', 'faq-3-answer' ) as $slot_id ) {
+	$count = substr_count( $faq_markup, $services_slot_prefix . $slot_id );
+	if ( 2 !== $count ) {
+		fail_corporate_preset(
+			'services-faq-slot-marker',
+			'Corporate Services FAQ text slots must have stable block + HTML markers.',
+			$faq_path,
+			$slot_id . ' marker count=2',
+			$count
+		);
+	}
+}
+foreach ( array( 'faq-1-question', 'faq-2-question', 'faq-3-question' ) as $slot_id ) {
+	$count = substr_count( $faq_markup, $services_slot_prefix . $slot_id );
+	if ( 1 !== $count ) {
+		fail_corporate_preset(
+			'services-faq-question-marker',
+			'Corporate Services FAQ summary slots must have one stable summary marker.',
+			$faq_path,
+			$slot_id . ' marker count=1',
+			$count
+		);
+	}
+}
+if ( 2 !== substr_count( $faq_markup, 'seo-geo-native-faq' ) ) {
+	fail_corporate_preset(
+		'services-faq-section-marker',
+		'Native FAQ must expose one stable section class in block attributes and HTML.',
+		$faq_path,
+		'seo-geo-native-faq marker count=2',
+		substr_count( $faq_markup, 'seo-geo-native-faq' )
+	);
 }
 
 $corporate_css_path = CORPORATE_THEME_DIR . '/assets/css/presets/corporate.css';
