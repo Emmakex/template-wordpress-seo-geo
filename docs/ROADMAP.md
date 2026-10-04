@@ -2626,7 +2626,17 @@ A remaining UNKNOWN dependency matters only if it represents a business function
 
 ### 10E.4A — Minimal Rescue Manifest
 
-Status: **next**
+Status: **accepted — Migration Bridge 0.8.49 / PR #216 / 8 of 8 CI gates green**
+
+Acceptance milestone:
+
+- dedicated **Tools → SEO/GEO Reset & Rebuild** entrypoint;
+- page/post identity, public path, content/excerpt SHA-256, useful SEO metadata, links and media captured;
+- front/posts/privacy page identities captured;
+- legacy theme/builder/plugins explicitly excluded from preservation policy;
+- dependency review and remaining UNKNOWN components explicitly non-blocking for reset-first redesign;
+- WordPress runtime acceptance proves active theme, active plugins and source content remain unchanged during capture;
+- deterministic installable 0.8.49 release artifact produced.
 
 Deliverables:
 
@@ -2647,7 +2657,7 @@ Acceptance:
 
 ### 10E.4B — Clone Reset Engine
 
-Status: **planned immediately after 10E.4A**
+Status: **active — current execution pointer**
 
 Deliverables:
 
@@ -2729,7 +2739,7 @@ PR #210 remains valid implementation evidence for those helpers.
 
 ### Microphase 10E.2A — Portable Clone Engine
 
-Status: **active — 10E.2A.1 through 10E.2A.5.2.2.2 accepted; 10E.2A.5.3.1 private same-server package handoff is the 0.8.27 candidate**
+Status: **historical/accepted for the Emmake pilot — the real `/nuevaweb/` clone already exists; retained as transport implementation history, not the current execution pointer**
 
 Purpose:
 
