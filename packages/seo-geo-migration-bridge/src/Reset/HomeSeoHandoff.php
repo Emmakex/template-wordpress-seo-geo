@@ -23,9 +23,9 @@ final class HomeSeoHandoff {
 	/**
 	 * Construct the Home SEO handoff.
 	 *
-	 * @param RescueManifest      $manifest Rescue Manifest authority.
-	 * @param CleanHomeRebuilder  $builder  Clean Home builder.
-	 * @param NativeHomeHydrator  $hydrator Native Home hydrator.
+	 * @param RescueManifest     $manifest Rescue Manifest authority.
+	 * @param CleanHomeRebuilder $builder  Clean Home builder.
+	 * @param NativeHomeHydrator $hydrator Native Home hydrator.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
@@ -82,16 +82,16 @@ final class HomeSeoHandoff {
 			$review_items[] = 'multiple-legacy-seo-providers';
 		}
 
-		$title       = $this->plain_provider_value( $seo, $provider, 'title', $review_items );
-		$description = $this->plain_provider_value( $seo, $provider, 'description', $review_items );
-		$canonical   = $this->provider_value( $seo, $provider, 'canonical' );
-		$source_path = is_array( $resource ) ? (string) ( $resource['path'] ?? '' ) : '';
+		$title              = $this->plain_provider_value( $seo, $provider, 'title', $review_items );
+		$description        = $this->plain_provider_value( $seo, $provider, 'description', $review_items );
+		$canonical          = $this->provider_value( $seo, $provider, 'canonical' );
+		$source_path        = is_array( $resource ) ? (string) ( $resource['path'] ?? '' ) : '';
 		$canonical_strategy = $this->canonical_strategy( $canonical, $source_path, $manifest, $review_items );
 		$indexability       = $this->indexability( $seo, $provider );
 
-		$blockers = array_values( array_unique( $blockers ) );
-		sort( $blockers );
+		$blockers     = array_values( array_unique( $blockers ) );
 		$review_items = array_values( array_unique( $review_items ) );
+		sort( $blockers );
 		sort( $review_items );
 
 		$material = array(
@@ -118,11 +118,11 @@ final class HomeSeoHandoff {
 		return array_merge(
 			$material,
 			array(
-				'ready'          => array() === $blockers,
-				'blockers'       => $blockers,
-				'review_required'=> array() !== $review_items,
-				'plan_sha256'    => $plan_sha,
-				'safety'         => array(
+				'ready'           => array() === $blockers,
+				'blockers'        => $blockers,
+				'review_required' => array() !== $review_items,
+				'plan_sha256'     => $plan_sha,
+				'safety'          => array(
 					'source_post_mutation'         => false,
 					'front_page_assignment_change' => false,
 					'legacy_provider_required'     => false,
@@ -184,14 +184,14 @@ final class HomeSeoHandoff {
 			return $existing;
 		}
 
-		$report                       = $report_material;
-		$report['status']             = 'applied';
-		$report['applied_at']         = gmdate( DATE_ATOM );
-		$report['report_sha256']      = $report_sha;
-		$report['cutover_seo_ready']  = true !== $report['review_required'];
-		$report['source_unchanged']   = $this->source_unchanged( $draft_id );
+		$report                         = $report_material;
+		$report['status']               = 'applied';
+		$report['applied_at']           = gmdate( DATE_ATOM );
+		$report['report_sha256']        = $report_sha;
+		$report['cutover_seo_ready']    = true !== $report['review_required'];
+		$report['source_unchanged']     = $this->source_unchanged( $draft_id );
 		$report['front_page_unchanged'] = (int) get_option( 'page_on_front', 0 ) === (int) $report['source_id'];
-		$report['draft_only']         = 'draft' === get_post_status( $draft_id );
+		$report['draft_only']           = 'draft' === get_post_status( $draft_id );
 
 		update_post_meta( $draft_id, self::REPORT_META, $report );
 
@@ -216,19 +216,25 @@ final class HomeSeoHandoff {
 	 * @param array<string,mixed> $seo Rescued SEO metadata.
 	 */
 	private function provider( array $seo ): string {
-		$yoast = $this->has_any_key( $seo, array(
-			'_yoast_wpseo_title',
-			'_yoast_wpseo_metadesc',
-			'_yoast_wpseo_canonical',
-			'_yoast_wpseo_meta-robots-noindex',
-			'_yoast_wpseo_meta-robots-nofollow',
-		) );
-		$rank_math = $this->has_any_key( $seo, array(
-			'rank_math_title',
-			'rank_math_description',
-			'rank_math_canonical_url',
-			'rank_math_robots',
-		) );
+		$yoast = $this->has_any_key(
+			$seo,
+			array(
+				'_yoast_wpseo_title',
+				'_yoast_wpseo_metadesc',
+				'_yoast_wpseo_canonical',
+				'_yoast_wpseo_meta-robots-noindex',
+				'_yoast_wpseo_meta-robots-nofollow',
+			)
+		);
+		$rank_math = $this->has_any_key(
+			$seo,
+			array(
+				'rank_math_title',
+				'rank_math_description',
+				'rank_math_canonical_url',
+				'rank_math_robots',
+			)
+		);
 
 		if ( $yoast && $rank_math ) {
 			return 'ambiguous';
@@ -249,7 +255,7 @@ final class HomeSeoHandoff {
 	 * @param array<string,mixed> $seo          Rescued SEO metadata.
 	 * @param string              $provider     Provider family.
 	 * @param string              $field        title|description.
-	 * @param list<string>        $review_items Review findings.
+	 * @param array               $review_items Review findings.
 	 */
 	private function plain_provider_value( array $seo, string $provider, string $field, array &$review_items ): ?string {
 		$value = $this->provider_value( $seo, $provider, $field );
@@ -277,7 +283,7 @@ final class HomeSeoHandoff {
 	 */
 	private function provider_value( array $seo, string $provider, string $field ): ?string {
 		$keys = array(
-			'yoast' => array(
+			'yoast'     => array(
 				'title'       => '_yoast_wpseo_title',
 				'description' => '_yoast_wpseo_metadesc',
 				'canonical'   => '_yoast_wpseo_canonical',
@@ -300,10 +306,10 @@ final class HomeSeoHandoff {
 	/**
 	 * Resolve canonical carryover policy without copying risky legacy values.
 	 *
-	 * @param string|null         $canonical    Legacy canonical.
-	 * @param string              $source_path  Rescued public path.
-	 * @param array<string,mixed>|null $manifest Saved manifest.
-	 * @param list<string>        $review_items Review findings.
+	 * @param string|null              $canonical    Legacy canonical.
+	 * @param string                   $source_path  Rescued public path.
+	 * @param array<string,mixed>|null $manifest     Saved manifest.
+	 * @param array                    $review_items Review findings.
 	 */
 	private function canonical_strategy( ?string $canonical, string $source_path, ?array $manifest, array &$review_items ): string {
 		if ( null === $canonical ) {
@@ -383,7 +389,7 @@ final class HomeSeoHandoff {
 	 * Whether one captured provider family has any value.
 	 *
 	 * @param array<string,mixed> $seo  Rescued SEO metadata.
-	 * @param list<string>        $keys Candidate keys.
+	 * @param array               $keys Candidate keys.
 	 */
 	private function has_any_key( array $seo, array $keys ): bool {
 		foreach ( $keys as $key ) {
