@@ -64,7 +64,7 @@ final class CorporateHomeContentKit {
 
 		$allowed_keys = array( 'schema_version', 'mode', 'model', 'locale', 'values', 'verified_groups' );
 		foreach ( array_keys( $blueprint ) as $key ) {
-			if ( ! is_string( $key ) || ! in_array( $key, $allowed_keys, true ) ) {
+			if ( ! in_array( $key, $allowed_keys, true ) ) {
 				return new WP_Error( 'seo_geo_home_blueprint_runtime_identity', 'Content Blueprint contains an unsupported or runtime-bound top-level field.' );
 			}
 		}
