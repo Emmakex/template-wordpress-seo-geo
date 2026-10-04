@@ -295,6 +295,7 @@ foreach (
 	array(
 		"'reviewed-remap-apply-plan'",
 		"'reviewed-remap-apply'",
+		"'reviewed-remap-rollback'",
 		"'section-verification-required:'",
 		"'asset-not-candidate:'",
 		"'native-slot-marker-count:'",
@@ -305,6 +306,8 @@ foreach (
 		'metadata_exists( \'post\', $draft_id, self::BACKUP_META )',
 		"self::LEDGER_META",
 		"self::BACKUP_META",
+		"self::ROLLBACK_META",
+		"'seo_geo_reviewed_remap_rollback_draft_drift'",
 	) as $reviewed_remap_guard
 ) {
 	if ( ! str_contains( $reviewed_remap, $reviewed_remap_guard ) ) {
@@ -364,6 +367,10 @@ foreach (
 		'check_admin_referer( self::apply_nonce_action( $draft_id ) )',
 		"'apply-reviewed-remap'",
 		'admin_post_' . "' . self::APPLY_ACTION",
+		"'seo_geo_native_replatform_rollback_reviewed'",
+		'check_admin_referer( self::rollback_nonce_action( $draft_id ) )',
+		"'rollback-reviewed-remap'",
+		'admin_post_' . "' . self::ROLLBACK_ACTION",
 	) as $native_replatform_controller_guard
 ) {
 	if ( ! str_contains( $native_replatform_controller, $native_replatform_controller_guard ) ) {
