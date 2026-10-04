@@ -355,7 +355,7 @@ foreach (
 $native_replatform_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Replatform/AdminNativeReplatformController.php' );
 foreach (
 	array(
-		"public const ACTION       = 'seo_geo_native_replatform_create_draft';",
+		"'seo_geo_native_replatform_create_draft'",
 		"current_user_can( 'manage_options' )",
 		'check_admin_referer( self::nonce_action( $page_key ) )',
 		"'create-native-draft'",
