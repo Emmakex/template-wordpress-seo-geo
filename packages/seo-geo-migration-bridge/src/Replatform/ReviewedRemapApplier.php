@@ -483,16 +483,16 @@ final class ReviewedRemapApplier {
 		$ledger            = get_post_meta( $draft_id, self::LEDGER_META, true );
 		$rollback          = get_post_meta( $draft_id, self::ROLLBACK_META, true );
 
-		$draft_sha = $draft instanceof WP_Post ? hash( 'sha256', (string) $draft->post_content ) : '';
-		$source_sha = 0 < $source_id
+		$draft_sha        = $draft instanceof WP_Post ? hash( 'sha256', (string) $draft->post_content ) : '';
+		$source_sha       = 0 < $source_id
 			? hash( 'sha256', (string) get_post_field( 'post_content', $source_id ) )
 			: '';
 		$source_unchanged = '' !== $stored_source_sha
 			&& '' !== $source_sha
 			&& hash_equals( $stored_source_sha, $source_sha );
-		$ledger_active = is_array( $ledger );
-		$ledger_after  = $ledger_active ? (string) ( $ledger['after_sha256'] ?? '' ) : '';
-		$draft_matches = $ledger_active
+		$ledger_active    = is_array( $ledger );
+		$ledger_after     = $ledger_active ? (string) ( $ledger['after_sha256'] ?? '' ) : '';
+		$draft_matches    = $ledger_active
 			&& '' !== $ledger_after
 			&& '' !== $draft_sha
 			&& hash_equals( $ledger_after, $draft_sha );
@@ -537,17 +537,17 @@ final class ReviewedRemapApplier {
 		$review = null;
 		if ( $ledger_active ) {
 			$review = array(
-				'applied_at'          => (string) ( $ledger['applied_at'] ?? '' ),
-				'selection_sha256'    => (string) ( $ledger['selection_sha256'] ?? '' ),
-				'before_sha256'       => (string) ( $ledger['before_sha256'] ?? '' ),
-				'after_sha256'        => $ledger_after,
+				'applied_at'           => (string) ( $ledger['applied_at'] ?? '' ),
+				'selection_sha256'     => (string) ( $ledger['selection_sha256'] ?? '' ),
+				'before_sha256'        => (string) ( $ledger['before_sha256'] ?? '' ),
+				'after_sha256'         => $ledger_after,
 				'draft_matches_ledger' => $draft_matches,
-				'verified_sections'   => is_array( $ledger['verified_sections'] ?? null )
+				'verified_sections'    => is_array( $ledger['verified_sections'] ?? null )
 					? array_values( array_map( 'strval', $ledger['verified_sections'] ) )
 					: array(),
-				'selected_assets'     => $selected_assets,
-				'selected_counts'     => $selected_counts,
-				'unmapped_counts'     => $unmapped_counts,
+				'selected_assets'      => $selected_assets,
+				'selected_counts'      => $selected_counts,
+				'unmapped_counts'      => $unmapped_counts,
 			);
 		}
 
@@ -567,9 +567,9 @@ final class ReviewedRemapApplier {
 			'generated_at'   => gmdate( DATE_ATOM ),
 			'status'         => $status,
 			'draft'          => array(
-				'id'      => $draft_id,
-				'status'  => $draft instanceof WP_Post ? (string) $draft->post_status : '',
-				'sha256'  => $draft_sha,
+				'id'     => $draft_id,
+				'status' => $draft instanceof WP_Post ? (string) $draft->post_status : '',
+				'sha256' => $draft_sha,
 			),
 			'source'         => array(
 				'id'             => $source_id,
@@ -587,12 +587,12 @@ final class ReviewedRemapApplier {
 			'review'         => $review,
 			'last_rollback'  => $last_rollback,
 			'safety'         => array(
-				'read_only'               => true,
-				'post_body_exported'      => false,
-				'backup_body_exported'    => false,
-				'credentials_exported'    => false,
-				'option_values_exported'  => false,
-				'public_source_mutation'  => false,
+				'read_only'              => true,
+				'post_body_exported'     => false,
+				'backup_body_exported'   => false,
+				'credentials_exported'   => false,
+				'option_values_exported' => false,
+				'public_source_mutation' => false,
 			),
 		);
 	}
