@@ -605,18 +605,29 @@ foreach ( $pattern_rows as $pattern ) {
 
 $cta_path = CORPORATE_THEME_DIR . '/patterns/cta.php';
 $cta_markup = is_file( $cta_path ) ? (string) file_get_contents( $cta_path ) : '';
-foreach ( array( 'final-cta-heading', 'final-cta-body', 'final-cta-button' ) as $slot_id ) {
-	$slot_occurrences[ $slot_id ] = substr_count( $cta_markup, $slot_prefix . $slot_id ) * 2;
-}
-
 foreach ( $slot_occurrences as $slot_id => $count ) {
-	$expected_count = str_starts_with( $slot_id, 'final-cta-' ) ? 4 : 4;
-	if ( $expected_count !== $count ) {
+	if ( str_starts_with( $slot_id, 'final-cta-' ) ) {
+		continue;
+	}
+	if ( 4 !== $count ) {
 		fail_corporate_preset(
 			'home-content-slot-marker',
-			'Every Corporate Home content slot must exist exactly once per locale as a block attribute + HTML class.',
-			str_starts_with( $slot_id, 'final-cta-' ) ? $cta_path : CORPORATE_PRESET_DIR . '/patterns.json',
-			$slot_id . ' marker count=' . $expected_count,
+			'Every localized Corporate Home slot must exist once per locale as a block attribute + HTML class.',
+			CORPORATE_PRESET_DIR . '/patterns.json',
+			$slot_id . ' marker count=4 across EN/ES',
+			$count
+		);
+	}
+}
+
+foreach ( array( 'final-cta-heading', 'final-cta-body', 'final-cta-button' ) as $slot_id ) {
+	$count = substr_count( $cta_markup, $slot_prefix . $slot_id );
+	if ( 2 !== $count ) {
+		fail_corporate_preset(
+			'home-content-cta-slot-marker',
+			'The runtime-localized CTA slot must exist once as a block attribute and once as an HTML class.',
+			$cta_path,
+			$slot_id . ' marker count=2',
 			$count
 		);
 	}
