@@ -441,7 +441,7 @@ final class SetupExecutor {
 		}
 
 		return array(
-			'source'                => 'migration-bridge-handoff-v1',
+			'source'                => is_string( $handoff['source'] ?? null ) ? $handoff['source'] : 'migration-bridge-handoff-v1',
 			'id'                    => is_string( $handoff['id'] ?? null ) ? $handoff['id'] : null,
 			'report_sha256'         => is_string( $handoff['report_sha256'] ?? null ) ? $handoff['report_sha256'] : null,
 			'bridge_disposition'    => is_string( $handoff['bridge_disposition'] ?? null ) ? $handoff['bridge_disposition'] : null,
