@@ -3136,11 +3136,11 @@ foreach (
 	array(
 		"public const OPTION = 'seo_geo_reset_rescue_manifest_v1';",
 		"'mode'           => 'reset-rebuild-rescue-manifest'",
-		"'legacy_theme_preserved'       => false",
-		"'legacy_builder_preserved'     => false",
-		"'legacy_plugins_preserved'     => false",
-		"'dependency_review_required'   => false",
-		"'unknown_components_blocking' => false",
+		"'legacy_theme_preserved'",
+		"'legacy_builder_preserved'",
+		"'legacy_plugins_preserved'",
+		"'dependency_review_required'",
+		"'unknown_components_blocking'",
 		'update_option( self::OPTION, $manifest, false )',
 	) as $rescue_guard
 ) {
