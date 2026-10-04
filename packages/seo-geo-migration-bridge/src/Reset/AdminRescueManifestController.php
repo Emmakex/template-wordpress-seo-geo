@@ -578,7 +578,7 @@ final class AdminRescueManifestController {
 			<p><strong><?php echo esc_html__( 'Current plan:', 'seo-geo-migration-bridge' ); ?></strong> <code><?php echo esc_html( implode( ', ', is_array( $plan['blockers'] ?? null ) ? $plan['blockers'] : array() ) ); ?></code></p>
 		<?php endif; ?>
 
-		<?php if ( array() === $candidates ) : ?>
+		<?php if ( 0 >= $bound_source && array() === $candidates ) : ?>
 			<div class="notice notice-warning inline">
 				<p><?php echo esc_html__( 'No rescued published inner pages are available for explicit Services mapping.', 'seo-geo-migration-bridge' ); ?></p>
 			</div>
@@ -589,16 +589,21 @@ final class AdminRescueManifestController {
 			<input type="hidden" name="action" value="<?php echo esc_attr( self::CLEAN_SERVICES_ACTION ); ?>">
 			<input type="hidden" name="confirm" value="create-clean-services">
 			<?php wp_nonce_field( self::CLEAN_SERVICES_NONCE ); ?>
-			<label for="seo-geo-services-source"><strong><?php echo esc_html__( 'Rescued Services source', 'seo-geo-migration-bridge' ); ?></strong></label>
-			<select id="seo-geo-services-source" name="source_id" required>
-				<option value=""><?php echo esc_html__( 'Select the existing page whose URL must be preserved', 'seo-geo-migration-bridge' ); ?></option>
-				<?php foreach ( $candidates as $candidate ) : ?>
-					<option value="<?php echo esc_attr( (string) $candidate['id'] ); ?>" <?php selected( $bound_source, $candidate['id'] ); ?>>
-						<?php echo esc_html( $candidate['title'] . ' — ' . $candidate['path'] ); ?>
-					</option>
-				<?php endforeach; ?>
-			</select>
-			<p class="description"><?php echo esc_html__( 'Selection is explicit: preset slugs never overwrite or guess the client URL.', 'seo-geo-migration-bridge' ); ?></p>
+			<?php if ( 0 < $bound_source ) : ?>
+				<input type="hidden" name="source_id" value="<?php echo esc_attr( (string) $bound_source ); ?>">
+				<p class="description"><?php echo esc_html__( 'The rescued source binding is locked after creation. Reuse cannot silently remap Services to a different client URL.', 'seo-geo-migration-bridge' ); ?></p>
+			<?php else : ?>
+				<label for="seo-geo-services-source"><strong><?php echo esc_html__( 'Rescued Services source', 'seo-geo-migration-bridge' ); ?></strong></label>
+				<select id="seo-geo-services-source" name="source_id" required>
+					<option value=""><?php echo esc_html__( 'Select the existing page whose URL must be preserved', 'seo-geo-migration-bridge' ); ?></option>
+					<?php foreach ( $candidates as $candidate ) : ?>
+						<option value="<?php echo esc_attr( (string) $candidate['id'] ); ?>">
+							<?php echo esc_html( $candidate['title'] . ' — ' . $candidate['path'] ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<p class="description"><?php echo esc_html__( 'Selection is explicit: preset slugs never overwrite or guess the client URL.', 'seo-geo-migration-bridge' ); ?></p>
+			<?php endif; ?>
 			<?php submit_button( 0 < $existing_draft ? __( 'Reuse clean Services draft', 'seo-geo-migration-bridge' ) : __( 'Create clean Services draft', 'seo-geo-migration-bridge' ), 'primary', 'submit', false ); ?>
 		</form>
 		<?php
