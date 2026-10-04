@@ -59,7 +59,7 @@ final class SetupPlanner {
 		$site_mode      = true === ( $handoff['valid'] ?? false )
 			? ( 'reset-rebuild-handoff-v1' === $handoff_source ? 'reset-rebuild' : 'migrated' )
 			: 'clean';
-		$warnings  = $compatibility['warnings'];
+		$warnings       = $compatibility['warnings'];
 
 		if ( true === ( $handoff['available'] ?? false ) && true !== ( $handoff['valid'] ?? false ) ) {
 			$warnings[] = array(
