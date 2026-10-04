@@ -121,5 +121,16 @@
     "below_fold_media": "lazy",
     "lcp_media": "not-lazy-loaded",
     "performance_profile": "core-web-vitals-strict"
+  },
+  "content_semantics": {
+    "answer_first_where_useful": true,
+    "entity_clarity_required": true,
+    "evidence_for_claims_required": true,
+    "crawlable_internal_links_required": true,
+    "faq_only_when_user_intent": true,
+    "author_provenance_when_applicable": true,
+    "keyword_stuffing_forbidden": true,
+    "doorway_content_forbidden": true,
+    "fabricated_proof_forbidden": true
   }
 }
