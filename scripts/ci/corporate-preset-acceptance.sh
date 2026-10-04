@@ -95,7 +95,7 @@ CORPORATE_H1_COUNT="$(printf '%s' "$CORPORATE_SEMANTIC_HTML" | grep -Eoi '<h1([[
 [[ "$CORPORATE_SEMANTIC_HTML" != *"$CORPORATE_SEMANTIC_TOKEN"* ]] \
   || fail_smoke "corporate-legacy-percent-token" "Legacy Divi percentage token leaked into public HTML" "token absent" "$CORPORATE_SEMANTIC_TOKEN"
 
-CORPORATE_MARKDOWN="$(wp_cli eval '$post = get_post( '"$CORPORATE_SEMANTIC_PAGE_ID"' ); $resolver = \\SeoGeo\\Core\\Runtime::markdown_alternates(); if ( ! $post instanceof WP_Post || null === $resolver ) { exit( 1 ); } $html_url = get_permalink( $post ); echo $resolver->render_markdown( array( "post" => $post, "html_url" => $html_url, "markdown_url" => $html_url . "index.md", "language" => null ) );' 2>"${TMP_DIR}/corporate-semantic-markdown.stderr")" \
+CORPORATE_MARKDOWN="$(wp_cli eval '$post = get_post( '"$CORPORATE_SEMANTIC_PAGE_ID"' ); $resolver = \SeoGeo\Core\Runtime::markdown_alternates(); if ( ! $post instanceof WP_Post || null === $resolver ) { exit( 1 ); } $html_url = get_permalink( $post ); echo $resolver->render_markdown( array( "post" => $post, "html_url" => $html_url, "markdown_url" => $html_url . "index.md", "language" => null ) );' 2>"${TMP_DIR}/corporate-semantic-markdown.stderr")" \
   || fail_smoke "corporate-semantic-markdown" "Could not render Corporate GEO Markdown fixture" "Markdown output" "$(head -c 240 "${TMP_DIR}/corporate-semantic-markdown.stderr" 2>/dev/null || true)"
 
 [[ "$CORPORATE_MARKDOWN" == *"Accuracy 100%"* ]] \
