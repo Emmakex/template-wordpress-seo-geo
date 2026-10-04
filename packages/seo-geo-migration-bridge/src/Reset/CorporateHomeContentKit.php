@@ -83,13 +83,13 @@ final class CorporateHomeContentKit {
 				return new WP_Error( 'seo_geo_home_content_model_invalid', 'Corporate Home content model contains an invalid slot.' );
 			}
 
-			$id                = $slot['id'];
-			$type              = $slot['type'];
-			$verification      = true === ( $slot['requires_verification'] ?? false );
+			$id                 = $slot['id'];
+			$type               = $slot['type'];
+			$verification       = true === ( $slot['requires_verification'] ?? false );
 			$verification_group = is_string( $slot['verification_group'] ?? null ) ? $slot['verification_group'] : '';
-			$group_verified    = '' !== $verification_group && true === ( $groups[ $verification_group ] ?? false );
-			$required          = true === ( $slot['required'] ?? false ) || ( $verification && $group_verified );
-			$value             = $this->normalize_value( $type, $raw_values[ $id ] ?? null );
+			$group_verified     = '' !== $verification_group && true === ( $groups[ $verification_group ] ?? false );
+			$required           = true === ( $slot['required'] ?? false ) || ( $verification && $group_verified );
+			$value              = $this->normalize_value( $type, $raw_values[ $id ] ?? null );
 
 			if ( $required && $this->empty_value( $type, $value ) ) {
 				$errors[] = 'required:' . $id;
@@ -213,6 +213,8 @@ final class CorporateHomeContentKit {
 
 	/**
 	 * Accept only HTTP(S), root-relative and fragment links.
+	 *
+	 * @param string $url Candidate link URL.
 	 */
 	private function safe_url( string $url ): string {
 		if ( '' === $url || 1 !== preg_match( '#^(?:https?://|/|\#)#i', $url ) ) {
