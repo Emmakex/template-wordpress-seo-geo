@@ -202,7 +202,7 @@ register_setting(
         "default" => array(),
     )
 );
-$writer = new \\SeoGeo\\Theme\\Setup\\WordPressSetupOptionWriter();
+$writer = new \SeoGeo\Theme\Setup\WordPressSetupOptionWriter();
 $before = $writer->read( "seo_geo_crawler_policy" );
 $ok     = $writer->write( "seo_geo_crawler_policy", array() );
 $after  = $writer->read( "seo_geo_crawler_policy" );
