@@ -478,10 +478,10 @@ final class ReviewedRemapApplier {
 	/**
 	 * Render one reviewed semantic slot using native core blocks only.
 	 *
-	 * @param string                                           $section       Semantic section.
-	 * @param array<string,mixed>                              $selection     Selected asset IDs.
-	 * @param array<string,array<string,array<string,mixed>>>   $asset_maps    Asset lookup maps.
-	 * @param string                                           $selection_sha Selection fingerprint.
+	 * @param string                                          $section       Semantic section.
+	 * @param array<string,mixed>                             $selection     Selected asset IDs.
+	 * @param array<string,array<string,array<string,mixed>>> $asset_maps    Asset lookup maps.
+	 * @param string                                          $selection_sha Selection fingerprint.
 	 */
 	private function render_section( string $section, array $selection, array $asset_maps, string $selection_sha ): string {
 		$parts = array();
@@ -535,8 +535,8 @@ final class ReviewedRemapApplier {
 			$parts[] = '<!-- wp:image' . $attrs . ' --><figure class="wp-block-image size-full"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt ) . '"' . $class . '/></figure><!-- /wp:image -->';
 		}
 
-		$class_name = 'seo-geo-reviewed-remap seo-geo-reviewed-remap--' . sanitize_html_class( $section );
-		$provenance = '<!-- seo-geo-reviewed-remap:' . sanitize_key( $section ) . ':' . substr( $selection_sha, 0, 16 ) . ' -->';
+		$class_name  = 'seo-geo-reviewed-remap seo-geo-reviewed-remap--' . sanitize_html_class( $section );
+		$provenance  = '<!-- seo-geo-reviewed-remap:' . sanitize_key( $section ) . ':' . substr( $selection_sha, 0, 16 ) . ' -->';
 
 		return '<!-- wp:group {"tagName":"section","className":"' . esc_attr( $class_name ) . '","layout":{"type":"constrained"}} -->'
 			. '<section class="wp-block-group ' . esc_attr( $class_name ) . '">'
@@ -549,7 +549,7 @@ final class ReviewedRemapApplier {
 	 * Return source assets not selected by the reviewed apply operation.
 	 *
 	 * @param array<string,array<string,array<string,mixed>>> $asset_maps Selected source inventory.
-	 * @param array<string,mixed>                            $selected   Selected IDs by type.
+	 * @param array<string,mixed>                             $selected   Selected IDs by type.
 	 * @return array<string,array<int,string>>
 	 */
 	private function unmapped_assets( array $asset_maps, array $selected ): array {
@@ -560,7 +560,7 @@ final class ReviewedRemapApplier {
 		);
 		foreach ( array_keys( $result ) as $type ) {
 			$selected_ids = isset( $selected[ $type ] ) && is_array( $selected[ $type ] ) ? array_map( 'strval', $selected[ $type ] ) : array();
-			$result[ $type ] = array_values( array_diff( array_keys( $asset_maps[ $type ] ), $selected_ids ) );
+			$result[ $type ]    = array_values( array_diff( array_keys( $asset_maps[ $type ] ), $selected_ids ) );
 			sort( $result[ $type ] );
 		}
 
