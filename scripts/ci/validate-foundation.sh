@@ -49,6 +49,7 @@ required_paths=(
   "docs/PORTABLE_SANDBOX.md"
   "docs/ARCHITECTURE.md"
   "docs/SEO_GEO_SPEC.md"
+  "docs/SEO_GEO_PRESET_CONTRACT.md"
   "docs/NATIVE_SEO.md"
   "docs/NATIVE_SCHEMA.md"
   "docs/GEO_CRAWLERS.md"
@@ -202,6 +203,7 @@ required_paths=(
   "scripts/ci/discovery-privacy-acceptance.sh"
   "scripts/ci/discovery-cache-acceptance.sh"
   "scripts/ci/corporate-preset-acceptance.sh"
+  "scripts/ci/validate-seo-geo-preset-contract.php"
   "scripts/ci/validate-corporate-preset.php"
   "scripts/ci/local-business-preset-acceptance.sh"
   "scripts/ci/validate-local-business-preset.php"
@@ -256,6 +258,7 @@ for path in "${required_paths[@]}"; do
   [[ -e "$path" ]] || fail_missing "$path"
 done
 
+php scripts/ci/validate-seo-geo-preset-contract.php
 php scripts/ci/validate-corporate-preset.php
 php scripts/ci/validate-local-business-preset.php
 php scripts/ci/validate-publisher-preset.php
@@ -270,4 +273,4 @@ python3 scripts/ci/validate-emmake-real-clone-acceptance.py
 python3 scripts/ci/validate-product-portfolio.py
 bash scripts/ci/validate-ci-path-scope.sh
 
-printf 'Foundation contract OK: %d required paths present plus all five Phase 7 preset contracts, the Phase 8A/8B/8C/8D/8E/8F/8G/8H/8I Migration Bridge safety contract, the Phase 9 zero-plugin onboarding contract, the Phase 10A reproducible release-artifact contract, the Phase 10B version/upgrade contract, the Phase 10C client delivery documentation contract, the Phase 10D production-readiness/recovery contract, the Phase 10E stable-release decision gate, the Phase 10E.2A.6 bounded Emmake real-clone acceptance gate, the independent Theme/Manager product-portfolio contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
+printf 'Foundation contract OK: %d required paths present plus the shared SEO/GEO-first preset contract, all five Phase 7 preset contracts, the Phase 8A/8B/8C/8D/8E/8F/8G/8H/8I Migration Bridge safety contract, the Phase 9 zero-plugin onboarding contract, the Phase 10A reproducible release-artifact contract, the Phase 10B version/upgrade contract, the Phase 10C client delivery documentation contract, the Phase 10D production-readiness/recovery contract, the Phase 10E stable-release decision gate, the Phase 10E.2A.6 bounded Emmake real-clone acceptance gate, the independent Theme/Manager product-portfolio contract and minimum-sufficient CI scope.\n' "${#required_paths[@]}"
