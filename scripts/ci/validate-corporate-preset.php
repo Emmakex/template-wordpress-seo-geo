@@ -142,6 +142,24 @@ if ( ! is_array( $schema ) || 'organization' !== ( $schema['site_identity'] ?? n
 	fail_corporate_preset( 'schema-confirmation', 'Corporate Organization identity must require explicit confirmation.', CORPORATE_PRESET_DIR . '/preset.json', 'organization + requires_confirmation=true', $schema );
 }
 
+$replatforming = $manifest['replatforming'] ?? null;
+if (
+	! is_array( $replatforming )
+	|| 'preserve-content-seo-links-rebuild-presentation' !== ( $replatforming['strategy'] ?? null )
+	|| false !== ( $replatforming['legacy_visual_parity'] ?? null )
+	|| true !== ( $replatforming['native_composition_required'] ?? null )
+	|| true !== ( $replatforming['source_content_may_be_restructured'] ?? null )
+	|| true !== ( $replatforming['source_facts_must_not_be_fabricated'] ?? null )
+) {
+	fail_corporate_preset(
+		'replatforming',
+		'Corporate must preserve the search/content asset while replacing legacy presentation with native composition.',
+		CORPORATE_PRESET_DIR . '/preset.json#replatforming',
+		'preserve content/SEO/links + no legacy visual parity + native composition',
+		$replatforming
+	);
+}
+
 $content_semantics = $manifest['content_semantics'] ?? null;
 $required_semantic_flags = array(
 	'answer_first_where_useful',
@@ -188,6 +206,11 @@ $expected_preset_slugs = array(
 	'seo-geo-theme/corporate-case-study',
 	'seo-geo-theme/corporate-stats',
 	'seo-geo-theme/corporate-testimonials',
+	'seo-geo-theme/corporate-native-hero',
+	'seo-geo-theme/corporate-native-capabilities',
+	'seo-geo-theme/corporate-native-proof',
+	'seo-geo-theme/corporate-native-process',
+	'seo-geo-theme/corporate-native-insights',
 );
 $declared_preset_slugs = $manifest['preset_patterns'] ?? null;
 if ( ! is_array( $declared_preset_slugs ) || array_values( $declared_preset_slugs ) !== $expected_preset_slugs ) {
@@ -204,8 +227,8 @@ if ( ! is_array( $category_labels ) || ! isset( $category_labels['en_US'], $cate
 }
 
 $pattern_rows = $patterns['patterns'] ?? null;
-if ( ! is_array( $pattern_rows ) || 3 !== count( $pattern_rows ) ) {
-	fail_corporate_preset( 'pattern-count', 'Corporate preset must ship exactly three preset-owned patterns in Phase 7A.', CORPORATE_PRESET_DIR . '/patterns.json', 3, is_array( $pattern_rows ) ? count( $pattern_rows ) : $pattern_rows );
+if ( ! is_array( $pattern_rows ) || 8 !== count( $pattern_rows ) ) {
+	fail_corporate_preset( 'pattern-count', 'Corporate Native must ship the complete reusable pattern set.', CORPORATE_PRESET_DIR . '/patterns.json', 8, is_array( $pattern_rows ) ? count( $pattern_rows ) : $pattern_rows );
 }
 
 $theme_tokens = corporate_theme_tokens();
@@ -264,6 +287,16 @@ if ( ! is_array( $locales ) || ! isset( $locales['en_US'], $locales['es_ES'] ) )
 	fail_corporate_preset( 'content-locales', 'Corporate content map must ship EN/ES together.', CORPORATE_PRESET_DIR . '/content-map.json', 'en_US + es_ES', $locales );
 }
 
+$required_native_home_patterns = array(
+	'seo-geo-theme/corporate-native-hero',
+	'seo-geo-theme/corporate-native-capabilities',
+	'seo-geo-theme/corporate-native-proof',
+	'seo-geo-theme/corporate-case-study',
+	'seo-geo-theme/corporate-native-process',
+	'seo-geo-theme/corporate-native-insights',
+	'seo-geo-theme/cta',
+);
+
 $page_keys_by_locale = array();
 $allowed_patterns = array_fill_keys( array_merge( array_keys( $base_slugs ), $expected_preset_slugs ), true );
 foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
@@ -302,6 +335,16 @@ foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
 			|| array() === $content_contract['retrieval_units']
 		) {
 			fail_corporate_preset( 'page-content-contract', 'Corporate page is missing a machine-readable SEO/GEO content contract.', CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.' . $page['key'], 'intent + sections + internal links + retrieval units', $content_contract );
+		}
+
+		if ( 'home' === $page['key'] && array_values( $page['patterns'] ?? array() ) !== $required_native_home_patterns ) {
+			fail_corporate_preset(
+				'native-home-composition',
+				'Corporate Home must use the canonical native composition rather than legacy visual parity.',
+				CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.home.patterns',
+				json_encode( $required_native_home_patterns ),
+				$page['patterns'] ?? null
+			);
 		}
 
 		$page_patterns = $page['patterns'] ?? array();
@@ -349,6 +392,37 @@ foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
 	}
 }
 
+$corporate_css_path = CORPORATE_THEME_DIR . '/assets/css/presets/corporate.css';
+$corporate_css      = is_file( $corporate_css_path ) ? (string) file_get_contents( $corporate_css_path ) : '';
+if ( '' === $corporate_css || str_contains( $corporate_css, 'migrated-divi' ) ) {
+	fail_corporate_preset(
+		'legacy-visual-css',
+		'Corporate Native stylesheet must not preserve legacy-builder presentation selectors.',
+		$corporate_css_path,
+		'modern native preset CSS without migrated-divi selectors',
+		'' === $corporate_css ? 'missing stylesheet' : 'legacy selector found'
+	);
+}
+foreach (
+	array(
+		'seo-geo-corporate-native-hero',
+		'seo-geo-corporate-native-capabilities',
+		'seo-geo-corporate-native-proof',
+		'seo-geo-corporate-native-process',
+		'seo-geo-corporate-native-insights',
+	) as $native_css_hook
+) {
+	if ( ! str_contains( $corporate_css, $native_css_hook ) ) {
+		fail_corporate_preset(
+			'native-css-hook',
+			'Corporate Native stylesheet is missing a required component hook.',
+			$corporate_css_path,
+			$native_css_hook,
+			'missing'
+		);
+	}
+}
+
 printf(
-	"Corporate preset contract OK: manifest/templates/Schema confirmation, SEO/GEO content semantics, 3 bilingual preset patterns and EN/ES page/repeatable content contracts pass.\n"
+	"Corporate Native contract OK: replatforming semantics, front-page/native components, 8 bilingual preset patterns and EN/ES page/repeatable content contracts pass.\n"
 );
