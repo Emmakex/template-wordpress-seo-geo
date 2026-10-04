@@ -2721,7 +2721,7 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **active — current execution pointer; Home first**
+Status: **active — Migration Bridge 0.8.52 clean Home candidate; Home first**
 
 Rebuild in this order:
 
@@ -2731,6 +2731,18 @@ Rebuild in this order:
 4. About;
 5. Insights;
 6. Contact.
+
+Home implementation candidate:
+
+- Step 4 in Reset & Rebuild creates one private, idempotent Home draft;
+- source identity/path comes only from the Rescue Manifest;
+- source content fingerprint must still match the Manifest;
+- composition comes only from Theme-registered Corporate patterns;
+- legacy Divi/Elementor layout is not copied;
+- mandatory Content Remap is not used;
+- current front-page assignment remains unchanged;
+- source page/plugins remain unchanged;
+- draft is marked `preset-scaffold` for the following content-refinement step.
 
 Rules:
 
