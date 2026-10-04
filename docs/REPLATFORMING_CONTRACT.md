@@ -42,6 +42,8 @@ The design philosophy is the same one used for the project's modern product-styl
 
 The Theme supplies the reusable design system and SEO/GEO runtime. Presets define the information architecture and visual language. Client content is remapped into those native structures rather than styled to resemble the old builder output.
 
+The current design benchmark and trend-adoption filter live in `docs/MODERN_PRESET_DESIGN_STRATEGY.md`. A replatform must therefore be not only cleaner than the legacy site, but intentionally **modern and functionally appropriate for its preset category**.
+
 ### North-star rule
 
 When a migration decision is ambiguous, prefer the option that:
