@@ -280,9 +280,7 @@ final class NativeHomeHydrator {
 	 * @return array<string,mixed>|null
 	 */
 	private function transform_block( array $block, array $values, array $groups ): ?array {
-		$class = is_array( $block['attrs'] ?? null ) && is_string( $block['attrs']['className'] ?? null )
-			? $block['attrs']['className']
-			: '';
+		$class = $this->block_class_names( $block );
 
 		if (
 			'core/column' === ( $block['blockName'] ?? null )
@@ -364,15 +362,42 @@ final class NativeHomeHydrator {
 	}
 
 	/**
+	 * Resolve class names from serialized block attributes with an own-tag HTML fallback.
+	 *
+	 * The fallback reads only the block's opening HTML tag, never descendant markup,
+	 * so semantic slot selection remains structural rather than positional.
+	 *
+	 * @param array<string,mixed> $block Parsed block.
+	 */
+	private function block_class_names( array $block ): string {
+		$classes = array();
+
+		if ( is_array( $block['attrs'] ?? null ) && is_string( $block['attrs']['className'] ?? null ) ) {
+			$classes[] = trim( $block['attrs']['className'] );
+		}
+
+		$html = is_string( $block['innerHTML'] ?? null ) ? ltrim( $block['innerHTML'] ) : '';
+		if (
+			'' !== $html
+			&& 1 === preg_match( '/^<[^>]*\\bclass=(["\\\'])(.*?)\\1/is', $html, $matches )
+			&& is_string( $matches[2] ?? null )
+		) {
+			$classes[] = trim( $matches[2] );
+		}
+
+		$classes = array_values( array_unique( array_filter( $classes ) ) );
+
+		return implode( ' ', $classes );
+	}
+
+	/**
 	 * Whether a block tree contains one semantic class.
 	 *
 	 * @param array<string,mixed> $block Parsed block.
 	 * @param string              $needle Class fragment.
 	 */
 	private function contains_class( array $block, string $needle ): bool {
-		$class = is_array( $block['attrs'] ?? null ) && is_string( $block['attrs']['className'] ?? null )
-			? $block['attrs']['className']
-			: '';
+		$class = $this->block_class_names( $block );
 		if ( str_contains( $class, $needle ) ) {
 			return true;
 		}
