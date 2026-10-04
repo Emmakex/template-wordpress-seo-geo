@@ -2957,7 +2957,7 @@ The Home path is accepted. Product development now continues through the remaini
 
 #### 10E.4E.1 — Generic clean inner-page scaffold + Services
 
-Status: **active — current development pointer**
+Status: **accepted — PR #230 / 9 of 9 CI gates green / merge `abb2509cf5f13a9e3e107745b3f68ed44a576755`**
 
 Goal:
 
@@ -2979,12 +2979,44 @@ Candidate behavior:
 - Insights blocks while its pattern list is empty/dynamic;
 - Step 8 exposes Services as the first operator flow.
 
+Accepted behavior:
+
+- Services source mapping is explicit and Rescue-Manifest-bound;
+- preset slugs never overwrite or guess the client's public URL;
+- page-key/source binding becomes immutable after creation;
+- source content/path, active plugins and front-page assignment remain unchanged;
+- native composition uses Corporate Theme patterns only;
+- Home stays on its dedicated accepted pipeline;
+- Insights remains blocked until its dynamic composition exists;
+- all 9 repository gates passed.
+
+#### 10E.4E.2 — Services semantic content contract
+
+Status: **active — current development pointer**
+
+Goal:
+
+Give Services its own SEO/GEO-native semantic model rather than reusing Home fields or hydrating placeholder text.
+
+Candidate behavior:
+
+- canonical `corporate-services-v1` model referenced by EN/ES Services contracts;
+- required service overview, audience/problem context, three service definitions/links and process/method slots;
+- proof remains optional and requires explicit verification;
+- FAQ is optional and omitted when no real user-intent questions are reviewed;
+- filler FAQ content is forbidden;
+- CTA remains required;
+- FAQ receives stable native slot markers for heading, intro, three questions and three answers;
+- no page-level H1 is introduced inside patterns because `page.html` already owns the H1;
+- Foundation CI validates slot order, EN/ES model references, pattern composition and marker coverage.
+
 Next after acceptance:
 
-- define a Services semantic content contract;
-- add portable Services Content Blueprint + native hydration;
+- build portable Services Content Blueprint + Services Content Kit;
+- hydrate the clean Services draft by semantic slots;
+- omit proof unless verified and FAQ unless populated;
 - add Services native SEO/GEO handoff/readiness;
-- then reuse the same scaffold for Work, About and Contact;
+- then reuse the generic scaffold for Work, About and Contact;
 - implement Insights as a dynamic native archive/index;
 - finish with whole-site acceptance.
 
