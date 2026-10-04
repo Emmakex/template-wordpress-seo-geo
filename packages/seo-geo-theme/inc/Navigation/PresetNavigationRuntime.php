@@ -82,7 +82,7 @@ final class PresetNavigationRuntime {
 
 		$list = '<ul class="seo-geo-preset-navigation__list">';
 		foreach ( $items as $item ) {
-			$url = isset( $item['url'] ) && is_string( $item['url'] ) ? $item['url'] : '';
+			$url  = isset( $item['url'] ) && is_string( $item['url'] ) ? $item['url'] : '';
 			$text = isset( $item['label'] ) && is_string( $item['label'] ) ? $item['label'] : '';
 			if ( '' === $url || '' === $text ) {
 				continue;
@@ -105,6 +105,7 @@ final class PresetNavigationRuntime {
 	 * Resolve menu items from explicit theme location, a bounded legacy-menu
 	 * heuristic, or the active preset navigation contract.
 	 *
+	 * @param string $location Navigation location.
 	 * @return list<array{label:string,url:string}>
 	 */
 	private function resolved_items( string $location ): array {
@@ -126,6 +127,7 @@ final class PresetNavigationRuntime {
 	/**
 	 * Resolve a menu explicitly assigned to the current theme location.
 	 *
+	 * @param string $location Navigation location.
 	 * @return list<array{label:string,url:string}>
 	 */
 	private function assigned_menu_items( string $location ): array {
@@ -195,6 +197,7 @@ final class PresetNavigationRuntime {
 	/**
 	 * Convert classic menu items into the public render shape.
 	 *
+	 * @param int $term_id Menu term ID.
 	 * @return list<array{label:string,url:string}>
 	 */
 	private function menu_items_from_term_id( int $term_id ): array {
@@ -209,8 +212,9 @@ final class PresetNavigationRuntime {
 				continue;
 			}
 
-			$url = isset( $item->url ) && is_string( $item->url ) ? trim( $item->url ) : '';
-			$label = isset( $item->title ) && is_string( $item->title ) ? trim( wp_strip_all_tags( $item->title ) ) : '';
+			$item_data = get_object_vars( $item );
+			$url       = isset( $item_data['url'] ) && is_string( $item_data['url'] ) ? trim( $item_data['url'] ) : '';
+			$label     = isset( $item_data['title'] ) && is_string( $item_data['title'] ) ? trim( wp_strip_all_tags( $item_data['title'] ) ) : '';
 			if ( '' === $url || '' === $label ) {
 				continue;
 			}
@@ -227,6 +231,7 @@ final class PresetNavigationRuntime {
 	/**
 	 * Resolve the active preset navigation map against existing site content.
 	 *
+	 * @param string $location Navigation location.
 	 * @return list<array{label:string,url:string}>
 	 */
 	private function preset_items( string $location ): array {
@@ -245,9 +250,9 @@ final class PresetNavigationRuntime {
 			return array();
 		}
 
-		$keys = $manifest['navigation'][ $location ] ?? null;
+		$keys   = $manifest['navigation'][ $location ] ?? null;
 		$locale = function_exists( 'seo_geo_theme_preset_locale' ) ? seo_geo_theme_preset_locale() : 'en_US';
-		$pages = $content['locales'][ $locale ]['pages'] ?? $content['locales']['en_US']['pages'] ?? null;
+		$pages  = $content['locales'][ $locale ]['pages'] ?? $content['locales']['en_US']['pages'] ?? null;
 		if ( ! is_array( $keys ) || ! is_array( $pages ) ) {
 			return array();
 		}
@@ -277,6 +282,7 @@ final class PresetNavigationRuntime {
 	/**
 	 * Resolve one content-map page definition without creating or mutating content.
 	 *
+	 * @param string              $key        Preset page key.
 	 * @param array<string,mixed> $definition Preset page definition.
 	 * @return array{label:string,url:string}|null
 	 */
@@ -295,10 +301,13 @@ final class PresetNavigationRuntime {
 		if ( 'posts-page' === $role ) {
 			$posts_page = (int) get_option( 'page_for_posts', 0 );
 			if ( 0 < $posts_page && 'publish' === get_post_status( $posts_page ) ) {
-				return array(
-					'label' => get_the_title( $posts_page ),
-					'url'   => get_permalink( $posts_page ),
-				);
+				$posts_url = get_permalink( $posts_page );
+				if ( is_string( $posts_url ) && '' !== $posts_url ) {
+					return array(
+						'label' => get_the_title( $posts_page ),
+						'url'   => $posts_url,
+					);
+				}
 			}
 		}
 
@@ -315,10 +324,13 @@ final class PresetNavigationRuntime {
 		if ( '' !== $slug ) {
 			$page = get_page_by_path( $slug, OBJECT, 'page' );
 			if ( $page instanceof WP_Post && 'publish' === $page->post_status ) {
-				return array(
-					'label' => '' !== $title ? $title : get_the_title( $page ),
-					'url'   => get_permalink( $page ),
-				);
+				$page_url = get_permalink( $page );
+				if ( is_string( $page_url ) && '' !== $page_url ) {
+					return array(
+						'label' => '' !== $title ? $title : get_the_title( $page ),
+						'url'   => $page_url,
+					);
+				}
 			}
 		}
 
@@ -335,6 +347,7 @@ final class PresetNavigationRuntime {
 					'update_post_term_cache' => false,
 				)
 			);
+
 			$needle = strtolower( remove_accents( $title ) );
 
 			foreach ( $query->posts as $page ) {
@@ -343,10 +356,13 @@ final class PresetNavigationRuntime {
 				}
 				$candidate = strtolower( remove_accents( get_the_title( $page ) ) );
 				if ( str_contains( $candidate, $needle ) || str_contains( $needle, $candidate ) ) {
-					return array(
-						'label' => get_the_title( $page ),
-						'url'   => get_permalink( $page ),
-					);
+					$page_url = get_permalink( $page );
+					if ( is_string( $page_url ) && '' !== $page_url ) {
+						return array(
+							'label' => get_the_title( $page ),
+							'url'   => $page_url,
+						);
+					}
 				}
 			}
 		}
@@ -356,9 +372,15 @@ final class PresetNavigationRuntime {
 
 	/**
 	 * Determine whether a navigation target represents the current request.
+	 *
+	 * @param string $url Navigation target URL.
 	 */
 	private function is_current_url( string $url ): bool {
-		$current = home_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '/' ) );
+		$request_uri = isset( $_SERVER['REQUEST_URI'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) )
+			: '/';
+		$current     = home_url( $request_uri );
+
 		return untrailingslashit( $current ) === untrailingslashit( $url );
 	}
 }
