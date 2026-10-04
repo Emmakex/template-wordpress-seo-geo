@@ -50,8 +50,10 @@ if ( $replay instanceof WP_Error ) {
 	throw new RuntimeException( $replay->get_error_code() . ': ' . $replay->get_error_message() );
 }
 
-$bound_plan = $rebuilder->plan( 'services' );
-$draft_id   = (int) ( $created['draft_id'] ?? 0 );
+$bound_plan      = $rebuilder->plan( 'services' );
+$remap_source_id = 1 < count( $candidates ) ? (int) $candidates[1]['id'] : $front_before;
+$remap_plan      = $rebuilder->plan( 'services', $remap_source_id );
+$draft_id        = (int) ( $created['draft_id'] ?? 0 );
 $draft      = 0 < $draft_id ? get_post( $draft_id ) : null;
 if ( ! $draft instanceof WP_Post ) {
 	throw new RuntimeException( 'Clean Services draft could not be loaded.' );
@@ -76,6 +78,7 @@ echo wp_json_encode(
 			'front'    => $front_plan,
 			'home'     => $home_plan,
 			'insights' => $insights_plan,
+			'remap'    => $remap_plan,
 		),
 		'created'       => $created,
 		'replay'        => $replay,
@@ -164,6 +167,8 @@ assert negative["home"]["ready"] is False
 assert "home-has-dedicated-rebuilder" in negative["home"]["blockers"]
 assert negative["insights"]["ready"] is False
 assert "corporate-page-patterns-empty" in negative["insights"]["blockers"]
+assert negative["remap"]["ready"] is False
+assert "page-source-binding-conflict" in negative["remap"]["blockers"]
 
 assert created["status"] == "created"
 assert replay["status"] == "existing"
