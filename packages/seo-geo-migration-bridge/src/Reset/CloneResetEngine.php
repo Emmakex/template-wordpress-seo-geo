@@ -38,7 +38,7 @@ final class CloneResetEngine {
 
 		$blockers     = array();
 		$saved        = $this->manifest->saved();
-		$bridge       = plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' );
+		$bridge       = $this->bridge_plugin_file();
 		$keep_plugins = $this->normalize_keep_plugins( $requested_keep_plugins, $bridge );
 		$plugins      = get_plugins();
 		$themes       = wp_get_themes();
@@ -188,14 +188,14 @@ final class CloneResetEngine {
 		);
 
 		$before = array(
-			'stylesheet'     => get_stylesheet(),
+			'stylesheet'     => $this->active_stylesheet(),
 			'active_plugins' => $this->active_plugins(),
 		);
 
-		if ( self::TARGET_THEME !== get_stylesheet() ) {
+		if ( self::TARGET_THEME !== $this->active_stylesheet() ) {
 			switch_theme( self::TARGET_THEME );
 		}
-		if ( self::TARGET_THEME !== get_stylesheet() ) {
+		if ( self::TARGET_THEME !== $this->active_stylesheet() ) {
 			return new WP_Error( 'seo_geo_clone_reset_theme_switch_failed', 'SEO/GEO Theme could not become the active theme.' );
 		}
 
@@ -243,8 +243,8 @@ final class CloneResetEngine {
 		if ( ! $manifest_unchanged ) {
 			$errors['manifest'] = 'rescue-manifest-drift';
 		}
-		if ( true !== ( $content_check['unchanged'] ?? false ) ) {
-			$errors['content'] = $content_check['drifted_ids'] ?? array();
+		if ( ! $content_check['unchanged'] ) {
+			$errors['content'] = $content_check['drifted_ids'];
 		}
 
 		$report = array(
@@ -256,7 +256,7 @@ final class CloneResetEngine {
 			'manifest_sha256'   => $manifest_sha,
 			'before'            => $before,
 			'after'             => array(
-				'stylesheet'     => get_stylesheet(),
+				'stylesheet'     => $this->active_stylesheet(),
 				'active_plugins' => $this->active_plugins(),
 			),
 			'removed'           => array(
@@ -268,9 +268,9 @@ final class CloneResetEngine {
 			'errors'            => $errors,
 			'safety'            => array(
 				'manifest_unchanged'  => $manifest_unchanged,
-				'content_unchanged'   => true === ( $content_check['unchanged'] ?? false ),
-				'target_theme_active' => self::TARGET_THEME === get_stylesheet(),
-				'bridge_active'       => is_plugin_active( plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' ) ),
+				'content_unchanged'   => $content_check['unchanged'],
+				'target_theme_active' => self::TARGET_THEME === $this->active_stylesheet(),
+				'bridge_active'       => is_plugin_active( $this->bridge_plugin_file() ),
 				'production_mutation' => false,
 			),
 		);
@@ -301,7 +301,7 @@ final class CloneResetEngine {
 	private function normalize_keep_plugins( array $requested, string $bridge ): array {
 		$keep = array( $bridge );
 		foreach ( $requested as $plugin_file ) {
-			if ( is_string( $plugin_file ) && '' !== trim( $plugin_file ) ) {
+			if ( '' !== trim( $plugin_file ) ) {
 				$keep[] = plugin_basename( $plugin_file );
 			}
 		}
@@ -334,8 +334,8 @@ final class CloneResetEngine {
 			}
 
 			++$checked;
-			$current = get_post_field( 'post_content', $post_id );
-			if ( ! is_string( $current ) || ! hash_equals( $expected_sha, hash( 'sha256', $current ) ) ) {
+			$current = (string) get_post_field( 'post_content', $post_id );
+			if ( ! hash_equals( $expected_sha, hash( 'sha256', $current ) ) ) {
 				$drifted[] = $post_id;
 			}
 		}
@@ -385,12 +385,12 @@ final class CloneResetEngine {
 		$uploads = wp_get_upload_dir();
 		$paths   = array(
 			'et-cache'      => WP_CONTENT_DIR . '/et-cache',
-			'elementor-css' => trailingslashit( (string) ( $uploads['basedir'] ?? '' ) ) . 'elementor/css',
+			'elementor-css' => trailingslashit( (string) $uploads['basedir'] ) . 'elementor/css',
 		);
 		$result  = array();
 
 		foreach ( $paths as $key => $path ) {
-			if ( '' === $path || ! $wp_filesystem ) {
+			if ( ! $wp_filesystem ) {
 				$result[ $key ] = false;
 				continue;
 			}
@@ -402,6 +402,22 @@ final class CloneResetEngine {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Return the active stylesheet slug without relying on mutable function narrowing.
+	 */
+	private function active_stylesheet(): string {
+		$value = get_option( 'stylesheet', '' );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Return the Migration Bridge plugin file from this package path.
+	 */
+	private function bridge_plugin_file(): string {
+		return plugin_basename( dirname( __DIR__, 2 ) . '/seo-geo-migration-bridge.php' );
 	}
 
 	/**
