@@ -191,6 +191,7 @@ foreach ( $pages as $page_key => $page_budget ) {
 }
 
 $semantic_templates = array(
+	'packages/seo-geo-theme/templates/front-page.html',
 	'packages/seo-geo-theme/templates/page.html',
 	'packages/seo-geo-theme/templates/single.html',
 );

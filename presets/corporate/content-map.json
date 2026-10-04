@@ -11,12 +11,12 @@
           "role": "front-page",
           "template": "page",
           "patterns": [
-            "seo-geo-theme/hero",
-            "seo-geo-theme/services-features",
-            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/corporate-native-hero",
+            "seo-geo-theme/corporate-native-capabilities",
+            "seo-geo-theme/corporate-native-proof",
             "seo-geo-theme/corporate-case-study",
-            "seo-geo-theme/corporate-stats",
-            "seo-geo-theme/corporate-testimonials",
+            "seo-geo-theme/corporate-native-process",
+            "seo-geo-theme/corporate-native-insights",
             "seo-geo-theme/cta"
           ],
           "content_contract": {
@@ -48,7 +48,9 @@
           "role": "services-index",
           "template": "page",
           "patterns": [
-            "seo-geo-theme/services-features",
+            "seo-geo-theme/corporate-native-capabilities",
+            "seo-geo-theme/corporate-native-process",
+            "seo-geo-theme/corporate-native-proof",
             "seo-geo-theme/faq",
             "seo-geo-theme/cta"
           ],
@@ -83,8 +85,8 @@
           "role": "case-studies-index",
           "template": "page",
           "patterns": [
+            "seo-geo-theme/corporate-native-proof",
             "seo-geo-theme/corporate-case-study",
-            "seo-geo-theme/corporate-stats",
             "seo-geo-theme/cta"
           ],
           "content_contract": {
@@ -115,9 +117,9 @@
           "role": "about",
           "template": "page",
           "patterns": [
-            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/corporate-native-proof",
             "seo-geo-theme/author-profile",
-            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/corporate-native-process",
             "seo-geo-theme/cta"
           ],
           "content_contract": {
@@ -175,7 +177,7 @@
           "template": "page",
           "patterns": [
             "seo-geo-theme/contact",
-            "seo-geo-theme/faq"
+            "seo-geo-theme/cta"
           ],
           "content_contract": {
             "primary_intent": "conversion-contact",
@@ -318,12 +320,12 @@
           "role": "front-page",
           "template": "page",
           "patterns": [
-            "seo-geo-theme/hero",
-            "seo-geo-theme/services-features",
-            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/corporate-native-hero",
+            "seo-geo-theme/corporate-native-capabilities",
+            "seo-geo-theme/corporate-native-proof",
             "seo-geo-theme/corporate-case-study",
-            "seo-geo-theme/corporate-stats",
-            "seo-geo-theme/corporate-testimonials",
+            "seo-geo-theme/corporate-native-process",
+            "seo-geo-theme/corporate-native-insights",
             "seo-geo-theme/cta"
           ],
           "content_contract": {
@@ -355,7 +357,9 @@
           "role": "services-index",
           "template": "page",
           "patterns": [
-            "seo-geo-theme/services-features",
+            "seo-geo-theme/corporate-native-capabilities",
+            "seo-geo-theme/corporate-native-process",
+            "seo-geo-theme/corporate-native-proof",
             "seo-geo-theme/faq",
             "seo-geo-theme/cta"
           ],
@@ -390,8 +394,8 @@
           "role": "case-studies-index",
           "template": "page",
           "patterns": [
+            "seo-geo-theme/corporate-native-proof",
             "seo-geo-theme/corporate-case-study",
-            "seo-geo-theme/corporate-stats",
             "seo-geo-theme/cta"
           ],
           "content_contract": {
@@ -422,9 +426,9 @@
           "role": "about",
           "template": "page",
           "patterns": [
-            "seo-geo-theme/trust-proof",
+            "seo-geo-theme/corporate-native-proof",
             "seo-geo-theme/author-profile",
-            "seo-geo-theme/corporate-stats",
+            "seo-geo-theme/corporate-native-process",
             "seo-geo-theme/cta"
           ],
           "content_contract": {
@@ -482,7 +486,7 @@
           "template": "page",
           "patterns": [
             "seo-geo-theme/contact",
-            "seo-geo-theme/faq"
+            "seo-geo-theme/cta"
           ],
           "content_contract": {
             "primary_intent": "conversion-contact",

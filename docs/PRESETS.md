@@ -412,6 +412,21 @@ Legacy layout artifacts may be inspected only to detect missing content. They mu
 
 The next Corporate milestone is therefore **native page composition**: rebuild Home, Services/About/Work/Insights/Contact surfaces from Corporate patterns/components and remap preserved content into them. Once the native Corporate composition is accepted, legacy presentation dependencies can be removed from the sandbox.
 
+### Corporate Native v1
+
+Corporate has moved from legacy compatibility styling to a native replatforming system.
+
+The active Corporate visual layer now assumes:
+
+- the page/template owns the document H1;
+- preserved legacy content is remapped into new native components;
+- legacy builder classes may remain in backup/source evidence but are not visual targets;
+- the canonical Home composition is hero support → capabilities → evidence → selected work → process → insights → CTA;
+- the visual layer is CSS-first and carries no project JavaScript;
+- real evidence is preferred over decorative counters/testimonial filler.
+
+The next implementation layer is the non-destructive Native Replatform Composer that will create/prepare replacement page content from these preset compositions while keeping rollback/source evidence.
+
 ## Future presets
 
 Potential presets such as travel, professional services, education, events or NGO/fundraising should only be added when they express a repeatable information architecture and acceptance contract. They should compose primitives from the existing theme/Core rather than introduce parallel SEO stacks.
