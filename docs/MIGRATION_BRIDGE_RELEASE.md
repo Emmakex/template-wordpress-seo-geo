@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.52`;
+- current plugin version: `0.8.53`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -50,6 +50,24 @@ The workflow additionally runs PHP syntax validation for every plugin PHP file.
 - `seo-geo-migration-bridge.zip.sha256`.
 
 This artifact is an installation candidate for controlled client analysis. It is not a declaration that a real client migration is accepted.
+
+## Version 0.8.53 — Corporate Home Content Kit + Native Hydrator
+
+0.8.53 completes the first reviewed-content loop for the reset-first Home rebuild.
+
+1. the clean Home draft remains the only mutation target;
+2. reviewed content is stored against the Theme-owned `corporate-home-v1` model;
+3. required text/link/list values are validated before persistence;
+4. evidence groups cannot be enabled with incomplete content;
+5. hydration targets semantic block classes, not legacy markup, placeholder strings or positional selectors;
+6. unverified hero proof, proof and case-study content is omitted;
+7. the original scaffold is backed up before first hydration;
+8. identical replay is idempotent;
+9. manual post-hydration drift blocks automatic overwrite;
+10. rollback restores the exact scaffold;
+11. the rescued source page, public front-page assignment and active plugin set remain unchanged.
+
+The next Home gate is real Emmake content population/review followed by preview QA before any front-page replacement.
 
 ## Version 0.8.52 — Clean Corporate Home rebuild
 
