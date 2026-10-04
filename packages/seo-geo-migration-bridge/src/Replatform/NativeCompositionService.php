@@ -20,14 +20,32 @@ final class NativeCompositionService {
 	/**
 	 * Draft metadata keys.
 	 */
-	public const SOURCE_ID_META   = '_seo_geo_replatform_source_id_v1';
-	public const SOURCE_SHA_META  = '_seo_geo_replatform_source_sha256_v1';
-	public const SOURCE_PATH_META = '_seo_geo_replatform_source_path_v1';
-	public const PRESET_META      = '_seo_geo_replatform_preset_v1';
-	public const PAGE_KEY_META    = '_seo_geo_replatform_page_key_v1';
-	public const PLAN_SHA_META    = '_seo_geo_replatform_plan_sha256_v1';
-	public const CREATED_AT_META  = '_seo_geo_replatform_created_at_v1';
-	public const COMPOSITION_META = '_seo_geo_replatform_composition_v1';
+	public const SOURCE_ID_META      = '_seo_geo_replatform_source_id_v1';
+	public const SOURCE_SHA_META     = '_seo_geo_replatform_source_sha256_v1';
+	public const SOURCE_PATH_META    = '_seo_geo_replatform_source_path_v1';
+	public const PRESET_META         = '_seo_geo_replatform_preset_v1';
+	public const PAGE_KEY_META       = '_seo_geo_replatform_page_key_v1';
+	public const PLAN_SHA_META       = '_seo_geo_replatform_plan_sha256_v1';
+	public const CREATED_AT_META     = '_seo_geo_replatform_created_at_v1';
+	public const COMPOSITION_META    = '_seo_geo_replatform_composition_v1';
+	public const REMAP_PLAN_SHA_META = '_seo_geo_replatform_remap_plan_sha256_v1';
+	public const REMAP_SUMMARY_META  = '_seo_geo_replatform_remap_summary_v1';
+
+	/**
+	 * Read-only content remap planner.
+	 *
+	 * @var ContentRemapPlanner
+	 */
+	private ContentRemapPlanner $content_remap_planner;
+
+	/**
+	 * Construct the native composer.
+	 *
+	 * @param ContentRemapPlanner|null $content_remap_planner Optional remap planner override.
+	 */
+	public function __construct( ?ContentRemapPlanner $content_remap_planner = null ) {
+		$this->content_remap_planner = $content_remap_planner ?? new ContentRemapPlanner();
+	}
 
 	/**
 	 * Build a read-only plan for one preset page key.
@@ -95,17 +113,22 @@ final class NativeCompositionService {
 		$source_content = $source instanceof WP_Post ? (string) $source->post_content : '';
 		$source_sha     = 0 < $source_id ? hash( 'sha256', $source_content ) : null;
 		$source_path    = $source instanceof WP_Post ? $this->post_path( $source ) : null;
+		$content_remap  = $source instanceof WP_Post && is_array( $page )
+			? $this->content_remap_planner->plan( $source, $page )
+			: null;
 		$composition    = implode( "\n\n", array_values( $pattern_contents ) );
 		$plan_material  = array(
-			'preset'        => $preset_id,
-			'page_key'      => $page_key,
-			'source_id'     => $source_id,
-			'source_sha256' => $source_sha,
-			'source_path'   => $source_path,
-			'patterns'      => array_keys( $pattern_contents ),
-			'composition'   => hash( 'sha256', $composition ),
+			'preset'                 => $preset_id,
+			'page_key'               => $page_key,
+			'source_id'              => $source_id,
+			'source_sha256'          => $source_sha,
+			'source_path'            => $source_path,
+			'patterns'               => array_keys( $pattern_contents ),
+			'composition'            => hash( 'sha256', $composition ),
+			'content_remap_plan_sha' => is_array( $content_remap ) ? ( $content_remap['plan_sha256'] ?? null ) : null,
 		);
-		$plan_sha       = hash( 'sha256', (string) wp_json_encode( $plan_material ) );
+
+		$plan_sha = hash( 'sha256', (string) wp_json_encode( $plan_material ) );
 
 		return array(
 			'schema_version' => 1,
@@ -125,6 +148,7 @@ final class NativeCompositionService {
 				: null,
 			'patterns'       => array_keys( $pattern_contents ),
 			'composition'    => $composition,
+			'content_remap'  => $content_remap,
 			'plan_sha256'    => $plan_sha,
 			'existing_draft' => $this->existing_draft_id( $source_id, $page_key, $plan_sha ),
 			'blockers'       => $blockers,
@@ -198,14 +222,17 @@ final class NativeCompositionService {
 		$existing = (int) ( $plan['existing_draft'] ?? 0 );
 		if ( 0 < $existing ) {
 			return array(
-				'schema_version' => 1,
-				'mode'           => 'native-replatform-draft',
-				'status'         => 'existing',
-				'draft_id'       => $existing,
-				'source_id'      => (int) $plan['source']['id'],
-				'page_key'       => (string) $plan['page_key'],
-				'preset'         => (string) $plan['preset'],
-				'plan_sha256'    => (string) $plan['plan_sha256'],
+				'schema_version'            => 1,
+				'mode'                      => 'native-replatform-draft',
+				'status'                    => 'existing',
+				'draft_id'                  => $existing,
+				'source_id'                 => (int) $plan['source']['id'],
+				'page_key'                  => (string) $plan['page_key'],
+				'preset'                    => (string) $plan['preset'],
+				'plan_sha256'               => (string) $plan['plan_sha256'],
+				'content_remap_plan_sha256' => is_array( $plan['content_remap'] ?? null )
+					? (string) ( $plan['content_remap']['plan_sha256'] ?? '' )
+					: '',
 			);
 		}
 
@@ -236,14 +263,23 @@ final class NativeCompositionService {
 		}
 
 		$meta = array(
-			self::SOURCE_ID_META   => $source_id,
-			self::SOURCE_SHA_META  => (string) $plan['source']['content_sha256'],
-			self::SOURCE_PATH_META => (string) $plan['source']['path'],
-			self::PRESET_META      => (string) $plan['preset'],
-			self::PAGE_KEY_META    => (string) $plan['page_key'],
-			self::PLAN_SHA_META    => (string) $plan['plan_sha256'],
-			self::CREATED_AT_META  => gmdate( DATE_ATOM ),
-			self::COMPOSITION_META => array_values( $plan['patterns'] ),
+			self::SOURCE_ID_META      => $source_id,
+			self::SOURCE_SHA_META     => (string) $plan['source']['content_sha256'],
+			self::SOURCE_PATH_META    => (string) $plan['source']['path'],
+			self::PRESET_META         => (string) $plan['preset'],
+			self::PAGE_KEY_META       => (string) $plan['page_key'],
+			self::PLAN_SHA_META       => (string) $plan['plan_sha256'],
+			self::CREATED_AT_META     => gmdate( DATE_ATOM ),
+			self::COMPOSITION_META    => array_values( $plan['patterns'] ),
+			self::REMAP_PLAN_SHA_META => is_array( $plan['content_remap'] ?? null )
+				? (string) ( $plan['content_remap']['plan_sha256'] ?? '' )
+				: '',
+			self::REMAP_SUMMARY_META  => is_array( $plan['content_remap'] ?? null )
+				? array(
+					'counts'        => $plan['content_remap']['counts'] ?? array(),
+					'manual_review' => $plan['content_remap']['manual_review'] ?? array(),
+				)
+				: array(),
 		);
 
 		foreach ( $meta as $key => $value ) {
@@ -251,15 +287,18 @@ final class NativeCompositionService {
 		}
 
 		return array(
-			'schema_version' => 1,
-			'mode'           => 'native-replatform-draft',
-			'status'         => 'created',
-			'draft_id'       => $draft_id,
-			'source_id'      => $source_id,
-			'page_key'       => (string) $plan['page_key'],
-			'preset'         => (string) $plan['preset'],
-			'plan_sha256'    => (string) $plan['plan_sha256'],
-			'safety'         => array(
+			'schema_version'            => 1,
+			'mode'                      => 'native-replatform-draft',
+			'status'                    => 'created',
+			'draft_id'                  => $draft_id,
+			'source_id'                 => $source_id,
+			'page_key'                  => (string) $plan['page_key'],
+			'preset'                    => (string) $plan['preset'],
+			'plan_sha256'               => (string) $plan['plan_sha256'],
+			'content_remap_plan_sha256' => is_array( $plan['content_remap'] ?? null )
+				? (string) ( $plan['content_remap']['plan_sha256'] ?? '' )
+				: '',
+			'safety'                    => array(
 				'source_unchanged' => hash_equals(
 					(string) $plan['source']['content_sha256'],
 					hash( 'sha256', (string) get_post_field( 'post_content', $source_id ) )

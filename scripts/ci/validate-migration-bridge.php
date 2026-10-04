@@ -69,6 +69,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Replatform/NativeCompositionService.php',
+	MIGRATION_BRIDGE_DIR . '/src/Replatform/ContentRemapPlanner.php',
 	MIGRATION_BRIDGE_DIR . '/src/Replatform/AdminNativeReplatformController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Parity/ParityAllowlist.php',
 	MIGRATION_BRIDGE_DIR . '/src/Parity/SeoParityEngine.php',
@@ -260,6 +261,29 @@ foreach ( $php_files as $path ) {
 	}
 }
 
+$content_remap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Replatform/ContentRemapPlanner.php' );
+foreach (
+	array(
+		"'content-remap-plan'",
+		"'manual-review'",
+		"'generated_factual_copy'",
+		"'uncertain_mapping_auto_apply'",
+		"'auto_apply'            => false",
+		'parse_blocks( (string) $source->post_content )',
+		'WP_HTML_Tag_Processor',
+	) as $content_remap_guard
+) {
+	if ( ! str_contains( $content_remap, $content_remap_guard ) ) {
+		fail_migration_bridge(
+			'content-remap-intelligence',
+			'Content Remap Intelligence is missing a read-only provenance, manual-review or no-fabrication guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Replatform/ContentRemapPlanner.php',
+			$content_remap_guard,
+			'missing'
+		);
+	}
+}
+
 $native_replatform = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Replatform/NativeCompositionService.php' );
 foreach (
 	array(
@@ -327,6 +351,7 @@ $read_only_files = array_merge(
 		MIGRATION_BRIDGE_DIR . '/src/Report/MigrationReportEngine.php',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventory.php',
 		MIGRATION_BRIDGE_DIR . '/src/Clone/DestinationSafetyPlanner.php',
+		MIGRATION_BRIDGE_DIR . '/src/Replatform/ContentRemapPlanner.php',
 	),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Builders/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array(),

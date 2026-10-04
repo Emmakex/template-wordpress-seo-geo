@@ -106,6 +106,30 @@ For an accepted sandbox, the composer:
 
 The draft is a destination canvas. Content remapping is a separate step and must distinguish preserved facts from proposed presentation copy. Missing evidence must remain missing/manual-review; the system must not fabricate credentials, outcomes, testimonials, locations, prices or other factual claims.
 
+## Content Remap Intelligence
+
+Content Remap Intelligence is intentionally provenance-first and non-generative.
+
+For each preserved source page it may:
+
+- extract bounded source units from the post title, excerpt and static WordPress block content;
+- inventory crawlable links and media references without rendering dynamic blocks;
+- assign deterministic hashes/IDs so every candidate can be traced back to the exact source snapshot;
+- read the selected preset's `content_contract.required_sections`;
+- propose bounded source candidates for each required semantic section;
+- flag evidence-sensitive sections such as proof, outcomes, credentials, testimonials, provenance or attribution for mandatory manual verification;
+- persist only the remap plan identity and bounded review summary on the destination draft.
+
+It must **not**:
+
+- generate or infer factual claims that are absent from the preserved source;
+- auto-apply uncertain semantic mappings;
+- treat a candidate as verified evidence merely because related words or links exist;
+- rewrite the public source page;
+- reintroduce builder-era visual layout as part of the remap.
+
+A candidate is therefore not publication approval. The next write-capable remap stage must require explicit reviewed selections and retain unmapped assets in the review ledger rather than silently discarding them.
+
 ## Acceptance model
 
 A replatform is accepted when:
