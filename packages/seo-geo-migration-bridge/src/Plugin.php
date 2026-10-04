@@ -111,8 +111,10 @@ use SeoGeo\MigrationBridge\Replatform\ReviewedRemapApplier;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Reset\AdminRescueManifestController;
 use SeoGeo\MigrationBridge\Reset\CleanHomeRebuilder;
+use SeoGeo\MigrationBridge\Reset\CorporateHomeContentKit;
 use SeoGeo\MigrationBridge\Reset\CloneResetEngine;
 use SeoGeo\MigrationBridge\Reset\CorporateThemeBootstrap;
+use SeoGeo\MigrationBridge\Reset\NativeHomeHydrator;
 use SeoGeo\MigrationBridge\Reset\RescueManifest;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
@@ -274,6 +276,20 @@ final class Plugin {
 	 * @var CleanHomeRebuilder|null
 	 */
 	private static ?CleanHomeRebuilder $clean_home_rebuilder = null;
+
+	/**
+	 * Reset/Rebuild Corporate Home Content Kit singleton.
+	 *
+	 * @var CorporateHomeContentKit|null
+	 */
+	private static ?CorporateHomeContentKit $corporate_home_content_kit = null;
+
+	/**
+	 * Reset/Rebuild native Corporate Home hydrator singleton.
+	 *
+	 * @var NativeHomeHydrator|null
+	 */
+	private static ?NativeHomeHydrator $native_home_hydrator = null;
 
 	/**
 	 * Reset/Rebuild administrator controller singleton.
@@ -1149,7 +1165,9 @@ final class Plugin {
 		self::$clone_reset_engine           ??= new CloneResetEngine( self::$rescue_manifest );
 		self::$corporate_theme_bootstrap    ??= new CorporateThemeBootstrap();
 		self::$clean_home_rebuilder         ??= new CleanHomeRebuilder( self::$rescue_manifest );
-		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder );
+		self::$corporate_home_content_kit   ??= new CorporateHomeContentKit();
+		self::$native_home_hydrator         ??= new NativeHomeHydrator( self::$clean_home_rebuilder, self::$corporate_home_content_kit );
+		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -1293,6 +1311,20 @@ final class Plugin {
 	 */
 	public static function clean_home_rebuilder(): ?CleanHomeRebuilder {
 		return self::$clean_home_rebuilder;
+	}
+
+	/**
+	 * Return the reset-first Corporate Home Content Kit service.
+	 */
+	public static function corporate_home_content_kit(): ?CorporateHomeContentKit {
+		return self::$corporate_home_content_kit;
+	}
+
+	/**
+	 * Return the reset-first native Corporate Home hydrator.
+	 */
+	public static function native_home_hydrator(): ?NativeHomeHydrator {
+		return self::$native_home_hydrator;
 	}
 
 	/**
