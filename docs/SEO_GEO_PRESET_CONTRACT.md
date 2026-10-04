@@ -78,6 +78,8 @@ SEO/GEO output must stay fast. The shared baseline remains:
 
 Preset visual systems must remain CSS-first. JavaScript is an exception requiring a separately accepted functional need and budget update.
 
+Once a preset has an implemented visual system, it must also have an **active-preset Lighthouse fixture**. Neutral Theme performance is not sufficient evidence for a visual preset. Corporate is the first preset with this gate; Local Business, Publisher, Ecommerce and SaaS / Digital Product must add their own active-preset budgets when their visual systems are implemented.
+
 Media policy:
 
 - use WordPress responsive images;
