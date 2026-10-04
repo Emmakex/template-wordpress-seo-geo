@@ -84,7 +84,12 @@ final class CleanCorporatePageRebuilder {
 			$blockers[] = 'rescue-manifest-required';
 		}
 
-		$source_id = 0 < $source_id ? $source_id : $this->bound_source_id( $page_key );
+		$bound_source_id = $this->bound_source_id( $page_key );
+		if ( 0 < $source_id && 0 < $bound_source_id && $source_id !== $bound_source_id ) {
+			$blockers[] = 'page-source-binding-conflict';
+		}
+
+		$source_id = 0 < $source_id ? $source_id : $bound_source_id;
 		if ( 0 >= $source_id ) {
 			$blockers[] = 'source-page-selection-required';
 		}
