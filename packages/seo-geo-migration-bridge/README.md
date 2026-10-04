@@ -2,6 +2,24 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Clean Corporate Home rebuild — 0.8.52
+
+After Corporate bootstrap, **Tools → SEO/GEO Reset & Rebuild** exposes Step 4.
+
+The clean Home builder:
+
+- reads the Rescue Manifest only to identify the existing front page, URL and content fingerprint;
+- requires the active `corporate` preset and completed 0.8.51 bootstrap;
+- composes the Home from Theme-registered Corporate patterns;
+- creates a private draft with the same page title as the rescued front page;
+- does not copy the legacy layout;
+- does not run mandatory Content Remap;
+- does not change `page_on_front`;
+- does not mutate the rescued source page, plugins or SEO configuration;
+- reuses an equivalent draft on identical replay.
+
+The draft starts as a **preset scaffold**. Content refinement/selection is the next page-rebuild step before any replacement of the current front page.
+
 ## Theme + Corporate preset bootstrap — 0.8.51
 
 After Clone Reset completes, **Tools → SEO/GEO Reset & Rebuild** exposes Step 3.

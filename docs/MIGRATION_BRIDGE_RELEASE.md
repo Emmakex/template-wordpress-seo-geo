@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.51`;
+- current plugin version: `0.8.52`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -50,6 +50,22 @@ The workflow additionally runs PHP syntax validation for every plugin PHP file.
 - `seo-geo-migration-bridge.zip.sha256`.
 
 This artifact is an installation candidate for controlled client analysis. It is not a declaration that a real client migration is accepted.
+
+## Version 0.8.52 — Clean Corporate Home rebuild
+
+0.8.52 begins 10E.4D without reintroducing the legacy migration path.
+
+After Rescue Manifest, Clone Reset and Corporate bootstrap:
+
+1. identify the rescued front-page ID/path from the Manifest;
+2. verify the source content fingerprint still matches;
+3. load the Corporate Home definition from the Theme preset;
+4. resolve only Theme-registered Corporate patterns;
+5. compose one private Home draft;
+6. keep the existing front page, URL assignment and plugins unchanged;
+7. reuse the equivalent draft on replay.
+
+No Divi/Elementor layout is copied and no mandatory Content Remap is executed.
 
 ## Version 0.8.51 — Theme + Corporate bootstrap
 

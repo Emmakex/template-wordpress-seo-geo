@@ -110,6 +110,7 @@ use SeoGeo\MigrationBridge\Replatform\NativeCompositionService;
 use SeoGeo\MigrationBridge\Replatform\ReviewedRemapApplier;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Reset\AdminRescueManifestController;
+use SeoGeo\MigrationBridge\Reset\CleanHomeRebuilder;
 use SeoGeo\MigrationBridge\Reset\CloneResetEngine;
 use SeoGeo\MigrationBridge\Reset\CorporateThemeBootstrap;
 use SeoGeo\MigrationBridge\Reset\RescueManifest;
@@ -266,6 +267,13 @@ final class Plugin {
 	 * @var CorporateThemeBootstrap|null
 	 */
 	private static ?CorporateThemeBootstrap $corporate_theme_bootstrap = null;
+
+	/**
+	 * Reset/Rebuild clean Corporate Home draft builder singleton.
+	 *
+	 * @var CleanHomeRebuilder|null
+	 */
+	private static ?CleanHomeRebuilder $clean_home_rebuilder = null;
 
 	/**
 	 * Reset/Rebuild administrator controller singleton.
@@ -1140,7 +1148,8 @@ final class Plugin {
 		self::$rescue_manifest              ??= new RescueManifest();
 		self::$clone_reset_engine           ??= new CloneResetEngine( self::$rescue_manifest );
 		self::$corporate_theme_bootstrap    ??= new CorporateThemeBootstrap();
-		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap );
+		self::$clean_home_rebuilder         ??= new CleanHomeRebuilder( self::$rescue_manifest );
+		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -1277,6 +1286,13 @@ final class Plugin {
 	 */
 	public static function corporate_theme_bootstrap(): ?CorporateThemeBootstrap {
 		return self::$corporate_theme_bootstrap;
+	}
+
+	/**
+	 * Return the reset-first clean Corporate Home draft builder.
+	 */
+	public static function clean_home_rebuilder(): ?CleanHomeRebuilder {
+		return self::$clean_home_rebuilder;
 	}
 
 	/**
