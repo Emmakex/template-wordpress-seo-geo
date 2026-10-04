@@ -26,13 +26,14 @@ A permanent, independently installable WordPress plugin for existing or new Word
 Core promises:
 
 - works without requiring the SEO/GEO Theme;
-- analyzes the current site before making changes;
+- acts as the permanent optimization/content-operations layer after launch;
 - publishes and manages optimized landing pages and blog content;
+- refreshes and improves existing content and internal linking;
 - coordinates SEO/GEO output through an explicit authority/provider resolver;
-- contains migration capabilities as an optional module;
-- supports a portable-sandbox workflow when the client has no staging environment;
-- keeps content publication, migration and production cutover reversible and auditable;
-- may remain installed after migration because publishing/operations are permanent capabilities.
+- consumes Search Console/Bing/analytics feedback when connected;
+- contains migration capabilities only as an optional later module;
+- keeps publication/update/rollback auditable;
+- may remain installed permanently because ongoing publishing/optimization is its primary capability.
 
 The Manager is not the deprecated standalone Core wrapper. It is a separate product with its own package, version, release artifact and acceptance lifecycle.
 
@@ -42,7 +43,7 @@ The Manager is not the deprecated standalone Core wrapper. It is a separate prod
 | --- | --- | --- | --- |
 | New site / redesign | Yes | Optional | Build with the self-contained Theme; add Manager only when ongoing publishing/operations are desired. |
 | Existing WordPress, keep current design | No | Yes | Analyze current stack, resolve SEO authority, publish through supported content/provider adapters. |
-| Existing WordPress, full redesign/replatform to SEO/GEO Theme | Yes | Yes during adoption, optional afterward | Manager preserves content/URLs/SEO/links/media/business requirements, then the Theme + selected preset rebuild the presentation from scratch; Manager may stay for ongoing publishing/optimization. |
+| Existing WordPress, full redesign/replatform to SEO/GEO Theme | Yes | Optional during rebuild; recommended afterward | Migration Bridge creates the clone and Rescue Manifest, the clone is reset, Theme + preset rebuild the site from scratch, then Manager becomes the ongoing publishing/optimization layer. |
 | Agency-managed content operations | Optional | Yes | Use Manager as the controlled publishing endpoint for landings/blogs across supported client stacks. |
 
 ## Hard independence rules
@@ -88,7 +89,7 @@ Manager starts a separate version line after its package contract exists. It rec
 
 ## Replatforming boundary
 
-The commercial redesign path follows `docs/REPLATFORMING_CONTRACT.md`: existing presentation is disposable; the search/content asset is not. No client-specific legacy layout may become the reusable Theme architecture.
+The commercial redesign path follows `docs/RESET_REBUILD_CONTRACT.md` and `docs/REPLATFORMING_CONTRACT.md`: the clone is a disposable rebuild workspace, the rescue set is deliberately minimal, and the old presentation/runtime is removed rather than normalized into the new product. No client-specific legacy layout may become the reusable Theme architecture.
 
 This is the intended WordPress equivalent of the product-style web builds used elsewhere in the portfolio: component-based, modern, fast and centrally improvable, while preserving WordPress content ownership and search equity.
 
