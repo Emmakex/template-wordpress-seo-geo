@@ -354,6 +354,10 @@ Cross-preset guarantees:
 - onboarding may later consume the declarative maps, but automatic page creation is outside Phase 7;
 - Ecommerce remains zero-plugin safe and WooCommerce remains a preferred future provider rather than a supported combination until its adapter is implemented and accepted.
 
+### Baseline locale semantics
+
+Preset `baseline_locales` are the locales explicitly supported/tested by that preset; they are **not a requirement to enable every listed locale on every site**. A monolingual site may use any one supported locale without warnings. The setup validator warns only when a configured locale is outside the preset's supported baseline.
+
 ## Visual systems rollout
 
 The five preset contracts are already shipped. Their full visual systems are implemented in the same order as the preset roadmap and **must not be replaced by client-specific Theme forks**:
