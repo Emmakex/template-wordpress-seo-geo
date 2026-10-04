@@ -13,6 +13,7 @@ Source:
 - preset: `corporate`;
 - native presentation contract: `corporate-native-v1`;
 - implementation path: Native Replatform Composer -> Content Remap Intelligence -> Reviewed Apply.
+- sandbox plugin candidate: `SEO/GEO Migration Bridge 0.8.48`.
 
 The source page remains the preserved authority during this gate. The native destination must remain a private draft.
 
@@ -20,7 +21,7 @@ The source page remains the preserved authority during this gate. The native des
 
 All of the following must be true before Reviewed Apply is executed on the real Home:
 
-- the request is running inside the accepted Migration Bridge sandbox;
+- the request is running inside the accepted Migration Bridge sandbox with version `0.8.48` installed;
 - the Corporate preset is active;
 - the preserved Home source ID, path and content SHA-256 are captured;
 - the native composition plan is ready with zero blockers;

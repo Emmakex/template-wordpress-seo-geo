@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.15`;
+- current plugin version: `0.8.48`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -154,3 +154,10 @@ Phase 10E.2A.4.6.1 is a read-only gate between verified staging and any activati
 The planner computes a resumable deterministic SHA-256 fingerprint over rewritten staging-table rows using manifest column order with binary-safe cell encoding. It independently walks the verified staged uploads/plugins/themes tree and requires every staged file to match its extracted `files-meta` record before adding it to a second fingerprint. Exact file/byte and database-row totals must reconcile.
 
 A deterministic activation plan then binds every staging table/file root to its future active target and a collision-free rollback name/path. The plan is hashed and persisted, but 0.8.20 does not execute any table rename, active-root swap or production mutation. `activation_allowed=true` means only that the immutable plan may be consumed by the next controlled-promotion microphase; `handoff_ready` remains false.
+
+
+### Version 0.8.48 — Native Replatform reviewed preview
+
+Migration Bridge 0.8.48 is the installable sandbox candidate for the first real Corporate Native Home review on `emmake.com/nuevaweb/`. It keeps all accepted 0.8.47 clone/handoff state compatible and adds the non-destructive Native Replatform Composer, Content Remap Intelligence v1, Reviewed Apply v1, explicit source/slot drift rejection, reversible private-draft review cycles, direct private draft Preview and privacy-bounded acceptance-evidence download.
+
+The reviewed evidence contains only identities, hashes, selected asset IDs, counts, verification decisions and drift state. It never includes post bodies, backup bodies, credentials or arbitrary option values. The plugin must be upgraded **inside the isolated sandbox** for this review; the production Home remains the preserved authority and is not mutated by Native Replatform actions. Existing clone jobs are not restarted or recreated for this upgrade.
