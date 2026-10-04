@@ -110,6 +110,7 @@ use SeoGeo\MigrationBridge\Replatform\NativeCompositionService;
 use SeoGeo\MigrationBridge\Replatform\ReviewedRemapApplier;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Reset\AdminRescueManifestController;
+use SeoGeo\MigrationBridge\Reset\CleanCorporatePageRebuilder;
 use SeoGeo\MigrationBridge\Reset\CleanHomeRebuilder;
 use SeoGeo\MigrationBridge\Reset\CorporateHomeContentKit;
 use SeoGeo\MigrationBridge\Reset\CloneResetEngine;
@@ -278,6 +279,13 @@ final class Plugin {
 	 * @var CleanHomeRebuilder|null
 	 */
 	private static ?CleanHomeRebuilder $clean_home_rebuilder = null;
+
+	/**
+	 * Reset/Rebuild clean Corporate inner-page builder singleton.
+	 *
+	 * @var CleanCorporatePageRebuilder|null
+	 */
+	private static ?CleanCorporatePageRebuilder $clean_corporate_page_rebuilder = null;
 
 	/**
 	 * Reset/Rebuild Corporate Home Content Kit singleton.
@@ -1179,13 +1187,14 @@ final class Plugin {
 		self::$dependency_review_controller ??= new AdminDependencyReviewController();
 		self::$rescue_manifest              ??= new RescueManifest();
 		self::$clone_reset_engine           ??= new CloneResetEngine( self::$rescue_manifest );
-		self::$corporate_theme_bootstrap    ??= new CorporateThemeBootstrap();
-		self::$clean_home_rebuilder         ??= new CleanHomeRebuilder( self::$rescue_manifest );
-		self::$corporate_home_content_kit   ??= new CorporateHomeContentKit();
+		self::$corporate_theme_bootstrap       ??= new CorporateThemeBootstrap();
+		self::$clean_home_rebuilder            ??= new CleanHomeRebuilder( self::$rescue_manifest );
+		self::$clean_corporate_page_rebuilder  ??= new CleanCorporatePageRebuilder( self::$rescue_manifest );
+		self::$corporate_home_content_kit      ??= new CorporateHomeContentKit();
 		self::$native_home_hydrator         ??= new NativeHomeHydrator( self::$clean_home_rebuilder, self::$corporate_home_content_kit );
 		self::$home_seo_handoff             ??= new HomeSeoHandoff( self::$rescue_manifest, self::$clean_home_rebuilder, self::$native_home_hydrator );
 		self::$home_pilot_readiness         ??= new HomePilotReadiness( self::$rescue_manifest, self::$clone_reset_engine, self::$clean_home_rebuilder, self::$native_home_hydrator, self::$home_seo_handoff );
-		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator, self::$home_seo_handoff, self::$home_pilot_readiness );
+		self::$rescue_manifest_controller      ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$clean_corporate_page_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator, self::$home_seo_handoff, self::$home_pilot_readiness );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -1329,6 +1338,13 @@ final class Plugin {
 	 */
 	public static function clean_home_rebuilder(): ?CleanHomeRebuilder {
 		return self::$clean_home_rebuilder;
+	}
+
+	/**
+	 * Return the reset-first clean Corporate inner-page builder.
+	 */
+	public static function clean_corporate_page_rebuilder(): ?CleanCorporatePageRebuilder {
+		return self::$clean_corporate_page_rebuilder;
 	}
 
 	/**
