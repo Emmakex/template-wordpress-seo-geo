@@ -2788,7 +2788,7 @@ Accepted behavior:
 
 #### 10E.4D.3 — Portable Content Blueprint + real Emmake Home v1
 
-Status: **active — Migration Bridge 0.8.54 candidate; current execution pointer**
+Status: **accepted — PR #224 / 8 of 8 CI gates green / merge `6d25006e6402267b8c5527e14cde886b95caad47`; field pilot on `emmake.com/nuevaweb/` is the current execution pointer**
 
 Goal:
 

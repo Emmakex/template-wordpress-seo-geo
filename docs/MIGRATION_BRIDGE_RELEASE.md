@@ -53,6 +53,8 @@ This artifact is an installation candidate for controlled client analysis. It is
 
 ## Version 0.8.54 — Portable Home Content Blueprint + Emmake reference content
 
+**Accepted:** PR #224 passed all 8 CI gates and was squash-merged as `6d25006e6402267b8c5527e14cde886b95caad47`.
+
 0.8.54 makes reviewed Home content portable across environments without carrying WordPress runtime identity.
 
 1. a Content Blueprint contains only schema/model, locale, semantic values and evidence flags;
