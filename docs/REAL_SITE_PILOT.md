@@ -53,6 +53,25 @@ Bounded evidence for this milestone is stored at `release/emmake-divi-migration-
 
 This closes the **Divi dependency migration** hurdle for the sandbox. It does not claim final visual parity, SEO/GEO parity, accessibility/performance acceptance or production cutover. The next accepted operation is the visual/quality parity pass on the fully native sandbox content.
 
+## 2026-10-04 Corporate preset application milestone
+
+The first reusable visual preset has now been applied successfully on the working `/nuevaweb/` sandbox:
+
+- active preset: `corporate`;
+- configured language map: `es=es_ES`;
+- native language routing: disabled;
+- public entity type: `organization`;
+- crawler policy remained inherited;
+- `llms.txt`: off;
+- Markdown alternatives: off;
+- the setup transaction completed successfully after the registered-default option-write fix;
+- the setup result emitted stable configuration/report fingerprints;
+- Yoast remained installed and was surfaced only as the advisory compatibility warning `compatibility:external-seo-provider:yoast`.
+
+Bounded evidence for this milestone is stored at `release/emmake-corporate-preset-application-20261004.json`.
+
+This proves **preset selection + validation + atomic application** on the real sandbox. It does not yet claim Corporate visual acceptance, SEO/GEO ownership parity, accessibility/performance acceptance or production cutover. The next accepted operation is the Corporate visual review on Home desktop, Contact desktop and Home mobile.
+
 ## Non-negotiable boundary
 
 The pilot does **not** switch production directly to the new theme.
