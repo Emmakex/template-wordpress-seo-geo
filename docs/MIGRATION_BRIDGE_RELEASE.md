@@ -58,7 +58,7 @@ The real `/nuevaweb/` handoff is produced separately from the plugin runtime by 
 The deterministic pack contains:
 
 - the installable SEO/GEO Theme release candidate;
-- Migration Bridge 0.8.56;
+- Migration Bridge 0.8.57;
 - `examples/content-blueprints/emmake-home.es_ES.json`;
 - `docs/EMMAKE_HOME_FIELD_PILOT.md`;
 - `pilot-manifest.json` with exact versions and SHA-256 identities;
