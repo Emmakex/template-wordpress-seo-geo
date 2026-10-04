@@ -75,13 +75,13 @@ foreach ( $php_files as $path ) {
 }
 
 $writer_source = (string) file_get_contents( $writer_path );
-foreach ( array( 'update_option(', 'delete_option(', "'exists'", "'value'" ) as $guard ) {
+foreach ( array( 'add_option(', 'update_option(', 'delete_option(', "'exists'", "'value'" ) as $guard ) {
 	if ( ! str_contains( $writer_source, $guard ) ) {
 		fwrite( STDERR, 'Phase 9E option-writer guard missing: ' . $guard . PHP_EOL );
 		exit( 1 );
 	}
 }
-foreach ( array( 'add_option(', 'wp_insert_post', 'activate_plugin', 'deactivate_plugins', 'wp_remote_post', '$_POST' ) as $forbidden_writer_primitive ) {
+foreach ( array( 'wp_insert_post', 'activate_plugin', 'deactivate_plugins', 'wp_remote_post', '$_POST' ) as $forbidden_writer_primitive ) {
 	if ( str_contains( $writer_source, $forbidden_writer_primitive ) ) {
 		fwrite( STDERR, 'Phase 9E writer exceeds its option-only mutation boundary: ' . $forbidden_writer_primitive . PHP_EOL );
 		exit( 1 );
