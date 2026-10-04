@@ -100,11 +100,11 @@ final class AdminRescueManifestController {
 		$report           = $this->reset->report();
 		$bootstrap_plan   = $this->bootstrap->plan();
 		$bootstrap_report = $this->bootstrap->report();
-		$clean_home_plan  = $this->clean_home->plan();
-		$content_model    = $this->content_kit->model();
-		$content_kit      = $this->content_kit->saved();
-		$hydration_plan   = $this->hydrator->plan();
-		$seo_handoff_plan = $this->seo_handoff->plan();
+		$clean_home_plan    = $this->clean_home->plan();
+		$content_model      = $this->content_kit->model();
+		$content_kit        = $this->content_kit->saved();
+		$hydration_plan     = $this->hydrator->plan();
+		$seo_handoff_plan   = $this->seo_handoff->plan();
 		$seo_handoff_report = $this->seo_handoff->report( (int) ( $clean_home_plan['existing_draft'] ?? 0 ) );
 		?>
 		<div class="wrap">
