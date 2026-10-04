@@ -338,7 +338,7 @@ foreach (
 		'$this->compose_with_slots(',
 		"'remap-slot-section-not-required:'",
 		"'remap-slot-pattern-not-in-page:'",
-		"'seo-geo-remap-slot:'",
+		"seo-geo-remap-slot:",
 	) as $native_replatform_guard
 ) {
 	if ( ! str_contains( $native_replatform, $native_replatform_guard ) ) {
