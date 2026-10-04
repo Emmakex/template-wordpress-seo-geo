@@ -154,6 +154,7 @@ for required_file in \
   "${BUILT_THEME}/inc/presets.php" \
   "${BUILT_THEME}/inc/setup.php" \
   "${BUILT_THEME}/inc/Forms/ContactFormRuntime.php" \
+  "${BUILT_THEME}/inc/Navigation/PresetNavigationRuntime.php" \
   "${BUILT_THEME}/inc/Setup/SetupConfigurationContract.php" \
   "${BUILT_THEME}/inc/Setup/MigrationHandoffReader.php" \
   "${BUILT_THEME}/inc/Setup/SetupCompatibilityDetector.php" \
