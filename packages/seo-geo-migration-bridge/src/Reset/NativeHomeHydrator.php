@@ -380,7 +380,6 @@ final class NativeHomeHydrator {
 		if (
 			'' !== $html
 			&& 1 === preg_match( '/^<[^>]*\\bclass=(["\\\'])(.*?)\\1/is', $html, $matches )
-			&& is_string( $matches[2] ?? null )
 		) {
 			$classes[] = trim( $matches[2] );
 		}
