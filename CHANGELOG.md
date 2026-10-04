@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Added **Deterministic EMMAKE Home Field Pilot Pack** tooling: one reproducible ZIP containing Theme, Migration Bridge 0.8.56, the accepted Emmake blueprint, a `/nuevaweb/` runbook, component SHA-256 manifest and browser-QA evidence template; automatic production cutover remains forbidden.
+
 - Migration Bridge 0.8.56 adds **Home Field Pilot Readiness v1**: a read-only sandbox preflight that requires reset/content/source/front-page/SEO integrity, rejects legacy builder debris and preset placeholders, and distinguishes machine readiness from the remaining browser QA before cutover.
 
 - Migration Bridge 0.8.55 adds **Native Home SEO/GEO handoff v1** and Core per-resource SEO metadata: safe rescued Yoast/Rank Math title/description/indexability carryover, native self-canonical preservation, explicit custom-canonical/template review findings, idempotent handoff reporting, and permanent provider-neutral SEO ownership after Bridge removal.
