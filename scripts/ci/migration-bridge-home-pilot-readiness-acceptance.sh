@@ -13,6 +13,10 @@ use SeoGeo\MigrationBridge\Reset\HomePilotReadiness;
 
 wp_set_current_user( 1 );
 
+if ( ! defined( 'SEO_GEO_MIGRATION_SANDBOX' ) ) {
+	define( 'SEO_GEO_MIGRATION_SANDBOX', true );
+}
+
 $readiness = Plugin::home_pilot_readiness();
 $builder   = Plugin::clean_home_rebuilder();
 
@@ -82,8 +86,8 @@ legacy = report["legacy_blocked"]
 restored = report["restored"]
 
 assert before["mode"] == "clean-home-field-pilot-readiness"
-assert before["ready_for_browser_qa"] is True
-assert before["blockers"] == []
+assert before["ready_for_browser_qa"] is True, before
+assert before["blockers"] == [], before
 assert before["checks"]["sandbox_marker"] is True
 assert before["checks"]["reset_completed"] is True
 assert before["checks"]["theme_active"] is True
@@ -109,8 +113,8 @@ assert "legacy-builder-markup-detected" in legacy["blockers"]
 assert legacy["checks"]["legacy_builder_free"] is False
 assert "elementor" in legacy["legacy_markers"]
 
-assert restored["ready_for_browser_qa"] is True
-assert restored["blockers"] == []
+assert restored["ready_for_browser_qa"] is True, restored
+assert restored["blockers"] == [], restored
 assert restored["checks"]["legacy_builder_free"] is True
 assert report["draft_sha256"] == report["original_sha256"]
 PY
