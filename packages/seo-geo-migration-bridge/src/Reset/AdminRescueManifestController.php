@@ -15,9 +15,9 @@ use WP_Error;
  * Provides Rescue Manifest + Clone Reset Engine actions.
  */
 final class AdminRescueManifestController {
-	public const PAGE_SLUG          = 'seo-geo-reset-rebuild';
-	public const ACTION             = 'seo_geo_reset_capture_rescue_manifest';
-	public const NONCE_ACTION       = 'seo_geo_reset_capture_rescue_manifest';
+	public const PAGE_SLUG              = 'seo-geo-reset-rebuild';
+	public const ACTION                 = 'seo_geo_reset_capture_rescue_manifest';
+	public const NONCE_ACTION           = 'seo_geo_reset_capture_rescue_manifest';
 	public const RESET_ACTION           = 'seo_geo_reset_apply_clone_runtime';
 	public const RESET_NONCE_ACTION     = 'seo_geo_reset_apply_clone_runtime';
 	public const BOOTSTRAP_ACTION       = 'seo_geo_reset_apply_corporate_bootstrap';
