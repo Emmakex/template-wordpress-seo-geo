@@ -22,6 +22,8 @@ final class AdminNativeReplatformController {
 	public const APPLY_NONCE_ACTION    = 'seo_geo_native_replatform_apply_reviewed';
 	public const ROLLBACK_ACTION       = 'seo_geo_native_replatform_rollback_reviewed';
 	public const ROLLBACK_NONCE_ACTION = 'seo_geo_native_replatform_rollback_reviewed';
+	public const EVIDENCE_ACTION       = 'seo_geo_native_replatform_download_evidence';
+	public const EVIDENCE_NONCE_ACTION = 'seo_geo_native_replatform_download_evidence';
 
 	/**
 	 * Construct the administrator controller.
@@ -43,6 +45,7 @@ final class AdminNativeReplatformController {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_create_draft' ) );
 		add_action( 'admin_post_' . self::APPLY_ACTION, array( $this, 'handle_apply_reviewed' ) );
 		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'handle_rollback_reviewed' ) );
+		add_action( 'admin_post_' . self::EVIDENCE_ACTION, array( $this, 'handle_download_evidence' ) );
 	}
 
 	/**
@@ -237,6 +240,49 @@ final class AdminNativeReplatformController {
 	}
 
 	/**
+	 * Download bounded acceptance evidence for an applied native draft.
+	 */
+	public function handle_download_evidence(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		$draft_id = isset( $_POST['draft_id'] ) ? absint( wp_unslash( $_POST['draft_id'] ) ) : 0;
+		$confirm  = isset( $_POST['confirm'] ) ? sanitize_key( wp_unslash( $_POST['confirm'] ) ) : '';
+
+		if ( 0 >= $draft_id || 'download-review-evidence' !== $confirm ) {
+			wp_die( esc_html__( 'Native review evidence request is incomplete or was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		check_admin_referer( self::evidence_nonce_action( $draft_id ) );
+
+		$evidence = ( new NativeReviewEvidence( $this->composer ) )->snapshot( $draft_id );
+		if ( 'ready' !== ( $evidence['status'] ?? null ) ) {
+			$blockers = is_array( $evidence['blockers'] ?? null ) ? $evidence['blockers'] : array();
+			wp_die(
+				esc_html(
+					sprintf(
+						/* translators: %s: comma-separated evidence blockers. */
+						__( 'Native review evidence is blocked: %s', 'seo-geo-migration-bridge' ),
+						implode( ', ', $blockers )
+					)
+				),
+				'',
+				array( 'response' => 400 )
+			);
+		}
+
+		$filename = 'seo-geo-native-review-evidence-' . $draft_id . '.json';
+
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+		echo wp_json_encode( $evidence, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		exit;
+	}
+
+	/**
 	 * Render reviewed candidate forms for existing native drafts.
 	 *
 	 * @param array<int,array<string,mixed>> $plans Native replatform plans.
@@ -277,12 +323,30 @@ final class AdminNativeReplatformController {
 			</p>
 
 			<?php if ( is_array( $ledger ) ) : ?>
+				<?php $evidence = ( new NativeReviewEvidence( $this->composer ) )->snapshot( $draft_id ); ?>
 				<div class="notice notice-info inline">
 					<p>
 						<?php echo esc_html__( 'Reviewed content is currently applied to this draft. Preview or edit the draft. To change the reviewed selection, restore the pre-apply draft first.', 'seo-geo-migration-bridge' ); ?>
 						<a href="<?php echo esc_url( $this->edit_link( $draft_id ) ); ?>"><?php echo esc_html__( 'Open draft', 'seo-geo-migration-bridge' ); ?></a>
 					</p>
 				</div>
+
+				<?php if ( 'ready' === ( $evidence['status'] ?? null ) ) : ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="<?php echo esc_attr( self::EVIDENCE_ACTION ); ?>">
+						<input type="hidden" name="draft_id" value="<?php echo esc_attr( (string) $draft_id ); ?>">
+						<input type="hidden" name="confirm" value="download-review-evidence">
+						<?php wp_nonce_field( self::evidence_nonce_action( $draft_id ) ); ?>
+						<p><?php echo esc_html__( 'Download a privacy-bounded JSON snapshot containing only identities, hashes, counts, verification decisions and safety state. Page bodies and private payloads are excluded.', 'seo-geo-migration-bridge' ); ?></p>
+						<?php submit_button( __( 'Download review evidence JSON', 'seo-geo-migration-bridge' ), 'secondary', 'submit', false ); ?>
+					</form>
+				<?php else : ?>
+					<p>
+						<strong><?php echo esc_html__( 'Review evidence blocked:', 'seo-geo-migration-bridge' ); ?></strong>
+						<?php echo esc_html( implode( ', ', is_array( $evidence['blockers'] ?? null ) ? $evidence['blockers'] : array() ) ); ?>
+					</p>
+				<?php endif; ?>
+
 				<?php if ( is_array( $backup ) ) : ?>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<input type="hidden" name="action" value="<?php echo esc_attr( self::ROLLBACK_ACTION ); ?>">
@@ -457,6 +521,15 @@ final class AdminNativeReplatformController {
 	 */
 	public static function rollback_nonce_action( int $draft_id ): string {
 		return self::ROLLBACK_NONCE_ACTION . ':' . $draft_id;
+	}
+
+	/**
+	 * Return a draft-scoped evidence-download nonce action.
+	 *
+	 * @param int $draft_id Native draft ID.
+	 */
+	public static function evidence_nonce_action( int $draft_id ): string {
+		return self::EVIDENCE_NONCE_ACTION . ':' . $draft_id;
 	}
 
 	/**
