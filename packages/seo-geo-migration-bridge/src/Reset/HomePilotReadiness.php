@@ -83,7 +83,8 @@ final class HomePilotReadiness {
 		$expected_plugins = is_array( $reset_report['after']['active_plugins'] ?? null )
 			? array_values( array_map( 'strval', $reset_report['after']['active_plugins'] ) )
 			: array();
-		$current_plugins  = array_values( array_map( 'strval', get_option( 'active_plugins', array() ) ) );
+
+		$current_plugins = array_values( array_map( 'strval', get_option( 'active_plugins', array() ) ) );
 		sort( $expected_plugins );
 		sort( $current_plugins );
 		$checks['plugin_set_unchanged'] = $expected_plugins === $current_plugins;
@@ -141,13 +142,15 @@ final class HomePilotReadiness {
 			$blockers[] = 'legacy-builder-markup-detected';
 		}
 
-		$placeholder_markers                    = $this->placeholder_markers( $content );
+		$placeholder_markers = $this->placeholder_markers( $content );
+
 		$checks['preset_placeholders_removed'] = array() === $placeholder_markers;
 		if ( ! $checks['preset_placeholders_removed'] ) {
 			$blockers[] = 'preset-placeholder-content-detected';
 		}
 
-		$verified_groups    = is_array( $hydration_plan['verified_groups'] ?? null ) ? $hydration_plan['verified_groups'] : array();
+		$verified_groups = is_array( $hydration_plan['verified_groups'] ?? null ) ? $hydration_plan['verified_groups'] : array();
+
 		$unverified_enabled = array_values(
 			array_keys(
 				array_filter(
@@ -240,14 +243,15 @@ final class HomePilotReadiness {
 	 */
 	private function legacy_markers( string $content ): array {
 		$patterns = array(
-			'et_pb_'           => '/\bet_pb_[a-z0-9_-]+/i',
-			'divi-shortcode'   => '/\[\/?et_pb_[^\]]*\]/i',
-			'elementor'        => '/(?:data-elementor-|\belementor-[a-z0-9_-]+)/i',
-			'visual-composer'  => '/(?:\[\/?vc_[^\]]*\]|\bwpb_[a-z0-9_-]+)/i',
-			'fusion-builder'   => '/(?:\[\/?fusion_[^\]]*\]|\bfusion-builder\b)/i',
-			'beaver-builder'   => '/\bfl-builder-[a-z0-9_-]+/i',
+			'et_pb_'          => '/\bet_pb_[a-z0-9_-]+/i',
+			'divi-shortcode'  => '/\[\/?et_pb_[^\]]*\]/i',
+			'elementor'       => '/(?:data-elementor-|\belementor-[a-z0-9_-]+)/i',
+			'visual-composer' => '/(?:\[\/?vc_[^\]]*\]|\bwpb_[a-z0-9_-]+)/i',
+			'fusion-builder'  => '/(?:\[\/?fusion_[^\]]*\]|\bfusion-builder\b)/i',
+			'beaver-builder'  => '/\bfl-builder-[a-z0-9_-]+/i',
 		);
-		$found    = array();
+
+		$found = array();
 
 		foreach ( $patterns as $label => $pattern ) {
 			if ( 1 === preg_match( $pattern, $content ) ) {
@@ -275,7 +279,8 @@ final class HomePilotReadiness {
 			'Primary action',
 			'Secondary action',
 		);
-		$found   = array();
+
+		$found = array();
 
 		foreach ( $needles as $needle ) {
 			if ( str_contains( $content, $needle ) ) {
