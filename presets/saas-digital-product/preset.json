@@ -115,5 +115,24 @@
     "SoftwareApplication Schema emitted from unverified marketing copy",
     "external service credentials created by preset activation",
     "required SaaS backend dependency for theme activation"
-  ]
+  ],
+  "seo_geo_runtime": {
+    "html_delivery": "semantic-server-rendered",
+    "primary_navigation": "crawlable-html-anchors",
+    "javascript_policy": "zero-by-default",
+    "canonical_authority": "shared-core-or-declared-provider",
+    "indexability_authority": "shared-core",
+    "hreflang_authority": "shared-core",
+    "schema_authority": "shared-core-or-declared-provider",
+    "single_h1_required": true,
+    "internal_links": "crawlable-html-anchors",
+    "structured_data_visible_fact_gate": true,
+    "llms_txt": "optional-indexable-content-only",
+    "markdown_alternates": "optional-noncanonical",
+    "content_provenance": "required-when-applicable",
+    "responsive_images": "wordpress-srcset-sizes",
+    "below_fold_media": "lazy",
+    "lcp_media": "not-lazy-loaded",
+    "performance_profile": "core-web-vitals-strict"
+  }
 }
