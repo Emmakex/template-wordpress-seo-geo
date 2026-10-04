@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.55 adds **Native Home SEO/GEO handoff v1** and Core per-resource SEO metadata: safe rescued Yoast/Rank Math title/description/indexability carryover, native self-canonical preservation, explicit custom-canonical/template review findings, idempotent handoff reporting, and permanent provider-neutral SEO ownership after Bridge removal.
+
 - Migration Bridge 0.8.54 adds **Portable Home Content Blueprint v1**: portable locale/model-bound semantic content without runtime IDs or plan hashes, strict unknown-slot/group rejection, deterministic blueprint fingerprinting, import through the existing Content Kit validation, and the first real Emmake `es_ES` Home blueprint with all unverified evidence groups disabled.
 
 - Migration Bridge 0.8.53 adds **Corporate Home Content Kit + Native Hydrator v1**: typed semantic content bound to `corporate-home-v1`, explicit evidence verification groups, deterministic block-slot hydration, omission of unverified proof/case-study sections, draft-drift detection, idempotent replay and exact scaffold rollback.
