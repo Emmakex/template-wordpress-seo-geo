@@ -3166,6 +3166,8 @@ foreach (
 		"SandboxGuard::enabled()",
 		"'rescue-manifest-required'",
 		"'target-theme-not-installed'",
+		"'target-theme-self-contained-runtime-required'",
+		'target_theme_runtime_ready',
 		"'dependency_review_needed' => false",
 		"'content_delete_allowed'   => false",
 		"'manifest_delete_allowed'  => false",
