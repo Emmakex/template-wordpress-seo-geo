@@ -2,6 +2,23 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Clone Reset Engine — 0.8.50
+
+After the Rescue Manifest is saved, **Tools → SEO/GEO Reset & Rebuild** exposes Step 2: Clone Reset Engine.
+
+Default behavior is intentionally minimal:
+
+- activate `seo-geo-theme`;
+- keep Migration Bridge during handoff;
+- delete every other plugin unless explicitly checked as a business function to retain;
+- delete every other installed theme;
+- clear old widget assignments, rewrite rules and object cache;
+- remove generated `wp-content/et-cache` and `uploads/elementor/css`;
+- preserve pages/posts and verify their Rescue Manifest content hashes after reset;
+- preserve the Rescue Manifest itself.
+
+The reset is blocked unless the site is explicitly marked as a sandbox/clone, the Rescue Manifest exists and the SEO/GEO Theme is installed. It does not require baseline or UNKNOWN dependency completion.
+
 ## Reset & Rebuild mode — 0.8.49
 
 For full redesigns, Migration Bridge now has a separate reset-first entrypoint under **Tools > SEO/GEO Reset & Rebuild**.
