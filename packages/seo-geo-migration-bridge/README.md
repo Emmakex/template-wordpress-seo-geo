@@ -2,6 +2,25 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Home Field Pilot Readiness — 0.8.56
+
+Step 7 adds a read-only machine preflight before browser QA.
+
+It requires:
+
+- sandbox marker enabled;
+- a completed Clone Reset report with Rescue Manifest/content integrity preserved;
+- SEO/GEO Theme active;
+- clean Home still a draft and in hydrated state;
+- hydration plan free of drift;
+- rescued source Home still matching its manifest fingerprint;
+- current front page still pointing to the rescued source;
+- native SEO handoff applied and `cutover_seo_ready=true`;
+- no known Divi/Elementor/Visual Composer/Fusion/Beaver builder debris in the clean Home;
+- no known preset placeholder copy remaining.
+
+Passing Step 7 means **ready for browser QA**, not ready for production cutover. Visual layout, responsive behavior, accessibility, rendered SEO/GEO output and performance remain explicit browser checks.
+
 ## Native Home SEO/GEO handoff — 0.8.55
 
 After the clean Home is hydrated, Step 6 translates safe rescued SEO provider metadata into permanent Theme/Core metadata.

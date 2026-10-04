@@ -46,6 +46,7 @@ final class AdminRescueManifestController {
 	 * @param CorporateHomeContentKit $content_kit Structured Home content service.
 	 * @param NativeHomeHydrator      $hydrator    Native Home hydrator.
 	 * @param HomeSeoHandoff          $seo_handoff Native SEO handoff service.
+	 * @param HomePilotReadiness      $readiness   Field-pilot readiness gate.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
@@ -54,7 +55,8 @@ final class AdminRescueManifestController {
 		private CleanHomeRebuilder $clean_home,
 		private CorporateHomeContentKit $content_kit,
 		private NativeHomeHydrator $hydrator,
-		private HomeSeoHandoff $seo_handoff
+		private HomeSeoHandoff $seo_handoff,
+		private HomePilotReadiness $readiness
 	) {
 	}
 
@@ -106,6 +108,7 @@ final class AdminRescueManifestController {
 		$hydration_plan     = $this->hydrator->plan();
 		$seo_handoff_plan   = $this->seo_handoff->plan();
 		$seo_handoff_report = $this->seo_handoff->report( (int) ( $clean_home_plan['existing_draft'] ?? 0 ) );
+		$readiness_report   = $this->readiness->report();
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'SEO/GEO Reset & Rebuild', 'seo-geo-migration-bridge' ); ?></h1>
@@ -276,6 +279,7 @@ final class AdminRescueManifestController {
 
 			<?php $this->render_content_kit_step( $clean_home_plan, $content_model, $content_kit, $hydration_plan ); ?>
 			<?php $this->render_home_seo_handoff_step( $seo_handoff_plan, $seo_handoff_report ); ?>
+			<?php $this->render_home_pilot_readiness_step( $readiness_report ); ?>
 		</div>
 		<?php
 	}
@@ -481,6 +485,56 @@ final class AdminRescueManifestController {
 				</p>
 			</div>
 		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render Step 7 — field-pilot readiness gate.
+	 *
+	 * @param array<string,mixed> $report Read-only readiness report.
+	 */
+	private function render_home_pilot_readiness_step( array $report ): void {
+		$ready    = true === ( $report['ready_for_browser_qa'] ?? false );
+		$blockers = is_array( $report['blockers'] ?? null ) ? $report['blockers'] : array();
+		$warnings = is_array( $report['warnings'] ?? null ) ? $report['warnings'] : array();
+		$manual   = is_array( $report['manual_browser_checks'] ?? null ) ? $report['manual_browser_checks'] : array();
+		?>
+		<h2><?php echo esc_html__( 'Step 7 — Field-pilot readiness', 'seo-geo-migration-bridge' ); ?></h2>
+		<p><?php echo esc_html__( 'Read-only preflight before browser QA. It does not replace visual, accessibility or performance review and it never changes the current front page.', 'seo-geo-migration-bridge' ); ?></p>
+
+		<div class="notice <?php echo $ready ? 'notice-success' : 'notice-warning'; ?> inline">
+			<p>
+				<strong><?php echo esc_html__( 'Machine preflight:', 'seo-geo-migration-bridge' ); ?></strong>
+				<?php echo $ready ? esc_html__( 'ready for browser QA', 'seo-geo-migration-bridge' ) : esc_html__( 'blocked', 'seo-geo-migration-bridge' ); ?>
+				—
+				<code><?php echo esc_html( (string) ( $report['report_sha256'] ?? '' ) ); ?></code>
+			</p>
+		</div>
+
+		<?php if ( array() !== $blockers ) : ?>
+			<p><strong><?php echo esc_html__( 'Blocking findings:', 'seo-geo-migration-bridge' ); ?></strong></p>
+			<ul>
+				<?php foreach ( $blockers as $blocker ) : ?>
+					<li><code><?php echo esc_html( (string) $blocker ); ?></code></li>
+				<?php endforeach; ?>
+			</ul>
+		<?php endif; ?>
+
+		<?php if ( array() !== $warnings ) : ?>
+			<p><strong><?php echo esc_html__( 'Review warnings:', 'seo-geo-migration-bridge' ); ?></strong></p>
+			<ul>
+				<?php foreach ( $warnings as $warning ) : ?>
+					<li><code><?php echo esc_html( (string) $warning ); ?></code></li>
+				<?php endforeach; ?>
+			</ul>
+		<?php endif; ?>
+
+		<p><strong><?php echo esc_html__( 'Browser QA still required:', 'seo-geo-migration-bridge' ); ?></strong></p>
+		<ul>
+			<?php foreach ( $manual as $check ) : ?>
+				<li><?php echo esc_html( (string) $check ); ?></li>
+			<?php endforeach; ?>
+		</ul>
 		<?php
 	}
 

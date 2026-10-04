@@ -97,10 +97,12 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/NativeHomeHydrator.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/HomeSeoHandoff.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/HomePilotReadiness.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
 	'examples/content-blueprints/emmake-home.es_ES.json',
 	'scripts/ci/migration-bridge-home-content-blueprint-acceptance.sh',
 	'scripts/ci/migration-bridge-home-seo-handoff-acceptance.sh',
+	'scripts/ci/migration-bridge-home-pilot-readiness-acceptance.sh',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
@@ -3432,6 +3434,33 @@ foreach (
 	}
 }
 
+$home_pilot_readiness = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/HomePilotReadiness.php' );
+foreach (
+	array(
+		"'clean-home-field-pilot-readiness'",
+		"'sandbox-marker-required'",
+		"'clone-reset-completed-report-required'",
+		"'plugin-set-drift-since-reset'",
+		"'hydrated-clean-home-draft-required'",
+		"'native-seo-handoff-report-required'",
+		"'seo-review-required-before-browser-qa'",
+		"'legacy-builder-markup-detected'",
+		"'preset-placeholder-content-detected'",
+		"'ready_for_browser_qa'",
+		"'manual_browser_checks'",
+	) as $home_pilot_guard
+) {
+	if ( ! str_contains( $home_pilot_readiness, $home_pilot_guard ) ) {
+		fail_migration_bridge(
+			'home-pilot-readiness-contract',
+			'Home pilot readiness must remain read-only, sandbox-bound, SEO-aware and legacy-builder sensitive.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/HomePilotReadiness.php',
+			$home_pilot_guard,
+			'missing'
+		);
+	}
+}
+
 $rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
 foreach (
 	array(
@@ -3488,10 +3517,12 @@ foreach (
 		'CorporateHomeContentKit',
 		'NativeHomeHydrator',
 		'HomeSeoHandoff',
+		'HomePilotReadiness',
 		'public static function clean_home_rebuilder()',
 		'public static function corporate_home_content_kit()',
 		'public static function native_home_hydrator()',
 		'public static function home_seo_handoff()',
+		'public static function home_pilot_readiness()',
 		'public static function corporate_theme_bootstrap()',
 		'public static function clone_reset_engine()',
 		'self::$rescue_manifest_controller->boot()',

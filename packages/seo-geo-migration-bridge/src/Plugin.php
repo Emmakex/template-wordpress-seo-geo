@@ -114,6 +114,7 @@ use SeoGeo\MigrationBridge\Reset\CleanHomeRebuilder;
 use SeoGeo\MigrationBridge\Reset\CorporateHomeContentKit;
 use SeoGeo\MigrationBridge\Reset\CloneResetEngine;
 use SeoGeo\MigrationBridge\Reset\CorporateThemeBootstrap;
+use SeoGeo\MigrationBridge\Reset\HomePilotReadiness;
 use SeoGeo\MigrationBridge\Reset\HomeSeoHandoff;
 use SeoGeo\MigrationBridge\Reset\NativeHomeHydrator;
 use SeoGeo\MigrationBridge\Reset\RescueManifest;
@@ -298,6 +299,13 @@ final class Plugin {
 	 * @var HomeSeoHandoff|null
 	 */
 	private static ?HomeSeoHandoff $home_seo_handoff = null;
+
+	/**
+	 * Reset/Rebuild clean Home field-pilot readiness singleton.
+	 *
+	 * @var HomePilotReadiness|null
+	 */
+	private static ?HomePilotReadiness $home_pilot_readiness = null;
 
 	/**
 	 * Reset/Rebuild administrator controller singleton.
@@ -1176,7 +1184,8 @@ final class Plugin {
 		self::$corporate_home_content_kit   ??= new CorporateHomeContentKit();
 		self::$native_home_hydrator         ??= new NativeHomeHydrator( self::$clean_home_rebuilder, self::$corporate_home_content_kit );
 		self::$home_seo_handoff             ??= new HomeSeoHandoff( self::$rescue_manifest, self::$clean_home_rebuilder, self::$native_home_hydrator );
-		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator, self::$home_seo_handoff );
+		self::$home_pilot_readiness         ??= new HomePilotReadiness( self::$rescue_manifest, self::$clone_reset_engine, self::$clean_home_rebuilder, self::$native_home_hydrator, self::$home_seo_handoff );
+		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator, self::$home_seo_handoff, self::$home_pilot_readiness );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -1341,6 +1350,13 @@ final class Plugin {
 	 */
 	public static function home_seo_handoff(): ?HomeSeoHandoff {
 		return self::$home_seo_handoff;
+	}
+
+	/**
+	 * Return the clean Home field-pilot readiness gate.
+	 */
+	public static function home_pilot_readiness(): ?HomePilotReadiness {
+		return self::$home_pilot_readiness;
 	}
 
 	/**

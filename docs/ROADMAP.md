@@ -2721,7 +2721,7 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **active — Home scaffold, Content Kit/hydrator and portable blueprint accepted; native SEO/GEO handoff is the current gate**
+Status: **active — Home scaffold, content and native SEO handoff accepted; field-pilot readiness is the current gate**
 
 Home scaffold milestone:
 
@@ -2820,7 +2820,7 @@ Accepted behavior:
 
 #### 10E.4D.4 — Native Home SEO/GEO handoff v1
 
-Status: **active — Migration Bridge 0.8.55 candidate; current execution pointer**
+Status: **accepted — PR #226 / 10 of 10 CI gates green / merge `14cadc731ab4022a2d86e4dfd94494d137cab7c6`**
 
 Goal:
 
@@ -2839,13 +2839,45 @@ Candidate behavior:
 - `cutover_seo_ready=true` only when no SEO review items remain;
 - source page, current front-page assignment and plugins remain unchanged.
 
+Accepted behavior:
+
+- native Core owns provider-neutral per-resource SEO overrides;
+- rescued Yoast/Rank Math title, description and indexability can be safely translated;
+- self-canonical remains runtime-owned;
+- custom canonicals, ambiguous providers and unresolved templates require review;
+- per-resource indexability cannot relax a stronger global noindex;
+- handoff is draft-only and idempotent;
+- all 10 Core + Migration Bridge gates passed.
+
+#### 10E.4D.5 — Home Field Pilot Readiness v1
+
+Status: **active — Migration Bridge 0.8.56 candidate; current execution pointer**
+
+Goal:
+
+Turn the real Home pilot into a deterministic preflight instead of a manual checklist scattered across previous steps.
+
+Candidate behavior:
+
+- read-only, sandbox-bound readiness report;
+- requires completed Clone Reset integrity and SEO/GEO Theme ownership;
+- requires hydrated clean Home draft with no drift;
+- requires rescued Home source fingerprint to remain unchanged;
+- requires current front page to remain on the rescued source;
+- requires native SEO handoff report and `cutover_seo_ready=true`;
+- rejects known Divi, Elementor, Visual Composer, Fusion and Beaver Builder debris;
+- rejects known preset placeholder copy;
+- reports evidence-group warnings separately from hard blockers;
+- declares the remaining browser-only checks explicitly: visual, responsive, accessibility, rendered SEO/GEO and performance;
+- does not mutate the front page, source page, plugins or draft content.
+
 Next only after acceptance:
 
-- install/update Migration Bridge 0.8.55 on `emmake.com/nuevaweb/`;
-- import/hydrate the accepted Emmake Home blueprint;
-- apply the native SEO/GEO handoff;
-- review any real provider-specific findings;
-- run final Home visual + SEO/GEO + accessibility + performance QA;
+- install/update Migration Bridge 0.8.56 on `emmake.com/nuevaweb/`;
+- import/hydrate `examples/content-blueprints/emmake-home.es_ES.json`;
+- apply Step 6 native SEO/GEO handoff;
+- require Step 7 `ready_for_browser_qa=true`;
+- run the five browser QA checks;
 - only then decide whether the rebuilt Home is eligible to replace the current front page.
 
 Rebuild in this order:
