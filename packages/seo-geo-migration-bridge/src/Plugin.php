@@ -111,6 +111,7 @@ use SeoGeo\MigrationBridge\Replatform\ReviewedRemapApplier;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Reset\AdminRescueManifestController;
 use SeoGeo\MigrationBridge\Reset\CloneResetEngine;
+use SeoGeo\MigrationBridge\Reset\CorporateThemeBootstrap;
 use SeoGeo\MigrationBridge\Reset\RescueManifest;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
@@ -258,6 +259,13 @@ final class Plugin {
 	 * @var CloneResetEngine|null
 	 */
 	private static ?CloneResetEngine $clone_reset_engine = null;
+
+	/**
+	 * Reset/Rebuild Corporate Theme bootstrap singleton.
+	 *
+	 * @var CorporateThemeBootstrap|null
+	 */
+	private static ?CorporateThemeBootstrap $corporate_theme_bootstrap = null;
 
 	/**
 	 * Reset/Rebuild administrator controller singleton.
@@ -1131,7 +1139,8 @@ final class Plugin {
 		self::$dependency_review_controller ??= new AdminDependencyReviewController();
 		self::$rescue_manifest              ??= new RescueManifest();
 		self::$clone_reset_engine           ??= new CloneResetEngine( self::$rescue_manifest );
-		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine );
+		self::$corporate_theme_bootstrap    ??= new CorporateThemeBootstrap();
+		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -1261,6 +1270,13 @@ final class Plugin {
 	 */
 	public static function clone_reset_engine(): ?CloneResetEngine {
 		return self::$clone_reset_engine;
+	}
+
+	/**
+	 * Return the reset-first Corporate Theme bootstrap service.
+	 */
+	public static function corporate_theme_bootstrap(): ?CorporateThemeBootstrap {
+		return self::$corporate_theme_bootstrap;
 	}
 
 	/**
