@@ -386,11 +386,11 @@ final class ReviewedRemapApplier {
 			return new WP_Error( 'seo_geo_reviewed_remap_rollback_unavailable', 'No active reviewed apply and rollback backup are available for this draft.' );
 		}
 
-		$current_sha  = hash( 'sha256', (string) $draft->post_content );
-		$ledger_after = (string) ( $ledger['after_sha256'] ?? '' );
+		$current_sha   = hash( 'sha256', (string) $draft->post_content );
+		$ledger_after  = (string) ( $ledger['after_sha256'] ?? '' );
 		$ledger_before = (string) ( $ledger['before_sha256'] ?? '' );
-		$backup_sha   = (string) ( $backup['sha256'] ?? '' );
-		$backup_body  = isset( $backup['content'] ) && is_string( $backup['content'] ) ? $backup['content'] : '';
+		$backup_sha    = (string) ( $backup['sha256'] ?? '' );
+		$backup_body   = isset( $backup['content'] ) && is_string( $backup['content'] ) ? $backup['content'] : '';
 
 		if ( '' === $ledger_after || ! hash_equals( $ledger_after, $current_sha ) ) {
 			return new WP_Error( 'seo_geo_reviewed_remap_rollback_draft_drift', 'The native draft changed after reviewed apply; automatic rollback is blocked.' );
@@ -419,8 +419,8 @@ final class ReviewedRemapApplier {
 			return new WP_Error( 'seo_geo_reviewed_remap_rollback_verification_failed', 'The native draft could not be verified after rollback.' );
 		}
 
-		$source_id         = (int) get_post_meta( $draft_id, NativeCompositionService::SOURCE_ID_META, true );
-		$stored_source_sha = (string) get_post_meta( $draft_id, NativeCompositionService::SOURCE_SHA_META, true );
+		$source_id          = (int) get_post_meta( $draft_id, NativeCompositionService::SOURCE_ID_META, true );
+		$stored_source_sha  = (string) get_post_meta( $draft_id, NativeCompositionService::SOURCE_SHA_META, true );
 		$current_source_sha = 0 < $source_id
 			? hash( 'sha256', (string) get_post_field( 'post_content', $source_id ) )
 			: '';
