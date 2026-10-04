@@ -26,7 +26,7 @@ A ready snapshot may contain only bounded operational facts:
 - unmapped asset counts by units/links/media;
 - rollback availability and pre-apply SHA-256;
 - whether a prior rollback record exists;
-- safety flags;
+- sandbox-only and sandbox-active safety state;
 - deterministic evidence SHA-256;
 - blocker codes when the snapshot is not ready.
 
@@ -52,18 +52,19 @@ The public source path may be retained because it is required to identify the ac
 
 The evidence status is `ready` only when:
 
-1. the destination still exists as a private page draft;
-2. the draft still has complete Native Replatform metadata;
-3. an active Reviewed Apply ledger exists;
-4. the current Native Replatform plan remains ready;
-5. source identity is unchanged;
-6. source content SHA-256 matches the draft-bound source fingerprint;
-7. native composition SHA-256 is unchanged;
-8. Content Remap plan SHA-256 is unchanged;
-9. current draft SHA-256 matches the Reviewed Apply ledger;
-10. rollback backup SHA-256 matches the ledger's pre-apply hash and the retained backup body.
+1. the request is running inside the accepted Migration Bridge sandbox;
+2. the destination still exists as a private page draft;
+3. the draft still has complete Native Replatform metadata;
+4. an active Reviewed Apply ledger exists;
+5. the current Native Replatform plan remains ready;
+6. source identity is unchanged;
+7. source content SHA-256 matches the draft-bound source fingerprint;
+8. native composition SHA-256 is unchanged;
+9. Content Remap plan SHA-256 is unchanged;
+10. current draft SHA-256 matches the Reviewed Apply ledger;
+11. rollback backup SHA-256 matches the ledger's pre-apply hash and the retained backup body.
 
-Any failure returns `blocked` and explicit blocker codes.
+Any failure returns `blocked` and explicit blocker codes. A production context therefore cannot manufacture a valid review-evidence snapshot merely by carrying equivalent metadata.
 
 ## Operator flow
 
@@ -87,4 +88,4 @@ Repeated snapshots over identical accepted state must produce the same evidence 
 
 For the first Corporate Native Home pilot, the repository may retain only the bounded review-evidence JSON or an equivalent sanitized record. The real page bodies, media payloads, database/backups and private migration artifacts must remain outside Git.
 
-Passing this evidence gate proves the Reviewed Apply state is internally consistent. It does not authorize production cutover.
+Passing this evidence gate proves the Reviewed Apply state is internally consistent inside the accepted sandbox. It does not authorize production cutover.
