@@ -431,7 +431,7 @@ final class NativeHomeHydrator {
 	 */
 	private function replace_element_text( string $html, string $text ): string {
 		return (string) preg_replace(
-			'#^(<([a-z0-9]+)\b[^>]*>).*?(</\2>)$#is',
+			'#^(\s*<([a-z0-9]+)\b[^>]*>).*?(</\2>\s*)$#is',
 			'$1' . esc_html( $text ) . '$3',
 			$html,
 			1
@@ -479,7 +479,7 @@ final class NativeHomeHydrator {
 		);
 
 		return (string) preg_replace(
-			'#^(<ul\b[^>]*>).*?(</ul>)$#is',
+			'#^(\s*<ul\b[^>]*>).*?(</ul>\s*)$#is',
 			'$1' . $list . '$2',
 			$html,
 			1
