@@ -178,7 +178,7 @@ final class CloneResetEngine {
 				)
 			)
 		);
-		$removed_themes = array_values(
+		$removed_themes  = array_values(
 			array_filter(
 				array_map(
 					static fn( mixed $row ): string => is_array( $row ) ? (string) ( $row['stylesheet'] ?? '' ) : '',
