@@ -20,18 +20,20 @@ final class NativeCompositionService {
 	/**
 	 * Draft metadata keys.
 	 */
-	public const SOURCE_ID_META     = '_seo_geo_replatform_source_id_v1';
-	public const SOURCE_SHA_META    = '_seo_geo_replatform_source_sha256_v1';
-	public const SOURCE_PATH_META   = '_seo_geo_replatform_source_path_v1';
-	public const PRESET_META        = '_seo_geo_replatform_preset_v1';
-	public const PAGE_KEY_META      = '_seo_geo_replatform_page_key_v1';
-	public const PLAN_SHA_META      = '_seo_geo_replatform_plan_sha256_v1';
-	public const CREATED_AT_META    = '_seo_geo_replatform_created_at_v1';
-	public const COMPOSITION_META   = '_seo_geo_replatform_composition_v1';
+	public const SOURCE_ID_META   = '_seo_geo_replatform_source_id_v1';
+	public const SOURCE_SHA_META  = '_seo_geo_replatform_source_sha256_v1';
+	public const SOURCE_PATH_META = '_seo_geo_replatform_source_path_v1';
+	public const PRESET_META      = '_seo_geo_replatform_preset_v1';
+	public const PAGE_KEY_META    = '_seo_geo_replatform_page_key_v1';
+	public const PLAN_SHA_META    = '_seo_geo_replatform_plan_sha256_v1';
+	public const CREATED_AT_META  = '_seo_geo_replatform_created_at_v1';
+	public const COMPOSITION_META = '_seo_geo_replatform_composition_v1';
 
 	/**
 	 * Build a read-only plan for one preset page key.
 	 *
+	 * @param string      $page_key  Preset page key.
+	 * @param string|null $preset_id Optional preset override.
 	 * @return array<string,mixed>
 	 */
 	public function plan( string $page_key, ?string $preset_id = null ): array {
@@ -103,7 +105,7 @@ final class NativeCompositionService {
 			'patterns'      => array_keys( $pattern_contents ),
 			'composition'   => hash( 'sha256', $composition ),
 		);
-		$plan_sha = hash( 'sha256', (string) wp_json_encode( $plan_material ) );
+		$plan_sha        = hash( 'sha256', (string) wp_json_encode( $plan_material ) );
 
 		return array(
 			'schema_version' => 1,
@@ -140,6 +142,7 @@ final class NativeCompositionService {
 	/**
 	 * Return plans for all singleton pages in the active preset.
 	 *
+	 * @param string|null $preset_id Optional preset override.
 	 * @return list<array<string,mixed>>
 	 */
 	public function plans( ?string $preset_id = null ): array {
@@ -172,6 +175,8 @@ final class NativeCompositionService {
 	/**
 	 * Create or reuse one private draft containing the native composition.
 	 *
+	 * @param string      $page_key  Preset page key.
+	 * @param string|null $preset_id Optional preset override.
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public function create_draft( string $page_key, ?string $preset_id = null ): array|WP_Error {
@@ -280,6 +285,8 @@ final class NativeCompositionService {
 	/**
 	 * Resolve one localized page definition.
 	 *
+	 * @param string $preset_id Preset identifier.
+	 * @param string $page_key  Preset page key.
 	 * @return array<string,mixed>|null
 	 */
 	private function page_definition( string $preset_id, string $page_key ): ?array {
@@ -295,7 +302,7 @@ final class NativeCompositionService {
 		}
 
 		foreach ( $pages as $page ) {
-			if ( is_array( $page ) && $page_key === ( $page['key'] ?? null ) ) {
+			if ( is_array( $page ) && ( $page['key'] ?? null ) === $page_key ) {
 				return $page;
 			}
 		}
@@ -338,6 +345,8 @@ final class NativeCompositionService {
 
 	/**
 	 * Resolve native pattern content from WordPress' registered pattern authority.
+	 *
+	 * @param string $slug Registered block-pattern slug.
 	 */
 	private function registered_pattern_content( string $slug ): ?string {
 		$pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( $slug );
@@ -352,6 +361,13 @@ final class NativeCompositionService {
 
 	/**
 	 * Resolve a prior equivalent native draft.
+	 *
+	 * The candidate list is deliberately bounded and filtered in PHP to avoid
+	 * introducing an unbounded meta query into an administrator workflow.
+	 *
+	 * @param int    $source_id Preserved source post ID.
+	 * @param string $page_key  Preset page key.
+	 * @param string $plan_sha  Deterministic composition plan hash.
 	 */
 	private function existing_draft_id( int $source_id, string $page_key, string $plan_sha ): int {
 		if ( 0 >= $source_id ) {
@@ -362,36 +378,34 @@ final class NativeCompositionService {
 			array(
 				'post_type'              => 'page',
 				'post_status'            => array( 'draft', 'pending', 'private' ),
-				'posts_per_page'         => 1,
+				'posts_per_page'         => 20,
 				'fields'                 => 'ids',
 				'orderby'                => 'ID',
 				'order'                  => 'DESC',
 				'no_found_rows'          => true,
-				'update_post_meta_cache' => false,
+				'update_post_meta_cache' => true,
 				'update_post_term_cache' => false,
-				'meta_query'             => array(
-					'relation' => 'AND',
-					array(
-						'key'   => self::SOURCE_ID_META,
-						'value' => $source_id,
-					),
-					array(
-						'key'   => self::PAGE_KEY_META,
-						'value' => $page_key,
-					),
-					array(
-						'key'   => self::PLAN_SHA_META,
-						'value' => $plan_sha,
-					),
-				),
 			)
 		);
 
-		return isset( $posts[0] ) ? (int) $posts[0] : 0;
+		foreach ( $posts as $post_id ) {
+			$post_id = (int) $post_id;
+			if (
+				$source_id === (int) get_post_meta( $post_id, self::SOURCE_ID_META, true )
+				&& $page_key === (string) get_post_meta( $post_id, self::PAGE_KEY_META, true )
+				&& $plan_sha === (string) get_post_meta( $post_id, self::PLAN_SHA_META, true )
+			) {
+				return $post_id;
+			}
+		}
+
+		return 0;
 	}
 
 	/**
 	 * Return the public path of one preserved source.
+	 *
+	 * @param WP_Post $post Preserved source post.
 	 */
 	private function post_path( WP_Post $post ): string {
 		$url  = get_permalink( $post );
