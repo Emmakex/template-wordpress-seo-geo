@@ -2949,7 +2949,46 @@ Rules:
 - old content may be intentionally dropped;
 - Composer / Content Remap / Reviewed Apply are optional helpers, not mandatory preservation gates.
 
-### 10E.4E — Clean-site acceptance
+### 10E.4E — Remaining page rebuild + clean-site acceptance
+
+Status: **active — 10E.4E.1 / Migration Bridge 0.8.57 candidate**
+
+The Home path is accepted. Product development now continues through the remaining Corporate pages before the final whole-site acceptance gate. The real `/nuevaweb/` Home field pilot remains a parallel execution task and does not justify duplicating Home infrastructure.
+
+#### 10E.4E.1 — Generic clean inner-page scaffold + Services
+
+Status: **active — current development pointer**
+
+Goal:
+
+Reuse one native rebuild authority for Services, Work, About and Contact while preserving each client's rescued URL identity and refusing automatic slug guesses.
+
+Candidate behavior:
+
+- explicit source-page selection from Rescue Manifest published pages;
+- current front page cannot be mapped as an inner page;
+- source content fingerprint must still match the Rescue Manifest;
+- Corporate page definition comes from the active locale;
+- native composition uses Theme-registered patterns only;
+- preset slug is informational and never replaces the rescued client URL;
+- deterministic page-key/source binding;
+- silent remapping to a different rescued source is blocked after the first binding;
+- one private idempotent draft per page plan;
+- source page/content/path, plugins and front-page assignment remain unchanged;
+- Home stays on its dedicated accepted pipeline;
+- Insights blocks while its pattern list is empty/dynamic;
+- Step 8 exposes Services as the first operator flow.
+
+Next after acceptance:
+
+- define a Services semantic content contract;
+- add portable Services Content Blueprint + native hydration;
+- add Services native SEO/GEO handoff/readiness;
+- then reuse the same scaffold for Work, About and Contact;
+- implement Insights as a dynamic native archive/index;
+- finish with whole-site acceptance.
+
+#### 10E.4E.final — Clean-site acceptance
 
 Status: **planned**
 
@@ -2966,7 +3005,7 @@ Validate:
 - performance;
 - absence of unnecessary legacy theme/builder runtime.
 
-Passing 10E.4E closes the Theme real-site sandbox acceptance path. Production cutover remains a separate explicit decision.
+Passing 10E.4E.final closes the Theme real-site sandbox acceptance path. Production cutover remains a separate explicit decision.
 
 ### Previously accepted implementation retained as tooling
 

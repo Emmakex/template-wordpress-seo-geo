@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.56`;
+- current plugin version: `0.8.57`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -58,13 +58,31 @@ The real `/nuevaweb/` handoff is produced separately from the plugin runtime by 
 The deterministic pack contains:
 
 - the installable SEO/GEO Theme release candidate;
-- Migration Bridge 0.8.56;
+- Migration Bridge 0.8.57;
 - `examples/content-blueprints/emmake-home.es_ES.json`;
 - `docs/EMMAKE_HOME_FIELD_PILOT.md`;
 - `pilot-manifest.json` with exact versions and SHA-256 identities;
 - `pilot-evidence-template.json` for Step 7 plus browser QA.
 
 The pack is a field-delivery artifact, not a new product runtime dependency. Client-specific Emmake content remains outside Migration Bridge and Theme runtime code.
+
+## Version 0.8.57 — Clean Corporate inner-page rebuild
+
+0.8.57 starts the post-Home rebuild with a reusable Corporate inner-page scaffold and Services as the first pilot.
+
+1. source mapping is explicit and Rescue-Manifest-bound;
+2. preset slugs never overwrite or guess the client's existing public URL;
+3. the selected source must be a rescued published page and cannot be the current front page;
+4. source content fingerprint drift blocks the rebuild;
+5. the private draft is composed only from the active locale's Theme-registered Corporate patterns;
+6. legacy Divi/Elementor/Visual Composer/Fusion composition is never used as input;
+7. source content, source URL, active plugins and front-page assignment remain unchanged;
+8. repeated execution reuses the same deterministic draft;
+9. once a page key is bound to a rescued source, a different source is rejected with `page-source-binding-conflict`;
+10. Home remains on its dedicated accepted pipeline;
+11. Insights remains blocked until its dynamic native composition is defined.
+
+The WordPress smoke uses a real rescued non-front-page fixture, creates/replays the Services scaffold and verifies source URL/content/plugin/front-page preservation.
 
 ## Version 0.8.56 — Home Field Pilot Readiness
 
