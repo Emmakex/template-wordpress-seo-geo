@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "mode": "corporate-home-content-blueprint",
+  "model": "corporate-home-v1",
+  "locale": "es_ES",
+  "values": {
+    "hero-eyebrow": "Marketing digital, datos e inteligencia de negocio",
+    "hero-lead": "EMMAKE ayuda a empresas, organizaciones y negocios a afrontar retos de transformación digital con marketing digital, investigación de mercado digital, análisis de datos e inteligencia de negocio.",
+    "hero-primary-cta": {
+      "label": "Cuéntanos tu reto",
+      "url": "/contacto/"
+    },
+    "hero-secondary-cta": {
+      "label": "Conoce cómo trabajamos",
+      "url": "/sobre-nosotros/"
+    },
+    "capabilities-heading": "Soluciones digitales para entender, decidir y crecer",
+    "capabilities-intro": "Partimos del negocio y de su contexto para combinar marketing, investigación, datos e inteligencia de negocio en una estrategia adaptada.",
+    "capability-1-title": "Marketing e investigación de mercado digital",
+    "capability-1-body": "Analizamos el mercado, las personas y el contexto digital antes de definir acciones de marketing para no avanzar a ciegas.",
+    "capability-1-link": {
+      "label": "Cómo trabajamos",
+      "url": "/sobre-nosotros/"
+    },
+    "capability-2-title": "Análisis de datos",
+    "capability-2-body": "Inspeccionamos, limpiamos y transformamos datos para convertirlos en información útil que ayude a mejorar, desarrollar e innovar.",
+    "capability-2-link": {
+      "label": "Nuestro enfoque de datos",
+      "url": "/sobre-nosotros/"
+    },
+    "capability-3-title": "Inteligencia de negocio",
+    "capability-3-body": "Conectamos tecnología, herramientas y procesos para transformar información en conocimiento útil para la estrategia comercial.",
+    "capability-3-link": {
+      "label": "Conoce nuestro enfoque",
+      "url": "/sobre-nosotros/"
+    },
+    "process-heading": "Una metodología para pasar del contexto a los resultados",
+    "process-intro": "Trabajamos entendiendo primero el negocio, analizando su situación y definiendo una estrategia que pueda medirse y mejorarse.",
+    "process-1-title": "Conocer y entender",
+    "process-1-body": "Nos tomamos el tiempo de conocer el negocio, la organización y los clientes a los que sirve.",
+    "process-2-title": "Analizar el contexto",
+    "process-2-body": "Realizamos análisis interno y benchmarking externo para identificar oportunidades, riesgos y el camino de trabajo.",
+    "process-3-title": "Definir, ejecutar y medir",
+    "process-3-body": "Convertimos el análisis en una estrategia con objetivos claros y damos visibilidad sobre la evolución mediante herramientas analíticas e informes.",
+    "insights-heading": "Ideas para la transformación digital",
+    "insights-intro": "El blog de EMMAKE reúne contenidos sobre marketing digital, SEO, SEM, inteligencia artificial, análisis de datos, inteligencia de negocio y otros ámbitos de transformación digital.",
+    "final-cta-heading": "Convirtamos tu próximo reto digital en una estrategia medible",
+    "final-cta-body": "Cuéntanos qué necesita mejorar tu negocio, empresa u organización. Empezaremos por entender el contexto antes de proponer tecnología o acciones.",
+    "final-cta-button": {
+      "label": "Habla con EMMAKE",
+      "url": "/contacto/"
+    }
+  },
+  "verified_groups": {
+    "hero-proof": false,
+    "proof": false,
+    "case-study": false
+  }
+}
