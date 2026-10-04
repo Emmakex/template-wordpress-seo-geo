@@ -2106,7 +2106,7 @@ Evidence:
 
 ### Microphase 10E — Stable release decision
 
-Status: **active — stable NO-GO; real clone complete, Theme sandbox/parity + production acceptance pending**
+Status: **active — stable NO-GO; real clone complete, native Theme replatform + SEO/GEO regression + production acceptance pending**
 
 Deliverables:
 
@@ -2156,7 +2156,7 @@ Boundary:
 - it does not make Migration Bridge a permanent Theme dependency;
 - it does not start Phase 11;
 - it is used first for read-only analysis/baseline on emmake.com;
-- production Theme activation remains forbidden until sandbox/parity/quality acceptance passes.
+- production Theme activation remains forbidden until sandbox replatform/SEO-GEO regression/quality acceptance passes.
 
 10E remains the active stable-release phase; 10E.1 removed the delivery-artifact gap required to execute that acceptance.
 
@@ -2168,7 +2168,9 @@ Evidence:
 
 ### Microphase 10E.2 — Emmake baseline review and sandbox handoff
 
-Status: **active — real clone + 11/11 Divi-to-native migration completed; visual/SEO-GEO/quality parity is next**
+Status: **active — real clone + 11/11 Divi-to-native migration completed; native Corporate rebuild + SEO/GEO regression acceptance is next**
+
+Replatforming rule: **preserve the asset, replace the presentation**. Emmake's legacy Divi composition is not the destination. The sandbox must preserve valuable content, URLs, links, SEO signals, media and required business behavior, then rebuild the public experience with the reusable Corporate preset. Old theme/builder layout, CSS, spacers, widget positioning and decorative structure are discarded unless a specific behavior is intentionally retained. See `docs/REPLATFORMING_CONTRACT.md`.
 
 Purpose:
 
@@ -2176,9 +2178,9 @@ Turn the accepted production baseline into explicit dependency review and a priv
 
 Current real-site evidence:
 
-- **2026-10-03 Divi migration milestone:** the `/nuevaweb/` sandbox reached `11 resources / 11 converted / 0 blocked`. Two operator-approved legacy omissions (`et_pb_signup`, `et_pb_sidebar`) were recorded rather than silently dropped; per-resource rollback remained available. The migrated Contact page rendered the Theme-owned native form, displayed the configured success state and delivered a real test email successfully. Bounded evidence: `release/emmake-divi-migration-field-milestone-20261003.json`. This closes the builder-content migration hurdle; visual parity, SEO/GEO parity, accessibility/performance and production acceptance remain pending.
+- **2026-10-03 Divi migration milestone:** the `/nuevaweb/` sandbox reached `11 resources / 11 converted / 0 blocked`. Two operator-approved legacy omissions (`et_pb_signup`, `et_pb_sidebar`) were recorded rather than silently dropped; per-resource rollback remained available. The migrated Contact page rendered the Theme-owned native form, displayed the configured success state and delivered a real test email successfully. Bounded evidence: `release/emmake-divi-migration-field-milestone-20261003.json`. This closes the builder-content migration hurdle; native Corporate replatforming, SEO/GEO regression, accessibility/performance and production acceptance remain pending. Legacy visual parity is no longer a target.
 
-- **2026-10-03 field milestone:** Migration Bridge 1.0.8 completed the product-owned `https://emmake.com/` → `https://emmake.com/nuevaweb/` clone. Persistent 10-step packaging, 48 MiB multipart transport, destination reconstruction and safe activation completed, and operator verification confirmed that `/nuevaweb/` renders the Emmake site instead of the clean WordPress fixture. Bounded evidence: `release/emmake-clone-field-milestone-20261003.json`. This closes the practical clone-transport/activation hurdle; Theme installation/parity/quality and production acceptance remain pending.
+- **2026-10-03 field milestone:** Migration Bridge 1.0.8 completed the product-owned `https://emmake.com/` → `https://emmake.com/nuevaweb/` clone. Persistent 10-step packaging, 48 MiB multipart transport, destination reconstruction and safe activation completed, and operator verification confirmed that `/nuevaweb/` renders the Emmake site instead of the clean WordPress fixture. Bounded evidence: `release/emmake-clone-field-milestone-20261003.json`. This closes the practical clone-transport/activation hurdle; Theme-native rebuild, SEO/GEO regression/quality and production acceptance remain pending.
 
 - emmake.com baseline reported `Ready` on 2026-09-24;
 - dependency summary: KEEP=4, REPLACE=2, MIGRATE=1, OPTIONAL=0, REMOVE-CANDIDATE=0, UNKNOWN=13;
@@ -2201,7 +2203,7 @@ Deliverables:
 - exclude post bodies, builder payloads, credentials, arbitrary option values, database dumps, uploads and customer data;
 - create a distinct sandbox clone using fresh backup references;
 - mark the clone with `SEO_GEO_MIGRATION_SANDBOX=true`, disable indexing/outbound transactions and install the exact Theme candidate;
-- execute dependency migration + parity + accessibility/performance acceptance only in sandbox.
+- execute dependency migration + Theme-native replatform + SEO/GEO regression + accessibility/performance acceptance only in sandbox.
 
 Current execution pointer: **10E.2A.6 — Emmake real clone acceptance on `emmake.com/nuevaweb/`.** Migration Bridge 0.8.47 is accepted on `main` at `1463598522d10131641297e4167e5b267227ddc6`, installable ZIP SHA-256 `e04fd29eb350c4bac0c91f3fe5f56b6908eb9474b8bee1302e0e6841906f18a4`. The retained real job has completed package integrity (45,216 workspace files / 686 MB; package checksum `ffa4d12183143a9172e0c879b9d7e5d375a5f1ee9112a08461228f0b58527580`; package-manifest SHA-256 `810ff0b63fcc639c2011de13035b3a74e5ee1fbfb6acd9240aab97ee245839e4`), destination planning, target ownership, WordPress core copy/verification and sandbox control hardening. The current phase is the private same-server package handoff. In 0.8.46 that handoff advanced internally but exposed only the final archive size/hash, so two successful 100-file batches still rendered `building` / `0 B` and would require hundreds of manual clicks for the real payload. 0.8.47 exposes the saved delivery cursor/file/byte counters and adds automatic bounded continuation at 500 files / 32 MB, stopping safely on zero progress or after 200 cycles. The next operator action is to install 0.8.47 over 0.8.46, reopen the same retained job and use **Continuar handoff automáticamente**. Do not create a new clone or restart any completed phase.
 

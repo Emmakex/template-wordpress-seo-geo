@@ -117,5 +117,31 @@
     "below_fold_media": "lazy",
     "lcp_media": "not-lazy-loaded",
     "performance_profile": "core-web-vitals-strict"
+  },
+  "design_direction": {
+    "north_star": "immediate-local-trust-and-action",
+    "functional_patterns": [
+      "local-value-proposition",
+      "call-book-quote-directions",
+      "services",
+      "service-area",
+      "hours-location",
+      "real-photos",
+      "local-faq",
+      "contact-map"
+    ],
+    "modern_traits": [
+      "mobile-first-actions",
+      "real-photography",
+      "compact-action-surfaces",
+      "scan-friendly-service-cards",
+      "location-context-chips"
+    ],
+    "avoid": [
+      "hidden-contact-facts",
+      "fake-review-stars",
+      "thin-doorway-location-pages",
+      "performance-heavy-map-first-layouts"
+    ]
   }
 }

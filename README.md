@@ -6,6 +6,16 @@ This repository now defines a **two-product WordPress SEO/GEO portfolio** built 
 
 **SEO/GEO Manager** is the planned permanent, independently installable plugin for site analysis, controlled landing/blog publication, migration and ongoing operations. It must work without the Theme, and the Theme must work without Manager. Migration is a module of Manager, not the whole product.
 
+## Product direction: replatform, do not visually clone
+
+For redesign/migration projects, the old WordPress site is treated as a **source of digital assets**, not as the visual destination.
+
+Preserve: valuable content, URLs, SEO/GEO signals, links, media, verified facts and required business workflows.
+
+Replace: legacy theme/builder layout, page-builder CSS, columns/rows/spacers, widgets, visual composition and obsolete presentation dependencies.
+
+The destination is rebuilt with the modern SEO/GEO Theme + selected preset. The canonical rule is documented in `docs/REPLATFORMING_CONTRACT.md`.
+
 ## ES
 
 Este repositorio define una base reutilizable para lanzar sitios WordPress con cinco pilares obligatorios:
@@ -50,7 +60,7 @@ Implemented presets: `corporate`, `local-business`, `publisher`, `ecommerce` and
 
 **Phase 8 — Existing-site adoption and safe migration is complete.** The existing Migration Bridge package covers read-only analysis, public SEO/GEO baseline capture, dependency classification, isolated sandbox migration, controlled Elementor/Divi conversion, strict parity, reversible production cutover, a privacy-bounded final handoff report and a capability-gated EN/ES operator screen. It remains outside the self-contained Theme and is not a Theme runtime dependency. Long-term, those accepted migration capabilities are absorbed into the permanent SEO/GEO Manager plugin as an optional migration module; Manager may remain installed for publishing after migration.
 
-**Phase 9 — Theme onboarding and operator experience is complete.** **Phase 10C — Client installation and cloning documentation** and **Phase 10D — Production verification and recovery** are complete (with 10A–10B already closed). The active roadmap step is **Phase 10E — Stable release decision**. On 2026-10-03 the selected pilot `emmake.com` completed the product-owned real clone to `https://emmake.com/nuevaweb/` with field-tested Migration Bridge 1.0.8. The clone is now the sandbox target for Theme migration/parity acceptance. The stable decision remains **NO-GO** until sandbox quality gates and the later production acceptance are complete; the target remains `0.1.0` / `prestable`.
+**Phase 9 — Theme onboarding and operator experience is complete.** **Phase 10C — Client installation and cloning documentation** and **Phase 10D — Production verification and recovery** are complete (with 10A–10B already closed). The active roadmap step is **Phase 10E — Stable release decision**. On 2026-10-03 the selected pilot `emmake.com` completed the product-owned real clone to `https://emmake.com/nuevaweb/` with field-tested Migration Bridge 1.0.8. The clone is now the sandbox target for a Theme-native Corporate rebuild plus SEO/GEO regression acceptance. The stable decision remains **NO-GO** until sandbox quality gates and the later production acceptance are complete; the target remains `0.1.0` / `prestable`.
 
 ## Engineering workflow
 
@@ -82,10 +92,12 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/PERFORMANCE.md`
 - `docs/ACCESSIBILITY.md`
 - `docs/DESIGN_SYSTEM.md`
+- `docs/MODERN_PRESET_DESIGN_STRATEGY.md`
 - `docs/PATTERNS.md`
 - `docs/PRESETS.md`
 - `docs/COMPATIBILITY.md`
 - `docs/MIGRATION_BRIDGE.md`
+- `docs/REPLATFORMING_CONTRACT.md`
 - `docs/ONBOARDING.md`
 - `docs/RELEASE_ARTIFACT.md`
 - `docs/RELEASE_VERSIONING.md`

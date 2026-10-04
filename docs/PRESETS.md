@@ -358,6 +358,12 @@ Cross-preset guarantees:
 
 Preset `baseline_locales` are the locales explicitly supported/tested by that preset; they are **not a requirement to enable every listed locale on every site**. A monolingual site may use any one supported locale without warnings. The setup validator warns only when a configured locale is outside the preset's supported baseline.
 
+## Modern functional design invariant
+
+Every preset must follow `docs/MODERN_PRESET_DESIGN_STRATEGY.md`. Trend research is an input, not an excuse to add decorative complexity: the design must remain modern, highly functional, reusable, accessible, SEO/GEO-safe and inside the performance budget.
+
+The five presets intentionally have different north stars and component emphasis so the portfolio does not collapse into one generic visual template.
+
 ## SEO/GEO-first invariant
 
 All five presets are presentation/information-architecture profiles over one shared SEO/GEO runtime. They must satisfy `docs/SEO_GEO_PRESET_CONTRACT.md` before visual acceptance.
@@ -396,31 +402,15 @@ Every visual preset must satisfy the same acceptance contract:
 - pass Foundation, PHP Quality, WordPress Smoke, Accessibility/Responsive, Performance, Native Multilingual, Self-contained Theme and Release Artifact CI;
 - prove cross-preset isolation before merge.
 
-A real client/sandbox may act as an acceptance fixture for a preset, but the resulting visual system remains reusable and preset-owned.
+A real client/sandbox may act as an acceptance fixture for a preset, but the resulting visual system remains reusable and preset-owned. The preset is a **replacement presentation system**, not a compatibility skin for the client's previous theme or builder.
 
-### Corporate visual acceptance v1.1
+### Corporate replatforming acceptance
 
-The first real Corporate field review exposed two reusable presentation gaps that are now part of the preset contract rather than client-specific patches:
+Corporate acceptance no longer targets visual parity with the legacy Emmake/Divi layout. The sandbox is used to prove that real client content, URLs, links, forms and SEO/GEO signals can be moved into a fresh Corporate information architecture and modern Theme presentation.
 
-- **migration-aware navigation:** explicitly assigned primary/footer menus win; migrated sites may reuse one bounded 3-8 item classic primary menu; otherwise navigation resolves from the active preset content map. The header must never fall back to an unbounded all-pages list.
-- **migrated-content composition:** the Corporate stylesheet may apply presentation-only heuristics to the front-page lead blocks and migrated service/counter primitives, but it must not rewrite page IDs, slugs, URLs or source content.
+Legacy layout artifacts may be inspected only to detect missing content. They must not drive the destination CSS or component structure.
 
-The v1.1 acceptance target is a compact one-line desktop header, accessible CSS-only mobile menu, stronger front-page hierarchy, compact service/proof components and the already validated Theme-native contact form.
-
-### Corporate visual acceptance v1.2
-
-The second real-site field pass keeps the SEO/GEO-first contract ahead of visual polish.
-
-Corporate v1.2 adds:
-
-- a singular-content H1 guard so the shared page/post title remains the only document H1 even when migrated builder content contains legacy H1 blocks;
-- a generic authored-text normalization hook used by HTML, native meta descriptions, Schema visible-fact checks, Markdown alternates and llms discovery text;
-- a bounded Divi legacy placeholder repair for percentage tokens without broad content rewriting;
-- responsive WordPress attachment markup during future Divi migrations so intrinsic dimensions, `srcset` and `sizes` remain available to the browser;
-- presentation-only media bounding for flattened legacy logo/image rows;
-- tighter section/spacer rhythm without adding JavaScript or remote assets.
-
-The field target remains `/nuevaweb/`, but every fix above is reusable and builder/preset-safe. Visual acceptance still requires a new Home/Contact/mobile review after the build passes CI.
+The next Corporate milestone is therefore **native page composition**: rebuild Home, Services/About/Work/Insights/Contact surfaces from Corporate patterns/components and remap preserved content into them. Once the native Corporate composition is accepted, legacy presentation dependencies can be removed from the sandbox.
 
 ## Future presets
 

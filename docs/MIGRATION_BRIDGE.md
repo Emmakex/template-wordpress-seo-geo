@@ -19,6 +19,12 @@ It exists because a real client site may already depend on:
 
 The bridge is **not** part of the final zero-plugin Theme baseline. Future Manager is also optional from the Theme perspective: Theme must keep working with zero required plugins.
 
+## Replatforming boundary
+
+Migration Bridge preserves the valuable asset, not the legacy presentation. The authoritative product contract is `docs/REPLATFORMING_CONTRACT.md`.
+
+The migration success target is **content/SEO/link/business-function preservation into a new Theme/preset-native presentation**. Builder-era grids, CSS, spacing, visual effects, widgets and page composition are not parity requirements and should normally be discarded. SEO/GEO parity checks remain strict for URLs, indexability, canonical/hreflang relationships, metadata, Schema authority, redirects and links; visual parity is explicitly out of scope.
+
 ## Phase 8A — Site Analyzer
 
 Status: **complete**

@@ -124,5 +124,30 @@
     "below_fold_media": "lazy",
     "lcp_media": "not-lazy-loaded",
     "performance_profile": "core-web-vitals-strict"
+  },
+  "design_direction": {
+    "north_star": "fast-editorial-discovery-and-reading",
+    "functional_patterns": [
+      "lead-story",
+      "latest-priority-stories",
+      "topic-navigation",
+      "editorial-modules",
+      "newsletter-follow",
+      "evergreen-resources",
+      "author-topic-discovery"
+    ],
+    "modern_traits": [
+      "editorial-grids",
+      "mixed-card-scale",
+      "type-led-identity",
+      "controlled-image-ratios",
+      "calm-reading-surfaces"
+    ],
+    "avoid": [
+      "flat-feed-only-home",
+      "intrusive-interstitials",
+      "infinite-scroll-only-navigation",
+      "motion-heavy-article-bodies"
+    ]
   }
 }

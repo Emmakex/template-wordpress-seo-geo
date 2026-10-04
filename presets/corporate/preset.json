@@ -132,5 +132,33 @@
     "keyword_stuffing_forbidden": true,
     "doorway_content_forbidden": true,
     "fabricated_proof_forbidden": true
+  },
+  "design_direction": {
+    "north_star": "premium-authority-clarity-proof",
+    "functional_patterns": [
+      "value-proposition",
+      "trust-proof",
+      "services",
+      "case-studies",
+      "method",
+      "expertise",
+      "insights",
+      "contact-cta"
+    ],
+    "modern_traits": [
+      "editorial-typography",
+      "disciplined-asymmetry",
+      "bounded-whitespace",
+      "selective-oversized-statements",
+      "restrained-brand-accent",
+      "outcome-led-proof"
+    ],
+    "avoid": [
+      "generic-icon-soup",
+      "unexplained-counters",
+      "decorative-carousels",
+      "autoplay-video-backgrounds",
+      "legacy-visual-parity"
+    ]
   }
 }

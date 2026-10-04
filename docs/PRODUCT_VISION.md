@@ -26,6 +26,7 @@ Neither product may become a mandatory runtime dependency of the other. The Them
 11. **One output authority per signal.** Theme, Manager and external SEO providers must never emit competing canonical, robots, hreflang, Schema, sitemap or social metadata.
 12. **Publishing is reversible.** Landing/blog publication is draft-first, idempotent, auditable and rollback-capable.
 13. **Staging is a workflow capability.** Clients without staging must have a portable-sandbox path rather than being forced to test migrations in production.
+14. **Replatform, do not visually clone.** Existing sites contribute content, SEO signals, URLs, links, media and required business behavior. Legacy theme/builder layout, CSS and visual composition are discarded unless a specific behavior is intentionally retained. The destination is rebuilt with the modern Theme + preset system described in `docs/REPLATFORMING_CONTRACT.md`.
 
 ## Primary users
 
