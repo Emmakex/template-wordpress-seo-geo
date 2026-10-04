@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "corporate",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "site_type": "corporate",
   "intended_for": [
     "company",
@@ -87,7 +87,7 @@
   "visual": {
     "stylesheet": "assets/css/presets/corporate.css",
     "body_class": "seo-geo-preset-corporate",
-    "design_system": "corporate-v1.1",
+    "design_system": "corporate-v1.2",
     "principles": [
       "professional-services-first",
       "clear-navigation",
@@ -96,7 +96,11 @@
       "responsive-card-layouts",
       "no-client-specific-hardcoded-copy",
       "migration-aware-navigation",
-      "compact-proof-and-service-components"
+      "compact-proof-and-service-components",
+      "single-h1-runtime-guard",
+      "responsive-migrated-media",
+      "bounded-legacy-media-layout",
+      "seo-geo-first-field-polish"
     ]
   },
   "seo_geo_runtime": {
