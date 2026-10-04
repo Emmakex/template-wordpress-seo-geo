@@ -22,6 +22,8 @@ final class AdminNativeReplatformController {
 	public const APPLY_NONCE_ACTION    = 'seo_geo_native_replatform_apply_reviewed';
 	public const ROLLBACK_ACTION       = 'seo_geo_native_replatform_rollback_reviewed';
 	public const ROLLBACK_NONCE_ACTION = 'seo_geo_native_replatform_rollback_reviewed';
+	public const EVIDENCE_ACTION       = 'seo_geo_native_replatform_review_evidence';
+	public const EVIDENCE_NONCE_ACTION = 'seo_geo_native_replatform_review_evidence';
 
 	/**
 	 * Construct the administrator controller.
@@ -43,6 +45,7 @@ final class AdminNativeReplatformController {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_create_draft' ) );
 		add_action( 'admin_post_' . self::APPLY_ACTION, array( $this, 'handle_apply_reviewed' ) );
 		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'handle_rollback_reviewed' ) );
+		add_action( 'admin_post_' . self::EVIDENCE_ACTION, array( $this, 'handle_download_evidence' ) );
 	}
 
 	/**
@@ -111,6 +114,7 @@ final class AdminNativeReplatformController {
 							<td>
 								<?php if ( 0 < (int) ( $plan['existing_draft'] ?? 0 ) ) : ?>
 									<a class="button" href="<?php echo esc_url( $this->edit_link( (int) $plan['existing_draft'] ) ); ?>"><?php echo esc_html__( 'Edit native draft', 'seo-geo-migration-bridge' ); ?></a>
+									<a class="button" href="<?php echo esc_url( $this->preview_link( (int) $plan['existing_draft'] ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Preview native draft', 'seo-geo-migration-bridge' ); ?></a>
 								<?php elseif ( true === ( $plan['ready'] ?? false ) ) : ?>
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 										<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION ); ?>">
@@ -237,6 +241,31 @@ final class AdminNativeReplatformController {
 	}
 
 	/**
+	 * Download privacy-bounded reviewed acceptance evidence.
+	 */
+	public function handle_download_evidence(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		$draft_id = isset( $_POST['draft_id'] ) ? absint( wp_unslash( $_POST['draft_id'] ) ) : 0;
+		$confirm  = isset( $_POST['confirm'] ) ? sanitize_key( wp_unslash( $_POST['confirm'] ) ) : '';
+
+		if ( 0 >= $draft_id || 'download-reviewed-evidence' !== $confirm ) {
+			wp_die( esc_html__( 'Reviewed evidence request is incomplete or was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		check_admin_referer( self::evidence_nonce_action( $draft_id ) );
+
+		$evidence = $this->applier->evidence( $draft_id );
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=' . get_option( 'blog_charset', 'UTF-8' ) );
+		header( 'Content-Disposition: attachment; filename="seo-geo-native-review-evidence-' . $draft_id . '.json"' );
+		echo wp_json_encode( $evidence, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		exit;
+	}
+
+	/**
 	 * Render reviewed candidate forms for existing native drafts.
 	 *
 	 * @param array<int,array<string,mixed>> $plans Native replatform plans.
@@ -281,8 +310,16 @@ final class AdminNativeReplatformController {
 					<p>
 						<?php echo esc_html__( 'Reviewed content is currently applied to this draft. Preview or edit the draft. To change the reviewed selection, restore the pre-apply draft first.', 'seo-geo-migration-bridge' ); ?>
 						<a href="<?php echo esc_url( $this->edit_link( $draft_id ) ); ?>"><?php echo esc_html__( 'Open draft', 'seo-geo-migration-bridge' ); ?></a>
+						<a href="<?php echo esc_url( $this->preview_link( $draft_id ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Preview', 'seo-geo-migration-bridge' ); ?></a>
 					</p>
 				</div>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline-block;margin-right:.5rem;">
+					<input type="hidden" name="action" value="<?php echo esc_attr( self::EVIDENCE_ACTION ); ?>">
+					<input type="hidden" name="draft_id" value="<?php echo esc_attr( (string) $draft_id ); ?>">
+					<input type="hidden" name="confirm" value="download-reviewed-evidence">
+					<?php wp_nonce_field( self::evidence_nonce_action( $draft_id ) ); ?>
+					<?php submit_button( __( 'Download review evidence', 'seo-geo-migration-bridge' ), 'secondary', 'submit', false ); ?>
+				</form>
 				<?php if ( is_array( $backup ) ) : ?>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<input type="hidden" name="action" value="<?php echo esc_attr( self::ROLLBACK_ACTION ); ?>">
@@ -381,17 +418,26 @@ final class AdminNativeReplatformController {
 	 */
 	private function asset_label( string $type, array $asset ): string {
 		if ( 'units' === $type ) {
-			$text = isset( $asset['text'] ) && is_string( $asset['text'] ) ? $asset['text'] : '';
-			return mb_strlen( $text ) > 140 ? mb_substr( $text, 0, 137 ) . '…' : $text;
+			$text   = isset( $asset['text'] ) && is_string( $asset['text'] ) ? $asset['text'] : '';
+			$kind   = isset( $asset['kind'] ) && is_string( $asset['kind'] ) ? $asset['kind'] : 'text';
+			$origin = isset( $asset['origin'] ) && is_string( $asset['origin'] ) ? $asset['origin'] : 'source';
+			$text   = mb_strlen( $text ) > 140 ? mb_substr( $text, 0, 137 ) . '…' : $text;
+
+			return '[' . $kind . ' · ' . $origin . '] ' . $text;
 		}
 		if ( 'links' === $type ) {
-			return isset( $asset['url'] ) && is_string( $asset['url'] ) ? $asset['url'] : '';
+			$url  = isset( $asset['url'] ) && is_string( $asset['url'] ) ? $asset['url'] : '';
+			$kind = true === ( $asset['internal'] ?? false ) ? 'internal' : 'external';
+
+			return '[' . $kind . '] ' . $url;
 		}
 
-		$url = isset( $asset['url'] ) && is_string( $asset['url'] ) ? $asset['url'] : '';
-		$alt = isset( $asset['alt'] ) && is_string( $asset['alt'] ) ? $asset['alt'] : '';
+		$url           = isset( $asset['url'] ) && is_string( $asset['url'] ) ? $asset['url'] : '';
+		$alt           = isset( $asset['alt'] ) && is_string( $asset['alt'] ) ? $asset['alt'] : '';
+		$attachment_id = isset( $asset['attachment_id'] ) ? (int) $asset['attachment_id'] : 0;
+		$identity      = 0 < $attachment_id ? 'media #' . $attachment_id : 'media';
 
-		return '' !== $alt ? $alt . ' — ' . $url : $url;
+		return '[' . $identity . '] ' . ( '' !== $alt ? $alt . ' — ' . $url : $url );
 	}
 
 	/**
@@ -460,6 +506,15 @@ final class AdminNativeReplatformController {
 	}
 
 	/**
+	 * Return a draft-scoped reviewed-evidence nonce action.
+	 *
+	 * @param int $draft_id Native draft ID.
+	 */
+	public static function evidence_nonce_action( int $draft_id ): string {
+		return self::EVIDENCE_NONCE_ACTION . ':' . $draft_id;
+	}
+
+	/**
 	 * Redirect back to the Native Replatform screen after an explicit action.
 	 *
 	 * @param string $status   Result status.
@@ -486,6 +541,17 @@ final class AdminNativeReplatformController {
 	 */
 	private function edit_link( int $post_id ): string {
 		$link = get_edit_post_link( $post_id, '' );
+
+		return is_string( $link ) && '' !== $link ? $link : '#';
+	}
+
+	/**
+	 * Return a private draft preview link or a safe inert fallback.
+	 *
+	 * @param int $post_id Draft post ID.
+	 */
+	private function preview_link( int $post_id ): string {
+		$link = get_preview_post_link( $post_id );
 
 		return is_string( $link ) && '' !== $link ? $link : '#';
 	}

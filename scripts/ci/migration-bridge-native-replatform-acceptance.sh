@@ -198,6 +198,7 @@ $rollback_drift_update = wp_update_post(
 if ( is_wp_error( $rollback_drift_update ) ) {
 	throw new RuntimeException( $rollback_drift_update->get_error_message() );
 }
+$evidence_drifted = $applier->evidence( $draft_id );
 $blocked_rollback = $applier->rollback( $draft_id );
 $blocked_rollback_code = is_wp_error( $blocked_rollback ) ? $blocked_rollback->get_error_code() : 'unexpected-success';
 
@@ -220,6 +221,7 @@ if ( is_wp_error( $rollback ) ) {
 $rolled_back_draft = get_post( $draft_id );
 $ledger_after_rollback = get_post_meta( $draft_id, ReviewedRemapApplier::LEDGER_META, true );
 $rollback_meta = get_post_meta( $draft_id, ReviewedRemapApplier::ROLLBACK_META, true );
+$evidence_after_rollback = $applier->evidence( $draft_id );
 $rollback_plan = $applier->plan( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
 
 $apply_third = $applier->apply( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
@@ -227,6 +229,7 @@ if ( is_wp_error( $apply_third ) ) {
 	throw new RuntimeException( $apply_third->get_error_code() . ': ' . $apply_third->get_error_message() );
 }
 
+$evidence_final = $applier->evidence( $draft_id );
 $draft        = get_post( $draft_id );
 $source_after = get_post( $home_id );
 $ledger       = get_post_meta( $draft_id, ReviewedRemapApplier::LEDGER_META, true );
@@ -257,6 +260,7 @@ echo wp_json_encode(
 		'apply_plan' => $apply_plan,
 		'apply_first' => $apply_first,
 		'apply_second' => $apply_second,
+		'evidence_drifted' => $evidence_drifted,
 		'blocked_rollback_code' => $blocked_rollback_code,
 		'rollback' => $rollback,
 		'rollback_meta' => $rollback_meta,
@@ -264,8 +268,10 @@ echo wp_json_encode(
 			'draft_sha256' => $rolled_back_draft instanceof WP_Post ? hash( 'sha256', (string) $rolled_back_draft->post_content ) : '',
 			'ledger_cleared' => ! is_array( $ledger_after_rollback ),
 		),
+		'evidence_after_rollback' => $evidence_after_rollback,
 		'rollback_plan' => $rollback_plan,
 		'apply_third' => $apply_third,
+		'evidence_final' => $evidence_final,
 		'ledger' => $ledger,
 		'backup' => array(
 			'schema_version' => is_array( $backup ) ? ( $backup['schema_version'] ?? null ) : null,
@@ -430,6 +436,14 @@ assert applied["safety"]["source_unchanged"] is True
 assert applied["safety"]["draft_only"] is True
 assert applied["safety"]["public_mutation"] is False
 
+evidence_drifted = report["evidence_drifted"]
+assert evidence_drifted["mode"] == "reviewed-remap-evidence"
+assert evidence_drifted["status"] == "draft-drift"
+assert evidence_drifted["review"]["draft_matches_ledger"] is False
+assert evidence_drifted["safety"]["post_body_exported"] is False
+assert evidence_drifted["safety"]["backup_body_exported"] is False
+assert evidence_drifted["safety"]["credentials_exported"] is False
+
 assert report["blocked_rollback_code"] == "seo_geo_reviewed_remap_rollback_draft_drift"
 
 rollback = report["rollback"]
@@ -448,6 +462,13 @@ assert report["rollback_meta"]["selection_sha256"] == applied["selection_sha256"
 assert report["rollback_meta"]["from_sha256"] == applied["after_sha256"]
 assert report["rollback_meta"]["to_sha256"] == applied["before_sha256"]
 
+evidence_after_rollback = report["evidence_after_rollback"]
+assert evidence_after_rollback["mode"] == "reviewed-remap-evidence"
+assert evidence_after_rollback["status"] == "review-not-applied"
+assert evidence_after_rollback["review"] is None
+assert evidence_after_rollback["last_rollback"]["selection_sha256"] == applied["selection_sha256"]
+assert evidence_after_rollback["source"]["unchanged"] is True
+
 rollback_plan = report["rollback_plan"]
 assert rollback_plan["ready"] is True
 assert rollback_plan["existing"] is False
@@ -457,6 +478,31 @@ reapplied = report["apply_third"]
 assert reapplied["status"] == "applied"
 assert reapplied["selection_sha256"] == applied["selection_sha256"]
 assert reapplied["before_sha256"] == rollback["to_sha256"]
+
+evidence_final = report["evidence_final"]
+assert evidence_final["mode"] == "reviewed-remap-evidence"
+assert evidence_final["status"] == "reviewable"
+assert evidence_final["draft"]["status"] == "draft"
+assert len(evidence_final["draft"]["sha256"]) == 64
+assert evidence_final["source"]["unchanged"] is True
+assert evidence_final["identity"]["preset"] == "corporate"
+assert evidence_final["identity"]["page_key"] == "home"
+assert evidence_final["identity"]["native_plan_sha"] == plan["plan_sha256"]
+assert evidence_final["identity"]["content_remap_sha"] == remap["plan_sha256"]
+assert evidence_final["review"]["selection_sha256"] == reapplied["selection_sha256"]
+assert evidence_final["review"]["draft_matches_ledger"] is True
+assert evidence_final["review"]["verified_sections"] == ["verified-proof"]
+assert evidence_final["review"]["selected_counts"] == {"units": 1, "links": 2, "media": 0}
+assert evidence_final["review"]["selected_assets"]["units"] == [next(unit["id"] for unit in remap["assets"]["units"] if "Preserved source copy" in unit["text"])]
+assert evidence_final["review"]["selected_assets"]["links"] == sorted([links["/services/"]["id"], links["https://example.org/evidence"]["id"]])
+assert evidence_final["safety"] == {
+    "read_only": True,
+    "post_body_exported": False,
+    "backup_body_exported": False,
+    "credentials_exported": False,
+    "option_values_exported": False,
+    "public_source_mutation": False,
+}
 
 ledger = report["ledger"]
 assert ledger["selection_sha256"] == reapplied["selection_sha256"]
@@ -522,4 +568,4 @@ PY
   fail_smoke "native-replatform-assertions" "Native Replatform composer violated draft/source/composition/rollback invariants" "all assertions pass" "assertion failure"
 fi
 
-printf '[smoke] Native Replatform Composer OK: reviewed candidate-only remap rejected source/slot drift, applied idempotently, refused unsafe rollback after draft drift, restored the private pre-apply draft, reapplied cleanly and never mutated the public source.\n'
+printf '[smoke] Native Replatform Composer OK: reviewed remap rejected drift, rolled back/reapplied safely, emitted privacy-bounded hash/count evidence and never mutated the public source.\n'
