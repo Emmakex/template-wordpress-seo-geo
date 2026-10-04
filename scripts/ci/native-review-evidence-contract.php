@@ -19,11 +19,11 @@ namespace {
 
 namespace SeoGeo\MigrationBridge\Replatform {
 	final class NativeCompositionService {
-		public const SOURCE_ID_META    = '_source_id';
-		public const SOURCE_SHA_META   = '_source_sha';
-		public const PRESET_META       = '_preset';
-		public const PAGE_KEY_META     = '_page_key';
-		public const PLAN_SHA_META     = '_plan_sha';
+		public const SOURCE_ID_META      = '_source_id';
+		public const SOURCE_SHA_META     = '_source_sha';
+		public const PRESET_META         = '_preset';
+		public const PAGE_KEY_META       = '_page_key';
+		public const PLAN_SHA_META       = '_plan_sha';
 		public const REMAP_PLAN_SHA_META = '_remap_sha';
 
 		/**
@@ -101,13 +101,13 @@ namespace SeoGeo\MigrationBridge\Replatform {
 	);
 	$meta = array(
 		$draft_id => array(
-			NativeCompositionService::SOURCE_ID_META     => $source_id,
-			NativeCompositionService::SOURCE_SHA_META    => $source_sha,
-			NativeCompositionService::PRESET_META        => 'corporate',
-			NativeCompositionService::PAGE_KEY_META      => 'home',
-			NativeCompositionService::PLAN_SHA_META      => $plan_sha,
+			NativeCompositionService::SOURCE_ID_META      => $source_id,
+			NativeCompositionService::SOURCE_SHA_META     => $source_sha,
+			NativeCompositionService::PRESET_META         => 'corporate',
+			NativeCompositionService::PAGE_KEY_META       => 'home',
+			NativeCompositionService::PLAN_SHA_META       => $plan_sha,
 			NativeCompositionService::REMAP_PLAN_SHA_META => $remap_sha,
-			ReviewedRemapApplier::LEDGER_META            => array(
+			ReviewedRemapApplier::LEDGER_META             => array(
 				'selection_sha256'  => $selection,
 				'before_sha256'     => $before_sha,
 				'after_sha256'      => $draft_sha,
@@ -123,11 +123,11 @@ namespace SeoGeo\MigrationBridge\Replatform {
 					'media' => array( 'm-001' ),
 				),
 			),
-			ReviewedRemapApplier::BACKUP_META            => array(
+			ReviewedRemapApplier::BACKUP_META             => array(
 				'sha256'  => $before_sha,
 				'content' => $before,
 			),
-			ReviewedRemapApplier::ROLLBACK_META          => array(
+			ReviewedRemapApplier::ROLLBACK_META           => array(
 				'selection_sha256' => str_repeat( 'd', 64 ),
 			),
 		),
@@ -147,11 +147,21 @@ namespace SeoGeo\MigrationBridge\Replatform {
 	);
 
 	$service = new NativeReviewEvidence( new NativeCompositionService( $plan ) );
-	$ready   = $service->snapshot( $draft_id );
+
+	$without_sandbox = $service->snapshot( $draft_id );
+	assert( 'blocked' === $without_sandbox['status'] );
+	assert( in_array( 'sandbox-required', $without_sandbox['blockers'], true ) );
+	assert( false === $without_sandbox['safety']['sandbox_active'] );
+
+	define( 'SEO_GEO_MIGRATION_SANDBOX', true );
+
+	$ready = $service->snapshot( $draft_id );
 
 	assert( 'ready' === $ready['status'] );
 	assert( array() === $ready['blockers'] );
 	assert( 'native-replatform-review-evidence' === $ready['mode'] );
+	assert( true === $ready['safety']['sandbox_only'] );
+	assert( true === $ready['safety']['sandbox_active'] );
 	assert( false === $ready['safety']['content_included'] );
 	assert( false === $ready['safety']['private_payload_included'] );
 	assert( false === $ready['safety']['production_cutover_authorized'] );
