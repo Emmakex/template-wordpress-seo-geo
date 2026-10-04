@@ -38,6 +38,28 @@
               "concise-summary",
               "service-definitions",
               "evidence"
+            ],
+            "remap_slots": [
+              {
+                "section": "value-proposition",
+                "after_pattern": "seo-geo-theme/corporate-native-hero"
+              },
+              {
+                "section": "service-overview",
+                "after_pattern": "seo-geo-theme/corporate-native-capabilities"
+              },
+              {
+                "section": "organization-context",
+                "after_pattern": "seo-geo-theme/corporate-case-study"
+              },
+              {
+                "section": "verified-proof",
+                "after_pattern": "seo-geo-theme/corporate-native-proof"
+              },
+              {
+                "section": "primary-cta",
+                "after_pattern": "seo-geo-theme/cta"
+              }
             ]
           }
         },
@@ -347,6 +369,28 @@
               "concise-summary",
               "service-definitions",
               "evidence"
+            ],
+            "remap_slots": [
+              {
+                "section": "value-proposition",
+                "after_pattern": "seo-geo-theme/corporate-native-hero"
+              },
+              {
+                "section": "service-overview",
+                "after_pattern": "seo-geo-theme/corporate-native-capabilities"
+              },
+              {
+                "section": "organization-context",
+                "after_pattern": "seo-geo-theme/corporate-case-study"
+              },
+              {
+                "section": "verified-proof",
+                "after_pattern": "seo-geo-theme/corporate-native-proof"
+              },
+              {
+                "section": "primary-cta",
+                "after_pattern": "seo-geo-theme/cta"
+              }
             ]
           }
         },

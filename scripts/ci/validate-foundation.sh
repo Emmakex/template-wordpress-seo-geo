@@ -153,6 +153,7 @@ required_paths=(
   "packages/seo-geo-migration-bridge/src/Migration/AdminMigrationController.php"
   "packages/seo-geo-migration-bridge/src/Replatform/NativeCompositionService.php"
   "packages/seo-geo-migration-bridge/src/Replatform/ContentRemapPlanner.php"
+  "packages/seo-geo-migration-bridge/src/Replatform/ReviewedRemapApplier.php"
   "packages/seo-geo-migration-bridge/src/Replatform/AdminNativeReplatformController.php"
   "packages/seo-geo-migration-bridge/src/Parity/ParityAllowlist.php"
   "packages/seo-geo-migration-bridge/src/Parity/SeoParityEngine.php"

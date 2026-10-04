@@ -90,6 +90,11 @@ final class NativeCompositionService {
 			$blockers[] = 'native-composition-empty';
 		}
 
+		$remap_slots = $this->remap_slots( is_array( $page ) ? $page : array() );
+		foreach ( $this->validate_remap_slots( is_array( $page ) ? $page : array(), $patterns, $remap_slots ) as $remap_blocker ) {
+			$blockers[] = $remap_blocker;
+		}
+
 		$pattern_contents = array();
 		foreach ( $patterns as $pattern_slug ) {
 			if ( ! is_string( $pattern_slug ) || '' === $pattern_slug ) {
@@ -116,7 +121,7 @@ final class NativeCompositionService {
 		$content_remap  = $source instanceof WP_Post && is_array( $page )
 			? $this->content_remap_planner->plan( $source, $page )
 			: null;
-		$composition    = implode( "\n\n", array_values( $pattern_contents ) );
+		$composition    = $this->compose_with_slots( $patterns, $pattern_contents, $remap_slots );
 		$plan_material  = array(
 			'preset'                 => $preset_id,
 			'page_key'               => $page_key,
@@ -124,6 +129,7 @@ final class NativeCompositionService {
 			'source_sha256'          => $source_sha,
 			'source_path'            => $source_path,
 			'patterns'               => array_keys( $pattern_contents ),
+			'remap_slots'            => $remap_slots,
 			'composition'            => hash( 'sha256', $composition ),
 			'content_remap_plan_sha' => is_array( $content_remap ) ? ( $content_remap['plan_sha256'] ?? null ) : null,
 		);
@@ -147,6 +153,7 @@ final class NativeCompositionService {
 				)
 				: null,
 			'patterns'       => array_keys( $pattern_contents ),
+			'remap_slots'    => $remap_slots,
 			'composition'    => $composition,
 			'content_remap'  => $content_remap,
 			'plan_sha256'    => $plan_sha,
@@ -306,6 +313,118 @@ final class NativeCompositionService {
 				'draft_only'       => 'draft' === get_post_status( $draft_id ),
 			),
 		);
+	}
+
+
+	/**
+	 * Return normalized reviewed-remap slot definitions from one page contract.
+	 *
+	 * @param array<string,mixed> $page Preset page definition.
+	 * @return list<array{section:string,after_pattern:string}>
+	 */
+	private function remap_slots( array $page ): array {
+		$contract = isset( $page['content_contract'] ) && is_array( $page['content_contract'] )
+			? $page['content_contract']
+			: array();
+		$raw      = isset( $contract['remap_slots'] ) && is_array( $contract['remap_slots'] )
+			? $contract['remap_slots']
+			: array();
+		$slots    = array();
+
+		foreach ( $raw as $slot ) {
+			if ( ! is_array( $slot ) ) {
+				continue;
+			}
+
+			$section       = isset( $slot['section'] ) && is_string( $slot['section'] ) ? sanitize_key( $slot['section'] ) : '';
+			$after_pattern = isset( $slot['after_pattern'] ) && is_string( $slot['after_pattern'] ) ? sanitize_text_field( $slot['after_pattern'] ) : '';
+
+			if ( '' === $section || '' === $after_pattern ) {
+				continue;
+			}
+
+			$slots[] = array(
+				'section'       => $section,
+				'after_pattern' => $after_pattern,
+			);
+		}
+
+		return $slots;
+	}
+
+	/**
+	 * Validate remap slots against the page semantic contract and composition.
+	 *
+	 * @param array<string,mixed>             $page     Preset page definition.
+	 * @param array<int,mixed>                $patterns Ordered pattern slugs.
+	 * @param array<int,array<string,string>> $slots    Normalized remap slots.
+	 * @return list<string>
+	 */
+	private function validate_remap_slots( array $page, array $patterns, array $slots ): array {
+		$contract = isset( $page['content_contract'] ) && is_array( $page['content_contract'] )
+			? $page['content_contract']
+			: array();
+		$required = isset( $contract['required_sections'] ) && is_array( $contract['required_sections'] )
+			? array_values( array_filter( $contract['required_sections'], 'is_string' ) )
+			: array();
+		$required = array_map( 'sanitize_key', $required );
+		$seen     = array();
+		$blockers = array();
+
+		foreach ( $slots as $slot ) {
+			if ( ! in_array( $slot['section'], $required, true ) ) {
+				$blockers[] = 'remap-slot-section-not-required:' . $slot['section'];
+			}
+			if ( ! in_array( $slot['after_pattern'], $patterns, true ) ) {
+				$blockers[] = 'remap-slot-pattern-not-in-page:' . $slot['after_pattern'];
+			}
+			if ( isset( $seen[ $slot['section'] ] ) ) {
+				$blockers[] = 'remap-slot-section-duplicate:' . $slot['section'];
+			}
+			$seen[ $slot['section'] ] = true;
+		}
+
+		return array_values( array_unique( $blockers ) );
+	}
+
+	/**
+	 * Compose registered patterns with inert reviewed-remap markers.
+	 *
+	 * @param array<int,mixed>                $patterns         Ordered pattern slugs.
+	 * @param array<string,string>            $pattern_contents Registered pattern content.
+	 * @param array<int,array<string,string>> $slots            Reviewed remap slots.
+	 */
+	private function compose_with_slots( array $patterns, array $pattern_contents, array $slots ): string {
+		$slots_by_pattern = array();
+		foreach ( $slots as $slot ) {
+			$slots_by_pattern[ $slot['after_pattern'] ][] = $slot['section'];
+		}
+
+		$parts = array();
+		foreach ( $patterns as $pattern_slug ) {
+			if ( ! is_string( $pattern_slug ) || ! isset( $pattern_contents[ $pattern_slug ] ) ) {
+				continue;
+			}
+
+			$parts[] = $pattern_contents[ $pattern_slug ];
+
+			foreach ( $slots_by_pattern[ $pattern_slug ] ?? array() as $section ) {
+				$parts[] = $this->slot_marker( (string) $section );
+			}
+		}
+
+		return implode( "\n\n", $parts );
+	}
+
+	/**
+	 * Return one inert native HTML block marker for a semantic remap slot.
+	 *
+	 * @param string $section Semantic section key.
+	 */
+	public static function slot_marker( string $section ): string {
+		$section = sanitize_key( $section );
+
+		return '<!-- wp:html --><!-- seo-geo-remap-slot:' . $section . ' --><!-- /wp:html -->';
 	}
 
 	/**

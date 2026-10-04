@@ -130,6 +130,38 @@ It must **not**:
 
 A candidate is therefore not publication approval. The next write-capable remap stage must require explicit reviewed selections and retain unmapped assets in the review ledger rather than silently discarding them.
 
+## Reviewed Remap Application
+
+Reviewed Apply is the first content-remap stage allowed to mutate the destination draft.
+
+The preset must explicitly bind a semantic section to a stable native composition point. The composer materializes that binding as an inert slot marker and includes the slot map in the deterministic native plan hash.
+
+Reviewed Apply must:
+
+- operate only inside an accepted sandbox;
+- require administrator capability and an explicit nonce-confirmed action;
+- target only a private native draft that is still bound to the preserved source;
+- revalidate source ID/hash, preset/page identity, native plan hash and content-remap plan hash immediately before mutation;
+- accept only asset IDs already present in the current slot candidate set;
+- require explicit verification for evidence-sensitive sections;
+- replace exactly one deterministic slot marker per selected semantic section;
+- use native WordPress blocks for the applied material;
+- store the first pre-apply draft body as rollback evidence;
+- persist selected and unmapped asset IDs, verification decisions, selection hash and before/after draft hashes in a review ledger;
+- be idempotent for an identical reviewed selection.
+
+Reviewed Apply must **not**:
+
+- mutate the preserved public source;
+- publish the destination draft;
+- create factual copy or silently reinterpret a source asset;
+- accept arbitrary text/URLs supplied outside the current source inventory;
+- bypass evidence verification because a candidate exists;
+- drop unmapped source assets from the audit trail;
+- apply when a slot marker, source snapshot or plan hash has drifted.
+
+This stage is deliberately narrower than final editorial optimization. It moves verified preserved material into the native information architecture; later optimization may improve hierarchy, linking and wording only under the separate SEO/GEO content rules without changing factual meaning.
+
 ## Acceptance model
 
 A replatform is accepted when:

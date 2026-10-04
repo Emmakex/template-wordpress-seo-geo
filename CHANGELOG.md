@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Native Replatform Reviewed Apply v1 adds explicit Corporate semantic slots, candidate-only draft mutation, mandatory verification for evidence-sensitive sections, rollback backup, selected/unmapped asset ledger and idempotent replay while preserving the source page.
+
 - Native Replatform Content Remap Intelligence v1 extracts provenance-bound source text/link/media assets, proposes preset semantic-slot candidates and forces evidence-sensitive mappings through manual review without generating factual copy.
 
 - Field milestone (2026-10-03): Migration Bridge 1.0.8 completed a real `emmake.com` → `/nuevaweb/` clone after persistent 10-step packaging, 48 MiB multipart transport, verified reconstruction and safe destination activation. This proves the clone transport/activation path in the pilot environment; Theme sandbox migration/parity and production acceptance remain separate pending gates.

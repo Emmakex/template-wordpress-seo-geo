@@ -2593,7 +2593,7 @@ Next:
 
 ### Microphase 10E.4 — Native Replatform Composer
 
-Status: **active — draft-only composer + Content Remap Intelligence v1 implemented; controlled reviewed application is next**
+Status: **active — draft-only composer + Content Remap Intelligence v1 + Reviewed Apply v1 implemented; CI acceptance and real Home preview next**
 
 Goal: bridge preserved legacy assets into the new preset-native presentation without modifying the public source page.
 
@@ -2615,13 +2615,20 @@ Implemented:
 - proof/evidence/outcome/credential/provenance sections are always marked `manual-review` and never auto-applied;
 - no factual copy is generated and uncertain mappings remain non-mutating candidates;
 - remap plan SHA-256 + bounded review summary are retained on the native draft for audit/replay;
-- WordPress smoke acceptance verifies source preservation, native pattern order, content/link inventory, evidence review gating and draft-only behavior.
+- Corporate Home now declares five explicit EN/ES reviewed-remap slots bound to canonical native patterns;
+- inert native slot markers are part of the deterministic composition hash;
+- **Reviewed Apply v1** accepts only candidate asset IDs from the current remap plan and writes only to the bound native draft;
+- sensitive evidence cannot be applied without explicit administrator verification;
+- source identity, source hash, native plan hash and remap plan hash are revalidated before mutation;
+- first application stores a draft-content backup, deterministic selection hash, selected/unmapped asset ledger and before/after content hashes;
+- repeating the same reviewed selection is idempotent and returns `existing`;
+- the admin Tools surface exposes explicit reviewed selections and verification checkboxes; no automatic publication or public mutation exists.
 
 Next:
 
-1. add **controlled reviewed remap application** that only writes explicitly approved source assets into supported Corporate native slots;
-2. preserve unmapped source assets in the review ledger rather than silently dropping them;
-3. preview the remapped Home replacement in `/nuevaweb/` while source Home remains recoverable;
+1. complete CI acceptance for Reviewed Apply v1 and merge only with all quality/runtime/performance gates green;
+2. use the accepted flow on the real Emmake Home in `/nuevaweb/` and review the resulting Corporate Native preview;
+3. refine slot-level presentation where real Emmake content exposes gaps in the generic Corporate patterns;
 4. repeat the accepted workflow for Services, Work, About, Insights and Contact;
 5. run SEO/GEO + link/media + performance + accessibility regression before any controlled swap.
 

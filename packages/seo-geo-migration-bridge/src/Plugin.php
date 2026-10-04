@@ -107,6 +107,7 @@ use SeoGeo\MigrationBridge\Report\MigrationReportEngine;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
 use SeoGeo\MigrationBridge\Replatform\AdminNativeReplatformController;
 use SeoGeo\MigrationBridge\Replatform\NativeCompositionService;
+use SeoGeo\MigrationBridge\Replatform\ReviewedRemapApplier;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
@@ -170,6 +171,13 @@ final class Plugin {
 	 * @var NativeCompositionService|null
 	 */
 	private static ?NativeCompositionService $native_replatform_composer = null;
+
+	/**
+	 * Reviewed native content-remap applier singleton.
+	 *
+	 * @var ReviewedRemapApplier|null
+	 */
+	private static ?ReviewedRemapApplier $native_replatform_remap_applier = null;
 
 	/**
 	 * Native replatform administrator controller singleton.
@@ -854,8 +862,12 @@ final class Plugin {
 		self::$migration_engine     ??= new MigrationEngine();
 		self::$migration_controller ??= new AdminMigrationController( self::$migration_engine );
 
-		self::$native_replatform_composer   ??= new NativeCompositionService();
-		self::$native_replatform_controller ??= new AdminNativeReplatformController( self::$native_replatform_composer );
+		self::$native_replatform_composer      ??= new NativeCompositionService();
+		self::$native_replatform_remap_applier ??= new ReviewedRemapApplier( self::$native_replatform_composer );
+		self::$native_replatform_controller    ??= new AdminNativeReplatformController(
+			self::$native_replatform_composer,
+			self::$native_replatform_remap_applier
+		);
 
 		self::$parity_engine          ??= new SeoParityEngine();
 		self::$cutover_engine         ??= new CutoverEngine();
@@ -1179,6 +1191,13 @@ final class Plugin {
 	 */
 	public static function native_replatform_composer(): ?NativeCompositionService {
 		return self::$native_replatform_composer;
+	}
+
+	/**
+	 * Return the reviewed Native Replatform content applier.
+	 */
+	public static function native_replatform_remap_applier(): ?ReviewedRemapApplier {
+		return self::$native_replatform_remap_applier;
 	}
 
 	/**
