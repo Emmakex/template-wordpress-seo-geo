@@ -285,6 +285,14 @@ final class NativeHomeHydrator {
 			? $block['attrs']['className']
 			: '';
 
+		if (
+			'core/column' === ( $block['blockName'] ?? null )
+			&& true !== ( $groups['hero-proof'] ?? false )
+			&& $this->contains_class( $block, 'seo-geo-corporate-native-hero__proof' )
+		) {
+			return null;
+		}
+
 		if ( str_contains( $class, 'seo-geo-corporate-native-proof' ) && true !== ( $groups['proof'] ?? false ) ) {
 			return null;
 		}
@@ -354,6 +362,29 @@ final class NativeHomeHydrator {
 		$block['innerContent'] = array( $inner_html );
 
 		return $block;
+	}
+
+	/**
+	 * Whether a block tree contains one semantic class.
+	 *
+	 * @param array<string,mixed> $block Parsed block.
+	 * @param string              $needle Class fragment.
+	 */
+	private function contains_class( array $block, string $needle ): bool {
+		$class = is_array( $block['attrs'] ?? null ) && is_string( $block['attrs']['className'] ?? null )
+			? $block['attrs']['className']
+			: '';
+		if ( str_contains( $class, $needle ) ) {
+			return true;
+		}
+
+		foreach ( is_array( $block['innerBlocks'] ?? null ) ? $block['innerBlocks'] : array() as $child ) {
+			if ( is_array( $child ) && $this->contains_class( $child, $needle ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
