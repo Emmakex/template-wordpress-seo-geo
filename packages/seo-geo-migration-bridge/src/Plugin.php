@@ -853,8 +853,10 @@ final class Plugin {
 		self::$sandbox_lab            ??= new SandboxMigrationLab();
 		self::$migration_engine       ??= new MigrationEngine();
 		self::$migration_controller   ??= new AdminMigrationController( self::$migration_engine );
-		self::$native_replatform_composer    ??= new NativeCompositionService();
-		self::$native_replatform_controller  ??= new AdminNativeReplatformController( self::$native_replatform_composer );
+
+		self::$native_replatform_composer   ??= new NativeCompositionService();
+		self::$native_replatform_controller ??= new AdminNativeReplatformController( self::$native_replatform_composer );
+
 		self::$parity_engine          ??= new SeoParityEngine();
 		self::$cutover_engine         ??= new CutoverEngine();
 		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
