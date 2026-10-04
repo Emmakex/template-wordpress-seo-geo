@@ -119,9 +119,6 @@ def main() -> int:
             if marker not in runbook:
                 raise RuntimeError(f"Runbook contract marker missing: {marker}")
 
-        with zipfile.ZipFile(Path(temp_name) / "nested-plugin.zip", "w"):
-            pass
-
         with zipfile.ZipFile(first_path) as archive:
             plugin_path = temp / "plugin.zip"
             theme_path = temp / "theme.zip"
