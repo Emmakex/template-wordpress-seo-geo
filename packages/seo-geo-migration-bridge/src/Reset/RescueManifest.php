@@ -181,11 +181,8 @@ final class RescueManifest {
 
 		$path = '';
 		if ( 'publish' === $post->post_status ) {
-			$permalink = get_permalink( $post );
-			if ( is_string( $permalink ) ) {
-				$parsed = wp_parse_url( $permalink, PHP_URL_PATH );
-				$path   = is_string( $parsed ) ? $parsed : '';
-			}
+			$parsed = wp_parse_url( get_permalink( $post ), PHP_URL_PATH );
+			$path   = is_string( $parsed ) ? $parsed : '';
 		}
 
 		return array(
