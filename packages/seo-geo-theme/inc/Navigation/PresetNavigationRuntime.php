@@ -379,8 +379,13 @@ final class PresetNavigationRuntime {
 		$request_uri = isset( $_SERVER['REQUEST_URI'] )
 			? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) )
 			: '/';
-		$current     = home_url( $request_uri );
+		$current_path = wp_parse_url( $request_uri, PHP_URL_PATH );
+		$target_path  = wp_parse_url( $url, PHP_URL_PATH );
 
-		return untrailingslashit( $current ) === untrailingslashit( $url );
+		if ( ! is_string( $current_path ) || ! is_string( $target_path ) ) {
+			return false;
+		}
+
+		return untrailingslashit( $current_path ) === untrailingslashit( $target_path );
 	}
 }
