@@ -2,12 +2,11 @@
 
 ## Purpose
 
-SEO/GEO Manager is the permanent WordPress plugin product for **analysis, controlled content publication, migration and ongoing SEO/GEO operations**.
+SEO/GEO Manager is the permanent WordPress plugin product for **continuous SEO/GEO optimization, controlled content publication and editorial operations**.
 
-It is designed for two equally important cases:
+Its primary product case is the site **after launch or rebuild**: keep improving content, internal linking, landing pages, blogs and SEO/GEO signals without returning to a developer-led rebuild cycle.
 
-1. a client already has a WordPress site and does not want to replace the current theme;
-2. a client uses the SEO/GEO Theme and wants an ongoing publishing/operations layer.
+It may also support existing WordPress sites that keep their current theme, but that compatibility path must not distort the clean Theme + preset workflow.
 
 The Manager must not require GitHub, a staging environment, a specific hosting company, Elementor, Divi or the SEO/GEO Theme.
 
@@ -21,7 +20,7 @@ The current packages/seo-geo-migration-bridge remains the accepted migration imp
 
 ### 1. Site Intelligence
 
-Read-only by default.
+Read-only by default and intentionally lightweight for already-rebuilt Theme sites. Deep legacy-stack analysis is only required when operating on a non-Theme existing site.
 
 Responsibilities:
 
@@ -116,9 +115,9 @@ Responsibilities:
 
 The engine never fabricates authors, sources, reviews, dates, claims or expertise.
 
-### 6. Migration module
+### 6. Optional migration module
 
-Long-term home of the accepted Migration Bridge capabilities:
+Secondary/backward-compatibility home of accepted Migration Bridge capabilities after the Manager's optimization/content core is already stable:
 
 - analyzer;
 - baseline;
