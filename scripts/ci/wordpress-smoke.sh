@@ -398,6 +398,7 @@ source scripts/ci/migration-bridge-corporate-bootstrap-acceptance.sh
 source scripts/ci/migration-bridge-clean-home-acceptance.sh
 source scripts/ci/migration-bridge-corporate-home-content-kit-acceptance.sh
 source scripts/ci/migration-bridge-home-content-blueprint-acceptance.sh
+source scripts/ci/migration-bridge-home-seo-handoff-acceptance.sh
 
 printf '[smoke] Checking runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
