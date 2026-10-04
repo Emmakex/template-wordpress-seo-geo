@@ -43,8 +43,16 @@ final class WordPressSetupOptionWriter implements SetupOptionWriterInterface {
 			return true;
 		}
 
-		if ( ! update_option( $option_name, $value, false ) ) {
-			return false;
+		if ( false === $current['exists'] ) {
+			/*
+			 * update_option() can return false for an absent option when a
+			 * registered default equals the requested value. Persist the
+			 * explicit authority with add_option() instead, then verify exact
+			 * read-back. This is especially relevant for empty-array defaults.
+			 */
+			add_option( $option_name, $value, '', false );
+		} else {
+			update_option( $option_name, $value, false );
 		}
 
 		$stored = $this->read( $option_name );

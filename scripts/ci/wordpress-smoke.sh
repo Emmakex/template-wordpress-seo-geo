@@ -191,6 +191,33 @@ wp_cli plugin is-active seo-geo-migration-bridge >/dev/null \
 wp_cli theme is-active seo-geo-theme >/dev/null \
   || fail_smoke "theme-state" "SEO GEO Starter is not active after activation" "active" "inactive" "wp theme is-active seo-geo-theme"
 
+printf '[smoke] Verifying setup writer persists an absent option equal to its registered default.\n'
+SETUP_DEFAULT_WRITE_STATE="$(wp_cli eval '
+delete_option( "seo_geo_crawler_policy" );
+register_setting(
+    "seo_geo_crawler_policy",
+    "seo_geo_crawler_policy",
+    array(
+        "type"    => "array",
+        "default" => array(),
+    )
+);
+$writer = new \SeoGeo\Theme\Setup\WordPressSetupOptionWriter();
+$before = $writer->read( "seo_geo_crawler_policy" );
+$ok     = $writer->write( "seo_geo_crawler_policy", array() );
+$after  = $writer->read( "seo_geo_crawler_policy" );
+echo wp_json_encode(
+    array(
+        "before_exists" => true === $before["exists"],
+        "write_ok"      => $ok,
+        "after_exists"  => true === $after["exists"],
+        "after_value"   => $after["value"],
+    )
+);
+' 2>/dev/null | tr -d '\r\n')"
+[[ "$SETUP_DEFAULT_WRITE_STATE" == '{"before_exists":false,"write_ok":true,"after_exists":true,"after_value":[]}' ]] \
+  || fail_smoke "setup-default-option-write" "Setup writer failed to persist an absent option whose registered default equals the requested value" '{"before_exists":false,"write_ok":true,"after_exists":true,"after_value":[]}' "$SETUP_DEFAULT_WRITE_STATE" "wp eval setup writer default-option regression"
+
 PROVIDER="$(wp_cli eval 'echo \SeoGeo\Core\Plugin::language()?->provider_id() ?? "missing";' 2>/dev/null | tr -d '\r\n')"
 [[ "$PROVIDER" == "native" ]] \
   || fail_smoke "language-service" "Language service did not initialize with the native provider" "native" "$PROVIDER" "wp eval language provider"
