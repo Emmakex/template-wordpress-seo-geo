@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.57 adds **Clean Corporate inner-page rebuild v1**: explicit rescued-source mapping, URL/content preservation and a reusable native scaffold for Services first, then Work/About/Contact; Home remains on its dedicated pipeline and Insights remains blocked until its dynamic composition is defined.
+
 - Added **Deterministic EMMAKE Home Field Pilot Pack** tooling: one reproducible ZIP containing Theme, Migration Bridge 0.8.56, the accepted Emmake blueprint, a `/nuevaweb/` runbook, component SHA-256 manifest and browser-QA evidence template; automatic production cutover remains forbidden.
 
 - Migration Bridge 0.8.56 adds **Home Field Pilot Readiness v1**: a read-only sandbox preflight that requires reset/content/source/front-page/SEO integrity, rejects legacy builder debris and preset placeholders, and distinguishes machine readiness from the remaining browser QA before cutover.
