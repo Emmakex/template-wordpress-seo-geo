@@ -99,6 +99,7 @@ required_paths=(
   "packages/seo-geo-core/src/Language/NativeLanguageRouter.php"
   "packages/seo-geo-core/src/Language/NativeTranslationRelationship.php"
   "packages/seo-geo-core/src/Language/NativeTranslationRegistry.php"
+  "packages/seo-geo-core/src/Seo/NativeSeoMetadata.php"
   "packages/seo-geo-core/src/Seo/OpenGraphResolver.php"
   "packages/seo-geo-core/src/Seo/HreflangResolver.php"
   "packages/seo-geo-core/src/Seo/LocalizedSeoResolver.php"

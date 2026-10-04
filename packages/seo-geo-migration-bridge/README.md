@@ -2,6 +2,22 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Native Home SEO/GEO handoff — 0.8.55
+
+After the clean Home is hydrated, Step 6 translates safe rescued SEO provider metadata into permanent Theme/Core metadata.
+
+The handoff:
+
+- reads only the Rescue Manifest copy of Yoast/Rank Math title, description, canonical and robots signals;
+- writes provider-neutral native title, description and indexability overrides to the clean draft;
+- keeps self-canonical behavior owned by native Core instead of copying a redundant provider canonical;
+- never copies a custom legacy canonical automatically;
+- flags custom canonicals, provider ambiguity and unresolved legacy template tokens for explicit review before cutover;
+- is idempotent and stores a deterministic handoff report on the clean draft;
+- does not mutate the rescued source page, current front-page assignment or active plugins.
+
+The native Core now supports per-resource overrides through `_seo_geo_title_v1`, `_seo_geo_description_v1`, `_seo_geo_canonical_v1` and `_seo_geo_indexability_v1`. These remain available after Migration Bridge is removed.
+
 ## Portable Home Content Blueprint + Emmake reference content — 0.8.54
 
 Step 5 now accepts a portable reviewed **Content Blueprint** in addition to manual Content Kit editing.

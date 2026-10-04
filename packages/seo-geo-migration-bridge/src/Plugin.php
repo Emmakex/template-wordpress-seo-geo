@@ -114,6 +114,7 @@ use SeoGeo\MigrationBridge\Reset\CleanHomeRebuilder;
 use SeoGeo\MigrationBridge\Reset\CorporateHomeContentKit;
 use SeoGeo\MigrationBridge\Reset\CloneResetEngine;
 use SeoGeo\MigrationBridge\Reset\CorporateThemeBootstrap;
+use SeoGeo\MigrationBridge\Reset\HomeSeoHandoff;
 use SeoGeo\MigrationBridge\Reset\NativeHomeHydrator;
 use SeoGeo\MigrationBridge\Reset\RescueManifest;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
@@ -290,6 +291,13 @@ final class Plugin {
 	 * @var NativeHomeHydrator|null
 	 */
 	private static ?NativeHomeHydrator $native_home_hydrator = null;
+
+	/**
+	 * Reset/Rebuild clean Home native SEO handoff singleton.
+	 *
+	 * @var HomeSeoHandoff|null
+	 */
+	private static ?HomeSeoHandoff $home_seo_handoff = null;
 
 	/**
 	 * Reset/Rebuild administrator controller singleton.
@@ -1167,7 +1175,8 @@ final class Plugin {
 		self::$clean_home_rebuilder         ??= new CleanHomeRebuilder( self::$rescue_manifest );
 		self::$corporate_home_content_kit   ??= new CorporateHomeContentKit();
 		self::$native_home_hydrator         ??= new NativeHomeHydrator( self::$clean_home_rebuilder, self::$corporate_home_content_kit );
-		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator );
+		self::$home_seo_handoff             ??= new HomeSeoHandoff( self::$rescue_manifest, self::$clean_home_rebuilder, self::$native_home_hydrator );
+		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator, self::$home_seo_handoff );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -1325,6 +1334,13 @@ final class Plugin {
 	 */
 	public static function native_home_hydrator(): ?NativeHomeHydrator {
 		return self::$native_home_hydrator;
+	}
+
+	/**
+	 * Return the reset-first clean Home native SEO handoff service.
+	 */
+	public static function home_seo_handoff(): ?HomeSeoHandoff {
+		return self::$home_seo_handoff;
 	}
 
 	/**

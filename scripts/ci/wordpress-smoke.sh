@@ -26,6 +26,7 @@ DB_ROOT_PASSWORD="root-smoke-password"
 TMP_DIR="$(mktemp -d)"
 HOME_BODY="${TMP_DIR}/home.html"
 PAGE_BODY="${TMP_DIR}/native-seo-page.html"
+NOINDEX_BODY="${TMP_DIR}/native-seo-noindex.html"
 SEARCH_BODY="${TMP_DIR}/search.html"
 ADMIN_BODY="${TMP_DIR}/admin.html"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
@@ -277,11 +278,33 @@ POST_ID="$(wp_cli post create \
 [[ "$POST_ID" =~ ^[0-9]+$ ]] \
   || fail_smoke "seo-fixture-post" "Could not create native SEO fixture post" "numeric post ID" "$POST_ID" "wp post create"
 
-printf '[smoke] Requesting frontend, SEO fixture, search and admin routes.\n'
+wp_cli post meta update "$POST_ID" _seo_geo_title_v1 'Native SEO Override Title' >/dev/null \
+  || fail_smoke "seo-native-title-meta" "Could not save native title override" "metadata saved" "wp post meta update failed"
+wp_cli post meta update "$POST_ID" _seo_geo_description_v1 'Native SEO override description.' >/dev/null \
+  || fail_smoke "seo-native-description-meta" "Could not save native description override" "metadata saved" "wp post meta update failed"
+wp_cli post meta update "$POST_ID" _seo_geo_canonical_v1 "${BASE_URL}/native-seo-canonical-target/" >/dev/null \
+  || fail_smoke "seo-native-canonical-meta" "Could not save native canonical override" "metadata saved" "wp post meta update failed"
+
+NOINDEX_ID="$(wp_cli post create \
+  --post_type=post \
+  --post_status=publish \
+  --post_title='Native SEO Noindex Fixture' \
+  --post_name='native-seo-noindex-fixture' \
+  --post_excerpt='Native SEO noindex fixture.' \
+  --post_content='Native SEO noindex body.' \
+  --porcelain 2>/dev/null | tr -d '\r\n')"
+[[ "$NOINDEX_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "seo-noindex-fixture-post" "Could not create native SEO noindex fixture post" "numeric post ID" "$NOINDEX_ID" "wp post create"
+wp_cli post meta update "$NOINDEX_ID" _seo_geo_indexability_v1 'noindex-follow' >/dev/null \
+  || fail_smoke "seo-native-indexability-meta" "Could not save native indexability override" "metadata saved" "wp post meta update failed"
+
+printf '[smoke] Requesting frontend, SEO fixtures, search and admin routes.\n'
 curl -fsS "$BASE_URL/" -o "$HOME_BODY" \
   || fail_smoke "frontend-request" "WordPress frontend request failed" "HTTP 2xx" "curl failure" "curl frontend"
 curl -fsS "$BASE_URL/native-seo-fixture/" -o "$PAGE_BODY" \
   || fail_smoke "seo-page-request" "Native SEO fixture request failed" "HTTP 2xx" "curl failure" "curl native SEO fixture"
+curl -fsS "$BASE_URL/native-seo-noindex-fixture/" -o "$NOINDEX_BODY" \
+  || fail_smoke "seo-noindex-page-request" "Native SEO noindex fixture request failed" "HTTP 2xx" "curl failure" "curl native SEO noindex fixture"
 curl -fsS "${BASE_URL}/?s=unlikely-native-seo-query" -o "$SEARCH_BODY" \
   || fail_smoke "search-request" "Native SEO search fixture request failed" "HTTP 2xx" "curl failure" "curl search fixture"
 curl -fsSL "$BASE_URL/wp-admin/" -o "$ADMIN_BODY" \
@@ -304,18 +327,29 @@ PAGE_CANONICAL_COUNT="$(grep -o 'rel="canonical"' "$PAGE_BODY" | wc -l | tr -d '
 [[ "$PAGE_CANONICAL_COUNT" == "1" ]] \
   || fail_smoke "page-canonical-count" "Native SEO fixture must expose exactly one canonical" "1" "$PAGE_CANONICAL_COUNT" "inspect fixture canonical tags"
 
-EXPECTED_CANONICAL="${BASE_URL}/native-seo-fixture/"
+EXPECTED_CANONICAL="${BASE_URL}/native-seo-canonical-target/"
 if ! grep -Fq "<link rel=\"canonical\" href=\"${EXPECTED_CANONICAL}\" />" "$PAGE_BODY"; then
-  fail_smoke "page-canonical-value" "Native SEO fixture canonical does not match its public permalink" "$EXPECTED_CANONICAL" "canonical href mismatch" "inspect fixture canonical href"
+  fail_smoke "page-canonical-value" "Native SEO fixture canonical override was not applied" "$EXPECTED_CANONICAL" "canonical href mismatch" "inspect fixture canonical href"
+fi
+
+if ! grep -Fq '<title>Native SEO Override Title</title>' "$PAGE_BODY"; then
+  fail_smoke "page-title-override" "Native SEO fixture title override was not applied" "Native SEO Override Title" "title mismatch" "inspect fixture title"
 fi
 
 PAGE_DESCRIPTION_COUNT="$(grep -o 'name="description"' "$PAGE_BODY" | wc -l | tr -d ' ')"
 [[ "$PAGE_DESCRIPTION_COUNT" == "1" ]] \
   || fail_smoke "page-description-count" "Native SEO fixture must expose exactly one meta description" "1" "$PAGE_DESCRIPTION_COUNT" "inspect fixture meta descriptions"
 
-if ! grep -Fq '<meta name="description" content="Native SEO fixture description." />' "$PAGE_BODY"; then
-  fail_smoke "page-description-value" "Native SEO fixture description does not match the resolved excerpt" "Native SEO fixture description." "description mismatch" "inspect fixture meta description"
+if ! grep -Fq '<meta name="description" content="Native SEO override description." />' "$PAGE_BODY"; then
+  fail_smoke "page-description-value" "Native SEO fixture description override was not applied" "Native SEO override description." "description mismatch" "inspect fixture meta description"
 fi
+
+NOINDEX_CANONICAL_COUNT="$(grep -o 'rel="canonical"' "$NOINDEX_BODY" | wc -l | tr -d ' ')"
+[[ "$NOINDEX_CANONICAL_COUNT" == "0" ]] \
+  || fail_smoke "native-noindex-canonical" "Native noindex override must suppress canonical output" "0" "$NOINDEX_CANONICAL_COUNT" "inspect noindex fixture canonical tags"
+NOINDEX_ROBOTS_LINE="$(grep -i "name='robots'" "$NOINDEX_BODY" | head -n 1 | tr -d '\r')"
+[[ "$NOINDEX_ROBOTS_LINE" == *"noindex"* && "$NOINDEX_ROBOTS_LINE" == *"follow"* && "$NOINDEX_ROBOTS_LINE" != *"nofollow"* ]] \
+  || fail_smoke "native-noindex-robots" "Native per-resource noindex-follow override was not applied" "robots contains noindex and follow without nofollow" "$NOINDEX_ROBOTS_LINE" "inspect noindex fixture robots"
 
 SEARCH_CANONICAL_COUNT="$(grep -o 'rel="canonical"' "$SEARCH_BODY" | wc -l | tr -d ' ')"
 [[ "$SEARCH_CANONICAL_COUNT" == "0" ]] \
@@ -328,6 +362,13 @@ SEARCH_ROBOTS_COUNT="$(grep -o "name='robots'" "$SEARCH_BODY" | wc -l | tr -d ' 
 SEARCH_ROBOTS_LINE="$(grep -i "name='robots'" "$SEARCH_BODY" | head -n 1 | tr -d '\r')"
 [[ "$SEARCH_ROBOTS_LINE" == *"noindex"* && "$SEARCH_ROBOTS_LINE" == *"follow"* && "$SEARCH_ROBOTS_LINE" != *"nofollow"* ]] \
   || fail_smoke "search-robots-policy" "Search fixture must resolve to noindex,follow" "robots contains noindex and follow without nofollow" "$SEARCH_ROBOTS_LINE" "inspect search robots policy"
+
+printf '[smoke] Restoring shared SEO fixture before legacy migration acceptance.\n'
+for native_meta in _seo_geo_title_v1 _seo_geo_description_v1 _seo_geo_canonical_v1; do
+  wp_cli post meta delete "$POST_ID" "$native_meta" >/dev/null 2>&1 || true
+done
+wp_cli post delete "$NOINDEX_ID" --force >/dev/null \
+  || fail_smoke "seo-native-fixture-cleanup" "Could not remove isolated native noindex fixture" "fixture removed" "wp post delete failed"
 
 source scripts/ci/migration-bridge-site-analyzer-acceptance.sh
 source scripts/ci/migration-bridge-baseline-acceptance.sh
@@ -364,6 +405,7 @@ source scripts/ci/migration-bridge-corporate-bootstrap-acceptance.sh
 source scripts/ci/migration-bridge-clean-home-acceptance.sh
 source scripts/ci/migration-bridge-corporate-home-content-kit-acceptance.sh
 source scripts/ci/migration-bridge-home-content-blueprint-acceptance.sh
+source scripts/ci/migration-bridge-home-seo-handoff-acceptance.sh
 
 printf '[smoke] Checking runtime diagnostics.\n'
 docker logs "$WP_CONTAINER" >"$RUNTIME_LOG" 2>&1 || true
