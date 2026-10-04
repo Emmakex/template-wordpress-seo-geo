@@ -78,8 +78,9 @@ The pack is a field-delivery artifact, not a new product runtime dependency. Cli
 6. legacy Divi/Elementor/Visual Composer/Fusion composition is never used as input;
 7. source content, source URL, active plugins and front-page assignment remain unchanged;
 8. repeated execution reuses the same deterministic draft;
-9. Home remains on its dedicated accepted pipeline;
-10. Insights remains blocked until its dynamic native composition is defined.
+9. once a page key is bound to a rescued source, a different source is rejected with `page-source-binding-conflict`;
+10. Home remains on its dedicated accepted pipeline;
+11. Insights remains blocked until its dynamic native composition is defined.
 
 The WordPress smoke uses a real rescued non-front-page fixture, creates/replays the Services scaffold and verifies source URL/content/plugin/front-page preservation.
 
