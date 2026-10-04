@@ -74,7 +74,7 @@ CORPORATE_NAV_BLOCK_REGISTERED="$(wp_cli eval '$registry = WP_Block_Type_Registr
 
 printf '[self-contained] Checking Corporate SEO/GEO rendered-content semantics.\n'
 CORPORATE_SEMANTIC_TOKEN='d276abfeceab40cca0e158fc6217176554b8e54a1f85b6eb004941797db52171'
-CORPORATE_SEMANTIC_CONTENT='<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">Legacy inner H1</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Accuracy 100{'${CORPORATE_SEMANTIC_TOKEN}'}</p><!-- /wp:paragraph -->'
+CORPORATE_SEMANTIC_CONTENT='<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">Legacy inner H1</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Accuracy 100{'"$CORPORATE_SEMANTIC_TOKEN"'}</p><!-- /wp:paragraph -->'
 CORPORATE_SEMANTIC_PAGE_ID="$(wp_cli post create --post_type=page --post_status=publish --post_title='Corporate Semantic Guard' --post_name='corporate-semantic-guard' --post_content="$CORPORATE_SEMANTIC_CONTENT" --porcelain 2>"${TMP_DIR}/corporate-semantic-create.stderr" | tr -d '\r\n')"
 [[ "$CORPORATE_SEMANTIC_PAGE_ID" =~ ^[0-9]+$ ]] \
   || fail_smoke "corporate-semantic-page" "Could not create Corporate semantic guard fixture" "numeric page ID" "$CORPORATE_SEMANTIC_PAGE_ID"
