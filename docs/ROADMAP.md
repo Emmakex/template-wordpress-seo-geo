@@ -2972,6 +2972,7 @@ Candidate behavior:
 - native composition uses Theme-registered patterns only;
 - preset slug is informational and never replaces the rescued client URL;
 - deterministic page-key/source binding;
+- silent remapping to a different rescued source is blocked after the first binding;
 - one private idempotent draft per page plan;
 - source page/content/path, plugins and front-page assignment remain unchanged;
 - Home stays on its dedicated accepted pipeline;
