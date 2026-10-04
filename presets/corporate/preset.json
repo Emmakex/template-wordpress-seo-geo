@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "corporate",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "site_type": "corporate",
   "intended_for": [
     "company",
@@ -87,14 +87,16 @@
   "visual": {
     "stylesheet": "assets/css/presets/corporate.css",
     "body_class": "seo-geo-preset-corporate",
-    "design_system": "corporate-v1",
+    "design_system": "corporate-v1.1",
     "principles": [
       "professional-services-first",
       "clear-navigation",
       "strong-content-hierarchy",
       "accessible-form-controls",
       "responsive-card-layouts",
-      "no-client-specific-hardcoded-copy"
+      "no-client-specific-hardcoded-copy",
+      "migration-aware-navigation",
+      "compact-proof-and-service-components"
     ]
   }
 }
