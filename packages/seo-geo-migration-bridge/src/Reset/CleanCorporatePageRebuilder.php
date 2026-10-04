@@ -197,12 +197,12 @@ final class CleanCorporatePageRebuilder {
 			'existing_draft'  => $this->existing_draft_id( $page_key, $source_id, $plan_sha ),
 			'content_state'   => self::CONTENT_STATE,
 			'safety'          => array(
-				'legacy_layout_reused'          => false,
-				'content_remap_required'        => false,
-				'source_post_mutation'          => false,
-				'source_url_change'             => false,
-				'front_page_assignment_change'  => false,
-				'draft_only'                    => true,
+				'legacy_layout_reused'         => false,
+				'content_remap_required'       => false,
+				'source_post_mutation'         => false,
+				'source_url_change'            => false,
+				'front_page_assignment_change' => false,
+				'draft_only'                   => true,
 			),
 		);
 	}
@@ -328,7 +328,7 @@ final class CleanCorporatePageRebuilder {
 				! is_array( $resource )
 				|| 'page' !== (string) ( $resource['post_type'] ?? '' )
 				|| 'publish' !== (string) ( $resource['status'] ?? '' )
-				|| $front_page_id === (int) ( $resource['id'] ?? 0 )
+				|| (int) ( $resource['id'] ?? 0 ) === $front_page_id
 			) {
 				continue;
 			}
