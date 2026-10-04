@@ -1,179 +1,151 @@
-# Replatforming Contract — Preserve the asset, replace the presentation
+# Replatforming Contract — reset-first rebuild
 
 ## Product intent
 
-Existing client sites are **not** visually cloned into the SEO/GEO Theme.
+A full redesign is a **new website built from a cloned copy**, not a careful preservation of the legacy runtime.
 
-The migration path preserves the valuable digital asset — content, URLs, SEO signals, internal/external links, media, entities, forms/business behavior that is still required, and other verified facts — then rebuilds the public presentation with the modern SEO/GEO Theme and the selected reusable preset.
+The authoritative reset workflow is defined in `docs/RESET_REBUILD_CONTRACT.md`.
 
-The old theme, page-builder layout, visual composition, CSS, spacing, widgets, builder grids and decorative structure are **reference material only**. They are not parity targets.
+The principle is:
 
-## Preserve by default
+> **Rescue the asset, reset the clone, rebuild the product.**
 
-- public URL/slugs and redirect intent;
-- canonical/indexability intent;
-- titles and meta descriptions when valid;
-- headings/content meaning, while allowing semantic restructuring;
-- body copy, FAQs, service/product facts, legal copy and editorial material worth keeping;
-- internal and external links;
-- media worth keeping, with responsive/native WordPress output;
-- structured-data facts that are truthful and still applicable;
-- multilingual relationships;
-- forms/business workflows that are still required;
-- analytics/conversion requirements as explicit integrations, never as visual baggage.
+The old website is useful as a source of content, URLs, SEO equity, links, selected media and business facts. Its theme, builder, CSS, widgets, plugin baggage and presentation architecture are not assets we want to carry forward.
 
-## Replace by default
+## What survives
 
-- legacy theme and child-theme presentation;
-- Elementor/Divi visual layout and builder CSS;
-- legacy columns, rows, spacers, decorative wrappers and widget positioning;
-- obsolete header/footer/navigation presentation;
-- inherited animation and visual effects;
-- old responsive hacks;
-- visual page-builder dependencies;
-- layout-specific shortcodes and presentation-only modules;
-- arbitrary legacy CSS whose only purpose is to reproduce the old design.
+Preserve only what gives the new site real value:
 
-## Rebuild target
+- useful factual content;
+- URLs/slugs and required redirect intent;
+- SEO metadata/indexability/canonical intent worth retaining;
+- internal/external links worth retaining;
+- selected media;
+- business/entity/contact facts;
+- required legal content;
+- required forms/business integrations;
+- multilingual relationships when the rebuilt site needs them.
 
-The destination should behave like a modern product website: fast, semantic, component-based, responsive, accessible and visually cohesive.
+Preservation is **selective**, not exhaustive.
 
-The design philosophy is the same one used for the project's modern product-style sites such as **iaempleado.com** and **kairoseth.com**: clear information architecture, reusable components, strong hierarchy, fast delivery and centralized iteration. The WordPress implementation must achieve that outcome with native WordPress/Theme primitives rather than copying those sites or introducing a JavaScript-app dependency.
+## What is reset
 
-The Theme supplies the reusable design system and SEO/GEO runtime. Presets define the information architecture and visual language. Client content is remapped into those native structures rather than styled to resemble the old builder output.
+Replace/remove by default:
 
-The current design benchmark and trend-adoption filter live in `docs/MODERN_PRESET_DESIGN_STRATEGY.md`. A replatform must therefore be not only cleaner than the legacy site, but intentionally **modern and functionally appropriate for its preset category**.
+- legacy theme and child theme;
+- Divi/Elementor/other builder presentation runtime;
+- layout metadata, builder CSS and generated assets;
+- presentation-only shortcodes;
+- old widgets/Customizer state;
+- obsolete theme options;
+- redundant frontend plugins;
+- legacy responsive hacks;
+- duplicate SEO/rendering ownership once the Theme takes control;
+- caches/transients and stale generated files;
+- plugins/media/assets that the rebuilt site no longer needs.
 
-### North-star rule
+A migration that leaves the new site carrying the old visual/runtime stack has failed the product goal.
 
-When a migration decision is ambiguous, prefer the option that:
+## Product roles
 
-1. preserves search equity and valuable factual content;
-2. reduces legacy runtime/design dependencies;
-3. moves the page toward reusable Theme/preset-native components;
-4. improves semantic HTML, accessibility and performance;
-5. makes future publishing/optimization easier through Manager/GitHub-driven product development.
+### Migration Bridge
 
-Do **not** choose an option merely because it looks more similar to the old site.
+One-time transition tool:
 
-## Migration Bridge role
+**Scan → Clone → Rescue Manifest → Reset → Theme/preset bootstrap → Rebuild handoff**
 
-Migration Bridge/Manager is responsible for:
+Once a usable clone already exists, the Bridge must not force the operator to repeat non-essential legacy analysis before rebuilding.
 
-1. clone/sandbox creation;
-2. URL and SEO baseline capture;
-3. content/link/media/business-dependency inventory;
-4. preservation backup;
-5. extraction/normalization of reusable content;
-6. dependency removal planning;
-7. handoff into Theme/preset-native structures;
-8. SEO/GEO regression checks;
-9. controlled cutover and rollback evidence.
+UNKNOWN legacy dependencies are relevant only when they represent a function the rebuilt site genuinely needs.
 
-It is **not** responsible for preserving builder-era visual parity.
+### SEO/GEO Theme
 
-## End-to-end client workflow
+The Theme becomes the new presentation and technical SEO/GEO authority:
 
-1. **Analyze** the existing WordPress site and capture its SEO/GEO/public-output baseline.
-2. **Clone** it into an isolated sandbox with the product-owned portable clone path.
-3. **Inventory** content, URLs, links, media, entities, redirects and required business integrations.
-4. **Classify** each dependency as preserve, replace, migrate, optional/manual-review or remove candidate.
-5. **Extract/normalize** reusable content out of legacy builder structures.
-6. **Select** the appropriate reusable preset.
-7. **Rebuild** the information architecture and presentation with Theme-native components.
-8. **Remap** preserved content into the new native structures.
-9. **Optimize** headings, internal linking, Schema, metadata, media and content semantics without changing factual meaning.
-10. **Validate** SEO/GEO regression, accessibility, responsive behavior and performance.
-11. **Cut over** only after acceptance evidence is green.
-12. **Operate continuously** through Manager/GitHub-driven publishing and optimization: new landing pages, blog posts, internal-link improvements, Search Console/Bing learnings and iterative SEO/GEO enhancements.
+- modern design system;
+- preset information architecture;
+- semantic/native WordPress components;
+- responsive/accessibility behavior;
+- technical SEO/GEO;
+- Schema/discovery;
+- multilingual behavior;
+- performance budgets.
 
-This workflow is the commercial product path. Migration is the one-time bridge into a continuously improvable WordPress platform.
+### SEO/GEO Manager
 
-## Native Replatform Composer
+Permanent post-rebuild operations layer:
 
-The first write-capable rebuild step is intentionally **draft-only**.
+- optimized landing/blog creation;
+- content refresh and improvement;
+- editorial workflows;
+- internal-link optimization;
+- Search Console/Bing/analytics feedback;
+- controlled publish/update/rollback;
+- continuous SEO/GEO improvement.
 
-For an accepted sandbox, the composer:
+The Manager is not required to preserve the old builder architecture.
 
-- reads the active preset's page composition;
-- resolves the preserved source page;
-- records source ID, URL path and content fingerprint;
-- assembles only registered Theme/preset-native patterns;
-- creates a non-public draft replacement;
-- records a deterministic plan fingerprint;
-- reuses an equivalent draft instead of creating duplicates;
-- never rewrites the source page, its slug or its public URL.
+## End-to-end full-redesign workflow
 
-The draft is a destination canvas. Content remapping is a separate step and must distinguish preserved facts from proposed presentation copy. Missing evidence must remain missing/manual-review; the system must not fabricate credentials, outcomes, testimonials, locations, prices or other factual claims.
+1. **Scan** enough of the original site to identify the digital asset.
+2. **Clone** the site into the working destination.
+3. **Create a Rescue Manifest** containing the content/URL/SEO/link/media/business material worth keeping.
+4. **Reset the clone** by removing the legacy presentation/runtime baggage.
+5. **Install/activate the SEO/GEO Theme**.
+6. **Apply the selected preset**.
+7. **Rebuild pages** using Theme-native patterns/components.
+8. **Reinsert/refactor the rescued asset** into the new information architecture.
+9. **Optimize** copy, headings, links, media, Schema and metadata without inventing facts.
+10. **Validate** URLs/redirects, SEO/GEO, accessibility, responsive behavior, performance and required business functions.
+11. **Cut over** only after acceptance.
+12. **Operate continuously** through SEO/GEO Manager.
 
-## Content Remap Intelligence
+## Native Replatform Composer / Reviewed Remap
 
-Content Remap Intelligence is intentionally provenance-first and non-generative.
+The existing Composer, Content Remap and Reviewed Apply features remain useful as **optional extraction/rebuild helpers**.
 
-For each preserved source page it may:
+They are not the architecture of the finished site and they are not required to preserve every legacy asset.
 
-- extract bounded source units from the post title, excerpt and static WordPress block content;
-- inventory crawlable links and media references without rendering dynamic blocks;
-- assign deterministic hashes/IDs so every candidate can be traced back to the exact source snapshot;
-- read the selected preset's `content_contract.required_sections`;
-- propose bounded source candidates for each required semantic section;
-- flag evidence-sensitive sections such as proof, outcomes, credentials, testimonials, provenance or attribution for mandatory manual verification;
-- persist only the remap plan identity and bounded review summary on the destination draft.
+Use them when they accelerate the Rescue Manifest or page reconstruction. Skip or discard legacy candidates that do not belong in the new site.
 
-It must **not**:
+Their safety rules still apply when used:
 
-- generate or infer factual claims that are absent from the preserved source;
-- auto-apply uncertain semantic mappings;
-- treat a candidate as verified evidence merely because related words or links exist;
-- rewrite the public source page;
-- reintroduce builder-era visual layout as part of the remap.
+- never fabricate factual proof;
+- never silently change public production content;
+- preserve provenance for reused facts;
+- keep draft operations reversible.
 
-A candidate is therefore not publication approval. The next write-capable remap stage must require explicit reviewed selections and retain unmapped assets in the review ledger rather than silently discarding them.
+But the reset-first path is allowed to intentionally leave old content/assets unmapped and remove them from the rebuilt clone.
 
-## Reviewed Remap Application
+## Emmake current path
 
-Reviewed Apply is the first content-remap stage allowed to mutate the destination draft.
+For `emmake.com/nuevaweb/`:
 
-The preset must explicitly bind a semantic section to a stable native composition point. The composer materializes that binding as an inert slot marker and includes the slot map in the deterministic native plan hash.
-
-Reviewed Apply must:
-
-- operate only inside an accepted sandbox;
-- require administrator capability and an explicit nonce-confirmed action;
-- target only a private native draft that is still bound to the preserved source;
-- revalidate source ID/hash, preset/page identity, native plan hash and content-remap plan hash immediately before mutation;
-- accept only asset IDs already present in the current slot candidate set;
-- require explicit verification for evidence-sensitive sections;
-- replace exactly one deterministic slot marker per selected semantic section;
-- use native WordPress blocks for the applied material;
-- store the current pre-apply draft body as rollback evidence before each active reviewed selection cycle;
-- persist selected and unmapped asset IDs, verification decisions, selection hash and before/after draft hashes in a review ledger;
-- support an explicit administrator-only rollback that restores only the hash-verified private draft, refuses rollback after unreviewed draft drift, archives bounded rollback evidence and clears the active ledger for a revised selection;
-- expose a private draft preview and a read-only acceptance-evidence snapshot limited to source/draft identities, hashes, selected asset IDs, counts, verification decisions and drift state; post bodies, backup bodies, credentials and arbitrary option values are forbidden from that evidence;
-- be idempotent for an identical reviewed selection.
-
-Reviewed Apply must **not**:
-
-- mutate the preserved public source;
-- publish the destination draft;
-- create factual copy or silently reinterpret a source asset;
-- accept arbitrary text/URLs supplied outside the current source inventory;
-- bypass evidence verification because a candidate exists;
-- drop unmapped source assets from the audit trail;
-- apply when a slot marker, source snapshot or plan hash has drifted.
-
-This stage is deliberately narrower than final editorial optimization. It moves verified preserved material into the native information architecture; later optimization may improve hierarchy, linking and wording only under the separate SEO/GEO content rules without changing factual meaning.
+- the clone already exists;
+- the clone itself is the working reset environment;
+- Corporate is the selected preset;
+- the remaining UNKNOWN dependency is not a blocker unless it maps to a business function we choose to keep;
+- we do **not** need another baseline/analyzer cycle simply to begin the redesign;
+- the immediate work is:
+  1. build the minimal Rescue Manifest;
+  2. reset the old theme/builder/plugin baggage;
+  3. activate/apply the SEO/GEO Theme + Corporate preset;
+  4. rebuild Home and the remaining core pages from scratch;
+  5. reuse only the content/URLs/SEO/links/media that improve the new site;
+  6. remove everything else;
+  7. validate the clean result.
 
 ## Acceptance model
 
-A replatform is accepted when:
+The rebuilt site is accepted when:
 
-- important URLs and redirects are preserved;
-- SEO/GEO authority is correct and non-duplicated;
-- valuable content is present and semantically improved;
-- links and media are preserved or intentionally replaced;
-- required business functions still work;
-- the new preset passes performance/accessibility/responsive gates;
-- the destination no longer depends on legacy visual-builder runtime for accepted migrated surfaces.
+- the necessary search equity is retained;
+- required URLs redirect or resolve correctly;
+- the new Theme/preset fully owns presentation;
+- legacy builder/runtime dependencies are gone from accepted surfaces;
+- required business functionality works;
+- duplicate SEO/GEO ownership is eliminated;
+- accessibility/responsive/performance gates pass;
+- the final site is materially lighter and simpler than the clone it started from.
 
-Visual comparison against the old site may be used to confirm that content was not accidentally lost, but visual similarity itself is not a success criterion.
+Visual similarity to the old site is explicitly **not** an acceptance criterion.
