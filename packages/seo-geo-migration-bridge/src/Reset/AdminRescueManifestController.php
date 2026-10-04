@@ -555,7 +555,7 @@ final class AdminRescueManifestController {
 	 */
 	private function render_services_rebuild_step( array $plan, array $candidates ): void {
 		$existing_draft = (int) ( $plan['existing_draft'] ?? 0 );
-		$bound_source   = (int) ( $plan['source']['id'] ?? 0 );
+		$bound_source   = $this->clean_pages->bound_source_id( 'services' );
 		?>
 		<h2><?php echo esc_html__( 'Step 8 — Start Services rebuild', 'seo-geo-migration-bridge' ); ?></h2>
 		<p><?php echo esc_html__( 'Map the Corporate Services page to one rescued published page explicitly. The source URL/content stays untouched; the new page is a private native-block draft with no legacy layout input.', 'seo-geo-migration-bridge' ); ?></p>
