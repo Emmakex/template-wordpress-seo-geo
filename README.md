@@ -92,6 +92,7 @@ No phase advances until its implementation, required gates, acceptance criteria,
 - `docs/PERFORMANCE.md`
 - `docs/ACCESSIBILITY.md`
 - `docs/DESIGN_SYSTEM.md`
+- `docs/MODERN_PRESET_DESIGN_STRATEGY.md`
 - `docs/PATTERNS.md`
 - `docs/PRESETS.md`
 - `docs/COMPATIBILITY.md`
