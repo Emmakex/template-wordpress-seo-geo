@@ -20,7 +20,7 @@ $readiness = (string) file_get_contents( $required[0] );
 foreach (
 	array(
 		'home-not-ready',
-		"$page_key . '-not-ready'",
+		". '-not-ready'",
 		'insights-not-ready',
 		'duplicate-page-source-binding',
 		'duplicate-public-path-binding',
