@@ -162,6 +162,7 @@ namespace SeoGeo\MigrationBridge\Replatform {
 	assert( 'native-replatform-review-evidence' === $ready['mode'] );
 	assert( true === $ready['safety']['sandbox_only'] );
 	assert( true === $ready['safety']['sandbox_active'] );
+	assert( true === $ready['safety']['draft_only'] );
 	assert( false === $ready['safety']['content_included'] );
 	assert( false === $ready['safety']['private_payload_included'] );
 	assert( false === $ready['safety']['production_cutover_authorized'] );
