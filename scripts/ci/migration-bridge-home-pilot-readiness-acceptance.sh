@@ -87,6 +87,7 @@ assert before["blockers"] == []
 assert before["checks"]["sandbox_marker"] is True
 assert before["checks"]["reset_completed"] is True
 assert before["checks"]["theme_active"] is True
+assert before["checks"]["plugin_set_unchanged"] is True
 assert before["checks"]["draft_ready"] is True
 assert before["checks"]["hydration_ready"] is True
 assert before["checks"]["source_unchanged"] is True
