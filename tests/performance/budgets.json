@@ -41,6 +41,18 @@
       "maxJsBytes": 8192,
       "maxRequests": 7,
       "maxDomNodes": 112
+    },
+    "corporate": {
+      "minPerformanceScore": 95,
+      "maxLcpMs": 1200,
+      "maxCls": 0.05,
+      "maxTbtMs": 100,
+      "maxTotalBytes": 40960,
+      "maxHtmlBytes": 16384,
+      "maxCssBytes": 8192,
+      "maxJsBytes": 8192,
+      "maxRequests": 8,
+      "maxDomNodes": 130
     }
   }
 }

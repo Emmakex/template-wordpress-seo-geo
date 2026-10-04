@@ -79,6 +79,12 @@ final class MetaDescriptionResolver {
 			return null;
 		}
 
+		/**
+		 * Filters normalized authored text before SEO/GEO consumers use it.
+		 *
+		 * @param string $text Normalized authored text.
+		 */
+		$text = apply_filters( 'seo_geo_normalize_authored_text', $text );
 		$text = trim( $text );
 
 		return '' !== $text ? $this->truncate( $text ) : null;

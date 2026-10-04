@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "corporate",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "site_type": "corporate",
   "intended_for": [
     "company",
@@ -87,7 +87,7 @@
   "visual": {
     "stylesheet": "assets/css/presets/corporate.css",
     "body_class": "seo-geo-preset-corporate",
-    "design_system": "corporate-v1.1",
+    "design_system": "corporate-v1.2",
     "principles": [
       "professional-services-first",
       "clear-navigation",
@@ -96,7 +96,11 @@
       "responsive-card-layouts",
       "no-client-specific-hardcoded-copy",
       "migration-aware-navigation",
-      "compact-proof-and-service-components"
+      "compact-proof-and-service-components",
+      "single-h1-runtime-guard",
+      "responsive-migrated-media",
+      "bounded-legacy-media-layout",
+      "seo-geo-first-field-polish"
     ]
   },
   "seo_geo_runtime": {
@@ -117,5 +121,16 @@
     "below_fold_media": "lazy",
     "lcp_media": "not-lazy-loaded",
     "performance_profile": "core-web-vitals-strict"
+  },
+  "content_semantics": {
+    "answer_first_where_useful": true,
+    "entity_clarity_required": true,
+    "evidence_for_claims_required": true,
+    "crawlable_internal_links_required": true,
+    "faq_only_when_user_intent": true,
+    "author_provenance_when_applicable": true,
+    "keyword_stuffing_forbidden": true,
+    "doorway_content_forbidden": true,
+    "fabricated_proof_forbidden": true
   }
 }

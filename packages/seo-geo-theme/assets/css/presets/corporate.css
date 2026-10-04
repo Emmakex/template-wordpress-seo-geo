@@ -206,7 +206,7 @@ a:hover {
 	margin-inline: auto;
 }
 
-.seo-geo-migrated-divi-fullwidth-header > h1 {
+.seo-geo-migrated-divi-fullwidth-header > :where(h1, h2) {
 	margin-top: clamp(2rem, 6vw, 4.5rem);
 }
 
@@ -859,5 +859,87 @@ body.home.seo-geo-preset-corporate .wp-block-post-content > :nth-child(4) {
 	.seo-geo-preset-corporate .seo-geo-migrated-divi-counter {
 		display: flex;
 		width: calc(100% - 1.5rem) !important;
+	}
+}
+
+
+/* Corporate v1.2 — field polish under the SEO/GEO-first contract.
+ * Presentation only: semantic HTML, URLs, indexability and content remain owned
+ * by the shared Theme/Core and authored WordPress document.
+ */
+
+/* Keep migrated media bounded. Consecutive top-level image blocks usually
+ * represent legacy logo/brand rows whose Divi column wrapper was flattened.
+ */
+.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image {
+	width: min(860px, calc(100% - 2rem));
+	text-align: center;
+}
+
+.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image img {
+	width: auto;
+	max-width: 100%;
+	max-height: 420px;
+	object-fit: contain;
+}
+
+.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image),
+.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image {
+	display: inline-flex;
+	box-sizing: border-box;
+	width: calc(33.333% - 1.1rem);
+	min-height: 160px;
+	margin: 0.55rem !important;
+	vertical-align: middle;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid #dce6e9;
+	border-radius: 1rem;
+	background: #fff;
+	padding: 1rem;
+	box-shadow: var(--seo-geo-shadow-sm);
+}
+
+.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image) img,
+.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image img {
+	max-height: 125px;
+}
+
+/* Legacy spacers are kept for content parity but cannot recreate the excessive
+ * vertical rhythm of the builder-era layout.
+ */
+.seo-geo-preset-corporate .wp-block-post-content > .wp-block-spacer {
+	height: clamp(1rem, 2.5vw, 2rem) !important;
+}
+
+/* Long-form Corporate text stays readable and avoids oversized empty bands. */
+.seo-geo-preset-corporate .wp-block-post-content > p + h2,
+.seo-geo-preset-corporate .wp-block-post-content > p + h3 {
+	margin-top: clamp(2.25rem, 5vw, 4rem);
+}
+
+.seo-geo-preset-corporate .wp-block-post-content > .wp-block-buttons {
+	margin-top: clamp(1.25rem, 3vw, 2rem);
+	margin-bottom: clamp(1.5rem, 4vw, 3rem);
+}
+
+@media (max-width: 760px) {
+	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image),
+	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image {
+		width: calc(50% - 1rem);
+		min-height: 135px;
+		margin: 0.5rem !important;
+	}
+
+	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image) img,
+	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image img {
+		max-height: 100px;
+	}
+}
+
+@media (max-width: 480px) {
+	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image),
+	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image {
+		width: calc(100% - 1rem);
 	}
 }

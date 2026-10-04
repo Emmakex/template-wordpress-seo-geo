@@ -407,6 +407,21 @@ The first real Corporate field review exposed two reusable presentation gaps tha
 
 The v1.1 acceptance target is a compact one-line desktop header, accessible CSS-only mobile menu, stronger front-page hierarchy, compact service/proof components and the already validated Theme-native contact form.
 
+### Corporate visual acceptance v1.2
+
+The second real-site field pass keeps the SEO/GEO-first contract ahead of visual polish.
+
+Corporate v1.2 adds:
+
+- a singular-content H1 guard so the shared page/post title remains the only document H1 even when migrated builder content contains legacy H1 blocks;
+- a generic authored-text normalization hook used by HTML, native meta descriptions, Schema visible-fact checks, Markdown alternates and llms discovery text;
+- a bounded Divi legacy placeholder repair for percentage tokens without broad content rewriting;
+- responsive WordPress attachment markup during future Divi migrations so intrinsic dimensions, `srcset` and `sizes` remain available to the browser;
+- presentation-only media bounding for flattened legacy logo/image rows;
+- tighter section/spacer rhythm without adding JavaScript or remote assets.
+
+The field target remains `/nuevaweb/`, but every fix above is reusable and builder/preset-safe. Visual acceptance still requires a new Home/Contact/mobile review after the build passes CI.
+
 ## Future presets
 
 Potential presets such as travel, professional services, education, events or NGO/fundraising should only be added when they express a repeatable information architecture and acceptance contract. They should compose primitives from the existing theme/Core rather than introduce parallel SEO stacks.

@@ -136,6 +136,18 @@ if ( ! is_array( $pages ) ) {
 	fail_seo_geo_preset_contract( 'performance-pages', 'Performance page budgets are missing.', 'tests/performance/budgets.json#pages', 'page budgets', $pages );
 }
 
+foreach ( array( 'en', 'es', 'migration', 'corporate' ) as $required_performance_page ) {
+	if ( ! isset( $pages[ $required_performance_page ] ) || ! is_array( $pages[ $required_performance_page ] ) ) {
+		fail_seo_geo_preset_contract(
+			'performance-page-required',
+			'Required SEO/GEO performance fixture budget is missing.',
+			'tests/performance/budgets.json#pages.' . $required_performance_page,
+			'budget object',
+			$pages[ $required_performance_page ] ?? null
+		);
+	}
+}
+
 foreach ( $pages as $page_key => $page_budget ) {
 	if ( ! is_array( $page_budget ) ) {
 		fail_seo_geo_preset_contract( 'performance-page-row', 'Performance page budget is invalid.', 'tests/performance/budgets.json#pages.' . $page_key, 'budget object', $page_budget );

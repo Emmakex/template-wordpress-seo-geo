@@ -18,7 +18,28 @@
             "seo-geo-theme/corporate-stats",
             "seo-geo-theme/corporate-testimonials",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "corporate-discovery",
+            "required_sections": [
+              "value-proposition",
+              "service-overview",
+              "organization-context",
+              "verified-proof",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "services",
+              "work",
+              "about",
+              "contact"
+            ],
+            "retrieval_units": [
+              "concise-summary",
+              "service-definitions",
+              "evidence"
+            ]
+          }
         },
         {
           "key": "services",
@@ -30,7 +51,30 @@
             "seo-geo-theme/services-features",
             "seo-geo-theme/faq",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "service-discovery",
+            "required_sections": [
+              "service-category-overview",
+              "audience-or-problem-context",
+              "service-links",
+              "process-or-method",
+              "evidence",
+              "faq-if-useful",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "service-detail",
+              "work",
+              "contact"
+            ],
+            "retrieval_units": [
+              "service-definitions",
+              "process",
+              "evidence",
+              "faq-if-useful"
+            ]
+          }
         },
         {
           "key": "work",
@@ -42,7 +86,27 @@
             "seo-geo-theme/corporate-case-study",
             "seo-geo-theme/corporate-stats",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "proof-discovery",
+            "required_sections": [
+              "case-study-overview",
+              "verified-outcomes",
+              "method-context",
+              "related-service-links",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "case-study",
+              "services",
+              "contact"
+            ],
+            "retrieval_units": [
+              "evidence",
+              "outcomes",
+              "method"
+            ]
+          }
         },
         {
           "key": "about",
@@ -55,7 +119,29 @@
             "seo-geo-theme/author-profile",
             "seo-geo-theme/corporate-stats",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "organization-trust",
+            "required_sections": [
+              "organization-identity",
+              "expertise",
+              "method-or-values",
+              "real-team-or-author-provenance",
+              "verified-proof",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "services",
+              "work",
+              "contact"
+            ],
+            "retrieval_units": [
+              "entity-facts",
+              "expertise",
+              "provenance",
+              "evidence"
+            ]
+          }
         },
         {
           "key": "insights",
@@ -63,7 +149,23 @@
           "slug": "insights",
           "role": "posts-page",
           "template": "archive",
-          "patterns": []
+          "patterns": [],
+          "content_contract": {
+            "primary_intent": "editorial-discovery",
+            "required_sections": [
+              "crawlable-article-index"
+            ],
+            "internal_link_targets": [
+              "article",
+              "services",
+              "about"
+            ],
+            "retrieval_units": [
+              "article-titles",
+              "topics",
+              "provenance"
+            ]
+          }
         },
         {
           "key": "contact",
@@ -74,7 +176,23 @@
           "patterns": [
             "seo-geo-theme/contact",
             "seo-geo-theme/faq"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "conversion-contact",
+            "required_sections": [
+              "contact-purpose",
+              "visible-contact-method",
+              "expectation-or-response-context"
+            ],
+            "internal_link_targets": [
+              "services",
+              "privacy-policy"
+            ],
+            "retrieval_units": [
+              "contact-facts",
+              "service-context"
+            ]
+          }
         },
         {
           "key": "privacy-policy",
@@ -82,7 +200,19 @@
           "slug": "privacy-policy",
           "role": "legal",
           "template": "page",
-          "patterns": []
+          "patterns": [],
+          "content_contract": {
+            "primary_intent": "legal-compliance",
+            "required_sections": [
+              "authoritative-legal-content"
+            ],
+            "internal_link_targets": [
+              "contact"
+            ],
+            "retrieval_units": [
+              "legal-facts"
+            ]
+          }
         },
         {
           "key": "legal-notice",
@@ -90,7 +220,19 @@
           "slug": "legal-notice",
           "role": "legal",
           "template": "page",
-          "patterns": []
+          "patterns": [],
+          "content_contract": {
+            "primary_intent": "legal-compliance",
+            "required_sections": [
+              "authoritative-legal-content"
+            ],
+            "internal_link_targets": [
+              "contact"
+            ],
+            "retrieval_units": [
+              "legal-facts"
+            ]
+          }
         }
       ],
       "repeatable": [
@@ -104,7 +246,32 @@
             "seo-geo-theme/services-features",
             "seo-geo-theme/faq",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "service-evaluation",
+            "required_sections": [
+              "service-definition",
+              "audience-or-problem",
+              "scope-or-deliverables",
+              "process-or-method",
+              "verified-evidence",
+              "faq-if-useful",
+              "related-links",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "services",
+              "case-study",
+              "contact"
+            ],
+            "retrieval_units": [
+              "definition",
+              "scope",
+              "process",
+              "evidence",
+              "faq-if-useful"
+            ]
+          }
         },
         {
           "key": "case-study",
@@ -115,7 +282,30 @@
             "seo-geo-theme/hero",
             "seo-geo-theme/corporate-stats",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "proof-evaluation",
+            "required_sections": [
+              "context",
+              "challenge",
+              "approach",
+              "verified-outcomes",
+              "evidence-or-method",
+              "related-service",
+              "attribution-if-permitted"
+            ],
+            "internal_link_targets": [
+              "work",
+              "service-detail",
+              "contact"
+            ],
+            "retrieval_units": [
+              "context",
+              "method",
+              "verified-outcomes",
+              "evidence"
+            ]
+          }
         }
       ]
     },
@@ -135,7 +325,28 @@
             "seo-geo-theme/corporate-stats",
             "seo-geo-theme/corporate-testimonials",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "corporate-discovery",
+            "required_sections": [
+              "value-proposition",
+              "service-overview",
+              "organization-context",
+              "verified-proof",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "services",
+              "work",
+              "about",
+              "contact"
+            ],
+            "retrieval_units": [
+              "concise-summary",
+              "service-definitions",
+              "evidence"
+            ]
+          }
         },
         {
           "key": "services",
@@ -147,7 +358,30 @@
             "seo-geo-theme/services-features",
             "seo-geo-theme/faq",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "service-discovery",
+            "required_sections": [
+              "service-category-overview",
+              "audience-or-problem-context",
+              "service-links",
+              "process-or-method",
+              "evidence",
+              "faq-if-useful",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "service-detail",
+              "work",
+              "contact"
+            ],
+            "retrieval_units": [
+              "service-definitions",
+              "process",
+              "evidence",
+              "faq-if-useful"
+            ]
+          }
         },
         {
           "key": "work",
@@ -159,7 +393,27 @@
             "seo-geo-theme/corporate-case-study",
             "seo-geo-theme/corporate-stats",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "proof-discovery",
+            "required_sections": [
+              "case-study-overview",
+              "verified-outcomes",
+              "method-context",
+              "related-service-links",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "case-study",
+              "services",
+              "contact"
+            ],
+            "retrieval_units": [
+              "evidence",
+              "outcomes",
+              "method"
+            ]
+          }
         },
         {
           "key": "about",
@@ -172,7 +426,29 @@
             "seo-geo-theme/author-profile",
             "seo-geo-theme/corporate-stats",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "organization-trust",
+            "required_sections": [
+              "organization-identity",
+              "expertise",
+              "method-or-values",
+              "real-team-or-author-provenance",
+              "verified-proof",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "services",
+              "work",
+              "contact"
+            ],
+            "retrieval_units": [
+              "entity-facts",
+              "expertise",
+              "provenance",
+              "evidence"
+            ]
+          }
         },
         {
           "key": "insights",
@@ -180,7 +456,23 @@
           "slug": "actualidad",
           "role": "posts-page",
           "template": "archive",
-          "patterns": []
+          "patterns": [],
+          "content_contract": {
+            "primary_intent": "editorial-discovery",
+            "required_sections": [
+              "crawlable-article-index"
+            ],
+            "internal_link_targets": [
+              "article",
+              "services",
+              "about"
+            ],
+            "retrieval_units": [
+              "article-titles",
+              "topics",
+              "provenance"
+            ]
+          }
         },
         {
           "key": "contact",
@@ -191,7 +483,23 @@
           "patterns": [
             "seo-geo-theme/contact",
             "seo-geo-theme/faq"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "conversion-contact",
+            "required_sections": [
+              "contact-purpose",
+              "visible-contact-method",
+              "expectation-or-response-context"
+            ],
+            "internal_link_targets": [
+              "services",
+              "privacy-policy"
+            ],
+            "retrieval_units": [
+              "contact-facts",
+              "service-context"
+            ]
+          }
         },
         {
           "key": "privacy-policy",
@@ -199,7 +507,19 @@
           "slug": "politica-de-privacidad",
           "role": "legal",
           "template": "page",
-          "patterns": []
+          "patterns": [],
+          "content_contract": {
+            "primary_intent": "legal-compliance",
+            "required_sections": [
+              "authoritative-legal-content"
+            ],
+            "internal_link_targets": [
+              "contact"
+            ],
+            "retrieval_units": [
+              "legal-facts"
+            ]
+          }
         },
         {
           "key": "legal-notice",
@@ -207,7 +527,19 @@
           "slug": "aviso-legal",
           "role": "legal",
           "template": "page",
-          "patterns": []
+          "patterns": [],
+          "content_contract": {
+            "primary_intent": "legal-compliance",
+            "required_sections": [
+              "authoritative-legal-content"
+            ],
+            "internal_link_targets": [
+              "contact"
+            ],
+            "retrieval_units": [
+              "legal-facts"
+            ]
+          }
         }
       ],
       "repeatable": [
@@ -221,7 +553,32 @@
             "seo-geo-theme/services-features",
             "seo-geo-theme/faq",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "service-evaluation",
+            "required_sections": [
+              "service-definition",
+              "audience-or-problem",
+              "scope-or-deliverables",
+              "process-or-method",
+              "verified-evidence",
+              "faq-if-useful",
+              "related-links",
+              "primary-cta"
+            ],
+            "internal_link_targets": [
+              "services",
+              "case-study",
+              "contact"
+            ],
+            "retrieval_units": [
+              "definition",
+              "scope",
+              "process",
+              "evidence",
+              "faq-if-useful"
+            ]
+          }
         },
         {
           "key": "case-study",
@@ -232,7 +589,30 @@
             "seo-geo-theme/hero",
             "seo-geo-theme/corporate-stats",
             "seo-geo-theme/cta"
-          ]
+          ],
+          "content_contract": {
+            "primary_intent": "proof-evaluation",
+            "required_sections": [
+              "context",
+              "challenge",
+              "approach",
+              "verified-outcomes",
+              "evidence-or-method",
+              "related-service",
+              "attribution-if-permitted"
+            ],
+            "internal_link_targets": [
+              "work",
+              "service-detail",
+              "contact"
+            ],
+            "retrieval_units": [
+              "context",
+              "method",
+              "verified-outcomes",
+              "evidence"
+            ]
+          }
         }
       ]
     }

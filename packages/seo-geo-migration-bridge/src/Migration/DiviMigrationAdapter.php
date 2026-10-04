@@ -356,7 +356,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			throw new RuntimeException( 'Nested Divi module inside text module is not supported.' );
 		}
 
-		return $text;
+		return $this->normalize_legacy_divi_text( $text );
 	}
 
 	/**
@@ -365,6 +365,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	 * @param string $html Trusted legacy HTML after WordPress sanitization.
 	 */
 	private function html_block( string $html ): string {
+		$html = $this->normalize_legacy_divi_text( $html );
+
 		return '<!-- wp:html -->' . wp_kses_post( $html ) . '<!-- /wp:html -->';
 	}
 
@@ -395,6 +397,11 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 			if ( is_string( $attachment_url ) && '' !== $attachment_url ) {
 				$url = $attachment_url;
 			}
+		} elseif ( '' !== $url ) {
+			$resolved_id = attachment_url_to_postid( $url );
+			if ( 0 < $resolved_id ) {
+				$id = $resolved_id;
+			}
 		}
 
 		if ( '' === $url ) {
@@ -403,9 +410,37 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 
 		$alt        = isset( $attrs['alt'] ) && is_string( $attrs['alt'] ) ? $attrs['alt'] : '';
 		$attrs_json = 0 < $id ? ' {"id":' . $id . ',"sizeSlug":"full","linkDestination":"none"}' : ' {"sizeSlug":"full","linkDestination":"none"}';
-		$class      = 0 < $id ? ' class="wp-image-' . $id . '"' : '';
+		$image_html = $this->responsive_image_markup( $id, $url, $alt );
 
-		return '<!-- wp:image' . $attrs_json . ' --><figure class="wp-block-image size-full"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt ) . '"' . $class . '/></figure><!-- /wp:image -->';
+		return '<!-- wp:image' . $attrs_json . ' --><figure class="wp-block-image size-full">' . $image_html . '</figure><!-- /wp:image -->';
+	}
+
+	/**
+	 * Build responsive image HTML while preserving WordPress runtime loading
+	 * heuristics for likely LCP media.
+	 *
+	 * @param int    $attachment_id WordPress attachment ID when available.
+	 * @param string $url           Fallback public image URL.
+	 * @param string $alt           Alternative text.
+	 */
+	private function responsive_image_markup( int $attachment_id, string $url, string $alt ): string {
+		if ( 0 < $attachment_id ) {
+			$markup = wp_get_attachment_image(
+				$attachment_id,
+				'full',
+				false,
+				array(
+					'alt'     => $alt,
+					'loading' => false,
+				)
+			);
+
+			if ( '' !== $markup ) {
+				return $markup;
+			}
+		}
+
+		return '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt ) . '" decoding="async"/>';
 	}
 
 	/**
@@ -426,10 +461,10 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		$blocks  = array();
 
 		if ( '' !== $image ) {
-			$blocks[] = '<!-- wp:image {"sizeSlug":"full","linkDestination":"none","className":"seo-geo-migrated-divi-header-image"} --><figure class="wp-block-image size-full seo-geo-migrated-divi-header-image"><img src="' . esc_url( $image ) . '" alt=""/></figure><!-- /wp:image -->';
+			$blocks[] = '<!-- wp:image {"sizeSlug":"full","linkDestination":"none","className":"seo-geo-migrated-divi-header-image"} --><figure class="wp-block-image size-full seo-geo-migrated-divi-header-image">' . $this->responsive_image_markup( attachment_url_to_postid( $image ), $image, '' ) . '</figure><!-- /wp:image -->';
 		}
 		if ( '' !== $title ) {
-			$blocks[] = '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">' . esc_html( wp_strip_all_tags( $title ) ) . '</h1><!-- /wp:heading -->';
+			$blocks[] = '<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">' . esc_html( wp_strip_all_tags( $title ) ) . '</h2><!-- /wp:heading -->';
 		}
 		if ( '' !== $subhead ) {
 			$blocks[] = '<!-- wp:paragraph --><p>' . esc_html( wp_strip_all_tags( $subhead ) ) . '</p><!-- /wp:paragraph -->';
@@ -501,7 +536,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		$parts = array();
 
 		if ( '' !== $image ) {
-			$parts[] = '<!-- wp:image {"sizeSlug":"full","linkDestination":"none"} --><figure class="wp-block-image size-full"><img src="' . esc_url( $image ) . '" alt=""/></figure><!-- /wp:image -->';
+			$parts[] = '<!-- wp:image {"sizeSlug":"full","linkDestination":"none"} --><figure class="wp-block-image size-full">' . $this->responsive_image_markup( attachment_url_to_postid( $image ), $image, '' ) . '</figure><!-- /wp:image -->';
 		}
 		if ( '' !== $title ) {
 			$title_html = esc_html( wp_strip_all_tags( $title ) );
@@ -565,7 +600,8 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		$parts    = array();
 
 		if ( '' !== $portrait ) {
-			$parts[] = '<!-- wp:image {"width":"96px","height":"96px","scale":"cover","sizeSlug":"full","linkDestination":"none"} --><figure class="wp-block-image size-full is-resized"><img src="' . esc_url( $portrait ) . '" alt="" style="object-fit:cover;width:96px;height:96px"/></figure><!-- /wp:image -->';
+			$portrait_markup = $this->responsive_image_markup( attachment_url_to_postid( $portrait ), $portrait, $author );
+			$parts[]         = '<!-- wp:image {"width":"96px","height":"96px","scale":"cover","sizeSlug":"full","linkDestination":"none"} --><figure class="wp-block-image size-full is-resized">' . $portrait_markup . '</figure><!-- /wp:image -->';
 		}
 		if ( '' !== $quote ) {
 			$parts[] = '<!-- wp:quote --><blockquote class="wp-block-quote">' . wp_kses_post( $quote ) . '</blockquote><!-- /wp:quote -->';
@@ -696,6 +732,21 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Normalize one bounded legacy Divi text placeholder.
+	 *
+	 * @param string $value Legacy text or sanitized HTML.
+	 */
+	private function normalize_legacy_divi_text( string $value ): string {
+		if ( '' === $value || ! str_contains( $value, '{' ) ) {
+			return $value;
+		}
+
+		$normalized = preg_replace( '/\\{[a-f0-9]{64}\\}/i', '%', $value );
+
+		return is_string( $normalized ) ? $normalized : $value;
 	}
 
 	/**

@@ -72,12 +72,44 @@ CORPORATE_NAV_BLOCK_REGISTERED="$(wp_cli eval '$registry = WP_Block_Type_Registr
 [[ "$CORPORATE_NAV_BLOCK_REGISTERED" == "1" ]] \
   || fail_smoke "corporate-nav-block" "Preset navigation dynamic block was not registered" "1" "$CORPORATE_NAV_BLOCK_REGISTERED"
 
+printf '[self-contained] Checking Corporate SEO/GEO rendered-content semantics.\n'
+CORPORATE_SEMANTIC_TOKEN='d276abfeceab40cca0e158fc6217176554b8e54a1f85b6eb004941797db52171'
+CORPORATE_SEMANTIC_CONTENT='<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">Legacy inner H1</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Accuracy 100{'"$CORPORATE_SEMANTIC_TOKEN"'}</p><!-- /wp:paragraph -->'
+CORPORATE_SEMANTIC_PAGE_ID="$(wp_cli post create --post_type=page --post_status=publish --post_title='Corporate Semantic Guard' --post_name='corporate-semantic-guard' --post_content="$CORPORATE_SEMANTIC_CONTENT" --porcelain 2>"${TMP_DIR}/corporate-semantic-create.stderr" | tr -d '\r\n')"
+[[ "$CORPORATE_SEMANTIC_PAGE_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "corporate-semantic-page" "Could not create Corporate semantic guard fixture" "numeric page ID" "$CORPORATE_SEMANTIC_PAGE_ID"
+
+CORPORATE_SEMANTIC_HTML="$(curl -fsS "$BASE_URL/corporate-semantic-guard/" 2>"${TMP_DIR}/corporate-semantic-http.stderr")" \
+  || fail_smoke "corporate-semantic-http" "Could not fetch Corporate semantic guard page" "HTTP 200 HTML" "$(head -c 240 "${TMP_DIR}/corporate-semantic-http.stderr" 2>/dev/null || true)"
+
+CORPORATE_H1_COUNT="$(printf '%s' "$CORPORATE_SEMANTIC_HTML" | grep -Eoi '<h1([[:space:]>])' | wc -l | tr -d ' ')"
+[[ "$CORPORATE_H1_COUNT" == "1" ]] \
+  || fail_smoke "corporate-single-h1" "Corporate singular HTML did not preserve exactly one document H1" "1" "$CORPORATE_H1_COUNT"
+
+[[ "$CORPORATE_SEMANTIC_HTML" == *">Legacy inner H1</h2>"* ]] \
+  || fail_smoke "corporate-content-h1-downgrade" "Legacy content H1 was not rendered as H2 under the page-owned H1" "Legacy inner H1 rendered as h2" "$CORPORATE_SEMANTIC_HTML"
+
+[[ "$CORPORATE_SEMANTIC_HTML" == *"Accuracy 100%"* ]] \
+  || fail_smoke "corporate-legacy-percent-visible" "Legacy Divi percentage placeholder was not normalized in public HTML" "Accuracy 100%" "$CORPORATE_SEMANTIC_HTML"
+
+[[ "$CORPORATE_SEMANTIC_HTML" != *"$CORPORATE_SEMANTIC_TOKEN"* ]] \
+  || fail_smoke "corporate-legacy-percent-token" "Legacy Divi percentage token leaked into public HTML" "token absent" "$CORPORATE_SEMANTIC_TOKEN"
+
+CORPORATE_MARKDOWN="$(wp_cli eval '$post = get_post( '"$CORPORATE_SEMANTIC_PAGE_ID"' ); $resolver = \SeoGeo\Core\Runtime::markdown_alternates(); if ( ! $post instanceof WP_Post || null === $resolver ) { exit( 1 ); } $html_url = get_permalink( $post ); echo $resolver->render_markdown( array( "post" => $post, "html_url" => $html_url, "markdown_url" => $html_url . "index.md", "language" => null ) );' 2>"${TMP_DIR}/corporate-semantic-markdown.stderr")" \
+  || fail_smoke "corporate-semantic-markdown" "Could not render Corporate GEO Markdown fixture" "Markdown output" "$(head -c 240 "${TMP_DIR}/corporate-semantic-markdown.stderr" 2>/dev/null || true)"
+
+[[ "$CORPORATE_MARKDOWN" == *"Accuracy 100%"* ]] \
+  || fail_smoke "corporate-markdown-percent-visible" "GEO Markdown did not receive normalized authored text" "Accuracy 100%" "$CORPORATE_MARKDOWN"
+
+[[ "$CORPORATE_MARKDOWN" != *"$CORPORATE_SEMANTIC_TOKEN"* ]] \
+  || fail_smoke "corporate-markdown-percent-token" "Legacy Divi percentage token leaked into GEO Markdown" "token absent" "$CORPORATE_SEMANTIC_TOKEN"
+
 if ! CORPORATE_MANIFEST="$(wp_cli eval '$manifest = seo_geo_theme_preset_document( "corporate", "preset.json" ); if ( ! is_array( $manifest ) ) { exit( 1 ); } echo wp_json_encode( array( "id" => $manifest["id"] ?? null, "site_type" => $manifest["site_type"] ?? null, "confirmation" => $manifest["schema"]["requires_confirmation"] ?? null, "visual" => $manifest["visual"]["design_system"] ?? null ) );' 2>"${TMP_DIR}/corporate-preset-manifest.stderr" | tr -d '\r\n')"; then
   CORPORATE_MANIFEST_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-manifest.stderr" | head -c 240)"
   fail_smoke "corporate-preset-manifest-eval" "Could not resolve Corporate preset manifest through the theme registry" "manifest resolves" "${CORPORATE_MANIFEST_ERROR:-wp eval failed}" "wp eval seo_geo_theme_preset_document"
 fi
-[[ "$CORPORATE_MANIFEST" == '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1.1"}' ]] \
-  || fail_smoke "corporate-preset-manifest" "Corporate preset manifest did not preserve its identity/confirmation/visual contract" '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1"}' "$CORPORATE_MANIFEST"
+[[ "$CORPORATE_MANIFEST" == '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1.2"}' ]] \
+  || fail_smoke "corporate-preset-manifest" "Corporate preset manifest did not preserve its identity/confirmation/visual contract" '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1.2"}' "$CORPORATE_MANIFEST"
 
 if ! CORPORATE_TITLE_EN="$(wp_cli eval '$pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' 2>"${TMP_DIR}/corporate-preset-title-en.stderr" | tr -d '\r\n')"; then
   CORPORATE_TITLE_EN_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-title-en.stderr" | head -c 240)"

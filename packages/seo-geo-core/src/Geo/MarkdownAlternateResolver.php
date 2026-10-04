@@ -466,6 +466,11 @@ final class MarkdownAlternateResolver {
 	private function plain_text( string $value ): string {
 		$value = wp_strip_all_tags( $value, true );
 		$value = preg_replace( '/\s+/u', ' ', $value );
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		$value = apply_filters( 'seo_geo_normalize_authored_text', $value );
 
 		return is_string( $value ) ? trim( $value ) : '';
 	}

@@ -142,6 +142,27 @@ if ( ! is_array( $schema ) || 'organization' !== ( $schema['site_identity'] ?? n
 	fail_corporate_preset( 'schema-confirmation', 'Corporate Organization identity must require explicit confirmation.', CORPORATE_PRESET_DIR . '/preset.json', 'organization + requires_confirmation=true', $schema );
 }
 
+$content_semantics = $manifest['content_semantics'] ?? null;
+$required_semantic_flags = array(
+	'answer_first_where_useful',
+	'entity_clarity_required',
+	'evidence_for_claims_required',
+	'crawlable_internal_links_required',
+	'faq_only_when_user_intent',
+	'author_provenance_when_applicable',
+	'keyword_stuffing_forbidden',
+	'doorway_content_forbidden',
+	'fabricated_proof_forbidden',
+);
+if ( ! is_array( $content_semantics ) ) {
+	fail_corporate_preset( 'content-semantics', 'Corporate preset must declare its SEO/GEO content semantics.', CORPORATE_PRESET_DIR . '/preset.json', 'content semantics object', $content_semantics );
+}
+foreach ( $required_semantic_flags as $semantic_flag ) {
+	if ( true !== ( $content_semantics[ $semantic_flag ] ?? null ) ) {
+		fail_corporate_preset( 'content-semantic-flag', 'Corporate preset weakened a required SEO/GEO content semantic.', CORPORATE_PRESET_DIR . '/preset.json#content_semantics.' . $semantic_flag, true, $content_semantics[ $semantic_flag ] ?? null );
+	}
+}
+
 $required_templates = $manifest['required_templates'] ?? null;
 if ( ! is_array( $required_templates ) ) {
 	fail_corporate_preset( 'templates', 'Corporate preset required_templates is missing.', CORPORATE_PRESET_DIR . '/preset.json', 'template slug list', $required_templates );
@@ -270,6 +291,19 @@ foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
 		$slugs[ $page['slug'] ] = true;
 		$roles[ $page['role'] ] = ( $roles[ $page['role'] ] ?? 0 ) + 1;
 
+		$content_contract = $page['content_contract'] ?? null;
+		if (
+			! is_array( $content_contract )
+			|| ! is_string( $content_contract['primary_intent'] ?? null )
+			|| ! is_array( $content_contract['required_sections'] ?? null )
+			|| array() === $content_contract['required_sections']
+			|| ! is_array( $content_contract['internal_link_targets'] ?? null )
+			|| ! is_array( $content_contract['retrieval_units'] ?? null )
+			|| array() === $content_contract['retrieval_units']
+		) {
+			fail_corporate_preset( 'page-content-contract', 'Corporate page is missing a machine-readable SEO/GEO content contract.', CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.' . $page['key'], 'intent + sections + internal links + retrieval units', $content_contract );
+		}
+
 		$page_patterns = $page['patterns'] ?? array();
 		if ( ! is_array( $page_patterns ) ) {
 			fail_corporate_preset( 'page-patterns', 'Corporate page pattern composition must be a list.', CORPORATE_PRESET_DIR . '/content-map.json', 'pattern list', $page_patterns );
@@ -293,6 +327,28 @@ if ( $page_keys_by_locale['en_US'] !== $page_keys_by_locale['es_ES'] ) {
 	fail_corporate_preset( 'page-key-parity', 'Corporate EN/ES page maps must describe the same logical pages.', CORPORATE_PRESET_DIR . '/content-map.json', $page_keys_by_locale['en_US'], $page_keys_by_locale['es_ES'] );
 }
 
+foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
+	$repeatables = $locales[ $locale ]['repeatable'] ?? null;
+	if ( ! is_array( $repeatables ) || 2 !== count( $repeatables ) ) {
+		fail_corporate_preset( 'repeatable-count', 'Corporate must define service-detail and case-study repeatable content contracts.', CORPORATE_PRESET_DIR . '/content-map.json', 2, is_array( $repeatables ) ? count( $repeatables ) : $repeatables );
+	}
+
+	foreach ( $repeatables as $repeatable ) {
+		$contract = is_array( $repeatable ) ? ( $repeatable['content_contract'] ?? null ) : null;
+		if (
+			! is_array( $contract )
+			|| ! is_string( $contract['primary_intent'] ?? null )
+			|| ! is_array( $contract['required_sections'] ?? null )
+			|| array() === $contract['required_sections']
+			|| ! is_array( $contract['internal_link_targets'] ?? null )
+			|| ! is_array( $contract['retrieval_units'] ?? null )
+			|| array() === $contract['retrieval_units']
+		) {
+			fail_corporate_preset( 'repeatable-content-contract', 'Corporate repeatable content is missing its SEO/GEO contract.', CORPORATE_PRESET_DIR . '/content-map.json#' . $locale, 'intent + sections + internal links + retrieval units', $contract );
+		}
+	}
+}
+
 printf(
-	"Corporate preset contract OK: manifest/templates/Schema confirmation, 3 bilingual preset patterns and 8-page EN/ES content maps pass.\n"
+	"Corporate preset contract OK: manifest/templates/Schema confirmation, SEO/GEO content semantics, 3 bilingual preset patterns and EN/ES page/repeatable content contracts pass.\n"
 );
