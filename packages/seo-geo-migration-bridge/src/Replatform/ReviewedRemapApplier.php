@@ -442,7 +442,7 @@ final class ReviewedRemapApplier {
 			'verified_sections' => is_array( $ledger['verified_sections'] ?? null ) ? $ledger['verified_sections'] : array(),
 		);
 		update_post_meta( $draft_id, self::ROLLBACK_META, $rollback );
-		delete_post_meta( $draft_id, self::LEDGER_META );
+		update_post_meta( $draft_id, self::LEDGER_META, '' );
 
 		return array(
 			'schema_version'   => 1,
