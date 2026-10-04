@@ -85,8 +85,8 @@ final class NativeReviewEvidence {
 			$blockers[] = 'reviewed-draft-drift';
 		}
 
-		$backup_sha  = is_array( $backup ) ? (string) ( $backup['sha256'] ?? '' ) : '';
-		$backup_body = is_array( $backup ) && isset( $backup['content'] ) && is_string( $backup['content'] )
+		$backup_sha         = is_array( $backup ) ? (string) ( $backup['sha256'] ?? '' ) : '';
+		$backup_body        = is_array( $backup ) && isset( $backup['content'] ) && is_string( $backup['content'] )
 			? $backup['content']
 			: '';
 		$rollback_available = '' !== $backup_sha
