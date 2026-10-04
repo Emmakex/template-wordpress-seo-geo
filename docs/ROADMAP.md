@@ -2721,7 +2721,7 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **active — Home scaffold, content, native SEO handoff and field-pilot readiness accepted; deterministic EMMAKE field-pilot pack is the current gate**
+Status: **active — Home pilot product path accepted; real `/nuevaweb/` field execution is the current gate**
 
 Home scaffold milestone:
 
@@ -2882,7 +2882,7 @@ Accepted behavior:
 
 #### 10E.4D.6 — Deterministic EMMAKE field-pilot pack
 
-Status: **active — field handoff packaging is the current execution pointer**
+Status: **accepted — PR #228 / 3 of 3 CI gates green / merge `0c6ff6620a8d25514a95d7b30e29cf563eecf0ce`**
 
 Goal:
 
@@ -2902,11 +2902,20 @@ Candidate behavior:
 - pack has no automatic production-cutover action;
 - CI builds the pack twice and requires byte-for-byte reproducibility.
 
-Next only after acceptance:
+Accepted behavior:
 
-- take the CI-produced `emmake-home-field-pilot-pack.zip`;
+- deterministic outer field-pilot ZIP produced and preserved by CI;
+- nested Theme and Migration Bridge ZIPs are installable;
+- component and outer SHA-256 identities are verified;
+- Emmake blueprint remains portable and evidence groups remain disabled;
+- bundled runbook keeps the pilot sandbox-only and forbids automatic cutover;
+- dedicated Field Pilot Pack CI, Foundation CI and Release Artifact CI all passed.
+
+Current execution pointer:
+
+- deploy the accepted field-pilot pack to `emmake.com/nuevaweb/`;
 - verify its outer SHA-256;
-- execute the bundled runbook on `emmake.com/nuevaweb/`;
+- execute the bundled runbook;
 - require Step 7 `ready_for_browser_qa=true`;
 - fill the five browser QA evidence fields;
 - only then decide whether Home cutover is eligible for explicit approval.
