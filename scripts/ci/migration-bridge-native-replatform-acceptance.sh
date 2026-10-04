@@ -114,6 +114,64 @@ $invalid_candidate = $applier->plan(
 	),
 	array()
 );
+
+$source_drift_update = wp_update_post(
+	array(
+		'ID'           => $home_id,
+		'post_content' => (string) $source_before?->post_content . "\n<!-- wp:paragraph --><p>Temporary CI drift sentinel.</p><!-- /wp:paragraph -->",
+	),
+	true
+);
+if ( is_wp_error( $source_drift_update ) ) {
+	throw new RuntimeException( $source_drift_update->get_error_message() );
+}
+$blocked_source_drift = $applier->plan( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
+
+$source_restore = wp_update_post(
+	array(
+		'ID'           => $home_id,
+		'post_content' => (string) $source_before?->post_content,
+	),
+	true
+);
+if ( is_wp_error( $source_restore ) ) {
+	throw new RuntimeException( $source_restore->get_error_message() );
+}
+
+$draft_before_drift = get_post( $draft_id );
+if ( ! $draft_before_drift instanceof WP_Post ) {
+	throw new RuntimeException( 'Native draft disappeared before marker drift acceptance.' );
+}
+
+$value_marker          = NativeCompositionService::slot_marker( 'value-proposition' );
+$draft_drifted_content = str_replace( $value_marker, '', (string) $draft_before_drift->post_content, $removed_markers );
+if ( 1 !== $removed_markers ) {
+	throw new RuntimeException( 'Expected exactly one value-proposition marker before marker drift acceptance.' );
+}
+
+$draft_drift_update = wp_update_post(
+	array(
+		'ID'           => $draft_id,
+		'post_content' => $draft_drifted_content,
+	),
+	true
+);
+if ( is_wp_error( $draft_drift_update ) ) {
+	throw new RuntimeException( $draft_drift_update->get_error_message() );
+}
+$blocked_slot_drift = $applier->plan( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
+
+$draft_restore = wp_update_post(
+	array(
+		'ID'           => $draft_id,
+		'post_content' => (string) $draft_before_drift->post_content,
+	),
+	true
+);
+if ( is_wp_error( $draft_restore ) ) {
+	throw new RuntimeException( $draft_restore->get_error_message() );
+}
+
 $apply_plan = $applier->plan( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
 $apply_first = $applier->apply( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
 if ( is_wp_error( $apply_first ) ) {
@@ -149,6 +207,8 @@ echo wp_json_encode(
 		'second' => $second,
 		'blocked_sensitive' => $blocked_sensitive,
 		'invalid_candidate' => $invalid_candidate,
+		'blocked_source_drift' => $blocked_source_drift,
+		'blocked_slot_drift' => $blocked_slot_drift,
 		'apply_plan' => $apply_plan,
 		'apply_first' => $apply_first,
 		'apply_second' => $apply_second,
@@ -282,6 +342,16 @@ invalid = report["invalid_candidate"]
 assert invalid["ready"] is False
 assert "asset-not-candidate:value-proposition:u-not-a-candidate" in invalid["blockers"]
 
+source_drift = report["blocked_source_drift"]
+assert source_drift["ready"] is False
+assert "source-content-drift" in source_drift["blockers"]
+assert "native-plan-drift" in source_drift["blockers"]
+assert "content-remap-plan-drift" in source_drift["blockers"]
+
+slot_drift = report["blocked_slot_drift"]
+assert slot_drift["ready"] is False
+assert "native-slot-marker-count:value-proposition:0" in slot_drift["blockers"]
+
 apply_plan = report["apply_plan"]
 assert apply_plan["ready"] is True
 assert apply_plan["mode"] == "reviewed-remap-apply-plan"
@@ -370,4 +440,4 @@ PY
   fail_smoke "native-replatform-assertions" "Native Replatform composer violated draft/source/composition invariants" "all assertions pass" "assertion failure"
 fi
 
-printf '[smoke] Native Replatform Composer OK: native draft created once, reviewed candidate-only remap applied idempotently to deterministic slots, evidence required explicit verification, source remained untouched and public mutation stayed locked.\n'
+printf '[smoke] Native Replatform Composer OK: native draft created once, reviewed candidate-only remap rejected source/slot drift, applied idempotently to deterministic slots, evidence required explicit verification, source remained untouched and public mutation stayed locked.\n'
