@@ -1,6 +1,273 @@
 {
   "schema_version": 1,
   "preset": "corporate",
+  "native_content_models": {
+    "corporate-home-v1": {
+      "schema_version": 1,
+      "page_key": "home",
+      "slot_prefix": "seo-geo-content-slot--",
+      "slots": [
+        {
+          "id": "hero-eyebrow",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "hero-lead",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "hero-primary-cta",
+          "type": "link",
+          "required": true
+        },
+        {
+          "id": "hero-secondary-cta",
+          "type": "link",
+          "required": false
+        },
+        {
+          "id": "hero-proof-heading",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "hero-proof"
+        },
+        {
+          "id": "hero-proof-list",
+          "type": "list",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "hero-proof"
+        },
+        {
+          "id": "capabilities-heading",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capabilities-intro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-1-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-1-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-1-link",
+          "type": "link",
+          "required": true
+        },
+        {
+          "id": "capability-2-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-2-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-2-link",
+          "type": "link",
+          "required": true
+        },
+        {
+          "id": "capability-3-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-3-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-3-link",
+          "type": "link",
+          "required": true
+        },
+        {
+          "id": "proof-heading",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-1-title",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-1-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-2-title",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-2-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-3-title",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-3-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "case-heading",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "case-study"
+        },
+        {
+          "id": "case-intro",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "case-study"
+        },
+        {
+          "id": "case-challenge-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "case-study"
+        },
+        {
+          "id": "case-approach-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "case-study"
+        },
+        {
+          "id": "case-result-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "case-study"
+        },
+        {
+          "id": "process-heading",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-intro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-1-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-1-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-2-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-2-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-3-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-3-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "insights-heading",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "insights-intro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "final-cta-heading",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "final-cta-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "final-cta-button",
+          "type": "link",
+          "required": true
+        }
+      ],
+      "section_policy": [
+        {
+          "section_class": "seo-geo-corporate-native-proof",
+          "mode": "omit-unless-verified",
+          "verification_group": "proof"
+        },
+        {
+          "section_class": "seo-geo-corporate-case-study",
+          "mode": "omit-unless-verified",
+          "verification_group": "case-study"
+        }
+      ],
+      "dynamic_sections": [
+        "seo-geo-corporate-native-insights"
+      ],
+      "safety": {
+        "legacy_layout_input": false,
+        "fabricated_evidence_allowed": false,
+        "unverified_optional_sections_omitted": true
+      }
+    }
+  },
   "locales": {
     "en_US": {
       "pages": [
@@ -21,6 +288,7 @@
           ],
           "content_contract": {
             "primary_intent": "corporate-discovery",
+            "native_content_model": "corporate-home-v1",
             "required_sections": [
               "value-proposition",
               "service-overview",
@@ -352,6 +620,7 @@
           ],
           "content_contract": {
             "primary_intent": "corporate-discovery",
+            "native_content_model": "corporate-home-v1",
             "required_sections": [
               "value-proposition",
               "service-overview",

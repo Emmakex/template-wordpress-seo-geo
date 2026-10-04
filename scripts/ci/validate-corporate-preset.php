@@ -297,6 +297,149 @@ $required_native_home_patterns = array(
 	'seo-geo-theme/cta',
 );
 
+$corporate_home_model = $content['native_content_models']['corporate-home-v1'] ?? null;
+$expected_home_slots = array(
+	'hero-eyebrow',
+	'hero-lead',
+	'hero-primary-cta',
+	'hero-secondary-cta',
+	'hero-proof-heading',
+	'hero-proof-list',
+	'capabilities-heading',
+	'capabilities-intro',
+	'capability-1-title',
+	'capability-1-body',
+	'capability-1-link',
+	'capability-2-title',
+	'capability-2-body',
+	'capability-2-link',
+	'capability-3-title',
+	'capability-3-body',
+	'capability-3-link',
+	'proof-heading',
+	'proof-1-title',
+	'proof-1-body',
+	'proof-2-title',
+	'proof-2-body',
+	'proof-3-title',
+	'proof-3-body',
+	'case-heading',
+	'case-intro',
+	'case-challenge-body',
+	'case-approach-body',
+	'case-result-body',
+	'process-heading',
+	'process-intro',
+	'process-1-title',
+	'process-1-body',
+	'process-2-title',
+	'process-2-body',
+	'process-3-title',
+	'process-3-body',
+	'insights-heading',
+	'insights-intro',
+	'final-cta-heading',
+	'final-cta-body',
+	'final-cta-button',
+);
+
+if (
+	! is_array( $corporate_home_model )
+	|| 1 !== ( $corporate_home_model['schema_version'] ?? null )
+	|| 'home' !== ( $corporate_home_model['page_key'] ?? null )
+	|| 'seo-geo-content-slot--' !== ( $corporate_home_model['slot_prefix'] ?? null )
+) {
+	fail_corporate_preset(
+		'home-content-model',
+		'Corporate Home must expose the stable native content model used by rebuild and future content operations.',
+		CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-home-v1',
+		'schema_version=1, page_key=home, stable slot prefix',
+		$corporate_home_model
+	);
+}
+
+$model_slots = is_array( $corporate_home_model['slots'] ?? null ) ? $corporate_home_model['slots'] : array();
+$model_slot_ids = array();
+foreach ( $model_slots as $slot ) {
+	if (
+		! is_array( $slot )
+		|| ! is_string( $slot['id'] ?? null )
+		|| ! in_array( $slot['type'] ?? null, array( 'text', 'link', 'list' ), true )
+		|| ! is_bool( $slot['required'] ?? null )
+		|| isset( $model_slot_ids[ $slot['id'] ] )
+	) {
+		fail_corporate_preset(
+			'home-content-slot',
+			'Corporate Home content slots must have unique IDs, supported types and an explicit required flag.',
+			CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-home-v1.slots',
+			'unique id + text/link/list + required boolean',
+			$slot
+		);
+	}
+	$model_slot_ids[ $slot['id'] ] = true;
+
+	if (
+		true === ( $slot['requires_verification'] ?? false )
+		&& ! is_string( $slot['verification_group'] ?? null )
+	) {
+		fail_corporate_preset(
+			'home-content-verification',
+			'Every evidence-sensitive Corporate Home slot must belong to an explicit verification group.',
+			CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-home-v1.slots.' . $slot['id'],
+			'verification_group string',
+			$slot
+		);
+	}
+}
+if ( array_keys( $model_slot_ids ) !== $expected_home_slots ) {
+	fail_corporate_preset(
+		'home-content-slot-set',
+		'Corporate Home native content slot set/order is not canonical.',
+		CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-home-v1.slots',
+		json_encode( $expected_home_slots ),
+		array_keys( $model_slot_ids )
+	);
+}
+
+$section_policy = $corporate_home_model['section_policy'] ?? null;
+$expected_section_policy = array(
+	array(
+		'section_class'      => 'seo-geo-corporate-native-proof',
+		'mode'               => 'omit-unless-verified',
+		'verification_group' => 'proof',
+	),
+	array(
+		'section_class'      => 'seo-geo-corporate-case-study',
+		'mode'               => 'omit-unless-verified',
+		'verification_group' => 'case-study',
+	),
+);
+if ( ! is_array( $section_policy ) || array_values( $section_policy ) !== $expected_section_policy ) {
+	fail_corporate_preset(
+		'home-content-section-policy',
+		'Unverified proof/case-study sections must be omitted rather than published with placeholders or fabricated evidence.',
+		CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-home-v1.section_policy',
+		json_encode( $expected_section_policy ),
+		$section_policy
+	);
+}
+
+$model_safety = $corporate_home_model['safety'] ?? null;
+if (
+	! is_array( $model_safety )
+	|| false !== ( $model_safety['legacy_layout_input'] ?? null )
+	|| false !== ( $model_safety['fabricated_evidence_allowed'] ?? null )
+	|| true !== ( $model_safety['unverified_optional_sections_omitted'] ?? null )
+) {
+	fail_corporate_preset(
+		'home-content-safety',
+		'Corporate Home content model must exclude legacy layout input and fabricated/unverified evidence.',
+		CORPORATE_PRESET_DIR . '/content-map.json#native_content_models.corporate-home-v1.safety',
+		'legacy_layout_input=false, fabricated_evidence_allowed=false, unverified_optional_sections_omitted=true',
+		$model_safety
+	);
+}
+
 $required_native_home_remap_slots = array(
 	array(
 		'section'       => 'value-proposition',
@@ -358,6 +501,16 @@ foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
 			|| array() === $content_contract['retrieval_units']
 		) {
 			fail_corporate_preset( 'page-content-contract', 'Corporate page is missing a machine-readable SEO/GEO content contract.', CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.' . $page['key'], 'intent + sections + internal links + retrieval units', $content_contract );
+		}
+
+		if ( 'home' === $page['key'] && 'corporate-home-v1' !== ( $content_contract['native_content_model'] ?? null ) ) {
+			fail_corporate_preset(
+				'native-home-content-model-ref',
+				'Corporate Home locale contract must reference the canonical native content model.',
+				CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.home.content_contract.native_content_model',
+				'corporate-home-v1',
+				$content_contract['native_content_model'] ?? null
+			);
 		}
 
 		if ( 'home' === $page['key'] && array_values( $page['patterns'] ?? array() ) !== $required_native_home_patterns ) {
@@ -425,6 +578,58 @@ foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
 		) {
 			fail_corporate_preset( 'repeatable-content-contract', 'Corporate repeatable content is missing its SEO/GEO contract.', CORPORATE_PRESET_DIR . '/content-map.json#' . $locale, 'intent + sections + internal links + retrieval units', $contract );
 		}
+	}
+}
+
+$slot_prefix = 'seo-geo-content-slot--';
+$slot_occurrences = array_fill_keys( $expected_home_slots, 0 );
+foreach ( $pattern_rows as $pattern ) {
+	if ( ! is_array( $pattern ) || ! is_string( $pattern['slug'] ?? null ) ) {
+		continue;
+	}
+	foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
+		$markup = is_array( $pattern['locales'][ $locale ] ?? null )
+			? (string) ( $pattern['locales'][ $locale ]['content'] ?? '' )
+			: '';
+		foreach ( $expected_home_slots as $slot_id ) {
+			if ( str_starts_with( $slot_id, 'final-cta-' ) ) {
+				continue;
+			}
+			$count = substr_count( $markup, $slot_prefix . $slot_id );
+			if ( 0 < $count ) {
+				$slot_occurrences[ $slot_id ] += $count;
+			}
+		}
+	}
+}
+
+$cta_path = CORPORATE_THEME_DIR . '/patterns/cta.php';
+$cta_markup = is_file( $cta_path ) ? (string) file_get_contents( $cta_path ) : '';
+foreach ( $slot_occurrences as $slot_id => $count ) {
+	if ( str_starts_with( $slot_id, 'final-cta-' ) ) {
+		continue;
+	}
+	if ( 4 !== $count ) {
+		fail_corporate_preset(
+			'home-content-slot-marker',
+			'Every localized Corporate Home slot must exist once per locale as a block attribute + HTML class.',
+			CORPORATE_PRESET_DIR . '/patterns.json',
+			$slot_id . ' marker count=4 across EN/ES',
+			$count
+		);
+	}
+}
+
+foreach ( array( 'final-cta-heading', 'final-cta-body', 'final-cta-button' ) as $slot_id ) {
+	$count = substr_count( $cta_markup, $slot_prefix . $slot_id );
+	if ( 2 !== $count ) {
+		fail_corporate_preset(
+			'home-content-cta-slot-marker',
+			'The runtime-localized CTA slot must exist once as a block attribute and once as an HTML class.',
+			$cta_path,
+			$slot_id . ' marker count=2',
+			$count
+		);
 	}
 }
 

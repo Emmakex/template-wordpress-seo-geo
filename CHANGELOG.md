@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Corporate Home adds **native content contract v1**: stable semantic slot IDs across EN/ES patterns and the base CTA, typed required/optional fields, explicit verification groups for proof/case-study material, and `omit-unless-verified` policy so future hydration/Manager workflows never depend on placeholder strings or legacy block positions.
+
 - Migration Bridge 0.8.52 adds **Clean Corporate Home rebuild v1**: a private, idempotent Home draft composed only from Theme-owned Corporate patterns. It uses Rescue Manifest only to bind the existing front-page identity/URL and verify source integrity; legacy layout, Divi/Elementor markup and mandatory Content Remap are excluded.
 
 - Migration Bridge 0.8.51 adds **Theme + Corporate preset bootstrap** for reset-first rebuilds: a completed Clone Reset is recognized by the Theme as a clean handoff, stale migration reports no longer re-block setup, Corporate configuration is applied only through the Theme-owned SetupExecutor, Organization identity requires explicit administrator confirmation, GEO discovery opt-ins remain conservative by default, and Clone Reset now blocks unless the installed target Theme contains its embedded Core runtime.
