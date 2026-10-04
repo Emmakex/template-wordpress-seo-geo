@@ -26,26 +26,38 @@ final class CorporatePageContentKit {
 	 * @return array<string,mixed>|null
 	 */
 	public function model( string $page_key ): ?array {
-		$definition = $this->page_definition( $page_key );
-		$model_name = is_array( $definition ) && is_array( $definition['content_contract'] ?? null )
-			? (string) ( $definition['content_contract']['native_content_model'] ?? '' )
-			: '';
-		if ( '' === $model_name || ! function_exists( 'seo_geo_theme_preset_document' ) ) {
+		$name = $this->model_name( $page_key );
+		if ( '' === $name || ! function_exists( 'seo_geo_theme_preset_document' ) ) {
 			return null;
 		}
 
-		$document = \seo_geo_theme_preset_document( 'corporate', 'content-map.json' );
-		$model    = is_array( $document ) ? ( $document['native_content_models'][ $model_name ] ?? null ) : null;
+		$page_models = \seo_geo_theme_preset_document( 'corporate', 'page-models.json' );
+		$model       = is_array( $page_models ) ? ( $page_models['native_content_models'][ $name ] ?? null ) : null;
+		if ( is_array( $model ) ) {
+			return $model;
+		}
+
+		$content_map = \seo_geo_theme_preset_document( 'corporate', 'content-map.json' );
+		$model       = is_array( $content_map ) ? ( $content_map['native_content_models'][ $name ] ?? null ) : null;
 
 		return is_array( $model ) ? $model : null;
 	}
 
 	/**
-	 * Return one page's model name.
+	 * Return one page's native model name.
 	 *
 	 * @param string $page_key Corporate page key.
 	 */
 	public function model_name( string $page_key ): string {
+		$page_key = sanitize_key( $page_key );
+		if ( function_exists( 'seo_geo_theme_preset_document' ) ) {
+			$page_models = \seo_geo_theme_preset_document( 'corporate', 'page-models.json' );
+			$name        = is_array( $page_models ) ? ( $page_models['models_by_page'][ $page_key ] ?? null ) : null;
+			if ( is_string( $name ) && '' !== $name ) {
+				return $name;
+			}
+		}
+
 		$definition = $this->page_definition( $page_key );
 		if ( ! is_array( $definition ) || ! is_array( $definition['content_contract'] ?? null ) ) {
 			return '';
@@ -145,9 +157,9 @@ final class CorporatePageContentKit {
 			return new WP_Error( 'seo_geo_page_content_forbidden', 'Administrator capability is required.' );
 		}
 
-		$validated_blueprint = $this->validate_blueprint( $page_key, $blueprint );
-		if ( $validated_blueprint instanceof WP_Error ) {
-			return $validated_blueprint;
+		$portable = $this->validate_blueprint( $page_key, $blueprint );
+		if ( $portable instanceof WP_Error ) {
+			return $portable;
 		}
 
 		$validated = $this->validate(
@@ -155,8 +167,8 @@ final class CorporatePageContentKit {
 			array(
 				'draft_id'        => $draft_id,
 				'plan_sha256'     => $plan_sha,
-				'values'          => $validated_blueprint['values'],
-				'verified_groups' => $validated_blueprint['verified_groups'],
+				'values'          => $portable['values'],
+				'verified_groups' => $portable['verified_groups'],
 			)
 		);
 		if ( $validated instanceof WP_Error ) {
@@ -165,7 +177,7 @@ final class CorporatePageContentKit {
 
 		unset( $validated['kit_sha256'] );
 		$validated['input_mode']       = 'blueprint';
-		$validated['blueprint_sha256'] = (string) $validated_blueprint['blueprint_sha256'];
+		$validated['blueprint_sha256'] = (string) $portable['blueprint_sha256'];
 		$validated['kit_sha256']       = $this->hash_material( $validated );
 
 		return $this->persist( $page_key, $validated );
@@ -262,7 +274,6 @@ final class CorporatePageContentKit {
 			if ( ! is_array( $slot ) || ! is_string( $slot['id'] ?? null ) || ! is_string( $slot['type'] ?? null ) ) {
 				return new WP_Error( 'seo_geo_page_content_model_invalid', 'Corporate page content model contains an invalid slot.' );
 			}
-
 			$slot_types[ $slot['id'] ] = $slot['type'];
 			if ( true === ( $slot['requires_verification'] ?? false ) && is_string( $slot['verification_group'] ?? null ) ) {
 				$allowed_groups[ $slot['verification_group'] ] = true;
@@ -302,6 +313,33 @@ final class CorporatePageContentKit {
 			}
 			if ( ! $this->empty_value( $type, $value ) ) {
 				$values[ $id ] = $value;
+			}
+		}
+
+		foreach ( is_array( $model['required_verified_groups'] ?? null ) ? $model['required_verified_groups'] : array() as $group ) {
+			if ( ! is_string( $group ) || ! isset( $allowed_groups[ $group ] ) || true !== ( $groups[ $group ] ?? false ) ) {
+				$errors[] = 'verified-group:' . ( is_scalar( $group ) ? (string) $group : 'invalid' );
+			}
+		}
+
+		foreach ( is_array( $model['required_any_slots'] ?? null ) ? $model['required_any_slots'] : array() as $slot_group ) {
+			if ( ! is_array( $slot_group ) ) {
+				$errors[] = 'required-any:invalid';
+				continue;
+			}
+			$present = false;
+			$labels  = array();
+			foreach ( $slot_group as $slot_id ) {
+				if ( ! is_string( $slot_id ) || ! isset( $slot_types[ $slot_id ] ) ) {
+					continue;
+				}
+				$labels[] = $slot_id;
+				if ( array_key_exists( $slot_id, $values ) ) {
+					$present = true;
+				}
+			}
+			if ( ! $present ) {
+				$errors[] = 'required-any:' . implode( '|', $labels );
 			}
 		}
 
@@ -380,18 +418,15 @@ final class CorporatePageContentKit {
 		if ( ! function_exists( 'seo_geo_theme_preset_document' ) || ! function_exists( 'seo_geo_theme_preset_locale' ) ) {
 			return null;
 		}
-
 		$document = \seo_geo_theme_preset_document( 'corporate', 'content-map.json' );
 		if ( ! is_array( $document ) ) {
 			return null;
 		}
-
 		$locale = \seo_geo_theme_preset_locale();
 		$pages  = $document['locales'][ $locale ]['pages'] ?? $document['locales']['en_US']['pages'] ?? null;
 		if ( ! is_array( $pages ) ) {
 			return null;
 		}
-
 		foreach ( $pages as $page ) {
 			if ( is_array( $page ) && sanitize_key( (string) ( $page['key'] ?? '' ) ) === sanitize_key( $page_key ) ) {
 				return $page;
@@ -401,11 +436,7 @@ final class CorporatePageContentKit {
 		return null;
 	}
 
-	/**
-	 * Hash one deterministic reviewed-content material array.
-	 *
-	 * @param array<string,mixed> $material Hash input.
-	 */
+	/** Hash deterministic reviewed-content material. */
 	private function hash_material( array $material ): string {
 		return hash(
 			'sha256',
@@ -413,20 +444,12 @@ final class CorporatePageContentKit {
 		);
 	}
 
-	/**
-	 * Resolve the active Corporate preset locale.
-	 */
+	/** Resolve active Corporate preset locale. */
 	private function active_locale(): string {
 		return function_exists( 'seo_geo_theme_preset_locale' ) ? (string) \seo_geo_theme_preset_locale() : get_locale();
 	}
 
-	/**
-	 * Normalize one typed slot value.
-	 *
-	 * @param string $type  Slot type.
-	 * @param mixed  $value Raw slot value.
-	 * @return mixed
-	 */
+	/** Normalize one typed slot value. */
 	private function normalize_value( string $type, mixed $value ): mixed {
 		if ( 'text' === $type ) {
 			return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
@@ -459,12 +482,7 @@ final class CorporatePageContentKit {
 		return null;
 	}
 
-	/**
-	 * Whether one normalized slot value is empty.
-	 *
-	 * @param string $type  Slot type.
-	 * @param mixed  $value Normalized slot value.
-	 */
+	/** Whether one normalized slot value is empty. */
 	private function empty_value( string $type, mixed $value ): bool {
 		if ( 'text' === $type ) {
 			return ! is_string( $value ) || '' === $value;
@@ -479,11 +497,7 @@ final class CorporatePageContentKit {
 		return true;
 	}
 
-	/**
-	 * Accept only HTTP(S), root-relative and fragment links.
-	 *
-	 * @param string $url Candidate link URL.
-	 */
+	/** Accept only HTTP(S), root-relative and fragment links. */
 	private function safe_url( string $url ): string {
 		if ( '' === $url || 1 !== preg_match( '#^(?:https?://|/|\#)#i', $url ) ) {
 			return '';
