@@ -448,6 +448,10 @@ body.seo-geo-preset-corporate :where(a, button, input, textarea, select, summary
 }
 
 /* Process. */
+.seo-geo-preset-corporate .seo-geo-corporate-native-process {
+	container-type: inline-size;
+}
+
 .seo-geo-preset-corporate .seo-geo-corporate-process-grid {
 	gap: 1rem;
 }
