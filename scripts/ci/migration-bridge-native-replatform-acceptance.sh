@@ -172,7 +172,7 @@ if ( is_wp_error( $draft_restore ) ) {
 	throw new RuntimeException( $draft_restore->get_error_message() );
 }
 
-$apply_plan = $applier->plan( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
+$apply_plan  = $applier->plan( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
 $apply_first = $applier->apply( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
 if ( is_wp_error( $apply_first ) ) {
 	throw new RuntimeException( $apply_first->get_error_code() . ': ' . $apply_first->get_error_message() );
@@ -180,6 +180,51 @@ if ( is_wp_error( $apply_first ) ) {
 $apply_second = $applier->apply( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
 if ( is_wp_error( $apply_second ) ) {
 	throw new RuntimeException( $apply_second->get_error_code() . ': ' . $apply_second->get_error_message() );
+}
+
+$applied_draft = get_post( $draft_id );
+if ( ! $applied_draft instanceof WP_Post ) {
+	throw new RuntimeException( 'Native draft disappeared before rollback acceptance.' );
+}
+$applied_content = (string) $applied_draft->post_content;
+
+$rollback_drift_update = wp_update_post(
+	array(
+		'ID'           => $draft_id,
+		'post_content' => $applied_content . "\n<!-- wp:paragraph --><p>Temporary reviewed draft drift.</p><!-- /wp:paragraph -->",
+	),
+	true
+);
+if ( is_wp_error( $rollback_drift_update ) ) {
+	throw new RuntimeException( $rollback_drift_update->get_error_message() );
+}
+$blocked_rollback = $applier->rollback( $draft_id );
+$blocked_rollback_code = is_wp_error( $blocked_rollback ) ? $blocked_rollback->get_error_code() : 'unexpected-success';
+
+$applied_restore = wp_update_post(
+	array(
+		'ID'           => $draft_id,
+		'post_content' => $applied_content,
+	),
+	true
+);
+if ( is_wp_error( $applied_restore ) ) {
+	throw new RuntimeException( $applied_restore->get_error_message() );
+}
+
+$rollback = $applier->rollback( $draft_id );
+if ( is_wp_error( $rollback ) ) {
+	throw new RuntimeException( $rollback->get_error_code() . ': ' . $rollback->get_error_message() );
+}
+
+$rolled_back_draft = get_post( $draft_id );
+$ledger_after_rollback = get_post_meta( $draft_id, ReviewedRemapApplier::LEDGER_META, true );
+$rollback_meta = get_post_meta( $draft_id, ReviewedRemapApplier::ROLLBACK_META, true );
+$rollback_plan = $applier->plan( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
+
+$apply_third = $applier->apply( $draft_id, $reviewed_selections, array( 'verified-proof' ) );
+if ( is_wp_error( $apply_third ) ) {
+	throw new RuntimeException( $apply_third->get_error_code() . ': ' . $apply_third->get_error_message() );
 }
 
 $draft        = get_post( $draft_id );
@@ -212,6 +257,15 @@ echo wp_json_encode(
 		'apply_plan' => $apply_plan,
 		'apply_first' => $apply_first,
 		'apply_second' => $apply_second,
+		'blocked_rollback_code' => $blocked_rollback_code,
+		'rollback' => $rollback,
+		'rollback_meta' => $rollback_meta,
+		'rollback_state' => array(
+			'draft_sha256' => $rolled_back_draft instanceof WP_Post ? hash( 'sha256', (string) $rolled_back_draft->post_content ) : '',
+			'ledger_cleared' => ! is_array( $ledger_after_rollback ),
+		),
+		'rollback_plan' => $rollback_plan,
+		'apply_third' => $apply_third,
 		'ledger' => $ledger,
 		'backup' => array(
 			'schema_version' => is_array( $backup ) ? ( $backup['schema_version'] ?? null ) : null,
@@ -376,14 +430,42 @@ assert applied["safety"]["source_unchanged"] is True
 assert applied["safety"]["draft_only"] is True
 assert applied["safety"]["public_mutation"] is False
 
+assert report["blocked_rollback_code"] == "seo_geo_reviewed_remap_rollback_draft_drift"
+
+rollback = report["rollback"]
+assert rollback["mode"] == "reviewed-remap-rollback"
+assert rollback["status"] == "rolled-back"
+assert rollback["draft_id"] == applied["draft_id"]
+assert rollback["selection_sha256"] == applied["selection_sha256"]
+assert rollback["from_sha256"] == applied["after_sha256"]
+assert rollback["to_sha256"] == applied["before_sha256"]
+assert rollback["safety"]["source_unchanged"] is True
+assert rollback["safety"]["draft_only"] is True
+assert rollback["safety"]["public_mutation"] is False
+assert report["rollback_state"]["draft_sha256"] == applied["before_sha256"]
+assert report["rollback_state"]["ledger_cleared"] is True
+assert report["rollback_meta"]["selection_sha256"] == applied["selection_sha256"]
+assert report["rollback_meta"]["from_sha256"] == applied["after_sha256"]
+assert report["rollback_meta"]["to_sha256"] == applied["before_sha256"]
+
+rollback_plan = report["rollback_plan"]
+assert rollback_plan["ready"] is True
+assert rollback_plan["existing"] is False
+assert rollback_plan["blockers"] == []
+
+reapplied = report["apply_third"]
+assert reapplied["status"] == "applied"
+assert reapplied["selection_sha256"] == applied["selection_sha256"]
+assert reapplied["before_sha256"] == rollback["to_sha256"]
+
 ledger = report["ledger"]
-assert ledger["selection_sha256"] == applied["selection_sha256"]
+assert ledger["selection_sha256"] == reapplied["selection_sha256"]
 assert ledger["source_id"] == report["source"]["id"]
 assert ledger["verified_sections"] == ["verified-proof"]
 assert len(ledger["before_sha256"]) == 64
 assert len(ledger["after_sha256"]) == 64
 assert report["backup"]["schema_version"] == 1
-assert len(report["backup"]["sha256"]) == 64
+assert report["backup"]["sha256"] == reapplied["before_sha256"]
 assert report["backup"]["has_content"] is True
 
 first = report["first"]
@@ -437,7 +519,7 @@ assert "https://example.org/evidence" in source["content"]
 print("ok")
 PY
 )"; then
-  fail_smoke "native-replatform-assertions" "Native Replatform composer violated draft/source/composition invariants" "all assertions pass" "assertion failure"
+  fail_smoke "native-replatform-assertions" "Native Replatform composer violated draft/source/composition/rollback invariants" "all assertions pass" "assertion failure"
 fi
 
-printf '[smoke] Native Replatform Composer OK: native draft created once, reviewed candidate-only remap rejected source/slot drift, applied idempotently to deterministic slots, evidence required explicit verification, source remained untouched and public mutation stayed locked.\n'
+printf '[smoke] Native Replatform Composer OK: reviewed candidate-only remap rejected source/slot drift, applied idempotently, refused unsafe rollback after draft drift, restored the private pre-apply draft, reapplied cleanly and never mutated the public source.\n'
