@@ -61,9 +61,9 @@ final class NativeReviewEvidence {
 			$blockers[] = 'current-native-plan-not-ready';
 		}
 
-		$current_source = is_array( $current_plan['source'] ?? null ) ? $current_plan['source'] : array();
-		$current_remap  = is_array( $current_plan['content_remap'] ?? null ) ? $current_plan['content_remap'] : array();
-		$current_draft_sha = $draft instanceof WP_Post ? hash( 'sha256', (string) $draft->post_content ) : '';
+		$current_source     = is_array( $current_plan['source'] ?? null ) ? $current_plan['source'] : array();
+		$current_remap      = is_array( $current_plan['content_remap'] ?? null ) ? $current_plan['content_remap'] : array();
+		$current_draft_sha  = $draft instanceof WP_Post ? hash( 'sha256', (string) $draft->post_content ) : '';
 		$current_source_sha = 0 < $source_id ? hash( 'sha256', (string) get_post_field( 'post_content', $source_id ) ) : '';
 
 		if ( (int) ( $current_source['id'] ?? 0 ) !== $source_id ) {
@@ -79,7 +79,7 @@ final class NativeReviewEvidence {
 			$blockers[] = 'content-remap-plan-drift';
 		}
 
-		$ledger_after = is_array( $ledger ) ? (string) ( $ledger['after_sha256'] ?? '' ) : '';
+		$ledger_after  = is_array( $ledger ) ? (string) ( $ledger['after_sha256'] ?? '' ) : '';
 		$ledger_before = is_array( $ledger ) ? (string) ( $ledger['before_sha256'] ?? '' ) : '';
 		if ( '' === $ledger_after || '' === $current_draft_sha || ! hash_equals( $ledger_after, $current_draft_sha ) ) {
 			$blockers[] = 'reviewed-draft-drift';
@@ -97,10 +97,10 @@ final class NativeReviewEvidence {
 			$blockers[] = 'reviewed-rollback-evidence-invalid';
 		}
 
-		$selected_assets = is_array( $ledger ) && is_array( $ledger['selected_assets'] ?? null )
+		$selected_assets   = is_array( $ledger ) && is_array( $ledger['selected_assets'] ?? null )
 			? $ledger['selected_assets']
 			: array();
-		$unmapped_assets = is_array( $ledger ) && is_array( $ledger['unmapped_assets'] ?? null )
+		$unmapped_assets   = is_array( $ledger ) && is_array( $ledger['unmapped_assets'] ?? null )
 			? $ledger['unmapped_assets']
 			: array();
 		$verified_sections = is_array( $ledger ) && is_array( $ledger['verified_sections'] ?? null )
@@ -131,24 +131,24 @@ final class NativeReviewEvidence {
 			'selected_counts'   => $this->asset_counts( $selected_assets ),
 			'unmapped_counts'   => $this->asset_counts( $unmapped_assets ),
 			'rollback'          => array(
-				'available'            => $rollback_available,
-				'pre_apply_sha256'     => $backup_sha,
+				'available'             => $rollback_available,
+				'pre_apply_sha256'      => $backup_sha,
 				'prior_rollback_exists' => is_array( $rollback ),
 			),
 			'safety'            => array(
-				'content_included'               => false,
-				'private_payload_included'       => false,
-				'source_post_mutation'           => false,
-				'production_cutover_authorized'  => false,
-				'draft_only'                     => $draft instanceof WP_Post && 'draft' === $draft->post_status,
+				'content_included'              => false,
+				'private_payload_included'      => false,
+				'source_post_mutation'          => false,
+				'production_cutover_authorized' => false,
+				'draft_only'                    => $draft instanceof WP_Post && 'draft' === $draft->post_status,
 			),
 		);
 
 		$blockers = array_values( array_unique( $blockers ) );
 		sort( $blockers );
 
-		$evidence['status']     = array() === $blockers ? 'ready' : 'blocked';
-		$evidence['blockers']   = $blockers;
+		$evidence['status']          = array() === $blockers ? 'ready' : 'blocked';
+		$evidence['blockers']        = $blockers;
 		$evidence['evidence_sha256'] = hash(
 			'sha256',
 			(string) wp_json_encode( $evidence, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
