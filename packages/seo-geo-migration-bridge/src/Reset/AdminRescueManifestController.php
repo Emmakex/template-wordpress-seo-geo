@@ -95,11 +95,11 @@ final class AdminRescueManifestController {
 			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
 		}
 
-		$saved            = $this->manifest->saved();
-		$plan             = $this->reset->plan();
-		$report           = $this->reset->report();
-		$bootstrap_plan   = $this->bootstrap->plan();
-		$bootstrap_report = $this->bootstrap->report();
+		$saved              = $this->manifest->saved();
+		$plan               = $this->reset->plan();
+		$report             = $this->reset->report();
+		$bootstrap_plan     = $this->bootstrap->plan();
+		$bootstrap_report   = $this->bootstrap->report();
 		$clean_home_plan    = $this->clean_home->plan();
 		$content_model      = $this->content_kit->model();
 		$content_kit        = $this->content_kit->saved();
