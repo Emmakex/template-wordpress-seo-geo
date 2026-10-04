@@ -9,6 +9,7 @@ on:
       - 'packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php'
       - 'examples/content-blueprints/**'
       - 'scripts/ci/validate-corporate-page-pipeline.php'
+      - 'scripts/ci/validate-corporate-site-readiness.php'
       - '.github/workflows/corporate-page-pipeline.yml'
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php'
       - 'examples/content-blueprints/**'
       - 'scripts/ci/validate-corporate-page-pipeline.php'
+      - 'scripts/ci/validate-corporate-site-readiness.php'
       - '.github/workflows/corporate-page-pipeline.yml'
 
 permissions:
@@ -31,7 +33,7 @@ concurrency:
 
 jobs:
   contract:
-    name: Corporate pages + Insights contract
+    name: Corporate pages + Insights + site readiness
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -45,6 +47,7 @@ jobs:
       - name: PHP syntax
         run: |
           php -l scripts/ci/validate-corporate-page-pipeline.php
+          php -l scripts/ci/validate-corporate-site-readiness.php
           php -l packages/seo-geo-migration-bridge/src/Reset/CorporatePageContentKit.php
           php -l packages/seo-geo-migration-bridge/src/Reset/NativeCorporatePageHydrator.php
           php -l packages/seo-geo-migration-bridge/src/Reset/CorporatePageSeoHandoff.php
@@ -52,7 +55,12 @@ jobs:
           php -l packages/seo-geo-migration-bridge/src/Reset/AdminCorporatePagePipelineController.php
           php -l packages/seo-geo-migration-bridge/src/Reset/CorporateInsightsManager.php
           php -l packages/seo-geo-migration-bridge/src/Reset/AdminCorporateInsightsController.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/CorporateSiteReadiness.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/AdminCorporateSiteReadinessController.php
           php -l packages/seo-geo-theme/inc/Insights/InsightsIndexRuntime.php
 
       - name: Validate Corporate page pipeline contract
         run: php scripts/ci/validate-corporate-page-pipeline.php
+
+      - name: Validate whole-site readiness contract
+        run: php scripts/ci/validate-corporate-site-readiness.php
