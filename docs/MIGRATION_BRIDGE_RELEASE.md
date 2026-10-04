@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.48`;
+- current plugin version: `0.8.49`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -53,26 +53,26 @@ This artifact is an installation candidate for controlled client analysis. It is
 
 ## emmake.com use
 
-For the first Phase 10E pilot:
+The real clone already exists at `/nuevaweb/`, so the full-redesign pilot now uses the reset-first path.
 
-1. install the accepted Migration Bridge ZIP from **Plugins → Add New Plugin → Upload Plugin**;
-2. activate it;
-3. use the read-only analysis path and explicitly capture the public SEO/GEO baseline before any migration mutation;
-4. do not activate the destination Theme directly in production;
-5. create/use an isolated sandbox before transformation;
-6. retain current production backups/recovery references.
+1. install/update the accepted Migration Bridge ZIP on the clone;
+2. open **Tools → SEO/GEO Reset & Rebuild**;
+3. create the minimal Rescue Manifest;
+4. do not repeat baseline/dependency review merely to unlock the redesign;
+5. treat remaining UNKNOWN legacy components as non-blocking unless their business function is selected to survive;
+6. continue to the Reset Engine, then activate the SEO/GEO Theme + Corporate preset and rebuild cleanly;
+7. keep production unchanged until the rebuilt clone passes final QA.
 
-The operator screen only shows the baseline capture action when no baseline exists. The action is capability/nonce protected and runs as a **resumable incremental capture**. Robots/sitemap discovery remains conservative, while page analysis uses an operator-selectable batch size from **1 to 20 pages per request**. The default/recommended value is **10**. The selected value is persisted with capture progress and can be changed safely while the capture is running; existing 0.8.3 progress without a stored batch size resumes at the 0.8.4 default of 10. Progress is persisted in a dedicated non-autoloaded option after every step, so a timeout/closed connection can resume instead of restarting. The final baseline is stored only after all accepted steps complete and an existing final baseline is never replaced automatically.
+The legacy baseline/dependency workflow remains available for migration scenarios that genuinely require parity-oriented analysis, but it is not the mandatory path for a reset-first full redesign.
 
-After the baseline is complete, 0.8.5 exposes the bounded dependency rows behind the summary so UNKNOWN/MIGRATE/REPLACE items can be reviewed before sandbox work. It also provides an authenticated **sandbox handoff JSON** download containing runtime identity, baseline ID/hash/counts, bounded dependency decisions and sandbox safety requirements. The handoff never includes post bodies, builder payloads, credentials, arbitrary option values, database dumps, uploads or customer data.
+### Version 0.8.49 — Reset/Rebuild Rescue Manifest
 
-Version 0.8.6 adds an explicit operator-review workflow for `UNKNOWN` components. Each review is capability/nonce-gated and stores only the component ID, one fixed planning classification (`KEEP`, `REPLACE`, `MIGRATE`, `OPTIONAL` or `REMOVE-CANDIDATE`), a fixed reason code and timestamp in a non-autoloaded option. Review evidence is exported separately in the handoff manifest and **does not replace the raw dependency-graph classification or authorize production plugin deactivation/theme switching**. The operator can revise or clear a decision while the component remains a live `UNKNOWN` item.
+0.8.49 introduces the reset-first full-redesign entrypoint.
 
-Version 0.8.7 hardens the real sandbox preflight. A clone is not ready until its origin differs from the production baseline origin, `SEO_GEO_MIGRATION_SANDBOX=true`, WordPress search visibility is disabled, `SEO_GEO_MIGRATION_OUTBOUND_SAFE=true`, `SEO_GEO_MIGRATION_BACKUPS_READY=true`, the destination Theme is active, the baseline/dependency graph are present and every raw `UNKNOWN` component has an explicit operator review. Reviewed `UNKNOWN` decisions affect sandbox planning only: `KEEP` becomes `unchanged`; `MIGRATE`/`REPLACE` become `migrate`; `OPTIONAL`/`REMOVE-CANDIDATE` remain `manual-review`. Raw graph classifications are preserved.
+The Rescue Manifest privately records page/post identity, URL paths, content/excerpt fingerprints, useful supported SEO metadata, links and media references together with front/posts/privacy page identities. It intentionally does not preserve the legacy theme, builder or plugin dependency graph and does not require UNKNOWN review.
 
-Version 0.8.8 adds a second accepted sandbox topology for shared-hosting clients: an explicitly isolated same-origin subdirectory. The default remains `origin`. Subdirectory mode requires `SEO_GEO_MIGRATION_SANDBOX_MODE='subdirectory'`, a non-root base path different from the production baseline path and `SEO_GEO_MIGRATION_STORAGE_ISOLATED=true`, in addition to all v0.8.7 guards. The operator UI exposes mode, production/sandbox paths and location/storage isolation. The Bridge never assumes that a folder is isolated merely because its URL path differs.
+Capture does not alter posts, active plugins, active theme or public output. It writes only the non-autoloaded `seo_geo_reset_rescue_manifest_v1` option.
 
-The plugin is transitional for the Theme 0.1.0 migration path. Its accepted capabilities later become the migration module inside SEO/GEO Manager.
 
 
 ### Version 0.8.9 — Portable Clone contract foundation
