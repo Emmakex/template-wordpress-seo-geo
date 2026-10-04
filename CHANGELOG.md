@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 1.0.9 promotes the accepted Native Replatform Content Remap + Reviewed Apply flow into a correctly versioned installable plugin candidate; prior Emmake clone evidence remains bound to the exact historical artifacts that produced it.
+
 - Native Replatform Reviewed Apply v1 adds explicit Corporate semantic slots, candidate-only draft mutation, mandatory verification for evidence-sensitive sections, rollback backup, selected/unmapped asset ledger and idempotent replay while preserving the source page.
 
 - Native Replatform Content Remap Intelligence v1 extracts provenance-bound source text/link/media assets, proposes preset semantic-slot candidates and forces evidence-sensitive mappings through manual review without generating factual copy.
