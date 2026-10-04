@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "preset": "corporate",
+  "models_by_page": {
+    "work": "corporate-work-v1",
+    "about": "corporate-about-v1",
+    "contact": "corporate-contact-v1"
+  },
+  "native_content_models": {
+    "corporate-work-v1": {
+      "schema_version": 1,
+      "page_key": "work",
+      "slot_prefix": "seo-geo-content-slot--",
+      "slots": [
+        {"id":"proof-heading","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-1-title","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-1-body","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-2-title","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-2-body","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-3-title","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-3-body","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"case-heading","type":"text","required":false,"requires_verification":true,"verification_group":"case-study"},
+        {"id":"case-intro","type":"text","required":false,"requires_verification":true,"verification_group":"case-study"},
+        {"id":"case-challenge-body","type":"text","required":false,"requires_verification":true,"verification_group":"case-study"},
+        {"id":"case-approach-body","type":"text","required":false,"requires_verification":true,"verification_group":"case-study"},
+        {"id":"case-result-body","type":"text","required":false,"requires_verification":true,"verification_group":"case-study"},
+        {"id":"final-cta-heading","type":"text","required":true},
+        {"id":"final-cta-body","type":"text","required":true},
+        {"id":"final-cta-button","type":"link","required":true}
+      ],
+      "required_verified_groups": ["case-study"],
+      "section_policy": [
+        {"section_class":"seo-geo-corporate-native-proof","mode":"omit-unless-verified","verification_group":"proof"},
+        {"section_class":"seo-geo-corporate-case-study","mode":"omit-unless-verified","verification_group":"case-study"}
+      ],
+      "dynamic_sections": [],
+      "safety": {
+        "legacy_layout_input": false,
+        "fabricated_evidence_allowed": false,
+        "unverified_optional_sections_omitted": true
+      }
+    },
+    "corporate-about-v1": {
+      "schema_version": 1,
+      "page_key": "about",
+      "slot_prefix": "seo-geo-content-slot--",
+      "slots": [
+        {"id":"proof-heading","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-1-title","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-1-body","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-2-title","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-2-body","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-3-title","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"proof-3-body","type":"text","required":false,"requires_verification":true,"verification_group":"proof"},
+        {"id":"author-eyebrow","type":"text","required":false},
+        {"id":"author-name","type":"text","required":true},
+        {"id":"author-role","type":"text","required":true},
+        {"id":"author-bio","type":"text","required":true},
+        {"id":"author-profile-link","type":"link","required":false},
+        {"id":"process-heading","type":"text","required":true},
+        {"id":"process-intro","type":"text","required":true},
+        {"id":"process-1-title","type":"text","required":true},
+        {"id":"process-1-body","type":"text","required":true},
+        {"id":"process-2-title","type":"text","required":true},
+        {"id":"process-2-body","type":"text","required":true},
+        {"id":"process-3-title","type":"text","required":true},
+        {"id":"process-3-body","type":"text","required":true},
+        {"id":"final-cta-heading","type":"text","required":true},
+        {"id":"final-cta-body","type":"text","required":true},
+        {"id":"final-cta-button","type":"link","required":true}
+      ],
+      "section_policy": [
+        {"section_class":"seo-geo-corporate-native-proof","mode":"omit-unless-verified","verification_group":"proof"}
+      ],
+      "dynamic_sections": [],
+      "safety": {
+        "legacy_layout_input": false,
+        "fabricated_evidence_allowed": false,
+        "unverified_optional_sections_omitted": true,
+        "real_provenance_required": true
+      }
+    },
+    "corporate-contact-v1": {
+      "schema_version": 1,
+      "page_key": "contact",
+      "slot_prefix": "seo-geo-content-slot--",
+      "slots": [
+        {"id":"contact-heading","type":"text","required":true},
+        {"id":"contact-intro","type":"text","required":true},
+        {"id":"contact-email","type":"text","required":false},
+        {"id":"contact-phone","type":"text","required":false},
+        {"id":"contact-area","type":"text","required":false},
+        {"id":"contact-primary-cta","type":"link","required":true},
+        {"id":"final-cta-heading","type":"text","required":true},
+        {"id":"final-cta-body","type":"text","required":true},
+        {"id":"final-cta-button","type":"link","required":true}
+      ],
+      "required_any_slots": [
+        ["contact-email", "contact-phone"]
+      ],
+      "section_policy": [],
+      "dynamic_sections": [],
+      "safety": {
+        "legacy_layout_input": false,
+        "fabricated_evidence_allowed": false,
+        "real_contact_method_required": true
+      }
+    }
+  }
+}
