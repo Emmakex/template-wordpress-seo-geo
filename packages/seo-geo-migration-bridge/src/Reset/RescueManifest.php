@@ -88,21 +88,21 @@ final class RescueManifest {
 				'pages'     => count(
 					array_filter(
 						$resources,
-						static fn( array $resource ): bool => 'page' === ( $resource['post_type'] ?? null )
+						static fn( array $item ): bool => 'page' === ( $item['post_type'] ?? null )
 					)
 				),
 				'posts'     => count(
 					array_filter(
 						$resources,
-						static fn( array $resource ): bool => 'post' === ( $resource['post_type'] ?? null )
+						static fn( array $item ): bool => 'post' === ( $item['post_type'] ?? null )
 					)
 				),
 			),
 			'policy'         => array(
-				'legacy_theme_preserved'       => false,
-				'legacy_builder_preserved'     => false,
-				'legacy_plugins_preserved'     => false,
-				'dependency_review_required'   => false,
+				'legacy_theme_preserved'      => false,
+				'legacy_builder_preserved'    => false,
+				'legacy_plugins_preserved'    => false,
+				'dependency_review_required'  => false,
 				'unknown_components_blocking' => false,
 			),
 		);
@@ -112,7 +112,7 @@ final class RescueManifest {
 			(string) wp_json_encode( $material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 		);
 
-		$manifest = $material;
+		$manifest                    = $material;
 		$manifest['captured_at']     = gmdate( DATE_ATOM );
 		$manifest['manifest_sha256'] = $manifest_sha;
 
