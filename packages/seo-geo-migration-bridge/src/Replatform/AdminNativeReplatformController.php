@@ -22,6 +22,8 @@ final class AdminNativeReplatformController {
 	public const APPLY_NONCE_ACTION    = 'seo_geo_native_replatform_apply_reviewed';
 	public const ROLLBACK_ACTION       = 'seo_geo_native_replatform_rollback_reviewed';
 	public const ROLLBACK_NONCE_ACTION = 'seo_geo_native_replatform_rollback_reviewed';
+	public const EVIDENCE_ACTION       = 'seo_geo_native_replatform_review_evidence';
+	public const EVIDENCE_NONCE_ACTION = 'seo_geo_native_replatform_review_evidence';
 
 	/**
 	 * Construct the administrator controller.
@@ -43,6 +45,7 @@ final class AdminNativeReplatformController {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_create_draft' ) );
 		add_action( 'admin_post_' . self::APPLY_ACTION, array( $this, 'handle_apply_reviewed' ) );
 		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'handle_rollback_reviewed' ) );
+		add_action( 'admin_post_' . self::EVIDENCE_ACTION, array( $this, 'handle_download_evidence' ) );
 	}
 
 	/**
@@ -234,6 +237,31 @@ final class AdminNativeReplatformController {
 		}
 
 		$this->redirect_result( 'remap-rolled-back', $draft_id );
+	}
+
+	/**
+	 * Download privacy-bounded reviewed acceptance evidence.
+	 */
+	public function handle_download_evidence(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		$draft_id = isset( $_POST['draft_id'] ) ? absint( wp_unslash( $_POST['draft_id'] ) ) : 0;
+		$confirm  = isset( $_POST['confirm'] ) ? sanitize_key( wp_unslash( $_POST['confirm'] ) ) : '';
+
+		if ( 0 >= $draft_id || 'download-reviewed-evidence' !== $confirm ) {
+			wp_die( esc_html__( 'Reviewed evidence request is incomplete or was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		check_admin_referer( self::evidence_nonce_action( $draft_id ) );
+
+		$evidence = $this->applier->evidence( $draft_id );
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=' . get_option( 'blog_charset', 'UTF-8' ) );
+		header( 'Content-Disposition: attachment; filename="seo-geo-native-review-evidence-' . $draft_id . '.json"' );
+		echo wp_json_encode( $evidence, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		exit;
 	}
 
 	/**
@@ -457,6 +485,15 @@ final class AdminNativeReplatformController {
 	 */
 	public static function rollback_nonce_action( int $draft_id ): string {
 		return self::ROLLBACK_NONCE_ACTION . ':' . $draft_id;
+	}
+
+	/**
+	 * Return a draft-scoped reviewed-evidence nonce action.
+	 *
+	 * @param int $draft_id Native draft ID.
+	 */
+	public static function evidence_nonce_action( int $draft_id ): string {
+		return self::EVIDENCE_NONCE_ACTION . ':' . $draft_id;
 	}
 
 	/**
