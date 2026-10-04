@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.48 packages the accepted Native Replatform review flow for sandbox use: draft-only Composer, provenance-bound Content Remap, Reviewed Apply with source/slot drift rejection, reversible private-draft review, direct Preview and privacy-bounded acceptance evidence. Existing 0.8.47 clone/handoff state remains resumable and production source pages remain untouched.
+
 - Native Replatform Reviewed Apply v1 adds explicit Corporate semantic slots, candidate-only draft mutation, mandatory verification for evidence-sensitive sections, source/slot drift rejection, reversible private-draft preview rollback, direct draft preview, privacy-bounded acceptance evidence, selected/unmapped asset evidence and idempotent replay while preserving the public source page.
 
 - Native Replatform Content Remap Intelligence v1 extracts provenance-bound source text/link/media assets, proposes preset semantic-slot candidates and forces evidence-sensitive mappings through manual review without generating factual copy.
