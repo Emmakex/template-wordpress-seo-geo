@@ -53,6 +53,25 @@ Bounded evidence for this milestone is stored at `release/emmake-divi-migration-
 
 This closes the **Divi dependency migration** hurdle for the sandbox. It does not claim final replatform acceptance, SEO/GEO regression acceptance, accessibility/performance acceptance or production cutover. The next accepted operation is to rebuild the public surfaces with the native Corporate preset, remapping preserved content into the new structure rather than reproducing the old Divi layout.
 
+## 2026-10-04 Corporate preset application milestone
+
+The reusable `corporate` preset was successfully applied on the working `/nuevaweb/` sandbox before the later Native Replatform flow became the active acceptance path:
+
+- active preset: `corporate`;
+- configured language map: `es=es_ES`;
+- native language routing: disabled;
+- public entity type: `organization`;
+- crawler policy remained inherited;
+- `llms.txt`: off;
+- Markdown alternatives: off;
+- the setup transaction completed successfully after the registered-default option-write fix;
+- the setup result emitted stable configuration/report fingerprints;
+- Yoast remained installed and was surfaced only as the advisory compatibility warning `compatibility:external-seo-provider:yoast`.
+
+Bounded evidence for this historical milestone is stored at `release/emmake-corporate-preset-application-20261004.json`.
+
+This record proves preset selection + validation + atomic application on the real sandbox. It does not claim Corporate Native Home acceptance, SEO/GEO ownership parity, accessibility/performance acceptance or production cutover. The repository roadmap has since advanced to the draft-only Native Replatform acceptance flow.
+
 ## Replatforming correction — 2026-10-04
 
 The pilot is **not** a visual-parity migration. The old Emmake/Divi design is no longer the destination reference.
