@@ -376,7 +376,7 @@ final class PresetNavigationRuntime {
 	 * @param string $url Navigation target URL.
 	 */
 	private function is_current_url( string $url ): bool {
-		$request_uri = isset( $_SERVER['REQUEST_URI'] )
+		$request_uri  = isset( $_SERVER['REQUEST_URI'] )
 			? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) )
 			: '/';
 		$current_path = wp_parse_url( $request_uri, PHP_URL_PATH );
