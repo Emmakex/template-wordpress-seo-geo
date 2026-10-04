@@ -27,7 +27,7 @@ final class CleanCorporatePageRebuilder {
 	public const PATTERNS_META     = '_seo_geo_clean_page_patterns_v1';
 	public const CREATED_AT_META   = '_seo_geo_clean_page_created_at_v1';
 	public const CONTENT_STATE_META = '_seo_geo_clean_page_content_state_v1';
-	public const CONTENT_STATE     = 'preset-scaffold';
+	public const CONTENT_STATE      = 'preset-scaffold';
 
 	private const PRESET = 'corporate';
 
@@ -311,7 +311,8 @@ final class CleanCorporatePageRebuilder {
 	/**
 	 * Return rescued published page candidates for explicit inner-page mapping.
 	 *
-	 * @return list<array{id:int,title:string,slug:string,path:string}>
+	 * @return array
+	 * @phpstan-return list<array{id:int,title:string,slug:string,path:string}>
 	 */
 	public function source_candidates(): array {
 		$manifest = $this->manifest->saved();
@@ -342,7 +343,7 @@ final class CleanCorporatePageRebuilder {
 
 		usort(
 			$candidates,
-			static fn( array $left, array $right ): int => strcmp( $left['path'], $right['path'] )
+			static fn( array $left, array $right ): int => strcmp( (string) $left['path'], (string) $right['path'] )
 		);
 
 		return $candidates;
@@ -496,7 +497,8 @@ final class CleanCorporatePageRebuilder {
 	/**
 	 * Return the active plugin set in deterministic order.
 	 *
-	 * @return list<string>
+	 * @return array
+	 * @phpstan-return list<string>
 	 */
 	private function active_plugins(): array {
 		$plugins = array_values( array_map( 'strval', get_option( 'active_plugins', array() ) ) );
