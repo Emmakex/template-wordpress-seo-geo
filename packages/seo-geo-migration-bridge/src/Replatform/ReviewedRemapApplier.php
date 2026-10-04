@@ -32,7 +32,7 @@ final class ReviewedRemapApplier {
 	 *
 	 * @param int                 $draft_id          Native draft ID.
 	 * @param array<string,mixed> $selections        Reviewed asset selections by semantic section.
-	 * @param list<string>        $verified_sections Sections explicitly verified by an administrator.
+	 * @param array<int,string>   $verified_sections Sections explicitly verified by an administrator.
 	 * @return array<string,mixed>
 	 */
 	public function plan( int $draft_id, array $selections, array $verified_sections = array() ): array {
@@ -46,10 +46,10 @@ final class ReviewedRemapApplier {
 			$blockers[] = 'draft-status-not-allowed';
 		}
 
-		$source_id       = (int) get_post_meta( $draft_id, NativeCompositionService::SOURCE_ID_META, true );
-		$preset          = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PRESET_META, true ) );
-		$page_key        = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PAGE_KEY_META, true ) );
-		$stored_plan_sha = (string) get_post_meta( $draft_id, NativeCompositionService::PLAN_SHA_META, true );
+		$source_id        = (int) get_post_meta( $draft_id, NativeCompositionService::SOURCE_ID_META, true );
+		$preset           = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PRESET_META, true ) );
+		$page_key         = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PAGE_KEY_META, true ) );
+		$stored_plan_sha  = (string) get_post_meta( $draft_id, NativeCompositionService::PLAN_SHA_META, true );
 		$stored_remap_sha = (string) get_post_meta( $draft_id, NativeCompositionService::REMAP_PLAN_SHA_META, true );
 
 		if ( 0 >= $source_id || '' === $preset || '' === $page_key || '' === $stored_plan_sha || '' === $stored_remap_sha ) {
@@ -64,7 +64,7 @@ final class ReviewedRemapApplier {
 		$current_source = is_array( $current_plan['source'] ?? null ) ? $current_plan['source'] : array();
 		$current_remap  = is_array( $current_plan['content_remap'] ?? null ) ? $current_plan['content_remap'] : array();
 
-		if ( $source_id !== (int) ( $current_source['id'] ?? 0 ) ) {
+		if ( (int) ( $current_source['id'] ?? 0 ) !== $source_id ) {
 			$blockers[] = 'source-identity-drift';
 		}
 		if ( '' !== $stored_plan_sha && ! hash_equals( $stored_plan_sha, (string) ( $current_plan['plan_sha256'] ?? '' ) ) ) {
@@ -74,13 +74,17 @@ final class ReviewedRemapApplier {
 			$blockers[] = 'content-remap-plan-drift';
 		}
 
-		$normalized      = $this->normalize_selections( $selections );
-		$verified        = array_values( array_unique( array_map( 'sanitize_key', $verified_sections ) ) );
-		$slot_map        = $this->slot_map( is_array( $current_plan['remap_slots'] ?? null ) ? $current_plan['remap_slots'] : array() );
-		$remap_slot_map  = $this->content_slot_map( is_array( $current_remap['slots'] ?? null ) ? $current_remap['slots'] : array() );
-		$asset_maps      = $this->asset_maps( is_array( $current_remap['assets'] ?? null ) ? $current_remap['assets'] : array() );
-		$operations      = array();
-		$selection_ids   = array( 'units' => array(), 'links' => array(), 'media' => array() );
+		$normalized     = $this->normalize_selections( $selections );
+		$verified       = array_values( array_unique( array_map( 'sanitize_key', $verified_sections ) ) );
+		$slot_map       = $this->slot_map( is_array( $current_plan['remap_slots'] ?? null ) ? $current_plan['remap_slots'] : array() );
+		$remap_slot_map = $this->content_slot_map( is_array( $current_remap['slots'] ?? null ) ? $current_remap['slots'] : array() );
+		$asset_maps     = $this->asset_maps( is_array( $current_remap['assets'] ?? null ) ? $current_remap['assets'] : array() );
+		$operations     = array();
+		$selection_ids  = array(
+			'units' => array(),
+			'links' => array(),
+			'media' => array(),
+		);
 
 		if ( array() === $normalized ) {
 			$blockers[] = 'reviewed-selection-empty';
@@ -157,7 +161,7 @@ final class ReviewedRemapApplier {
 			'selections'        => $normalized,
 			'verified_sections' => $verified,
 		);
-		$selection_sha = hash(
+		$selection_sha      = hash(
 			'sha256',
 			(string) wp_json_encode( $selection_material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 		);
@@ -193,12 +197,12 @@ final class ReviewedRemapApplier {
 			'operations'        => $operations,
 			'blockers'          => $blockers,
 			'safety'            => array(
-				'sandbox_only'                  => true,
-				'draft_only'                    => true,
-				'source_post_mutation'          => false,
-				'candidate_only'                => true,
+				'sandbox_only'                    => true,
+				'draft_only'                      => true,
+				'source_post_mutation'            => false,
+				'candidate_only'                  => true,
 				'sensitive_requires_verification' => true,
-				'public_post_creation'          => false,
+				'public_post_creation'            => false,
 			),
 		);
 	}
@@ -208,7 +212,7 @@ final class ReviewedRemapApplier {
 	 *
 	 * @param int                 $draft_id          Native draft ID.
 	 * @param array<string,mixed> $selections        Reviewed asset selections by semantic section.
-	 * @param list<string>        $verified_sections Sections explicitly verified by an administrator.
+	 * @param array<int,string>   $verified_sections Sections explicitly verified by an administrator.
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public function apply( int $draft_id, array $selections, array $verified_sections = array() ): array|WP_Error {
@@ -299,7 +303,7 @@ final class ReviewedRemapApplier {
 			return new WP_Error( 'seo_geo_reviewed_remap_verification_failed', 'Reviewed native draft could not be reloaded safely.' );
 		}
 
-		$current_source_sha = hash( 'sha256', (string) get_post_field( 'post_content', (int) $plan['source_id'] ) );
+		$current_source_sha  = hash( 'sha256', (string) get_post_field( 'post_content', (int) $plan['source_id'] ) );
 		$expected_source_sha = (string) ( $current_plan['source']['content_sha256'] ?? '' );
 		if ( '' === $expected_source_sha || ! hash_equals( $expected_source_sha, $current_source_sha ) ) {
 			wp_update_post(
@@ -450,10 +454,14 @@ final class ReviewedRemapApplier {
 	 * Index source assets by asset type and ID.
 	 *
 	 * @param array<string,mixed> $assets Content-remap assets.
-	 * @return array{units:array<string,array<string,mixed>>,links:array<string,array<string,mixed>>,media:array<string,array<string,mixed>>}
+	 * @return array<string,array<string,array<string,mixed>>>
 	 */
 	private function asset_maps( array $assets ): array {
-		$result = array( 'units' => array(), 'links' => array(), 'media' => array() );
+		$result = array(
+			'units' => array(),
+			'links' => array(),
+			'media' => array(),
+		);
 
 		foreach ( array_keys( $result ) as $type ) {
 			$items = isset( $assets[ $type ] ) && is_array( $assets[ $type ] ) ? $assets[ $type ] : array();
@@ -470,10 +478,10 @@ final class ReviewedRemapApplier {
 	/**
 	 * Render one reviewed semantic slot using native core blocks only.
 	 *
-	 * @param string                                                                                      $section       Semantic section.
-	 * @param array<string,mixed>                                                                         $selection     Selected asset IDs.
-	 * @param array{units:array<string,array<string,mixed>>,links:array<string,array<string,mixed>>,media:array<string,array<string,mixed>>} $asset_maps Asset lookup maps.
-	 * @param string                                                                                      $selection_sha Selection fingerprint.
+	 * @param string                                           $section       Semantic section.
+	 * @param array<string,mixed>                              $selection     Selected asset IDs.
+	 * @param array<string,array<string,array<string,mixed>>>   $asset_maps    Asset lookup maps.
+	 * @param string                                           $selection_sha Selection fingerprint.
 	 */
 	private function render_section( string $section, array $selection, array $asset_maps, string $selection_sha ): string {
 		$parts = array();
@@ -540,12 +548,16 @@ final class ReviewedRemapApplier {
 	/**
 	 * Return source assets not selected by the reviewed apply operation.
 	 *
-	 * @param array{units:array<string,array<string,mixed>>,links:array<string,array<string,mixed>>,media:array<string,array<string,mixed>>} $asset_maps Selected source inventory.
-	 * @param array<string,mixed> $selected Selected IDs by type.
-	 * @return array{units:list<string>,links:list<string>,media:list<string>}
+	 * @param array<string,array<string,array<string,mixed>>> $asset_maps Selected source inventory.
+	 * @param array<string,mixed>                            $selected   Selected IDs by type.
+	 * @return array<string,array<int,string>>
 	 */
 	private function unmapped_assets( array $asset_maps, array $selected ): array {
-		$result = array( 'units' => array(), 'links' => array(), 'media' => array() );
+		$result = array(
+			'units' => array(),
+			'links' => array(),
+			'media' => array(),
+		);
 		foreach ( array_keys( $result ) as $type ) {
 			$selected_ids = isset( $selected[ $type ] ) && is_array( $selected[ $type ] ) ? array_map( 'strval', $selected[ $type ] ) : array();
 			$result[ $type ] = array_values( array_diff( array_keys( $asset_maps[ $type ] ), $selected_ids ) );
