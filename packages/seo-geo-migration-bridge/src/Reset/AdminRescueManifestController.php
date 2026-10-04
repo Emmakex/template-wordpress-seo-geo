@@ -22,8 +22,14 @@ final class AdminRescueManifestController {
 	public const RESET_NONCE_ACTION      = 'seo_geo_reset_apply_clone_runtime';
 	public const BOOTSTRAP_ACTION        = 'seo_geo_reset_apply_corporate_bootstrap';
 	public const BOOTSTRAP_NONCE_ACTION  = 'seo_geo_reset_apply_corporate_bootstrap';
-	public const CLEAN_HOME_ACTION       = 'seo_geo_reset_create_clean_home';
-	public const CLEAN_HOME_NONCE_ACTION = 'seo_geo_reset_create_clean_home';
+	public const CLEAN_HOME_ACTION        = 'seo_geo_reset_create_clean_home';
+	public const CLEAN_HOME_NONCE_ACTION  = 'seo_geo_reset_create_clean_home';
+	public const CONTENT_KIT_ACTION       = 'seo_geo_reset_save_home_content_kit';
+	public const CONTENT_KIT_NONCE_ACTION = 'seo_geo_reset_save_home_content_kit';
+	public const HYDRATE_ACTION           = 'seo_geo_reset_hydrate_home';
+	public const HYDRATE_NONCE_ACTION     = 'seo_geo_reset_hydrate_home';
+	public const ROLLBACK_ACTION          = 'seo_geo_reset_rollback_home_hydration';
+	public const ROLLBACK_NONCE_ACTION    = 'seo_geo_reset_rollback_home_hydration';
 
 	/**
 	 * Construct the reset-first administrator controller.
@@ -31,13 +37,17 @@ final class AdminRescueManifestController {
 	 * @param RescueManifest          $manifest   Rescue manifest service.
 	 * @param CloneResetEngine        $reset      Clone reset service.
 	 * @param CorporateThemeBootstrap $bootstrap  Corporate Theme bootstrap service.
-	 * @param CleanHomeRebuilder      $clean_home Clean Corporate Home draft builder.
+	 * @param CleanHomeRebuilder       $clean_home Clean Corporate Home draft builder.
+	 * @param CorporateHomeContentKit  $content_kit Structured Home content service.
+	 * @param NativeHomeHydrator       $hydrator Native Home hydrator.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
 		private CloneResetEngine $reset,
 		private CorporateThemeBootstrap $bootstrap,
-		private CleanHomeRebuilder $clean_home
+		private CleanHomeRebuilder $clean_home,
+		private CorporateHomeContentKit $content_kit,
+		private NativeHomeHydrator $hydrator
 	) {
 	}
 
@@ -50,6 +60,9 @@ final class AdminRescueManifestController {
 		add_action( 'admin_post_' . self::RESET_ACTION, array( $this, 'handle_reset' ) );
 		add_action( 'admin_post_' . self::BOOTSTRAP_ACTION, array( $this, 'handle_bootstrap' ) );
 		add_action( 'admin_post_' . self::CLEAN_HOME_ACTION, array( $this, 'handle_clean_home' ) );
+		add_action( 'admin_post_' . self::CONTENT_KIT_ACTION, array( $this, 'handle_content_kit' ) );
+		add_action( 'admin_post_' . self::HYDRATE_ACTION, array( $this, 'handle_hydrate_home' ) );
+		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'handle_rollback_home' ) );
 	}
 
 	/**
@@ -79,6 +92,9 @@ final class AdminRescueManifestController {
 		$bootstrap_plan   = $this->bootstrap->plan();
 		$bootstrap_report = $this->bootstrap->report();
 		$clean_home_plan  = $this->clean_home->plan();
+		$content_model    = $this->content_kit->model();
+		$content_kit      = $this->content_kit->saved();
+		$hydration_plan   = $this->hydrator->plan();
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'SEO/GEO Reset & Rebuild', 'seo-geo-migration-bridge' ); ?></h1>
@@ -246,7 +262,133 @@ final class AdminRescueManifestController {
 					<?php submit_button( __( 'Create clean Home draft', 'seo-geo-migration-bridge' ), 'primary', 'submit', false ); ?>
 				</form>
 			<?php endif; ?>
+
+			<?php $this->render_content_kit_step( $clean_home_plan, $content_model, $content_kit, $hydration_plan ); ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render Step 5 — reviewed Content Kit + native hydration.
+	 *
+	 * @param array<string,mixed>      $clean_home_plan Clean Home plan.
+	 * @param array<string,mixed>|null $content_model   Theme-owned content model.
+	 * @param array<string,mixed>|null $content_kit     Saved Content Kit.
+	 * @param array<string,mixed>      $hydration_plan  Native hydration plan.
+	 */
+	private function render_content_kit_step(
+		array $clean_home_plan,
+		?array $content_model,
+		?array $content_kit,
+		array $hydration_plan
+	): void {
+		$draft_id = (int) ( $clean_home_plan['existing_draft'] ?? 0 );
+		$values   = is_array( $content_kit['values'] ?? null ) ? $content_kit['values'] : array();
+		$groups   = is_array( $content_kit['verified_groups'] ?? null ) ? $content_kit['verified_groups'] : array();
+		$slots    = is_array( $content_model['slots'] ?? null ) ? $content_model['slots'] : array();
+		?>
+		<h2><?php echo esc_html__( 'Step 5 — Home Content Kit + native hydration', 'seo-geo-migration-bridge' ); ?></h2>
+		<p><?php echo esc_html__( 'Write reviewed content into semantic Corporate slots. No legacy layout is read. Evidence groups remain hidden until explicitly verified.', 'seo-geo-migration-bridge' ); ?></p>
+
+		<?php if ( 0 >= $draft_id || ! is_array( $content_model ) ) : ?>
+			<div class="notice notice-warning inline">
+				<p><?php echo esc_html__( 'Create the clean Home draft first. The Content Kit is only available after Step 4.', 'seo-geo-migration-bridge' ); ?></p>
+			</div>
+			<?php return; ?>
+		<?php endif; ?>
+
+		<?php if ( is_array( $content_kit ) ) : ?>
+			<div class="notice notice-success inline">
+				<p>
+					<strong><?php echo esc_html__( 'Saved Content Kit:', 'seo-geo-migration-bridge' ); ?></strong>
+					<code><?php echo esc_html( (string) ( $content_kit['kit_sha256'] ?? '' ) ); ?></code>
+				</p>
+			</div>
+		<?php endif; ?>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( self::CONTENT_KIT_ACTION ); ?>">
+			<input type="hidden" name="confirm" value="save-home-content-kit">
+			<input type="hidden" name="draft_id" value="<?php echo esc_attr( (string) $draft_id ); ?>">
+			<input type="hidden" name="plan_sha256" value="<?php echo esc_attr( (string) ( $clean_home_plan['plan_sha256'] ?? '' ) ); ?>">
+			<?php wp_nonce_field( self::CONTENT_KIT_NONCE_ACTION ); ?>
+
+			<h3><?php echo esc_html__( 'Evidence verification', 'seo-geo-migration-bridge' ); ?></h3>
+			<p><?php echo esc_html__( 'Only check a group when every claim in that group is backed by real evidence. Unchecked groups are omitted from the hydrated Home.', 'seo-geo-migration-bridge' ); ?></p>
+			<?php foreach ( array( 'hero-proof', 'proof', 'case-study' ) as $group ) : ?>
+				<label style="display:block;margin:.45rem 0;">
+					<input type="checkbox" name="verified_groups[<?php echo esc_attr( $group ); ?>]" value="1" <?php checked( true === ( $groups[ $group ] ?? false ) ); ?>>
+					<?php echo esc_html( ucwords( str_replace( '-', ' ', $group ) ) ); ?>
+				</label>
+			<?php endforeach; ?>
+
+			<h3><?php echo esc_html__( 'Semantic content fields', 'seo-geo-migration-bridge' ); ?></h3>
+			<table class="form-table" role="presentation">
+				<tbody>
+				<?php foreach ( $slots as $slot ) : ?>
+					<?php
+					if ( ! is_array( $slot ) || ! is_string( $slot['id'] ?? null ) || ! is_string( $slot['type'] ?? null ) ) {
+						continue;
+					}
+					$slot_id       = $slot['id'];
+					$type          = $slot['type'];
+					$current_value = $values[ $slot_id ] ?? null;
+					$required      = true === ( $slot['required'] ?? false );
+					$verification  = is_string( $slot['verification_group'] ?? null ) ? $slot['verification_group'] : '';
+					?>
+					<tr>
+						<th scope="row">
+							<label for="seo-geo-slot-<?php echo esc_attr( $slot_id ); ?>"><?php echo esc_html( ucwords( str_replace( '-', ' ', $slot_id ) ) ); ?></label>
+							<?php if ( $required ) : ?><span aria-label="<?php echo esc_attr__( 'Required', 'seo-geo-migration-bridge' ); ?>"> *</span><?php endif; ?>
+						</th>
+						<td>
+							<?php if ( '' !== $verification ) : ?>
+								<p class="description"><?php echo esc_html( sprintf( __( 'Evidence group: %s', 'seo-geo-migration-bridge' ), $verification ) ); ?></p>
+							<?php endif; ?>
+							<?php if ( 'link' === $type ) : ?>
+								<?php $link = is_array( $current_value ) ? $current_value : array(); ?>
+								<input id="seo-geo-slot-<?php echo esc_attr( $slot_id ); ?>" class="regular-text" type="text" name="content_values[<?php echo esc_attr( $slot_id ); ?>][label]" value="<?php echo esc_attr( (string) ( $link['label'] ?? '' ) ); ?>" placeholder="<?php echo esc_attr__( 'Link label', 'seo-geo-migration-bridge' ); ?>">
+								<input class="regular-text" type="text" name="content_values[<?php echo esc_attr( $slot_id ); ?>][url]" value="<?php echo esc_attr( (string) ( $link['url'] ?? '' ) ); ?>" placeholder="/contact/">
+							<?php elseif ( 'list' === $type ) : ?>
+								<?php $items = is_array( $current_value ) ? array_values( array_map( 'strval', $current_value ) ) : array(); ?>
+								<textarea id="seo-geo-slot-<?php echo esc_attr( $slot_id ); ?>" class="large-text" rows="4" name="content_lists[<?php echo esc_attr( $slot_id ); ?>]"><?php echo esc_textarea( implode( "\n", $items ) ); ?></textarea>
+								<p class="description"><?php echo esc_html__( 'One verified item per line.', 'seo-geo-migration-bridge' ); ?></p>
+							<?php else : ?>
+								<textarea id="seo-geo-slot-<?php echo esc_attr( $slot_id ); ?>" class="large-text" rows="3" name="content_values[<?php echo esc_attr( $slot_id ); ?>]"><?php echo esc_textarea( is_string( $current_value ) ? $current_value : '' ); ?></textarea>
+							<?php endif; ?>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+			<?php submit_button( __( 'Save reviewed Home Content Kit', 'seo-geo-migration-bridge' ) ); ?>
+		</form>
+
+		<?php if ( is_array( $content_kit ) ) : ?>
+			<h3><?php echo esc_html__( 'Apply to clean Home draft', 'seo-geo-migration-bridge' ); ?></h3>
+			<?php if ( true !== ( $hydration_plan['ready'] ?? false ) ) : ?>
+				<div class="notice notice-warning inline">
+					<p><strong><?php echo esc_html__( 'Hydration is blocked:', 'seo-geo-migration-bridge' ); ?></strong></p>
+					<p><code><?php echo esc_html( implode( ', ', is_array( $hydration_plan['blockers'] ?? null ) ? $hydration_plan['blockers'] : array() ) ); ?></code></p>
+				</div>
+			<?php else : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline-block;margin-right:.5rem;">
+					<input type="hidden" name="action" value="<?php echo esc_attr( self::HYDRATE_ACTION ); ?>">
+					<input type="hidden" name="confirm" value="hydrate-clean-home">
+					<?php wp_nonce_field( self::HYDRATE_NONCE_ACTION ); ?>
+					<?php submit_button( __( 'Hydrate clean Home draft', 'seo-geo-migration-bridge' ), 'primary', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
+
+			<?php if ( NativeHomeHydrator::CONTENT_STATE === (string) get_post_meta( $draft_id, CleanHomeRebuilder::CONTENT_STATE_META, true ) ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline-block;">
+					<input type="hidden" name="action" value="<?php echo esc_attr( self::ROLLBACK_ACTION ); ?>">
+					<input type="hidden" name="confirm" value="rollback-home-hydration">
+					<?php wp_nonce_field( self::ROLLBACK_NONCE_ACTION ); ?>
+					<?php submit_button( __( 'Restore preset scaffold', 'seo-geo-migration-bridge' ), 'secondary', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
+		<?php endif; ?>
 		<?php
 	}
 
@@ -350,6 +492,100 @@ final class AdminRescueManifestController {
 		}
 
 		$this->redirect( 'clean-home-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
+	}
+
+	/**
+	 * Save the reviewed Corporate Home Content Kit.
+	 */
+	public function handle_content_kit(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::CONTENT_KIT_NONCE_ACTION );
+
+		$confirm = filter_input( INPUT_POST, 'confirm', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( 'save-home-content-kit' !== $confirm ) {
+			wp_die( esc_html__( 'Home Content Kit save was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$raw_values = filter_input( INPUT_POST, 'content_values', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
+		$raw_lists  = filter_input( INPUT_POST, 'content_lists', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
+		$raw_groups = filter_input( INPUT_POST, 'verified_groups', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
+		$values     = is_array( $raw_values ) ? $raw_values : array();
+		$lists      = is_array( $raw_lists ) ? $raw_lists : array();
+
+		foreach ( $lists as $slot_id => $raw_list ) {
+			if ( ! is_string( $slot_id ) || ! is_scalar( $raw_list ) ) {
+				continue;
+			}
+			$values[ $slot_id ] = preg_split( '/\r\n|\r|\n/', (string) $raw_list ) ?: array();
+		}
+
+		$groups = array();
+		foreach ( array( 'hero-proof', 'proof', 'case-study' ) as $group ) {
+			$groups[ $group ] = is_array( $raw_groups ) && '1' === (string) ( $raw_groups[ $group ] ?? '' );
+		}
+
+		$candidate = array(
+			'draft_id'        => (int) filter_input( INPUT_POST, 'draft_id', FILTER_SANITIZE_NUMBER_INT ),
+			'plan_sha256'     => (string) filter_input( INPUT_POST, 'plan_sha256', FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
+			'values'          => $values,
+			'verified_groups' => $groups,
+		);
+
+		$result = $this->content_kit->save( $candidate );
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect( 'home-content-kit-saved' );
+	}
+
+	/**
+	 * Hydrate the clean Home draft from the reviewed Content Kit.
+	 */
+	public function handle_hydrate_home(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::HYDRATE_NONCE_ACTION );
+
+		$confirm = filter_input( INPUT_POST, 'confirm', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( 'hydrate-clean-home' !== $confirm ) {
+			wp_die( esc_html__( 'Home hydration was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$result = $this->hydrator->apply();
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect( 'home-hydration-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
+	}
+
+	/**
+	 * Roll the clean Home draft back to the original preset scaffold.
+	 */
+	public function handle_rollback_home(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::ROLLBACK_NONCE_ACTION );
+
+		$confirm = filter_input( INPUT_POST, 'confirm', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( 'rollback-home-hydration' !== $confirm ) {
+			wp_die( esc_html__( 'Home hydration rollback was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$result = $this->hydrator->rollback();
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect( 'home-hydration-rolled-back' );
 	}
 
 	/**
