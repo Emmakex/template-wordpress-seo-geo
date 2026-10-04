@@ -66,6 +66,21 @@ The `seo_geo_indexability_state` filter may override the native result only with
 
 The same resolver is reused by discovery metadata and is intended to be reused later by sitemaps and agent-friendly alternate formats, preventing a URL from being `noindex` in metadata while accidentally remaining eligible elsewhere.
 
+## Per-resource native metadata contract
+
+Native Core supports provider-neutral singular-resource overrides so migrated sites do not need to retain Yoast, Rank Math or another legacy provider merely to preserve reviewed SEO fields.
+
+Supported post meta:
+
+- `_seo_geo_title_v1`: document title override;
+- `_seo_geo_description_v1`: meta-description override;
+- `_seo_geo_canonical_v1`: explicit absolute HTTP(S) canonical override;
+- `_seo_geo_indexability_v1`: one of `indexable`, `noindex-follow` or `noindex-nofollow`.
+
+The overrides are registered only when native Core owns the corresponding SEO signal. Localized SEO keeps later priority for canonical/indexability so validated language routing remains authoritative.
+
+Migration tooling must not copy opaque provider templates or custom canonicals blindly. A normal self-canonical should remain runtime-resolved; custom canonicals require explicit review.
+
 ## Canonical contract
 
 Native canonical output is emitted only for `indexable` requests.
