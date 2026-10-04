@@ -145,7 +145,6 @@ final class CorporateThemeBootstrap {
 			'markdown_alternates_enabled' => false,
 		);
 
-		/** @var array<string,mixed> $result */
 		$result = \seo_geo_theme_apply_setup( $candidate, true );
 		if ( true !== ( $result['valid'] ?? false ) || true !== ( $result['applied'] ?? false ) ) {
 			$errors = is_array( $result['errors'] ?? null )
@@ -158,7 +157,7 @@ final class CorporateThemeBootstrap {
 			);
 		}
 
-		$setup_report = function_exists( 'seo_geo_theme_setup_report' )
+		$setup_report   = function_exists( 'seo_geo_theme_setup_report' )
 			? \seo_geo_theme_setup_report()
 			: null;
 		$current_preset = function_exists( 'seo_geo_theme_active_preset_id' )
@@ -183,13 +182,13 @@ final class CorporateThemeBootstrap {
 				: '',
 			'idempotent'           => true === ( $result['idempotent'] ?? false ),
 			'safety'               => array(
-				'theme_setup_authority'      => 'theme-owned-setup-executor',
-				'organization_confirmed'     => true,
-				'name_source'                => 'wordpress-site-title',
-				'local_business_inferred'    => false,
-				'page_content_mutation'      => false,
-				'plugin_mutation'            => false,
-				'production_cutover'         => false,
+				'theme_setup_authority'   => 'theme-owned-setup-executor',
+				'organization_confirmed'  => true,
+				'name_source'             => 'wordpress-site-title',
+				'local_business_inferred' => false,
+				'page_content_mutation'   => false,
+				'plugin_mutation'         => false,
+				'production_cutover'      => false,
 			),
 		);
 
