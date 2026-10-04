@@ -70,6 +70,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Replatform/NativeCompositionService.php',
 	MIGRATION_BRIDGE_DIR . '/src/Replatform/ContentRemapPlanner.php',
+	MIGRATION_BRIDGE_DIR . '/src/Replatform/ReviewedRemapApplier.php',
 	MIGRATION_BRIDGE_DIR . '/src/Replatform/AdminNativeReplatformController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Parity/ParityAllowlist.php',
 	MIGRATION_BRIDGE_DIR . '/src/Parity/SeoParityEngine.php',
@@ -238,6 +239,10 @@ $authorized_mutation_calls = array(
 		'wp_insert_post',
 		'update_post_meta',
 	),
+	MIGRATION_BRIDGE_DIR . '/src/Replatform/ReviewedRemapApplier.php' => array(
+		'wp_update_post',
+		'update_post_meta',
+	),
 );
 
 foreach ( $php_files as $path ) {
@@ -254,7 +259,7 @@ foreach ( $php_files as $path ) {
 				'destructive-api',
 				'Mutation API exists outside an explicitly authorized migration/cutover engine boundary.',
 				$path,
-				'only approved mutation APIs in MigrationEngine.php, NativeCompositionService.php or CutoverEngine.php',
+				'only approved mutation APIs in MigrationEngine.php, NativeCompositionService.php, ReviewedRemapApplier.php or CutoverEngine.php',
 				$function_name
 			);
 		}
@@ -284,6 +289,35 @@ foreach (
 	}
 }
 
+
+$reviewed_remap = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Replatform/ReviewedRemapApplier.php' );
+foreach (
+	array(
+		"'reviewed-remap-apply-plan'",
+		"'reviewed-remap-apply'",
+		"'section-verification-required:'",
+		"'asset-not-candidate:'",
+		"'native-slot-marker-count:'",
+		"'source_post_mutation'          => false",
+		"'candidate_only'                => true",
+		"'sensitive_requires_verification' => true",
+		"defined( 'SEO_GEO_MIGRATION_SANDBOX' )",
+		"metadata_exists( 'post', $draft_id, self::BACKUP_META )",
+		"self::LEDGER_META",
+		"self::BACKUP_META",
+	) as $reviewed_remap_guard
+) {
+	if ( ! str_contains( $reviewed_remap, $reviewed_remap_guard ) ) {
+		fail_migration_bridge(
+			'reviewed-remap-apply',
+			'Reviewed remap application is missing a candidate, verification, sandbox, rollback or provenance guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Replatform/ReviewedRemapApplier.php',
+			$reviewed_remap_guard,
+			'missing'
+		);
+	}
+}
+
 $native_replatform = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Replatform/NativeCompositionService.php' );
 foreach (
 	array(
@@ -300,6 +334,10 @@ foreach (
 		'WP_Block_Patterns_Registry::get_instance()->get_registered( $slug )',
 		'self::SOURCE_SHA_META',
 		'self::PLAN_SHA_META',
+		"'remap_slots'            => $remap_slots",
+		"'remap-slot-section-not-required:'",
+		"'remap-slot-pattern-not-in-page:'",
+		"'seo-geo-remap-slot:'",
 	) as $native_replatform_guard
 ) {
 	if ( ! str_contains( $native_replatform, $native_replatform_guard ) ) {
@@ -321,6 +359,10 @@ foreach (
 		'check_admin_referer( self::nonce_action( $page_key ) )',
 		"'create-native-draft'",
 		'admin_post_' . "' . self::ACTION",
+		"public const APPLY_ACTION      = 'seo_geo_native_replatform_apply_reviewed';",
+		"check_admin_referer( self::apply_nonce_action( $draft_id ) )",
+		"'apply-reviewed-remap'",
+		'admin_post_' . "' . self::APPLY_ACTION",
 	) as $native_replatform_controller_guard
 ) {
 	if ( ! str_contains( $native_replatform_controller, $native_replatform_controller_guard ) ) {
