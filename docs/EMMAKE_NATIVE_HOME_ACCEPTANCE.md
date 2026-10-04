@@ -1,92 +1,107 @@
-# Emmake Native Home Acceptance
+# Emmake Reset/Rebuild Acceptance
 
-Status: **candidate gate — no production mutation authorized**
-
-This document defines the bounded real-site acceptance required for the first Corporate Native Home preview in the existing `/nuevaweb/` sandbox.
+Status: **active pilot contract — `/nuevaweb/` reset-first rebuild**
 
 ## Scope
 
-Source:
+Working clone:
 
-- production authority: `https://emmake.com/`;
-- sandbox: `https://emmake.com/nuevaweb/`;
-- preset: `corporate`;
-- native presentation contract: `corporate-native-v1`;
-- implementation path: Native Replatform Composer -> Content Remap Intelligence -> Reviewed Apply.
-- sandbox plugin candidate: `SEO/GEO Migration Bridge 0.8.48`.
+- `https://emmake.com/nuevaweb/`
 
-The source page remains the preserved authority during this gate. The native destination must remain a private draft.
+Target:
 
-## Preconditions
+- SEO/GEO Theme;
+- Corporate preset;
+- clean Theme-native rebuild;
+- no requirement to preserve the old Divi/theme/plugin presentation stack.
 
-All of the following must be true before Reviewed Apply is executed on the real Home:
+The clone is the rebuild workspace. The public production site remains the reference for URLs/search equity until a later explicit cutover.
 
-- the request is running inside the accepted Migration Bridge sandbox with version `0.8.48` installed;
-- the Corporate preset is active;
-- the preserved Home source ID, path and content SHA-256 are captured;
-- the native composition plan is ready with zero blockers;
-- the Content Remap plan is current and its SHA-256 matches the draft metadata;
-- each selected asset ID exists in the current candidate inventory;
-- every evidence-sensitive section is explicitly reviewed by an administrator;
-- the native draft still contains exactly one marker for every selected semantic slot;
-- the source page is still published and unchanged since the reviewed plan was created.
+## Immediate path
 
-## Required Home semantic slots
+The Emmake pilot now follows:
 
-The first real preview must review these Corporate Home slots independently:
+**Existing clone → Rescue Manifest → reset legacy runtime → Corporate Theme/preset → clean rebuild → QA**
 
-1. `value-proposition`;
-2. `service-overview`;
-3. `organization-context`;
-4. `verified-proof`;
-5. `primary-cta`.
+Do not repeat analysis simply because an old workflow screen still offers it.
 
-Missing evidence is allowed. Fabricated evidence is not.
+A remaining UNKNOWN legacy component does not block the rebuild unless we decide that the function it provides must survive in the new site.
 
-## Blocking drift
+## Minimal Rescue Manifest
 
-Reviewed Apply must stop before mutation when any of these identities change:
+Before reset, retain only:
 
-- source page identity;
-- source content fingerprint;
-- native composition fingerprint;
-- Content Remap plan fingerprint;
-- selected candidate inventory;
-- deterministic native slot marker count.
+- useful page/post content and business facts;
+- existing public URLs/slugs worth keeping;
+- redirect intent;
+- useful title/meta/canonical/indexability intent;
+- internal/external links worth keeping;
+- selected useful media;
+- contact/legal material;
+- required forms/business functions.
 
-A drifted plan must be regenerated and reviewed again. The system must never silently reinterpret an old approval against new source content.
+Everything else is optional/disposable.
 
-## Preview acceptance
+## Reset acceptance
 
-The Home preview is accepted for the next page only when all of the following are recorded:
+The clone reset is accepted when:
 
-- destination remains `draft`;
-- source page content, slug and public URL are unchanged;
-- selected assets appear only in their reviewed native slots;
-- evidence-sensitive material has explicit verification;
-- unmapped source assets remain visible in the ledger;
-- the current pre-apply draft body is retained privately as rollback evidence for the active review cycle;
-- the operator can preview the private native draft without publishing it;
-- the operator can download a bounded review-evidence JSON containing hashes, selected asset IDs, counts, verification decisions and drift state, but no post body or backup body;
-- replaying the same reviewed selection is idempotent;
-- no legacy Divi visual-layout dependency is reintroduced;
-- no canonical, robots, hreflang or Schema authority is changed by draft creation;
-- internal and external links selected for the draft remain traceable to source assets;
-- no factual text is generated merely to fill a preset slot.
+- legacy visual theme/builder runtime is no longer required;
+- obsolete plugins are deactivated/removed;
+- builder-generated presentation assets/options are removed where safe;
+- stale caches/transients are cleared;
+- useful content/data from the Rescue Manifest remains available;
+- Migration Bridge remains only as long as needed to finish handoff;
+- the reset makes the site simpler/lighter.
 
-## Quality gate after editorial review
+## Corporate rebuild order
 
-Once the draft content and presentation are approved, the sandbox Home must pass:
+Rebuild cleanly in this order:
 
-- SEO/GEO ownership regression;
-- internal-link and media preservation review;
-- responsive acceptance at the established viewport matrix;
-- automated accessibility acceptance;
-- performance budgets;
-- clean WordPress/PHP runtime logs.
+1. Home;
+2. Services;
+3. Work;
+4. About;
+5. Insights;
+6. Contact.
 
-Passing this Home gate does **not** authorize production cutover. It authorizes repeating the accepted workflow for Services, Work, About, Insights and Contact.
+Each page starts from Corporate preset/Theme-native components, not from the visual structure of the old page.
 
-## Evidence boundary
+## Content rule
 
-Do not commit post bodies, credentials, customer information, database dumps, backups or private uploads to the repository. Repository evidence must stay bounded to identities, hashes, counts, decisions, gate results and non-sensitive observations. The downloadable Reviewed Remap evidence is intentionally safe for that role: it records no post body, backup body, credentials or arbitrary option values.
+Old content is source material, not a parity target.
+
+We may:
+
+- reuse useful facts;
+- shorten or reorganize copy;
+- merge repetitive sections;
+- rewrite for stronger UX/SEO/GEO;
+- preserve useful links/media;
+- discard weak, duplicated or obsolete material.
+
+We must not invent proof, testimonials, metrics, certifications, prices or other factual claims.
+
+## Optional migration helpers
+
+Native Replatform Composer, Content Remap, Reviewed Apply, Preview, rollback and bounded evidence remain available when useful.
+
+They are **optional helpers** for extracting/reusing source material. They do not require us to preserve every old candidate and they do not block reset-first reconstruction.
+
+## Final sandbox acceptance
+
+Before any production cutover, the rebuilt clone must pass:
+
+- URL/redirect review;
+- canonical/indexability/meta ownership;
+- Schema/discovery output;
+- internal/external links;
+- required media;
+- contact/forms/business functions;
+- accessibility;
+- responsive behavior;
+- performance;
+- clean WordPress/PHP runtime logs;
+- confirmation that unnecessary legacy visual runtime is gone.
+
+Passing this contract accepts the rebuilt sandbox. It does not automatically authorize production cutover.

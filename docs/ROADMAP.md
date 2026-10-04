@@ -2591,53 +2591,141 @@ Next:
 
 
 
-### Microphase 10E.4 — Native Replatform Composer
+### Microphase 10E.4 — Reset & Rebuild pilot
 
-Status: **active — bounded Preview + review-evidence surface accepted; real Emmake Home `/nuevaweb/` is the current gate**
+Status: **active — Emmake clone exists; reset-first rebuild is the current execution path**
 
-Goal: bridge preserved legacy assets into the new preset-native presentation without modifying the public source page.
+Goal:
 
-Implemented:
+Turn the existing `emmake.com/nuevaweb/` clone into a clean SEO/GEO Theme site without carrying the legacy runtime forward.
 
-- read-only native composition planning from the active preset/content map;
-- source-page resolution for front page, posts page, privacy page and slug-bound singleton pages;
-- composition assembled from WordPress' registered native pattern authority;
-- deterministic source/content/composition SHA-256 plan;
-- draft-only replacement page creation inside accepted sandbox;
-- source URL, slug and content remain untouched;
-- replatform metadata binds draft to source ID/hash/path, preset, page key and plan hash;
-- equivalent draft creation is idempotent;
-- administrator-only Tools screen with nonce + explicit confirmation;
-- no public/unauthenticated mutation endpoint;
-- **Content Remap Intelligence v1** extracts bounded title/body/link/media assets directly from the preserved source without rendering dynamic blocks;
-- every extracted asset carries deterministic provenance/hash identity;
-- preset `content_contract.required_sections` are converted into semantic remap slots with bounded source candidates;
-- proof/evidence/outcome/credential/provenance sections are always marked `manual-review` and never auto-applied;
-- no factual copy is generated and uncertain mappings remain non-mutating candidates;
-- remap plan SHA-256 + bounded review summary are retained on the native draft for audit/replay;
-- Corporate Home now declares five explicit EN/ES reviewed-remap slots bound to canonical native patterns;
-- inert native slot markers are part of the deterministic composition hash;
-- **Reviewed Apply v1** accepts only candidate asset IDs from the current remap plan and writes only to the bound native draft;
-- sensitive evidence cannot be applied without explicit administrator verification;
-- source identity, source hash, native plan hash and remap plan hash are revalidated before mutation;
-- first application stores a draft-content backup, deterministic selection hash, selected/unmapped asset ledger and before/after content hashes;
-- repeating the same reviewed selection is idempotent and returns `existing`;
-- the admin Tools surface exposes explicit reviewed selections and verification checkboxes; no automatic publication or public mutation exists;
-- a reviewed preview can be restored to its hash-verified pre-apply private draft, preserving rollback evidence and clearing the active ledger so the operator can revise selections and re-apply without touching the public source;
-- the operator surface exposes a private draft Preview link and can export privacy-bounded review evidence containing only identities, hashes, selected asset IDs, counts, verification decisions and drift state — never post bodies, backup bodies, credentials or arbitrary option values.
+Authoritative contract:
 
-Acceptance milestone:
+- `docs/RESET_REBUILD_CONTRACT.md`;
+- `docs/REPLATFORMING_CONTRACT.md`;
+- `docs/EMMAKE_NATIVE_HOME_ACCEPTANCE.md` remains useful only for bounded content/provenance evidence where needed.
 
-- PR #210 passed Foundation, Package, Migration Bridge Release, Release Artifact, PHP Quality, WordPress Smoke, Accessibility & Responsive and Performance Baseline CI before squash merge as `985dd5012666dfcc779c4110214aae0717283119`;
-- bounded Preview + review-evidence implementation is therefore accepted as the code-side gate for the real Home pilot.
+### Direction correction — 2026-10-04
 
-Next:
+The project does **not** need to preserve the cloned site's old theme/builder/plugin stack merely because the clone exists.
 
-1. use the accepted flow on the real Emmake Home in `/nuevaweb/`: apply reviewed assets, preview, rollback/revise if needed, download bounded acceptance evidence and record the accepted Corporate Native draft;
-2. refine slot-level presentation where real Emmake content exposes gaps in the generic Corporate patterns;
-3. repeat the accepted workflow for Services, Work, About, Insights and Contact;
-4. run SEO/GEO + link/media + performance + accessibility regression before any controlled swap.
+The clone is the working reset environment.
 
+The full-redesign path is now explicitly:
+
+**Scan → Clone → Rescue Manifest → Reset → SEO/GEO Theme + preset → Rebuild → QA → SEO/GEO Manager**
+
+The following are not blockers for beginning the rebuild when the clone already exists:
+
+- repeating the historical public baseline solely to unlock redesign work;
+- resolving every remaining UNKNOWN legacy dependency;
+- preserving visual-builder parity;
+- keeping plugins/themes that have no role in the new product.
+
+A remaining UNKNOWN dependency matters only if it represents a business function we deliberately choose to keep.
+
+### 10E.4A — Minimal Rescue Manifest
+
+Status: **next**
+
+Deliverables:
+
+- capture the pages/posts and factual content worth retaining;
+- capture current public URL/slug intent;
+- capture redirects/canonical/indexability/meta intent worth retaining;
+- capture internal/external links worth retaining;
+- capture selected reusable media;
+- capture business/entity/contact/legal facts;
+- identify only the forms/business integrations that the rebuilt site still needs;
+- explicitly allow legacy content/plugins/assets to be discarded when they add no value.
+
+Acceptance:
+
+- manifest is bounded and does not encode the legacy visual layout;
+- no requirement exists to preserve every legacy component;
+- one unresolved legacy plugin/component cannot block reset unless it is selected as a required surviving function.
+
+### 10E.4B — Clone Reset Engine
+
+Status: **planned immediately after 10E.4A**
+
+Deliverables:
+
+- explicit administrator reset action available only on the working clone/sandbox;
+- deactivate/remove legacy theme/builder presentation dependencies;
+- remove obsolete builder CSS/generated assets and presentation-only state;
+- clear stale caches/transients;
+- reset legacy widgets/Customizer/theme options that belong only to the old design;
+- retain WordPress content/data required by the Rescue Manifest;
+- retain Migration Bridge until reset/rebuild handoff is complete;
+- produce a bounded cleanup report of kept/removed component IDs and counts.
+
+Acceptance:
+
+- production is never targeted by the reset action;
+- content/URL/SEO material in the Rescue Manifest remains available;
+- old visual stack is no longer required for rebuilt pages;
+- reset is materially smaller/lighter than the source clone.
+
+### 10E.4C — Theme + Corporate preset bootstrap
+
+Status: **planned**
+
+Deliverables:
+
+- install/activate the self-contained SEO/GEO Theme;
+- activate Corporate preset;
+- make Theme/preset the new presentation authority;
+- ensure duplicate legacy SEO/frontend rendering ownership is disabled/removed;
+- start from clean Theme-native patterns rather than converted legacy layout.
+
+### 10E.4D — Clean page rebuild
+
+Status: **planned**
+
+Rebuild in this order:
+
+1. Home;
+2. Services;
+3. Work;
+4. About;
+5. Insights;
+6. Contact.
+
+Rules:
+
+- reuse only useful rescued content/facts/links/media;
+- reorganize/rewrite content for modern SEO/GEO and UX while retaining factual meaning;
+- do not preserve Divi/Elementor visual parity;
+- old content may be intentionally dropped;
+- Composer / Content Remap / Reviewed Apply are optional helpers, not mandatory preservation gates.
+
+### 10E.4E — Clean-site acceptance
+
+Status: **planned**
+
+Validate:
+
+- URLs and redirects;
+- canonical/indexability/meta ownership;
+- Schema and discovery output;
+- internal/external links;
+- required media;
+- required business functions;
+- accessibility;
+- responsive behavior;
+- performance;
+- absence of unnecessary legacy theme/builder runtime.
+
+Passing 10E.4E closes the Theme real-site sandbox acceptance path. Production cutover remains a separate explicit decision.
+
+### Previously accepted implementation retained as tooling
+
+The Native Replatform Composer, Content Remap Intelligence, Reviewed Apply, rollback, Preview and bounded evidence work remain accepted and tested.
+
+They are now treated as **supporting migration/rebuild utilities**, not as a requirement to preserve the old site component-by-component.
+
+PR #210 remains valid implementation evidence for those helpers.
 
 ### Microphase 10E.2A — Portable Clone Engine
 
@@ -2739,7 +2827,7 @@ Status: **planned — starts only after Phase 10E closes**
 
 Goal:
 
-Create a permanent, independently installable WordPress plugin that can analyze existing client sites, publish optimized landings/blogs, coordinate migration and continue operating after migration without requiring the SEO/GEO Theme or GitHub.
+Create the permanent WordPress **SEO/GEO optimization and content operations layer** that keeps a rebuilt or existing supported site improving after launch: publish optimized landings/blogs, refresh content, improve internal linking, use search/performance feedback and coordinate SEO/GEO output without duplicate ownership. Migration support may later exist as an optional module, but it is not the primary reason the Manager exists.
 
 Authoritative contracts:
 
@@ -3000,7 +3088,7 @@ These rules apply permanently:
 - Manager works without Theme on supported WordPress installations.
 - Manager is not the deprecated Core wrapper.
 - Exactly one owner exists per overlapping public SEO/GEO signal.
-- Existing client sites are analyzed before mutation.
+- Full redesigns use a clone + bounded Rescue Manifest before reset; the rebuilt site must not inherit legacy runtime merely because it was detected.
 - Publishing is draft-first by default, idempotent and rollback-capable.
 - Migration never assumes the client already has staging.
 - Dynamic production data is never replaced by a stale sandbox database without an explicit data-recovery decision.
