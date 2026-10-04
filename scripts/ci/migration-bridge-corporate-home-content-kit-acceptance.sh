@@ -258,6 +258,8 @@ expected_fragments = (
     "A clear path from problem to improvement",
     "Useful insights from the work",
     "Turn the next digital bottleneck into a working system",
+    "Tell us what needs to improve and we will start from the business requirement, not from a predefined stack.",
+    "Start a conversation",
     "Talk to our team",
     'href="/contact/"',
 )
@@ -271,6 +273,9 @@ for forbidden in (
     "Acción principal",
     "Resultado verificado",
     "Proyectos seleccionados",
+    "State the next useful step clearly",
+    "Add the minimum supporting context a visitor needs before taking action.",
+    "Take the next step",
 ):
     assert forbidden not in hydrated
 
