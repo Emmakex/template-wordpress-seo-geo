@@ -236,11 +236,6 @@ wait_for_fixture "$ES_URL" \
 wait_for_fixture "$MIGRATION_URL" \
   || fail_performance "fixture-migration-http" "Post-migration performance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl migration-parity-fixture"
 
-wp_cli option update seo_geo_active_preset corporate >/dev/null \
-  || fail_performance "corporate-preset-activate" "Could not activate Corporate preset for its performance sample" "Corporate preset active" "option update failed" "wp option update seo_geo_active_preset corporate"
-wait_for_fixture "$CORPORATE_URL" \
-  || fail_performance "fixture-corporate-http" "Corporate performance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl corporate migration fixture"
-
 CHROME_PATH="$(node -e "const { chromium } = require('@playwright/test'); process.stdout.write(chromium.executablePath())")"
 [[ -x "$CHROME_PATH" ]] \
   || fail_performance "chromium-path" "Playwright Chromium executable was not found" "executable CHROME_PATH" "$CHROME_PATH" "resolve chromium executablePath"
@@ -250,6 +245,15 @@ for sample in 1 2 3; do
   run_lighthouse en "$EN_URL" "$sample"
   run_lighthouse es "$ES_URL" "$sample"
   run_lighthouse migration "$MIGRATION_URL" "$sample"
+done
+
+printf '[performance] Activating Corporate for isolated preset performance samples.\n'
+wp_cli option update seo_geo_active_preset corporate >/dev/null \
+  || fail_performance "corporate-preset-activate" "Could not activate Corporate preset for its performance sample" "Corporate preset active" "option update failed" "wp option update seo_geo_active_preset corporate"
+wait_for_fixture "$CORPORATE_URL" \
+  || fail_performance "fixture-corporate-http" "Corporate performance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl corporate migration fixture"
+
+for sample in 1 2 3; do
   run_lighthouse corporate "$CORPORATE_URL" "$sample"
 done
 
