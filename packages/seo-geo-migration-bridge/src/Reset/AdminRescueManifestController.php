@@ -15,23 +15,23 @@ use WP_Error;
  * Provides Rescue Manifest + Clone Reset Engine actions.
  */
 final class AdminRescueManifestController {
-	public const PAGE_SLUG              = 'seo-geo-reset-rebuild';
-	public const ACTION                 = 'seo_geo_reset_capture_rescue_manifest';
-	public const NONCE_ACTION           = 'seo_geo_reset_capture_rescue_manifest';
-	public const RESET_ACTION           = 'seo_geo_reset_apply_clone_runtime';
-	public const RESET_NONCE_ACTION     = 'seo_geo_reset_apply_clone_runtime';
-	public const BOOTSTRAP_ACTION       = 'seo_geo_reset_apply_corporate_bootstrap';
-	public const BOOTSTRAP_NONCE_ACTION = 'seo_geo_reset_apply_corporate_bootstrap';
-	public const CLEAN_HOME_ACTION      = 'seo_geo_reset_create_clean_home';
+	public const PAGE_SLUG               = 'seo-geo-reset-rebuild';
+	public const ACTION                  = 'seo_geo_reset_capture_rescue_manifest';
+	public const NONCE_ACTION            = 'seo_geo_reset_capture_rescue_manifest';
+	public const RESET_ACTION            = 'seo_geo_reset_apply_clone_runtime';
+	public const RESET_NONCE_ACTION      = 'seo_geo_reset_apply_clone_runtime';
+	public const BOOTSTRAP_ACTION        = 'seo_geo_reset_apply_corporate_bootstrap';
+	public const BOOTSTRAP_NONCE_ACTION  = 'seo_geo_reset_apply_corporate_bootstrap';
+	public const CLEAN_HOME_ACTION       = 'seo_geo_reset_create_clean_home';
 	public const CLEAN_HOME_NONCE_ACTION = 'seo_geo_reset_create_clean_home';
 
 	/**
 	 * Construct the reset-first administrator controller.
 	 *
-	 * @param RescueManifest          $manifest  Rescue manifest service.
-	 * @param CloneResetEngine        $reset     Clone reset service.
+	 * @param RescueManifest          $manifest   Rescue manifest service.
+	 * @param CloneResetEngine        $reset      Clone reset service.
 	 * @param CorporateThemeBootstrap $bootstrap  Corporate Theme bootstrap service.
-	 * @param CleanHomeRebuilder       $clean_home Clean Corporate Home draft builder.
+	 * @param CleanHomeRebuilder      $clean_home Clean Corporate Home draft builder.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
@@ -221,7 +221,8 @@ final class AdminRescueManifestController {
 						<?php echo esc_html__( 'It contains only Corporate preset structure; the current front page and its URL remain unchanged.', 'seo-geo-migration-bridge' ); ?>
 					</p>
 					<p>
-						<a class="button button-primary" href="<?php echo esc_url( get_edit_post_link( $clean_home_draft_id, '' ) ?: '#' ); ?>"><?php echo esc_html__( 'Edit clean Home draft', 'seo-geo-migration-bridge' ); ?></a>
+						<?php $clean_home_edit_link = get_edit_post_link( $clean_home_draft_id, '' ); ?>
+						<a class="button button-primary" href="<?php echo esc_url( is_string( $clean_home_edit_link ) && '' !== $clean_home_edit_link ? $clean_home_edit_link : '#' ); ?>"><?php echo esc_html__( 'Edit clean Home draft', 'seo-geo-migration-bridge' ); ?></a>
 						<a class="button" href="<?php echo esc_url( get_preview_post_link( $clean_home_draft_id ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Preview clean Home', 'seo-geo-migration-bridge' ); ?></a>
 					</p>
 				</div>
