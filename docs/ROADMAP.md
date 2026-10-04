@@ -2657,7 +2657,19 @@ Acceptance:
 
 ### 10E.4B — Clone Reset Engine
 
-Status: **active — current execution pointer**
+Status: **accepted — Migration Bridge 0.8.50 / PR #218 / 8 of 8 CI gates green / merge c6dbfff6a505d3f380f666e3d5dc0ba8f2d39153**
+
+Acceptance milestone:
+
+- explicit clone/sandbox-only reset action accepted;
+- saved Rescue Manifest required before destructive cleanup;
+- SEO/GEO Theme activation verified;
+- every non-kept plugin and every non-target theme removed in WordPress runtime acceptance;
+- Migration Bridge retained during handoff;
+- explicitly selected business plugins retained;
+- Divi/Elementor generated presentation caches, old widget assignments, rewrite rules and object cache cleaned;
+- Rescue Manifest and rescued post content SHA-256 fingerprints verified unchanged after reset;
+- Foundation, Package, Migration Bridge Release, Release Artifact, PHP Quality, WordPress Smoke, Accessibility/Responsive and Performance gates all passed.
 
 Deliverables:
 
@@ -2679,15 +2691,33 @@ Acceptance:
 
 ### 10E.4C — Theme + Corporate preset bootstrap
 
-Status: **planned**
+Status: **active — Migration Bridge 0.8.51 candidate; current execution pointer**
 
-Deliverables:
+Implemented candidate:
 
-- install/activate the self-contained SEO/GEO Theme;
-- activate Corporate preset;
-- make Theme/preset the new presentation authority;
-- ensure duplicate legacy SEO/frontend rendering ownership is disabled/removed;
-- start from clean Theme-native patterns rather than converted legacy layout.
+- completed Clone Reset report becomes the newest clean handoff authority `reset-rebuild-handoff-v1`;
+- stale legacy migration-report evidence is retained but no longer re-blocks the reset-first Theme setup;
+- Corporate bootstrap delegates all configuration writes to the Theme-owned `SetupExecutor`;
+- preset is fixed to `corporate`;
+- one native language is seeded from the active WordPress locale with prefix routing disabled;
+- Organization identity requires explicit administrator confirmation that the WordPress site title represents the organization;
+- LocalBusiness identity/facts are never inferred;
+- crawler policy remains inherited;
+- `llms.txt` and Markdown alternates remain disabled by default;
+- bootstrap creates no pages and mutates no plugins;
+- identical replay is required to be idempotent.
+
+Acceptance gate:
+
+- Theme setup plan resolves `site_mode=reset-rebuild`;
+- Theme setup report preserves `reset-rebuild-handoff-v1`;
+- Corporate preset is persisted by Theme authority;
+- rescued content, page count, active plugins and historical migration evidence remain unchanged;
+- all repository CI gates pass.
+
+Next only after acceptance:
+
+- **10E.4D — clean page rebuild**, starting with Home from Corporate native patterns rather than converted legacy layout.
 
 ### 10E.4D — Clean page rebuild
 
