@@ -3202,8 +3202,8 @@ foreach (
 		"'llms_txt_enabled'            => false",
 		"'markdown_alternates_enabled' => false",
 		'\\seo_geo_theme_apply_setup( $candidate, true )',
-		"'organization_fact_inferred' => false",
-		"'local_business_inferred'    => false",
+		"'organization_fact_inferred'",
+		"'local_business_inferred'",
 	) as $bootstrap_guard
 ) {
 	if ( ! str_contains( $corporate_bootstrap, $bootstrap_guard ) ) {
