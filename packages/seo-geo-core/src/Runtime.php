@@ -41,6 +41,7 @@ use SeoGeo\Core\Seo\HreflangResolver;
 use SeoGeo\Core\Seo\IndexabilityResolver;
 use SeoGeo\Core\Seo\LocalizedSeoResolver;
 use SeoGeo\Core\Seo\MetaDescriptionResolver;
+use SeoGeo\Core\Seo\NativeSeoMetadata;
 use SeoGeo\Core\Seo\NativeSeoPresenter;
 use SeoGeo\Core\Seo\OpenGraphResolver;
 use SeoGeo\Core\Seo\SeoOutputAuthority;
@@ -166,8 +167,21 @@ final class Runtime {
 
 		self::$seo_authority = new SeoOutputAuthority( self::$integration_detector->seo_provider() );
 		self::$localized_seo = new LocalizedSeoResolver( self::$language_router, self::$translation_registry, $language_configuration );
+		$native_metadata     = new NativeSeoMetadata();
 
 		self::$language_router->register();
+		if ( self::$seo_authority->native_owns( SeoOutputAuthority::SIGNAL_TITLE ) ) {
+			add_filter( 'pre_get_document_title', array( $native_metadata, 'filter_document_title' ), 10 );
+		}
+		if ( self::$seo_authority->native_owns( SeoOutputAuthority::SIGNAL_META_DESCRIPTION ) ) {
+			add_filter( 'seo_geo_meta_description', array( $native_metadata, 'filter_meta_description' ), 10 );
+		}
+		if ( self::$seo_authority->native_owns( SeoOutputAuthority::SIGNAL_ROBOTS ) ) {
+			add_filter( 'seo_geo_indexability_state', array( $native_metadata, 'filter_indexability_state' ), 10 );
+		}
+		if ( self::$seo_authority->native_owns( SeoOutputAuthority::SIGNAL_CANONICAL ) ) {
+			add_filter( 'seo_geo_canonical_url', array( $native_metadata, 'filter_canonical_url' ), 10, 2 );
+		}
 		add_filter( 'seo_geo_indexability_state', array( self::$localized_seo, 'resolve_indexability' ), 20 );
 		add_filter( 'seo_geo_canonical_url', array( self::$localized_seo, 'filter_canonical_url' ), 20, 2 );
 
