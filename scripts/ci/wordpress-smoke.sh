@@ -161,12 +161,12 @@ docker cp packages/seo-geo-core/. "$WP_CONTAINER":/var/www/html/wp-content/plugi
   || fail_smoke "plugin-copy" "Could not copy SEO GEO Core into WordPress" "plugin copied" "docker cp failed" "docker cp plugin"
 docker cp packages/seo-geo-migration-bridge/. "$WP_CONTAINER":/var/www/html/wp-content/plugins/seo-geo-migration-bridge/ \
   || fail_smoke "migration-bridge-copy" "Could not copy SEO/GEO Migration Bridge into WordPress" "migration bridge copied" "docker cp failed" "docker cp migration bridge"
-docker cp packages/seo-geo-theme/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
-  || fail_smoke "theme-copy" "Could not copy SEO GEO Starter into WordPress" "theme copied" "docker cp failed" "docker cp theme"
-docker exec "$WP_CONTAINER" mkdir -p /var/www/html/wp-content/themes/seo-geo-theme/presets \
-  || fail_smoke "theme-preset-dir" "Could not create bundled preset directory" "theme preset directory created" "mkdir failed" "docker exec mkdir"
-docker cp presets/. "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/presets/ \
-  || fail_smoke "theme-preset-copy" "Could not copy bundled presets into WordPress theme fixture" "theme presets copied" "docker cp failed" "docker cp presets"
+
+SELF_CONTAINED_THEME="$TMP_DIR/seo-geo-theme"
+bash scripts/build-theme-package.sh "$SELF_CONTAINED_THEME" \
+  || fail_smoke "theme-build" "Could not assemble self-contained SEO/GEO Theme" "embedded Core + presets assembled" "theme build failed" "build-theme-package.sh"
+docker cp "$SELF_CONTAINED_THEME/." "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
+  || fail_smoke "theme-copy" "Could not copy self-contained SEO/GEO Theme into WordPress" "theme copied" "docker cp failed" "docker cp theme"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-core \
   /var/www/html/wp-content/plugins/seo-geo-migration-bridge \
