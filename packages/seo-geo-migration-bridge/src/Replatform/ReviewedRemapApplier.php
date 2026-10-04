@@ -36,8 +36,9 @@ final class ReviewedRemapApplier {
 	 * @return array<string,mixed>
 	 */
 	public function plan( int $draft_id, array $selections, array $verified_sections = array() ): array {
-		$blockers = array();
-		$draft    = get_post( $draft_id );
+		$blockers        = array();
+		$marker_blockers = array();
+		$draft           = get_post( $draft_id );
 
 		if ( ! $draft instanceof WP_Post || 'page' !== $draft->post_type ) {
 			$blockers[] = 'draft-not-found';
@@ -128,7 +129,7 @@ final class ReviewedRemapApplier {
 			$marker = NativeCompositionService::slot_marker( $section );
 			$count  = $draft instanceof WP_Post ? substr_count( (string) $draft->post_content, $marker ) : 0;
 			if ( 1 !== $count ) {
-				$blockers[] = 'native-slot-marker-count:' . $section . ':' . $count;
+				$marker_blockers[] = 'native-slot-marker-count:' . $section . ':' . $count;
 			}
 
 			$operations[] = array(
@@ -139,9 +140,6 @@ final class ReviewedRemapApplier {
 				'verified'      => in_array( $section, $verified, true ),
 			);
 		}
-
-		$blockers = array_values( array_unique( $blockers ) );
-		sort( $blockers );
 
 		foreach ( $selection_ids as &$ids ) {
 			$ids = array_values( array_unique( $ids ) );
@@ -164,6 +162,19 @@ final class ReviewedRemapApplier {
 			(string) wp_json_encode( $selection_material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 		);
 
+		$current_ledger = get_post_meta( $draft_id, self::LEDGER_META, true );
+		$existing       = is_array( $current_ledger )
+			&& hash_equals( (string) ( $current_ledger['selection_sha256'] ?? '' ), $selection_sha )
+			&& $draft instanceof WP_Post
+			&& hash_equals( (string) ( $current_ledger['after_sha256'] ?? '' ), hash( 'sha256', (string) $draft->post_content ) );
+
+		if ( ! $existing ) {
+			$blockers = array_merge( $blockers, $marker_blockers );
+		}
+
+		$blockers = array_values( array_unique( $blockers ) );
+		sort( $blockers );
+
 		return array(
 			'schema_version'    => 1,
 			'mode'              => 'reviewed-remap-apply-plan',
@@ -175,6 +186,7 @@ final class ReviewedRemapApplier {
 			'native_plan_sha'   => $stored_plan_sha,
 			'content_remap_sha' => $stored_remap_sha,
 			'selection_sha256'  => $selection_sha,
+			'existing'          => $existing,
 			'selections'        => $normalized,
 			'verified_sections' => $verified,
 			'selected_assets'   => $selection_ids,
