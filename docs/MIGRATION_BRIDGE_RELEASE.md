@@ -8,8 +8,25 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.15`;
+- current plugin version: `1.0.9`;
 - ZIP root: `seo-geo-migration-bridge/`.
+
+## Current candidate — 1.0.9
+
+Migration Bridge 1.0.9 is the first installable candidate that contains the accepted Native Replatform **Content Remap Intelligence v1** and **Reviewed Apply v1** flow.
+
+It adds:
+
+- provenance-bound source text/link/media inventory;
+- explicit Corporate Home semantic remap slots;
+- candidate-only reviewed selection;
+- mandatory administrator verification for evidence-sensitive sections;
+- draft-only application with source/native/remap hash revalidation;
+- pre-apply draft backup;
+- selected/unmapped asset ledger;
+- idempotent replay of an identical reviewed selection.
+
+Historical Emmake clone evidence remains bound to the exact earlier artifacts that actually produced it. Bumping the installable candidate to 1.0.9 does not rewrite or relabel the 0.8.x/1.0.8 field evidence.
 
 ## Build
 
