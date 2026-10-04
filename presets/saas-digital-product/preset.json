@@ -134,5 +134,36 @@
     "below_fold_media": "lazy",
     "lcp_media": "not-lazy-loaded",
     "performance_profile": "core-web-vitals-strict"
+  },
+  "design_direction": {
+    "north_star": "explain-show-prove-convert",
+    "functional_patterns": [
+      "plain-language-value",
+      "primary-cta",
+      "product-ui-proof",
+      "customer-proof",
+      "outcome-features",
+      "how-it-works",
+      "integrations-security",
+      "case-studies",
+      "pricing",
+      "faq",
+      "final-cta"
+    ],
+    "modern_traits": [
+      "product-ui-as-visual",
+      "editorial-interface-composition",
+      "brand-specific-dark-light-surfaces",
+      "functional-bento",
+      "selective-gradient-glow-3d",
+      "subtle-product-motion"
+    ],
+    "avoid": [
+      "generic-ai-gradient-look",
+      "vague-jargon",
+      "fake-ui-evidence",
+      "interaction-delaying-motion",
+      "oversized-animation-bundles"
+    ]
   }
 }
