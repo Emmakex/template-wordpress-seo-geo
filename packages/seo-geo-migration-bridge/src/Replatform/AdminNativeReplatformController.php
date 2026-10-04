@@ -19,6 +19,11 @@ final class AdminNativeReplatformController {
 	public const ACTION       = 'seo_geo_native_replatform_create_draft';
 	public const NONCE_ACTION = 'seo_geo_native_replatform_create_draft';
 
+	/**
+	 * Construct the administrator controller.
+	 *
+	 * @param NativeCompositionService $composer Draft-only native composer.
+	 */
 	public function __construct( private NativeCompositionService $composer ) {
 	}
 
@@ -95,7 +100,7 @@ final class AdminNativeReplatformController {
 							</td>
 							<td>
 								<?php if ( 0 < (int) ( $plan['existing_draft'] ?? 0 ) ) : ?>
-									<a class="button" href="<?php echo esc_url( get_edit_post_link( (int) $plan['existing_draft'], '' ) ?: '#' ); ?>"><?php echo esc_html__( 'Edit native draft', 'seo-geo-migration-bridge' ); ?></a>
+									<a class="button" href="<?php echo esc_url( $this->edit_link( (int) $plan['existing_draft'] ) ); ?>"><?php echo esc_html__( 'Edit native draft', 'seo-geo-migration-bridge' ); ?></a>
 								<?php elseif ( true === ( $plan['ready'] ?? false ) ) : ?>
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 										<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION ); ?>">
@@ -158,9 +163,22 @@ final class AdminNativeReplatformController {
 
 	/**
 	 * Return a page-scoped nonce action.
+	 *
+	 * @param string $page_key Preset page key.
 	 */
 	public static function nonce_action( string $page_key ): string {
 		return self::NONCE_ACTION . ':' . sanitize_key( $page_key );
+	}
+
+	/**
+	 * Return an administrator edit link or a safe inert fallback.
+	 *
+	 * @param int $post_id Draft post ID.
+	 */
+	private function edit_link( int $post_id ): string {
+		$link = get_edit_post_link( $post_id, '' );
+
+		return is_string( $link ) && '' !== $link ? $link : '#';
 	}
 
 	/**
@@ -183,7 +201,7 @@ final class AdminNativeReplatformController {
 		<div class="notice notice-success is-dismissible">
 			<p>
 				<?php echo esc_html( $message ); ?>
-				<a href="<?php echo esc_url( get_edit_post_link( $draft_id, '' ) ?: '#' ); ?>"><?php echo esc_html__( 'Open draft', 'seo-geo-migration-bridge' ); ?></a>
+				<a href="<?php echo esc_url( $this->edit_link( $draft_id ) ); ?>"><?php echo esc_html__( 'Open draft', 'seo-geo-migration-bridge' ); ?></a>
 			</p>
 		</div>
 		<?php
