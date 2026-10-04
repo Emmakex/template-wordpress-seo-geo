@@ -3141,7 +3141,7 @@ foreach (
 		"'legacy_plugins_preserved'     => false",
 		"'dependency_review_required'   => false",
 		"'unknown_components_blocking' => false",
-		"update_option( self::OPTION, $manifest, false )",
+		'update_option( self::OPTION, $manifest, false )',
 	) as $rescue_guard
 ) {
 	if ( ! str_contains( $rescue_manifest, $rescue_guard ) ) {
