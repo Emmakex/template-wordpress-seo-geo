@@ -91,6 +91,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Review/DependencyReviewStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/RescueManifest.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/CloneResetEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
@@ -3155,6 +3156,39 @@ foreach (
 	}
 }
 
+$clone_reset = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/CloneResetEngine.php' );
+foreach (
+	array(
+		"public const REPORT_OPTION = 'seo_geo_clone_reset_report_v1';",
+		"public const TARGET_THEME  = 'seo-geo-theme';",
+		"'mode'           => 'reset-rebuild-clone-reset-plan'",
+		"SandboxGuard::enabled()",
+		"'rescue-manifest-required'",
+		"'target-theme-not-installed'",
+		"'dependency_review_needed' => false",
+		"'content_delete_allowed'   => false",
+		"'manifest_delete_allowed'  => false",
+		"'bridge_delete_allowed'    => false",
+		"switch_theme( self::TARGET_THEME )",
+		"deactivate_plugins( $active_to_remove, true )",
+		"delete_plugins( $removed_plugins )",
+		"delete_theme( $stylesheet )",
+		"WP_CONTENT_DIR . '/et-cache'",
+		"'elementor/css'",
+		"verify_rescued_content",
+	) as $clone_reset_guard
+) {
+	if ( ! str_contains( $clone_reset, $clone_reset_guard ) ) {
+		fail_migration_bridge(
+			'clone-reset-contract',
+			'Clone Reset Engine must remain clone-only, content-preserving and legacy-runtime removing.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/CloneResetEngine.php',
+			$clone_reset_guard,
+			'missing'
+		);
+	}
+}
+
 $rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
 foreach (
 	array(
@@ -3163,6 +3197,9 @@ foreach (
 		"current_user_can( 'manage_options' )",
 		"check_admin_referer( self::NONCE_ACTION )",
 		"'capture-rescue-manifest'",
+		"public const RESET_ACTION       = 'seo_geo_reset_apply_clone_runtime';",
+		"check_admin_referer( self::RESET_NONCE_ACTION )",
+		"'reset-clone-runtime'",
 	) as $rescue_controller_guard
 ) {
 	if ( ! str_contains( $rescue_controller, $rescue_controller_guard ) ) {
@@ -3180,6 +3217,8 @@ foreach (
 	array(
 		'AdminRescueManifestController',
 		'RescueManifest',
+		'CloneResetEngine',
+		'public static function clone_reset_engine()',
 		'self::$rescue_manifest_controller->boot()',
 		'public static function rescue_manifest()',
 	) as $reset_boot_guard
