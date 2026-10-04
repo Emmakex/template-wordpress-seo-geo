@@ -530,13 +530,13 @@ final class ReviewedRemapApplier {
 				continue;
 			}
 
-			$attrs = 0 < $id ? ' {"id":' . $id . ',"sizeSlug":"full","linkDestination":"none"}' : ' {"sizeSlug":"full","linkDestination":"none"}';
-			$class = 0 < $id ? ' class="wp-image-' . $id . '"' : '';
+			$attrs   = 0 < $id ? ' {"id":' . $id . ',"sizeSlug":"full","linkDestination":"none"}' : ' {"sizeSlug":"full","linkDestination":"none"}';
+			$class   = 0 < $id ? ' class="wp-image-' . $id . '"' : '';
 			$parts[] = '<!-- wp:image' . $attrs . ' --><figure class="wp-block-image size-full"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt ) . '"' . $class . '/></figure><!-- /wp:image -->';
 		}
 
-		$class_name  = 'seo-geo-reviewed-remap seo-geo-reviewed-remap--' . sanitize_html_class( $section );
-		$provenance  = '<!-- seo-geo-reviewed-remap:' . sanitize_key( $section ) . ':' . substr( $selection_sha, 0, 16 ) . ' -->';
+		$class_name = 'seo-geo-reviewed-remap seo-geo-reviewed-remap--' . sanitize_html_class( $section );
+		$provenance = '<!-- seo-geo-reviewed-remap:' . sanitize_key( $section ) . ':' . substr( $selection_sha, 0, 16 ) . ' -->';
 
 		return '<!-- wp:group {"tagName":"section","className":"' . esc_attr( $class_name ) . '","layout":{"type":"constrained"}} -->'
 			. '<section class="wp-block-group ' . esc_attr( $class_name ) . '">'
@@ -559,8 +559,8 @@ final class ReviewedRemapApplier {
 			'media' => array(),
 		);
 		foreach ( array_keys( $result ) as $type ) {
-			$selected_ids = isset( $selected[ $type ] ) && is_array( $selected[ $type ] ) ? array_map( 'strval', $selected[ $type ] ) : array();
-			$result[ $type ]    = array_values( array_diff( array_keys( $asset_maps[ $type ] ), $selected_ids ) );
+			$selected_ids    = isset( $selected[ $type ] ) && is_array( $selected[ $type ] ) ? array_map( 'strval', $selected[ $type ] ) : array();
+			$result[ $type ] = array_values( array_diff( array_keys( $asset_maps[ $type ] ), $selected_ids ) );
 			sort( $result[ $type ] );
 		}
 
