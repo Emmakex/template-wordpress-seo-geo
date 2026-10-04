@@ -362,7 +362,7 @@ final class ReviewedRemapApplier {
 		$result = array();
 
 		foreach ( $selections as $section => $selection ) {
-			if ( ! is_string( $section ) || ! is_array( $selection ) ) {
+			if ( ! is_array( $selection ) ) {
 				continue;
 			}
 
