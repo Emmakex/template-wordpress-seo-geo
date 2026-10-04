@@ -256,6 +256,7 @@ final class HomeSeoHandoff {
 	 * @param string              $provider     Provider family.
 	 * @param string              $field        title|description.
 	 * @param array               $review_items Review findings.
+	 * @phpstan-param list<string> $review_items
 	 */
 	private function plain_provider_value( array $seo, string $provider, string $field, array &$review_items ): ?string {
 		$value = $this->provider_value( $seo, $provider, $field );
@@ -310,6 +311,7 @@ final class HomeSeoHandoff {
 	 * @param string                   $source_path  Rescued public path.
 	 * @param array<string,mixed>|null $manifest     Saved manifest.
 	 * @param array                    $review_items Review findings.
+	 * @phpstan-param list<string>      $review_items
 	 */
 	private function canonical_strategy( ?string $canonical, string $source_path, ?array $manifest, array &$review_items ): string {
 		if ( null === $canonical ) {
@@ -390,6 +392,7 @@ final class HomeSeoHandoff {
 	 *
 	 * @param array<string,mixed> $seo  Rescued SEO metadata.
 	 * @param array               $keys Candidate keys.
+	 * @phpstan-param list<string> $keys
 	 */
 	private function has_any_key( array $seo, array $keys ): bool {
 		foreach ( $keys as $key ) {
