@@ -2691,7 +2691,7 @@ Acceptance:
 
 ### 10E.4C — Theme + Corporate preset bootstrap
 
-Status: **active — Migration Bridge 0.8.51 candidate; current execution pointer**
+Status: **accepted — Migration Bridge 0.8.51 / PR #219 / 10 of 10 CI gates green / merge 912a128cd74879eb349cc39e8471d4611252ed09**
 
 Implemented candidate:
 
@@ -2721,7 +2721,7 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **planned**
+Status: **active — current execution pointer; Home first**
 
 Rebuild in this order:
 
