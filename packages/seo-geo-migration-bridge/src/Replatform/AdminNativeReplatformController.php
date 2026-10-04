@@ -15,11 +15,13 @@ use WP_Error;
  * Exposes read-only plans, draft creation and explicit reviewed remap application.
  */
 final class AdminNativeReplatformController {
-	public const PAGE_SLUG          = 'seo-geo-native-replatform';
-	public const ACTION             = 'seo_geo_native_replatform_create_draft';
-	public const NONCE_ACTION       = 'seo_geo_native_replatform_create_draft';
-	public const APPLY_ACTION       = 'seo_geo_native_replatform_apply_reviewed';
-	public const APPLY_NONCE_ACTION = 'seo_geo_native_replatform_apply_reviewed';
+	public const PAGE_SLUG             = 'seo-geo-native-replatform';
+	public const ACTION                = 'seo_geo_native_replatform_create_draft';
+	public const NONCE_ACTION          = 'seo_geo_native_replatform_create_draft';
+	public const APPLY_ACTION          = 'seo_geo_native_replatform_apply_reviewed';
+	public const APPLY_NONCE_ACTION    = 'seo_geo_native_replatform_apply_reviewed';
+	public const ROLLBACK_ACTION       = 'seo_geo_native_replatform_rollback_reviewed';
+	public const ROLLBACK_NONCE_ACTION = 'seo_geo_native_replatform_rollback_reviewed';
 
 	/**
 	 * Construct the administrator controller.
@@ -40,6 +42,7 @@ final class AdminNativeReplatformController {
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_create_draft' ) );
 		add_action( 'admin_post_' . self::APPLY_ACTION, array( $this, 'handle_apply_reviewed' ) );
+		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'handle_rollback_reviewed' ) );
 	}
 
 	/**
@@ -209,6 +212,31 @@ final class AdminNativeReplatformController {
 	}
 
 	/**
+	 * Handle explicit restoration of the draft state before Reviewed Apply.
+	 */
+	public function handle_rollback_reviewed(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		$draft_id = isset( $_POST['draft_id'] ) ? absint( wp_unslash( $_POST['draft_id'] ) ) : 0;
+		$confirm  = isset( $_POST['confirm'] ) ? sanitize_key( wp_unslash( $_POST['confirm'] ) ) : '';
+
+		if ( 0 >= $draft_id || 'rollback-reviewed-remap' !== $confirm ) {
+			wp_die( esc_html__( 'Reviewed remap rollback request is incomplete or was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		check_admin_referer( self::rollback_nonce_action( $draft_id ) );
+
+		$result = $this->applier->rollback( $draft_id );
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect_result( 'remap-rolled-back', $draft_id );
+	}
+
+	/**
 	 * Render reviewed candidate forms for existing native drafts.
 	 *
 	 * @param array<int,array<string,mixed>> $plans Native replatform plans.
@@ -224,6 +252,8 @@ final class AdminNativeReplatformController {
 			}
 
 			$assets = $this->asset_index( is_array( $remap['assets'] ?? null ) ? $remap['assets'] : array() );
+			$ledger = get_post_meta( $draft_id, ReviewedRemapApplier::LEDGER_META, true );
+			$backup = get_post_meta( $draft_id, ReviewedRemapApplier::BACKUP_META, true );
 			?>
 			<hr>
 			<h2>
@@ -238,6 +268,34 @@ final class AdminNativeReplatformController {
 				?>
 			</h2>
 			<p><?php echo esc_html__( 'Select only preserved source assets that belong in each semantic slot. Evidence-sensitive sections require explicit verification. Nothing is applied automatically.', 'seo-geo-migration-bridge' ); ?></p>
+			<p>
+				<strong><?php echo esc_html__( 'Source snapshot:', 'seo-geo-migration-bridge' ); ?></strong>
+				<code><?php echo esc_html( (string) ( $plan['source']['content_sha256'] ?? '' ) ); ?></code>
+				<br>
+				<strong><?php echo esc_html__( 'Content remap plan:', 'seo-geo-migration-bridge' ); ?></strong>
+				<code><?php echo esc_html( (string) ( $remap['plan_sha256'] ?? '' ) ); ?></code>
+			</p>
+
+			<?php if ( is_array( $ledger ) ) : ?>
+				<div class="notice notice-info inline">
+					<p>
+						<?php echo esc_html__( 'Reviewed content is currently applied to this draft. Preview or edit the draft. To change the reviewed selection, restore the pre-apply draft first.', 'seo-geo-migration-bridge' ); ?>
+						<a href="<?php echo esc_url( $this->edit_link( $draft_id ) ); ?>"><?php echo esc_html__( 'Open draft', 'seo-geo-migration-bridge' ); ?></a>
+					</p>
+				</div>
+				<?php if ( is_array( $backup ) ) : ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="<?php echo esc_attr( self::ROLLBACK_ACTION ); ?>">
+						<input type="hidden" name="draft_id" value="<?php echo esc_attr( (string) $draft_id ); ?>">
+						<input type="hidden" name="confirm" value="rollback-reviewed-remap">
+						<?php wp_nonce_field( self::rollback_nonce_action( $draft_id ) ); ?>
+						<p><?php echo esc_html__( 'This restores only the private native draft captured immediately before Reviewed Apply. It does not modify the preserved public source page.', 'seo-geo-migration-bridge' ); ?></p>
+						<?php submit_button( __( 'Restore pre-apply native draft', 'seo-geo-migration-bridge' ), 'secondary', 'submit', false ); ?>
+					</form>
+				<?php endif; ?>
+				<?php continue; ?>
+			<?php endif; ?>
+
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( self::APPLY_ACTION ); ?>">
 				<input type="hidden" name="draft_id" value="<?php echo esc_attr( (string) $draft_id ); ?>">
@@ -393,6 +451,15 @@ final class AdminNativeReplatformController {
 	}
 
 	/**
+	 * Return a draft-scoped reviewed-rollback nonce action.
+	 *
+	 * @param int $draft_id Native draft ID.
+	 */
+	public static function rollback_nonce_action( int $draft_id ): string {
+		return self::ROLLBACK_NONCE_ACTION . ':' . $draft_id;
+	}
+
+	/**
 	 * Redirect back to the Native Replatform screen after an explicit action.
 	 *
 	 * @param string $status   Result status.
@@ -437,10 +504,11 @@ final class AdminNativeReplatformController {
 		}
 
 		$messages = array(
-			'created'        => __( 'Native replacement draft created. The preserved source page was not modified.', 'seo-geo-migration-bridge' ),
-			'existing'       => __( 'The equivalent native replacement draft already exists; no duplicate was created.', 'seo-geo-migration-bridge' ),
-			'remap-applied'  => __( 'Reviewed preserved content was applied to the native draft. The source page remains unchanged.', 'seo-geo-migration-bridge' ),
-			'remap-existing' => __( 'The same reviewed content selection was already applied; no duplicate mutation was performed.', 'seo-geo-migration-bridge' ),
+			'created'           => __( 'Native replacement draft created. The preserved source page was not modified.', 'seo-geo-migration-bridge' ),
+			'existing'          => __( 'The equivalent native replacement draft already exists; no duplicate was created.', 'seo-geo-migration-bridge' ),
+			'remap-applied'     => __( 'Reviewed preserved content was applied to the native draft. The source page remains unchanged.', 'seo-geo-migration-bridge' ),
+			'remap-existing'    => __( 'The same reviewed content selection was already applied; no duplicate mutation was performed.', 'seo-geo-migration-bridge' ),
+			'remap-rolled-back' => __( 'The native draft was restored to its pre-apply state. The preserved public source page was not modified.', 'seo-geo-migration-bridge' ),
 		);
 
 		if ( ! isset( $messages[ $status ] ) ) {

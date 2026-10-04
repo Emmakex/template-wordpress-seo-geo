@@ -146,8 +146,9 @@ Reviewed Apply must:
 - require explicit verification for evidence-sensitive sections;
 - replace exactly one deterministic slot marker per selected semantic section;
 - use native WordPress blocks for the applied material;
-- store the first pre-apply draft body as rollback evidence;
+- store the current pre-apply draft body as rollback evidence before each active reviewed selection cycle;
 - persist selected and unmapped asset IDs, verification decisions, selection hash and before/after draft hashes in a review ledger;
+- support an explicit administrator-only rollback that restores only the hash-verified private draft, refuses rollback after unreviewed draft drift, archives bounded rollback evidence and clears the active ledger for a revised selection;
 - be idempotent for an identical reviewed selection.
 
 Reviewed Apply must **not**:
