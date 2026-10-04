@@ -114,6 +114,7 @@ final class AdminNativeReplatformController {
 							<td>
 								<?php if ( 0 < (int) ( $plan['existing_draft'] ?? 0 ) ) : ?>
 									<a class="button" href="<?php echo esc_url( $this->edit_link( (int) $plan['existing_draft'] ) ); ?>"><?php echo esc_html__( 'Edit native draft', 'seo-geo-migration-bridge' ); ?></a>
+									<a class="button" href="<?php echo esc_url( $this->preview_link( (int) $plan['existing_draft'] ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Preview native draft', 'seo-geo-migration-bridge' ); ?></a>
 								<?php elseif ( true === ( $plan['ready'] ?? false ) ) : ?>
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 										<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION ); ?>">
@@ -309,8 +310,16 @@ final class AdminNativeReplatformController {
 					<p>
 						<?php echo esc_html__( 'Reviewed content is currently applied to this draft. Preview or edit the draft. To change the reviewed selection, restore the pre-apply draft first.', 'seo-geo-migration-bridge' ); ?>
 						<a href="<?php echo esc_url( $this->edit_link( $draft_id ) ); ?>"><?php echo esc_html__( 'Open draft', 'seo-geo-migration-bridge' ); ?></a>
+						<a href="<?php echo esc_url( $this->preview_link( $draft_id ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Preview', 'seo-geo-migration-bridge' ); ?></a>
 					</p>
 				</div>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline-block;margin-right:.5rem;">
+					<input type="hidden" name="action" value="<?php echo esc_attr( self::EVIDENCE_ACTION ); ?>">
+					<input type="hidden" name="draft_id" value="<?php echo esc_attr( (string) $draft_id ); ?>">
+					<input type="hidden" name="confirm" value="download-reviewed-evidence">
+					<?php wp_nonce_field( self::evidence_nonce_action( $draft_id ) ); ?>
+					<?php submit_button( __( 'Download review evidence', 'seo-geo-migration-bridge' ), 'secondary', 'submit', false ); ?>
+				</form>
 				<?php if ( is_array( $backup ) ) : ?>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<input type="hidden" name="action" value="<?php echo esc_attr( self::ROLLBACK_ACTION ); ?>">
@@ -409,17 +418,26 @@ final class AdminNativeReplatformController {
 	 */
 	private function asset_label( string $type, array $asset ): string {
 		if ( 'units' === $type ) {
-			$text = isset( $asset['text'] ) && is_string( $asset['text'] ) ? $asset['text'] : '';
-			return mb_strlen( $text ) > 140 ? mb_substr( $text, 0, 137 ) . '…' : $text;
+			$text   = isset( $asset['text'] ) && is_string( $asset['text'] ) ? $asset['text'] : '';
+			$kind   = isset( $asset['kind'] ) && is_string( $asset['kind'] ) ? $asset['kind'] : 'text';
+			$origin = isset( $asset['origin'] ) && is_string( $asset['origin'] ) ? $asset['origin'] : 'source';
+			$text   = mb_strlen( $text ) > 140 ? mb_substr( $text, 0, 137 ) . '…' : $text;
+
+			return '[' . $kind . ' · ' . $origin . '] ' . $text;
 		}
 		if ( 'links' === $type ) {
-			return isset( $asset['url'] ) && is_string( $asset['url'] ) ? $asset['url'] : '';
+			$url  = isset( $asset['url'] ) && is_string( $asset['url'] ) ? $asset['url'] : '';
+			$kind = true === ( $asset['internal'] ?? false ) ? 'internal' : 'external';
+
+			return '[' . $kind . '] ' . $url;
 		}
 
-		$url = isset( $asset['url'] ) && is_string( $asset['url'] ) ? $asset['url'] : '';
-		$alt = isset( $asset['alt'] ) && is_string( $asset['alt'] ) ? $asset['alt'] : '';
+		$url           = isset( $asset['url'] ) && is_string( $asset['url'] ) ? $asset['url'] : '';
+		$alt           = isset( $asset['alt'] ) && is_string( $asset['alt'] ) ? $asset['alt'] : '';
+		$attachment_id = isset( $asset['attachment_id'] ) ? (int) $asset['attachment_id'] : 0;
+		$identity      = 0 < $attachment_id ? 'media #' . $attachment_id : 'media';
 
-		return '' !== $alt ? $alt . ' — ' . $url : $url;
+		return '[' . $identity . '] ' . ( '' !== $alt ? $alt . ' — ' . $url : $url );
 	}
 
 	/**
@@ -523,6 +541,17 @@ final class AdminNativeReplatformController {
 	 */
 	private function edit_link( int $post_id ): string {
 		$link = get_edit_post_link( $post_id, '' );
+
+		return is_string( $link ) && '' !== $link ? $link : '#';
+	}
+
+	/**
+	 * Return a private draft preview link or a safe inert fallback.
+	 *
+	 * @param int $post_id Draft post ID.
+	 */
+	private function preview_link( int $post_id ): string {
+		$link = get_preview_post_link( $post_id );
 
 		return is_string( $link ) && '' !== $link ? $link : '#';
 	}
