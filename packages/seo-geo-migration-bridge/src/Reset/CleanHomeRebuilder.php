@@ -17,14 +17,14 @@ use WP_Post;
  * Builds a private Home draft from Theme-owned Corporate patterns only.
  */
 final class CleanHomeRebuilder {
-	public const SOURCE_ID_META       = '_seo_geo_clean_home_source_id_v1';
-	public const SOURCE_SHA_META      = '_seo_geo_clean_home_source_sha256_v1';
-	public const SOURCE_PATH_META     = '_seo_geo_clean_home_source_path_v1';
-	public const MANIFEST_SHA_META    = '_seo_geo_clean_home_manifest_sha256_v1';
-	public const PLAN_SHA_META        = '_seo_geo_clean_home_plan_sha256_v1';
-	public const PATTERNS_META        = '_seo_geo_clean_home_patterns_v1';
-	public const CREATED_AT_META      = '_seo_geo_clean_home_created_at_v1';
-	public const CONTENT_STATE_META   = '_seo_geo_clean_home_content_state_v1';
+	public const SOURCE_ID_META     = '_seo_geo_clean_home_source_id_v1';
+	public const SOURCE_SHA_META    = '_seo_geo_clean_home_source_sha256_v1';
+	public const SOURCE_PATH_META   = '_seo_geo_clean_home_source_path_v1';
+	public const MANIFEST_SHA_META  = '_seo_geo_clean_home_manifest_sha256_v1';
+	public const PLAN_SHA_META      = '_seo_geo_clean_home_plan_sha256_v1';
+	public const PATTERNS_META      = '_seo_geo_clean_home_patterns_v1';
+	public const CREATED_AT_META    = '_seo_geo_clean_home_created_at_v1';
+	public const CONTENT_STATE_META = '_seo_geo_clean_home_content_state_v1';
 
 	private const PAGE_KEY = 'home';
 	private const PRESET   = 'corporate';
@@ -162,7 +162,7 @@ final class CleanHomeRebuilder {
 			'content_state'   => 'preset-scaffold',
 			'safety'          => array(
 				'legacy_layout_reused'         => false,
-				'content_remap_required'        => false,
+				'content_remap_required'       => false,
 				'source_post_mutation'         => false,
 				'front_page_assignment_change' => false,
 				'draft_only'                   => true,
@@ -222,14 +222,14 @@ final class CleanHomeRebuilder {
 		}
 
 		$meta = array(
-			self::SOURCE_ID_META      => $source_id,
-			self::SOURCE_SHA_META     => (string) ( $plan['source']['content_sha256'] ?? '' ),
-			self::SOURCE_PATH_META    => (string) ( $plan['source']['path'] ?? '' ),
-			self::MANIFEST_SHA_META   => (string) $plan['manifest_sha256'],
-			self::PLAN_SHA_META       => (string) $plan['plan_sha256'],
-			self::PATTERNS_META       => array_values( is_array( $plan['patterns'] ?? null ) ? $plan['patterns'] : array() ),
-			self::CREATED_AT_META     => gmdate( DATE_ATOM ),
-			self::CONTENT_STATE_META  => 'preset-scaffold',
+			self::SOURCE_ID_META     => $source_id,
+			self::SOURCE_SHA_META    => (string) ( $plan['source']['content_sha256'] ?? '' ),
+			self::SOURCE_PATH_META   => (string) ( $plan['source']['path'] ?? '' ),
+			self::MANIFEST_SHA_META  => (string) $plan['manifest_sha256'],
+			self::PLAN_SHA_META      => (string) $plan['plan_sha256'],
+			self::PATTERNS_META      => array_values( is_array( $plan['patterns'] ?? null ) ? $plan['patterns'] : array() ),
+			self::CREATED_AT_META    => gmdate( DATE_ATOM ),
+			self::CONTENT_STATE_META => 'preset-scaffold',
 		);
 		foreach ( $meta as $key => $value ) {
 			update_post_meta( $draft_id, $key, $value );
