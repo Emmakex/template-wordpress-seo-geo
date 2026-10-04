@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Phase 7A Corporate preset acceptance.
+# Corporate Native preset acceptance.
 #
 # This file is sourced by self-contained-theme-smoke.sh and reuses its
 # disposable WordPress fixture and structured fail_smoke diagnostic.
@@ -11,18 +11,19 @@ for corporate_file in \
   "${BUILT_THEME}/presets/corporate/preset.json" \
   "${BUILT_THEME}/presets/corporate/content-map.json" \
   "${BUILT_THEME}/presets/corporate/patterns.json" \
+  "${BUILT_THEME}/templates/front-page.html" \
   "${BUILT_THEME}/assets/css/presets/corporate.css"; do
   [[ -f "$corporate_file" ]] \
     || fail_smoke "corporate-preset-package" "Built theme is missing a Corporate preset artifact" "file exists" "$corporate_file"
 done
 
 corporate_pattern_state() {
-  wp_cli eval '$registry = WP_Block_Patterns_Registry::get_instance(); foreach ( array( "seo-geo-theme/corporate-case-study", "seo-geo-theme/corporate-stats", "seo-geo-theme/corporate-testimonials" ) as $slug ) { echo $registry->is_registered( $slug ) ? "1" : "0"; }' 2>"${TMP_DIR}/corporate-preset-patterns.stderr" | tr -d '\r\n'
+  wp_cli eval '$registry = WP_Block_Patterns_Registry::get_instance(); foreach ( array( "seo-geo-theme/corporate-case-study", "seo-geo-theme/corporate-stats", "seo-geo-theme/corporate-testimonials", "seo-geo-theme/corporate-native-hero", "seo-geo-theme/corporate-native-capabilities", "seo-geo-theme/corporate-native-proof", "seo-geo-theme/corporate-native-process", "seo-geo-theme/corporate-native-insights" ) as $slug ) { echo $registry->is_registered( $slug ) ? "1" : "0"; }' 2>"${TMP_DIR}/corporate-preset-patterns.stderr" | tr -d '\r\n'
 }
 
 CORPORATE_STATE_DEFAULT="$(corporate_pattern_state)"
-[[ "$CORPORATE_STATE_DEFAULT" == "000" ]] \
-  || fail_smoke "corporate-preset-default" "Corporate preset patterns registered before explicit preset activation" "000" "$CORPORATE_STATE_DEFAULT"
+[[ "$CORPORATE_STATE_DEFAULT" == "00000000" ]] \
+  || fail_smoke "corporate-preset-default" "Corporate preset patterns registered before explicit preset activation" "00000000" "$CORPORATE_STATE_DEFAULT"
 
 CORPORATE_VISUAL_DEFAULT="$(wp_cli eval 'do_action( "wp_enqueue_scripts" ); echo wp_style_is( "seo-geo-theme-preset-corporate", "enqueued" ) ? "1" : "0";' 2>"${TMP_DIR}/corporate-preset-visual-default.stderr" | tr -d '\r\n')"
 [[ "$CORPORATE_VISUAL_DEFAULT" == "0" ]] \
@@ -32,8 +33,8 @@ wp_cli option update seo_geo_active_preset corporate >/dev/null \
   || fail_smoke "corporate-preset-option" "Could not activate Corporate preset" "option update succeeds" "failed"
 
 CORPORATE_STATE_ACTIVE="$(corporate_pattern_state)"
-[[ "$CORPORATE_STATE_ACTIVE" == "111" ]] \
-  || fail_smoke "corporate-preset-active" "Corporate preset did not register its complete pattern set after activation" "111" "$CORPORATE_STATE_ACTIVE"
+[[ "$CORPORATE_STATE_ACTIVE" == "11111111" ]] \
+  || fail_smoke "corporate-preset-active" "Corporate preset did not register its complete pattern set after activation" "11111111" "$CORPORATE_STATE_ACTIVE"
 
 CORPORATE_VISUAL_ACTIVE="$(wp_cli eval 'do_action( "wp_enqueue_scripts" ); echo wp_style_is( "seo-geo-theme-preset-corporate", "enqueued" ) ? "1" : "0";' 2>"${TMP_DIR}/corporate-preset-visual-active.stderr" | tr -d '\r\n')"
 [[ "$CORPORATE_VISUAL_ACTIVE" == "1" ]] \
@@ -42,6 +43,15 @@ CORPORATE_VISUAL_ACTIVE="$(wp_cli eval 'do_action( "wp_enqueue_scripts" ); echo 
 CORPORATE_BODY_CLASS="$(wp_cli eval '$classes = seo_geo_theme_preset_body_class( array() ); echo in_array( "seo-geo-preset-corporate", $classes, true ) ? "1" : "0";' 2>"${TMP_DIR}/corporate-preset-body-class.stderr" | tr -d '\r\n')"
 [[ "$CORPORATE_BODY_CLASS" == "1" ]] \
   || fail_smoke "corporate-preset-body-class" "Corporate preset did not expose its stable frontend body class" "1" "$CORPORATE_BODY_CLASS"
+
+printf '[self-contained] Checking Corporate Native front-page semantic template.\n'
+CORPORATE_FRONT_TEMPLATE="$(cat "${BUILT_THEME}/templates/front-page.html")"
+[[ "$CORPORATE_FRONT_TEMPLATE" == *'"tagName":"main"'* ]] \
+  || fail_smoke "corporate-front-main" "Corporate Native front page lost its main landmark" '"tagName":"main"' "$CORPORATE_FRONT_TEMPLATE"
+[[ "$CORPORATE_FRONT_TEMPLATE" == *'wp:post-title {"level":1'* ]] \
+  || fail_smoke "corporate-front-h1" "Corporate Native front page lost page-owned H1 authority" 'wp:post-title level 1' "$CORPORATE_FRONT_TEMPLATE"
+[[ "$CORPORATE_FRONT_TEMPLATE" == *'wp:post-content'* ]] \
+  || fail_smoke "corporate-front-content" "Corporate Native front page lost native post-content composition" 'wp:post-content' "$CORPORATE_FRONT_TEMPLATE"
 
 printf '[self-contained] Checking Corporate migration-aware navigation.\n'
 CORPORATE_LEGACY_MENU_ID="$(wp_cli menu create 'Primary Menu' --porcelain 2>/dev/null | tr -d '\r\n')"
@@ -108,8 +118,8 @@ if ! CORPORATE_MANIFEST="$(wp_cli eval '$manifest = seo_geo_theme_preset_documen
   CORPORATE_MANIFEST_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-manifest.stderr" | head -c 240)"
   fail_smoke "corporate-preset-manifest-eval" "Could not resolve Corporate preset manifest through the theme registry" "manifest resolves" "${CORPORATE_MANIFEST_ERROR:-wp eval failed}" "wp eval seo_geo_theme_preset_document"
 fi
-[[ "$CORPORATE_MANIFEST" == '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1.2"}' ]] \
-  || fail_smoke "corporate-preset-manifest" "Corporate preset manifest did not preserve its identity/confirmation/visual contract" '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1.2"}' "$CORPORATE_MANIFEST"
+[[ "$CORPORATE_MANIFEST" == '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-native-v1"}' ]] \
+  || fail_smoke "corporate-preset-manifest" "Corporate preset manifest did not preserve its identity/confirmation/visual contract" '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-native-v1"}' "$CORPORATE_MANIFEST"
 
 if ! CORPORATE_TITLE_EN="$(wp_cli eval '$pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' 2>"${TMP_DIR}/corporate-preset-title-en.stderr" | tr -d '\r\n')"; then
   CORPORATE_TITLE_EN_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-title-en.stderr" | head -c 240)"
@@ -118,7 +128,7 @@ fi
 [[ "$CORPORATE_TITLE_EN" == "Corporate verified metrics" ]] \
   || fail_smoke "corporate-preset-en" "Corporate preset English copy is not active in the default locale" "Corporate verified metrics" "$CORPORATE_TITLE_EN"
 
-if ! CORPORATE_TITLE_ES="$(wp_cli eval 'add_filter( "locale", static fn( $locale ) => "es_ES", PHP_INT_MAX ); switch_to_locale( "es_ES" ); foreach ( array( "seo-geo-theme/corporate-case-study", "seo-geo-theme/corporate-stats", "seo-geo-theme/corporate-testimonials" ) as $slug ) { unregister_block_pattern( $slug ); } seo_geo_theme_register_active_preset_patterns(); $pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' 2>"${TMP_DIR}/corporate-preset-title-es.stderr" | tr -d '\r\n')"; then
+if ! CORPORATE_TITLE_ES="$(wp_cli eval 'add_filter( "locale", static fn( $locale ) => "es_ES", PHP_INT_MAX ); switch_to_locale( "es_ES" ); foreach ( array( "seo-geo-theme/corporate-case-study", "seo-geo-theme/corporate-stats", "seo-geo-theme/corporate-testimonials", "seo-geo-theme/corporate-native-hero", "seo-geo-theme/corporate-native-capabilities", "seo-geo-theme/corporate-native-proof", "seo-geo-theme/corporate-native-process", "seo-geo-theme/corporate-native-insights" ) as $slug ) { unregister_block_pattern( $slug ); } seo_geo_theme_register_active_preset_patterns(); $pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' 2>"${TMP_DIR}/corporate-preset-title-es.stderr" | tr -d '\r\n')"; then
   CORPORATE_TITLE_ES_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-title-es.stderr" | head -c 240)"
   fail_smoke "corporate-preset-es-eval" "Could not resolve Corporate Spanish pattern title" "Métricas corporativas verificadas" "${CORPORATE_TITLE_ES_ERROR:-wp eval failed}"
 fi
@@ -129,8 +139,8 @@ wp_cli option update seo_geo_active_preset unsupported-preset >/dev/null \
   || fail_smoke "corporate-preset-invalid-option" "Could not set unsupported preset probe" "option update succeeds" "failed"
 
 CORPORATE_STATE_UNSUPPORTED="$(corporate_pattern_state)"
-[[ "$CORPORATE_STATE_UNSUPPORTED" == "000" ]] \
-  || fail_smoke "corporate-preset-allowlist" "Unsupported preset ID activated Corporate pattern behavior" "000" "$CORPORATE_STATE_UNSUPPORTED"
+[[ "$CORPORATE_STATE_UNSUPPORTED" == "00000000" ]] \
+  || fail_smoke "corporate-preset-allowlist" "Unsupported preset ID activated Corporate pattern behavior" "00000000" "$CORPORATE_STATE_UNSUPPORTED"
 
 CORPORATE_VISUAL_UNSUPPORTED="$(wp_cli eval 'do_action( "wp_enqueue_scripts" ); echo wp_style_is( "seo-geo-theme-preset-corporate", "enqueued" ) ? "1" : "0";' 2>"${TMP_DIR}/corporate-preset-visual-unsupported.stderr" | tr -d '\r\n')"
 [[ "$CORPORATE_VISUAL_UNSUPPORTED" == "0" ]] \
