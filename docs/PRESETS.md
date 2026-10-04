@@ -358,6 +358,12 @@ Cross-preset guarantees:
 
 Preset `baseline_locales` are the locales explicitly supported/tested by that preset; they are **not a requirement to enable every listed locale on every site**. A monolingual site may use any one supported locale without warnings. The setup validator warns only when a configured locale is outside the preset's supported baseline.
 
+## Modern functional design invariant
+
+Every preset must follow `docs/MODERN_PRESET_DESIGN_STRATEGY.md`. Trend research is an input, not an excuse to add decorative complexity: the design must remain modern, highly functional, reusable, accessible, SEO/GEO-safe and inside the performance budget.
+
+The five presets intentionally have different north stars and component emphasis so the portfolio does not collapse into one generic visual template.
+
 ## SEO/GEO-first invariant
 
 All five presets are presentation/information-architecture profiles over one shared SEO/GEO runtime. They must satisfy `docs/SEO_GEO_PRESET_CONTRACT.md` before visual acceptance.
