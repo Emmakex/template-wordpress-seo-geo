@@ -105,7 +105,7 @@ final class NativeCompositionService {
 			'patterns'      => array_keys( $pattern_contents ),
 			'composition'   => hash( 'sha256', $composition ),
 		);
-		$plan_sha        = hash( 'sha256', (string) wp_json_encode( $plan_material ) );
+		$plan_sha       = hash( 'sha256', (string) wp_json_encode( $plan_material ) );
 
 		return array(
 			'schema_version' => 1,
@@ -391,9 +391,9 @@ final class NativeCompositionService {
 		foreach ( $posts as $post_id ) {
 			$post_id = (int) $post_id;
 			if (
-				$source_id === (int) get_post_meta( $post_id, self::SOURCE_ID_META, true )
-				&& $page_key === (string) get_post_meta( $post_id, self::PAGE_KEY_META, true )
-				&& $plan_sha === (string) get_post_meta( $post_id, self::PLAN_SHA_META, true )
+				(int) get_post_meta( $post_id, self::SOURCE_ID_META, true ) === $source_id
+				&& (string) get_post_meta( $post_id, self::PAGE_KEY_META, true ) === $page_key
+				&& (string) get_post_meta( $post_id, self::PLAN_SHA_META, true ) === $plan_sha
 			) {
 				return $post_id;
 			}
