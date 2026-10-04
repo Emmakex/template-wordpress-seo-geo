@@ -149,6 +149,7 @@ Reviewed Apply must:
 - store the current pre-apply draft body as rollback evidence before each active reviewed selection cycle;
 - persist selected and unmapped asset IDs, verification decisions, selection hash and before/after draft hashes in a review ledger;
 - support an explicit administrator-only rollback that restores only the hash-verified private draft, refuses rollback after unreviewed draft drift, archives bounded rollback evidence and clears the active ledger for a revised selection;
+- expose a private draft preview and a read-only acceptance-evidence snapshot limited to source/draft identities, hashes, selected asset IDs, counts, verification decisions and drift state; post bodies, backup bodies, credentials and arbitrary option values are forbidden from that evidence;
 - be idempotent for an identical reviewed selection.
 
 Reviewed Apply must **not**:
