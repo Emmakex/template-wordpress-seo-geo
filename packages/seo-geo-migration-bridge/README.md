@@ -2,6 +2,34 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Corporate Home Content Kit + Native Hydrator — 0.8.53
+
+After the clean Corporate Home draft exists, **Tools → SEO/GEO Reset & Rebuild** exposes Step 5.
+
+The Content Kit:
+
+- uses the Theme-owned `corporate-home-v1` semantic model;
+- stores typed `text`, `link` and `list` values;
+- binds the kit to the clean draft and its plan SHA-256;
+- requires all mandatory non-evidence fields;
+- requires complete content before an evidence group can be marked verified;
+- keeps `hero-proof`, `proof` and `case-study` verification explicit;
+- persists a deterministic kit SHA-256.
+
+The Native Hydrator:
+
+- parses the clean scaffold as native WordPress blocks;
+- finds fields through stable `seo-geo-content-slot--*` classes rather than placeholder text or block position;
+- removes the hero proof column, proof band and case-study section when their evidence group is not verified;
+- removes the optional secondary hero CTA when no reviewed value exists;
+- always hydrates from the original scaffold backup;
+- blocks re-apply after an untracked manual edit with `hydrated-draft-drift`;
+- is idempotent for the same reviewed kit;
+- offers exact rollback to the original preset scaffold;
+- does not alter the rescued source page, front-page assignment or active plugins.
+
+This is the first content-writing surface that shares the same semantic contract intended for the future SEO/GEO Manager.
+
 ## Clean Corporate Home rebuild — 0.8.52
 
 After Corporate bootstrap, **Tools → SEO/GEO Reset & Rebuild** exposes Step 4.
