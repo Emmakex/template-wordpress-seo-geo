@@ -20,10 +20,7 @@ $readiness = (string) file_get_contents( $required[0] );
 foreach (
 	array(
 		'home-not-ready',
-		'services-not-ready',
-		'work-not-ready',
-		'about-not-ready',
-		'contact-not-ready',
+		"$page_key . '-not-ready'",
 		'insights-not-ready',
 		'duplicate-page-source-binding',
 		'duplicate-public-path-binding',
@@ -35,6 +32,13 @@ foreach (
 ) {
 	if ( ! str_contains( $readiness, $marker ) ) {
 		fwrite( STDERR, 'Whole-site readiness contract missing marker: ' . $marker . PHP_EOL );
+		exit( 1 );
+	}
+}
+
+foreach ( array( 'services', 'work', 'about', 'contact' ) as $page_key ) {
+	if ( ! str_contains( $readiness, "'" . $page_key . "'" ) ) {
+		fwrite( STDERR, 'Whole-site readiness contract missing page key: ' . $page_key . PHP_EOL );
 		exit( 1 );
 	}
 }
