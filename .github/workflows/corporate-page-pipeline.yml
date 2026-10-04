@@ -1,0 +1,58 @@
+name: Corporate Page Pipeline CI
+
+on:
+  pull_request:
+    paths:
+      - 'presets/corporate/**'
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-migration-bridge/src/Reset/**'
+      - 'packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php'
+      - 'examples/content-blueprints/**'
+      - 'scripts/ci/validate-corporate-page-pipeline.php'
+      - '.github/workflows/corporate-page-pipeline.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'presets/corporate/**'
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-migration-bridge/src/Reset/**'
+      - 'packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php'
+      - 'examples/content-blueprints/**'
+      - 'scripts/ci/validate-corporate-page-pipeline.php'
+      - '.github/workflows/corporate-page-pipeline.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: corporate-pages-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Corporate pages + Insights contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Runtime version
+        run: php -v
+
+      - name: PHP syntax
+        run: |
+          php -l scripts/ci/validate-corporate-page-pipeline.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/CorporatePageContentKit.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/NativeCorporatePageHydrator.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/CorporatePageSeoHandoff.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/CorporatePageReadiness.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/AdminCorporatePagePipelineController.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/CorporateInsightsManager.php
+          php -l packages/seo-geo-migration-bridge/src/Reset/AdminCorporateInsightsController.php
+          php -l packages/seo-geo-theme/inc/Insights/InsightsIndexRuntime.php
+
+      - name: Validate Corporate page pipeline contract
+        run: php scripts/ci/validate-corporate-page-pipeline.php
