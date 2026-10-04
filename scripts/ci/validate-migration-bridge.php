@@ -96,6 +96,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CleanHomeRebuilder.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/NativeHomeHydrator.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/HomeSeoHandoff.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
 	'examples/content-blueprints/emmake-home.es_ES.json',
 	'scripts/ci/migration-bridge-home-content-blueprint-acceptance.sh',
@@ -3402,6 +3403,35 @@ foreach (
 	}
 }
 
+$home_seo_handoff = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/HomeSeoHandoff.php' );
+foreach (
+	array(
+		"'clean-home-native-seo-handoff-plan'",
+		"'clean-home-native-seo-handoff'",
+		"NativeSeoMetadata::META_TITLE",
+		"NativeSeoMetadata::META_DESCRIPTION",
+		"NativeSeoMetadata::META_INDEXABILITY",
+		"delete_post_meta( $draft_id, NativeSeoMetadata::META_CANONICAL )",
+		"'custom-canonical-review'",
+		"'legacy-title-template-review'",
+		"'legacy-description-template-review'",
+		"'cutover_seo_ready'",
+		"'source_post_mutation'         => false",
+		"'front_page_assignment_change' => false",
+		"'legacy_provider_required'     => false",
+	) as $home_seo_guard
+) {
+	if ( ! str_contains( $home_seo_handoff, $home_seo_guard ) ) {
+		fail_migration_bridge(
+			'home-native-seo-handoff-contract',
+			'Clean Home SEO handoff must remain provider-neutral, conservative around legacy templates/canonicals and non-destructive to the source/front-page assignment.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/HomeSeoHandoff.php',
+			$home_seo_guard,
+			'missing'
+		);
+	}
+}
+
 $rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
 foreach (
 	array(
@@ -3432,6 +3462,9 @@ foreach (
 		"'seo_geo_reset_rollback_home_hydration'",
 		"check_admin_referer( self::ROLLBACK_NONCE_ACTION )",
 		"'rollback-home-hydration'",
+		"'seo_geo_reset_apply_home_seo_handoff'",
+		"check_admin_referer( self::SEO_HANDOFF_NONCE_ACTION )",
+		"'apply-home-seo-handoff'",
 	) as $rescue_controller_guard
 ) {
 	if ( ! str_contains( $rescue_controller, $rescue_controller_guard ) ) {
@@ -3454,9 +3487,11 @@ foreach (
 		'CleanHomeRebuilder',
 		'CorporateHomeContentKit',
 		'NativeHomeHydrator',
+		'HomeSeoHandoff',
 		'public static function clean_home_rebuilder()',
 		'public static function corporate_home_content_kit()',
 		'public static function native_home_hydrator()',
+		'public static function home_seo_handoff()',
 		'public static function corporate_theme_bootstrap()',
 		'public static function clone_reset_engine()',
 		'self::$rescue_manifest_controller->boot()',
