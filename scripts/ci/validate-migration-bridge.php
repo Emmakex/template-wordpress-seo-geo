@@ -94,6 +94,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CloneResetEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateThemeBootstrap.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CleanHomeRebuilder.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/CleanCorporatePageRebuilder.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/NativeHomeHydrator.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/HomeSeoHandoff.php',
@@ -103,6 +104,7 @@ $required = array(
 	'scripts/ci/migration-bridge-home-content-blueprint-acceptance.sh',
 	'scripts/ci/migration-bridge-home-seo-handoff-acceptance.sh',
 	'scripts/ci/migration-bridge-home-pilot-readiness-acceptance.sh',
+	'scripts/ci/migration-bridge-clean-corporate-inner-page-acceptance.sh',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
@@ -3461,6 +3463,33 @@ foreach (
 	}
 }
 
+
+$clean_corporate_page = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/CleanCorporatePageRebuilder.php' );
+foreach (
+	array(
+		"'reset-rebuild-clean-corporate-page-plan'",
+		"'home-has-dedicated-rebuilder'",
+		"'source-page-selection-required'",
+		"'inner-page-source-cannot-be-front-page'",
+		"'source-page-content-drift'",
+		"'corporate-page-patterns-empty'",
+		"'source_url_change'",
+		"'front_page_assignment_change'",
+		"'plugins_unchanged'",
+		"'preset-scaffold'",
+	) as $clean_corporate_page_guard
+) {
+	if ( ! str_contains( $clean_corporate_page, $clean_corporate_page_guard ) ) {
+		fail_migration_bridge(
+			'clean-corporate-page-contract',
+			'Clean Corporate inner pages must preserve explicit source identity/URL and compose only native preset patterns.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/CleanCorporatePageRebuilder.php',
+			$clean_corporate_page_guard,
+			'missing'
+		);
+	}
+}
+
 $rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
 foreach (
 	array(
@@ -3518,11 +3547,13 @@ foreach (
 		'NativeHomeHydrator',
 		'HomeSeoHandoff',
 		'HomePilotReadiness',
+		'CleanCorporatePageRebuilder',
 		'public static function clean_home_rebuilder()',
 		'public static function corporate_home_content_kit()',
 		'public static function native_home_hydrator()',
 		'public static function home_seo_handoff()',
 		'public static function home_pilot_readiness()',
+		'public static function clean_corporate_page_rebuilder()',
 		'public static function corporate_theme_bootstrap()',
 		'public static function clone_reset_engine()',
 		'self::$rescue_manifest_controller->boot()',
