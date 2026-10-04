@@ -2561,6 +2561,35 @@ Migration Bridge v0.8.7 acceptance evidence:
 - post-merge Migration Bridge Release CI `36054164341` passed;
 - deterministic installable v0.8.7 ZIP SHA-256: `683d5a78c56b6c073963703153d2969f71f5b8f17e16dab7da4b05878133ebc9`.
 
+
+### Microphase 10E.3 — Corporate Native foundation
+
+Status: **active — native composition system implemented; sandbox content remap/application next**
+
+Goal: replace the legacy visual-parity path with a reusable Corporate Native WordPress presentation system.
+
+Implemented in this microphase:
+
+- Corporate manifest promoted to `2.0.0` / `corporate-native-v1`;
+- dedicated `front-page.html` with template-owned H1;
+- five new native Corporate patterns: hero support, capabilities, evidence/proof, process and insights;
+- canonical Home composition rebuilt around those native patterns;
+- Services/Work/About compositions remapped to native patterns;
+- Corporate stylesheet rewritten from scratch around the native system;
+- legacy `migrated-divi` presentation selectors removed from the Corporate stylesheet;
+- CSS-first / zero-project-JS design retained;
+- bilingual EN/ES pattern registration retained;
+- CI now rejects a Corporate visual system that reintroduces legacy-builder presentation parity.
+
+Next:
+
+1. add the non-destructive **Native Replatform Composer** to Migration Bridge/Manager;
+2. create a draft/native replacement Home in the sandbox from the Corporate composition;
+3. map preserved Emmake content, URLs, links and media into the native structure;
+4. repeat for Services, Work, About, Insights and Contact;
+5. run SEO/GEO + performance + accessibility regression evidence before cutover.
+
+
 ### Microphase 10E.2A — Portable Clone Engine
 
 Status: **active — 10E.2A.1 through 10E.2A.5.2.2.2 accepted; 10E.2A.5.3.1 private same-server package handoff is the 0.8.27 candidate**
