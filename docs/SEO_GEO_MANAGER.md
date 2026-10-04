@@ -115,9 +115,9 @@ Responsibilities:
 
 The engine never fabricates authors, sources, reviews, dates, claims or expertise.
 
-### 6. Optional migration module
+### 6. Migration module
 
-Secondary/backward-compatibility home of accepted Migration Bridge capabilities after the Manager's optimization/content core is already stable:
+This is an **optional secondary/backward-compatibility module**, not the primary reason the Manager exists. It absorbs accepted Migration Bridge capabilities only after the Manager's optimization/content core is already stable:
 
 - analyzer;
 - baseline;
