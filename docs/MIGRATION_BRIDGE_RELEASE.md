@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.49`;
+- current plugin version: `0.8.50`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -64,6 +64,29 @@ The real clone already exists at `/nuevaweb/`, so the full-redesign pilot now us
 7. keep production unchanged until the rebuilt clone passes final QA.
 
 The legacy baseline/dependency workflow remains available for migration scenarios that genuinely require parity-oriented analysis, but it is not the mandatory path for a reset-first full redesign.
+
+### Version 0.8.50 — Clone Reset Engine
+
+0.8.50 implements the first destructive reset-first action on the **clone only**.
+
+Prerequisites:
+
+- Rescue Manifest exists;
+- `SEO_GEO_MIGRATION_SANDBOX=true`;
+- for same-origin subdirectory mode, isolated storage is explicitly marked;
+- `seo-geo-theme` is installed.
+
+Apply behavior:
+
+- SEO/GEO Theme becomes active;
+- Migration Bridge is always retained until rebuild handoff;
+- all other plugins are removed unless explicitly selected to keep;
+- all other themes are removed;
+- legacy widget assignments/rewrite state/cache are cleared;
+- Divi `et-cache` and Elementor generated CSS are removed;
+- Rescue Manifest and rescued post content are hash-verified after reset.
+
+The reset does not delete pages/posts or require legacy UNKNOWN review.
 
 ### Version 0.8.49 — Reset/Rebuild Rescue Manifest
 

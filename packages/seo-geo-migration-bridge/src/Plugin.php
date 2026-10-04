@@ -110,6 +110,7 @@ use SeoGeo\MigrationBridge\Replatform\NativeCompositionService;
 use SeoGeo\MigrationBridge\Replatform\ReviewedRemapApplier;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Reset\AdminRescueManifestController;
+use SeoGeo\MigrationBridge\Reset\CloneResetEngine;
 use SeoGeo\MigrationBridge\Reset\RescueManifest;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
@@ -250,6 +251,13 @@ final class Plugin {
 	 * @var RescueManifest|null
 	 */
 	private static ?RescueManifest $rescue_manifest = null;
+
+	/**
+	 * Reset/Rebuild clone runtime reset singleton.
+	 *
+	 * @var CloneResetEngine|null
+	 */
+	private static ?CloneResetEngine $clone_reset_engine = null;
 
 	/**
 	 * Reset/Rebuild administrator controller singleton.
@@ -1122,7 +1130,8 @@ final class Plugin {
 		self::$sandbox_handoff_controller   ??= new AdminSandboxHandoffController();
 		self::$dependency_review_controller ??= new AdminDependencyReviewController();
 		self::$rescue_manifest              ??= new RescueManifest();
-		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest );
+		self::$clone_reset_engine           ??= new CloneResetEngine( self::$rescue_manifest );
+		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -1245,6 +1254,13 @@ final class Plugin {
 	 */
 	public static function rescue_manifest(): ?RescueManifest {
 		return self::$rescue_manifest;
+	}
+
+	/**
+	 * Return the reset-first Clone Reset Engine.
+	 */
+	public static function clone_reset_engine(): ?CloneResetEngine {
+		return self::$clone_reset_engine;
 	}
 
 	/**

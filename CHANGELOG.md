@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.50 adds **Clone Reset Engine v1**: after a Rescue Manifest exists, the clone switches to the SEO/GEO Theme, removes every non-kept plugin and non-target theme, clears Divi/Elementor generated presentation caches, widget assignments, rewrite rules and object cache, while proving rescued post content and the manifest remain unchanged. Migration Bridge retains itself until handoff; business plugins survive only when explicitly kept.
+
 - Migration Bridge 0.8.49 introduces **Reset & Rebuild / Rescue Manifest v1**: a dedicated full-redesign path that captures pages/posts, URL identity, content fingerprints, useful SEO metadata, links and media without requiring UNKNOWN dependency review or mutating content/theme/plugin state. The existing Migration Bridge screen links directly to this reset-first path.
 
 - Product direction corrected to a **reset-first rebuild** for full redesigns: once a usable clone exists, Migration Bridge creates a minimal Rescue Manifest, legacy theme/builder/plugin baggage is removed, Theme + preset rebuild from clean native components, and SEO/GEO Manager becomes the permanent post-launch optimization/content layer.
