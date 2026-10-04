@@ -16,8 +16,9 @@ use WP_Post;
  * Applies explicitly reviewed source assets to deterministic native remap slots.
  */
 final class ReviewedRemapApplier {
-	public const LEDGER_META = '_seo_geo_replatform_reviewed_apply_v1';
-	public const BACKUP_META = '_seo_geo_replatform_reviewed_apply_backup_v1';
+	public const LEDGER_META   = '_seo_geo_replatform_reviewed_apply_v1';
+	public const BACKUP_META   = '_seo_geo_replatform_reviewed_apply_backup_v1';
+	public const ROLLBACK_META = '_seo_geo_replatform_reviewed_apply_rollback_v1';
 
 	/**
 	 * Construct the reviewed applier.
@@ -278,7 +279,7 @@ final class ReviewedRemapApplier {
 			}
 		}
 
-		if ( ! metadata_exists( 'post', $draft_id, self::BACKUP_META ) ) {
+		if ( ! is_array( $current_ledger ) ) {
 			update_post_meta(
 				$draft_id,
 				self::BACKUP_META,
@@ -350,6 +351,111 @@ final class ReviewedRemapApplier {
 			'ledger'           => $ledger,
 			'safety'           => array(
 				'source_unchanged' => true,
+				'draft_only'       => 'draft' === get_post_status( $draft_id ),
+				'public_mutation'  => false,
+			),
+		);
+	}
+
+	/**
+	 * Restore the draft body captured immediately before the latest reviewed apply.
+	 *
+	 * The preserved public source is never modified. The active reviewed ledger is
+	 * archived as rollback evidence and then cleared so a new reviewed selection
+	 * can be applied from the restored deterministic slot markers.
+	 *
+	 * @param int $draft_id Native draft ID.
+	 * @return array<string,mixed>|WP_Error
+	 */
+	public function rollback( int $draft_id ): array|WP_Error {
+		if ( ! $this->sandbox_active() ) {
+			return new WP_Error( 'seo_geo_reviewed_remap_rollback_sandbox_required', 'Reviewed remap rollback may only run inside an accepted sandbox.' );
+		}
+		if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $draft_id ) ) {
+			return new WP_Error( 'seo_geo_reviewed_remap_rollback_forbidden', 'Administrator edit capability is required.' );
+		}
+
+		$draft = get_post( $draft_id );
+		if ( ! $draft instanceof WP_Post || 'page' !== $draft->post_type || 'draft' !== $draft->post_status ) {
+			return new WP_Error( 'seo_geo_reviewed_remap_rollback_draft_invalid', 'Reviewed remap rollback requires the bound native page draft.' );
+		}
+
+		$ledger = get_post_meta( $draft_id, self::LEDGER_META, true );
+		$backup = get_post_meta( $draft_id, self::BACKUP_META, true );
+		if ( ! is_array( $ledger ) || ! is_array( $backup ) ) {
+			return new WP_Error( 'seo_geo_reviewed_remap_rollback_unavailable', 'No active reviewed apply and rollback backup are available for this draft.' );
+		}
+
+		$current_sha  = hash( 'sha256', (string) $draft->post_content );
+		$ledger_after = (string) ( $ledger['after_sha256'] ?? '' );
+		$ledger_before = (string) ( $ledger['before_sha256'] ?? '' );
+		$backup_sha   = (string) ( $backup['sha256'] ?? '' );
+		$backup_body  = isset( $backup['content'] ) && is_string( $backup['content'] ) ? $backup['content'] : '';
+
+		if ( '' === $ledger_after || ! hash_equals( $ledger_after, $current_sha ) ) {
+			return new WP_Error( 'seo_geo_reviewed_remap_rollback_draft_drift', 'The native draft changed after reviewed apply; automatic rollback is blocked.' );
+		}
+		if ( '' === $backup_sha || '' === $ledger_before || ! hash_equals( $ledger_before, $backup_sha ) || ! hash_equals( $backup_sha, hash( 'sha256', $backup_body ) ) ) {
+			return new WP_Error( 'seo_geo_reviewed_remap_rollback_backup_invalid', 'Reviewed remap rollback backup does not match the recorded pre-apply draft state.' );
+		}
+
+		$updated = wp_update_post(
+			array(
+				'ID'           => $draft_id,
+				'post_content' => $backup_body,
+			),
+			true
+		);
+		if ( $updated instanceof WP_Error ) {
+			return $updated;
+		}
+
+		$restored = get_post( $draft_id );
+		if (
+			! $restored instanceof WP_Post
+			|| 'draft' !== $restored->post_status
+			|| ! hash_equals( $backup_sha, hash( 'sha256', (string) $restored->post_content ) )
+		) {
+			return new WP_Error( 'seo_geo_reviewed_remap_rollback_verification_failed', 'The native draft could not be verified after rollback.' );
+		}
+
+		$source_id         = (int) get_post_meta( $draft_id, NativeCompositionService::SOURCE_ID_META, true );
+		$stored_source_sha = (string) get_post_meta( $draft_id, NativeCompositionService::SOURCE_SHA_META, true );
+		$current_source_sha = 0 < $source_id
+			? hash( 'sha256', (string) get_post_field( 'post_content', $source_id ) )
+			: '';
+
+		$rollback = array(
+			'schema_version'    => 1,
+			'rolled_back_at'    => gmdate( DATE_ATOM ),
+			'draft_id'          => $draft_id,
+			'source_id'         => $source_id,
+			'preset'            => (string) ( $ledger['preset'] ?? '' ),
+			'page_key'          => (string) ( $ledger['page_key'] ?? '' ),
+			'native_plan_sha'   => (string) ( $ledger['native_plan_sha'] ?? '' ),
+			'content_remap_sha' => (string) ( $ledger['content_remap_sha'] ?? '' ),
+			'selection_sha256'  => (string) ( $ledger['selection_sha256'] ?? '' ),
+			'from_sha256'       => $current_sha,
+			'to_sha256'         => $backup_sha,
+			'selected_assets'   => is_array( $ledger['selected_assets'] ?? null ) ? $ledger['selected_assets'] : array(),
+			'unmapped_assets'   => is_array( $ledger['unmapped_assets'] ?? null ) ? $ledger['unmapped_assets'] : array(),
+			'verified_sections' => is_array( $ledger['verified_sections'] ?? null ) ? $ledger['verified_sections'] : array(),
+		);
+		update_post_meta( $draft_id, self::ROLLBACK_META, $rollback );
+		delete_post_meta( $draft_id, self::LEDGER_META );
+
+		return array(
+			'schema_version'   => 1,
+			'mode'             => 'reviewed-remap-rollback',
+			'status'           => 'rolled-back',
+			'draft_id'         => $draft_id,
+			'source_id'        => $source_id,
+			'selection_sha256' => (string) ( $ledger['selection_sha256'] ?? '' ),
+			'from_sha256'      => $current_sha,
+			'to_sha256'        => $backup_sha,
+			'rollback'         => $rollback,
+			'safety'           => array(
+				'source_unchanged' => '' !== $stored_source_sha && hash_equals( $stored_source_sha, $current_source_sha ),
 				'draft_only'       => 'draft' === get_post_status( $draft_id ),
 				'public_mutation'  => false,
 			),
