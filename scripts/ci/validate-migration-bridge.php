@@ -3440,6 +3440,7 @@ foreach (
 		"'clean-home-field-pilot-readiness'",
 		"'sandbox-marker-required'",
 		"'clone-reset-completed-report-required'",
+		"'plugin-set-drift-since-reset'",
 		"'hydrated-clean-home-draft-required'",
 		"'native-seo-handoff-report-required'",
 		"'seo-review-required-before-browser-qa'",
