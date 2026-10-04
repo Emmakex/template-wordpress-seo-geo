@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.54`;
+- current plugin version: `0.8.55`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -50,6 +50,22 @@ The workflow additionally runs PHP syntax validation for every plugin PHP file.
 - `seo-geo-migration-bridge.zip.sha256`.
 
 This artifact is an installation candidate for controlled client analysis. It is not a declaration that a real client migration is accepted.
+
+## Version 0.8.55 — Native Home SEO/GEO handoff
+
+0.8.55 closes the SEO carryover gap before the clean Home can be considered for cutover.
+
+1. native Core adds provider-neutral per-resource title, description, canonical and indexability metadata;
+2. native overrides are applied only while native Core owns the corresponding SEO signal;
+3. Open Graph inherits the native document-title and description overrides through the existing resolvers;
+4. Migration Bridge translates safe rescued Yoast/Rank Math title, description and indexability signals into native metadata;
+5. self-canonical stays runtime-owned and is not redundantly copied;
+6. a custom legacy canonical is never auto-applied and instead creates a manual-review finding;
+7. unresolved provider template tokens are never persisted as literal native SEO text;
+8. the handoff is draft-only, idempotent and preserves the rescued source page, current front-page assignment and plugins;
+9. the handoff report exposes `cutover_seo_ready` only when no SEO review item remains.
+
+The next field gate is the real `emmake.com/nuevaweb/` Home: import the accepted Emmake blueprint, hydrate it, apply the safe native SEO handoff and then run visual + SEO/GEO + accessibility + performance QA before any front-page replacement.
 
 ## Version 0.8.54 — Portable Home Content Blueprint + Emmake reference content
 
