@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Reset;
 
-
 /**
  * Provides the first reset-first rebuild action without legacy dependency gates.
  */
@@ -19,6 +18,8 @@ final class AdminRescueManifestController {
 	public const NONCE_ACTION = 'seo_geo_reset_capture_rescue_manifest';
 
 	/**
+	 * Construct the reset-first administrator controller.
+	 *
 	 * @param RescueManifest $manifest Rescue manifest service.
 	 */
 	public function __construct( private RescueManifest $manifest ) {
@@ -112,8 +113,8 @@ final class AdminRescueManifestController {
 
 		$redirect = add_query_arg(
 			array(
-				'page'                  => self::PAGE_SLUG,
-				'seo_geo_rescue_saved'  => '1',
+				'page'                 => self::PAGE_SLUG,
+				'seo_geo_rescue_saved' => '1',
 			),
 			admin_url( 'tools.php' )
 		);
