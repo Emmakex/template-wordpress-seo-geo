@@ -40,3 +40,4 @@ spl_autoload_register(
 
 SeoGeo\MigrationBridge\Plugin::boot();
 SeoGeo\MigrationBridge\Reset\AdminCorporatePagePipelineController::boot_from_plugin();
+SeoGeo\MigrationBridge\Reset\AdminCorporateInsightsController::boot_from_plugin();
