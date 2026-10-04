@@ -2721,7 +2721,7 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **active — Home scaffold + Content Kit/hydrator accepted; Portable Content Blueprint + real Emmake Home is the current gate**
+Status: **active — Home scaffold, Content Kit/hydrator and portable blueprint accepted; native SEO/GEO handoff is the current gate**
 
 Home scaffold milestone:
 
@@ -2810,12 +2810,42 @@ Candidate behavior:
 - Native Hydrator remains the only writer to the clean draft;
 - source page, front-page assignment and plugin set remain unchanged.
 
+Accepted behavior:
+
+- portable semantic Home content is independent from WordPress runtime IDs;
+- the real Emmake `es_ES` reference blueprint is complete for mandatory slots;
+- proof/case-study groups remain disabled until verified;
+- import/re-import identity is deterministic;
+- Foundation, Package, Release, PHP Quality, WordPress Smoke, accessibility and performance gates all passed.
+
+#### 10E.4D.4 — Native Home SEO/GEO handoff v1
+
+Status: **active — Migration Bridge 0.8.55 candidate; current execution pointer**
+
+Goal:
+
+Preserve useful rescued SEO signals after legacy SEO plugins are removed, without carrying their runtime or blindly copying risky provider configuration.
+
+Candidate behavior:
+
+- permanent Core-owned per-resource title, description, canonical and indexability metadata;
+- native overrides apply only while native Core owns the corresponding SEO signal;
+- Migration Bridge maps safe Yoast/Rank Math title, description and indexability metadata from the Rescue Manifest;
+- ordinary self-canonical remains native and is not copied redundantly;
+- custom legacy canonical creates a review item instead of being auto-applied;
+- unresolved Yoast/Rank Math template tokens create review items instead of becoming literal SEO output;
+- provider ambiguity creates a review item;
+- handoff is hydrated-draft-only, source-content drift protected, idempotent and report-backed;
+- `cutover_seo_ready=true` only when no SEO review items remain;
+- source page, current front-page assignment and plugins remain unchanged.
+
 Next only after acceptance:
 
-- install/update Migration Bridge 0.8.54 on `emmake.com/nuevaweb/`;
-- import `examples/content-blueprints/emmake-home.es_ES.json`;
-- hydrate and visually review the private Corporate Home;
-- run Home-specific SEO/GEO, accessibility and performance QA;
+- install/update Migration Bridge 0.8.55 on `emmake.com/nuevaweb/`;
+- import/hydrate the accepted Emmake Home blueprint;
+- apply the native SEO/GEO handoff;
+- review any real provider-specific findings;
+- run final Home visual + SEO/GEO + accessibility + performance QA;
 - only then decide whether the rebuilt Home is eligible to replace the current front page.
 
 Rebuild in this order:
