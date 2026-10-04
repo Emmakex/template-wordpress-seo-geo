@@ -3412,7 +3412,7 @@ foreach (
 		"NativeSeoMetadata::META_TITLE",
 		"NativeSeoMetadata::META_DESCRIPTION",
 		"NativeSeoMetadata::META_INDEXABILITY",
-		"delete_post_meta( $draft_id, NativeSeoMetadata::META_CANONICAL )",
+		'delete_post_meta( $draft_id, NativeSeoMetadata::META_CANONICAL )',
 		"'custom-canonical-review'",
 		"'legacy-title-template-review'",
 		"'legacy-description-template-review'",
