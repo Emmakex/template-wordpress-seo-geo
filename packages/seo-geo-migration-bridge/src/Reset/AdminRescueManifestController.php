@@ -33,6 +33,8 @@ final class AdminRescueManifestController {
 	public const HYDRATE_NONCE_ACTION     = 'seo_geo_reset_hydrate_home';
 	public const ROLLBACK_ACTION          = 'seo_geo_reset_rollback_home_hydration';
 	public const ROLLBACK_NONCE_ACTION    = 'seo_geo_reset_rollback_home_hydration';
+	public const SEO_HANDOFF_ACTION       = 'seo_geo_reset_apply_home_seo_handoff';
+	public const SEO_HANDOFF_NONCE_ACTION = 'seo_geo_reset_apply_home_seo_handoff';
 
 	/**
 	 * Construct the reset-first administrator controller.
@@ -43,6 +45,7 @@ final class AdminRescueManifestController {
 	 * @param CleanHomeRebuilder      $clean_home  Clean Corporate Home draft builder.
 	 * @param CorporateHomeContentKit $content_kit Structured Home content service.
 	 * @param NativeHomeHydrator      $hydrator    Native Home hydrator.
+	 * @param HomeSeoHandoff          $seo_handoff Native SEO handoff service.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
@@ -50,7 +53,8 @@ final class AdminRescueManifestController {
 		private CorporateThemeBootstrap $bootstrap,
 		private CleanHomeRebuilder $clean_home,
 		private CorporateHomeContentKit $content_kit,
-		private NativeHomeHydrator $hydrator
+		private NativeHomeHydrator $hydrator,
+		private HomeSeoHandoff $seo_handoff
 	) {
 	}
 
@@ -67,6 +71,7 @@ final class AdminRescueManifestController {
 		add_action( 'admin_post_' . self::BLUEPRINT_ACTION, array( $this, 'handle_content_blueprint' ) );
 		add_action( 'admin_post_' . self::HYDRATE_ACTION, array( $this, 'handle_hydrate_home' ) );
 		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'handle_rollback_home' ) );
+		add_action( 'admin_post_' . self::SEO_HANDOFF_ACTION, array( $this, 'handle_home_seo_handoff' ) );
 	}
 
 	/**
@@ -99,6 +104,8 @@ final class AdminRescueManifestController {
 		$content_model    = $this->content_kit->model();
 		$content_kit      = $this->content_kit->saved();
 		$hydration_plan   = $this->hydrator->plan();
+		$seo_handoff_plan = $this->seo_handoff->plan();
+		$seo_handoff_report = $this->seo_handoff->report( (int) ( $clean_home_plan['existing_draft'] ?? 0 ) );
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'SEO/GEO Reset & Rebuild', 'seo-geo-migration-bridge' ); ?></h1>
@@ -268,6 +275,7 @@ final class AdminRescueManifestController {
 			<?php endif; ?>
 
 			<?php $this->render_content_kit_step( $clean_home_plan, $content_model, $content_kit, $hydration_plan ); ?>
+			<?php $this->render_home_seo_handoff_step( $seo_handoff_plan, $seo_handoff_report ); ?>
 		</div>
 		<?php
 	}
@@ -419,6 +427,59 @@ final class AdminRescueManifestController {
 					<?php submit_button( __( 'Restore preset scaffold', 'seo-geo-migration-bridge' ), 'secondary', 'submit', false ); ?>
 				</form>
 			<?php endif; ?>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render Step 6 — native SEO/GEO handoff.
+	 *
+	 * @param array<string,mixed>      $plan   Handoff plan.
+	 * @param array<string,mixed>|null $report Persisted handoff report.
+	 */
+	private function render_home_seo_handoff_step( array $plan, ?array $report ): void {
+		?>
+		<h2><?php echo esc_html__( 'Step 6 — Native SEO/GEO handoff', 'seo-geo-migration-bridge' ); ?></h2>
+		<p><?php echo esc_html__( 'Translate safe rescued Yoast/Rank Math signals into provider-neutral Theme metadata. Custom canonicals and unresolved legacy templates are never copied automatically.', 'seo-geo-migration-bridge' ); ?></p>
+
+		<?php if ( true !== ( $plan['ready'] ?? false ) ) : ?>
+			<div class="notice notice-warning inline">
+				<p><strong><?php echo esc_html__( 'SEO handoff is not ready:', 'seo-geo-migration-bridge' ); ?></strong></p>
+				<p><code><?php echo esc_html( implode( ', ', is_array( $plan['blockers'] ?? null ) ? $plan['blockers'] : array() ) ); ?></code></p>
+			</div>
+		<?php else : ?>
+			<p>
+				<strong><?php echo esc_html__( 'Detected provider:', 'seo-geo-migration-bridge' ); ?></strong>
+				<code><?php echo esc_html( (string) ( $plan['provider'] ?? 'none' ) ); ?></code>
+				·
+				<strong><?php echo esc_html__( 'Canonical:', 'seo-geo-migration-bridge' ); ?></strong>
+				<code><?php echo esc_html( (string) ( $plan['canonical_strategy'] ?? 'native-self-canonical' ) ); ?></code>
+			</p>
+
+			<?php if ( true === ( $plan['review_required'] ?? false ) ) : ?>
+				<div class="notice notice-warning inline">
+					<p><strong><?php echo esc_html__( 'Manual SEO review required before cutover:', 'seo-geo-migration-bridge' ); ?></strong></p>
+					<p><code><?php echo esc_html( implode( ', ', is_array( $plan['review_items'] ?? null ) ? $plan['review_items'] : array() ) ); ?></code></p>
+				</div>
+			<?php endif; ?>
+
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( self::SEO_HANDOFF_ACTION ); ?>">
+				<input type="hidden" name="confirm" value="apply-home-seo-handoff">
+				<?php wp_nonce_field( self::SEO_HANDOFF_NONCE_ACTION ); ?>
+				<?php submit_button( __( 'Apply safe native SEO handoff', 'seo-geo-migration-bridge' ), 'primary', 'submit', false ); ?>
+			</form>
+		<?php endif; ?>
+
+		<?php if ( is_array( $report ) ) : ?>
+			<div class="notice <?php echo true === ( $report['cutover_seo_ready'] ?? false ) ? 'notice-success' : 'notice-warning'; ?> inline">
+				<p>
+					<strong><?php echo esc_html__( 'SEO handoff report:', 'seo-geo-migration-bridge' ); ?></strong>
+					<code><?php echo esc_html( (string) ( $report['report_sha256'] ?? '' ) ); ?></code>
+					—
+					<?php echo true === ( $report['cutover_seo_ready'] ?? false ) ? esc_html__( 'SEO-ready', 'seo-geo-migration-bridge' ) : esc_html__( 'review required', 'seo-geo-migration-bridge' ); ?>
+				</p>
+			</div>
 		<?php endif; ?>
 		<?php
 	}
@@ -638,6 +699,29 @@ final class AdminRescueManifestController {
 		}
 
 		$this->redirect( 'home-hydration-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
+	}
+
+	/**
+	 * Apply safe rescued SEO signals to the native clean Home.
+	 */
+	public function handle_home_seo_handoff(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::SEO_HANDOFF_NONCE_ACTION );
+
+		$confirm = filter_input( INPUT_POST, 'confirm', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( 'apply-home-seo-handoff' !== $confirm ) {
+			wp_die( esc_html__( 'Home SEO handoff was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$result = $this->seo_handoff->apply();
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect( 'home-seo-handoff-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
 	}
 
 	/**
