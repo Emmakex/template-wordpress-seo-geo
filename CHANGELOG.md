@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Corporate Services now has its own **`corporate-services-v1` semantic content contract**: EN/ES references, required service/process/CTA slots, proof gated by explicit verification, and an optional native FAQ with stable question/answer slots and filler-content prohibition.
+
 - Migration Bridge 0.8.57 adds **Clean Corporate inner-page rebuild v1**: explicit rescued-source mapping, immutable page/source binding, URL/content preservation and a reusable native scaffold for Services first, then Work/About/Contact; Home remains on its dedicated pipeline and Insights remains blocked until its dynamic composition is defined.
 
 - Added **Deterministic EMMAKE Home Field Pilot Pack** tooling: one reproducible ZIP containing Theme, Migration Bridge 0.8.56, the accepted Emmake blueprint, a `/nuevaweb/` runbook, component SHA-256 manifest and browser-QA evidence template; automatic production cutover remains forbidden.
