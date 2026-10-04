@@ -132,6 +132,27 @@ test.describe('Phase 9 onboarding wizard', () => {
 
   });
 
+  test('accepts a Spanish-only Corporate locale without requiring en_US', async ({ page }) => {
+    await gotoWizard(page, 'es');
+
+    await page.getByLabel('Preset').selectOption('corporate');
+    await page.getByLabel('Código del idioma principal').fill('es');
+    await page.getByLabel('Mapa de idiomas').fill('es=es_ES');
+    await page.getByLabel('Enrutado nativo').selectOption('disabled');
+    await page.getByLabel('Entidad del sitio').selectOption('organization');
+    await page.getByLabel('Confirmo que esta identidad describe el sitio público real.').check();
+    await page.getByLabel('Entiendo que la previsualización solo valida y no guarda ajustes.').check();
+
+    await page.getByRole('button', { name: 'Validar configuración' }).click();
+
+    const results = page.locator('#seo-geo-setup-results');
+    await expect(results).toBeVisible();
+    await expect(results).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'La previsualización es válida.' })).toBeVisible();
+    await expect(results).not.toContainText('preset-baseline-locale-not-configured:en_US');
+    await expect(results).not.toContainText('configured-locale-outside-preset-baseline:es_ES');
+  });
+
   test('announces validation errors and keeps the result keyboard-focusable', async ({ page }) => {
     await gotoWizard(page, 'en');
 
