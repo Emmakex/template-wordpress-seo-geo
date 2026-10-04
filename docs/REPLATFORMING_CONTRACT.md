@@ -38,7 +38,21 @@ The old theme, page-builder layout, visual composition, CSS, spacing, widgets, b
 
 The destination should behave like a modern product website: fast, semantic, component-based, responsive, accessible and visually cohesive.
 
+The design philosophy is the same one used for the project's modern product-style sites such as **iaempleado.com** and **kairoseth.com**: clear information architecture, reusable components, strong hierarchy, fast delivery and centralized iteration. The WordPress implementation must achieve that outcome with native WordPress/Theme primitives rather than copying those sites or introducing a JavaScript-app dependency.
+
 The Theme supplies the reusable design system and SEO/GEO runtime. Presets define the information architecture and visual language. Client content is remapped into those native structures rather than styled to resemble the old builder output.
+
+### North-star rule
+
+When a migration decision is ambiguous, prefer the option that:
+
+1. preserves search equity and valuable factual content;
+2. reduces legacy runtime/design dependencies;
+3. moves the page toward reusable Theme/preset-native components;
+4. improves semantic HTML, accessibility and performance;
+5. makes future publishing/optimization easier through Manager/GitHub-driven product development.
+
+Do **not** choose an option merely because it looks more similar to the old site.
 
 ## Migration Bridge role
 
@@ -55,6 +69,23 @@ Migration Bridge/Manager is responsible for:
 9. controlled cutover and rollback evidence.
 
 It is **not** responsible for preserving builder-era visual parity.
+
+## End-to-end client workflow
+
+1. **Analyze** the existing WordPress site and capture its SEO/GEO/public-output baseline.
+2. **Clone** it into an isolated sandbox with the product-owned portable clone path.
+3. **Inventory** content, URLs, links, media, entities, redirects and required business integrations.
+4. **Classify** each dependency as preserve, replace, migrate, optional/manual-review or remove candidate.
+5. **Extract/normalize** reusable content out of legacy builder structures.
+6. **Select** the appropriate reusable preset.
+7. **Rebuild** the information architecture and presentation with Theme-native components.
+8. **Remap** preserved content into the new native structures.
+9. **Optimize** headings, internal linking, Schema, metadata, media and content semantics without changing factual meaning.
+10. **Validate** SEO/GEO regression, accessibility, responsive behavior and performance.
+11. **Cut over** only after acceptance evidence is green.
+12. **Operate continuously** through Manager/GitHub-driven publishing and optimization: new landing pages, blog posts, internal-link improvements, Search Console/Bing learnings and iterative SEO/GEO enhancements.
+
+This workflow is the commercial product path. Migration is the one-time bridge into a continuously improvable WordPress platform.
 
 ## Acceptance model
 
