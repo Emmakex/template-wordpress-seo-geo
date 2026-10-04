@@ -2,8 +2,8 @@
 /**
  * Plugin Name: SEO/GEO Migration Bridge
  * Plugin URI: https://github.com/Emmakex/template-wordpress-seo-geo
- * Description: Safe existing-site analysis and SEO/GEO baseline tooling for WordPress migrations.
- * Version: 0.8.48
+ * Description: Scan, clone, rescue and reset-first rebuild tooling for SEO/GEO WordPress migrations.
+ * Version: 0.8.49
  * Requires at least: 7.1
  * Requires PHP: 8.2
  * Author: Eduardo Yauri
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEO_GEO_MIGRATION_BRIDGE_VERSION', '0.8.48' );
+define( 'SEO_GEO_MIGRATION_BRIDGE_VERSION', '0.8.49' );
 define( 'SEO_GEO_MIGRATION_BRIDGE_DIR', plugin_dir_path( __FILE__ ) );
 
 spl_autoload_register(

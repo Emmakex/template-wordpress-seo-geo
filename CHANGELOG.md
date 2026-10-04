@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.49 introduces **Reset & Rebuild / Rescue Manifest v1**: a dedicated full-redesign path that captures pages/posts, URL identity, content fingerprints, useful SEO metadata, links and media without requiring UNKNOWN dependency review or mutating content/theme/plugin state. The existing Migration Bridge screen links directly to this reset-first path.
+
 - Product direction corrected to a **reset-first rebuild** for full redesigns: once a usable clone exists, Migration Bridge creates a minimal Rescue Manifest, legacy theme/builder/plugin baggage is removed, Theme + preset rebuild from clean native components, and SEO/GEO Manager becomes the permanent post-launch optimization/content layer.
 
 - Migration Bridge 0.8.48 packages the accepted Native Replatform review flow for sandbox use: draft-only Composer, provenance-bound Content Remap, Reviewed Apply with source/slot drift rejection, reversible private-draft review, direct Preview and privacy-bounded acceptance evidence. Existing 0.8.47 clone/handoff state remains resumable and production source pages remain untouched.

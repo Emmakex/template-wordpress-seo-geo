@@ -2,6 +2,33 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Reset & Rebuild mode — 0.8.49
+
+For full redesigns, Migration Bridge now has a separate reset-first entrypoint under **Tools > SEO/GEO Reset & Rebuild**.
+
+The first action is a **Rescue Manifest**, not another mandatory legacy dependency review.
+
+It records only the assets a clean rebuild may need:
+
+- pages/posts and URL identity;
+- content/excerpt fingerprints;
+- useful Yoast/Rank Math title/description/canonical/indexability metadata when present;
+- crawlable links found in saved content;
+- media references found in saved content;
+- front/posts/privacy page identities.
+
+The Rescue Manifest deliberately records:
+
+- `legacy_theme_preserved=false`;
+- `legacy_builder_preserved=false`;
+- `legacy_plugins_preserved=false`;
+- `dependency_review_required=false`;
+- `unknown_components_blocking=false`.
+
+Capture is read-only with respect to posts, themes and plugins; only the private non-autoloaded Rescue Manifest option is written.
+
+The next reset-first microphase removes legacy presentation/runtime baggage while retaining the saved WordPress/search asset.
+
 This **package** is transitional, but its migration capability is not being discarded. The roadmap moves the accepted analyzer/baseline/dependency/parity/cutover behavior into the permanent **SEO/GEO Manager** plugin as an optional migration module. Manager is a separate sellable product that also publishes landings/blogs and may remain installed after migration.
 
 ## Phase 8A — Site Analyzer

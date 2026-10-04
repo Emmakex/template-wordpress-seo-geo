@@ -154,6 +154,11 @@ final class AdminOperatorScreen {
 		<div class="wrap seo-geo-migration-operator">
 			<h1><?php echo esc_html( $this->copy->text( 'page_title' ) ); ?></h1>
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
+			<div class="notice notice-info inline">
+				<p><strong><?php echo esc_html__( 'Full redesign / existing clone?', 'seo-geo-migration-bridge' ); ?></strong></p>
+				<p><?php echo esc_html__( 'Use Reset & Rebuild to rescue only content, URLs, SEO, links and useful media, then remove the legacy theme/builder/plugin baggage. Remaining UNKNOWN dependencies do not block this path unless their business function is explicitly required.', 'seo-geo-migration-bridge' ); ?></p>
+				<p><a class="button button-primary" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html__( 'Open Reset & Rebuild', 'seo-geo-migration-bridge' ); ?></a></p>
+			</div>
 			<?php $this->render_baseline_result_notice(); ?>
 			<?php $this->render_dependency_review_result_notice(); ?>
 			<?php $this->render_clone_result_notice(); ?>
