@@ -3192,12 +3192,12 @@ foreach (
 $rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
 foreach (
 	array(
-		"public const PAGE_SLUG    = 'seo-geo-reset-rebuild';",
-		"public const ACTION       = 'seo_geo_reset_capture_rescue_manifest';",
+		"'seo-geo-reset-rebuild'",
+		"'seo_geo_reset_capture_rescue_manifest'",
 		"current_user_can( 'manage_options' )",
 		"check_admin_referer( self::NONCE_ACTION )",
 		"'capture-rescue-manifest'",
-		"public const RESET_ACTION       = 'seo_geo_reset_apply_clone_runtime';",
+		"'seo_geo_reset_apply_clone_runtime'",
 		"check_admin_referer( self::RESET_NONCE_ACTION )",
 		"'reset-clone-runtime'",
 	) as $rescue_controller_guard
