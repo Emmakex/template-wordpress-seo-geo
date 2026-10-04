@@ -2721,7 +2721,39 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **active — Migration Bridge 0.8.52 clean Home candidate; Home first**
+Status: **active — Home scaffold accepted; Corporate Home Content Contract v1 is the current gate**
+
+Home scaffold milestone:
+
+- Migration Bridge 0.8.52 / PR #221 / 8 of 8 CI gates green / merge `6a30237042db4ba05014645788954965ccf99198`;
+- one private idempotent Home draft composed only from Theme-owned Corporate patterns;
+- Rescue Manifest binds only source identity/path/fingerprint;
+- current front-page assignment, source content and plugins remain unchanged;
+- no Divi/Elementor/VC/Fusion/remap-slot tokens in the clean scaffold.
+
+#### 10E.4D.1 — Corporate Home Content Contract v1
+
+Status: **active — current execution pointer**
+
+Goal:
+
+Give the clean Corporate Home a stable semantic content API so Migration Bridge, manual editing and the future SEO/GEO Manager all target the same native fields rather than placeholder strings or block positions.
+
+Candidate contract:
+
+- machine-readable `corporate-home-v1` model in the Corporate content map;
+- stable `seo-geo-content-slot--*` classes on Theme-native Home blocks;
+- required text/link/list slot types;
+- evidence-sensitive hero proof, proof band and case-study fields require explicit verification;
+- proof and case-study sections use `omit-unless-verified` policy;
+- Insights remains a dynamic native query section;
+- no legacy layout input;
+- fabricated evidence forbidden;
+- Foundation CI validates slot identity, uniqueness and EN/ES parity.
+
+Next only after acceptance:
+
+- **10E.4D.2 — Content Kit + native hydrator**: persist reviewed structured Home content and hydrate the clean draft without legacy layout/remap dependencies.
 
 Rebuild in this order:
 
