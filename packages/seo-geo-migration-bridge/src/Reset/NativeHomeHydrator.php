@@ -42,9 +42,10 @@ final class NativeHomeHydrator {
 	 * @return array<string,mixed>
 	 */
 	public function plan(): array {
-		$blockers = array();
-		$saved    = $this->kit->saved();
-		$home     = $this->builder->plan();
+		$blockers  = array();
+		$saved     = $this->kit->saved();
+		$saved_kit = is_array( $saved ) ? $saved : array();
+		$home      = $this->builder->plan();
 
 		if ( true !== ( $home['ready'] ?? false ) ) {
 			$blockers[] = 'clean-home-plan-not-ready';
@@ -53,7 +54,7 @@ final class NativeHomeHydrator {
 			$blockers[] = 'content-kit-required';
 		}
 
-		$draft_id = is_array( $saved ) ? (int) ( $saved['draft_id'] ?? 0 ) : 0;
+		$draft_id = (int) ( $saved_kit['draft_id'] ?? 0 );
 		$draft    = 0 < $draft_id ? get_post( $draft_id ) : null;
 		if ( ! $draft instanceof WP_Post || 'page' !== $draft->post_type || 'draft' !== $draft->post_status ) {
 			$blockers[] = 'clean-home-draft-required';
@@ -61,10 +62,9 @@ final class NativeHomeHydrator {
 
 		if (
 			$draft instanceof WP_Post
-			&& is_array( $saved )
 			&& ! hash_equals(
 				(string) get_post_meta( $draft_id, CleanHomeRebuilder::PLAN_SHA_META, true ),
-				(string) ( $saved['plan_sha256'] ?? '' )
+				(string) ( $saved_kit['plan_sha256'] ?? '' )
 			)
 		) {
 			$blockers[] = 'content-kit-plan-drift';
@@ -93,8 +93,8 @@ final class NativeHomeHydrator {
 		}
 
 		$hydrated = '';
-		if ( array() === $blockers && is_array( $saved ) ) {
-			$hydrated = $this->hydrate_content( $scaffold, $saved );
+		if ( array() === $blockers ) {
+			$hydrated = $this->hydrate_content( $scaffold, $saved_kit );
 			if ( '' === $hydrated ) {
 				$blockers[] = 'hydration-empty';
 			}
@@ -109,12 +109,12 @@ final class NativeHomeHydrator {
 			'ready'            => array() === $blockers,
 			'blockers'         => $blockers,
 			'draft_id'         => $draft_id,
-			'kit_sha256'       => is_array( $saved ) ? (string) ( $saved['kit_sha256'] ?? '' ) : '',
+			'kit_sha256'       => (string) ( $saved_kit['kit_sha256'] ?? '' ),
 			'state'            => $state,
 			'scaffold_sha256'  => hash( 'sha256', $scaffold ),
 			'hydrated_sha256'  => hash( 'sha256', $hydrated ),
 			'hydrated_content' => $hydrated,
-			'verified_groups'  => is_array( $saved['verified_groups'] ?? null ) ? $saved['verified_groups'] : array(),
+			'verified_groups'  => is_array( $saved_kit['verified_groups'] ?? null ) ? $saved_kit['verified_groups'] : array(),
 			'safety'           => array(
 				'source_post_mutation'         => false,
 				'front_page_assignment_change' => false,
@@ -218,7 +218,7 @@ final class NativeHomeHydrator {
 		$draft_id = is_array( $saved ) ? (int) ( $saved['draft_id'] ?? 0 ) : 0;
 		$backup   = 0 < $draft_id ? get_post_meta( $draft_id, self::BACKUP_META, true ) : '';
 		$backup   = is_string( $backup ) ? $backup : '';
-		if ( 0 >= $draft_id || '' === $backup ) {
+		if ( '' === $backup ) {
 			return new WP_Error( 'seo_geo_home_hydration_backup_missing', 'No clean Home hydration backup is available.' );
 		}
 
@@ -262,9 +262,6 @@ final class NativeHomeHydrator {
 		$output = array();
 
 		foreach ( $blocks as $block ) {
-			if ( ! is_array( $block ) ) {
-				continue;
-			}
 			$transformed = $this->transform_block( $block, $values, $groups );
 			if ( is_array( $transformed ) ) {
 				$output[] = $transformed;
