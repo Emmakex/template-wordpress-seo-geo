@@ -66,6 +66,20 @@ A project may deliberately promote a hero heading to H1 when composing a page, b
 
 Patterns never emit JSON-LD or Schema markup. FAQ, author/person and organization structured data belong to `seo-geo-core`, which can decide whether visible content and provider ownership justify the corresponding graph node.
 
+### Semantic content slots
+
+Reusable patterns may expose stable `seo-geo-content-slot--*` classes when a reset-first rebuild needs deterministic native hydration. These markers identify visible content only; they do not create metadata or Schema ownership.
+
+The native FAQ exposes:
+
+- `faq-heading` and `faq-intro`;
+- `faq-1-question` / `faq-1-answer`;
+- `faq-2-question` / `faq-2-answer`;
+- `faq-3-question` / `faq-3-answer`;
+- section class `seo-geo-native-faq`.
+
+FAQ remains optional. A future hydrator must omit the whole section when no reviewed user-intent questions are supplied rather than publishing the neutral authoring prompts.
+
 ### Native blocks only
 
 The Phase 2B base set uses native WordPress blocks. It must not require Elementor, a forms plugin, a slider library, JavaScript widgets or a Custom HTML block.
