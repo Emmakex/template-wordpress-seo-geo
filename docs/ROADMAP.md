@@ -2593,7 +2593,7 @@ Next:
 
 ### Microphase 10E.4 — Native Replatform Composer
 
-Status: **active — draft-only composer + Content Remap Intelligence v1 + Reviewed Apply v1 accepted; reversible private-draft review cycle candidate is in CI before the real Home preview**
+Status: **active — draft-only composer + Content Remap Intelligence v1 + Reviewed Apply v1 + reversible private-draft review cycle accepted; bounded Home preview evidence is the current gate**
 
 Goal: bridge preserved legacy assets into the new preset-native presentation without modifying the public source page.
 
@@ -2623,12 +2623,13 @@ Implemented:
 - first application stores a draft-content backup, deterministic selection hash, selected/unmapped asset ledger and before/after content hashes;
 - repeating the same reviewed selection is idempotent and returns `existing`;
 - the admin Tools surface exposes explicit reviewed selections and verification checkboxes; no automatic publication or public mutation exists;
-- a reviewed preview can be restored to its hash-verified pre-apply private draft, preserving rollback evidence and clearing the active ledger so the operator can revise selections and re-apply without touching the public source.
+- a reviewed preview can be restored to its hash-verified pre-apply private draft, preserving rollback evidence and clearing the active ledger so the operator can revise selections and re-apply without touching the public source;
+- the operator surface exposes a private draft Preview link and can export privacy-bounded review evidence containing only identities, hashes, selected asset IDs, counts, verification decisions and drift state — never post bodies, backup bodies, credentials or arbitrary option values.
 
 Next:
 
-1. close CI acceptance for the reversible Reviewed Apply preview cycle and merge only with all quality/runtime/performance gates green;
-2. use the accepted flow on the real Emmake Home in `/nuevaweb/`: apply reviewed assets, preview, rollback/revise if needed, and record the accepted Corporate Native draft;
+1. close CI acceptance for the bounded Preview + review-evidence surface;
+2. use the accepted flow on the real Emmake Home in `/nuevaweb/`: apply reviewed assets, preview, rollback/revise if needed, download bounded acceptance evidence and record the accepted Corporate Native draft;
 3. refine slot-level presentation where real Emmake content exposes gaps in the generic Corporate patterns;
 4. repeat the accepted workflow for Services, Work, About, Insights and Contact;
 5. run SEO/GEO + link/media + performance + accessibility regression before any controlled swap.
