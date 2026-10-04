@@ -78,6 +78,8 @@ For a reviewed native draft:
 6. run SEO/GEO, links/media, accessibility, responsive and performance checks;
 7. do not infer production approval from the review-evidence snapshot alone.
 
+The download action itself is administrator-only and nonce-confirmed; the evidence service remains read-only.
+
 ## Determinism
 
 The `evidence_sha256` is calculated from the bounded snapshot itself before the hash field is added.
