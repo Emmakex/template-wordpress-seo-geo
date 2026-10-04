@@ -93,6 +93,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Reset/RescueManifest.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CloneResetEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateThemeBootstrap.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/CleanHomeRebuilder.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
@@ -3219,6 +3220,34 @@ foreach (
 	}
 }
 
+$clean_home = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/CleanHomeRebuilder.php' );
+foreach (
+	array(
+		"'mode'           => 'reset-rebuild-clean-home-plan'",
+		"'preset'         => self::PRESET",
+		"'page_key'       => self::PAGE_KEY",
+		"'content_state'   => 'preset-scaffold'",
+		"'legacy_layout_reused'       => false",
+		"'content_remap_required'      => false",
+		"'source_post_mutation'       => false",
+		"'front_page_assignment_change' => false",
+		"'draft_only'                 => true",
+		"'post_status'  => 'draft'",
+		"WP_Block_Patterns_Registry::get_instance()->get_registered",
+		"seo-geo-remap-slot:",
+	) as $clean_home_guard
+) {
+	if ( ! str_contains( $clean_home, $clean_home_guard ) ) {
+		fail_migration_bridge(
+			'clean-home-contract',
+			'Clean Home rebuild must use Theme-owned Corporate patterns only, stay draft-only and avoid legacy/remap dependencies.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/CleanHomeRebuilder.php',
+			$clean_home_guard,
+			'missing'
+		);
+	}
+}
+
 $rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
 foreach (
 	array(
@@ -3233,6 +3262,9 @@ foreach (
 		"'seo_geo_reset_apply_corporate_bootstrap'",
 		"check_admin_referer( self::BOOTSTRAP_NONCE_ACTION )",
 		"'bootstrap-corporate-theme'",
+		"'seo_geo_reset_create_clean_home'",
+		"check_admin_referer( self::CLEAN_HOME_NONCE_ACTION )",
+		"'create-clean-home'",
 	) as $rescue_controller_guard
 ) {
 	if ( ! str_contains( $rescue_controller, $rescue_controller_guard ) ) {
@@ -3252,6 +3284,8 @@ foreach (
 		'RescueManifest',
 		'CloneResetEngine',
 		'CorporateThemeBootstrap',
+		'CleanHomeRebuilder',
+		'public static function clean_home_rebuilder()',
 		'public static function corporate_theme_bootstrap()',
 		'public static function clone_reset_engine()',
 		'self::$rescue_manifest_controller->boot()',
