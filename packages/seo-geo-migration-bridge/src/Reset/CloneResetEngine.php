@@ -20,6 +20,8 @@ final class CloneResetEngine {
 	public const TARGET_THEME  = 'seo-geo-theme';
 
 	/**
+	 * Construct the clone reset engine.
+	 *
 	 * @param RescueManifest $manifest Rescue Manifest authority.
 	 */
 	public function __construct( private RescueManifest $manifest ) {
@@ -187,7 +189,7 @@ final class CloneResetEngine {
 
 		$before = array(
 			'stylesheet'     => get_stylesheet(),
-			'active_plugins' => array_values( array_map( 'strval', get_option( 'active_plugins', array() ) ) ),
+			'active_plugins' => $this->active_plugins(),
 		);
 
 		if ( self::TARGET_THEME !== get_stylesheet() ) {
@@ -224,8 +226,8 @@ final class CloneResetEngine {
 		delete_option( 'rewrite_rules' );
 		wp_cache_flush();
 
-		$generated_cleanup = $this->clear_generated_paths();
-		$manifest_after    = $this->manifest->saved();
+		$generated_cleanup  = $this->clear_generated_paths();
+		$manifest_after     = $this->manifest->saved();
 		$manifest_unchanged = is_array( $manifest_after )
 			&& '' !== $manifest_sha
 			&& hash_equals( $manifest_sha, (string) ( $manifest_after['manifest_sha256'] ?? '' ) );
@@ -255,7 +257,7 @@ final class CloneResetEngine {
 			'before'            => $before,
 			'after'             => array(
 				'stylesheet'     => get_stylesheet(),
-				'active_plugins' => array_values( array_map( 'strval', get_option( 'active_plugins', array() ) ) ),
+				'active_plugins' => $this->active_plugins(),
 			),
 			'removed'           => array(
 				'plugins_requested' => $removed_plugins,
@@ -265,8 +267,8 @@ final class CloneResetEngine {
 			'content_check'     => $content_check,
 			'errors'            => $errors,
 			'safety'            => array(
-				'manifest_unchanged' => $manifest_unchanged,
-				'content_unchanged'  => true === ( $content_check['unchanged'] ?? false ),
+				'manifest_unchanged'  => $manifest_unchanged,
+				'content_unchanged'   => true === ( $content_check['unchanged'] ?? false ),
 				'target_theme_active' => self::TARGET_THEME === get_stylesheet(),
 				'bridge_active'       => is_plugin_active( plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' ) ),
 				'production_mutation' => false,
@@ -320,13 +322,13 @@ final class CloneResetEngine {
 		$drifted = array();
 		$checked = 0;
 
-		foreach ( is_array( $manifest['resources'] ?? null ) ? $manifest['resources'] : array() as $resource ) {
-			if ( ! is_array( $resource ) ) {
+		foreach ( is_array( $manifest['resources'] ?? null ) ? $manifest['resources'] : array() as $item ) {
+			if ( ! is_array( $item ) ) {
 				continue;
 			}
 
-			$post_id      = (int) ( $resource['id'] ?? 0 );
-			$expected_sha = (string) ( $resource['content_sha256'] ?? '' );
+			$post_id      = (int) ( $item['id'] ?? 0 );
+			$expected_sha = (string) ( $item['content_sha256'] ?? '' );
 			if ( 0 >= $post_id || '' === $expected_sha ) {
 				continue;
 			}
@@ -346,6 +348,30 @@ final class CloneResetEngine {
 	}
 
 	/**
+	 * Return the normalized active plugin file list.
+	 *
+	 * @return list<string>
+	 */
+	private function active_plugins(): array {
+		$value = get_option( 'active_plugins', array() );
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+
+		$plugins = array_values(
+			array_filter(
+				array_map(
+					static fn( mixed $plugin ): string => is_string( $plugin ) ? $plugin : '',
+					$value
+				)
+			)
+		);
+		sort( $plugins );
+
+		return $plugins;
+	}
+
+	/**
 	 * Delete known generated presentation caches only.
 	 *
 	 * @return array<string,bool>
@@ -361,7 +387,7 @@ final class CloneResetEngine {
 			'et-cache'      => WP_CONTENT_DIR . '/et-cache',
 			'elementor-css' => trailingslashit( (string) ( $uploads['basedir'] ?? '' ) ) . 'elementor/css',
 		);
-		$result = array();
+		$result  = array();
 
 		foreach ( $paths as $key => $path ) {
 			if ( '' === $path || ! $wp_filesystem ) {
