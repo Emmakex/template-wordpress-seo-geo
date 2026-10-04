@@ -172,7 +172,7 @@ final class HomeSeoHandoff {
 			'review_items'       => is_array( $plan['review_items'] ?? null ) ? $plan['review_items'] : array(),
 			'plan_sha256'        => (string) ( $plan['plan_sha256'] ?? '' ),
 		);
-		$report_sha     = hash(
+		$report_sha      = hash(
 			'sha256',
 			(string) wp_json_encode( $report_material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 		);
