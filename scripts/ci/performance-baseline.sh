@@ -228,12 +228,18 @@ wp_cli eval-file /var/www/html/wp-content/seed-acceptance.php \
 EN_URL="${BASE_URL}/acceptance-en/?fixture_lang=en"
 ES_URL="${BASE_URL}/acceptance-es/?fixture_lang=es"
 MIGRATION_URL="${BASE_URL}/migration-parity-fixture/?fixture_lang=en"
+CORPORATE_URL="${BASE_URL}/migration-parity-fixture/?fixture_lang=en&fixture_preset=corporate"
 wait_for_fixture "$EN_URL" \
   || fail_performance "fixture-en-http" "English performance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl acceptance-en"
 wait_for_fixture "$ES_URL" \
   || fail_performance "fixture-es-http" "Spanish performance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl acceptance-es"
 wait_for_fixture "$MIGRATION_URL" \
   || fail_performance "fixture-migration-http" "Post-migration performance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl migration-parity-fixture"
+
+wp_cli option update seo_geo_active_preset corporate >/dev/null \
+  || fail_performance "corporate-preset-activate" "Could not activate Corporate preset for its performance sample" "Corporate preset active" "option update failed" "wp option update seo_geo_active_preset corporate"
+wait_for_fixture "$CORPORATE_URL" \
+  || fail_performance "fixture-corporate-http" "Corporate performance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl corporate migration fixture"
 
 CHROME_PATH="$(node -e "const { chromium } = require('@playwright/test'); process.stdout.write(chromium.executablePath())")"
 [[ -x "$CHROME_PATH" ]] \
@@ -244,6 +250,7 @@ for sample in 1 2 3; do
   run_lighthouse en "$EN_URL" "$sample"
   run_lighthouse es "$ES_URL" "$sample"
   run_lighthouse migration "$MIGRATION_URL" "$sample"
+  run_lighthouse corporate "$CORPORATE_URL" "$sample"
 done
 
 printf '[performance] Evaluating median Lighthouse/resource metrics.\n'
@@ -257,4 +264,4 @@ if grep -Eqi 'PHP (Fatal error|Warning|Notice)|Fatal error|Uncaught (Error|Excep
   fail_performance "runtime-php" "WordPress emitted a PHP runtime diagnostic during performance measurement" "no PHP fatal/warning/notice/uncaught error" "runtime diagnostics detected" "inspect WordPress runtime/debug logs"
 fi
 
-printf 'Performance baseline OK: Lighthouse %s captured 3 samples for EN/ES and the representative post-migration fixture, then evaluated median resource metrics.\n' "$LIGHTHOUSE_VERSION"
+printf 'Performance baseline OK: Lighthouse %s captured 3 samples for EN/ES, neutral migration and active Corporate fixtures, then evaluated median resource metrics.\n' "$LIGHTHOUSE_VERSION"
