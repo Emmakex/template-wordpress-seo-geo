@@ -381,7 +381,8 @@ foreach (
 		"'download-reviewed-evidence'",
 		'admin_post_' . "' . self::EVIDENCE_ACTION",
 		"'Content-Type: application/json; charset='",
-		"'Content-Disposition: attachment; filename=\\\"seo-geo-native-review-evidence-'",
+		"Content-Disposition: attachment; filename=",
+		"seo-geo-native-review-evidence-",
 	) as $native_replatform_controller_guard
 ) {
 	if ( ! str_contains( $native_replatform_controller, $native_replatform_controller_guard ) ) {
