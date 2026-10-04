@@ -104,6 +104,27 @@ foreach ( SEO_GEO_PRESET_IDS as $preset_id ) {
 		}
 	}
 
+	$design_direction = $manifest['design_direction'] ?? null;
+	if (
+		! is_array( $design_direction )
+		|| ! is_string( $design_direction['north_star'] ?? null )
+		|| '' === trim( (string) $design_direction['north_star'] )
+		|| ! is_array( $design_direction['functional_patterns'] ?? null )
+		|| array() === $design_direction['functional_patterns']
+		|| ! is_array( $design_direction['modern_traits'] ?? null )
+		|| array() === $design_direction['modern_traits']
+		|| ! is_array( $design_direction['avoid'] ?? null )
+		|| array() === $design_direction['avoid']
+	) {
+		fail_seo_geo_preset_contract(
+			'design-direction',
+			'Preset must declare a modern functional design direction with a north star, functional patterns, modern traits and explicit anti-patterns.',
+			$path . '#design_direction',
+			'complete design direction object',
+			$design_direction
+		);
+	}
+
 	$seo_acceptance = $manifest['seo_acceptance'] ?? null;
 	if ( ! is_array( $seo_acceptance ) || 4 > count( $seo_acceptance ) ) {
 		fail_seo_geo_preset_contract( 'seo-acceptance', 'Preset must keep an explicit SEO acceptance list.', $path . '#seo_acceptance', 'at least four acceptance rules', $seo_acceptance );
@@ -204,5 +225,5 @@ if ( ! str_contains( $header, 'seo-geo/preset-navigation' ) ) {
 }
 
 printf(
-	"SEO/GEO-first preset contract OK: 5 presets preserve semantic server HTML, shared SEO/Schema authority, crawlable navigation, optional safe GEO alternates and strict performance budgets.\n"
+	"SEO/GEO-first preset contract OK: 5 presets preserve semantic server HTML, shared SEO/Schema authority, crawlable navigation, modern functional design direction, optional safe GEO alternates and strict performance budgets.\n"
 );
