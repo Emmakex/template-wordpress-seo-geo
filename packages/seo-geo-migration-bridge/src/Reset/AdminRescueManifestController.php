@@ -26,6 +26,9 @@ final class AdminRescueManifestController {
 	public const CLEAN_HOME_NONCE_ACTION  = 'seo_geo_reset_create_clean_home';
 	public const CONTENT_KIT_ACTION       = 'seo_geo_reset_save_home_content_kit';
 	public const CONTENT_KIT_NONCE_ACTION = 'seo_geo_reset_save_home_content_kit';
+	public const BLUEPRINT_ACTION         = 'seo_geo_reset_import_home_content_blueprint';
+	public const BLUEPRINT_NONCE_ACTION   = 'seo_geo_reset_import_home_content_blueprint';
+	public const MAX_BLUEPRINT_BYTES      = 65536;
 	public const HYDRATE_ACTION           = 'seo_geo_reset_hydrate_home';
 	public const HYDRATE_NONCE_ACTION     = 'seo_geo_reset_hydrate_home';
 	public const ROLLBACK_ACTION          = 'seo_geo_reset_rollback_home_hydration';
@@ -61,6 +64,7 @@ final class AdminRescueManifestController {
 		add_action( 'admin_post_' . self::BOOTSTRAP_ACTION, array( $this, 'handle_bootstrap' ) );
 		add_action( 'admin_post_' . self::CLEAN_HOME_ACTION, array( $this, 'handle_clean_home' ) );
 		add_action( 'admin_post_' . self::CONTENT_KIT_ACTION, array( $this, 'handle_content_kit' ) );
+		add_action( 'admin_post_' . self::BLUEPRINT_ACTION, array( $this, 'handle_content_blueprint' ) );
 		add_action( 'admin_post_' . self::HYDRATE_ACTION, array( $this, 'handle_hydrate_home' ) );
 		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'handle_rollback_home' ) );
 	}
@@ -303,9 +307,29 @@ final class AdminRescueManifestController {
 					<strong><?php echo esc_html__( 'Saved Content Kit:', 'seo-geo-migration-bridge' ); ?></strong>
 					<code><?php echo esc_html( (string) ( $content_kit['kit_sha256'] ?? '' ) ); ?></code>
 				</p>
+				<?php if ( 'blueprint' === ( $content_kit['input_mode'] ?? null ) ) : ?>
+					<p>
+						<strong><?php echo esc_html__( 'Imported Blueprint:', 'seo-geo-migration-bridge' ); ?></strong>
+						<code><?php echo esc_html( (string) ( $content_kit['blueprint_sha256'] ?? '' ) ); ?></code>
+					</p>
+				<?php endif; ?>
 			</div>
 		<?php endif; ?>
 
+		<h3><?php echo esc_html__( 'Import portable Content Blueprint', 'seo-geo-migration-bridge' ); ?></h3>
+		<p><?php echo esc_html__( 'Paste reviewed JSON that contains only locale, semantic values and evidence flags. Draft IDs and plan hashes are bound to this clean Home during import, so a blueprint can move between environments without carrying server identity.', 'seo-geo-migration-bridge' ); ?></p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( self::BLUEPRINT_ACTION ); ?>">
+			<input type="hidden" name="confirm" value="import-home-content-blueprint">
+			<input type="hidden" name="draft_id" value="<?php echo esc_attr( (string) $draft_id ); ?>">
+			<input type="hidden" name="plan_sha256" value="<?php echo esc_attr( (string) ( $clean_home_plan['plan_sha256'] ?? '' ) ); ?>">
+			<?php wp_nonce_field( self::BLUEPRINT_NONCE_ACTION ); ?>
+			<textarea class="large-text code" rows="12" maxlength="<?php echo esc_attr( (string) self::MAX_BLUEPRINT_BYTES ); ?>" name="content_blueprint_json" required placeholder='{"schema_version":1,"mode":"corporate-home-content-blueprint","model":"corporate-home-v1","locale":"es_ES","values":{},"verified_groups":{"hero-proof":false,"proof":false,"case-study":false}}'></textarea>
+			<p class="description"><?php echo esc_html__( 'The blueprint locale must match the active Corporate preset locale. Unknown slots/groups and runtime-bound fields are rejected.', 'seo-geo-migration-bridge' ); ?></p>
+			<?php submit_button( __( 'Import reviewed Content Blueprint', 'seo-geo-migration-bridge' ), 'secondary', 'submit', false ); ?>
+		</form>
+
+		<h3><?php echo esc_html__( 'Edit Content Kit manually', 'seo-geo-migration-bridge' ); ?></h3>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="<?php echo esc_attr( self::CONTENT_KIT_ACTION ); ?>">
 			<input type="hidden" name="confirm" value="save-home-content-kit">
@@ -499,6 +523,49 @@ final class AdminRescueManifestController {
 		}
 
 		$this->redirect( 'clean-home-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
+	}
+
+	/**
+	 * Import a portable reviewed Corporate Home Content Blueprint.
+	 */
+	public function handle_content_blueprint(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::BLUEPRINT_NONCE_ACTION );
+
+		$confirm = filter_input( INPUT_POST, 'confirm', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( 'import-home-content-blueprint' !== $confirm ) {
+			wp_die( esc_html__( 'Home Content Blueprint import was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$raw_blueprint = filter_input( INPUT_POST, 'content_blueprint_json', FILTER_UNSAFE_RAW );
+		$raw_blueprint = is_string( $raw_blueprint ) ? trim( $raw_blueprint ) : '';
+		if ( '' === $raw_blueprint || self::MAX_BLUEPRINT_BYTES < strlen( $raw_blueprint ) ) {
+			wp_die( esc_html__( 'Content Blueprint JSON is empty or exceeds the allowed size.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		try {
+			$blueprint = json_decode( $raw_blueprint, true, 64, JSON_THROW_ON_ERROR );
+		} catch ( \JsonException $exception ) {
+			wp_die( esc_html__( 'Content Blueprint JSON is invalid.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		if ( ! is_array( $blueprint ) ) {
+			wp_die( esc_html__( 'Content Blueprint must decode to a JSON object.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$result = $this->content_kit->import_blueprint(
+			$blueprint,
+			(int) filter_input( INPUT_POST, 'draft_id', FILTER_SANITIZE_NUMBER_INT ),
+			(string) filter_input( INPUT_POST, 'plan_sha256', FILTER_SANITIZE_FULL_SPECIAL_CHARS )
+		);
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect( 'home-content-blueprint-imported' );
 	}
 
 	/**
