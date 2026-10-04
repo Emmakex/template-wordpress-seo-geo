@@ -17,19 +17,21 @@ use WP_Post;
  * Builds a private Home draft from Theme-owned Corporate patterns only.
  */
 final class CleanHomeRebuilder {
-	public const SOURCE_ID_META    = '_seo_geo_clean_home_source_id_v1';
-	public const SOURCE_SHA_META   = '_seo_geo_clean_home_source_sha256_v1';
-	public const SOURCE_PATH_META  = '_seo_geo_clean_home_source_path_v1';
-	public const MANIFEST_SHA_META = '_seo_geo_clean_home_manifest_sha256_v1';
-	public const PLAN_SHA_META     = '_seo_geo_clean_home_plan_sha256_v1';
-	public const PATTERNS_META     = '_seo_geo_clean_home_patterns_v1';
-	public const CREATED_AT_META   = '_seo_geo_clean_home_created_at_v1';
-	public const CONTENT_STATE_META = '_seo_geo_clean_home_content_state_v1';
+	public const SOURCE_ID_META       = '_seo_geo_clean_home_source_id_v1';
+	public const SOURCE_SHA_META      = '_seo_geo_clean_home_source_sha256_v1';
+	public const SOURCE_PATH_META     = '_seo_geo_clean_home_source_path_v1';
+	public const MANIFEST_SHA_META    = '_seo_geo_clean_home_manifest_sha256_v1';
+	public const PLAN_SHA_META        = '_seo_geo_clean_home_plan_sha256_v1';
+	public const PATTERNS_META        = '_seo_geo_clean_home_patterns_v1';
+	public const CREATED_AT_META      = '_seo_geo_clean_home_created_at_v1';
+	public const CONTENT_STATE_META   = '_seo_geo_clean_home_content_state_v1';
 
 	private const PAGE_KEY = 'home';
 	private const PRESET   = 'corporate';
 
 	/**
+	 * Construct the clean Home builder.
+	 *
 	 * @param RescueManifest $manifest Rescue Manifest authority.
 	 */
 	public function __construct( private RescueManifest $manifest ) {
@@ -41,8 +43,8 @@ final class CleanHomeRebuilder {
 	 * @return array<string,mixed>
 	 */
 	public function plan(): array {
-		$blockers = array();
-		$saved    = $this->manifest->saved();
+		$blockers  = array();
+		$saved     = $this->manifest->saved();
 		$bootstrap = get_option( CorporateThemeBootstrap::REPORT_OPTION, null );
 
 		if (
@@ -121,7 +123,7 @@ final class CleanHomeRebuilder {
 		$blockers = array_values( array_unique( $blockers ) );
 		sort( $blockers );
 
-		$source_path = $source instanceof WP_Post ? $this->post_path( $source ) : '';
+		$source_path   = $source instanceof WP_Post ? $this->post_path( $source ) : '';
 		$plan_material = array(
 			'preset'          => self::PRESET,
 			'page_key'        => self::PAGE_KEY,
@@ -132,19 +134,19 @@ final class CleanHomeRebuilder {
 			'patterns'        => $patterns,
 			'composition_sha' => hash( 'sha256', $composition ),
 		);
-		$plan_sha = hash(
+		$plan_sha      = hash(
 			'sha256',
 			(string) wp_json_encode( $plan_material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 		);
 
 		return array(
-			'schema_version' => 1,
-			'mode'           => 'reset-rebuild-clean-home-plan',
-			'ready'          => array() === $blockers,
-			'blockers'       => $blockers,
-			'preset'         => self::PRESET,
-			'page_key'       => self::PAGE_KEY,
-			'source'         => $source instanceof WP_Post
+			'schema_version'  => 1,
+			'mode'            => 'reset-rebuild-clean-home-plan',
+			'ready'           => array() === $blockers,
+			'blockers'        => $blockers,
+			'preset'          => self::PRESET,
+			'page_key'        => self::PAGE_KEY,
+			'source'          => $source instanceof WP_Post
 				? array(
 					'id'             => $source_id,
 					'title'          => get_the_title( $source ),
@@ -159,11 +161,11 @@ final class CleanHomeRebuilder {
 			'existing_draft'  => $this->existing_draft_id( $source_id, $plan_sha ),
 			'content_state'   => 'preset-scaffold',
 			'safety'          => array(
-				'legacy_layout_reused'       => false,
-				'content_remap_required'      => false,
-				'source_post_mutation'       => false,
+				'legacy_layout_reused'         => false,
+				'content_remap_required'        => false,
+				'source_post_mutation'         => false,
 				'front_page_assignment_change' => false,
-				'draft_only'                 => true,
+				'draft_only'                   => true,
 			),
 		);
 	}
@@ -220,14 +222,14 @@ final class CleanHomeRebuilder {
 		}
 
 		$meta = array(
-			self::SOURCE_ID_META     => $source_id,
-			self::SOURCE_SHA_META    => (string) ( $plan['source']['content_sha256'] ?? '' ),
-			self::SOURCE_PATH_META   => (string) ( $plan['source']['path'] ?? '' ),
-			self::MANIFEST_SHA_META  => (string) $plan['manifest_sha256'],
-			self::PLAN_SHA_META      => (string) $plan['plan_sha256'],
-			self::PATTERNS_META      => array_values( is_array( $plan['patterns'] ?? null ) ? $plan['patterns'] : array() ),
-			self::CREATED_AT_META    => gmdate( DATE_ATOM ),
-			self::CONTENT_STATE_META => 'preset-scaffold',
+			self::SOURCE_ID_META      => $source_id,
+			self::SOURCE_SHA_META     => (string) ( $plan['source']['content_sha256'] ?? '' ),
+			self::SOURCE_PATH_META    => (string) ( $plan['source']['path'] ?? '' ),
+			self::MANIFEST_SHA_META   => (string) $plan['manifest_sha256'],
+			self::PLAN_SHA_META       => (string) $plan['plan_sha256'],
+			self::PATTERNS_META       => array_values( is_array( $plan['patterns'] ?? null ) ? $plan['patterns'] : array() ),
+			self::CREATED_AT_META     => gmdate( DATE_ATOM ),
+			self::CONTENT_STATE_META  => 'preset-scaffold',
 		);
 		foreach ( $meta as $key => $value ) {
 			update_post_meta( $draft_id, $key, $value );
@@ -242,11 +244,11 @@ final class CleanHomeRebuilder {
 			'plan_sha256'    => (string) $plan['plan_sha256'],
 			'content_state'  => 'preset-scaffold',
 			'safety'         => array(
-				'source_unchanged' => hash_equals(
+				'source_unchanged'        => hash_equals(
 					(string) ( $plan['source']['content_sha256'] ?? '' ),
 					hash( 'sha256', (string) get_post_field( 'post_content', $source_id ) )
 				),
-				'front_page_id_unchanged' => $source_id === (int) get_option( 'page_on_front', 0 ),
+				'front_page_id_unchanged' => (int) get_option( 'page_on_front', 0 ) === $source_id,
 				'draft_only'              => 'draft' === get_post_status( $draft_id ),
 			),
 		);
@@ -280,6 +282,8 @@ final class CleanHomeRebuilder {
 
 	/**
 	 * Resolve one Theme-registered block pattern.
+	 *
+	 * @param string $slug Pattern slug.
 	 */
 	private function registered_pattern_content( string $slug ): ?string {
 		$pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( $slug );
@@ -296,6 +300,7 @@ final class CleanHomeRebuilder {
 	 * Find the front-page resource captured by the Rescue Manifest.
 	 *
 	 * @param array<string,mixed> $manifest Saved Rescue Manifest.
+	 * @param int                 $post_id  Front-page post ID.
 	 * @return array<string,mixed>|null
 	 */
 	private function manifest_resource( array $manifest, int $post_id ): ?array {
@@ -310,6 +315,9 @@ final class CleanHomeRebuilder {
 
 	/**
 	 * Resolve an equivalent clean Home draft.
+	 *
+	 * @param int    $source_id Preserved front-page post ID.
+	 * @param string $plan_sha  Clean Home plan SHA-256.
 	 */
 	private function existing_draft_id( int $source_id, string $plan_sha ): int {
 		if ( 0 >= $source_id ) {
@@ -345,6 +353,8 @@ final class CleanHomeRebuilder {
 
 	/**
 	 * Return one post's public path.
+	 *
+	 * @param WP_Post $post Preserved front-page post.
 	 */
 	private function post_path( WP_Post $post ): string {
 		$path = wp_parse_url( get_permalink( $post ), PHP_URL_PATH );
