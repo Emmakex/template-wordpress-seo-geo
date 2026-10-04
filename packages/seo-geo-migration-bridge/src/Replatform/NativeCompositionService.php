@@ -409,7 +409,7 @@ final class NativeCompositionService {
 	 */
 	private function post_path( WP_Post $post ): string {
 		$url  = get_permalink( $post );
-		$path = is_string( $url ) ? wp_parse_url( $url, PHP_URL_PATH ) : null;
+		$path = wp_parse_url( $url, PHP_URL_PATH );
 
 		return is_string( $path ) && '' !== $path ? $path : '/';
 	}
