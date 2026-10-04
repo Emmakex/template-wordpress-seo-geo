@@ -102,6 +102,20 @@ $divi_id = wp_insert_post(
 );
 update_post_meta( $divi_id, 'et_pb_use_builder', 'on' );
 
+$divi_legacy_percent_token = 'd276abfeceab40cca0e158fc6217176554b8e54a1f85b6eb004941797db52171';
+$divi_source = (string) get_post_field( 'post_content', $divi_id );
+$divi_source = str_replace(
+	'Migrated Divi body.</p>[/et_pb_text]',
+	'Migrated Divi body. 100{' . $divi_legacy_percent_token . '}</p>[/et_pb_text]',
+	$divi_source
+);
+wp_update_post(
+	array(
+		'ID'           => $divi_id,
+		'post_content' => $divi_source,
+	)
+);
+
 $unsupported_id = wp_insert_post(
 	array(
 		'post_type'    => 'page',
@@ -244,6 +258,7 @@ echo wp_json_encode(
 			'divi_permalink'      => $divi_permalink_before,
 			'unsupported_content' => $unsupported_before?->post_content,
 			'unsupported_meta_sha256' => $unsupported_meta_hash_before,
+			'divi_legacy_percent_token' => $divi_legacy_percent_token,
 		),
 		'invariants' => array(
 			'active_plugins_same' => $active_plugins_before === $active_plugins_after,
@@ -351,6 +366,10 @@ assert "seo-geo-migrated-divi-fullwidth-header" in after["divi"]["content"]
 assert "What we do" in after["divi"]["content"]
 assert "How we do it" in after["divi"]["content"]
 assert "Header body." in after["divi"]["content"]
+assert '<!-- wp:heading {"level":2} -->' in after["divi"]["content"]
+assert '<!-- wp:heading {"level":1} -->' not in after["divi"]["content"]
+assert "Migrated Divi body. 100%" in after["divi"]["content"]
+assert report["before"]["divi_legacy_percent_token"] not in after["divi"]["content"]
 assert "header.jpg" in after["divi"]["content"]
 assert "Primary" in after["divi"]["content"]
 assert "Secondary" in after["divi"]["content"]
