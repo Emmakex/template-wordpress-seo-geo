@@ -1,0 +1,80 @@
+name: EMMAKE Field Pilot Pack CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-migration-bridge/**'
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'examples/content-blueprints/emmake-home.es_ES.json'
+      - 'docs/EMMAKE_HOME_FIELD_PILOT.md'
+      - 'release/version.json'
+      - 'scripts/build-migration-bridge-release.py'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/build-theme-release.py'
+      - 'scripts/build-emmake-field-pilot-pack.py'
+      - 'scripts/ci/emmake-field-pilot-pack-acceptance.py'
+      - '.github/workflows/emmake-field-pilot-pack.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-migration-bridge/**'
+      - 'packages/seo-geo-theme/**'
+      - 'packages/seo-geo-core/**'
+      - 'examples/content-blueprints/emmake-home.es_ES.json'
+      - 'docs/EMMAKE_HOME_FIELD_PILOT.md'
+      - 'release/version.json'
+      - 'scripts/build-migration-bridge-release.py'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/build-theme-release.py'
+      - 'scripts/build-emmake-field-pilot-pack.py'
+      - 'scripts/ci/emmake-field-pilot-pack-acceptance.py'
+      - '.github/workflows/emmake-field-pilot-pack.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emmake-field-pilot-pack-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pack:
+    name: Deterministic EMMAKE Home pilot pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          python3 --version
+          php --version | head -n 1
+
+      - name: Validate pilot pack scripts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m py_compile             scripts/build-emmake-field-pilot-pack.py             scripts/ci/emmake-field-pilot-pack-acceptance.py
+
+      - name: Field-pilot pack acceptance
+        run: python3 scripts/ci/emmake-field-pilot-pack-acceptance.py
+
+      - name: Build field-pilot pack
+        run: |
+          python3 scripts/build-emmake-field-pilot-pack.py             --output dist-field-pilot/emmake-home-field-pilot-pack.zip
+
+      - name: Preserve field-pilot pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: emmake-home-field-pilot-pack
+          path: |
+            dist-field-pilot/emmake-home-field-pilot-pack.zip
+            dist-field-pilot/emmake-home-field-pilot-pack.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

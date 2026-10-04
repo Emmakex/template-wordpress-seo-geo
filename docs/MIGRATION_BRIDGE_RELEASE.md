@@ -51,6 +51,21 @@ The workflow additionally runs PHP syntax validation for every plugin PHP file.
 
 This artifact is an installation candidate for controlled client analysis. It is not a declaration that a real client migration is accepted.
 
+## EMMAKE field-pilot delivery pack
+
+The real `/nuevaweb/` handoff is produced separately from the plugin runtime by `scripts/build-emmake-field-pilot-pack.py`.
+
+The deterministic pack contains:
+
+- the installable SEO/GEO Theme release candidate;
+- Migration Bridge 0.8.56;
+- `examples/content-blueprints/emmake-home.es_ES.json`;
+- `docs/EMMAKE_HOME_FIELD_PILOT.md`;
+- `pilot-manifest.json` with exact versions and SHA-256 identities;
+- `pilot-evidence-template.json` for Step 7 plus browser QA.
+
+The pack is a field-delivery artifact, not a new product runtime dependency. Client-specific Emmake content remains outside Migration Bridge and Theme runtime code.
+
 ## Version 0.8.56 — Home Field Pilot Readiness
 
 0.8.56 adds the final machine preflight before a rebuilt Home enters browser QA.

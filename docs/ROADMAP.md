@@ -2721,7 +2721,7 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **active — Home scaffold, content and native SEO handoff accepted; field-pilot readiness is the current gate**
+Status: **active — Home scaffold, content, native SEO handoff and field-pilot readiness accepted; deterministic EMMAKE field-pilot pack is the current gate**
 
 Home scaffold milestone:
 
@@ -2851,7 +2851,7 @@ Accepted behavior:
 
 #### 10E.4D.5 — Home Field Pilot Readiness v1
 
-Status: **active — Migration Bridge 0.8.56 candidate; current execution pointer**
+Status: **accepted — PR #227 / 8 of 8 CI gates green / merge `52f801644f55b98d6252ea901e391e9c5b150efe`**
 
 Goal:
 
@@ -2871,14 +2871,45 @@ Candidate behavior:
 - declares the remaining browser-only checks explicitly: visual, responsive, accessibility, rendered SEO/GEO and performance;
 - does not mutate the front page, source page, plugins or draft content.
 
+Accepted behavior:
+
+- Step 7 is read-only and sandbox-bound;
+- reset integrity, active Theme, source/front-page invariants and plugin-set drift are checked;
+- native SEO handoff must exist with `cutover_seo_ready=true`;
+- legacy builder debris and preset placeholders are blocking findings;
+- injected Elementor markup blocks readiness and exact draft restoration returns it to green;
+- all 8 repository gates passed.
+
+#### 10E.4D.6 — Deterministic EMMAKE field-pilot pack
+
+Status: **active — field handoff packaging is the current execution pointer**
+
+Goal:
+
+Turn the accepted Home pilot components into one reproducible handoff artifact for `emmake.com/nuevaweb/` so field execution does not depend on separate downloads or undocumented operator memory.
+
+Candidate behavior:
+
+- one deterministic outer ZIP;
+- includes the installable self-contained SEO/GEO Theme release;
+- includes Migration Bridge 0.8.56;
+- includes the accepted `emmake-home.es_ES.json` portable blueprint;
+- includes a strict `/nuevaweb/` field runbook;
+- includes a machine-readable manifest with exact component versions and SHA-256 identities;
+- includes an evidence template for Step 7 + five browser QA checks;
+- pack build validates that no WordPress runtime IDs or hashes leak into the portable blueprint;
+- hero-proof/proof/case-study remain disabled in the Emmake payload;
+- pack has no automatic production-cutover action;
+- CI builds the pack twice and requires byte-for-byte reproducibility.
+
 Next only after acceptance:
 
-- install/update Migration Bridge 0.8.56 on `emmake.com/nuevaweb/`;
-- import/hydrate `examples/content-blueprints/emmake-home.es_ES.json`;
-- apply Step 6 native SEO/GEO handoff;
+- take the CI-produced `emmake-home-field-pilot-pack.zip`;
+- verify its outer SHA-256;
+- execute the bundled runbook on `emmake.com/nuevaweb/`;
 - require Step 7 `ready_for_browser_qa=true`;
-- run the five browser QA checks;
-- only then decide whether the rebuilt Home is eligible to replace the current front page.
+- fill the five browser QA evidence fields;
+- only then decide whether Home cutover is eligible for explicit approval.
 
 Rebuild in this order:
 
