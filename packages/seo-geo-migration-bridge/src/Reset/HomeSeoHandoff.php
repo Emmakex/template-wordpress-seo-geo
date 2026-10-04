@@ -172,7 +172,7 @@ final class HomeSeoHandoff {
 			'review_items'       => is_array( $plan['review_items'] ?? null ) ? $plan['review_items'] : array(),
 			'plan_sha256'        => (string) ( $plan['plan_sha256'] ?? '' ),
 		);
-		$report_sha = hash(
+		$report_sha     = hash(
 			'sha256',
 			(string) wp_json_encode( $report_material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 		);
@@ -216,7 +216,7 @@ final class HomeSeoHandoff {
 	 * @param array<string,mixed> $seo Rescued SEO metadata.
 	 */
 	private function provider( array $seo ): string {
-		$yoast = $this->has_any_key(
+		$yoast     = $this->has_any_key(
 			$seo,
 			array(
 				'_yoast_wpseo_title',
