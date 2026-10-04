@@ -279,7 +279,7 @@ final class ReviewedRemapApplier {
 			}
 		}
 
-		if ( ! is_array( $current_ledger ) ) {
+		if ( ! is_array( $current_ledger ) || ! metadata_exists( 'post', $draft_id, self::BACKUP_META ) ) {
 			update_post_meta(
 				$draft_id,
 				self::BACKUP_META,
