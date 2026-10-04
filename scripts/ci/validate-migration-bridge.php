@@ -90,6 +90,8 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminSandboxHandoffController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Review/DependencyReviewStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Review/AdminDependencyReviewController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/RescueManifest.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
@@ -3127,6 +3129,80 @@ foreach ( array( "'en' => array(", "'es' => array(", "'next_remove_bridge'", "'p
 			'missing'
 		);
 	}
+}
+
+$rescue_manifest = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/RescueManifest.php' );
+foreach (
+	array(
+		"public const OPTION = 'seo_geo_reset_rescue_manifest_v1';",
+		"'mode'           => 'reset-rebuild-rescue-manifest'",
+		"'legacy_theme_preserved'       => false",
+		"'legacy_builder_preserved'     => false",
+		"'legacy_plugins_preserved'     => false",
+		"'dependency_review_required'   => false",
+		"'unknown_components_blocking' => false",
+		"update_option( self::OPTION, $manifest, false )",
+	) as $rescue_guard
+) {
+	if ( ! str_contains( $rescue_manifest, $rescue_guard ) ) {
+		fail_migration_bridge(
+			'reset-rescue-contract',
+			'Reset/Rebuild Rescue Manifest must stay minimal, dependency-review-independent and privately persisted.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/RescueManifest.php',
+			$rescue_guard,
+			'missing'
+		);
+	}
+}
+
+$rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
+foreach (
+	array(
+		"public const PAGE_SLUG    = 'seo-geo-reset-rebuild';",
+		"public const ACTION       = 'seo_geo_reset_capture_rescue_manifest';",
+		"current_user_can( 'manage_options' )",
+		"check_admin_referer( self::NONCE_ACTION )",
+		"'capture-rescue-manifest'",
+	) as $rescue_controller_guard
+) {
+	if ( ! str_contains( $rescue_controller, $rescue_controller_guard ) ) {
+		fail_migration_bridge(
+			'reset-rescue-entrypoint',
+			'Reset/Rebuild Rescue Manifest admin action must remain explicit, capability-gated and nonce-protected.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
+			$rescue_controller_guard,
+			'missing'
+		);
+	}
+}
+
+foreach (
+	array(
+		'AdminRescueManifestController',
+		'RescueManifest',
+		'self::$rescue_manifest_controller->boot()',
+		'public static function rescue_manifest()',
+	) as $reset_boot_guard
+) {
+	if ( ! str_contains( (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Plugin.php' ), $reset_boot_guard ) ) {
+		fail_migration_bridge(
+			'reset-rescue-bootstrap',
+			'Migration Bridge bootstrap must expose and boot the Reset/Rebuild Rescue Manifest.',
+			MIGRATION_BRIDGE_DIR . '/src/Plugin.php',
+			$reset_boot_guard,
+			'missing'
+		);
+	}
+}
+
+if ( ! str_contains( $operator_screen, "tools.php?page=seo-geo-reset-rebuild" ) ) {
+	fail_migration_bridge(
+		'reset-rescue-operator-link',
+		'Migration Bridge operator UI must expose the reset-first path directly.',
+		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+		'tools.php?page=seo-geo-reset-rebuild',
+		'missing'
+	);
 }
 
 $http_client = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Http/WordPressHttpClient.php' );
