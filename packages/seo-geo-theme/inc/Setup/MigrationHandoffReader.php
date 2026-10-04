@@ -16,7 +16,8 @@ final class MigrationHandoffReader {
 	/**
 	 * Stable option written by Phase 8H.
 	 */
-	public const OPTION_NAME = 'seo_geo_migration_report_v1';
+	public const OPTION_NAME       = 'seo_geo_migration_report_v1';
+	public const RESET_OPTION_NAME = 'seo_geo_clone_reset_report_v1';
 
 	/**
 	 * Return a bounded handoff summary.
@@ -24,6 +25,11 @@ final class MigrationHandoffReader {
 	 * @return array<string,mixed>
 	 */
 	public function read(): array {
+		$reset = get_option( self::RESET_OPTION_NAME, null );
+		if ( null !== $reset ) {
+			return $this->reset_handoff( $reset );
+		}
+
 		$envelope = get_option( self::OPTION_NAME, null );
 
 		if ( null === $envelope ) {
@@ -80,6 +86,55 @@ final class MigrationHandoffReader {
 		);
 	}
 
+
+	/**
+	 * Convert one completed reset-first cleanup report into a clean Theme handoff.
+	 *
+	 * @param mixed $value Stored clone-reset report.
+	 * @return array<string,mixed>
+	 */
+	private function reset_handoff( mixed $value ): array {
+		if (
+			! is_array( $value )
+			|| 1 !== ( $value['schema_version'] ?? null )
+			|| 'reset-rebuild-clone-reset' !== ( $value['mode'] ?? null )
+			|| 'completed' !== ( $value['status'] ?? null )
+		) {
+			return $this->invalid( 'reset-report-invalid', 'reset-rebuild-handoff-v1' );
+		}
+
+		$safety = is_array( $value['safety'] ?? null ) ? $value['safety'] : array();
+		if (
+			true !== ( $safety['manifest_unchanged'] ?? false )
+			|| true !== ( $safety['content_unchanged'] ?? false )
+			|| true !== ( $safety['target_theme_active'] ?? false )
+			|| false !== ( $safety['production_mutation'] ?? null )
+		) {
+			return $this->invalid( 'reset-safety-invalid', 'reset-rebuild-handoff-v1' );
+		}
+
+		$plan_sha256     = is_string( $value['plan_sha256'] ?? null ) ? strtolower( $value['plan_sha256'] ) : '';
+		$manifest_sha256 = is_string( $value['manifest_sha256'] ?? null ) ? strtolower( $value['manifest_sha256'] ) : '';
+		if ( ! $this->sha256( $plan_sha256 ) || ! $this->sha256( $manifest_sha256 ) ) {
+			return $this->invalid( 'reset-fingerprint-invalid', 'reset-rebuild-handoff-v1' );
+		}
+
+		return array(
+			'available'                   => true,
+			'valid'                       => true,
+			'source'                      => 'reset-rebuild-handoff-v1',
+			'reason'                      => null,
+			'id'                          => 'reset-' . substr( $plan_sha256, 0, 12 ),
+			'saved_at'                    => is_string( $value['reset_at'] ?? null ) ? $value['reset_at'] : null,
+			'envelope_sha256'             => $manifest_sha256,
+			'report_sha256'               => $plan_sha256,
+			'blocking_review_count'       => 0,
+			'advisory_review_count'       => 0,
+			'bridge_disposition'          => 'retain-until-rebuild-handoff',
+			'runtime_dependency_required' => false,
+		);
+	}
+
 	/**
 	 * Return an absent-handoff state.
 	 *
@@ -100,11 +155,11 @@ final class MigrationHandoffReader {
 	 * @param string $reason Validation reason.
 	 * @return array<string,mixed>
 	 */
-	private function invalid( string $reason ): array {
+	private function invalid( string $reason, string $source = 'migration-bridge-handoff-v1' ): array {
 		return array(
 			'available' => true,
 			'valid'     => false,
-			'source'    => 'migration-bridge-handoff-v1',
+			'source'    => $source,
 			'reason'    => $reason,
 		);
 	}
