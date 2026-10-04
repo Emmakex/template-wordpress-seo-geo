@@ -1187,14 +1187,16 @@ final class Plugin {
 		self::$dependency_review_controller ??= new AdminDependencyReviewController();
 		self::$rescue_manifest              ??= new RescueManifest();
 		self::$clone_reset_engine           ??= new CloneResetEngine( self::$rescue_manifest );
-		self::$corporate_theme_bootstrap       ??= new CorporateThemeBootstrap();
-		self::$clean_home_rebuilder            ??= new CleanHomeRebuilder( self::$rescue_manifest );
-		self::$clean_corporate_page_rebuilder  ??= new CleanCorporatePageRebuilder( self::$rescue_manifest );
-		self::$corporate_home_content_kit      ??= new CorporateHomeContentKit();
+		self::$corporate_theme_bootstrap    ??= new CorporateThemeBootstrap();
+		self::$clean_home_rebuilder         ??= new CleanHomeRebuilder( self::$rescue_manifest );
+		self::$corporate_home_content_kit   ??= new CorporateHomeContentKit();
 		self::$native_home_hydrator         ??= new NativeHomeHydrator( self::$clean_home_rebuilder, self::$corporate_home_content_kit );
 		self::$home_seo_handoff             ??= new HomeSeoHandoff( self::$rescue_manifest, self::$clean_home_rebuilder, self::$native_home_hydrator );
 		self::$home_pilot_readiness         ??= new HomePilotReadiness( self::$rescue_manifest, self::$clone_reset_engine, self::$clean_home_rebuilder, self::$native_home_hydrator, self::$home_seo_handoff );
-		self::$rescue_manifest_controller      ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$clean_corporate_page_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator, self::$home_seo_handoff, self::$home_pilot_readiness );
+
+		self::$clean_corporate_page_rebuilder ??= new CleanCorporatePageRebuilder( self::$rescue_manifest );
+
+		self::$rescue_manifest_controller ??= new AdminRescueManifestController( self::$rescue_manifest, self::$clone_reset_engine, self::$corporate_theme_bootstrap, self::$clean_home_rebuilder, self::$clean_corporate_page_rebuilder, self::$corporate_home_content_kit, self::$native_home_hydrator, self::$home_seo_handoff, self::$home_pilot_readiness );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
