@@ -2593,7 +2593,7 @@ Next:
 
 ### Microphase 10E.4 — Native Replatform Composer
 
-Status: **active — draft-only composer implemented; content remap intelligence is next**
+Status: **active — draft-only composer + Content Remap Intelligence v1 implemented; controlled reviewed application is next**
 
 Goal: bridge preserved legacy assets into the new preset-native presentation without modifying the public source page.
 
@@ -2609,15 +2609,21 @@ Implemented:
 - equivalent draft creation is idempotent;
 - administrator-only Tools screen with nonce + explicit confirmation;
 - no public/unauthenticated mutation endpoint;
-- WordPress smoke acceptance verifies source preservation, native pattern order and draft-only behavior.
+- **Content Remap Intelligence v1** extracts bounded title/body/link/media assets directly from the preserved source without rendering dynamic blocks;
+- every extracted asset carries deterministic provenance/hash identity;
+- preset `content_contract.required_sections` are converted into semantic remap slots with bounded source candidates;
+- proof/evidence/outcome/credential/provenance sections are always marked `manual-review` and never auto-applied;
+- no factual copy is generated and uncertain mappings remain non-mutating candidates;
+- remap plan SHA-256 + bounded review summary are retained on the native draft for audit/replay;
+- WordPress smoke acceptance verifies source preservation, native pattern order, content/link inventory, evidence review gating and draft-only behavior.
 
 Next:
 
-1. implement **Content Remap Intelligence**: extract reusable facts/content/links/media from the preserved source;
-2. map those assets into the semantic slots of the native Corporate composition;
-3. keep uncertain mappings explicit/manual-review rather than inventing copy;
-4. preview Home replacement in `/nuevaweb/` while source Home remains recoverable;
-5. run SEO/GEO regression before any controlled swap.
+1. add **controlled reviewed remap application** that only writes explicitly approved source assets into supported Corporate native slots;
+2. preserve unmapped source assets in the review ledger rather than silently dropping them;
+3. preview the remapped Home replacement in `/nuevaweb/` while source Home remains recoverable;
+4. repeat the accepted workflow for Services, Work, About, Insights and Contact;
+5. run SEO/GEO + link/media + performance + accessibility regression before any controlled swap.
 
 
 ### Microphase 10E.2A — Portable Clone Engine
