@@ -382,6 +382,15 @@ Every visual preset must satisfy the same acceptance contract:
 
 A real client/sandbox may act as an acceptance fixture for a preset, but the resulting visual system remains reusable and preset-owned.
 
+### Corporate visual acceptance v1.1
+
+The first real Corporate field review exposed two reusable presentation gaps that are now part of the preset contract rather than client-specific patches:
+
+- **migration-aware navigation:** explicitly assigned primary/footer menus win; migrated sites may reuse one bounded 3-8 item classic primary menu; otherwise navigation resolves from the active preset content map. The header must never fall back to an unbounded all-pages list.
+- **migrated-content composition:** the Corporate stylesheet may apply presentation-only heuristics to the front-page lead blocks and migrated service/counter primitives, but it must not rewrite page IDs, slugs, URLs or source content.
+
+The v1.1 acceptance target is a compact one-line desktop header, accessible CSS-only mobile menu, stronger front-page hierarchy, compact service/proof components and the already validated Theme-native contact form.
+
 ## Future presets
 
 Potential presets such as travel, professional services, education, events or NGO/fundraising should only be added when they express a repeatable information architecture and acceptance contract. They should compose primitives from the existing theme/Core rather than introduce parallel SEO stacks.
