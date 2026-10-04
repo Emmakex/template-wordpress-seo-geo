@@ -42,7 +42,7 @@ The Manager is not the deprecated standalone Core wrapper. It is a separate prod
 | --- | --- | --- | --- |
 | New site / redesign | Yes | Optional | Build with the self-contained Theme; add Manager only when ongoing publishing/operations are desired. |
 | Existing WordPress, keep current design | No | Yes | Analyze current stack, resolve SEO authority, publish through supported content/provider adapters. |
-| Existing WordPress, migrate to SEO/GEO Theme | Yes | Yes during adoption, optional afterward | Manager migration module performs analysis/sandbox/parity/cutover; Manager may stay for ongoing publishing. |
+| Existing WordPress, full redesign/replatform to SEO/GEO Theme | Yes | Yes during adoption, optional afterward | Manager preserves content/URLs/SEO/links/media/business requirements, then the Theme + selected preset rebuild the presentation from scratch; Manager may stay for ongoing publishing/optimization. |
 | Agency-managed content operations | Optional | Yes | Use Manager as the controlled publishing endpoint for landings/blogs across supported client stacks. |
 
 ## Hard independence rules
@@ -85,6 +85,12 @@ Manager starts a separate version line after its package contract exists. It rec
 - WordPress/PHP compatibility matrix;
 - security and capability contract;
 - real-site acceptance matrix.
+
+## Replatforming boundary
+
+The commercial redesign path follows `docs/REPLATFORMING_CONTRACT.md`: existing presentation is disposable; the search/content asset is not. No client-specific legacy layout may become the reusable Theme architecture.
+
+This is the intended WordPress equivalent of the product-style web builds used elsewhere in the portfolio: component-based, modern, fast and centrally improvable, while preserving WordPress content ownership and search equity.
 
 ## Migration Bridge transition
 
