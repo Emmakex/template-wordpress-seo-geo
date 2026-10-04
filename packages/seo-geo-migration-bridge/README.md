@@ -13,7 +13,7 @@ The builder:
 - composes only Theme-registered Corporate patterns;
 - refuses the current front page because Home keeps its dedicated pipeline;
 - blocks page definitions with no native composition yet, such as Insights;
-- stores a deterministic page-key/source binding for replay;
+- stores a deterministic page-key/source binding for replay and blocks silent remapping after creation;
 - reuses an equivalent private draft on identical replay;
 - keeps active plugins and the front-page assignment unchanged.
 
