@@ -179,7 +179,7 @@ final class CorporatePageSeoHandoff {
 			'review_items'       => is_array( $plan['review_items'] ?? null ) ? $plan['review_items'] : array(),
 			'plan_sha256'        => (string) ( $plan['plan_sha256'] ?? '' ),
 		);
-		$report_sha = hash(
+		$report_sha      = hash(
 			'sha256',
 			(string) wp_json_encode( $report_material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 		);
@@ -191,17 +191,17 @@ final class CorporatePageSeoHandoff {
 			return $existing;
 		}
 
-		$report                      = $report_material;
-		$report['status']            = 'applied';
-		$report['applied_at']        = gmdate( DATE_ATOM );
-		$report['report_sha256']     = $report_sha;
-		$report['cutover_seo_ready'] = true !== $report['review_required'];
-		$report['source_unchanged']  = $this->source_unchanged( $draft_id );
+		$report                          = $report_material;
+		$report['status']                = 'applied';
+		$report['applied_at']            = gmdate( DATE_ATOM );
+		$report['report_sha256']         = $report_sha;
+		$report['cutover_seo_ready']     = true !== $report['review_required'];
+		$report['source_unchanged']      = $this->source_unchanged( $draft_id );
 		$report['source_path_unchanged'] = $this->source_path_matches(
 			(int) $report['source_id'],
 			(string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::SOURCE_PATH_META, true )
 		);
-		$report['draft_only'] = 'draft' === get_post_status( $draft_id );
+		$report['draft_only']            = 'draft' === get_post_status( $draft_id );
 
 		update_post_meta( $draft_id, self::REPORT_META, $report );
 
@@ -222,7 +222,7 @@ final class CorporatePageSeoHandoff {
 
 	/** Resolve captured SEO provider family. */
 	private function provider( array $seo ): string {
-		$yoast = $this->has_any_key(
+		$yoast     = $this->has_any_key(
 			$seo,
 			array( '_yoast_wpseo_title', '_yoast_wpseo_metadesc', '_yoast_wpseo_canonical', '_yoast_wpseo_meta-robots-noindex', '_yoast_wpseo_meta-robots-nofollow' )
 		);

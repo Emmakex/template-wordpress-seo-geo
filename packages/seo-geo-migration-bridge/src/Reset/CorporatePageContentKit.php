@@ -129,7 +129,7 @@ final class CorporatePageContentKit {
 			return $normalized;
 		}
 
-		$material = array(
+		$material                     = array(
 			'schema_version'  => self::BLUEPRINT_SCHEMA_VERSION,
 			'mode'            => self::BLUEPRINT_MODE,
 			'page_key'        => $page_key,
@@ -220,7 +220,7 @@ final class CorporatePageContentKit {
 			return $normalized;
 		}
 
-		$material = array(
+		$material               = array(
 			'schema_version'  => 1,
 			'mode'            => 'corporate-page-content-kit',
 			'page_key'        => $page_key,
@@ -398,9 +398,9 @@ final class CorporatePageContentKit {
 	 * @return array<string,mixed>
 	 */
 	private function persist( string $page_key, array $validated ): array {
-		$validated['saved_at'] = gmdate( DATE_ATOM );
-		$all                   = get_option( self::OPTION, array() );
-		$all                   = is_array( $all ) ? $all : array();
+		$validated['saved_at']            = gmdate( DATE_ATOM );
+		$all                              = get_option( self::OPTION, array() );
+		$all                              = is_array( $all ) ? $all : array();
 		$all[ sanitize_key( $page_key ) ] = $validated;
 		ksort( $all );
 		update_option( self::OPTION, $all, false );

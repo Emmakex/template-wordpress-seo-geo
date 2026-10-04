@@ -42,9 +42,9 @@ final class CorporateSiteReadiness {
 			$blockers[] = 'home-not-ready';
 		}
 
-		$source_ids = array();
+		$source_ids   = array();
 		$source_paths = array();
-		$front_id = (int) get_option( 'page_on_front', 0 );
+		$front_id     = (int) get_option( 'page_on_front', 0 );
 		if ( 0 < $front_id ) {
 			$source_ids['home'] = $front_id;
 		}
@@ -92,7 +92,7 @@ final class CorporateSiteReadiness {
 		$insights_id = (int) ( $reports['insights']['source_id'] ?? 0 );
 		if ( 0 < $insights_id ) {
 			$source_ids['insights'] = $insights_id;
-			$path = wp_parse_url( get_permalink( $insights_id ), PHP_URL_PATH );
+			$path                   = wp_parse_url( get_permalink( $insights_id ), PHP_URL_PATH );
 			if ( is_string( $path ) && '' !== $path ) {
 				$source_paths['insights'] = $path;
 			}
@@ -135,15 +135,15 @@ final class CorporateSiteReadiness {
 		}
 
 		$material = array(
-			'schema_version'      => 1,
-			'mode'                => 'corporate-clean-site-readiness',
-			'page_reports'        => $reports,
-			'source_bindings'     => $source_ids,
-			'public_paths'        => $source_paths,
-			'duplicate_sources'   => $duplicates,
-			'duplicate_paths'     => $duplicate_paths,
-			'front_page_id'       => $front_id,
-			'posts_page_id'       => $posts_page,
+			'schema_version'        => 1,
+			'mode'                  => 'corporate-clean-site-readiness',
+			'page_reports'          => $reports,
+			'source_bindings'       => $source_ids,
+			'public_paths'          => $source_paths,
+			'duplicate_sources'     => $duplicates,
+			'duplicate_paths'       => $duplicate_paths,
+			'front_page_id'         => $front_id,
+			'posts_page_id'         => $posts_page,
 			'manual_browser_matrix' => $manual_matrix,
 		);
 
@@ -170,7 +170,7 @@ final class CorporateSiteReadiness {
 	private function duplicate_values( array $values ): array {
 		$owners = array();
 		foreach ( $values as $page_key => $value ) {
-			$key = (string) $value;
+			$key              = (string) $value;
 			$owners[ $key ] ??= array();
 			$owners[ $key ][] = $page_key;
 		}

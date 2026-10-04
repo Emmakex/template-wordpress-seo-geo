@@ -187,7 +187,7 @@ final class CorporateInsightsManager {
 		$this->write_or_delete( $source_id, NativeSeoMetadata::META_INDEXABILITY, $overrides['indexability'] ?? null );
 		delete_post_meta( $source_id, NativeSeoMetadata::META_CANONICAL );
 
-		$report = array(
+		$report                  = array(
 			'schema_version'     => 1,
 			'mode'               => 'corporate-insights-native-index',
 			'status'             => 'applied',
@@ -311,7 +311,7 @@ final class CorporateInsightsManager {
 
 	/** Back up provider-neutral native metadata exactly. */
 	private function native_meta_backup( int $post_id ): array {
-		$keys = array(
+		$keys   = array(
 			NativeSeoMetadata::META_TITLE,
 			NativeSeoMetadata::META_DESCRIPTION,
 			NativeSeoMetadata::META_CANONICAL,
@@ -372,8 +372,16 @@ final class CorporateInsightsManager {
 	/** Resolve one scalar provider value. */
 	private function provider_value( array $seo, string $provider, string $field ): ?string {
 		$keys = array(
-			'yoast'     => array( 'title' => '_yoast_wpseo_title', 'description' => '_yoast_wpseo_metadesc', 'canonical' => '_yoast_wpseo_canonical' ),
-			'rank-math' => array( 'title' => 'rank_math_title', 'description' => 'rank_math_description', 'canonical' => 'rank_math_canonical_url' ),
+			'yoast'     => array(
+				'title'       => '_yoast_wpseo_title',
+				'description' => '_yoast_wpseo_metadesc',
+				'canonical'   => '_yoast_wpseo_canonical',
+			),
+			'rank-math' => array(
+				'title'       => 'rank_math_title',
+				'description' => 'rank_math_description',
+				'canonical'   => 'rank_math_canonical_url',
+			),
 		);
 		if ( ! isset( $keys[ $provider ][ $field ] ) ) {
 			return null;

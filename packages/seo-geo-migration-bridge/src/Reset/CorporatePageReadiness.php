@@ -79,7 +79,7 @@ final class CorporatePageReadiness {
 		$expected_plugins = is_array( $reset_report['after']['active_plugins'] ?? null )
 			? array_values( array_map( 'strval', $reset_report['after']['active_plugins'] ) )
 			: array();
-		$current_plugins = array_values( array_map( 'strval', get_option( 'active_plugins', array() ) ) );
+		$current_plugins  = array_values( array_map( 'strval', get_option( 'active_plugins', array() ) ) );
 		sort( $expected_plugins );
 		sort( $current_plugins );
 		$checks['plugin_set_unchanged'] = $expected_plugins === $current_plugins;
@@ -144,13 +144,13 @@ final class CorporatePageReadiness {
 			$blockers[] = 'legacy-builder-markup-detected';
 		}
 
-		$placeholder_markers                 = $this->placeholder_markers( $content );
+		$placeholder_markers                   = $this->placeholder_markers( $content );
 		$checks['preset_placeholders_removed'] = array() === $placeholder_markers;
 		if ( ! $checks['preset_placeholders_removed'] ) {
 			$blockers[] = 'preset-placeholder-content-detected';
 		}
 
-		$verified_groups = is_array( $hydration_plan['verified_groups'] ?? null ) ? $hydration_plan['verified_groups'] : array();
+		$verified_groups                    = is_array( $hydration_plan['verified_groups'] ?? null ) ? $hydration_plan['verified_groups'] : array();
 		$checks['evidence_groups_reviewed'] = ! in_array( true, array_values( $verified_groups ), true );
 		if ( ! $checks['evidence_groups_reviewed'] ) {
 			$warnings[] = 'verified-evidence-groups-require-field-review';
@@ -248,7 +248,7 @@ final class CorporatePageReadiness {
 			'fusion-builder'  => '/(?:\[\/?fusion_[^\]]*\]|\bfusion-builder\b)/i',
 			'beaver-builder'  => '/\bfl-builder-[a-z0-9_-]+/i',
 		);
-		$found = array();
+		$found    = array();
 		foreach ( $patterns as $label => $pattern ) {
 			if ( 1 === preg_match( $pattern, $content ) ) {
 				$found[] = $label;
@@ -271,7 +271,7 @@ final class CorporatePageReadiness {
 			'Add the public phone number and, if relevant, service hours.',
 			'Add a real address or describe the geographic area served.',
 		);
-		$found = array();
+		$found   = array();
 		foreach ( $needles as $needle ) {
 			if ( str_contains( $content, $needle ) ) {
 				$found[] = $needle;

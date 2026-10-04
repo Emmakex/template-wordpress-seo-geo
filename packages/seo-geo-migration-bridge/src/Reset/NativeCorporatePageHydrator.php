@@ -161,11 +161,11 @@ final class NativeCorporatePageHydrator {
 			return new WP_Error( 'seo_geo_page_hydration_draft_missing', 'Clean Corporate page draft is unavailable.' );
 		}
 
-		$hydrated      = (string) $plan['hydrated_content'];
-		$hydrated_sha  = (string) $plan['hydrated_sha256'];
-		$current_sha   = hash( 'sha256', (string) $draft->post_content );
-		$current_kit   = (string) get_post_meta( $draft_id, self::KIT_SHA_META, true );
-		$front_before  = (int) get_option( 'page_on_front', 0 );
+		$hydrated       = (string) $plan['hydrated_content'];
+		$hydrated_sha   = (string) $plan['hydrated_sha256'];
+		$current_sha    = hash( 'sha256', (string) $draft->post_content );
+		$current_kit    = (string) get_post_meta( $draft_id, self::KIT_SHA_META, true );
+		$front_before   = (int) get_option( 'page_on_front', 0 );
 		$plugins_before = $this->active_plugins();
 
 		if ( hash_equals( $current_sha, $hydrated_sha ) && hash_equals( $current_kit, (string) $plan['kit_sha256'] ) ) {
@@ -212,11 +212,11 @@ final class NativeCorporatePageHydrator {
 			'kit_sha256'     => (string) $plan['kit_sha256'],
 			'content_sha256' => $hydrated_sha,
 			'safety'         => array(
-				'draft_only'              => 'draft' === get_post_status( $draft_id ),
-				'front_page_id_unchanged' => (int) get_option( 'page_on_front', 0 ) === $front_before,
-				'plugins_unchanged'       => $this->active_plugins() === $plugins_before,
-				'source_content_unchanged'=> $this->source_unchanged( $draft_id ),
-				'rollback_available'      => '' !== (string) get_post_meta( $draft_id, self::BACKUP_META, true ),
+				'draft_only'               => 'draft' === get_post_status( $draft_id ),
+				'front_page_id_unchanged'  => (int) get_option( 'page_on_front', 0 ) === $front_before,
+				'plugins_unchanged'        => $this->active_plugins() === $plugins_before,
+				'source_content_unchanged' => $this->source_unchanged( $draft_id ),
+				'rollback_available'       => '' !== (string) get_post_meta( $draft_id, self::BACKUP_META, true ),
 			),
 		);
 	}
@@ -397,14 +397,14 @@ final class NativeCorporatePageHydrator {
 	 * @return array<string,mixed>
 	 */
 	private function replace_details( array $block, string $question, string $answer ): array {
-		$html = is_string( $block['innerHTML'] ?? null ) ? $block['innerHTML'] : '';
-		$html = (string) preg_replace(
+		$html                  = is_string( $block['innerHTML'] ?? null ) ? $block['innerHTML'] : '';
+		$html                  = (string) preg_replace(
 			'#(<summary\b[^>]*>).*?(</summary>)#is',
 			'$1' . esc_html( $question ) . '$2',
 			$html,
 			1
 		);
-		$html = (string) preg_replace(
+		$html                  = (string) preg_replace(
 			'#(<p\b[^>]*class=(["\'])[^"\']*seo-geo-content-slot--faq-[1-3]-answer[^"\']*\2[^>]*>).*?(</p>)#is',
 			'$1' . esc_html( $answer ) . '$3',
 			$html,
