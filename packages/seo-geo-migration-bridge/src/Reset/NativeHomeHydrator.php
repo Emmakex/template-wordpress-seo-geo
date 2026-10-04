@@ -116,11 +116,11 @@ final class NativeHomeHydrator {
 			'hydrated_content' => $hydrated,
 			'verified_groups'  => is_array( $saved['verified_groups'] ?? null ) ? $saved['verified_groups'] : array(),
 			'safety'           => array(
-				'source_post_mutation'          => false,
+				'source_post_mutation'         => false,
 				'front_page_assignment_change' => false,
-				'legacy_layout_input'           => false,
-				'rollback_available'            => true,
-				'draft_only'                    => true,
+				'legacy_layout_input'          => false,
+				'rollback_available'           => true,
+				'draft_only'                   => true,
 			),
 		);
 	}
