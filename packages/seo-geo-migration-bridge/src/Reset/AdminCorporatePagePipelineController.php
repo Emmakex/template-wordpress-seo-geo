@@ -13,7 +13,7 @@ use SeoGeo\MigrationBridge\Plugin;
 use WP_Error;
 
 /**
- * Exposes draft → blueprint → hydration → SEO handoff → readiness for Corporate pages.
+ * Exposes draft, blueprint, hydration, SEO handoff and readiness for Corporate pages.
  */
 final class AdminCorporatePagePipelineController {
 	public const PAGE_SLUG = 'seo-geo-corporate-page-pipeline';
@@ -31,6 +31,12 @@ final class AdminCorporatePagePipelineController {
 
 	/**
 	 * Construct the administrator controller.
+	 *
+	 * @param CleanCorporatePageRebuilder $builder   Clean inner-page builder.
+	 * @param CorporatePageContentKit     $kit       Reviewed content service.
+	 * @param NativeCorporatePageHydrator $hydrator  Native content hydrator.
+	 * @param CorporatePageSeoHandoff     $handoff   Native SEO handoff service.
+	 * @param CorporatePageReadiness      $readiness Page readiness service.
 	 */
 	public function __construct(
 		private CleanCorporatePageRebuilder $builder,
@@ -41,9 +47,7 @@ final class AdminCorporatePagePipelineController {
 	) {
 	}
 
-	/**
-	 * Bootstrap the page from already accepted Plugin services.
-	 */
+	/** Bootstrap the page from already accepted Plugin services. */
 	public static function boot_from_plugin(): void {
 		$manifest = Plugin::rescue_manifest();
 		$reset    = Plugin::clone_reset_engine();
@@ -91,12 +95,14 @@ final class AdminCorporatePagePipelineController {
 		$bound      = $this->builder->bound_source_id( $page_key );
 		$candidates = $this->builder->source_candidates();
 		$model      = $this->kit->model( $page_key );
+		$model_name = $this->kit->model_name( $page_key );
 		$saved_kit  = $this->kit->saved( $page_key );
 		$hydration  = $this->hydrator->plan( $page_key );
 		$draft_id   = (int) ( $plan['existing_draft'] ?? 0 );
 		$seo_report = 0 < $draft_id ? $this->handoff->report( $draft_id ) : null;
 		$ready      = $this->readiness->report( $page_key );
-		$status     = isset( $_GET['pipeline_status'] ) ? sanitize_key( wp_unslash( $_GET['pipeline_status'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only administrator status message.
+		$status = isset( $_GET['pipeline_status'] ) ? sanitize_key( wp_unslash( $_GET['pipeline_status'] ) ) : '';
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'SEO/GEO Corporate Page Pipeline', 'seo-geo-migration-bridge' ); ?></h1>
@@ -119,7 +125,7 @@ final class AdminCorporatePagePipelineController {
 
 			<hr>
 			<h2><?php echo esc_html( strtoupper( $page_key ) ); ?></h2>
-			<p><strong><?php echo esc_html__( 'Native model:', 'seo-geo-migration-bridge' ); ?></strong> <code><?php echo esc_html( $this->kit->model_name( $page_key ) ?: 'not-defined' ); ?></code></p>
+			<p><strong><?php echo esc_html__( 'Native model:', 'seo-geo-migration-bridge' ); ?></strong> <code><?php echo esc_html( '' !== $model_name ? $model_name : 'not-defined' ); ?></code></p>
 
 			<h3><?php echo esc_html__( '1. Bind rescued source and create clean draft', 'seo-geo-migration-bridge' ); ?></h3>
 			<p><strong><?php echo esc_html__( 'Plan:', 'seo-geo-migration-bridge' ); ?></strong> <?php echo true === ( $plan['ready'] ?? false ) ? '✅' : '⛔'; ?> <code><?php echo esc_html( implode( ', ', is_array( $plan['blockers'] ?? null ) ? $plan['blockers'] : array() ) ); ?></code></p>
@@ -168,34 +174,45 @@ final class AdminCorporatePagePipelineController {
 
 			<h3><?php echo esc_html__( '5. Readiness', 'seo-geo-migration-bridge' ); ?></h3>
 			<p><strong><?php echo esc_html__( 'Ready for browser QA:', 'seo-geo-migration-bridge' ); ?></strong> <?php echo true === ( $ready['ready_for_browser_qa'] ?? false ) ? '✅' : '⛔'; ?></p>
-			<?php if ( array() !== ( $ready['blockers'] ?? array() ) ) : ?><p><strong>Blockers:</strong> <code><?php echo esc_html( implode( ', ', $ready['blockers'] ) ); ?></code></p><?php endif; ?>
-			<?php if ( array() !== ( $ready['warnings'] ?? array() ) ) : ?><p><strong>Warnings:</strong> <code><?php echo esc_html( implode( ', ', $ready['warnings'] ) ); ?></code></p><?php endif; ?>
+			<?php if ( array() !== ( $ready['blockers'] ?? array() ) ) : ?>
+				<p><strong><?php echo esc_html__( 'Blockers:', 'seo-geo-migration-bridge' ); ?></strong> <code><?php echo esc_html( implode( ', ', $ready['blockers'] ) ); ?></code></p>
+			<?php endif; ?>
+			<?php if ( array() !== ( $ready['warnings'] ?? array() ) ) : ?>
+				<p><strong><?php echo esc_html__( 'Warnings:', 'seo-geo-migration-bridge' ); ?></strong> <code><?php echo esc_html( implode( ', ', $ready['warnings'] ) ); ?></code></p>
+			<?php endif; ?>
 			<p><strong>SHA:</strong> <code><?php echo esc_html( (string) ( $ready['report_sha256'] ?? '' ) ); ?></code></p>
 		</div>
 		<?php
 	}
 
-	/** Create/reuse one clean page draft. */
+	/** Create or reuse one clean page draft. */
 	public function handle_create(): never {
-		$this->authorize();
-		$page_key = $this->posted_page_key();
+		$this->authorize_request();
+		check_admin_referer( self::NONCE_ACTION );
+
+		$page_key  = $this->validated_page_key( isset( $_POST['page_key'] ) ? sanitize_key( wp_unslash( $_POST['page_key'] ) ) : '' );
 		$source_id = isset( $_POST['source_id'] ) ? absint( wp_unslash( $_POST['source_id'] ) ) : 0;
-		$result = $this->builder->create_draft( $page_key, $source_id );
+		$result    = $this->builder->create_draft( $page_key, $source_id );
 		$this->finish( $page_key, $result, 'draft' );
 	}
 
-	/** Validate/import one portable Content Blueprint. */
+	/** Validate and import one portable Content Blueprint. */
 	public function handle_blueprint(): never {
-		$this->authorize();
-		$page_key = $this->posted_page_key();
-		$raw      = isset( $_POST['blueprint_json'] ) ? (string) wp_unslash( $_POST['blueprint_json'] ) : '';
+		$this->authorize_request();
+		check_admin_referer( self::NONCE_ACTION );
+
+		$page_key = $this->validated_page_key( isset( $_POST['page_key'] ) ? sanitize_key( wp_unslash( $_POST['page_key'] ) ) : '' );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON is decoded and then validated against a strict semantic blueprint contract.
+		$raw = isset( $_POST['blueprint_json'] ) ? (string) wp_unslash( $_POST['blueprint_json'] ) : '';
 		if ( '' === trim( $raw ) || self::MAX_BLUEPRINT < strlen( $raw ) ) {
 			wp_die( esc_html__( 'Blueprint JSON is empty or exceeds the 64KB limit.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 		}
+
 		$data = json_decode( $raw, true );
 		if ( ! is_array( $data ) ) {
 			wp_die( esc_html__( 'Blueprint JSON is invalid.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 		}
+
 		$plan     = $this->builder->plan( $page_key );
 		$draft_id = (int) ( $plan['existing_draft'] ?? 0 );
 		$result   = $this->kit->import_blueprint( $page_key, $data, $draft_id, (string) ( $plan['plan_sha256'] ?? '' ) );
@@ -204,48 +221,63 @@ final class AdminCorporatePagePipelineController {
 
 	/** Hydrate one clean page draft. */
 	public function handle_hydrate(): never {
-		$this->authorize();
-		$page_key = $this->posted_page_key();
+		$this->authorize_request();
+		check_admin_referer( self::NONCE_ACTION );
+
+		$page_key = $this->validated_page_key( isset( $_POST['page_key'] ) ? sanitize_key( wp_unslash( $_POST['page_key'] ) ) : '' );
 		$this->finish( $page_key, $this->hydrator->apply( $page_key ), 'hydration' );
 	}
 
 	/** Roll back one clean page hydration. */
 	public function handle_rollback(): never {
-		$this->authorize();
-		$page_key = $this->posted_page_key();
+		$this->authorize_request();
+		check_admin_referer( self::NONCE_ACTION );
+
+		$page_key = $this->validated_page_key( isset( $_POST['page_key'] ) ? sanitize_key( wp_unslash( $_POST['page_key'] ) ) : '' );
 		$this->finish( $page_key, $this->hydrator->rollback( $page_key ), 'rollback' );
 	}
 
 	/** Apply safe native SEO signals. */
 	public function handle_seo(): never {
-		$this->authorize();
-		$page_key = $this->posted_page_key();
+		$this->authorize_request();
+		check_admin_referer( self::NONCE_ACTION );
+
+		$page_key = $this->validated_page_key( isset( $_POST['page_key'] ) ? sanitize_key( wp_unslash( $_POST['page_key'] ) ) : '' );
 		$this->finish( $page_key, $this->handoff->apply( $page_key ), 'seo' );
 	}
 
-	/** Render one action-only form. */
-	private function action_form( string $action, string $page_key, string $label, string $class = 'primary' ): void {
+	/**
+	 * Render one action-only form.
+	 *
+	 * @param string $action       Admin-post action.
+	 * @param string $page_key     Corporate page key.
+	 * @param string $label        Submit-button label.
+	 * @param string $button_class WordPress submit-button class.
+	 */
+	private function action_form( string $action, string $page_key, string $label, string $button_class = 'primary' ): void {
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline-block;margin-right:8px">
 			<input type="hidden" name="action" value="<?php echo esc_attr( $action ); ?>">
 			<input type="hidden" name="page_key" value="<?php echo esc_attr( $page_key ); ?>">
 			<?php wp_nonce_field( self::NONCE_ACTION ); ?>
-			<?php submit_button( $label, $class, 'submit', false ); ?>
+			<?php submit_button( $label, $button_class, 'submit', false ); ?>
 		</form>
 		<?php
 	}
 
-	/** Enforce administrator capability and nonce. */
-	private function authorize(): void {
+	/** Enforce administrator capability for a mutating request. */
+	private function authorize_request(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
 		}
-		check_admin_referer( self::NONCE_ACTION );
 	}
 
-	/** Resolve a supported page key from POST. */
-	private function posted_page_key(): string {
-		$page_key = isset( $_POST['page_key'] ) ? sanitize_key( wp_unslash( $_POST['page_key'] ) ) : '';
+	/**
+	 * Validate one supplied Corporate page key.
+	 *
+	 * @param string $page_key Candidate page key.
+	 */
+	private function validated_page_key( string $page_key ): string {
 		if ( ! in_array( $page_key, self::PAGE_KEYS, true ) ) {
 			wp_die( esc_html__( 'Unsupported Corporate page key.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 		}
@@ -253,18 +285,26 @@ final class AdminCorporatePagePipelineController {
 		return $page_key;
 	}
 
-	/** Resolve the selected page key from GET. */
+	/** Resolve the selected page key from the read-only query string. */
 	private function requested_page_key(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only administrator page selector.
 		$page_key = isset( $_GET['page_key'] ) ? sanitize_key( wp_unslash( $_GET['page_key'] ) ) : 'services';
 
 		return in_array( $page_key, self::PAGE_KEYS, true ) ? $page_key : 'services';
 	}
 
-	/** Redirect one action result or surface its error. */
+	/**
+	 * Redirect one action result or surface its error.
+	 *
+	 * @param string         $page_key Corporate page key.
+	 * @param array|WP_Error $result   Action result.
+	 * @param string         $action   Status action label.
+	 */
 	private function finish( string $page_key, array|WP_Error $result, string $action ): never {
 		if ( $result instanceof WP_Error ) {
 			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
 		}
+
 		$status = sanitize_key( $action . '-' . (string) ( $result['status'] ?? 'ok' ) );
 		$url    = add_query_arg(
 			array(
