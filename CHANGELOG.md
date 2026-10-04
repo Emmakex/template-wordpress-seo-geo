@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.53 adds **Corporate Home Content Kit + Native Hydrator v1**: typed semantic content bound to `corporate-home-v1`, explicit evidence verification groups, deterministic block-slot hydration, omission of unverified proof/case-study sections, draft-drift detection, idempotent replay and exact scaffold rollback.
+
 - Corporate Home adds **native content contract v1**: stable semantic slot IDs across EN/ES patterns and the base CTA, typed required/optional fields, explicit verification groups for proof/case-study material, and `omit-unless-verified` policy so future hydration/Manager workflows never depend on placeholder strings or legacy block positions.
 
 - Migration Bridge 0.8.52 adds **Clean Corporate Home rebuild v1**: a private, idempotent Home draft composed only from Theme-owned Corporate patterns. It uses Rescue Manifest only to bind the existing front-page identity/URL and verify source integrity; legacy layout, Divi/Elementor markup and mandatory Content Remap are excluded.
