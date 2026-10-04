@@ -17,15 +17,15 @@ use WP_Post;
  * Builds private native drafts for Corporate inner pages without reusing legacy layout.
  */
 final class CleanCorporatePageRebuilder {
-	public const SOURCE_MAP_OPTION = 'seo_geo_clean_page_source_map_v1';
-	public const PAGE_KEY_META     = '_seo_geo_clean_page_key_v1';
-	public const SOURCE_ID_META    = '_seo_geo_clean_page_source_id_v1';
-	public const SOURCE_SHA_META   = '_seo_geo_clean_page_source_sha256_v1';
-	public const SOURCE_PATH_META  = '_seo_geo_clean_page_source_path_v1';
-	public const MANIFEST_SHA_META = '_seo_geo_clean_page_manifest_sha256_v1';
-	public const PLAN_SHA_META     = '_seo_geo_clean_page_plan_sha256_v1';
-	public const PATTERNS_META     = '_seo_geo_clean_page_patterns_v1';
-	public const CREATED_AT_META   = '_seo_geo_clean_page_created_at_v1';
+	public const SOURCE_MAP_OPTION  = 'seo_geo_clean_page_source_map_v1';
+	public const PAGE_KEY_META      = '_seo_geo_clean_page_key_v1';
+	public const SOURCE_ID_META     = '_seo_geo_clean_page_source_id_v1';
+	public const SOURCE_SHA_META    = '_seo_geo_clean_page_source_sha256_v1';
+	public const SOURCE_PATH_META   = '_seo_geo_clean_page_source_path_v1';
+	public const MANIFEST_SHA_META  = '_seo_geo_clean_page_manifest_sha256_v1';
+	public const PLAN_SHA_META      = '_seo_geo_clean_page_plan_sha256_v1';
+	public const PATTERNS_META      = '_seo_geo_clean_page_patterns_v1';
+	public const CREATED_AT_META    = '_seo_geo_clean_page_created_at_v1';
 	public const CONTENT_STATE_META = '_seo_geo_clean_page_content_state_v1';
 	public const CONTENT_STATE      = 'preset-scaffold';
 
@@ -197,12 +197,12 @@ final class CleanCorporatePageRebuilder {
 			'existing_draft'  => $this->existing_draft_id( $page_key, $source_id, $plan_sha ),
 			'content_state'   => self::CONTENT_STATE,
 			'safety'          => array(
-				'legacy_layout_reused'       => false,
-				'content_remap_required'     => false,
-				'source_post_mutation'       => false,
-				'source_url_change'          => false,
-				'front_page_assignment_change' => false,
-				'draft_only'                 => true,
+				'legacy_layout_reused'          => false,
+				'content_remap_required'        => false,
+				'source_post_mutation'          => false,
+				'source_url_change'             => false,
+				'front_page_assignment_change'  => false,
+				'draft_only'                    => true,
 			),
 		);
 	}
@@ -301,8 +301,8 @@ final class CleanCorporatePageRebuilder {
 					&& hash_equals( hash( 'sha256', $source_before ), hash( 'sha256', (string) $source_after->post_content ) ),
 				'source_path_unchanged'   => $source_after instanceof WP_Post
 					&& $path_before === $this->post_path( $source_after ),
-				'front_page_id_unchanged' => $front_before === (int) get_option( 'page_on_front', 0 ),
-				'plugins_unchanged'       => $plugins_before === $this->active_plugins(),
+				'front_page_id_unchanged' => (int) get_option( 'page_on_front', 0 ) === $front_before,
+				'plugins_unchanged'       => $this->active_plugins() === $plugins_before,
 				'draft_only'              => 'draft' === get_post_status( $draft_id ),
 			),
 		);
@@ -386,7 +386,7 @@ final class CleanCorporatePageRebuilder {
 		}
 
 		foreach ( $pages as $page ) {
-			if ( is_array( $page ) && $page_key === (string) ( $page['key'] ?? '' ) ) {
+			if ( is_array( $page ) && (string) ( $page['key'] ?? '' ) === $page_key ) {
 				return $page;
 			}
 		}
@@ -403,7 +403,7 @@ final class CleanCorporatePageRebuilder {
 	 */
 	private function manifest_resource( array $manifest, int $post_id ): ?array {
 		foreach ( is_array( $manifest['resources'] ?? null ) ? $manifest['resources'] : array() as $resource ) {
-			if ( is_array( $resource ) && $post_id === (int) ( $resource['id'] ?? 0 ) ) {
+			if ( is_array( $resource ) && (int) ( $resource['id'] ?? 0 ) === $post_id ) {
 				return $resource;
 			}
 		}
