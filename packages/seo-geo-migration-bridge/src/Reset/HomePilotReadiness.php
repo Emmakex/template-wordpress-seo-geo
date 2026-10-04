@@ -80,6 +80,17 @@ final class HomePilotReadiness {
 			$blockers[] = 'seo-geo-theme-must-be-active';
 		}
 
+		$expected_plugins = is_array( $reset_report['after']['active_plugins'] ?? null )
+			? array_values( array_map( 'strval', $reset_report['after']['active_plugins'] ) )
+			: array();
+		$current_plugins  = array_values( array_map( 'strval', get_option( 'active_plugins', array() ) ) );
+		sort( $expected_plugins );
+		sort( $current_plugins );
+		$checks['plugin_set_unchanged'] = $expected_plugins === $current_plugins;
+		if ( ! $checks['plugin_set_unchanged'] ) {
+			$blockers[] = 'plugin-set-drift-since-reset';
+		}
+
 		$checks['home_plan_ready'] = true === ( $home_plan['ready'] ?? false );
 		if ( ! $checks['home_plan_ready'] ) {
 			$blockers[] = 'clean-home-plan-not-ready';
