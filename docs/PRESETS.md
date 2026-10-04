@@ -358,6 +358,22 @@ Cross-preset guarantees:
 
 Preset `baseline_locales` are the locales explicitly supported/tested by that preset; they are **not a requirement to enable every listed locale on every site**. A monolingual site may use any one supported locale without warnings. The setup validator warns only when a configured locale is outside the preset's supported baseline.
 
+## SEO/GEO-first invariant
+
+All five presets are presentation/information-architecture profiles over one shared SEO/GEO runtime. They must satisfy `docs/SEO_GEO_PRESET_CONTRACT.md` before visual acceptance.
+
+This means preset work is evaluated in this order:
+
+1. semantic/crawlable server HTML;
+2. single canonical/indexability/hreflang/Schema authority;
+3. truthful visible content and provenance;
+4. GEO discovery/privacy contracts;
+5. strict performance and Core Web Vitals;
+6. accessibility/responsive behavior;
+7. visual polish.
+
+A visually attractive preset that weakens HTML semantics, crawlability, SEO authority, Schema truthfulness, multilingual correctness or performance is **not acceptable**.
+
 ## Visual systems rollout
 
 The five preset contracts are already shipped. Their full visual systems are implemented in the same order as the preset roadmap and **must not be replaced by client-specific Theme forks**:
