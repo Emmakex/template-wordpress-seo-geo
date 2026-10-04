@@ -4,7 +4,7 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
-- Native Replatform Reviewed Apply v1 adds explicit Corporate semantic slots, candidate-only draft mutation, mandatory verification for evidence-sensitive sections, source/slot drift rejection, reversible private-draft preview rollback, selected/unmapped asset evidence and idempotent replay while preserving the public source page.
+- Native Replatform Reviewed Apply v1 adds explicit Corporate semantic slots, candidate-only draft mutation, mandatory verification for evidence-sensitive sections, source/slot drift rejection, reversible private-draft preview rollback, direct draft preview, privacy-bounded acceptance evidence, selected/unmapped asset evidence and idempotent replay while preserving the public source page.
 
 - Native Replatform Content Remap Intelligence v1 extracts provenance-bound source text/link/media assets, proposes preset semantic-slot candidates and forces evidence-sensitive mappings through manual review without generating factual copy.
 
