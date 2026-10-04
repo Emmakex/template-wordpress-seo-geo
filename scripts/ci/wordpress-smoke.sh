@@ -363,6 +363,13 @@ SEARCH_ROBOTS_LINE="$(grep -i "name='robots'" "$SEARCH_BODY" | head -n 1 | tr -d
 [[ "$SEARCH_ROBOTS_LINE" == *"noindex"* && "$SEARCH_ROBOTS_LINE" == *"follow"* && "$SEARCH_ROBOTS_LINE" != *"nofollow"* ]] \
   || fail_smoke "search-robots-policy" "Search fixture must resolve to noindex,follow" "robots contains noindex and follow without nofollow" "$SEARCH_ROBOTS_LINE" "inspect search robots policy"
 
+printf '[smoke] Restoring shared SEO fixture before legacy migration acceptance.\n'
+for native_meta in _seo_geo_title_v1 _seo_geo_description_v1 _seo_geo_canonical_v1; do
+  wp_cli post meta delete "$POST_ID" "$native_meta" >/dev/null 2>&1 || true
+done
+wp_cli post delete "$NOINDEX_ID" --force >/dev/null \
+  || fail_smoke "seo-native-fixture-cleanup" "Could not remove isolated native noindex fixture" "fixture removed" "wp post delete failed"
+
 source scripts/ci/migration-bridge-site-analyzer-acceptance.sh
 source scripts/ci/migration-bridge-baseline-acceptance.sh
 source scripts/ci/migration-bridge-incremental-baseline-acceptance.sh
