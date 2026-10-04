@@ -192,16 +192,16 @@ final class AdminRescueManifestController {
 			wp_die( esc_html__( 'Clone reset was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 		}
 
-		$keep_plugins = isset( $_POST['keep_plugins'] ) && is_array( $_POST['keep_plugins'] )
-			? array_values(
-				array_filter(
-					array_map(
-						static fn( mixed $value ): string => is_string( $value ) ? sanitize_text_field( wp_unslash( $value ) ) : '',
-						$_POST['keep_plugins']
-					)
+		$raw_keep_plugins = isset( $_POST['keep_plugins'] ) ? wp_unslash( $_POST['keep_plugins'] ) : array();
+		$raw_keep_plugins = is_array( $raw_keep_plugins ) ? $raw_keep_plugins : array();
+		$keep_plugins     = array_values(
+			array_filter(
+				array_map(
+					static fn( mixed $value ): string => is_string( $value ) ? sanitize_text_field( $value ) : '',
+					$raw_keep_plugins
 				)
 			)
-			: array();
+		);
 
 		$result = $this->reset->apply( $keep_plugins );
 		if ( $result instanceof WP_Error ) {
