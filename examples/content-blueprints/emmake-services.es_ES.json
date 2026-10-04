@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "mode": "corporate-page-content-blueprint",
+  "page_key": "services",
+  "model": "corporate-services-v1",
+  "locale": "es_ES",
+  "values": {
+    "capabilities-heading": "Soluciones digitales para entender, decidir y crecer",
+    "capabilities-intro": "EMMAKE combina marketing digital, investigación de mercado digital, análisis de datos e inteligencia de negocio para ayudar a empresas y organizaciones a afrontar retos de transformación digital con una estrategia adaptada a su contexto.",
+    "capability-1-title": "Marketing e investigación de mercado digital",
+    "capability-1-body": "Analizamos el mercado, las personas y el contexto digital antes de definir acciones de marketing para no avanzar a ciegas.",
+    "capability-1-link": {
+      "label": "Habla con EMMAKE",
+      "url": "/contacto/"
+    },
+    "capability-2-title": "Análisis de datos",
+    "capability-2-body": "Inspeccionamos, limpiamos y transformamos datos para convertirlos en información útil que ayude a mejorar, desarrollar e innovar.",
+    "capability-2-link": {
+      "label": "Cuéntanos qué necesitas analizar",
+      "url": "/contacto/"
+    },
+    "capability-3-title": "Inteligencia de negocio",
+    "capability-3-body": "Conectamos tecnología, herramientas y procesos para transformar información en conocimiento útil para la estrategia comercial.",
+    "capability-3-link": {
+      "label": "Explícanos tu reto",
+      "url": "/contacto/"
+    },
+    "process-heading": "Cómo abordamos cada servicio",
+    "process-intro": "Antes de recomendar herramientas o acciones entendemos el negocio, analizamos su situación y definimos una estrategia que pueda medirse y mejorarse.",
+    "process-1-title": "Conocer y entender",
+    "process-1-body": "Conocemos el negocio, la organización y las personas a las que sirve para definir el contexto real del trabajo.",
+    "process-2-title": "Analizar el contexto",
+    "process-2-body": "Combinamos análisis interno y benchmarking externo para identificar oportunidades, riesgos y prioridades.",
+    "process-3-title": "Definir, ejecutar y medir",
+    "process-3-body": "Convertimos el análisis en una estrategia con objetivos claros y damos visibilidad sobre su evolución mediante analítica e informes.",
+    "final-cta-heading": "Cuéntanos qué necesita mejorar tu organización",
+    "final-cta-body": "Empezaremos por entender el contexto y el objetivo antes de recomendar tecnología, acciones o herramientas.",
+    "final-cta-button": {
+      "label": "Habla con EMMAKE",
+      "url": "/contacto/"
+    }
+  },
+  "verified_groups": {
+    "proof": false
+  }
+}
