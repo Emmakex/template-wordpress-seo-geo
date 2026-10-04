@@ -1,0 +1,49 @@
+name: Native Review Evidence CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-migration-bridge/src/Replatform/NativeReviewEvidence.php'
+      - 'packages/seo-geo-migration-bridge/src/Replatform/AdminNativeReplatformController.php'
+      - 'scripts/ci/native-review-evidence-contract.php'
+      - '.github/workflows/native-review-evidence.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-migration-bridge/src/Replatform/NativeReviewEvidence.php'
+      - 'packages/seo-geo-migration-bridge/src/Replatform/AdminNativeReplatformController.php'
+      - 'scripts/ci/native-review-evidence-contract.php'
+      - '.github/workflows/native-review-evidence.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-review-evidence-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Privacy-bounded review evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Syntax
+        run: |
+          php -l packages/seo-geo-migration-bridge/src/Replatform/NativeReviewEvidence.php
+          php -l packages/seo-geo-migration-bridge/src/Replatform/AdminNativeReplatformController.php
+          php -l scripts/ci/native-review-evidence-contract.php
+
+      - name: Evidence contract
+        run: php -d zend.assertions=1 -d assert.exception=1 scripts/ci/native-review-evidence-contract.php
