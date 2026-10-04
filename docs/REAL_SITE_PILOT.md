@@ -11,7 +11,7 @@ This document fixes the first real-site acceptance target for the self-contained
 - Candidate main commit: `d3ff8353c08cfce6c796837a74e372ba7daf0073`
 - Candidate ZIP SHA-256: `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`
 - Stable decision: `no-go`
-- Pilot status: **real product-owned clone completed; 11/11 Divi resources migrated to native blocks with 0 blockers and functional Contact form delivery verified; visual/SEO-GEO/quality parity and production cutover remain pending**
+- Pilot status: **real product-owned clone completed; 11/11 Divi resources migrated to native blocks with 0 blockers and functional Contact form delivery verified; native Corporate rebuild, SEO/GEO regression acceptance and production cutover remain pending**
 - Accepted Migration Bridge version: `0.8.36`
 - Accepted Migration Bridge main commit: `b78f38016ac0848cd37b75fb608262b289d32ceb`
 - Accepted Migration Bridge ZIP SHA-256: `1da3ce1fbadf28c379c8f4cb2272b17e223c36ea348d892aa5fbb110837fc792`
@@ -51,7 +51,17 @@ The working `/nuevaweb/` clone has now completed its builder-content migration:
 
 Bounded evidence for this milestone is stored at `release/emmake-divi-migration-field-milestone-20261003.json`.
 
-This closes the **Divi dependency migration** hurdle for the sandbox. It does not claim final visual parity, SEO/GEO parity, accessibility/performance acceptance or production cutover. The next accepted operation is the visual/quality parity pass on the fully native sandbox content.
+This closes the **Divi dependency migration** hurdle for the sandbox. It does not claim final replatform acceptance, SEO/GEO regression acceptance, accessibility/performance acceptance or production cutover. The next accepted operation is to rebuild the public surfaces with the native Corporate preset, remapping preserved content into the new structure rather than reproducing the old Divi layout.
+
+## Replatforming correction — 2026-10-04
+
+The pilot is **not** a visual-parity migration. The old Emmake/Divi design is no longer the destination reference.
+
+Preserve: valuable content, URLs, SEO signals, links, media, verified facts and required business behavior.
+
+Replace: theme/builder layout, legacy composition, CSS, widgets, decorative structure and visual dependencies.
+
+The target is a fresh Corporate site built with the SEO/GEO Theme and reusable native components. Emmake is evidence that the product can modernize a real legacy WordPress site without sacrificing its search asset.
 
 ## Non-negotiable boundary
 
