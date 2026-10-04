@@ -82,8 +82,8 @@ final class PresetNavigationRuntime {
 
 		$list = '<ul class="seo-geo-preset-navigation__list">';
 		foreach ( $items as $item ) {
-			$url  = isset( $item['url'] ) && is_string( $item['url'] ) ? $item['url'] : '';
-			$text = isset( $item['label'] ) && is_string( $item['label'] ) ? $item['label'] : '';
+			$url  = $item['url'];
+			$text = $item['label'];
 			if ( '' === $url || '' === $text ) {
 				continue;
 			}
@@ -150,17 +150,13 @@ final class PresetNavigationRuntime {
 	 */
 	private function legacy_primary_menu_items(): array {
 		$menus = wp_get_nav_menus();
-		if ( ! is_array( $menus ) || array() === $menus ) {
+		if ( array() === $menus ) {
 			return array();
 		}
 
 		$candidates = array();
 
 		foreach ( $menus as $menu ) {
-			if ( ! isset( $menu->term_id, $menu->name ) ) {
-				continue;
-			}
-
 			$items = $this->menu_items_from_term_id( (int) $menu->term_id );
 			$count = count( $items );
 			if ( 3 > $count || 8 < $count ) {
@@ -191,7 +187,7 @@ final class PresetNavigationRuntime {
 			static fn( array $a, array $b ): int => (int) $b['score'] <=> (int) $a['score']
 		);
 
-		return is_array( $candidates[0]['items'] ?? null ) ? $candidates[0]['items'] : array();
+		return $candidates[0]['items'];
 	}
 
 	/**
@@ -325,7 +321,7 @@ final class PresetNavigationRuntime {
 			$page = get_page_by_path( $slug, OBJECT, 'page' );
 			if ( $page instanceof WP_Post && 'publish' === $page->post_status ) {
 				$page_url = get_permalink( $page );
-				if ( is_string( $page_url ) && '' !== $page_url ) {
+				if ( '' !== $page_url ) {
 					return array(
 						'label' => '' !== $title ? $title : get_the_title( $page ),
 						'url'   => $page_url,
@@ -357,7 +353,7 @@ final class PresetNavigationRuntime {
 				$candidate = strtolower( remove_accents( get_the_title( $page ) ) );
 				if ( str_contains( $candidate, $needle ) || str_contains( $needle, $candidate ) ) {
 					$page_url = get_permalink( $page );
-					if ( is_string( $page_url ) && '' !== $page_url ) {
+					if ( '' !== $page_url ) {
 						return array(
 							'label' => get_the_title( $page ),
 							'url'   => $page_url,
