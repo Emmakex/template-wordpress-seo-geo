@@ -43,11 +43,36 @@ CORPORATE_BODY_CLASS="$(wp_cli eval '$classes = seo_geo_theme_preset_body_class(
 [[ "$CORPORATE_BODY_CLASS" == "1" ]] \
   || fail_smoke "corporate-preset-body-class" "Corporate preset did not expose its stable frontend body class" "1" "$CORPORATE_BODY_CLASS"
 
+printf '[self-contained] Checking Corporate migration-aware navigation.\n'
+CORPORATE_LEGACY_MENU_ID="$(wp_cli menu create 'Primary Menu' --porcelain 2>/dev/null | tr -d '\r\n')"
+[[ "$CORPORATE_LEGACY_MENU_ID" =~ ^[0-9]+$ ]] \
+  || fail_smoke "corporate-nav-menu-create" "Could not create legacy primary menu fixture" "numeric menu ID" "$CORPORATE_LEGACY_MENU_ID"
+
+wp_cli menu item add-custom "$CORPORATE_LEGACY_MENU_ID" 'Company' "$BASE_URL/company/" >/dev/null \
+  || fail_smoke "corporate-nav-menu-company" "Could not add Company fixture navigation item" "menu item created" "failed"
+wp_cli menu item add-custom "$CORPORATE_LEGACY_MENU_ID" 'Insights' "$BASE_URL/insights/" >/dev/null \
+  || fail_smoke "corporate-nav-menu-insights" "Could not add Insights fixture navigation item" "menu item created" "failed"
+wp_cli menu item add-custom "$CORPORATE_LEGACY_MENU_ID" 'Contact' "$BASE_URL/contact/" >/dev/null \
+  || fail_smoke "corporate-nav-menu-contact" "Could not add Contact fixture navigation item" "menu item created" "failed"
+
+CORPORATE_NAV_HTML="$(wp_cli eval 'echo do_blocks( "<!-- wp:seo-geo/preset-navigation {\\"location\\":\\"primary\\"} /-->" );' 2>"${TMP_DIR}/corporate-preset-navigation.stderr")"
+for expected_nav_fragment in \
+  'seo-geo-preset-navigation--primary' \
+  '>Company<' \
+  '>Insights<' \
+  '>Contact<' \
+  '<details class="seo-geo-preset-navigation__mobile">'; do
+  [[ "$CORPORATE_NAV_HTML" == *"$expected_nav_fragment"* ]] \
+    || fail_smoke "corporate-nav-render" "Corporate navigation did not reuse the bounded legacy primary menu" "$expected_nav_fragment" "$CORPORATE_NAV_HTML"
+done
+[[ "$CORPORATE_NAV_HTML" != *"wp-block-page-list"* ]] \
+  || fail_smoke "corporate-nav-all-pages" "Corporate navigation fell back to an unbounded all-pages list" "no wp-block-page-list markup" "$CORPORATE_NAV_HTML"
+
 if ! CORPORATE_MANIFEST="$(wp_cli eval '$manifest = seo_geo_theme_preset_document( "corporate", "preset.json" ); if ( ! is_array( $manifest ) ) { exit( 1 ); } echo wp_json_encode( array( "id" => $manifest["id"] ?? null, "site_type" => $manifest["site_type"] ?? null, "confirmation" => $manifest["schema"]["requires_confirmation"] ?? null, "visual" => $manifest["visual"]["design_system"] ?? null ) );' 2>"${TMP_DIR}/corporate-preset-manifest.stderr" | tr -d '\r\n')"; then
   CORPORATE_MANIFEST_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-manifest.stderr" | head -c 240)"
   fail_smoke "corporate-preset-manifest-eval" "Could not resolve Corporate preset manifest through the theme registry" "manifest resolves" "${CORPORATE_MANIFEST_ERROR:-wp eval failed}" "wp eval seo_geo_theme_preset_document"
 fi
-[[ "$CORPORATE_MANIFEST" == '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1"}' ]] \
+[[ "$CORPORATE_MANIFEST" == '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1.1"}' ]] \
   || fail_smoke "corporate-preset-manifest" "Corporate preset manifest did not preserve its identity/confirmation/visual contract" '{"id":"corporate","site_type":"corporate","confirmation":true,"visual":"corporate-v1"}' "$CORPORATE_MANIFEST"
 
 if ! CORPORATE_TITLE_EN="$(wp_cli eval '$pattern = WP_Block_Patterns_Registry::get_instance()->get_registered( "seo-geo-theme/corporate-stats" ); echo is_array( $pattern ) ? (string) ( $pattern["title"] ?? "" ) : "";' 2>"${TMP_DIR}/corporate-preset-title-en.stderr" | tr -d '\r\n')"; then
