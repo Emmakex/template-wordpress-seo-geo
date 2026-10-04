@@ -143,6 +143,12 @@ test.describe('Phase 9 onboarding wizard', () => {
     await page.getByLabel('Confirmo que esta identidad describe el sitio público real.').check();
     await page.getByLabel('Entiendo que la previsualización solo valida y no guarda ajustes.').check();
 
+    await page.locator('form').evaluate((form) => {
+      const action = new URL(form.action);
+      action.searchParams.set('fixture_lang', 'es');
+      form.action = action.toString();
+    });
+
     await page.getByRole('button', { name: 'Validar configuración' }).click();
 
     const results = page.locator('#seo-geo-setup-results');
