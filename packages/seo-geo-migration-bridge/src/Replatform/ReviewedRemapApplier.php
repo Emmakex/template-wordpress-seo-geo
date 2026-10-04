@@ -46,13 +46,14 @@ final class ReviewedRemapApplier {
 			$blockers[] = 'draft-status-not-allowed';
 		}
 
-		$source_id        = (int) get_post_meta( $draft_id, NativeCompositionService::SOURCE_ID_META, true );
-		$preset           = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PRESET_META, true ) );
-		$page_key         = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PAGE_KEY_META, true ) );
-		$stored_plan_sha  = (string) get_post_meta( $draft_id, NativeCompositionService::PLAN_SHA_META, true );
-		$stored_remap_sha = (string) get_post_meta( $draft_id, NativeCompositionService::REMAP_PLAN_SHA_META, true );
+		$source_id         = (int) get_post_meta( $draft_id, NativeCompositionService::SOURCE_ID_META, true );
+		$stored_source_sha = (string) get_post_meta( $draft_id, NativeCompositionService::SOURCE_SHA_META, true );
+		$preset            = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PRESET_META, true ) );
+		$page_key          = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PAGE_KEY_META, true ) );
+		$stored_plan_sha   = (string) get_post_meta( $draft_id, NativeCompositionService::PLAN_SHA_META, true );
+		$stored_remap_sha  = (string) get_post_meta( $draft_id, NativeCompositionService::REMAP_PLAN_SHA_META, true );
 
-		if ( 0 >= $source_id || '' === $preset || '' === $page_key || '' === $stored_plan_sha || '' === $stored_remap_sha ) {
+		if ( 0 >= $source_id || '' === $stored_source_sha || '' === $preset || '' === $page_key || '' === $stored_plan_sha || '' === $stored_remap_sha ) {
 			$blockers[] = 'draft-replatform-metadata-incomplete';
 		}
 
@@ -66,6 +67,9 @@ final class ReviewedRemapApplier {
 
 		if ( (int) ( $current_source['id'] ?? 0 ) !== $source_id ) {
 			$blockers[] = 'source-identity-drift';
+		}
+		if ( '' !== $stored_source_sha && ! hash_equals( $stored_source_sha, (string) ( $current_source['content_sha256'] ?? '' ) ) ) {
+			$blockers[] = 'source-content-drift';
 		}
 		if ( '' !== $stored_plan_sha && ! hash_equals( $stored_plan_sha, (string) ( $current_plan['plan_sha256'] ?? '' ) ) ) {
 			$blockers[] = 'native-plan-drift';
