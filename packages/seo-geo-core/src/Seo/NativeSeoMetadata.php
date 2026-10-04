@@ -87,6 +87,10 @@ final class NativeSeoMetadata {
 	 * @param string $state Existing native indexability state.
 	 */
 	public function filter_indexability_state( string $state ): string {
+		if ( IndexabilityResolver::INDEXABLE !== $state ) {
+			return $state;
+		}
+
 		$post_id = $this->current_post_id();
 		if ( 0 >= $post_id ) {
 			return $state;
