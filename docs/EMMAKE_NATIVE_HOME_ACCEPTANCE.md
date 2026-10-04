@@ -64,7 +64,9 @@ The Home preview is accepted for the next page only when all of the following ar
 - selected assets appear only in their reviewed native slots;
 - evidence-sensitive material has explicit verification;
 - unmapped source assets remain visible in the ledger;
-- first pre-apply draft body is retained as rollback evidence;
+- the current pre-apply draft body is retained privately as rollback evidence for the active review cycle;
+- the operator can preview the private native draft without publishing it;
+- the operator can download a bounded review-evidence JSON containing hashes, selected asset IDs, counts, verification decisions and drift state, but no post body or backup body;
 - replaying the same reviewed selection is idempotent;
 - no legacy Divi visual-layout dependency is reintroduced;
 - no canonical, robots, hreflang or Schema authority is changed by draft creation;
@@ -86,4 +88,4 @@ Passing this Home gate does **not** authorize production cutover. It authorizes 
 
 ## Evidence boundary
 
-Do not commit post bodies, credentials, customer information, database dumps, backups or private uploads to the repository. Repository evidence must stay bounded to identities, hashes, counts, decisions, gate results and non-sensitive observations.
+Do not commit post bodies, credentials, customer information, database dumps, backups or private uploads to the repository. Repository evidence must stay bounded to identities, hashes, counts, decisions, gate results and non-sensitive observations. The downloadable Reviewed Remap evidence is intentionally safe for that role: it records no post body, backup body, credentials or arbitrary option values.
