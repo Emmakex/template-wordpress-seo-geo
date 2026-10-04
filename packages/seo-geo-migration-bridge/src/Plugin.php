@@ -105,6 +105,8 @@ use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Parity\SeoParityEngine;
 use SeoGeo\MigrationBridge\Report\MigrationReportEngine;
 use SeoGeo\MigrationBridge\Report\MigrationReportStore;
+use SeoGeo\MigrationBridge\Replatform\AdminNativeReplatformController;
+use SeoGeo\MigrationBridge\Replatform\NativeCompositionService;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
@@ -161,6 +163,20 @@ final class Plugin {
 	 * @var AdminMigrationController|null
 	 */
 	private static ?AdminMigrationController $migration_controller = null;
+
+	/**
+	 * Native replatform draft composer singleton.
+	 *
+	 * @var NativeCompositionService|null
+	 */
+	private static ?NativeCompositionService $native_replatform_composer = null;
+
+	/**
+	 * Native replatform administrator controller singleton.
+	 *
+	 * @var AdminNativeReplatformController|null
+	 */
+	private static ?AdminNativeReplatformController $native_replatform_controller = null;
 
 	/**
 	 * Read-only SEO/GEO parity engine singleton.
@@ -837,6 +853,8 @@ final class Plugin {
 		self::$sandbox_lab            ??= new SandboxMigrationLab();
 		self::$migration_engine       ??= new MigrationEngine();
 		self::$migration_controller   ??= new AdminMigrationController( self::$migration_engine );
+		self::$native_replatform_composer    ??= new NativeCompositionService();
+		self::$native_replatform_controller  ??= new AdminNativeReplatformController( self::$native_replatform_composer );
 		self::$parity_engine          ??= new SeoParityEngine();
 		self::$cutover_engine         ??= new CutoverEngine();
 		self::$cutover_controller     ??= new AdminCutoverController( self::$cutover_engine );
@@ -1076,6 +1094,7 @@ final class Plugin {
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
+		self::$native_replatform_controller->boot();
 		self::$cutover_controller->boot();
 		self::$baseline_capture_controller->boot();
 		self::$sandbox_handoff_controller->boot();
@@ -1151,6 +1170,13 @@ final class Plugin {
 	 */
 	public static function migration_engine(): ?MigrationEngine {
 		return self::$migration_engine;
+	}
+
+	/**
+	 * Return the non-destructive Native Replatform composer.
+	 */
+	public static function native_replatform_composer(): ?NativeCompositionService {
+		return self::$native_replatform_composer;
 	}
 
 	/**
