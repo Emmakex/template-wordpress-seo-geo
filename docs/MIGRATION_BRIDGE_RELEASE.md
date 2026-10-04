@@ -55,7 +55,7 @@ This artifact is an installation candidate for controlled client analysis. It is
 
 0.8.51 completes the reset-first handoff from Migration Bridge into the Theme configuration authority.
 
-After Clone Reset v1:
+After Clone Reset v1 (which now refuses to remove the standalone Core unless the installed SEO/GEO Theme contains its embedded Core runtime):
 
 1. the Theme recognizes the completed reset report as a clean `reset-rebuild-handoff-v1`;
 2. the old migration-report option may remain as historical evidence but no longer overrides the newer reset state;
