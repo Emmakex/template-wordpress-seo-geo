@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.55`;
+- current plugin version: `0.8.56`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -50,6 +50,25 @@ The workflow additionally runs PHP syntax validation for every plugin PHP file.
 - `seo-geo-migration-bridge.zip.sha256`.
 
 This artifact is an installation candidate for controlled client analysis. It is not a declaration that a real client migration is accepted.
+
+## Version 0.8.56 — Home Field Pilot Readiness
+
+0.8.56 adds the final machine preflight before a rebuilt Home enters browser QA.
+
+1. readiness is read-only and sandbox-bound;
+2. Clone Reset must be completed with rescued manifest/content unchanged;
+3. SEO/GEO Theme must be active;
+4. the clean Home must remain a hydrated draft without hydration drift;
+5. the rescued source Home must still match its manifest fingerprint;
+6. the current front-page assignment must still point to the rescued source;
+7. native SEO handoff must be applied and SEO review must be clear;
+8. common legacy builder markers are forbidden in the clean Home;
+9. known preset placeholder copy is forbidden;
+10. the report explicitly lists the browser-only checks that remain before cutover.
+
+The runtime smoke injects a temporary Elementor marker, proves readiness becomes blocked, restores the draft exactly and proves readiness returns to green.
+
+The next field action is the real `emmake.com/nuevaweb/` pilot using the accepted Emmake blueprint, Step 6 SEO handoff and Step 7 readiness report.
 
 ## Version 0.8.55 — Native Home SEO/GEO handoff
 
