@@ -297,6 +297,29 @@ $required_native_home_patterns = array(
 	'seo-geo-theme/cta',
 );
 
+$required_native_home_remap_slots = array(
+	array(
+		'section'       => 'value-proposition',
+		'after_pattern' => 'seo-geo-theme/corporate-native-hero',
+	),
+	array(
+		'section'       => 'service-overview',
+		'after_pattern' => 'seo-geo-theme/corporate-native-capabilities',
+	),
+	array(
+		'section'       => 'organization-context',
+		'after_pattern' => 'seo-geo-theme/corporate-case-study',
+	),
+	array(
+		'section'       => 'verified-proof',
+		'after_pattern' => 'seo-geo-theme/corporate-native-proof',
+	),
+	array(
+		'section'       => 'primary-cta',
+		'after_pattern' => 'seo-geo-theme/cta',
+	),
+);
+
 $page_keys_by_locale = array();
 $allowed_patterns = array_fill_keys( array_merge( array_keys( $base_slugs ), $expected_preset_slugs ), true );
 foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
@@ -344,6 +367,19 @@ foreach ( array( 'en_US', 'es_ES' ) as $locale ) {
 				CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.home.patterns',
 				json_encode( $required_native_home_patterns ),
 				$page['patterns'] ?? null
+			);
+		}
+
+		if (
+			'home' === $page['key']
+			&& array_values( is_array( $content_contract['remap_slots'] ?? null ) ? $content_contract['remap_slots'] : array() ) !== $required_native_home_remap_slots
+		) {
+			fail_corporate_preset(
+				'native-home-remap-slots',
+				'Corporate Home reviewed remap slots must remain explicit, semantic and bound to the canonical native composition.',
+				CORPORATE_PRESET_DIR . '/content-map.json#' . $locale . '.home.content_contract.remap_slots',
+				json_encode( $required_native_home_remap_slots ),
+				$content_contract['remap_slots'] ?? null
 			);
 		}
 
