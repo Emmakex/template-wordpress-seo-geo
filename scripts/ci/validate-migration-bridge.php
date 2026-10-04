@@ -100,6 +100,7 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
 	'examples/content-blueprints/emmake-home.es_ES.json',
 	'scripts/ci/migration-bridge-home-content-blueprint-acceptance.sh',
+	'scripts/ci/migration-bridge-home-seo-handoff-acceptance.sh',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneInventoryStore.php',
