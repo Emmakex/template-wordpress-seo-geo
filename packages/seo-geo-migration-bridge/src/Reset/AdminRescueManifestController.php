@@ -35,6 +35,8 @@ final class AdminRescueManifestController {
 	public const ROLLBACK_NONCE_ACTION    = 'seo_geo_reset_rollback_home_hydration';
 	public const SEO_HANDOFF_ACTION       = 'seo_geo_reset_apply_home_seo_handoff';
 	public const SEO_HANDOFF_NONCE_ACTION = 'seo_geo_reset_apply_home_seo_handoff';
+	public const CLEAN_SERVICES_ACTION    = 'seo_geo_reset_create_clean_services';
+	public const CLEAN_SERVICES_NONCE     = 'seo_geo_reset_create_clean_services';
 
 	/**
 	 * Construct the reset-first administrator controller.
@@ -42,8 +44,9 @@ final class AdminRescueManifestController {
 	 * @param RescueManifest          $manifest    Rescue manifest service.
 	 * @param CloneResetEngine        $reset       Clone reset service.
 	 * @param CorporateThemeBootstrap $bootstrap   Corporate Theme bootstrap service.
-	 * @param CleanHomeRebuilder      $clean_home  Clean Corporate Home draft builder.
-	 * @param CorporateHomeContentKit $content_kit Structured Home content service.
+	 * @param CleanHomeRebuilder          $clean_home  Clean Corporate Home draft builder.
+	 * @param CleanCorporatePageRebuilder $clean_pages Clean Corporate inner-page builder.
+	 * @param CorporateHomeContentKit     $content_kit Structured Home content service.
 	 * @param NativeHomeHydrator      $hydrator    Native Home hydrator.
 	 * @param HomeSeoHandoff          $seo_handoff Native SEO handoff service.
 	 * @param HomePilotReadiness      $readiness   Field-pilot readiness gate.
@@ -53,6 +56,7 @@ final class AdminRescueManifestController {
 		private CloneResetEngine $reset,
 		private CorporateThemeBootstrap $bootstrap,
 		private CleanHomeRebuilder $clean_home,
+		private CleanCorporatePageRebuilder $clean_pages,
 		private CorporateHomeContentKit $content_kit,
 		private NativeHomeHydrator $hydrator,
 		private HomeSeoHandoff $seo_handoff,
@@ -74,6 +78,7 @@ final class AdminRescueManifestController {
 		add_action( 'admin_post_' . self::HYDRATE_ACTION, array( $this, 'handle_hydrate_home' ) );
 		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'handle_rollback_home' ) );
 		add_action( 'admin_post_' . self::SEO_HANDOFF_ACTION, array( $this, 'handle_home_seo_handoff' ) );
+		add_action( 'admin_post_' . self::CLEAN_SERVICES_ACTION, array( $this, 'handle_clean_services' ) );
 	}
 
 	/**
@@ -109,6 +114,8 @@ final class AdminRescueManifestController {
 		$seo_handoff_plan   = $this->seo_handoff->plan();
 		$seo_handoff_report = $this->seo_handoff->report( (int) ( $clean_home_plan['existing_draft'] ?? 0 ) );
 		$readiness_report   = $this->readiness->report();
+		$services_plan      = $this->clean_pages->plan( 'services' );
+		$services_sources   = $this->clean_pages->source_candidates();
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'SEO/GEO Reset & Rebuild', 'seo-geo-migration-bridge' ); ?></h1>
@@ -280,6 +287,7 @@ final class AdminRescueManifestController {
 			<?php $this->render_content_kit_step( $clean_home_plan, $content_model, $content_kit, $hydration_plan ); ?>
 			<?php $this->render_home_seo_handoff_step( $seo_handoff_plan, $seo_handoff_report ); ?>
 			<?php $this->render_home_pilot_readiness_step( $readiness_report ); ?>
+			<?php $this->render_services_rebuild_step( $services_plan, $services_sources ); ?>
 		</div>
 		<?php
 	}
@@ -539,6 +547,64 @@ final class AdminRescueManifestController {
 	}
 
 	/**
+	 * Render Step 8 — clean Services scaffold.
+	 *
+	 * @param array<string,mixed> $plan       Current Services plan.
+	 * @param array               $candidates Rescued published page candidates.
+	 * @phpstan-param list<array{id:int,title:string,slug:string,path:string}> $candidates
+	 */
+	private function render_services_rebuild_step( array $plan, array $candidates ): void {
+		$existing_draft = (int) ( $plan['existing_draft'] ?? 0 );
+		$bound_source   = (int) ( $plan['source']['id'] ?? 0 );
+		?>
+		<h2><?php echo esc_html__( 'Step 8 — Start Services rebuild', 'seo-geo-migration-bridge' ); ?></h2>
+		<p><?php echo esc_html__( 'Map the Corporate Services page to one rescued published page explicitly. The source URL/content stays untouched; the new page is a private native-block draft with no legacy layout input.', 'seo-geo-migration-bridge' ); ?></p>
+
+		<?php if ( 0 < $bound_source ) : ?>
+			<div class="notice <?php echo true === ( $plan['ready'] ?? false ) ? 'notice-success' : 'notice-warning'; ?> inline">
+				<p>
+					<strong><?php echo esc_html__( 'Bound source:', 'seo-geo-migration-bridge' ); ?></strong>
+					<code><?php echo esc_html( (string) ( $plan['source']['path'] ?? '' ) ); ?></code>
+					—
+					<?php echo esc_html( (string) ( $plan['source']['title'] ?? '' ) ); ?>
+				</p>
+				<?php if ( 0 < $existing_draft ) : ?>
+					<p><strong><?php echo esc_html__( 'Clean Services draft:', 'seo-geo-migration-bridge' ); ?></strong> <code>#<?php echo esc_html( (string) $existing_draft ); ?></code></p>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( true !== ( $plan['ready'] ?? false ) && array() !== ( $plan['blockers'] ?? array() ) ) : ?>
+			<p><strong><?php echo esc_html__( 'Current plan:', 'seo-geo-migration-bridge' ); ?></strong> <code><?php echo esc_html( implode( ', ', is_array( $plan['blockers'] ?? null ) ? $plan['blockers'] : array() ) ); ?></code></p>
+		<?php endif; ?>
+
+		<?php if ( array() === $candidates ) : ?>
+			<div class="notice notice-warning inline">
+				<p><?php echo esc_html__( 'No rescued published inner pages are available for explicit Services mapping.', 'seo-geo-migration-bridge' ); ?></p>
+			</div>
+			<?php return; ?>
+		<?php endif; ?>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="<?php echo esc_attr( self::CLEAN_SERVICES_ACTION ); ?>">
+			<input type="hidden" name="confirm" value="create-clean-services">
+			<?php wp_nonce_field( self::CLEAN_SERVICES_NONCE ); ?>
+			<label for="seo-geo-services-source"><strong><?php echo esc_html__( 'Rescued Services source', 'seo-geo-migration-bridge' ); ?></strong></label>
+			<select id="seo-geo-services-source" name="source_id" required>
+				<option value=""><?php echo esc_html__( 'Select the existing page whose URL must be preserved', 'seo-geo-migration-bridge' ); ?></option>
+				<?php foreach ( $candidates as $candidate ) : ?>
+					<option value="<?php echo esc_attr( (string) $candidate['id'] ); ?>" <?php selected( $bound_source, $candidate['id'] ); ?>>
+						<?php echo esc_html( $candidate['title'] . ' — ' . $candidate['path'] ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+			<p class="description"><?php echo esc_html__( 'Selection is explicit: preset slugs never overwrite or guess the client URL.', 'seo-geo-migration-bridge' ); ?></p>
+			<?php submit_button( 0 < $existing_draft ? __( 'Reuse clean Services draft', 'seo-geo-migration-bridge' ) : __( 'Create clean Services draft', 'seo-geo-migration-bridge' ), 'primary', 'submit', false ); ?>
+		</form>
+		<?php
+	}
+
+	/**
 	 * Capture/refresh the manifest after explicit administrator confirmation.
 	 */
 	public function handle_capture(): never {
@@ -591,6 +657,34 @@ final class AdminRescueManifestController {
 		$this->redirect( 'clone-reset-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
 	}
 
+
+	/**
+	 * Create/reuse the clean Corporate Services draft from an explicit rescued source.
+	 */
+	public function handle_clean_services(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::CLEAN_SERVICES_NONCE );
+
+		$confirm = isset( $_POST['confirm'] ) ? sanitize_key( wp_unslash( $_POST['confirm'] ) ) : '';
+		if ( 'create-clean-services' !== $confirm ) {
+			wp_die( esc_html__( 'Clean Services rebuild was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$source_id = isset( $_POST['source_id'] ) ? absint( wp_unslash( $_POST['source_id'] ) ) : 0;
+		if ( 0 >= $source_id ) {
+			wp_die( esc_html__( 'A rescued Services source page must be selected.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$result = $this->clean_pages->create_draft( 'services', $source_id );
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect( 'clean-services-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
+	}
 
 	/**
 	 * Apply the Corporate Theme bootstrap through Theme-owned setup.
