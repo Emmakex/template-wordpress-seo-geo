@@ -2721,7 +2721,7 @@ Next only after acceptance:
 
 ### 10E.4D — Clean page rebuild
 
-Status: **active — Home scaffold accepted; Corporate Home Content Contract v1 is the current gate**
+Status: **active — Home scaffold + semantic contract accepted; Content Kit + Native Hydrator v1 is the current gate**
 
 Home scaffold milestone:
 
@@ -2733,7 +2733,7 @@ Home scaffold milestone:
 
 #### 10E.4D.1 — Corporate Home Content Contract v1
 
-Status: **active — current execution pointer**
+Status: **accepted — PR #222 / 10 of 10 CI gates green / merge `9f11b6ef26e029c15b96f14be820fb699ace06bf`**
 
 Goal:
 
@@ -2751,9 +2751,35 @@ Candidate contract:
 - fabricated evidence forbidden;
 - Foundation CI validates slot identity, uniqueness and EN/ES parity.
 
+Accepted contract:
+
+- machine-readable `corporate-home-v1` model;
+- stable semantic content slots shared by EN/ES patterns and the base CTA;
+- evidence-sensitive fields grouped explicitly;
+- proof/case-study sections remain omit-unless-verified;
+- Foundation, Pattern Contract, PHP Quality, multilingual, self-contained Theme, WordPress Smoke, accessibility and performance gates all passed.
+
+#### 10E.4D.2 — Content Kit + Native Hydrator v1
+
+Status: **active — Migration Bridge 0.8.53 candidate; current execution pointer**
+
+Candidate behavior:
+
+- persist a reviewed `corporate-home-v1` Content Kit bound to the clean Home draft and plan SHA-256;
+- validate required text/link/list fields before save;
+- require complete group content before `hero-proof`, `proof` or `case-study` can be marked verified;
+- hydrate native blocks by semantic slot class rather than placeholder text or block position;
+- omit the hero proof column, proof band and case-study section when unverified;
+- remove the optional secondary hero CTA when no reviewed value exists;
+- keep the rescued source page, front-page assignment and plugin set unchanged;
+- store the original preset scaffold before first hydration;
+- block automatic overwrite after manual hydrated-draft drift;
+- make identical replay idempotent;
+- provide exact rollback to the preset scaffold.
+
 Next only after acceptance:
 
-- **10E.4D.2 — Content Kit + native hydrator**: persist reviewed structured Home content and hydrate the clean draft without legacy layout/remap dependencies.
+- populate the Content Kit with **real Emmake content**, review the private Home preview and run Home-specific SEO/GEO/accessibility/performance QA before any replacement of the current front page.
 
 Rebuild in this order:
 

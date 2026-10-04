@@ -94,6 +94,8 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CloneResetEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateThemeBootstrap.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/CleanHomeRebuilder.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php',
+	MIGRATION_BRIDGE_DIR . '/src/Reset/NativeHomeHydrator.php',
 	MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneJobStore.php',
 	MIGRATION_BRIDGE_DIR . '/src/Clone/CloneManifest.php',
@@ -3248,6 +3250,57 @@ foreach (
 	}
 }
 
+$home_content_kit = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php' );
+foreach (
+	array(
+		"public const OPTION = 'seo_geo_corporate_home_content_kit_v1';",
+		"public const MODEL  = 'corporate-home-v1';",
+		"'mode'            => 'corporate-home-content-kit'",
+		"'verified_groups'",
+		"'kit_sha256'",
+		"'seo_geo_home_content_incomplete'",
+		"'hero-proof'",
+		"'case-study'",
+	) as $home_content_guard
+) {
+	if ( ! str_contains( $home_content_kit, $home_content_guard ) ) {
+		fail_migration_bridge(
+			'home-content-kit-contract',
+			'Corporate Home Content Kit must remain typed, plan-bound, evidence-aware and fingerprinted.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/CorporateHomeContentKit.php',
+			$home_content_guard,
+			'missing'
+		);
+	}
+}
+
+$home_hydrator = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/NativeHomeHydrator.php' );
+foreach (
+	array(
+		"'corporate-home-native-hydration-plan'",
+		"'hydrated-draft-drift'",
+		"public const BACKUP_META",
+		"public const CONTENT_STATE",
+		'parse_blocks( $content )',
+		'serialize_blocks( $output )',
+		"'seo-geo-corporate-native-hero__proof'",
+		"'seo-geo-corporate-native-proof'",
+		"'seo-geo-corporate-case-study'",
+		"public function rollback()",
+		"'rollback_available'",
+	) as $home_hydrator_guard
+) {
+	if ( ! str_contains( $home_hydrator, $home_hydrator_guard ) ) {
+		fail_migration_bridge(
+			'home-native-hydrator-contract',
+			'Native Home hydration must remain semantic-slot based, evidence-gated, drift-protected, draft-only and reversible.',
+			MIGRATION_BRIDGE_DIR . '/src/Reset/NativeHomeHydrator.php',
+			$home_hydrator_guard,
+			'missing'
+		);
+	}
+}
+
 $rescue_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Reset/AdminRescueManifestController.php' );
 foreach (
 	array(
@@ -3265,6 +3318,15 @@ foreach (
 		"'seo_geo_reset_create_clean_home'",
 		"check_admin_referer( self::CLEAN_HOME_NONCE_ACTION )",
 		"'create-clean-home'",
+		"'seo_geo_reset_save_home_content_kit'",
+		"check_admin_referer( self::CONTENT_KIT_NONCE_ACTION )",
+		"'save-home-content-kit'",
+		"'seo_geo_reset_hydrate_home'",
+		"check_admin_referer( self::HYDRATE_NONCE_ACTION )",
+		"'hydrate-clean-home'",
+		"'seo_geo_reset_rollback_home_hydration'",
+		"check_admin_referer( self::ROLLBACK_NONCE_ACTION )",
+		"'rollback-home-hydration'",
 	) as $rescue_controller_guard
 ) {
 	if ( ! str_contains( $rescue_controller, $rescue_controller_guard ) ) {
@@ -3285,7 +3347,11 @@ foreach (
 		'CloneResetEngine',
 		'CorporateThemeBootstrap',
 		'CleanHomeRebuilder',
+		'CorporateHomeContentKit',
+		'NativeHomeHydrator',
 		'public static function clean_home_rebuilder()',
+		'public static function corporate_home_content_kit()',
+		'public static function native_home_hydrator()',
 		'public static function corporate_theme_bootstrap()',
 		'public static function clone_reset_engine()',
 		'self::$rescue_manifest_controller->boot()',
