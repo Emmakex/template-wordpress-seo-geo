@@ -463,6 +463,141 @@ final class ReviewedRemapApplier {
 	}
 
 	/**
+	 * Build bounded, read-only evidence for the current reviewed draft state.
+	 *
+	 * No post body, backup body, credentials or arbitrary option values are
+	 * included. The evidence is suitable for real-site acceptance records.
+	 *
+	 * @param int $draft_id Native draft ID.
+	 * @return array<string,mixed>
+	 */
+	public function evidence( int $draft_id ): array {
+		$draft             = get_post( $draft_id );
+		$source_id         = (int) get_post_meta( $draft_id, NativeCompositionService::SOURCE_ID_META, true );
+		$stored_source_sha = (string) get_post_meta( $draft_id, NativeCompositionService::SOURCE_SHA_META, true );
+		$source_path       = (string) get_post_meta( $draft_id, NativeCompositionService::SOURCE_PATH_META, true );
+		$preset            = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PRESET_META, true ) );
+		$page_key          = sanitize_key( (string) get_post_meta( $draft_id, NativeCompositionService::PAGE_KEY_META, true ) );
+		$native_plan_sha   = (string) get_post_meta( $draft_id, NativeCompositionService::PLAN_SHA_META, true );
+		$remap_plan_sha    = (string) get_post_meta( $draft_id, NativeCompositionService::REMAP_PLAN_SHA_META, true );
+		$ledger            = get_post_meta( $draft_id, self::LEDGER_META, true );
+		$rollback          = get_post_meta( $draft_id, self::ROLLBACK_META, true );
+
+		$draft_sha = $draft instanceof WP_Post ? hash( 'sha256', (string) $draft->post_content ) : '';
+		$source_sha = 0 < $source_id
+			? hash( 'sha256', (string) get_post_field( 'post_content', $source_id ) )
+			: '';
+		$source_unchanged = '' !== $stored_source_sha
+			&& '' !== $source_sha
+			&& hash_equals( $stored_source_sha, $source_sha );
+		$ledger_active = is_array( $ledger );
+		$ledger_after  = $ledger_active ? (string) ( $ledger['after_sha256'] ?? '' ) : '';
+		$draft_matches = $ledger_active
+			&& '' !== $ledger_after
+			&& '' !== $draft_sha
+			&& hash_equals( $ledger_after, $draft_sha );
+
+		$status = 'review-not-applied';
+		if ( ! $draft instanceof WP_Post || 'page' !== $draft->post_type || 'draft' !== $draft->post_status ) {
+			$status = 'invalid-draft';
+		} elseif ( $ledger_active && ! $draft_matches ) {
+			$status = 'draft-drift';
+		} elseif ( ! $source_unchanged ) {
+			$status = 'source-drift';
+		} elseif ( $ledger_active ) {
+			$status = 'reviewable';
+		}
+
+		$selected_counts = array(
+			'units' => 0,
+			'links' => 0,
+			'media' => 0,
+		);
+		$unmapped_counts = $selected_counts;
+		$selected_assets = array(
+			'units' => array(),
+			'links' => array(),
+			'media' => array(),
+		);
+		if ( $ledger_active ) {
+			foreach ( array_keys( $selected_counts ) as $type ) {
+				$selected = is_array( $ledger['selected_assets'][ $type ] ?? null )
+					? array_values( array_map( 'strval', $ledger['selected_assets'][ $type ] ) )
+					: array();
+				$unmapped = is_array( $ledger['unmapped_assets'][ $type ] ?? null )
+					? array_values( array_map( 'strval', $ledger['unmapped_assets'][ $type ] ) )
+					: array();
+				sort( $selected );
+				$selected_assets[ $type ] = $selected;
+				$selected_counts[ $type ] = count( $selected );
+				$unmapped_counts[ $type ] = count( $unmapped );
+			}
+		}
+
+		$review = null;
+		if ( $ledger_active ) {
+			$review = array(
+				'applied_at'          => (string) ( $ledger['applied_at'] ?? '' ),
+				'selection_sha256'    => (string) ( $ledger['selection_sha256'] ?? '' ),
+				'before_sha256'       => (string) ( $ledger['before_sha256'] ?? '' ),
+				'after_sha256'        => $ledger_after,
+				'draft_matches_ledger' => $draft_matches,
+				'verified_sections'   => is_array( $ledger['verified_sections'] ?? null )
+					? array_values( array_map( 'strval', $ledger['verified_sections'] ) )
+					: array(),
+				'selected_assets'     => $selected_assets,
+				'selected_counts'     => $selected_counts,
+				'unmapped_counts'     => $unmapped_counts,
+			);
+		}
+
+		$last_rollback = null;
+		if ( is_array( $rollback ) ) {
+			$last_rollback = array(
+				'rolled_back_at'   => (string) ( $rollback['rolled_back_at'] ?? '' ),
+				'selection_sha256' => (string) ( $rollback['selection_sha256'] ?? '' ),
+				'from_sha256'      => (string) ( $rollback['from_sha256'] ?? '' ),
+				'to_sha256'        => (string) ( $rollback['to_sha256'] ?? '' ),
+			);
+		}
+
+		return array(
+			'schema_version' => 1,
+			'mode'           => 'reviewed-remap-evidence',
+			'generated_at'   => gmdate( DATE_ATOM ),
+			'status'         => $status,
+			'draft'          => array(
+				'id'      => $draft_id,
+				'status'  => $draft instanceof WP_Post ? (string) $draft->post_status : '',
+				'sha256'  => $draft_sha,
+			),
+			'source'         => array(
+				'id'             => $source_id,
+				'path'           => $source_path,
+				'stored_sha256'  => $stored_source_sha,
+				'current_sha256' => $source_sha,
+				'unchanged'      => $source_unchanged,
+			),
+			'identity'       => array(
+				'preset'            => $preset,
+				'page_key'          => $page_key,
+				'native_plan_sha'   => $native_plan_sha,
+				'content_remap_sha' => $remap_plan_sha,
+			),
+			'review'         => $review,
+			'last_rollback'  => $last_rollback,
+			'safety'         => array(
+				'read_only'               => true,
+				'post_body_exported'      => false,
+				'backup_body_exported'    => false,
+				'credentials_exported'    => false,
+				'option_values_exported'  => false,
+				'public_source_mutation'  => false,
+			),
+		);
+	}
+
+	/**
 	 * Normalize selections into a stable section/type/ID structure.
 	 *
 	 * @param array<string,mixed> $selections Raw selections.
