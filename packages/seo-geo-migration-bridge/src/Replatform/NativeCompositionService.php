@@ -355,9 +355,9 @@ final class NativeCompositionService {
 	/**
 	 * Validate remap slots against the page semantic contract and composition.
 	 *
-	 * @param array<string,mixed>                         $page     Preset page definition.
-	 * @param list<mixed>                                 $patterns Ordered pattern slugs.
-	 * @param list<array{section:string,after_pattern:string}> $slots    Normalized remap slots.
+	 * @param array<string,mixed>              $page     Preset page definition.
+	 * @param array<int,mixed>                  $patterns Ordered pattern slugs.
+	 * @param array<int,array<string,string>>   $slots    Normalized remap slots.
 	 * @return list<string>
 	 */
 	private function validate_remap_slots( array $page, array $patterns, array $slots ): array {
@@ -390,9 +390,9 @@ final class NativeCompositionService {
 	/**
 	 * Compose registered patterns with inert reviewed-remap markers.
 	 *
-	 * @param list<mixed>                                 $patterns         Ordered pattern slugs.
-	 * @param array<string,string>                        $pattern_contents Registered pattern content.
-	 * @param list<array{section:string,after_pattern:string}> $slots            Reviewed remap slots.
+	 * @param array<int,mixed>                $patterns         Ordered pattern slugs.
+	 * @param array<string,string>             $pattern_contents Registered pattern content.
+	 * @param array<int,array<string,string>>  $slots            Reviewed remap slots.
 	 */
 	private function compose_with_slots( array $patterns, array $pattern_contents, array $slots ): string {
 		$slots_by_pattern = array();
