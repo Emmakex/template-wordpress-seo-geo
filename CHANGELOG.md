@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.56 adds **Home Field Pilot Readiness v1**: a read-only sandbox preflight that requires reset/content/source/front-page/SEO integrity, rejects legacy builder debris and preset placeholders, and distinguishes machine readiness from the remaining browser QA before cutover.
+
 - Migration Bridge 0.8.55 adds **Native Home SEO/GEO handoff v1** and Core per-resource SEO metadata: safe rescued Yoast/Rank Math title/description/indexability carryover, native self-canonical preservation, explicit custom-canonical/template review findings, idempotent handoff reporting, and permanent provider-neutral SEO ownership after Bridge removal.
 
 - Migration Bridge 0.8.54 adds **Portable Home Content Blueprint v1**: portable locale/model-bound semantic content without runtime IDs or plan hashes, strict unknown-slot/group rejection, deterministic blueprint fingerprinting, import through the existing Content Kit validation, and the first real Emmake `es_ES` Home blueprint with all unverified evidence groups disabled.
