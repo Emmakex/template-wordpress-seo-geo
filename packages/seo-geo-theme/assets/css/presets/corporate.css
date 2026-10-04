@@ -342,6 +342,10 @@ body.seo-geo-preset-corporate :where(a, button, input, textarea, select, summary
 }
 
 /* Capability cards. */
+.seo-geo-preset-corporate .seo-geo-corporate-native-capabilities {
+	container-type: inline-size;
+}
+
 .seo-geo-preset-corporate .seo-geo-corporate-card-grid {
 	gap: 1rem;
 	align-items: stretch !important;
