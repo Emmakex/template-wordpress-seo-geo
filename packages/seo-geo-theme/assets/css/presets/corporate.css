@@ -1,148 +1,174 @@
 /**
- * Corporate preset visual system.
+ * Corporate Native v1.
  *
+ * Fresh presentation for replatformed company / consultancy / B2B sites.
  * Loaded only when seo_geo_active_preset=corporate.
- * The neutral Theme remains visually unopinionated for the other four presets
- * until their own visual systems are implemented and accepted.
+ *
+ * Contract:
+ * - semantic server HTML first;
+ * - zero project JavaScript by default;
+ * - no legacy-builder visual parity;
+ * - content / SEO / links survive, presentation is rebuilt.
  */
 
 body.seo-geo-preset-corporate {
-	--seo-geo-shell: min(1180px, calc(100vw - 2rem));
-	--seo-geo-reading: min(760px, calc(100vw - 2rem));
-	--seo-geo-shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
-	--seo-geo-shadow-md: 0 18px 45px rgb(15 23 42 / 10%);
-	--seo-geo-brand-ink: #253542;
-	--seo-geo-brand-accent: #0f766e;
-	--seo-geo-brand-accent-strong: #115e59;
-	--seo-geo-focus: #2563eb;
+	--corp-shell: min(1180px, calc(100vw - 2rem));
+	--corp-reading: min(760px, calc(100vw - 2rem));
+	--corp-ink: #13262f;
+	--corp-ink-soft: #415761;
+	--corp-bg: #f6f8f7;
+	--corp-surface: #ffffff;
+	--corp-surface-strong: #eaf2ef;
+	--corp-line: #d7e1de;
+	--corp-accent: #087f70;
+	--corp-accent-strong: #075f56;
+	--corp-warm: #d99a63;
+	--corp-focus: #1d4ed8;
+	--corp-radius-sm: 0.65rem;
+	--corp-radius-md: 1rem;
+	--corp-radius-lg: 1.6rem;
+	--corp-shadow-sm: 0 1px 2px rgb(19 38 47 / 7%);
+	--corp-shadow-md: 0 20px 48px rgb(19 38 47 / 10%);
+	margin: 0;
+	background: var(--corp-bg);
+	color: var(--corp-ink);
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
 }
 
 html {
 	scroll-behavior: smooth;
 }
 
-body {
-	margin: 0;
-	background: var(--wp--preset--color--base);
-	color: var(--seo-geo-brand-ink);
-	text-rendering: optimizeLegibility;
-	-webkit-font-smoothing: antialiased;
-}
-
-a {
+body.seo-geo-preset-corporate a {
 	text-underline-offset: 0.16em;
 	text-decoration-thickness: 0.08em;
 }
 
-a:hover {
-	text-decoration-thickness: 0.13em;
+body.seo-geo-preset-corporate a:hover {
+	text-decoration-thickness: 0.12em;
 }
 
-:where(a, button, input, textarea, select, summary):focus-visible {
-	outline: 3px solid var(--seo-geo-focus);
+body.seo-geo-preset-corporate :where(a, button, input, textarea, select, summary):focus-visible {
+	outline: 3px solid var(--corp-focus);
 	outline-offset: 3px;
 }
 
-/* Header and navigation. */
-.seo-geo-site-header {
+/* Header / navigation. */
+.seo-geo-preset-corporate .seo-geo-site-header {
 	position: sticky;
 	z-index: 50;
 	top: var(--wp-admin--admin-bar--height, 0);
-	border-bottom: 1px solid var(--wp--preset--color--border);
-	background: rgb(255 255 255 / 96%);
-	box-shadow: var(--seo-geo-shadow-sm);
-	backdrop-filter: blur(12px);
+	border-bottom: 1px solid rgb(215 225 222 / 82%);
+	background: rgb(246 248 247 / 88%);
+	backdrop-filter: blur(18px);
 }
 
-.seo-geo-site-header__inner {
-	width: var(--seo-geo-shell);
-	min-height: 78px;
+.seo-geo-preset-corporate .seo-geo-site-header__inner {
+	width: var(--corp-shell);
+	min-height: 76px;
 	margin-inline: auto;
-	gap: 1.5rem;
+	gap: clamp(1rem, 3vw, 2.5rem);
 }
 
-.seo-geo-site-brand {
-	gap: 0.75rem;
-	flex-shrink: 0;
+.seo-geo-preset-corporate .seo-geo-site-brand {
+	min-width: max-content;
+	gap: 0.7rem;
 }
 
-.seo-geo-site-brand .wp-block-site-logo img {
+.seo-geo-preset-corporate .seo-geo-site-brand .wp-block-site-logo img {
 	width: auto;
-	max-height: 52px;
+	max-height: 48px;
 }
 
-.seo-geo-site-brand .wp-block-site-title {
+.seo-geo-preset-corporate .seo-geo-site-brand .wp-block-site-title {
 	margin: 0;
-	color: var(--seo-geo-brand-ink);
-	font-size: 1rem;
+	color: var(--corp-ink);
+	font-size: 0.95rem;
 	font-weight: 800;
-	letter-spacing: 0.04em;
+	letter-spacing: 0.055em;
 	text-transform: uppercase;
 }
 
-.seo-geo-site-brand .wp-block-site-title a {
+.seo-geo-preset-corporate .seo-geo-site-brand .wp-block-site-title a {
 	color: inherit;
 	text-decoration: none;
 }
 
-.seo-geo-primary-nav {
-	font-size: 0.96rem;
-	font-weight: 600;
+.seo-geo-preset-corporate .seo-geo-preset-navigation {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: 0.94rem;
+	font-weight: 700;
 }
 
-.seo-geo-primary-nav .wp-block-page-list,
-.seo-geo-footer-nav .wp-block-page-list {
+.seo-geo-preset-corporate .seo-geo-preset-navigation__desktop {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.seo-geo-preset-corporate .seo-geo-preset-navigation__list {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.6rem 1.15rem;
+	justify-content: flex-end;
+	gap: 0.5rem 1.1rem;
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-.seo-geo-primary-nav .wp-block-pages-list__item,
-.seo-geo-footer-nav .wp-block-pages-list__item {
+.seo-geo-preset-corporate .seo-geo-preset-navigation__item {
 	margin: 0;
 }
 
-.seo-geo-primary-nav a {
-	color: var(--seo-geo-brand-ink);
+.seo-geo-preset-corporate .seo-geo-preset-navigation__item a {
+	color: var(--corp-ink);
 	text-decoration: none;
+	white-space: nowrap;
 }
 
-.seo-geo-primary-nav a:hover,
-.seo-geo-primary-nav .current-menu-item > a,
-.seo-geo-primary-nav .current_page_item > a {
-	color: var(--seo-geo-brand-accent);
+.seo-geo-preset-corporate .seo-geo-preset-navigation__item a:hover,
+.seo-geo-preset-corporate .seo-geo-preset-navigation__item a[aria-current="page"] {
+	color: var(--corp-accent);
 }
 
-/* Main layout. */
-.seo-geo-page-shell,
-.seo-geo-index-shell,
-.seo-geo-single-shell,
-.seo-geo-archive-shell {
-	width: var(--seo-geo-shell);
+.seo-geo-preset-corporate .seo-geo-preset-navigation__mobile {
+	display: none;
+}
+
+/* Shared page / article geometry. */
+.seo-geo-preset-corporate :where(
+	.seo-geo-page-shell,
+	.seo-geo-index-shell,
+	.seo-geo-single-shell,
+	.seo-geo-archive-shell
+) {
+	width: var(--corp-shell);
 	margin-inline: auto;
-	padding-block: clamp(2rem, 5vw, 4.5rem);
+	padding-block: clamp(2.5rem, 6vw, 5rem);
 }
 
-.seo-geo-page-title,
-.seo-geo-single-title,
-.seo-geo-archive-title {
-	width: var(--seo-geo-reading);
-	margin: 0 auto clamp(1.75rem, 4vw, 3rem);
-	color: var(--seo-geo-brand-ink);
-	letter-spacing: -0.035em;
+.seo-geo-preset-corporate :where(
+	.seo-geo-page-title,
+	.seo-geo-single-title,
+	.seo-geo-archive-title
+) {
+	width: var(--corp-reading);
+	margin: 0 auto clamp(2rem, 5vw, 4rem);
+	color: var(--corp-ink);
+	font-size: clamp(2.7rem, 7vw, 5.9rem);
+	line-height: 0.96;
+	letter-spacing: -0.06em;
+	text-wrap: balance;
 }
 
-.wp-block-post-content {
-	color: var(--seo-geo-brand-ink);
+.seo-geo-preset-corporate .wp-block-post-content {
+	color: var(--corp-ink);
 }
 
-.wp-block-post-content > :where(
+.seo-geo-preset-corporate .wp-block-post-content > :where(
 	p,
-	h1,
 	h2,
 	h3,
 	h4,
@@ -157,215 +183,479 @@ a:hover {
 	.wp-block-details,
 	.wp-block-separator
 ) {
-	width: var(--seo-geo-reading);
+	width: var(--corp-reading);
 	margin-inline: auto;
 }
 
-.wp-block-post-content > .wp-block-image,
-.wp-block-post-content > .wp-block-gallery,
-.wp-block-post-content > .wp-block-columns,
-.wp-block-post-content > .wp-block-group,
-.wp-block-post-content > .wp-block-latest-posts {
-	max-width: 1120px;
+.seo-geo-preset-corporate .wp-block-post-content > :where(
+	.wp-block-image,
+	.wp-block-gallery,
+	.wp-block-columns,
+	.wp-block-group,
+	.wp-block-query,
+	.wp-block-latest-posts
+) {
+	max-width: 1180px;
 	margin-inline: auto;
 }
 
-.wp-block-post-content > * + * {
-	margin-block-start: clamp(1rem, 2.4vw, 1.75rem);
+.seo-geo-preset-corporate .wp-block-post-content > * + * {
+	margin-block-start: clamp(1rem, 2.5vw, 1.8rem);
 }
 
-.wp-block-post-content p {
-	font-size: clamp(1rem, 0.96rem + 0.18vw, 1.08rem);
-	line-height: 1.75;
+.seo-geo-preset-corporate .wp-block-post-content p {
+	font-size: clamp(1rem, 0.97rem + 0.2vw, 1.08rem);
+	line-height: 1.72;
 }
 
-.wp-block-post-content img {
+.seo-geo-preset-corporate .wp-block-post-content img {
 	max-width: 100%;
 	height: auto;
-	border-radius: 0.8rem;
+	border-radius: var(--corp-radius-md);
 }
 
-.wp-block-post-content .wp-block-image {
-	margin-block: clamp(1.5rem, 4vw, 3rem);
+/* Native front-page hero. */
+.seo-geo-preset-corporate .seo-geo-front-page-shell {
+	overflow: clip;
 }
 
-/* Converted Divi primitives. */
-.seo-geo-migrated-divi-fullwidth-header {
+.seo-geo-preset-corporate .seo-geo-front-page-hero {
 	position: relative;
-	overflow: hidden;
-	max-width: 1120px !important;
-	margin: 0 auto clamp(2.25rem, 6vw, 5rem) !important;
-	border: 1px solid var(--wp--preset--color--border);
-	border-radius: 1.25rem;
-	background: var(--wp--preset--color--surface);
-	box-shadow: var(--seo-geo-shadow-md);
+	isolation: isolate;
+	padding: clamp(4rem, 9vw, 8rem) 1rem clamp(2rem, 5vw, 4rem);
+	background:
+		linear-gradient(180deg, rgb(234 242 239 / 80%), rgb(246 248 247 / 25%));
 }
 
-.seo-geo-migrated-divi-fullwidth-header > :not(.seo-geo-migrated-divi-header-image) {
-	width: min(760px, calc(100% - 3rem));
+.seo-geo-preset-corporate .seo-geo-front-page-hero::before {
+	position: absolute;
+	z-index: -1;
+	top: -14rem;
+	right: -9rem;
+	width: 32rem;
+	height: 32rem;
+	border: 1px solid rgb(8 127 112 / 15%);
+	border-radius: 50%;
+	background: radial-gradient(circle, rgb(8 127 112 / 13%), transparent 68%);
+	content: "";
+}
+
+.seo-geo-preset-corporate .seo-geo-front-page-hero__inner {
+	width: var(--corp-shell);
 	margin-inline: auto;
 }
 
-.seo-geo-migrated-divi-fullwidth-header > :where(h1, h2) {
-	margin-top: clamp(2rem, 6vw, 4.5rem);
-}
-
-.seo-geo-migrated-divi-fullwidth-header > :last-child {
-	margin-bottom: clamp(2rem, 6vw, 4.5rem);
-}
-
-.seo-geo-migrated-divi-header-image {
-	margin: 0 !important;
-}
-
-.seo-geo-migrated-divi-header-image img {
-	width: 100%;
-	max-height: 440px;
-	border-radius: 0;
-	object-fit: cover;
-}
-
-.seo-geo-migrated-divi-blurb,
-.seo-geo-migrated-divi-testimonial,
-.seo-geo-migrated-divi-counter {
-	box-sizing: border-box;
-	padding: clamp(1.25rem, 3vw, 2rem);
-	border: 1px solid var(--wp--preset--color--border);
-	border-radius: 1rem;
-	background: var(--wp--preset--color--base);
-	box-shadow: var(--seo-geo-shadow-sm);
-}
-
-.seo-geo-migrated-divi-blurb h3,
-.seo-geo-migrated-divi-counter h3 {
-	margin-top: 0;
-}
-
-.seo-geo-migrated-divi-testimonial blockquote {
+.seo-geo-preset-corporate .seo-geo-front-page-title {
+	max-width: 15ch;
 	margin: 0;
-	border-inline-start: 4px solid var(--seo-geo-brand-accent);
+	color: var(--corp-ink);
+	font-size: clamp(3.2rem, 8vw, 7rem);
+	line-height: 0.92;
+	letter-spacing: -0.065em;
+	text-wrap: balance;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero {
+	width: var(--corp-shell);
+	margin: 0 auto clamp(5rem, 10vw, 9rem);
+	padding: clamp(1rem, 3vw, 2rem);
+	gap: clamp(1.2rem, 4vw, 3rem);
+	container-type: inline-size;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero__copy,
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero__proof {
+	box-sizing: border-box;
+	min-height: 100%;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero__copy {
+	padding: clamp(1rem, 3vw, 2rem) 0;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero__proof {
+	border: 1px solid var(--corp-line);
+	border-radius: var(--corp-radius-lg);
+	padding: clamp(1.4rem, 4vw, 2.5rem);
+	background:
+		linear-gradient(145deg, rgb(255 255 255 / 98%), rgb(234 242 239 / 90%));
+	box-shadow: var(--corp-shadow-md);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero__proof ul {
+	margin-bottom: 0;
 	padding-inline-start: 1.25rem;
 }
 
-.wp-block-details {
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero__proof li + li {
+	margin-top: 0.65rem;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-eyebrow {
+	margin-bottom: 0.7rem;
+	color: var(--corp-accent);
+	font-size: 0.78rem !important;
+	font-weight: 800;
+	letter-spacing: 0.16em;
+	line-height: 1.3 !important;
+	text-transform: uppercase;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-lead {
+	max-width: 35ch;
+	color: var(--corp-ink);
+	font-weight: 500;
+	line-height: 1.35 !important;
+	text-wrap: pretty;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-actions {
+	margin-top: clamp(1.5rem, 4vw, 2.3rem);
+}
+
+/* Native sections. */
+.seo-geo-preset-corporate .seo-geo-corporate-native-section {
+	width: var(--corp-shell);
 	box-sizing: border-box;
-	padding: 1rem 1.1rem;
-	border: 1px solid var(--wp--preset--color--border);
-	border-radius: 0.75rem;
-	background: var(--wp--preset--color--surface);
+	margin-block: clamp(5rem, 10vw, 9rem) !important;
 }
 
-.wp-block-details summary {
-	cursor: pointer;
-	color: var(--seo-geo-brand-ink);
-	font-weight: 700;
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading {
+	max-width: 800px;
+	margin-inline: 0;
+	margin-bottom: clamp(2rem, 5vw, 3.5rem);
 }
 
-.wp-block-latest-posts {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 1.25rem;
-	padding: 0;
-	list-style: none;
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading h2 {
+	max-width: 18ch;
+	margin-top: 0;
+	color: var(--corp-ink);
+	font-size: clamp(2.2rem, 5vw, 4.5rem) !important;
+	line-height: 1;
+	letter-spacing: -0.05em;
+	text-wrap: balance;
 }
 
-.wp-block-latest-posts > li {
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading p:last-child {
+	max-width: 62ch;
+	color: var(--corp-ink-soft);
+}
+
+/* Capability cards. */
+.seo-geo-preset-corporate .seo-geo-corporate-card-grid {
+	gap: 1rem;
+	align-items: stretch !important;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card {
+	position: relative;
+	box-sizing: border-box;
+	min-height: 100%;
+	border: 1px solid var(--corp-line);
+	border-radius: var(--corp-radius-lg);
+	background: var(--corp-surface);
+	padding: clamp(1.4rem, 3vw, 2.2rem);
+	box-shadow: var(--corp-shadow-sm);
+	container-type: inline-size;
+	transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card:hover {
+	border-color: rgb(8 127 112 / 42%);
+	transform: translateY(-3px);
+	box-shadow: var(--corp-shadow-md);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card--featured {
+	background:
+		linear-gradient(145deg, var(--corp-ink), #1f4148);
+	color: #fff;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card--featured :where(h3, p, a) {
+	color: inherit;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card__index {
+	margin: 0 0 clamp(2rem, 6cqw, 4rem);
+	color: var(--corp-accent);
+	font-size: 0.78rem !important;
+	font-weight: 800;
+	letter-spacing: 0.14em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card--featured .seo-geo-corporate-card__index {
+	color: #9edfd6;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card h3 {
+	margin-top: 0;
+	font-size: clamp(1.35rem, 8cqw, 2rem);
+	line-height: 1.08;
+	letter-spacing: -0.025em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card a {
+	font-weight: 750;
+}
+
+/* Evidence / proof band. */
+.seo-geo-preset-corporate .seo-geo-corporate-native-proof {
+	margin-block: clamp(5rem, 10vw, 9rem) !important;
+	padding: clamp(4rem, 8vw, 7rem) 1rem;
+	background:
+		radial-gradient(circle at 92% 12%, rgb(8 127 112 / 30%), transparent 24rem),
+		var(--corp-ink) !important;
+	color: #fff !important;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-proof__inner {
+	width: var(--corp-shell);
+	margin-inline: auto;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-proof h2 {
+	max-width: 17ch;
+	color: #fff;
+	font-size: clamp(2.3rem, 5vw, 4.5rem) !important;
+	line-height: 1;
+	letter-spacing: -0.05em;
+	text-wrap: balance;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-proof .seo-geo-corporate-eyebrow {
+	color: #9edfd6;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-proof-grid {
+	margin-top: clamp(2rem, 5vw, 4rem);
+	gap: 1rem;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-proof-card {
+	box-sizing: border-box;
+	border-top: 1px solid rgb(255 255 255 / 28%);
+	padding-top: 1.25rem;
+	color: #e3ece9;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-proof-card h3 {
+	color: #fff;
+}
+
+/* Process. */
+.seo-geo-preset-corporate .seo-geo-corporate-process-grid {
+	gap: 1rem;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-process-step {
+	box-sizing: border-box;
+	min-height: 260px;
+	border-top: 1px solid var(--corp-line);
+	padding: 1.5rem 1rem 1rem 0;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-process-step__number {
+	color: var(--corp-warm);
+	font-size: 0.8rem !important;
+	font-weight: 800;
+	letter-spacing: 0.16em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-process-step h3 {
+	margin-top: clamp(2rem, 5vw, 4rem);
+	margin-bottom: 0.8rem;
+	font-size: clamp(1.6rem, 3vw, 2.35rem);
+	letter-spacing: -0.035em;
+}
+
+/* Editorial / insights. */
+.seo-geo-preset-corporate .seo-geo-corporate-insights-query .wp-block-post-template {
+	gap: 1rem;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-insight-card {
+	box-sizing: border-box;
+	min-height: 100%;
+	border: 1px solid var(--corp-line);
+	border-radius: var(--corp-radius-lg);
+	background: var(--corp-surface);
+	padding: clamp(1.3rem, 3vw, 2rem);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-insight-card .wp-block-post-date {
+	color: var(--corp-ink-soft);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-insight-card .wp-block-post-title {
+	margin-top: 1rem;
+	font-size: clamp(1.35rem, 3vw, 1.9rem);
+	line-height: 1.1;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-insight-card .wp-block-post-title a {
+	color: var(--corp-ink);
+	text-decoration: none;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-insight-card .wp-block-post-title a:hover {
+	color: var(--corp-accent);
+}
+
+/* Existing optional Corporate proof patterns become native components too. */
+.seo-geo-preset-corporate :where(
+	.seo-geo-corporate-case-study,
+	.seo-geo-corporate-stats,
+	.seo-geo-corporate-testimonials
+) {
+	box-sizing: border-box;
+	width: var(--corp-shell);
+	margin: clamp(5rem, 10vw, 9rem) auto !important;
+	border: 1px solid var(--corp-line);
+	border-radius: var(--corp-radius-lg);
+	padding: clamp(2rem, 5vw, 4rem);
+	background: var(--corp-surface);
+	box-shadow: var(--corp-shadow-sm);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-case-study > h2,
+.seo-geo-preset-corporate .seo-geo-corporate-stats > h2,
+.seo-geo-preset-corporate .seo-geo-corporate-testimonials > h2 {
+	max-width: 18ch;
+	font-size: clamp(2rem, 4.5vw, 3.8rem);
+	line-height: 1;
+	letter-spacing: -0.045em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-testimonials blockquote {
 	margin: 0;
-	padding: 1.25rem;
-	border: 1px solid var(--wp--preset--color--border);
-	border-radius: 1rem;
-	background: var(--wp--preset--color--base);
-	box-shadow: var(--seo-geo-shadow-sm);
+	border: 0;
+	padding: 0;
 }
 
-.wp-block-latest-posts a {
-	color: var(--seo-geo-brand-ink);
-	font-weight: 700;
+.seo-geo-preset-corporate .seo-geo-corporate-testimonials cite {
+	display: block;
+	margin-top: 1rem;
+	color: var(--corp-ink-soft);
+	font-style: normal;
 }
 
-/* Buttons and form controls. */
-.wp-element-button,
-.wp-block-button__link,
-.seo-geo-contact-form button {
+/* Native FAQ and content disclosure. */
+.seo-geo-preset-corporate .wp-block-details {
+	box-sizing: border-box;
+	border: 1px solid var(--corp-line);
+	border-radius: var(--corp-radius-md);
+	background: var(--corp-surface);
+	padding: 1rem 1.1rem;
+}
+
+.seo-geo-preset-corporate .wp-block-details summary {
+	cursor: pointer;
+	color: var(--corp-ink);
+	font-weight: 750;
+}
+
+/* Buttons. */
+.seo-geo-preset-corporate :where(
+	.wp-element-button,
+	.wp-block-button__link,
+	.seo-geo-contact-form button
+) {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-height: 44px;
-	border: 0;
-	border-radius: 0.6rem;
-	background: var(--seo-geo-brand-accent);
+	min-height: 46px;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	background: var(--corp-accent);
 	color: #fff;
-	padding: 0.72rem 1.2rem;
+	padding: 0.76rem 1.25rem;
 	font: inherit;
-	font-weight: 700;
-	line-height: 1.2;
+	font-weight: 750;
+	line-height: 1.15;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background-color 160ms ease, transform 160ms ease;
+	transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
-.wp-element-button:hover,
-.wp-block-button__link:hover,
-.seo-geo-contact-form button:hover {
-	background: var(--seo-geo-brand-accent-strong);
+.seo-geo-preset-corporate :where(
+	.wp-element-button,
+	.wp-block-button__link,
+	.seo-geo-contact-form button
+):hover {
+	background: var(--corp-accent-strong);
 	transform: translateY(-1px);
 }
 
-.seo-geo-contact-form-wrap {
-	width: var(--seo-geo-reading);
-	margin: clamp(1.5rem, 4vw, 3rem) auto;
-	padding: clamp(1.25rem, 4vw, 2.25rem);
-	border: 1px solid var(--wp--preset--color--border);
-	border-radius: 1rem;
-	background: var(--wp--preset--color--surface);
+.seo-geo-preset-corporate .wp-block-button.is-style-outline .wp-block-button__link {
+	border-color: var(--corp-line);
+	background: transparent;
+	color: var(--corp-ink);
 }
 
-.seo-geo-contact-form {
+.seo-geo-preset-corporate .wp-block-button.is-style-outline .wp-block-button__link:hover {
+	border-color: var(--corp-accent);
+	background: var(--corp-surface-strong);
+}
+
+/* Contact. */
+.seo-geo-preset-corporate .seo-geo-contact-form-wrap {
+	box-sizing: border-box;
+	width: min(900px, calc(100vw - 2rem));
+	margin: clamp(2rem, 5vw, 4rem) auto;
+	border: 1px solid var(--corp-line);
+	border-radius: var(--corp-radius-lg);
+	background: var(--corp-surface);
+	padding: clamp(1.4rem, 4vw, 2.5rem);
+	box-shadow: var(--corp-shadow-md);
+}
+
+.seo-geo-preset-corporate .seo-geo-contact-form {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 1rem 1.25rem;
 }
 
-.seo-geo-contact-form-field {
+.seo-geo-preset-corporate .seo-geo-contact-form-field {
 	margin: 0;
 }
 
-.seo-geo-contact-form-field-textarea,
-.seo-geo-contact-form-submit {
+.seo-geo-preset-corporate .seo-geo-contact-form-field-textarea,
+.seo-geo-preset-corporate .seo-geo-contact-form-submit {
 	grid-column: 1 / -1;
 }
 
-.seo-geo-contact-form label {
+.seo-geo-preset-corporate .seo-geo-contact-form label {
 	display: block;
 	margin-bottom: 0.4rem;
-	color: var(--seo-geo-brand-ink);
-	font-weight: 700;
+	color: var(--corp-ink);
+	font-weight: 750;
 }
 
-.seo-geo-contact-form :where(input, textarea, select) {
+.seo-geo-preset-corporate .seo-geo-contact-form :where(input, textarea, select) {
 	box-sizing: border-box;
 	width: 100%;
-	min-height: 46px;
-	border: 1px solid #a9b7c3;
-	border-radius: 0.55rem;
+	min-height: 48px;
+	border: 1px solid #aebeba;
+	border-radius: var(--corp-radius-sm);
 	background: #fff;
-	color: var(--seo-geo-brand-ink);
-	padding: 0.7rem 0.8rem;
+	color: var(--corp-ink);
+	padding: 0.72rem 0.85rem;
 	font: inherit;
 }
 
-.seo-geo-contact-form textarea {
+.seo-geo-preset-corporate .seo-geo-contact-form textarea {
 	min-height: 150px;
 	resize: vertical;
 }
 
-.seo-geo-contact-form :where(input, textarea, select):focus {
-	border-color: var(--seo-geo-brand-accent);
-	box-shadow: 0 0 0 3px rgb(15 118 110 / 16%);
+.seo-geo-preset-corporate .seo-geo-contact-form :where(input, textarea, select):focus {
+	border-color: var(--corp-accent);
+	box-shadow: 0 0 0 3px rgb(8 127 112 / 16%);
 	outline: 0;
 }
 
-.seo-geo-contact-form-honeypot {
+.seo-geo-preset-corporate .seo-geo-contact-form-honeypot {
 	position: absolute !important;
 	left: -10000px !important;
 	width: 1px !important;
@@ -373,118 +663,207 @@ a:hover {
 	overflow: hidden !important;
 }
 
-.seo-geo-contact-form-status {
-	width: var(--seo-geo-reading);
+.seo-geo-preset-corporate .seo-geo-contact-form-status {
 	box-sizing: border-box;
+	width: min(900px, calc(100vw - 2rem));
 	margin: 0 auto 1rem;
-	border-radius: 0.65rem;
+	border-radius: var(--corp-radius-sm);
 	padding: 0.9rem 1rem;
-	font-weight: 600;
+	font-weight: 650;
 }
 
-.seo-geo-contact-form-success {
+.seo-geo-preset-corporate .seo-geo-contact-form-success {
 	border: 1px solid #86c9b6;
 	background: #ecfdf5;
 	color: #14532d;
 }
 
-.seo-geo-contact-form-error {
+.seo-geo-preset-corporate .seo-geo-contact-form-error {
 	border: 1px solid #f0a2a2;
 	background: #fef2f2;
 	color: #991b1b;
 }
 
-/* Archive/index cards. */
-.seo-geo-index-shell .wp-block-post-template,
-.seo-geo-archive-shell .wp-block-post-template {
+/* Archive / article discovery. */
+.seo-geo-preset-corporate :where(
+	.seo-geo-index-shell,
+	.seo-geo-archive-shell
+) .wp-block-post-template {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 1.5rem;
+	gap: 1rem;
 	padding: 0;
 }
 
-.seo-geo-index-shell .wp-block-post-template > li,
-.seo-geo-archive-shell .wp-block-post-template > li {
+.seo-geo-preset-corporate :where(
+	.seo-geo-index-shell,
+	.seo-geo-archive-shell
+) .wp-block-post-template > li {
 	box-sizing: border-box;
 	margin: 0;
-	padding: 1.5rem;
-	border: 1px solid var(--wp--preset--color--border);
-	border-radius: 1rem;
-	background: #fff;
-	box-shadow: var(--seo-geo-shadow-sm);
+	border: 1px solid var(--corp-line);
+	border-radius: var(--corp-radius-lg);
+	background: var(--corp-surface);
+	padding: clamp(1.3rem, 3vw, 2rem);
+	box-shadow: var(--corp-shadow-sm);
 }
 
-.seo-geo-index-shell .wp-block-post-title a,
-.seo-geo-archive-shell .wp-block-post-title a {
-	color: var(--seo-geo-brand-ink);
+.seo-geo-preset-corporate :where(
+	.seo-geo-index-shell,
+	.seo-geo-archive-shell
+) .wp-block-post-title a {
+	color: var(--corp-ink);
 	text-decoration: none;
 }
 
 /* Footer. */
-.seo-geo-site-footer {
-	margin-top: clamp(3rem, 8vw, 6rem);
-	background: var(--seo-geo-brand-ink);
+.seo-geo-preset-corporate .seo-geo-site-footer {
+	margin-top: clamp(4rem, 9vw, 8rem);
+	background: var(--corp-ink);
 	color: #fff;
 }
 
-.seo-geo-site-footer__inner {
-	width: var(--seo-geo-shell);
+.seo-geo-preset-corporate .seo-geo-site-footer__inner {
+	width: var(--corp-shell);
 	margin-inline: auto;
-	padding-block: 2rem;
+	padding-block: clamp(2.5rem, 5vw, 4rem);
 }
 
-.seo-geo-site-footer a,
-.seo-geo-site-footer .wp-block-site-title {
+.seo-geo-preset-corporate .seo-geo-site-footer :where(a, .wp-block-site-title) {
 	color: #fff;
 }
 
-.seo-geo-site-footer .wp-block-site-tagline {
-	color: #dbe4e8;
+.seo-geo-preset-corporate .seo-geo-site-footer .wp-block-site-tagline {
+	color: #c9d7d3;
 }
 
-@media (max-width: 782px) {
-	.seo-geo-site-header {
+.seo-geo-preset-corporate .seo-geo-site-footer .seo-geo-preset-navigation__item a {
+	color: #fff;
+	opacity: 0.9;
+}
+
+.seo-geo-preset-corporate .seo-geo-site-footer .seo-geo-preset-navigation__item a:hover,
+.seo-geo-preset-corporate .seo-geo-site-footer .seo-geo-preset-navigation__item a[aria-current="page"] {
+	color: #9edfd6;
+	opacity: 1;
+}
+
+/* Container-aware refinements for reusable blocks. */
+@container (max-width: 720px) {
+	.seo-geo-preset-corporate .seo-geo-corporate-native-hero__copy,
+	.seo-geo-preset-corporate .seo-geo-corporate-native-hero__proof {
+		padding: 1.25rem;
+	}
+}
+
+@media (max-width: 900px) {
+	.seo-geo-preset-corporate .seo-geo-site-header {
 		top: 0;
 	}
 
-	.seo-geo-site-header__inner {
-		min-height: 68px;
+	.seo-geo-preset-corporate .seo-geo-site-header__inner {
+		min-height: 66px;
+		flex-direction: row;
+		align-items: center;
+		padding-block: 0.5rem;
 	}
 
-	.seo-geo-site-brand .wp-block-site-title {
+	.seo-geo-preset-corporate .seo-geo-preset-navigation__desktop {
 		display: none;
 	}
 
-	.seo-geo-site-header__inner {
-		align-items: flex-start;
-		flex-direction: column;
-		padding-block: 0.75rem;
+	.seo-geo-preset-corporate .seo-geo-preset-navigation__mobile {
+		position: relative;
+		display: block;
 	}
 
-	.seo-geo-primary-nav {
-		width: 100%;
-		overflow-x: auto;
-		padding-bottom: 0.25rem;
+	.seo-geo-preset-corporate .seo-geo-preset-navigation__mobile > summary {
+		box-sizing: border-box;
+		min-height: 44px;
+		border: 1px solid var(--corp-line);
+		border-radius: 999px;
+		background: var(--corp-surface);
+		padding: 0.65rem 0.95rem;
+		color: var(--corp-ink);
+		font-weight: 800;
+		cursor: pointer;
+		list-style: none;
 	}
 
-	.seo-geo-primary-nav .wp-block-page-list {
-		flex-wrap: nowrap;
-		width: max-content;
-		min-width: 100%;
+	.seo-geo-preset-corporate .seo-geo-preset-navigation__mobile > summary::-webkit-details-marker {
+		display: none;
 	}
 
-	.seo-geo-contact-form,
-	.wp-block-latest-posts,
-	.seo-geo-index-shell .wp-block-post-template,
-	.seo-geo-archive-shell .wp-block-post-template {
+	.seo-geo-preset-corporate .seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__list {
+		position: absolute;
+		z-index: 100;
+		top: calc(100% + 0.5rem);
+		right: 0;
+		display: grid;
+		width: min(340px, calc(100vw - 2rem));
+		gap: 0;
+		border: 1px solid var(--corp-line);
+		border-radius: var(--corp-radius-md);
+		background: var(--corp-surface);
+		padding: 0.5rem;
+		box-shadow: var(--corp-shadow-md);
+	}
+
+	.seo-geo-preset-corporate .seo-geo-preset-navigation__mobile .seo-geo-preset-navigation__item a {
+		display: block;
+		border-radius: 0.6rem;
+		padding: 0.75rem 0.8rem;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-preset-navigation__mobile .seo-geo-preset-navigation__item a:hover,
+	.seo-geo-preset-corporate .seo-geo-preset-navigation__mobile .seo-geo-preset-navigation__item a[aria-current="page"] {
+		background: var(--corp-surface-strong);
+	}
+
+	.seo-geo-preset-corporate .seo-geo-front-page-title {
+		font-size: clamp(3rem, 12vw, 5.3rem);
+	}
+
+	.seo-geo-preset-corporate .seo-geo-contact-form,
+	.seo-geo-preset-corporate :where(
+		.seo-geo-index-shell,
+		.seo-geo-archive-shell
+	) .wp-block-post-template {
 		grid-template-columns: 1fr;
 	}
+}
 
-	.seo-geo-page-shell,
-	.seo-geo-index-shell,
-	.seo-geo-single-shell,
-	.seo-geo-archive-shell {
-		padding-block: 2rem;
+@media (max-width: 600px) {
+	.seo-geo-preset-corporate {
+		--corp-shell: min(100% - 1.25rem, 1180px);
+		--corp-reading: min(100% - 1.25rem, 760px);
+	}
+
+	.seo-geo-preset-corporate .seo-geo-site-brand .wp-block-site-title {
+		display: none;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-front-page-hero {
+		padding-top: 3.3rem;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-corporate-native-section,
+	.seo-geo-preset-corporate .seo-geo-corporate-native-proof,
+	.seo-geo-preset-corporate :where(
+		.seo-geo-corporate-case-study,
+		.seo-geo-corporate-stats,
+		.seo-geo-corporate-testimonials
+	) {
+		margin-block: 4rem !important;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-corporate-card,
+	.seo-geo-preset-corporate .seo-geo-corporate-insight-card {
+		border-radius: 1.2rem;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-contact-form {
+		grid-template-columns: 1fr;
 	}
 }
 
@@ -493,453 +872,12 @@ a:hover {
 		scroll-behavior: auto;
 	}
 
-	.wp-element-button,
-	.wp-block-button__link,
-	.seo-geo-contact-form button {
+	.seo-geo-preset-corporate :where(
+		.wp-element-button,
+		.wp-block-button__link,
+		.seo-geo-contact-form button,
+		.seo-geo-corporate-card
+	) {
 		transition: none;
-	}
-}
-
-
-/* Corporate v1.1 field polish. */
-.seo-geo-preset-navigation {
-	flex: 1 1 auto;
-	min-width: 0;
-	font-size: 0.94rem;
-	font-weight: 700;
-}
-
-.seo-geo-preset-navigation__desktop {
-	display: flex;
-	justify-content: flex-end;
-}
-
-.seo-geo-preset-navigation__list {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: flex-end;
-	gap: 0.55rem 1.15rem;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-.seo-geo-preset-navigation__item {
-	margin: 0;
-}
-
-.seo-geo-preset-navigation__item a {
-	color: var(--seo-geo-brand-ink);
-	text-decoration: none;
-	white-space: nowrap;
-}
-
-.seo-geo-preset-navigation__item a:hover,
-.seo-geo-preset-navigation__item a[aria-current="page"] {
-	color: var(--seo-geo-brand-accent);
-}
-
-.seo-geo-preset-navigation__mobile {
-	display: none;
-}
-
-.seo-geo-site-header__inner {
-	align-items: center;
-}
-
-.seo-geo-site-brand {
-	min-width: max-content;
-}
-
-.seo-geo-site-brand .wp-block-site-title {
-	font-size: 1.05rem;
-}
-
-/* Front-page hero heuristic for migrated Corporate sites.
- * The first four blocks represent eyebrow, headline/brand, lead and CTA.
- * This is presentation-only: no content, IDs, slugs or URLs are mutated.
- */
-body.home.seo-geo-preset-corporate .seo-geo-page-shell {
-	padding-top: 0;
-}
-
-body.home.seo-geo-preset-corporate .seo-geo-page-title {
-	position: absolute !important;
-	width: 1px !important;
-	height: 1px !important;
-	margin: -1px !important;
-	padding: 0 !important;
-	overflow: hidden !important;
-	clip: rect(0 0 0 0) !important;
-	white-space: nowrap !important;
-	border: 0 !important;
-}
-
-body.home.seo-geo-preset-corporate .wp-block-post-content {
-	position: relative;
-	isolation: isolate;
-}
-
-body.home.seo-geo-preset-corporate .wp-block-post-content::before {
-	position: absolute;
-	z-index: -2;
-	top: 0;
-	left: 50%;
-	width: min(1120px, calc(100vw - 2rem));
-	height: clamp(360px, 42vw, 470px);
-	border: 1px solid #d9e4e8;
-	border-radius: 1.5rem;
-	background:
-		radial-gradient(circle at 85% 18%, rgb(15 118 110 / 18%), transparent 34%),
-		linear-gradient(135deg, #f8fbfc 0%, #eef7f5 52%, #f7f9fb 100%);
-	box-shadow: var(--seo-geo-shadow-md);
-	content: "";
-	transform: translateX(-50%);
-}
-
-body.home.seo-geo-preset-corporate .wp-block-post-content::after {
-	position: absolute;
-	z-index: -1;
-	top: 58px;
-	left: calc(50% + min(330px, 25vw));
-	width: clamp(110px, 14vw, 190px);
-	aspect-ratio: 1;
-	border: 24px solid rgb(15 118 110 / 12%);
-	border-radius: 50%;
-	content: "";
-	transform: translateX(-50%);
-}
-
-body.home.seo-geo-preset-corporate .wp-block-post-content > :nth-child(-n+4) {
-	position: relative;
-	z-index: 1;
-	width: min(760px, calc(100% - 3rem));
-	margin-inline: auto;
-}
-
-body.home.seo-geo-preset-corporate .wp-block-post-content > :first-child {
-	margin-top: 0;
-	padding-top: clamp(3.5rem, 7vw, 5.25rem);
-	color: var(--seo-geo-brand-accent);
-	font-size: 0.86rem;
-	font-weight: 800;
-	letter-spacing: 0.16em;
-	text-transform: uppercase;
-}
-
-body.home.seo-geo-preset-corporate .wp-block-post-content > :nth-child(2) {
-	margin-top: 0.75rem;
-	color: var(--seo-geo-brand-ink);
-	font-size: clamp(2.7rem, 6vw, 5.4rem);
-	font-weight: 800;
-	line-height: 0.98;
-	letter-spacing: -0.055em;
-}
-
-body.home.seo-geo-preset-corporate .wp-block-post-content > :nth-child(3) {
-	max-width: 690px;
-	margin-top: 1.5rem;
-	font-size: clamp(1.08rem, 1rem + 0.38vw, 1.32rem);
-	line-height: 1.65;
-}
-
-body.home.seo-geo-preset-corporate .wp-block-post-content > :nth-child(4) {
-	margin-top: 1.75rem;
-	margin-bottom: clamp(7rem, 12vw, 9rem);
-}
-
-/* Migrated service modules become compact Corporate cards. */
-.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb {
-	display: grid;
-	grid-template-columns: minmax(72px, 96px) 1fr;
-	grid-template-rows: auto 1fr;
-	gap: 0.35rem 1.4rem;
-	width: min(900px, calc(100% - 2rem));
-	margin: 1.25rem auto !important;
-	padding: clamp(1.25rem, 3vw, 2rem);
-	border-color: #dbe5e8;
-	background: linear-gradient(180deg, #fff 0%, #fbfcfd 100%);
-	box-shadow: 0 12px 28px rgb(37 53 66 / 7%);
-}
-
-.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb > .wp-block-image {
-	grid-column: 1;
-	grid-row: 1 / span 2;
-	align-self: start;
-	margin: 0 !important;
-}
-
-.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb > .wp-block-image img {
-	width: 72px;
-	height: 72px;
-	object-fit: contain;
-	border-radius: 0;
-}
-
-.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb > h3 {
-	grid-column: 2;
-	margin: 0;
-	font-size: clamp(1.35rem, 1.2rem + 0.5vw, 1.8rem);
-}
-
-.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb > :not(.wp-block-image):not(h3) {
-	grid-column: 2;
-	margin-top: 0;
-}
-
-/* Counter modules read as a compact proof band instead of loose numbers. */
-.seo-geo-preset-corporate .seo-geo-migrated-divi-counter {
-	display: inline-flex;
-	flex-direction: column;
-	justify-content: center;
-	width: min(210px, calc(50% - 1.5rem)) !important;
-	min-height: 135px;
-	margin: 0.75rem !important;
-	vertical-align: top;
-	border: 0;
-	background: var(--seo-geo-brand-ink);
-	color: #fff;
-	box-shadow: var(--seo-geo-shadow-md);
-}
-
-.seo-geo-preset-corporate .seo-geo-migrated-divi-counter h3 {
-	margin: 0;
-	color: #fff;
-	font-size: clamp(2rem, 1.65rem + 1.3vw, 3rem);
-	line-height: 1;
-}
-
-.seo-geo-preset-corporate .seo-geo-migrated-divi-counter p {
-	margin: 0.65rem 0 0;
-	color: #dce8ec;
-	font-size: 0.95rem;
-	line-height: 1.4;
-}
-
-/* Improve section rhythm after conversion without relying on Divi layout CSS. */
-.seo-geo-preset-corporate .wp-block-post-content > h2 {
-	margin-top: clamp(3.5rem, 7vw, 6rem);
-	font-size: clamp(2rem, 1.65rem + 1.3vw, 3.2rem);
-	line-height: 1.08;
-	letter-spacing: -0.035em;
-}
-
-.seo-geo-preset-corporate .wp-block-post-content > h3 {
-	margin-top: clamp(2.5rem, 5vw, 4rem);
-	font-size: clamp(1.55rem, 1.35rem + 0.7vw, 2.15rem);
-	line-height: 1.18;
-}
-
-.seo-geo-preset-corporate .seo-geo-contact-form-wrap {
-	max-width: 860px;
-	border-color: #d4e0e5;
-	background: #f8fbfc;
-	box-shadow: 0 16px 40px rgb(37 53 66 / 8%);
-}
-
-.seo-geo-preset-corporate .seo-geo-contact-form-submit {
-	margin-bottom: 0;
-}
-
-.seo-geo-preset-corporate .seo-geo-contact-form-submit button {
-	min-width: 120px;
-}
-
-/* Footer navigation produced by the preset runtime. */
-.seo-geo-site-footer .seo-geo-preset-navigation__list {
-	justify-content: flex-end;
-}
-
-.seo-geo-site-footer .seo-geo-preset-navigation__item a {
-	color: #fff;
-	opacity: 0.92;
-}
-
-.seo-geo-site-footer .seo-geo-preset-navigation__item a:hover,
-.seo-geo-site-footer .seo-geo-preset-navigation__item a[aria-current="page"] {
-	color: #9fe5d8;
-	opacity: 1;
-}
-
-@media (max-width: 900px) {
-	.seo-geo-site-header__inner {
-		min-height: 68px;
-		flex-direction: row;
-		align-items: center;
-		padding-block: 0.55rem;
-	}
-
-	.seo-geo-preset-navigation__desktop {
-		display: none;
-	}
-
-	.seo-geo-preset-navigation__mobile {
-		position: relative;
-		display: block;
-	}
-
-	.seo-geo-preset-navigation__mobile > summary {
-		min-height: 44px;
-		box-sizing: border-box;
-		border: 1px solid #cad7dc;
-		border-radius: 0.55rem;
-		background: #fff;
-		padding: 0.65rem 0.9rem;
-		color: var(--seo-geo-brand-ink);
-		font-weight: 800;
-		cursor: pointer;
-		list-style: none;
-	}
-
-	.seo-geo-preset-navigation__mobile > summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__list {
-		position: absolute;
-		z-index: 100;
-		top: calc(100% + 0.5rem);
-		right: 0;
-		display: grid;
-		width: min(320px, calc(100vw - 2rem));
-		gap: 0;
-		border: 1px solid #d3dfe3;
-		border-radius: 0.8rem;
-		background: #fff;
-		padding: 0.5rem;
-		box-shadow: var(--seo-geo-shadow-md);
-	}
-
-	.seo-geo-preset-navigation__mobile .seo-geo-preset-navigation__item a {
-		display: block;
-		border-radius: 0.5rem;
-		padding: 0.7rem 0.75rem;
-	}
-
-	.seo-geo-preset-navigation__mobile .seo-geo-preset-navigation__item a:hover,
-	.seo-geo-preset-navigation__mobile .seo-geo-preset-navigation__item a[aria-current="page"] {
-		background: #eef7f5;
-	}
-
-	body.home.seo-geo-preset-corporate .wp-block-post-content::after {
-		display: none;
-	}
-}
-
-@media (max-width: 600px) {
-	body.home.seo-geo-preset-corporate .wp-block-post-content::before {
-		height: 390px;
-		border-radius: 1rem;
-	}
-
-	body.home.seo-geo-preset-corporate .wp-block-post-content > :first-child {
-		padding-top: 2.7rem;
-	}
-
-	body.home.seo-geo-preset-corporate .wp-block-post-content > :nth-child(2) {
-		font-size: clamp(2.35rem, 15vw, 3.7rem);
-	}
-
-	body.home.seo-geo-preset-corporate .wp-block-post-content > :nth-child(4) {
-		margin-bottom: 6rem;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb {
-		grid-template-columns: 1fr;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb > .wp-block-image,
-	.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb > h3,
-	.seo-geo-preset-corporate .seo-geo-migrated-divi-blurb > :not(.wp-block-image):not(h3) {
-		grid-column: 1;
-		grid-row: auto;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-migrated-divi-counter {
-		display: flex;
-		width: calc(100% - 1.5rem) !important;
-	}
-}
-
-
-/* Corporate v1.2 — field polish under the SEO/GEO-first contract.
- * Presentation only: semantic HTML, URLs, indexability and content remain owned
- * by the shared Theme/Core and authored WordPress document.
- */
-
-/* Keep migrated media bounded. Consecutive top-level image blocks usually
- * represent legacy logo/brand rows whose Divi column wrapper was flattened.
- */
-.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image {
-	width: min(860px, calc(100% - 2rem));
-	text-align: center;
-}
-
-.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image img {
-	width: auto;
-	max-width: 100%;
-	max-height: 420px;
-	object-fit: contain;
-}
-
-.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image),
-.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image {
-	display: inline-flex;
-	box-sizing: border-box;
-	width: calc(33.333% - 1.1rem);
-	min-height: 160px;
-	margin: 0.55rem !important;
-	vertical-align: middle;
-	align-items: center;
-	justify-content: center;
-	border: 1px solid #dce6e9;
-	border-radius: 1rem;
-	background: #fff;
-	padding: 1rem;
-	box-shadow: var(--seo-geo-shadow-sm);
-}
-
-.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image) img,
-.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image img {
-	max-height: 125px;
-}
-
-/* Legacy spacers are kept for content parity but cannot recreate the excessive
- * vertical rhythm of the builder-era layout.
- */
-.seo-geo-preset-corporate .wp-block-post-content > .wp-block-spacer {
-	height: clamp(1rem, 2.5vw, 2rem) !important;
-}
-
-/* Long-form Corporate text stays readable and avoids oversized empty bands. */
-.seo-geo-preset-corporate .wp-block-post-content > p + h2,
-.seo-geo-preset-corporate .wp-block-post-content > p + h3 {
-	margin-top: clamp(2.25rem, 5vw, 4rem);
-}
-
-.seo-geo-preset-corporate .wp-block-post-content > .wp-block-buttons {
-	margin-top: clamp(1.25rem, 3vw, 2rem);
-	margin-bottom: clamp(1.5rem, 4vw, 3rem);
-}
-
-@media (max-width: 760px) {
-	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image),
-	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image {
-		width: calc(50% - 1rem);
-		min-height: 135px;
-		margin: 0.5rem !important;
-	}
-
-	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image) img,
-	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image img {
-		max-height: 100px;
-	}
-}
-
-@media (max-width: 480px) {
-	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image:has(+ .wp-block-image),
-	.seo-geo-preset-corporate .wp-block-post-content > .wp-block-image + .wp-block-image {
-		width: calc(100% - 1rem);
 	}
 }
