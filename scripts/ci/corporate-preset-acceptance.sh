@@ -55,7 +55,7 @@ wp_cli menu item add-custom "$CORPORATE_LEGACY_MENU_ID" 'Insights' "$BASE_URL/in
 wp_cli menu item add-custom "$CORPORATE_LEGACY_MENU_ID" 'Contact' "$BASE_URL/contact/" >/dev/null \
   || fail_smoke "corporate-nav-menu-contact" "Could not add Contact fixture navigation item" "menu item created" "failed"
 
-CORPORATE_NAV_HTML="$(wp_cli eval 'echo do_blocks( "<!-- wp:seo-geo/preset-navigation {\\"location\\":\\"primary\\"} /-->" );' 2>"${TMP_DIR}/corporate-preset-navigation.stderr")"
+CORPORATE_NAV_HTML="$(wp_cli eval '$runtime = seo_geo_theme_preset_navigation_runtime(); echo $runtime->render( array( "location" => "primary" ) );' 2>"${TMP_DIR}/corporate-preset-navigation.stderr")"
 for expected_nav_fragment in \
   'seo-geo-preset-navigation--primary' \
   '>Company<' \
@@ -67,6 +67,10 @@ for expected_nav_fragment in \
 done
 [[ "$CORPORATE_NAV_HTML" != *"wp-block-page-list"* ]] \
   || fail_smoke "corporate-nav-all-pages" "Corporate navigation fell back to an unbounded all-pages list" "no wp-block-page-list markup" "$CORPORATE_NAV_HTML"
+
+CORPORATE_NAV_BLOCK_REGISTERED="$(wp_cli eval '$registry = WP_Block_Type_Registry::get_instance(); echo $registry->is_registered( "seo-geo/preset-navigation" ) ? "1" : "0";' 2>"${TMP_DIR}/corporate-preset-nav-block.stderr" | tr -d '\r\n')"
+[[ "$CORPORATE_NAV_BLOCK_REGISTERED" == "1" ]] \
+  || fail_smoke "corporate-nav-block" "Preset navigation dynamic block was not registered" "1" "$CORPORATE_NAV_BLOCK_REGISTERED"
 
 if ! CORPORATE_MANIFEST="$(wp_cli eval '$manifest = seo_geo_theme_preset_document( "corporate", "preset.json" ); if ( ! is_array( $manifest ) ) { exit( 1 ); } echo wp_json_encode( array( "id" => $manifest["id"] ?? null, "site_type" => $manifest["site_type"] ?? null, "confirmation" => $manifest["schema"]["requires_confirmation"] ?? null, "visual" => $manifest["visual"]["design_system"] ?? null ) );' 2>"${TMP_DIR}/corporate-preset-manifest.stderr" | tr -d '\r\n')"; then
   CORPORATE_MANIFEST_ERROR="$(tr -d '\r' <"${TMP_DIR}/corporate-preset-manifest.stderr" | head -c 240)"
