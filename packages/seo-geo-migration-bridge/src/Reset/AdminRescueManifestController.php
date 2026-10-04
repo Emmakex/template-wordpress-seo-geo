@@ -22,18 +22,22 @@ final class AdminRescueManifestController {
 	public const RESET_NONCE_ACTION     = 'seo_geo_reset_apply_clone_runtime';
 	public const BOOTSTRAP_ACTION       = 'seo_geo_reset_apply_corporate_bootstrap';
 	public const BOOTSTRAP_NONCE_ACTION = 'seo_geo_reset_apply_corporate_bootstrap';
+	public const CLEAN_HOME_ACTION      = 'seo_geo_reset_create_clean_home';
+	public const CLEAN_HOME_NONCE_ACTION = 'seo_geo_reset_create_clean_home';
 
 	/**
 	 * Construct the reset-first administrator controller.
 	 *
 	 * @param RescueManifest          $manifest  Rescue manifest service.
 	 * @param CloneResetEngine        $reset     Clone reset service.
-	 * @param CorporateThemeBootstrap $bootstrap Corporate Theme bootstrap service.
+	 * @param CorporateThemeBootstrap $bootstrap  Corporate Theme bootstrap service.
+	 * @param CleanHomeRebuilder       $clean_home Clean Corporate Home draft builder.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
 		private CloneResetEngine $reset,
-		private CorporateThemeBootstrap $bootstrap
+		private CorporateThemeBootstrap $bootstrap,
+		private CleanHomeRebuilder $clean_home
 	) {
 	}
 
@@ -45,6 +49,7 @@ final class AdminRescueManifestController {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_capture' ) );
 		add_action( 'admin_post_' . self::RESET_ACTION, array( $this, 'handle_reset' ) );
 		add_action( 'admin_post_' . self::BOOTSTRAP_ACTION, array( $this, 'handle_bootstrap' ) );
+		add_action( 'admin_post_' . self::CLEAN_HOME_ACTION, array( $this, 'handle_clean_home' ) );
 	}
 
 	/**
@@ -73,6 +78,7 @@ final class AdminRescueManifestController {
 		$report           = $this->reset->report();
 		$bootstrap_plan   = $this->bootstrap->plan();
 		$bootstrap_report = $this->bootstrap->report();
+		$clean_home_plan  = $this->clean_home->plan();
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'SEO/GEO Reset & Rebuild', 'seo-geo-migration-bridge' ); ?></h1>
@@ -203,6 +209,42 @@ final class AdminRescueManifestController {
 					<?php submit_button( __( 'Apply Corporate bootstrap', 'seo-geo-migration-bridge' ), 'primary', 'submit', false ); ?>
 				</form>
 			<?php endif; ?>
+
+			<h2><?php echo esc_html__( 'Step 4 — Create clean Corporate Home', 'seo-geo-migration-bridge' ); ?></h2>
+			<p><?php echo esc_html__( 'Create a new private Home draft from Theme-owned Corporate patterns only. The old Divi/Elementor layout is not copied and Content Remap is not required.', 'seo-geo-migration-bridge' ); ?></p>
+
+			<?php if ( 0 < (int) ( $clean_home_plan['existing_draft'] ?? 0 ) ) : ?>
+				<?php $clean_home_draft_id = (int) $clean_home_plan['existing_draft']; ?>
+				<div class="notice notice-success inline">
+					<p>
+						<strong><?php echo esc_html__( 'Clean Home draft ready.', 'seo-geo-migration-bridge' ); ?></strong>
+						<?php echo esc_html__( 'It contains only Corporate preset structure; the current front page and its URL remain unchanged.', 'seo-geo-migration-bridge' ); ?>
+					</p>
+					<p>
+						<a class="button button-primary" href="<?php echo esc_url( get_edit_post_link( $clean_home_draft_id, '' ) ?: '#' ); ?>"><?php echo esc_html__( 'Edit clean Home draft', 'seo-geo-migration-bridge' ); ?></a>
+						<a class="button" href="<?php echo esc_url( get_preview_post_link( $clean_home_draft_id ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Preview clean Home', 'seo-geo-migration-bridge' ); ?></a>
+					</p>
+				</div>
+			<?php elseif ( true !== ( $clean_home_plan['ready'] ?? false ) ) : ?>
+				<div class="notice notice-warning inline">
+					<p><strong><?php echo esc_html__( 'Clean Home rebuild is not ready:', 'seo-geo-migration-bridge' ); ?></strong></p>
+					<p><code><?php echo esc_html( implode( ', ', is_array( $clean_home_plan['blockers'] ?? null ) ? $clean_home_plan['blockers'] : array() ) ); ?></code></p>
+				</div>
+			<?php else : ?>
+				<p>
+					<strong><?php echo esc_html__( 'Source URL retained:', 'seo-geo-migration-bridge' ); ?></strong>
+					<code><?php echo esc_html( (string) ( $clean_home_plan['source']['path'] ?? '/' ) ); ?></code>
+					·
+					<strong><?php echo esc_html__( 'Patterns:', 'seo-geo-migration-bridge' ); ?></strong>
+					<?php echo esc_html( (string) count( is_array( $clean_home_plan['patterns'] ?? null ) ? $clean_home_plan['patterns'] : array() ) ); ?>
+				</p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( self::CLEAN_HOME_ACTION ); ?>">
+					<input type="hidden" name="confirm" value="create-clean-home">
+					<?php wp_nonce_field( self::CLEAN_HOME_NONCE_ACTION ); ?>
+					<?php submit_button( __( 'Create clean Home draft', 'seo-geo-migration-bridge' ), 'primary', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -283,6 +325,30 @@ final class AdminRescueManifestController {
 		}
 
 		$this->redirect( 'corporate-bootstrap-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
+	}
+
+
+	/**
+	 * Create/reuse the private clean Corporate Home draft.
+	 */
+	public function handle_clean_home(): never {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::CLEAN_HOME_NONCE_ACTION );
+
+		$confirm = isset( $_POST['confirm'] ) ? sanitize_key( wp_unslash( $_POST['confirm'] ) ) : '';
+		if ( 'create-clean-home' !== $confirm ) {
+			wp_die( esc_html__( 'Clean Home creation was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+		}
+
+		$result = $this->clean_home->create_draft();
+		if ( $result instanceof WP_Error ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		$this->redirect( 'clean-home-' . sanitize_key( (string) ( $result['status'] ?? 'unknown' ) ) );
 	}
 
 	/**
