@@ -266,6 +266,231 @@
         "fabricated_evidence_allowed": false,
         "unverified_optional_sections_omitted": true
       }
+    },
+    "corporate-services-v1": {
+      "schema_version": 1,
+      "page_key": "services",
+      "slot_prefix": "seo-geo-content-slot--",
+      "slots": [
+        {
+          "id": "capabilities-heading",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capabilities-intro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-1-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-1-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-1-link",
+          "type": "link",
+          "required": true
+        },
+        {
+          "id": "capability-2-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-2-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-2-link",
+          "type": "link",
+          "required": true
+        },
+        {
+          "id": "capability-3-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-3-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "capability-3-link",
+          "type": "link",
+          "required": true
+        },
+        {
+          "id": "process-heading",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-intro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-1-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-1-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-2-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-2-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-3-title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "process-3-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "proof-heading",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-1-title",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-1-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-2-title",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-2-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-3-title",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "proof-3-body",
+          "type": "text",
+          "required": false,
+          "requires_verification": true,
+          "verification_group": "proof"
+        },
+        {
+          "id": "faq-heading",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "faq-intro",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "faq-1-question",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "faq-1-answer",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "faq-2-question",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "faq-2-answer",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "faq-3-question",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "faq-3-answer",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "final-cta-heading",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "final-cta-body",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "final-cta-button",
+          "type": "link",
+          "required": true
+        }
+      ],
+      "section_policy": [
+        {
+          "section_class": "seo-geo-corporate-native-proof",
+          "mode": "omit-unless-verified",
+          "verification_group": "proof"
+        },
+        {
+          "section_class": "seo-geo-native-faq",
+          "mode": "omit-unless-populated",
+          "content_group": "faq"
+        }
+      ],
+      "dynamic_sections": [],
+      "safety": {
+        "legacy_layout_input": false,
+        "fabricated_evidence_allowed": false,
+        "unverified_optional_sections_omitted": true,
+        "faq_filler_forbidden": true
+      }
     }
   },
   "locales": {
@@ -365,7 +590,8 @@
               "process",
               "evidence",
               "faq-if-useful"
-            ]
+            ],
+            "native_content_model": "corporate-services-v1"
           }
         },
         {
@@ -697,7 +923,8 @@
               "process",
               "evidence",
               "faq-if-useful"
-            ]
+            ],
+            "native_content_model": "corporate-services-v1"
           }
         },
         {
