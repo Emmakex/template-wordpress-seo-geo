@@ -15,10 +15,10 @@ use WP_Error;
  * Exposes read-only plans, draft creation and explicit reviewed remap application.
  */
 final class AdminNativeReplatformController {
-	public const PAGE_SLUG         = 'seo-geo-native-replatform';
-	public const ACTION            = 'seo_geo_native_replatform_create_draft';
-	public const NONCE_ACTION      = 'seo_geo_native_replatform_create_draft';
-	public const APPLY_ACTION      = 'seo_geo_native_replatform_apply_reviewed';
+	public const PAGE_SLUG          = 'seo-geo-native-replatform';
+	public const ACTION             = 'seo_geo_native_replatform_create_draft';
+	public const NONCE_ACTION       = 'seo_geo_native_replatform_create_draft';
+	public const APPLY_ACTION       = 'seo_geo_native_replatform_apply_reviewed';
 	public const APPLY_NONCE_ACTION = 'seo_geo_native_replatform_apply_reviewed';
 
 	/**
@@ -181,10 +181,10 @@ final class AdminNativeReplatformController {
 		check_admin_referer( self::apply_nonce_action( $draft_id ) );
 
 		$raw_selections = isset( $_POST['selections'] ) && is_array( $_POST['selections'] )
-			? wp_unslash( $_POST['selections'] )
+			? map_deep( wp_unslash( $_POST['selections'] ), 'sanitize_text_field' )
 			: array();
 		$raw_verified   = isset( $_POST['verified_sections'] ) && is_array( $_POST['verified_sections'] )
-			? wp_unslash( $_POST['verified_sections'] )
+			? map_deep( wp_unslash( $_POST['verified_sections'] ), 'sanitize_text_field' )
 			: array();
 
 		$selections = $this->sanitize_selections( $raw_selections );
@@ -211,7 +211,7 @@ final class AdminNativeReplatformController {
 	/**
 	 * Render reviewed candidate forms for existing native drafts.
 	 *
-	 * @param list<array<string,mixed>> $plans Native replatform plans.
+	 * @param array<int,array<string,mixed>> $plans Native replatform plans.
 	 */
 	private function render_review_forms( array $plans ): void {
 		foreach ( $plans as $plan ) {
@@ -298,7 +298,11 @@ final class AdminNativeReplatformController {
 	 * @return array{units:array<string,array<string,mixed>>,links:array<string,array<string,mixed>>,media:array<string,array<string,mixed>>}
 	 */
 	private function asset_index( array $assets ): array {
-		$result = array( 'units' => array(), 'links' => array(), 'media' => array() );
+		$result = array(
+			'units' => array(),
+			'links' => array(),
+			'media' => array(),
+		);
 
 		foreach ( array_keys( $result ) as $type ) {
 			foreach ( is_array( $assets[ $type ] ?? null ) ? $assets[ $type ] : array() as $asset ) {
@@ -351,7 +355,11 @@ final class AdminNativeReplatformController {
 				continue;
 			}
 
-			$result[ $section ] = array( 'units' => array(), 'links' => array(), 'media' => array() );
+			$result[ $section ] = array(
+				'units' => array(),
+				'links' => array(),
+				'media' => array(),
+			);
 			foreach ( array_keys( $result[ $section ] ) as $type ) {
 				$values = isset( $selection[ $type ] ) && is_array( $selection[ $type ] ) ? $selection[ $type ] : array();
 				foreach ( $values as $value ) {
