@@ -30,8 +30,8 @@ final class NativeReviewEvidence {
 	 * @return array<string,mixed>
 	 */
 	public function snapshot( int $draft_id ): array {
-		$blockers      = array();
-		$draft         = get_post( $draft_id );
+		$blockers       = array();
+		$draft          = get_post( $draft_id );
 		$sandbox_active = defined( 'SEO_GEO_MIGRATION_SANDBOX' )
 			&& true === constant( 'SEO_GEO_MIGRATION_SANDBOX' );
 
