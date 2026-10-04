@@ -68,6 +68,8 @@ $required = array(
 	MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationPresetResolver.php',
 	MIGRATION_BRIDGE_DIR . '/src/Migration/MigrationEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Migration/AdminMigrationController.php',
+	MIGRATION_BRIDGE_DIR . '/src/Replatform/NativeCompositionService.php',
+	MIGRATION_BRIDGE_DIR . '/src/Replatform/AdminNativeReplatformController.php',
 	MIGRATION_BRIDGE_DIR . '/src/Parity/ParityAllowlist.php',
 	MIGRATION_BRIDGE_DIR . '/src/Parity/SeoParityEngine.php',
 	MIGRATION_BRIDGE_DIR . '/src/Cutover/PublicSnapshotProviderInterface.php',
@@ -187,6 +189,7 @@ $php_files = array_merge(
 	glob( MIGRATION_BRIDGE_DIR . '/src/Content/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Sandbox/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Migration/*.php' ) ?: array(),
+	glob( MIGRATION_BRIDGE_DIR . '/src/Replatform/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Parity/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Cutover/*.php' ) ?: array(),
 	glob( MIGRATION_BRIDGE_DIR . '/src/Report/*.php' ) ?: array(),
@@ -230,6 +233,10 @@ $authorized_mutation_calls = array(
 		'deactivate_plugins',
 		'switch_theme',
 	),
+	MIGRATION_BRIDGE_DIR . '/src/Replatform/NativeCompositionService.php' => array(
+		'wp_insert_post',
+		'update_post_meta',
+	),
 );
 
 foreach ( $php_files as $path ) {
@@ -246,11 +253,70 @@ foreach ( $php_files as $path ) {
 				'destructive-api',
 				'Mutation API exists outside an explicitly authorized migration/cutover engine boundary.',
 				$path,
-				'only approved mutation APIs in MigrationEngine.php or CutoverEngine.php',
+				'only approved mutation APIs in MigrationEngine.php, NativeCompositionService.php or CutoverEngine.php',
 				$function_name
 			);
 		}
 	}
+}
+
+$native_replatform = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Replatform/NativeCompositionService.php' );
+foreach (
+	array(
+		"'native-replatform-plan'",
+		"'native-replatform-draft'",
+		"'source-page-not-found'",
+		"'native-composition-empty'",
+		"'source_post_mutation'     => false",
+		"'public_post_creation'     => false",
+		"'legacy_visual_parity'     => false",
+		"'native_draft_only'        => true",
+		"'post_status'  => 'draft'",
+		"defined( 'SEO_GEO_MIGRATION_SANDBOX' )",
+		'WP_Block_Patterns_Registry::get_instance()->get_registered( $slug )',
+		'self::SOURCE_SHA_META',
+		'self::PLAN_SHA_META',
+	) as $native_replatform_guard
+) {
+	if ( ! str_contains( $native_replatform, $native_replatform_guard ) ) {
+		fail_migration_bridge(
+			'native-replatform-composer',
+			'Native Replatform composer is missing a source-preservation, sandbox, draft-only or deterministic-composition guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Replatform/NativeCompositionService.php',
+			$native_replatform_guard,
+			'missing'
+		);
+	}
+}
+
+$native_replatform_controller = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Replatform/AdminNativeReplatformController.php' );
+foreach (
+	array(
+		"public const ACTION       = 'seo_geo_native_replatform_create_draft';",
+		"current_user_can( 'manage_options' )",
+		'check_admin_referer( self::nonce_action( $page_key ) )',
+		"'create-native-draft'",
+		'admin_post_' . "' . self::ACTION",
+	) as $native_replatform_controller_guard
+) {
+	if ( ! str_contains( $native_replatform_controller, $native_replatform_controller_guard ) ) {
+		fail_migration_bridge(
+			'native-replatform-controller',
+			'Native Replatform admin surface is missing an administrator, nonce or explicit-confirmation guard.',
+			MIGRATION_BRIDGE_DIR . '/src/Replatform/AdminNativeReplatformController.php',
+			$native_replatform_controller_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $native_replatform_controller, 'admin_post_nopriv_' ) ) {
+	fail_migration_bridge(
+		'native-replatform-public-endpoint',
+		'Native Replatform draft creation must never expose an unauthenticated endpoint.',
+		MIGRATION_BRIDGE_DIR . '/src/Replatform/AdminNativeReplatformController.php',
+		'authenticated admin_post action only',
+		'admin_post_nopriv_'
+	);
 }
 
 $read_only_files = array_merge(

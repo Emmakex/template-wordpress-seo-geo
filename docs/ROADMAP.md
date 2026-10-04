@@ -2590,6 +2590,36 @@ Next:
 5. run SEO/GEO + performance + accessibility regression evidence before cutover.
 
 
+
+### Microphase 10E.4 — Native Replatform Composer
+
+Status: **active — draft-only composer implemented; content remap intelligence is next**
+
+Goal: bridge preserved legacy assets into the new preset-native presentation without modifying the public source page.
+
+Implemented:
+
+- read-only native composition planning from the active preset/content map;
+- source-page resolution for front page, posts page, privacy page and slug-bound singleton pages;
+- composition assembled from WordPress' registered native pattern authority;
+- deterministic source/content/composition SHA-256 plan;
+- draft-only replacement page creation inside accepted sandbox;
+- source URL, slug and content remain untouched;
+- replatform metadata binds draft to source ID/hash/path, preset, page key and plan hash;
+- equivalent draft creation is idempotent;
+- administrator-only Tools screen with nonce + explicit confirmation;
+- no public/unauthenticated mutation endpoint;
+- WordPress smoke acceptance verifies source preservation, native pattern order and draft-only behavior.
+
+Next:
+
+1. implement **Content Remap Intelligence**: extract reusable facts/content/links/media from the preserved source;
+2. map those assets into the semantic slots of the native Corporate composition;
+3. keep uncertain mappings explicit/manual-review rather than inventing copy;
+4. preview Home replacement in `/nuevaweb/` while source Home remains recoverable;
+5. run SEO/GEO regression before any controlled swap.
+
+
 ### Microphase 10E.2A — Portable Clone Engine
 
 Status: **active — 10E.2A.1 through 10E.2A.5.2.2.2 accepted; 10E.2A.5.3.1 private same-server package handoff is the 0.8.27 candidate**

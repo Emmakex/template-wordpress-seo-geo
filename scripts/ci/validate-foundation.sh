@@ -224,6 +224,7 @@ required_paths=(
   "scripts/ci/migration-bridge-sandbox-handoff-acceptance.sh"
   "scripts/ci/migration-bridge-sandbox-lab-acceptance.sh"
   "scripts/ci/migration-bridge-migration-engine-acceptance.sh"
+  "scripts/ci/migration-bridge-native-replatform-acceptance.sh"
   "scripts/ci/migration-bridge-parity-acceptance.sh"
   "scripts/ci/migration-bridge-cutover-acceptance.sh"
   "scripts/ci/migration-bridge-report-acceptance.sh"
