@@ -109,6 +109,8 @@ use SeoGeo\MigrationBridge\Replatform\AdminNativeReplatformController;
 use SeoGeo\MigrationBridge\Replatform\NativeCompositionService;
 use SeoGeo\MigrationBridge\Replatform\ReviewedRemapApplier;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
+use SeoGeo\MigrationBridge\Reset\AdminRescueManifestController;
+use SeoGeo\MigrationBridge\Reset\RescueManifest;
 use SeoGeo\MigrationBridge\Sandbox\SandboxGuard;
 use SeoGeo\MigrationBridge\Sandbox\SandboxMigrationLab;
 
@@ -241,6 +243,20 @@ final class Plugin {
 	 * @var AdminDependencyReviewController|null
 	 */
 	private static ?AdminDependencyReviewController $dependency_review_controller = null;
+
+	/**
+	 * Reset/Rebuild rescue manifest singleton.
+	 *
+	 * @var RescueManifest|null
+	 */
+	private static ?RescueManifest $rescue_manifest = null;
+
+	/**
+	 * Reset/Rebuild administrator controller singleton.
+	 *
+	 * @var AdminRescueManifestController|null
+	 */
+	private static ?AdminRescueManifestController $rescue_manifest_controller = null;
 
 	/**
 	 * Portable Clone resumable job store singleton.
@@ -1105,6 +1121,8 @@ final class Plugin {
 
 		self::$sandbox_handoff_controller   ??= new AdminSandboxHandoffController();
 		self::$dependency_review_controller ??= new AdminDependencyReviewController();
+		self::$rescue_manifest              ??= new RescueManifest();
+		self::$rescue_manifest_controller   ??= new AdminRescueManifestController( self::$rescue_manifest );
 
 		SandboxGuard::boot();
 		self::$migration_controller->boot();
@@ -1113,6 +1131,7 @@ final class Plugin {
 		self::$baseline_capture_controller->boot();
 		self::$sandbox_handoff_controller->boot();
 		self::$dependency_review_controller->boot();
+		self::$rescue_manifest_controller->boot();
 		self::$clone_controller->boot();
 		self::$clone_inventory_controller->boot();
 		self::$local_clone_plan_controller->boot();
@@ -1219,6 +1238,13 @@ final class Plugin {
 	 */
 	public static function operator_status(): ?OperatorStatus {
 		return self::$operator_status;
+	}
+
+	/**
+	 * Return the reset-first Rescue Manifest service.
+	 */
+	public static function rescue_manifest(): ?RescueManifest {
+		return self::$rescue_manifest;
 	}
 
 	/**
