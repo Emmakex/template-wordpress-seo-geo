@@ -418,6 +418,10 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 	/**
 	 * Build responsive image HTML while preserving WordPress runtime loading
 	 * heuristics for likely LCP media.
+	 *
+	 * @param int    $attachment_id WordPress attachment ID when available.
+	 * @param string $url           Fallback public image URL.
+	 * @param string $alt           Alternative text.
 	 */
 	private function responsive_image_markup( int $attachment_id, string $url, string $alt ): string {
 		if ( 0 < $attachment_id ) {
