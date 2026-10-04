@@ -3470,6 +3470,7 @@ foreach (
 		"'reset-rebuild-clean-corporate-page-plan'",
 		"'home-has-dedicated-rebuilder'",
 		"'source-page-selection-required'",
+		"'page-source-binding-conflict'",
 		"'inner-page-source-cannot-be-front-page'",
 		"'source-page-content-drift'",
 		"'corporate-page-patterns-empty'",
