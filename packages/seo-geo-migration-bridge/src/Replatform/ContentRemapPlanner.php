@@ -129,10 +129,10 @@ final class ContentRemapPlanner {
 	/**
 	 * Extract leaf-block assets recursively without rendering dynamic blocks.
 	 *
-	 * @param array<int,mixed>                    $blocks Parsed WordPress blocks.
-	 * @param array<int,array<string,mixed>>      $units  Text units.
-	 * @param array<string,array<string,mixed>>   $links  Links keyed by normalized identity.
-	 * @param array<string,array<string,mixed>>   $media  Media keyed by normalized identity.
+	 * @param array<int,mixed>                  $blocks Parsed WordPress blocks.
+	 * @param array<int,array<string,mixed>>    $units  Text units.
+	 * @param array<string,array<string,mixed>> $links  Links keyed by normalized identity.
+	 * @param array<string,array<string,mixed>> $media  Media keyed by normalized identity.
 	 */
 	private function collect_blocks( array $blocks, array &$units, array &$links, array &$media ): void {
 		foreach ( $blocks as $block ) {
@@ -209,8 +209,8 @@ final class ContentRemapPlanner {
 	/**
 	 * Extract bounded links from one static HTML fragment.
 	 *
-	 * @param string                                $html  Static block HTML.
-	 * @param array<string,array<string,mixed>>     $links Link store.
+	 * @param string                            $html  Static block HTML.
+	 * @param array<string,array<string,mixed>> $links Link store.
 	 */
 	private function collect_links( string $html, array &$links ): void {
 		if ( '' === $html || count( $links ) >= self::MAX_LINKS || ! class_exists( WP_HTML_Tag_Processor::class ) ) {
@@ -246,9 +246,9 @@ final class ContentRemapPlanner {
 	/**
 	 * Extract bounded image/media references from one static HTML fragment.
 	 *
-	 * @param string                                $html  Static block HTML.
-	 * @param array<string,mixed>                   $block Parsed source block.
-	 * @param array<string,array<string,mixed>>     $media Media store.
+	 * @param string                            $html  Static block HTML.
+	 * @param array<string,mixed>               $block Parsed source block.
+	 * @param array<string,array<string,mixed>> $media Media store.
 	 */
 	private function collect_media( string $html, array $block, array &$media ): void {
 		if ( '' === $html || count( $media ) >= self::MAX_MEDIA || ! class_exists( WP_HTML_Tag_Processor::class ) ) {
@@ -293,10 +293,10 @@ final class ContentRemapPlanner {
 	/**
 	 * Build candidates for one preset-required semantic section.
 	 *
-	 * @param string                                $section Required semantic section.
-	 * @param array<int,array<string,mixed>>        $units   Extracted text units.
-	 * @param array<string,array<string,mixed>>     $links   Extracted links.
-	 * @param array<string,array<string,mixed>>     $media   Extracted media.
+	 * @param string                            $section Required semantic section.
+	 * @param array<int,array<string,mixed>>    $units   Extracted text units.
+	 * @param array<string,array<string,mixed>> $links   Extracted links.
+	 * @param array<string,array<string,mixed>> $media   Extracted media.
 	 * @return array<string,mixed>
 	 */
 	private function slot_candidates( string $section, array $units, array $links, array $media ): array {
