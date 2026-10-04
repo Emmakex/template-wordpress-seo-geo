@@ -15,6 +15,7 @@ require_once get_template_directory() . '/inc/seo-geo-core/bootstrap.php';
 require_once get_template_directory() . '/inc/presets.php';
 require_once get_template_directory() . '/inc/setup.php';
 require_once get_template_directory() . '/inc/Forms/ContactFormRuntime.php';
+require_once get_template_directory() . '/inc/Navigation/PresetNavigationRuntime.php';
 
 /**
  * Load project-owned translations.
@@ -127,3 +128,18 @@ function seo_geo_theme_contact_form_runtime(): \SeoGeo\Theme\Forms\ContactFormRu
 }
 
 seo_geo_theme_contact_form_runtime()->register();
+
+/**
+ * Register the preset-owned navigation runtime.
+ */
+function seo_geo_theme_preset_navigation_runtime(): \SeoGeo\Theme\Navigation\PresetNavigationRuntime {
+	static $runtime = null;
+
+	if ( ! $runtime instanceof \SeoGeo\Theme\Navigation\PresetNavigationRuntime ) {
+		$runtime = new \SeoGeo\Theme\Navigation\PresetNavigationRuntime();
+	}
+
+	return $runtime;
+}
+
+seo_geo_theme_preset_navigation_runtime()->register();
