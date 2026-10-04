@@ -435,7 +435,7 @@ final class DiviMigrationAdapter implements BuilderMigrationAdapterInterface {
 				)
 			);
 
-			if ( is_string( $markup ) && '' !== $markup ) {
+			if ( '' !== $markup ) {
 				return $markup;
 			}
 		}
