@@ -13,6 +13,7 @@ namespace SeoGeo\Core\Seo;
  * Resolves the authoritative provider for overlapping SEO output.
  */
 final class SeoOutputAuthority {
+	public const SIGNAL_TITLE            = 'title';
 	public const SIGNAL_CANONICAL        = 'canonical';
 	public const SIGNAL_META_DESCRIPTION = 'meta_description';
 	public const SIGNAL_ROBOTS           = 'robots';
@@ -33,6 +34,7 @@ final class SeoOutputAuthority {
 	 * @var array<int, string>
 	 */
 	private const SUPPORTED_SIGNALS = array(
+		self::SIGNAL_TITLE,
 		self::SIGNAL_CANONICAL,
 		self::SIGNAL_META_DESCRIPTION,
 		self::SIGNAL_ROBOTS,
