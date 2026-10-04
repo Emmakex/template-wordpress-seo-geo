@@ -847,12 +847,12 @@ final class Plugin {
 	 * Initialize Migration Bridge services.
 	 */
 	public static function boot(): void {
-		self::$analyzer               ??= new SiteAnalyzer();
-		self::$baseline_snapshotter   ??= new BaselineSnapshotter();
-		self::$dependency_graph       ??= new DependencyGraphBuilder();
-		self::$sandbox_lab            ??= new SandboxMigrationLab();
-		self::$migration_engine       ??= new MigrationEngine();
-		self::$migration_controller   ??= new AdminMigrationController( self::$migration_engine );
+		self::$analyzer             ??= new SiteAnalyzer();
+		self::$baseline_snapshotter ??= new BaselineSnapshotter();
+		self::$dependency_graph     ??= new DependencyGraphBuilder();
+		self::$sandbox_lab          ??= new SandboxMigrationLab();
+		self::$migration_engine     ??= new MigrationEngine();
+		self::$migration_controller ??= new AdminMigrationController( self::$migration_engine );
 
 		self::$native_replatform_composer   ??= new NativeCompositionService();
 		self::$native_replatform_controller ??= new AdminNativeReplatformController( self::$native_replatform_composer );
