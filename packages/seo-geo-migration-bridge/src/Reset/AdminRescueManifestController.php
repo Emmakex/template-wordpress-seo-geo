@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Reset;
 
-use WP_Error;
 
 /**
  * Provides the first reset-first rebuild action without legacy dependency gates.
@@ -109,10 +108,7 @@ final class AdminRescueManifestController {
 			wp_die( esc_html__( 'Rescue Manifest capture was not explicitly confirmed.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 		}
 
-		$result = $this->manifest->capture();
-		if ( isset( $result['error'] ) && $result['error'] instanceof WP_Error ) {
-			wp_die( esc_html( $result['error']->get_error_message() ), '', array( 'response' => 400 ) );
-		}
+		$this->manifest->capture();
 
 		$redirect = add_query_arg(
 			array(
