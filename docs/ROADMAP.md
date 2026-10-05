@@ -2913,12 +2913,9 @@ Accepted behavior:
 
 Current execution pointer:
 
-- deploy the accepted field-pilot pack to `emmake.com/nuevaweb/`;
-- verify its outer SHA-256;
-- execute the bundled runbook;
-- require Step 7 `ready_for_browser_qa=true`;
-- fill the five browser QA evidence fields;
-- only then decide whether Home cutover is eligible for explicit approval.
+- superseded as the global execution pointer by **10E.4E.final complete-site sandbox acceptance**;
+- the deterministic Home pack remains valid input/evidence for the Home portion of the complete-site test;
+- no Home-only cutover decision is taken before the whole-site readiness and browser QA sequence is complete.
 
 Rebuild in this order:
 
@@ -2951,7 +2948,7 @@ Rules:
 
 ### 10E.4E — Remaining page rebuild + clean-site acceptance
 
-Status: **active — 10E.4E.3 / Migration Bridge 0.8.58 candidate**
+Status: **active — 10E.4E.final / complete-site sandbox acceptance is the current execution pointer**
 
 The Home path is accepted. Product development now continues through the remaining Corporate pages before the final whole-site acceptance gate. The real `/nuevaweb/` Home field pilot remains a parallel execution task and does not justify duplicating Home infrastructure.
 
@@ -3022,7 +3019,7 @@ Next after acceptance:
 
 #### 10E.4E.3 — Complete Corporate page pipeline + Insights + whole-site readiness
 
-Status: **active — PR #232 / Migration Bridge 0.8.58 candidate / current development pointer**
+Status: **accepted — PR #232 / 13 of 13 CI gates green / merge `d1c81cc57ef641dc00d07c10e2bcc7111cdb064a` / Migration Bridge 0.8.58**
 
 Goal:
 
@@ -3062,7 +3059,29 @@ Next only after acceptance:
 
 #### 10E.4E.final — Clean-site acceptance
 
-Status: **planned**
+Status: **active — current execution pointer / functional development frozen at Migration Bridge 0.8.58**
+
+Development freeze evidence:
+
+- PR #232 accepted and merged as `d1c81cc57ef641dc00d07c10e2bcc7111cdb064a`;
+- all 13 repository gates passed on the exact 0.8.58 head;
+- WPCS and PHPStan level 6 green;
+- WordPress Smoke green on WordPress 7.1 / PHP 8.2;
+- Theme, multilingual, accessibility/responsive and Lighthouse performance gates green;
+- deterministic Migration Bridge 0.8.58 release and EMMAKE field-pilot pack green;
+- no automatic production cutover exists.
+
+Execution order for `/nuevaweb/`:
+
+1. install/verify the accepted SEO/GEO Theme + Migration Bridge 0.8.58 artifacts;
+2. run Rescue Manifest + Clone Reset + Corporate bootstrap;
+3. complete Home pipeline;
+4. complete Services, Work, About and Contact through the generic page pipeline;
+5. assign and validate native dynamic Insights;
+6. require `CorporateSiteReadiness` global machine gate green;
+7. execute page-by-page and whole-site browser QA;
+8. record defects and fix only evidence-backed failures;
+9. production cutover remains a separate explicit decision.
 
 Validate:
 
