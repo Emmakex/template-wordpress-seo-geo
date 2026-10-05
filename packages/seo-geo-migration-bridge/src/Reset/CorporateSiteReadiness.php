@@ -15,10 +15,21 @@ use WP_Post;
  * Aggregates accepted page pipelines before global browser QA begins.
  */
 final class CorporateSiteReadiness {
-	/** @var list<string> */
+	/**
+	 * Corporate inner pages required by the whole-site gate.
+	 *
+	 * @var list<string>
+	 */
 	private const INNER_PAGE_KEYS = array( 'services', 'work', 'about', 'contact' );
 
-	/** Construct the whole-site readiness gate. */
+	/**
+	 * Construct the whole-site readiness gate.
+	 *
+	 * @param HomePilotReadiness            $home     Home readiness authority.
+	 * @param CorporatePageReadiness        $pages    Corporate inner-page readiness authority.
+	 * @param CorporateInsightsManager      $insights Corporate Insights manager.
+	 * @param CleanCorporatePageRebuilder   $builder  Clean Corporate page builder.
+	 */
 	public function __construct(
 		private HomePilotReadiness $home,
 		private CorporatePageReadiness $pages,
@@ -108,7 +119,7 @@ final class CorporateSiteReadiness {
 		}
 
 		$posts_page = (int) get_option( 'page_for_posts', 0 );
-		if ( 0 >= $front_id || 0 >= $posts_page || $front_id === $posts_page ) {
+		if ( 0 >= $front_id || 0 >= $posts_page || $posts_page === $front_id ) {
 			$blockers[] = 'front-and-insights-authority-invalid';
 		}
 
