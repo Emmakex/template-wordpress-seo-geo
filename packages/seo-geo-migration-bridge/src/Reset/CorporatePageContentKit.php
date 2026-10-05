@@ -108,8 +108,8 @@ final class CorporatePageContentKit {
 		if (
 			self::BLUEPRINT_SCHEMA_VERSION !== ( $blueprint['schema_version'] ?? null )
 			|| self::BLUEPRINT_MODE !== ( $blueprint['mode'] ?? null )
-			|| $page_key !== sanitize_key( (string) ( $blueprint['page_key'] ?? '' ) )
-			|| $name !== (string) ( $blueprint['model'] ?? '' )
+			|| sanitize_key( (string) ( $blueprint['page_key'] ?? '' ) ) !== $page_key
+			|| (string) ( $blueprint['model'] ?? '' ) !== $name
 		) {
 			return new WP_Error( 'seo_geo_page_blueprint_contract_invalid', 'Content Blueprint schema, page key, mode or model is invalid.' );
 		}
@@ -129,7 +129,7 @@ final class CorporatePageContentKit {
 			return $normalized;
 		}
 
-		$material                     = array(
+		$material = array(
 			'schema_version'  => self::BLUEPRINT_SCHEMA_VERSION,
 			'mode'            => self::BLUEPRINT_MODE,
 			'page_key'        => $page_key,
@@ -202,7 +202,7 @@ final class CorporatePageContentKit {
 		if ( 0 >= $draft_id || 'page' !== get_post_type( $draft_id ) || 'draft' !== get_post_status( $draft_id ) ) {
 			return new WP_Error( 'seo_geo_page_content_draft_required', 'A private clean Corporate page draft is required.' );
 		}
-		if ( $page_key !== (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::PAGE_KEY_META, true ) ) {
+		if ( (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::PAGE_KEY_META, true ) !== $page_key ) {
 			return new WP_Error( 'seo_geo_page_content_key_mismatch', 'The clean draft does not belong to the requested Corporate page key.' );
 		}
 
@@ -220,7 +220,7 @@ final class CorporatePageContentKit {
 			return $normalized;
 		}
 
-		$material               = array(
+		$material = array(
 			'schema_version'  => 1,
 			'mode'            => 'corporate-page-content-kit',
 			'page_key'        => $page_key,
@@ -436,7 +436,11 @@ final class CorporatePageContentKit {
 		return null;
 	}
 
-	/** Hash deterministic reviewed-content material. */
+	/**
+	 * Hash deterministic reviewed-content material.
+	 *
+	 * @param array<string,mixed> $material Deterministic content material.
+	 */
 	private function hash_material( array $material ): string {
 		return hash(
 			'sha256',
@@ -449,7 +453,12 @@ final class CorporatePageContentKit {
 		return function_exists( 'seo_geo_theme_preset_locale' ) ? (string) \seo_geo_theme_preset_locale() : get_locale();
 	}
 
-	/** Normalize one typed slot value. */
+	/**
+	 * Normalize one typed slot value.
+	 *
+	 * @param string $type  Semantic slot type.
+	 * @param mixed  $value Submitted slot value.
+	 */
 	private function normalize_value( string $type, mixed $value ): mixed {
 		if ( 'text' === $type ) {
 			return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
@@ -482,7 +491,12 @@ final class CorporatePageContentKit {
 		return null;
 	}
 
-	/** Whether one normalized slot value is empty. */
+	/**
+	 * Whether one normalized slot value is empty.
+	 *
+	 * @param string $type  Semantic slot type.
+	 * @param mixed  $value Normalized slot value.
+	 */
 	private function empty_value( string $type, mixed $value ): bool {
 		if ( 'text' === $type ) {
 			return ! is_string( $value ) || '' === $value;
@@ -497,7 +511,11 @@ final class CorporatePageContentKit {
 		return true;
 	}
 
-	/** Accept only HTTP(S), root-relative and fragment links. */
+	/**
+	 * Accept only HTTP(S), root-relative and fragment links.
+	 *
+	 * @param string $url Candidate URL.
+	 */
 	private function safe_url( string $url ): string {
 		if ( '' === $url || 1 !== preg_match( '#^(?:https?://|/|\#)#i', $url ) ) {
 			return '';
