@@ -2,7 +2,11 @@
 
 All notable changes to the installable self-contained SEO/GEO theme are recorded here.
 
-## [Unreleased] — target 0.1.0
+## [Unreleased] — target 0.1.1
+
+- Migration Bridge 0.8.60 adds the **automatic Home quality pass** discovered by the real EMMAKE `/nuevaweb/` browser pilot: structural pages such as `Nuestras Marcas` no longer become capabilities, semantic fallbacks are ranked from rescued evidence, process copy is selected more deliberately, the generated draft receives a descriptive H1, and detected capability titles are visible before mutation.
+
+- Theme 0.1.1 removes inherited legacy tagline rendering from the rebuilt footer and hardens Corporate Insights cards for responsive and print/PDF layouts while preserving the self-contained zero-plugin runtime.
 
 - Migration Bridge 0.8.58 completes the **Corporate reset-first page pipeline and whole-site readiness**: reusable Services/Work/About/Contact Blueprint→hydration→SEO→readiness flow, evidence/provenance/contact safety gates, native dynamic Insights index, reversible assignment, and a final machine gate across Home + all inner surfaces before browser QA.
 
@@ -75,4 +79,4 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 - `release/version.json` is the authoritative target version source.
 - The WordPress `style.css` theme header must match that version exactly.
 - This entry remains Unreleased until the stable-release decision in the final Phase 10 gate.
-- Current Phase 10E decision is **NO-GO**: `0.1.0` remains `prestable` until a selected real site completes sandbox + production acceptance.
+- Current Phase 10E decision is **NO-GO**: `0.1.1` remains `prestable` until a selected real site completes sandbox + production acceptance.

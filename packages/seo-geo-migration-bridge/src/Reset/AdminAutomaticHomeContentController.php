@@ -22,11 +22,11 @@ final class AdminAutomaticHomeContentController {
 	/**
 	 * Construct the operator controller.
 	 *
-	 * @param AutomaticHomeContentKit $automatic Automatic content extraction and hydration service.
-	 * @param CleanHomeRebuilder      $builder   Clean Corporate Home builder.
+	 * @param AutomaticHomeContentQualityKit $automatic Automatic content extraction and hydration service.
+	 * @param CleanHomeRebuilder             $builder   Clean Corporate Home builder.
 	 */
 	public function __construct(
-		private AutomaticHomeContentKit $automatic,
+		private AutomaticHomeContentQualityKit $automatic,
 		private CleanHomeRebuilder $builder
 	) {
 	}
@@ -46,7 +46,7 @@ final class AdminAutomaticHomeContentController {
 			return;
 		}
 
-		( new self( new AutomaticHomeContentKit( $manifest, $builder, $kit, $hydrator ), $builder ) )->boot();
+		( new self( new AutomaticHomeContentQualityKit( $manifest, $builder, $kit, $hydrator ), $builder ) )->boot();
 	}
 
 	/** Register the notice and mutation action. */
@@ -88,7 +88,10 @@ final class AdminAutomaticHomeContentController {
 				<p>
 					<?php echo esc_html__( 'Detected:', 'seo-geo-migration-bridge' ); ?>
 					<strong><?php echo esc_html( (string) (int) ( $plan['detected']['sentences'] ?? 0 ) ); ?></strong> <?php echo esc_html__( 'content units', 'seo-geo-migration-bridge' ); ?> ·
-					<strong><?php echo esc_html( (string) (int) ( $plan['detected']['capabilities'] ?? 0 ) ); ?></strong> <?php echo esc_html__( 'capabilities', 'seo-geo-migration-bridge' ); ?> ·
+					<strong><?php echo esc_html( (string) (int) ( $plan['detected']['capabilities'] ?? 0 ) ); ?></strong> <?php echo esc_html__( 'capabilities', 'seo-geo-migration-bridge' ); ?>
+					<?php if ( ! empty( $plan['detected']['capability_titles'] ) && is_array( $plan['detected']['capability_titles'] ) ) : ?>
+						<code><?php echo esc_html( implode( ' · ', array_map( 'strval', $plan['detected']['capability_titles'] ) ) ); ?></code>
+					<?php endif; ?> ·
 					<?php echo esc_html__( 'contact target', 'seo-geo-migration-bridge' ); ?> <code><?php echo esc_html( (string) ( $plan['detected']['contact_path'] ?? '' ) ); ?></code>
 				</p>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
