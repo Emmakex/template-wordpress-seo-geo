@@ -24,7 +24,11 @@ final class CorporateInsightsManager {
 	public const BACKUP_OPTION = 'seo_geo_corporate_insights_backup_v1';
 	public const REPORT_OPTION = 'seo_geo_corporate_insights_report_v1';
 
-	/** Construct the Insights manager. */
+	/**
+	 * Construct the Insights manager.
+	 *
+	 * @param RescueManifest $manifest Rescue Manifest authority.
+	 */
 	public function __construct( private RescueManifest $manifest ) {
 	}
 
@@ -39,7 +43,7 @@ final class CorporateInsightsManager {
 		$manifest = $this->manifest->saved();
 		$bound    = (int) get_option( self::SOURCE_OPTION, 0 );
 
-		if ( 0 < $source_id && 0 < $bound && $source_id !== $bound ) {
+		if ( 0 < $source_id && 0 < $bound && $bound !== $source_id ) {
 			$blockers[] = 'insights-source-binding-conflict';
 		}
 		$source_id = 0 < $source_id ? $source_id : $bound;
@@ -56,7 +60,7 @@ final class CorporateInsightsManager {
 		if ( 'page' !== (string) get_option( 'show_on_front', 'posts' ) || 0 >= (int) get_option( 'page_on_front', 0 ) ) {
 			$blockers[] = 'static-front-page-required';
 		}
-		if ( 0 < $source_id && $source_id === (int) get_option( 'page_on_front', 0 ) ) {
+		if ( 0 < $source_id && (int) get_option( 'page_on_front', 0 ) === $source_id ) {
 			$blockers[] = 'insights-source-cannot-be-front-page';
 		}
 
@@ -187,7 +191,7 @@ final class CorporateInsightsManager {
 		$this->write_or_delete( $source_id, NativeSeoMetadata::META_INDEXABILITY, $overrides['indexability'] ?? null );
 		delete_post_meta( $source_id, NativeSeoMetadata::META_CANONICAL );
 
-		$report                  = array(
+		$report = array(
 			'schema_version'     => 1,
 			'mode'               => 'corporate-insights-native-index',
 			'status'             => 'applied',
@@ -199,7 +203,7 @@ final class CorporateInsightsManager {
 			'review_items'       => is_array( $plan['review_items'] ?? null ) ? $plan['review_items'] : array(),
 			'cutover_seo_ready'  => true !== ( $plan['review_required'] ?? false ),
 			'source_unchanged'   => $this->source_matches_manifest( $source_id ),
-			'posts_page_applied' => $source_id === (int) get_option( 'page_for_posts', 0 ),
+			'posts_page_applied' => (int) get_option( 'page_for_posts', 0 ) === $source_id,
 			'applied_at'         => gmdate( DATE_ATOM ),
 		);
 		$report['report_sha256'] = hash(
@@ -254,12 +258,13 @@ final class CorporateInsightsManager {
 		$report    = get_option( self::REPORT_OPTION, null );
 		$blockers  = array();
 		$template  = get_template_directory() . '/templates/home.html';
-		$content   = is_readable( $template ) ? (string) file_get_contents( $template ) : '';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads a local Theme template file only.
+		$content = is_readable( $template ) ? (string) file_get_contents( $template ) : '';
 
 		if ( ! SandboxGuard::enabled() ) {
 			$blockers[] = 'sandbox-marker-required';
 		}
-		if ( 0 >= $source_id || $source_id !== (int) get_option( 'page_for_posts', 0 ) ) {
+		if ( 0 >= $source_id || (int) get_option( 'page_for_posts', 0 ) !== $source_id ) {
 			$blockers[] = 'native-posts-page-assignment-required';
 		}
 		if ( ! $this->source_matches_manifest( $source_id ) || 'publish' !== get_post_status( $source_id ) ) {
@@ -309,7 +314,12 @@ final class CorporateInsightsManager {
 		);
 	}
 
-	/** Back up provider-neutral native metadata exactly. */
+	/**
+	 * Back up provider-neutral native metadata exactly.
+	 *
+	 * @param int $post_id Source page ID.
+	 * @return array<string,mixed>
+	 */
 	private function native_meta_backup( int $post_id ): array {
 		$keys   = array(
 			NativeSeoMetadata::META_TITLE,
@@ -328,7 +338,12 @@ final class CorporateInsightsManager {
 		return $backup;
 	}
 
-	/** Restore provider-neutral native metadata exactly. */
+	/**
+	 * Restore provider-neutral native metadata exactly.
+	 *
+	 * @param int                 $post_id Source page ID.
+	 * @param array<string,mixed> $backup  Native metadata backup.
+	 */
 	private function restore_native_meta( int $post_id, array $backup ): void {
 		foreach ( $backup as $key => $state ) {
 			if ( ! is_string( $key ) || ! is_array( $state ) ) {
@@ -342,7 +357,11 @@ final class CorporateInsightsManager {
 		}
 	}
 
-	/** Resolve captured SEO provider family. */
+	/**
+	 * Resolve captured SEO provider family.
+	 *
+	 * @param array<string,mixed> $seo Captured SEO metadata.
+	 */
 	private function provider( array $seo ): string {
 		$yoast = $this->has_any_key( $seo, array( '_yoast_wpseo_title', '_yoast_wpseo_metadesc', '_yoast_wpseo_canonical', '_yoast_wpseo_meta-robots-noindex', '_yoast_wpseo_meta-robots-nofollow' ) );
 		$rank  = $this->has_any_key( $seo, array( 'rank_math_title', 'rank_math_description', 'rank_math_canonical_url', 'rank_math_robots' ) );
@@ -353,7 +372,14 @@ final class CorporateInsightsManager {
 		return $rank ? 'rank-math' : ( $yoast ? 'yoast' : 'none' );
 	}
 
-	/** Resolve safe plain legacy title/description. */
+	/**
+	 * Resolve safe plain legacy title/description.
+	 *
+	 * @param array<string,mixed> $seo          Captured SEO metadata.
+	 * @param string              $provider     Provider family.
+	 * @param string              $field        Provider field name.
+	 * @param list<string>        $review_items Review items accumulator.
+	 */
 	private function plain_provider_value( array $seo, string $provider, string $field, array &$review_items ): ?string {
 		$value = $this->provider_value( $seo, $provider, $field );
 		if ( null === $value ) {
@@ -369,7 +395,13 @@ final class CorporateInsightsManager {
 		return '' !== $value ? $value : null;
 	}
 
-	/** Resolve one scalar provider value. */
+	/**
+	 * Resolve one scalar provider value.
+	 *
+	 * @param array<string,mixed> $seo      Captured SEO metadata.
+	 * @param string              $provider Provider family.
+	 * @param string              $field    Provider field name.
+	 */
 	private function provider_value( array $seo, string $provider, string $field ): ?string {
 		$keys = array(
 			'yoast'     => array(
@@ -391,7 +423,12 @@ final class CorporateInsightsManager {
 		return is_scalar( $value ) && '' !== trim( (string) $value ) ? trim( (string) $value ) : null;
 	}
 
-	/** Resolve legacy indexability. */
+	/**
+	 * Resolve legacy indexability.
+	 *
+	 * @param array<string,mixed> $seo      Captured SEO metadata.
+	 * @param string              $provider Provider family.
+	 */
 	private function indexability( array $seo, string $provider ): string {
 		if ( 'yoast' === $provider ) {
 			$noindex  = (string) ( $seo['_yoast_wpseo_meta-robots-noindex'] ?? '' );
@@ -417,7 +454,13 @@ final class CorporateInsightsManager {
 		return IndexabilityResolver::INDEXABLE;
 	}
 
-	/** Whether one canonical is the rescued self-canonical. */
+	/**
+	 * Whether one canonical is the rescued self-canonical.
+	 *
+	 * @param string                   $canonical   Legacy canonical URL.
+	 * @param string                   $source_path Rescued public path.
+	 * @param array<string,mixed>|null $manifest    Rescue Manifest.
+	 */
 	private function is_self_canonical( string $canonical, string $source_path, ?array $manifest ): bool {
 		$canonical_host = wp_parse_url( $canonical, PHP_URL_HOST );
 		$canonical_path = wp_parse_url( $canonical, PHP_URL_PATH );
@@ -431,7 +474,13 @@ final class CorporateInsightsManager {
 			&& $this->normalize_path( $canonical_path ) === $this->normalize_path( $source_path );
 	}
 
-	/** Write one scalar override or remove it when absent. */
+	/**
+	 * Write one scalar override or remove it when absent.
+	 *
+	 * @param int    $post_id  Source page ID.
+	 * @param string $meta_key Native metadata key.
+	 * @param mixed  $value    Override value.
+	 */
 	private function write_or_delete( int $post_id, string $meta_key, mixed $value ): void {
 		if ( is_scalar( $value ) && '' !== trim( (string) $value ) ) {
 			update_post_meta( $post_id, $meta_key, (string) $value );
@@ -441,7 +490,12 @@ final class CorporateInsightsManager {
 		delete_post_meta( $post_id, $meta_key );
 	}
 
-	/** Whether any known provider key exists. */
+	/**
+	 * Whether any known provider key exists.
+	 *
+	 * @param array<string,mixed> $seo  Captured SEO metadata.
+	 * @param list<string>        $keys Provider metadata keys.
+	 */
 	private function has_any_key( array $seo, array $keys ): bool {
 		foreach ( $keys as $key ) {
 			if ( array_key_exists( $key, $seo ) ) {
@@ -452,7 +506,13 @@ final class CorporateInsightsManager {
 		return false;
 	}
 
-	/** Find one resource captured by the Rescue Manifest. */
+	/**
+	 * Find one resource captured by the Rescue Manifest.
+	 *
+	 * @param array<string,mixed> $manifest  Rescue Manifest.
+	 * @param int                 $source_id Source page ID.
+	 * @return array<string,mixed>|null
+	 */
 	private function resource( array $manifest, int $source_id ): ?array {
 		foreach ( is_array( $manifest['resources'] ?? null ) ? $manifest['resources'] : array() as $resource ) {
 			if ( is_array( $resource ) && (int) ( $resource['id'] ?? 0 ) === $source_id ) {
@@ -463,7 +523,11 @@ final class CorporateInsightsManager {
 		return null;
 	}
 
-	/** Confirm source content still matches Rescue Manifest. */
+	/**
+	 * Confirm source content still matches Rescue Manifest.
+	 *
+	 * @param int $source_id Source page ID.
+	 */
 	private function source_matches_manifest( int $source_id ): bool {
 		$manifest = $this->manifest->saved();
 		$resource = is_array( $manifest ) ? $this->resource( $manifest, $source_id ) : null;
@@ -473,7 +537,12 @@ final class CorporateInsightsManager {
 		return is_string( $content ) && '' !== $expected && hash_equals( $expected, hash( 'sha256', $content ) );
 	}
 
-	/** Confirm source permalink still matches the rescued path. */
+	/**
+	 * Confirm source permalink still matches the rescued path.
+	 *
+	 * @param int    $source_id     Source page ID.
+	 * @param string $expected_path Rescued public path.
+	 */
 	private function source_path_matches( int $source_id, string $expected_path ): bool {
 		if ( 0 >= $source_id || '' === $expected_path ) {
 			return false;
@@ -483,7 +552,11 @@ final class CorporateInsightsManager {
 		return is_string( $path ) && $this->normalize_path( $path ) === $this->normalize_path( $expected_path );
 	}
 
-	/** Normalize one URL path. */
+	/**
+	 * Normalize one URL path.
+	 *
+	 * @param string $path URL path.
+	 */
 	private function normalize_path( string $path ): string {
 		$path = '/' . trim( $path, '/' );
 
