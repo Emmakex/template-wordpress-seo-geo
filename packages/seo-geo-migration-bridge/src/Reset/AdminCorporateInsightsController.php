@@ -22,7 +22,12 @@ final class AdminCorporateInsightsController {
 	private const ROLLBACK_ACTION = 'seo_geo_corporate_insights_rollback';
 	private const NONCE_ACTION    = 'seo_geo_corporate_insights';
 
-	/** Construct the Insights controller. */
+	/**
+	 * Construct the Insights controller.
+	 *
+	 * @param CorporateInsightsManager    $manager Insights manager.
+	 * @param CleanCorporatePageRebuilder $builder Clean Corporate page builder.
+	 */
 	public function __construct(
 		private CorporateInsightsManager $manager,
 		private CleanCorporatePageRebuilder $builder
@@ -68,7 +73,8 @@ final class AdminCorporateInsightsController {
 		$plan       = $this->manager->plan();
 		$readiness  = $this->manager->readiness();
 		$candidates = $this->builder->source_candidates();
-		$status     = isset( $_GET['insights_status'] ) ? sanitize_key( wp_unslash( $_GET['insights_status'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only administrator status message.
+		$status = isset( $_GET['insights_status'] ) ? sanitize_key( wp_unslash( $_GET['insights_status'] ) ) : '';
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'SEO/GEO Native Insights Index', 'seo-geo-migration-bridge' ); ?></h1>
@@ -115,6 +121,7 @@ final class AdminCorporateInsightsController {
 	/** Apply explicit Insights source. */
 	public function handle_apply(): never {
 		$this->authorize();
+		check_admin_referer( self::NONCE_ACTION );
 		$source_id = isset( $_POST['source_id'] ) ? absint( wp_unslash( $_POST['source_id'] ) ) : 0;
 		$result    = $this->manager->apply( $source_id );
 		$this->finish( $result, 'apply' );
@@ -123,18 +130,23 @@ final class AdminCorporateInsightsController {
 	/** Roll back Insights assignment. */
 	public function handle_rollback(): never {
 		$this->authorize();
+		check_admin_referer( self::NONCE_ACTION );
 		$this->finish( $this->manager->rollback(), 'rollback' );
 	}
 
-	/** Enforce administrator capability and nonce. */
+	/** Enforce administrator capability. */
 	private function authorize(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Administrator capability is required.', 'seo-geo-migration-bridge' ), '', array( 'response' => 403 ) );
 		}
-		check_admin_referer( self::NONCE_ACTION );
 	}
 
-	/** Redirect an action result or surface its error. */
+	/**
+	 * Redirect an action result or surface its error.
+	 *
+	 * @param array<string,mixed>|WP_Error $result Action result.
+	 * @param string                       $action Action identifier.
+	 */
 	private function finish( array|WP_Error $result, string $action ): never {
 		if ( $result instanceof WP_Error ) {
 			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
