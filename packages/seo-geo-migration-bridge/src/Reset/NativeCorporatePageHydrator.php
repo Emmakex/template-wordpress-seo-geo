@@ -26,6 +26,9 @@ final class NativeCorporatePageHydrator {
 
 	/**
 	 * Construct the native page hydrator.
+	 *
+	 * @param CleanCorporatePageRebuilder $builder Clean Corporate page builder.
+	 * @param CorporatePageContentKit     $kit     Reviewed Corporate page content service.
 	 */
 	public function __construct(
 		private CleanCorporatePageRebuilder $builder,
@@ -54,7 +57,7 @@ final class NativeCorporatePageHydrator {
 			! is_array( $saved )
 			|| 1 !== ( $saved['schema_version'] ?? null )
 			|| 'corporate-page-content-kit' !== ( $saved['mode'] ?? null )
-			|| $page_key !== (string) ( $saved['page_key'] ?? '' )
+			|| (string) ( $saved['page_key'] ?? '' ) !== $page_key
 		) {
 			$blockers[] = 'content-kit-required';
 		}
@@ -67,7 +70,7 @@ final class NativeCorporatePageHydrator {
 		if ( ! $draft instanceof WP_Post || 'page' !== $draft->post_type || 'draft' !== $draft->post_status ) {
 			$blockers[] = 'clean-page-draft-required';
 		}
-		if ( $draft instanceof WP_Post && $page_key !== (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::PAGE_KEY_META, true ) ) {
+		if ( $draft instanceof WP_Post && (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::PAGE_KEY_META, true ) !== $page_key ) {
 			$blockers[] = 'clean-page-key-mismatch';
 		}
 		if (
@@ -437,6 +440,8 @@ final class NativeCorporatePageHydrator {
 
 	/**
 	 * Resolve one semantic slot ID from a class list.
+	 *
+	 * @param string $class_names Block class list.
 	 */
 	private function slot_id( string $class_names ): ?string {
 		if ( 1 !== preg_match( '/(?:^|\s)seo-geo-content-slot--([a-z0-9-]+)(?:\s|$)/', $class_names, $matches ) ) {
@@ -448,6 +453,8 @@ final class NativeCorporatePageHydrator {
 
 	/**
 	 * Resolve an optional FAQ pair index from a Details block class list.
+	 *
+	 * @param string $class_names Block class list.
 	 */
 	private function faq_index( string $class_names ): ?int {
 		if ( 1 !== preg_match( '/(?:^|\s)seo-geo-content-slot--faq-([1-3])(?:\s|$)/', $class_names, $matches ) ) {
@@ -476,6 +483,9 @@ final class NativeCorporatePageHydrator {
 
 	/**
 	 * Replace textual contents of one leaf HTML element.
+	 *
+	 * @param string $html Leaf HTML fragment.
+	 * @param string $text Reviewed text.
 	 */
 	private function replace_element_text( string $html, string $text ): string {
 		return (string) preg_replace(
@@ -488,6 +498,10 @@ final class NativeCorporatePageHydrator {
 
 	/**
 	 * Replace one semantic link label and destination.
+	 *
+	 * @param string $html  Link HTML fragment.
+	 * @param string $label Reviewed link label.
+	 * @param string $url   Reviewed link URL.
 	 */
 	private function replace_link( string $html, string $label, string $url ): string {
 		return (string) preg_replace_callback(
@@ -510,6 +524,7 @@ final class NativeCorporatePageHydrator {
 	/**
 	 * Replace one semantic list.
 	 *
+	 * @param string           $html  List HTML fragment.
 	 * @param array<int,mixed> $items Reviewed list items.
 	 */
 	private function replace_list( string $html, array $items ): string {
@@ -531,6 +546,8 @@ final class NativeCorporatePageHydrator {
 
 	/**
 	 * Confirm rescued source content still matches the clean page provenance.
+	 *
+	 * @param int $draft_id Clean Corporate page draft ID.
 	 */
 	private function source_unchanged( int $draft_id ): bool {
 		$source_id  = (int) get_post_meta( $draft_id, CleanCorporatePageRebuilder::SOURCE_ID_META, true );
