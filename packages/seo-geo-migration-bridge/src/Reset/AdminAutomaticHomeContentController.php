@@ -19,7 +19,12 @@ final class AdminAutomaticHomeContentController {
 	private const ACTION       = 'seo_geo_auto_home_content';
 	private const NONCE_ACTION = 'seo_geo_auto_home_content';
 
-	/** Construct the operator controller. */
+	/**
+	 * Construct the operator controller.
+	 *
+	 * @param AutomaticHomeContentKit $automatic Automatic content extraction and hydration service.
+	 * @param CleanHomeRebuilder      $builder   Clean Corporate Home builder.
+	 */
 	public function __construct(
 		private AutomaticHomeContentKit $automatic,
 		private CleanHomeRebuilder $builder
