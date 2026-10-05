@@ -12,8 +12,8 @@ This runbook is the controlled field handoff for the first real reset-first Home
 ## Package contents
 
 - `seo-geo-theme.zip` — self-contained SEO/GEO Theme release candidate.
-- `seo-geo-migration-bridge.zip` — Migration Bridge 0.8.58.
-- `emmake-home.es_ES.json` — reviewed portable Home Content Blueprint.
+- `seo-geo-migration-bridge.zip` — Migration Bridge 0.8.59.
+- `emmake-home.es_ES.json` — reviewed portable Home Content Blueprint retained as an advanced fallback, not the normal migration path.
 - `pilot-manifest.json` — exact versions, SHA-256 identities and execution sequence.
 - `pilot-evidence-template.json` — field evidence record to complete after Step 7.
 - this runbook.
@@ -86,19 +86,22 @@ Expected result:
 - composition uses Theme-native Corporate patterns only;
 - source Home remains public and unchanged.
 
-### Step 5 — Content Blueprint + hydration
+### Step 5 — Automatic content + native hydration
 
-Open `emmake-home.es_ES.json` from this pack and paste its complete JSON into **Import portable Content Blueprint**.
+Use **Recommended: Automatic Home Content → Generate and hydrate Home automatically**.
 
-Then hydrate the clean Home.
+Migration Bridge must read the preserved Home and related WordPress pages, remove legacy presentation syntax as text, map useful authored content into the Corporate semantic model, save the Content Kit and hydrate the private clean Home draft in one controlled action.
 
 Expected result:
 
-- locale: `es_ES`;
+- locale follows the active WordPress/Corporate preset locale;
 - model: `corporate-home-v1`;
-- Emmake semantic content applied;
+- useful rescued content mapped automatically into semantic Home slots;
+- source Home and current front-page assignment remain unchanged;
+- no Divi/Elementor/legacy layout is executed or copied;
 - `hero-proof`, `proof` and `case-study` remain disabled until independently verified;
-- no preset placeholder copy remains.
+- no fabricated client, metric, result or case-study evidence;
+- manual Content Kit/portable Blueprint controls remain available only as advanced fallback/editing tools.
 
 ### Step 6 — Native SEO/GEO handoff
 
