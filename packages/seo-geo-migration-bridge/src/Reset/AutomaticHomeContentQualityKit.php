@@ -398,7 +398,7 @@ final class AutomaticHomeContentQualityKit {
 			}
 			$lower = strtolower( $sentence );
 
-			$score = 10 * $this->match_count( $lower, $keywords );
+			$score  = 10 * $this->match_count( $lower, $keywords );
 			$score -= 15 * $this->match_count( $lower, $penalties );
 			if ( $score > $best_score ) {
 				$best       = $sentence;
