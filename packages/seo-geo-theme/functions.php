@@ -27,11 +27,12 @@ function seo_geo_theme_setup(): void {
 add_action( 'after_setup_theme', 'seo_geo_theme_setup' );
 
 /**
- * Load the neutral Theme foundation and the active preset's visual system.
+ * Load the neutral Theme foundation, shared design-system primitives and the
+ * active preset's visual system.
  *
- * Each preset owns its own stylesheet. This keeps Corporate, Local Business,
- * Publisher, Ecommerce and SaaS/Digital Product visually isolated while they
- * continue to share the same Theme/Core runtime.
+ * Presets share one bounded geometry/motion layer while keeping their own art
+ * direction isolated. A preset may optionally ship a later "premium" layer;
+ * it is loaded only for that active preset and always after its base CSS.
  */
 function seo_geo_theme_enqueue_styles(): void {
 	$stylesheet = get_stylesheet_directory() . '/style.css';
@@ -44,6 +45,18 @@ function seo_geo_theme_enqueue_styles(): void {
 		$version
 	);
 
+	$design_system_handle = 'seo-geo-theme';
+	$design_system        = get_stylesheet_directory() . '/assets/css/design-system.css';
+	if ( is_readable( $design_system ) ) {
+		wp_enqueue_style(
+			'seo-geo-theme-design-system',
+			get_stylesheet_directory_uri() . '/assets/css/design-system.css',
+			array( 'seo-geo-theme' ),
+			(string) filemtime( $design_system )
+		);
+		$design_system_handle = 'seo-geo-theme-design-system';
+	}
+
 	$preset_id = seo_geo_theme_active_preset_id();
 	if ( null === $preset_id ) {
 		return;
@@ -54,11 +67,24 @@ function seo_geo_theme_enqueue_styles(): void {
 		return;
 	}
 
+	$preset_handle = 'seo-geo-theme-preset-' . $preset_id;
 	wp_enqueue_style(
-		'seo-geo-theme-preset-' . $preset_id,
+		$preset_handle,
 		get_stylesheet_directory_uri() . '/assets/css/presets/' . $preset_id . '.css',
-		array( 'seo-geo-theme' ),
+		array( $design_system_handle ),
 		(string) filemtime( $preset_stylesheet )
+	);
+
+	$premium_stylesheet = get_stylesheet_directory() . '/assets/css/presets/' . $preset_id . '-premium.css';
+	if ( ! is_readable( $premium_stylesheet ) ) {
+		return;
+	}
+
+	wp_enqueue_style(
+		$preset_handle . '-premium',
+		get_stylesheet_directory_uri() . '/assets/css/presets/' . $preset_id . '-premium.css',
+		array( $preset_handle ),
+		(string) filemtime( $premium_stylesheet )
 	);
 }
 add_action( 'wp_enqueue_scripts', 'seo_geo_theme_enqueue_styles' );
@@ -174,7 +200,7 @@ function seo_geo_theme_normalize_migrated_text( string $value ): string {
 		return $value;
 	}
 
-	$normalized = preg_replace( '/\\{[a-f0-9]{64}\\}/i', '%', $value );
+	$normalized = preg_replace( '/\{[a-f0-9]{64}\}/i', '%', $value );
 
 	return is_string( $normalized ) ? $normalized : $value;
 }
@@ -197,8 +223,8 @@ function seo_geo_theme_guard_singular_content_h1( string $block_content, array $
 		return $block_content;
 	}
 
-	$block_content = preg_replace( '/<h1\\b/i', '<h2', $block_content, 1 );
-	$block_content = preg_replace( '/<\\/h1>/i', '</h2>', $block_content, 1 );
+	$block_content = preg_replace( '/<h1\b/i', '<h2', $block_content, 1 );
+	$block_content = preg_replace( '/<\/h1>/i', '</h2>', $block_content, 1 );
 
 	return is_string( $block_content ) ? $block_content : '';
 }
