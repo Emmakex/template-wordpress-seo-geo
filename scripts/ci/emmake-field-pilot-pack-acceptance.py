@@ -70,8 +70,8 @@ def main() -> int:
             "scope": "sandbox-home-pilot",
         }:
             raise RuntimeError("Pilot manifest target is invalid")
-        if manifest["migration_bridge"]["version"] != "0.8.59":
-            raise RuntimeError("Pilot pack must carry Migration Bridge 0.8.59")
+        if manifest["migration_bridge"]["version"] != "0.8.60":
+            raise RuntimeError("Pilot pack must carry Migration Bridge 0.8.60")
         if manifest["migration_bridge"]["sha256"] != sha256(plugin_bytes):
             raise RuntimeError("Migration Bridge checksum mismatch")
         if manifest["theme"]["sha256"] != sha256(theme_bytes):
