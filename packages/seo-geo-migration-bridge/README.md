@@ -2,6 +2,17 @@
 
 Accepted Phase 8 WordPress migration tooling for adopting existing client sites without treating production as disposable.
 
+## Complete Corporate page pipeline + whole-site readiness — 0.8.58
+
+0.8.58 is the development-complete candidate before full real-site testing.
+
+- Services, Work, About and Contact use one reusable clean-page pipeline from rescued source identity through semantic Blueprint/Content Kit, native hydration, SEO/GEO handoff and readiness;
+- evidence-sensitive Work/proof content cannot become ready without explicit verification;
+- Contact requires a real direct contact method and About requires real provenance/author content;
+- Insights uses the rescued public URL as a native dynamic WordPress posts index instead of a static hydrated page;
+- the final whole-site gate requires Home, all four static inner pages and Insights to be ready together and rejects duplicate bindings/paths and unsafe placeholder links;
+- browser QA and production cutover remain explicit later phases.
+
 ## Clean Corporate inner-page rebuild — 0.8.57
 
 After the accepted Home pilot, Step 8 starts the remaining site rebuild with **Services** using one generic inner-page builder.

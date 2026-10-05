@@ -8,7 +8,7 @@ The release package is built from:
 
 - source: `packages/seo-geo-migration-bridge/`;
 - main plugin: `seo-geo-migration-bridge.php`;
-- current plugin version: `0.8.57`;
+- current plugin version: `0.8.58`;
 - ZIP root: `seo-geo-migration-bridge/`.
 
 ## Build
@@ -58,13 +58,30 @@ The real `/nuevaweb/` handoff is produced separately from the plugin runtime by 
 The deterministic pack contains:
 
 - the installable SEO/GEO Theme release candidate;
-- Migration Bridge 0.8.57;
+- Migration Bridge 0.8.58;
 - `examples/content-blueprints/emmake-home.es_ES.json`;
 - `docs/EMMAKE_HOME_FIELD_PILOT.md`;
 - `pilot-manifest.json` with exact versions and SHA-256 identities;
 - `pilot-evidence-template.json` for Step 7 plus browser QA.
 
 The pack is a field-delivery artifact, not a new product runtime dependency. Client-specific Emmake content remains outside Migration Bridge and Theme runtime code.
+
+## Version 0.8.58 — Complete Corporate page pipeline + whole-site readiness
+
+0.8.58 closes product development before real-site browser testing.
+
+1. Services, Work, About and Contact share one reusable reset-first pipeline: rescued-source binding → portable Content Blueprint / Content Kit → native hydration → provider-neutral SEO/GEO handoff → deterministic readiness;
+2. Work requires explicitly verified case-study evidence before it can be considered ready;
+3. About requires real author/provenance content and Contact requires at least one real direct contact method;
+4. optional proof and FAQ sections are omitted unless reviewed content/verification exists;
+5. Insights is implemented separately as a native dynamic WordPress posts index using the rescued public page as `page_for_posts`, Theme `home.html` Query Loop rendering and provider-neutral SEO metadata;
+6. Insights assignment and native metadata are reversible and legacy page-builder content is not rendered by the posts index;
+7. `CorporateSiteReadiness` requires Home + Services + Work + About + Contact + Insights to be machine-ready together;
+8. the whole-site gate rejects duplicate source/path bindings, front/posts authority conflicts, placeholder links and unsafe links;
+9. operator screens exist for static page pipeline, Insights and final site readiness;
+10. browser QA remains a separate phase and no automatic production cutover exists.
+
+This release candidate is the development freeze point before the complete `/nuevaweb/` field test.
 
 ## Version 0.8.57 — Clean Corporate inner-page rebuild
 

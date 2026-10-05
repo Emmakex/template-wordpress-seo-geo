@@ -48,7 +48,7 @@ function seo_geo_theme_preset_document( string $preset_id, string $filename ): ?
 		return null;
 	}
 
-	if ( ! in_array( $filename, array( 'preset.json', 'content-map.json', 'patterns.json' ), true ) ) {
+	if ( ! in_array( $filename, array( 'preset.json', 'content-map.json', 'patterns.json', 'page-models.json' ), true ) ) {
 		return null;
 	}
 

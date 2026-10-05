@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.0
 
+- Migration Bridge 0.8.58 completes the **Corporate reset-first page pipeline and whole-site readiness**: reusable Services/Work/About/Contact Blueprint→hydration→SEO→readiness flow, evidence/provenance/contact safety gates, native dynamic Insights index, reversible assignment, and a final machine gate across Home + all inner surfaces before browser QA.
+
 - Corporate Services now has its own **`corporate-services-v1` semantic content contract**: EN/ES references, required service/process/CTA slots, proof gated by explicit verification, and an optional native FAQ with stable question/answer slots and filler-content prohibition.
 
 - Migration Bridge 0.8.57 adds **Clean Corporate inner-page rebuild v1**: explicit rescued-source mapping, immutable page/source binding, URL/content preservation and a reusable native scaffold for Services first, then Work/About/Contact; Home remains on its dedicated pipeline and Insights remains blocked until its dynamic composition is defined.

@@ -1,0 +1,30 @@
+<!-- wp:template-part {"slug":"header","tagName":"header"} /-->
+
+<!-- wp:group {"tagName":"main","className":"seo-geo-insights-shell","layout":{"type":"constrained"}} -->
+<main class="wp-block-group seo-geo-insights-shell">
+	<!-- wp:seo-geo/insights-title /-->
+
+	<!-- wp:query {"query":{"perPage":10,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":true},"className":"seo-geo-insights-query"} -->
+	<div class="wp-block-query seo-geo-insights-query">
+		<!-- wp:post-template {"layout":{"type":"grid","columnCount":2}} -->
+			<!-- wp:group {"className":"seo-geo-insights-card","layout":{"type":"constrained"}} -->
+			<div class="wp-block-group seo-geo-insights-card">
+				<!-- wp:post-featured-image {"isLink":true,"aspectRatio":"16/9"} /-->
+				<!-- wp:post-title {"isLink":true,"level":2} /-->
+				<!-- wp:post-date {"fontSize":"sm"} /-->
+				<!-- wp:post-excerpt /-->
+			</div>
+			<!-- /wp:group -->
+		<!-- /wp:post-template -->
+
+		<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"space-between"}} -->
+			<!-- wp:query-pagination-previous /-->
+			<!-- wp:query-pagination-numbers /-->
+			<!-- wp:query-pagination-next /-->
+		<!-- /wp:query-pagination -->
+	</div>
+	<!-- /wp:query -->
+</main>
+<!-- /wp:group -->
+
+<!-- wp:template-part {"slug":"footer","tagName":"footer"} /-->

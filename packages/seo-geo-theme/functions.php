@@ -15,6 +15,7 @@ require_once get_template_directory() . '/inc/seo-geo-core/bootstrap.php';
 require_once get_template_directory() . '/inc/presets.php';
 require_once get_template_directory() . '/inc/setup.php';
 require_once get_template_directory() . '/inc/Forms/ContactFormRuntime.php';
+require_once get_template_directory() . '/inc/Insights/InsightsIndexRuntime.php';
 require_once get_template_directory() . '/inc/Navigation/PresetNavigationRuntime.php';
 
 /**
@@ -113,7 +114,6 @@ function seo_geo_theme_focusable_main_landmark( string $block_content, array $bl
 }
 add_filter( 'render_block_core/group', 'seo_geo_theme_focusable_main_landmark', 10, 2 );
 
-
 /**
  * Register the Theme-owned native contact-form runtime used by migrated pages.
  */
@@ -128,6 +128,21 @@ function seo_geo_theme_contact_form_runtime(): \SeoGeo\Theme\Forms\ContactFormRu
 }
 
 seo_geo_theme_contact_form_runtime()->register();
+
+/**
+ * Register the native dynamic Insights/posts-index runtime.
+ */
+function seo_geo_theme_insights_index_runtime(): \SeoGeo\Theme\Insights\InsightsIndexRuntime {
+	static $runtime = null;
+
+	if ( ! $runtime instanceof \SeoGeo\Theme\Insights\InsightsIndexRuntime ) {
+		$runtime = new \SeoGeo\Theme\Insights\InsightsIndexRuntime();
+	}
+
+	return $runtime;
+}
+
+seo_geo_theme_insights_index_runtime()->register();
 
 /**
  * Register the preset-owned navigation runtime.
