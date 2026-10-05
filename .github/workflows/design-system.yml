@@ -4,19 +4,29 @@ on:
   pull_request:
     paths:
       - 'packages/seo-geo-theme/theme.json'
+      - 'packages/seo-geo-theme/assets/css/design-system.css'
+      - 'packages/seo-geo-theme/assets/css/presets/*.css'
+      - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-design-system.php'
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
+      - 'docs/DESIGN_BENCHMARK_2026.md'
+      - 'docs/DESIGN_SYSTEM_ROADMAP_1_0.md'
   push:
     branches:
       - main
     paths:
       - 'packages/seo-geo-theme/theme.json'
+      - 'packages/seo-geo-theme/assets/css/design-system.css'
+      - 'packages/seo-geo-theme/assets/css/presets/*.css'
+      - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-design-system.php'
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
+      - 'docs/DESIGN_BENCHMARK_2026.md'
+      - 'docs/DESIGN_SYSTEM_ROADMAP_1_0.md'
 
 permissions:
   contents: read
