@@ -26,7 +26,11 @@ final class AdminCorporatePagePipelineController {
 	private const NONCE_ACTION     = 'seo_geo_corporate_page_pipeline';
 	private const MAX_BLUEPRINT    = 65536;
 
-	/** @var list<string> */
+	/**
+	 * Corporate pages supported by the reusable static-page pipeline.
+	 *
+	 * @var list<string>
+	 */
 	private const PAGE_KEYS = array( 'services', 'work', 'about', 'contact' );
 
 	/**
