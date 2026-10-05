@@ -115,10 +115,10 @@ final class AutomaticHomeContentKit {
 				'about_path'       => is_array( $about ) ? (string) ( $about['path'] ?? '' ) : '',
 			),
 			'safety'          => array(
-				'legacy_layout_reused'          => false,
-				'legacy_runtime_executed'       => false,
-				'evidence_auto_verified'        => false,
-				'source_post_mutation'          => false,
+				'legacy_layout_reused'         => false,
+				'legacy_runtime_executed'      => false,
+				'evidence_auto_verified'       => false,
+				'source_post_mutation'         => false,
 				'front_page_assignment_change' => false,
 			),
 		);
@@ -255,7 +255,7 @@ final class AutomaticHomeContentKit {
 		}
 
 		foreach ( array_slice( $process, 0, 3 ) as $index => $step ) {
-			$number                                      = $index + 1;
+			$number                                    = $index + 1;
 			$values[ 'process-' . $number . '-title' ] = (string) $step['title'];
 			$values[ 'process-' . $number . '-body' ]  = (string) $step['body'];
 		}
@@ -429,7 +429,7 @@ final class AutomaticHomeContentKit {
 	 * @return list<array{title:string,body:string}>
 	 */
 	private function process_steps( array $sentences, string $lead ): array {
-		$sets = array(
+		$sets  = array(
 			array(
 				'es'       => 'Entender',
 				'en'       => 'Understand',
