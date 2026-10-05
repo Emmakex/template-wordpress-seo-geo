@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "mode": "seo-geo-stable-release-decision",
-  "target_version": "0.1.0",
+  "target_version": "0.1.1",
   "decision": "no-go",
   "wrapper_disposition": "deprecated-retained-nondistributed",
   "real_site_acceptance": {
