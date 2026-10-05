@@ -83,11 +83,9 @@ final class AutomaticHomeContentQualityKit {
 		$plan['detected']     = is_array( $plan['detected'] ?? null ) ? $plan['detected'] : array();
 
 		$plan['detected']['capabilities']      = count( $services );
-		$plan['detected']['capability_titles'] = array_values(
-			array_map(
-				static fn( array $service ): string => (string) $service['title'],
-				$services
-			)
+		$plan['detected']['capability_titles'] = array_map(
+			static fn( array $service ): string => (string) $service['title'],
+			$services
 		);
 
 		return $plan;
@@ -453,11 +451,9 @@ final class AutomaticHomeContentQualityKit {
 			}
 		);
 
-		return array_values(
-			array_map(
-				static fn( array $item ): array => $item['category'],
-				$ranked
-			)
+		return array_map(
+			static fn( array $item ): array => $item['category'],
+			$ranked
 		);
 	}
 
