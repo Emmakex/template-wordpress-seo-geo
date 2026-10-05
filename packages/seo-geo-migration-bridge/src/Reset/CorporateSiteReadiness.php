@@ -25,10 +25,10 @@ final class CorporateSiteReadiness {
 	/**
 	 * Construct the whole-site readiness gate.
 	 *
-	 * @param HomePilotReadiness            $home     Home readiness authority.
-	 * @param CorporatePageReadiness        $pages    Corporate inner-page readiness authority.
-	 * @param CorporateInsightsManager      $insights Corporate Insights manager.
-	 * @param CleanCorporatePageRebuilder   $builder  Clean Corporate page builder.
+	 * @param HomePilotReadiness          $home     Home readiness authority.
+	 * @param CorporatePageReadiness      $pages    Corporate inner-page readiness authority.
+	 * @param CorporateInsightsManager    $insights Corporate Insights manager.
+	 * @param CleanCorporatePageRebuilder $builder  Clean Corporate page builder.
 	 */
 	public function __construct(
 		private HomePilotReadiness $home,

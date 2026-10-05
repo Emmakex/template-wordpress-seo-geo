@@ -129,7 +129,7 @@ final class CorporatePageContentKit {
 			return $normalized;
 		}
 
-		$material = array(
+		$material                     = array(
 			'schema_version'  => self::BLUEPRINT_SCHEMA_VERSION,
 			'mode'            => self::BLUEPRINT_MODE,
 			'page_key'        => $page_key,
@@ -220,7 +220,7 @@ final class CorporatePageContentKit {
 			return $normalized;
 		}
 
-		$material = array(
+		$material               = array(
 			'schema_version'  => 1,
 			'mode'            => 'corporate-page-content-kit',
 			'page_key'        => $page_key,

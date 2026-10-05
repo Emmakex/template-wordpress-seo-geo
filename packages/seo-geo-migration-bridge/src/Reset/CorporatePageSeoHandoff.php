@@ -257,7 +257,8 @@ final class CorporatePageSeoHandoff {
 	 * @param array<string,mixed> $seo          Captured SEO metadata.
 	 * @param string              $provider     Provider family.
 	 * @param string              $field        Provider field name.
-	 * @param list<string>        $review_items Review items accumulator.
+	 * @param array               $review_items Review items accumulator.
+	 * @phpstan-param list<string> $review_items
 	 */
 	private function plain_provider_value( array $seo, string $provider, string $field, array &$review_items ): ?string {
 		$value = $this->provider_value( $seo, $provider, $field );
@@ -307,10 +308,11 @@ final class CorporatePageSeoHandoff {
 	/**
 	 * Resolve canonical carryover policy without copying risky values.
 	 *
-	 * @param string|null         $canonical    Legacy canonical URL.
-	 * @param string              $source_path  Rescued public path.
+	 * @param string|null              $canonical    Legacy canonical URL.
+	 * @param string                   $source_path  Rescued public path.
 	 * @param array<string,mixed>|null $manifest Rescue Manifest.
-	 * @param list<string>        $review_items Review items accumulator.
+	 * @param array                    $review_items Review items accumulator.
+	 * @phpstan-param list<string> $review_items
 	 */
 	private function canonical_strategy( ?string $canonical, string $source_path, ?array $manifest, array &$review_items ): string {
 		if ( null === $canonical ) {
@@ -387,7 +389,8 @@ final class CorporatePageSeoHandoff {
 	 * Whether one provider family has any captured value.
 	 *
 	 * @param array<string,mixed> $seo  Captured SEO metadata.
-	 * @param list<string>        $keys Provider metadata keys.
+	 * @param array               $keys Provider metadata keys.
+	 * @phpstan-param list<string> $keys
 	 */
 	private function has_any_key( array $seo, array $keys ): bool {
 		foreach ( $keys as $key ) {

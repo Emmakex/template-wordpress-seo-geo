@@ -191,7 +191,7 @@ final class CorporateInsightsManager {
 		$this->write_or_delete( $source_id, NativeSeoMetadata::META_INDEXABILITY, $overrides['indexability'] ?? null );
 		delete_post_meta( $source_id, NativeSeoMetadata::META_CANONICAL );
 
-		$report = array(
+		$report                  = array(
 			'schema_version'     => 1,
 			'mode'               => 'corporate-insights-native-index',
 			'status'             => 'applied',
@@ -378,7 +378,8 @@ final class CorporateInsightsManager {
 	 * @param array<string,mixed> $seo          Captured SEO metadata.
 	 * @param string              $provider     Provider family.
 	 * @param string              $field        Provider field name.
-	 * @param list<string>        $review_items Review items accumulator.
+	 * @param array               $review_items Review items accumulator.
+	 * @phpstan-param list<string> $review_items
 	 */
 	private function plain_provider_value( array $seo, string $provider, string $field, array &$review_items ): ?string {
 		$value = $this->provider_value( $seo, $provider, $field );
@@ -494,7 +495,8 @@ final class CorporateInsightsManager {
 	 * Whether any known provider key exists.
 	 *
 	 * @param array<string,mixed> $seo  Captured SEO metadata.
-	 * @param list<string>        $keys Provider metadata keys.
+	 * @param array               $keys Provider metadata keys.
+	 * @phpstan-param list<string> $keys
 	 */
 	private function has_any_key( array $seo, array $keys ): bool {
 		foreach ( $keys as $key ) {
