@@ -1,0 +1,124 @@
+name: Corporate Page Final PHPStan Fix
+
+on:
+  push:
+    branches:
+      - feat/corporate-inner-page-content-pipeline
+
+permissions:
+  contents: write
+
+concurrency:
+  group: corporate-page-final-phpstan-fix
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/corporate-inner-page-content-pipeline
+
+      - name: PHP 8.2 toolchain
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install pinned quality dependencies
+        run: bash scripts/ci/php-quality.sh deps
+
+      - name: Apply exact PHPStan level 6 fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('packages/seo-geo-migration-bridge/src/Reset/AdminCorporatePagePipelineController.php'): [
+                  (
+                      '* @param array|WP_Error $result   Action result.',
+                      '* @param array|WP_Error $result   Action result.\n\t * @phpstan-param array<string,mixed>|WP_Error $result'
+                  ),
+              ],
+              Path('packages/seo-geo-migration-bridge/src/Reset/CorporateInsightsManager.php'): [
+                  (
+                      'if ( ! is_string( $key ) || ! is_array( $state ) ) {',
+                      'if ( ! is_array( $state ) ) {'
+                  ),
+              ],
+              Path('packages/seo-geo-migration-bridge/src/Reset/CorporatePageContentKit.php'): [
+                  (
+                      'if ( ! is_string( $slot_id ) || ! array_key_exists( $slot_id, $slot_types ) ) {',
+                      'if ( ! array_key_exists( $slot_id, $slot_types ) ) {'
+                  ),
+                  (
+                      'if ( ! is_string( $group ) || ! isset( $allowed_groups[ $group ] ) ) {',
+                      'if ( ! isset( $allowed_groups[ $group ] ) ) {'
+                  ),
+              ],
+              Path('packages/seo-geo-migration-bridge/src/Reset/CorporatePageReadiness.php'): [
+                  (
+                      "return is_string( $content ) && '' !== $expected && hash_equals( $expected, hash( 'sha256', $content ) );",
+                      "return '' !== $expected && hash_equals( $expected, hash( 'sha256', $content ) );"
+                  ),
+              ],
+              Path('packages/seo-geo-migration-bridge/src/Reset/CorporateSiteReadiness.php'): [
+                  (
+                      '$duplicates[ $value ] = array_values( $page_keys );',
+                      '$duplicates[ $value ] = $page_keys;'
+                  ),
+              ],
+              Path('packages/seo-geo-migration-bridge/src/Reset/NativeCorporatePageHydrator.php'): [
+                  (
+                      "if ( ! is_array( $policy ) || ! is_string( $policy['section_class'] ?? null ) || ! str_contains( $class, $policy['section_class'] ) ) {",
+                      "if ( ! is_string( $policy['section_class'] ?? null ) || ! str_contains( $class, $policy['section_class'] ) ) {"
+                  ),
+                  (
+                      "if ( is_string( $key ) && str_starts_with( $key, $prefix ) && '' !== trim( is_scalar( $value ) ? (string) $value : wp_json_encode( $value ) ) ) {",
+                      "if ( str_starts_with( $key, $prefix ) && '' !== trim( is_scalar( $value ) ? (string) $value : wp_json_encode( $value ) ) ) {"
+                  ),
+              ],
+          }
+
+          for path, pairs in replacements.items():
+              text = path.read_text()
+              for old, new in pairs:
+                  if old not in text:
+                      raise SystemExit(f'Missing expected PHPStan fragment in {path}: {old}')
+                  text = text.replace(old, new)
+              path.write_text(text)
+          PY
+
+      - name: Apply safe formatting
+        run: |
+          vendor/bin/phpcbf --standard=phpcs.xml.dist \
+            packages/seo-geo-migration-bridge/src/Reset/AdminCorporatePagePipelineController.php \
+            packages/seo-geo-migration-bridge/src/Reset/CorporateInsightsManager.php \
+            packages/seo-geo-migration-bridge/src/Reset/CorporatePageContentKit.php \
+            packages/seo-geo-migration-bridge/src/Reset/CorporatePageReadiness.php \
+            packages/seo-geo-migration-bridge/src/Reset/CorporateSiteReadiness.php \
+            packages/seo-geo-migration-bridge/src/Reset/NativeCorporatePageHydrator.php || true
+
+      - name: Verify WordPress Coding Standards
+        run: bash scripts/ci/php-quality.sh phpcs
+
+      - name: Verify PHPStan level 6
+        run: bash scripts/ci/php-quality.sh phpstan
+
+      - name: Commit verified PHPStan fixes
+        run: |
+          if git diff --quiet; then
+            echo 'No PHPStan fixes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add packages/seo-geo-migration-bridge/src/Reset
+          git commit -m 'Finish Corporate page PHPStan cleanup'
+          git push origin HEAD:feat/corporate-inner-page-content-pipeline
