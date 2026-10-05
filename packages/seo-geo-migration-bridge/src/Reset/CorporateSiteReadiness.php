@@ -189,7 +189,7 @@ final class CorporateSiteReadiness {
 		$duplicates = array();
 		foreach ( $owners as $value => $page_keys ) {
 			if ( 1 < count( $page_keys ) ) {
-				$duplicates[ $value ] = array_values( $page_keys );
+				$duplicates[ $value ] = $page_keys;
 			}
 		}
 		ksort( $duplicates );

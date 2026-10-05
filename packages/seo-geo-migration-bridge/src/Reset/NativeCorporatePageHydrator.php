@@ -309,7 +309,7 @@ final class NativeCorporatePageHydrator {
 		$class = $this->block_class_names( $block );
 
 		foreach ( $policies as $policy ) {
-			if ( ! is_array( $policy ) || ! is_string( $policy['section_class'] ?? null ) || ! str_contains( $class, $policy['section_class'] ) ) {
+			if ( ! is_string( $policy['section_class'] ?? null ) || ! str_contains( $class, $policy['section_class'] ) ) {
 				continue;
 			}
 			if (
@@ -473,7 +473,7 @@ final class NativeCorporatePageHydrator {
 	private function content_group_populated( string $group, array $values ): bool {
 		$prefix = $group . '-';
 		foreach ( $values as $key => $value ) {
-			if ( is_string( $key ) && str_starts_with( $key, $prefix ) && '' !== trim( is_scalar( $value ) ? (string) $value : wp_json_encode( $value ) ) ) {
+			if ( str_starts_with( $key, $prefix ) && '' !== trim( is_scalar( $value ) ? (string) $value : wp_json_encode( $value ) ) ) {
 				return true;
 			}
 		}

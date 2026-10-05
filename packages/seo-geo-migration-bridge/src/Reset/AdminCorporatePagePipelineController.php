@@ -302,6 +302,7 @@ final class AdminCorporatePagePipelineController {
 	 *
 	 * @param string         $page_key Corporate page key.
 	 * @param array|WP_Error $result   Action result.
+	 * @phpstan-param array<string,mixed>|WP_Error $result
 	 * @param string         $action   Status action label.
 	 */
 	private function finish( string $page_key, array|WP_Error $result, string $action ): never {

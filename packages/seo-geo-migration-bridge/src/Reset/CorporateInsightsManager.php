@@ -346,7 +346,7 @@ final class CorporateInsightsManager {
 	 */
 	private function restore_native_meta( int $post_id, array $backup ): void {
 		foreach ( $backup as $key => $state ) {
-			if ( ! is_string( $key ) || ! is_array( $state ) ) {
+			if ( ! is_array( $state ) ) {
 				continue;
 			}
 			if ( true === ( $state['exists'] ?? false ) ) {

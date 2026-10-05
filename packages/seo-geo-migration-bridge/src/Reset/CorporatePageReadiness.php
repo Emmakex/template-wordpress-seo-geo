@@ -223,7 +223,7 @@ final class CorporatePageReadiness {
 			$expected = (string) ( $resource['content_sha256'] ?? '' );
 			$content  = get_post_field( 'post_content', $source_id );
 
-			return is_string( $content ) && '' !== $expected && hash_equals( $expected, hash( 'sha256', $content ) );
+			return '' !== $expected && hash_equals( $expected, hash( 'sha256', $content ) );
 		}
 
 		return false;

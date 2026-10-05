@@ -281,12 +281,12 @@ final class CorporatePageContentKit {
 		}
 
 		foreach ( array_keys( $raw_values ) as $slot_id ) {
-			if ( ! is_string( $slot_id ) || ! array_key_exists( $slot_id, $slot_types ) ) {
+			if ( ! array_key_exists( $slot_id, $slot_types ) ) {
 				return new WP_Error( 'seo_geo_page_blueprint_unknown_slot', 'Content Blueprint contains an unknown semantic slot.' );
 			}
 		}
 		foreach ( array_keys( $raw_groups ) as $group ) {
-			if ( ! is_string( $group ) || ! isset( $allowed_groups[ $group ] ) ) {
+			if ( ! isset( $allowed_groups[ $group ] ) ) {
 				return new WP_Error( 'seo_geo_page_blueprint_unknown_group', 'Content Blueprint contains an unknown evidence verification group.' );
 			}
 		}
