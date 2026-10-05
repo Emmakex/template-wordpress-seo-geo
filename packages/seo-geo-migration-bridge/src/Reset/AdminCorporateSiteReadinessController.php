@@ -17,7 +17,11 @@ use SeoGeo\MigrationBridge\Plugin;
 final class AdminCorporateSiteReadinessController {
 	public const PAGE_SLUG = 'seo-geo-corporate-site-readiness';
 
-	/** Construct the read-only controller. */
+	/**
+	 * Construct the read-only controller.
+	 *
+	 * @param CorporateSiteReadiness $readiness Whole-site readiness authority.
+	 */
 	public function __construct( private CorporateSiteReadiness $readiness ) {
 	}
 
