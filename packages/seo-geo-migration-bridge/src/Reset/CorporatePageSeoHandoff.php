@@ -22,6 +22,10 @@ final class CorporatePageSeoHandoff {
 
 	/**
 	 * Construct the generic Corporate page SEO handoff.
+	 *
+	 * @param RescueManifest              $manifest Rescue Manifest authority.
+	 * @param CleanCorporatePageRebuilder $builder  Clean Corporate page builder.
+	 * @param NativeCorporatePageHydrator $hydrator Native Corporate page hydrator.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
@@ -50,7 +54,7 @@ final class CorporatePageSeoHandoff {
 		if ( ! $draft instanceof WP_Post || 'page' !== $draft->post_type || 'draft' !== $draft->post_status ) {
 			$blockers[] = 'clean-page-draft-required';
 		}
-		if ( $page_key !== (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::PAGE_KEY_META, true ) ) {
+		if ( (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::PAGE_KEY_META, true ) !== $page_key ) {
 			$blockers[] = 'clean-page-key-mismatch';
 		}
 		if ( NativeCorporatePageHydrator::CONTENT_STATE !== (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::CONTENT_STATE_META, true ) ) {
@@ -220,7 +224,11 @@ final class CorporatePageSeoHandoff {
 		return is_array( $value ) ? $value : null;
 	}
 
-	/** Resolve captured SEO provider family. */
+	/**
+	 * Resolve captured SEO provider family.
+	 *
+	 * @param array<string,mixed> $seo Captured SEO metadata.
+	 */
 	private function provider( array $seo ): string {
 		$yoast     = $this->has_any_key(
 			$seo,
@@ -243,7 +251,14 @@ final class CorporatePageSeoHandoff {
 		return 'none';
 	}
 
-	/** Resolve a safe plain legacy title/description. */
+	/**
+	 * Resolve a safe plain legacy title/description.
+	 *
+	 * @param array<string,mixed> $seo          Captured SEO metadata.
+	 * @param string              $provider     Provider family.
+	 * @param string              $field        Provider field name.
+	 * @param list<string>        $review_items Review items accumulator.
+	 */
 	private function plain_provider_value( array $seo, string $provider, string $field, array &$review_items ): ?string {
 		$value = $this->provider_value( $seo, $provider, $field );
 		if ( null === $value ) {
@@ -260,7 +275,13 @@ final class CorporatePageSeoHandoff {
 		return '' !== $value ? $value : null;
 	}
 
-	/** Resolve one scalar legacy provider value. */
+	/**
+	 * Resolve one scalar legacy provider value.
+	 *
+	 * @param array<string,mixed> $seo      Captured SEO metadata.
+	 * @param string              $provider Provider family.
+	 * @param string              $field    Provider field name.
+	 */
 	private function provider_value( array $seo, string $provider, string $field ): ?string {
 		$keys = array(
 			'yoast'     => array(
@@ -283,7 +304,14 @@ final class CorporatePageSeoHandoff {
 		return is_scalar( $value ) && '' !== trim( (string) $value ) ? trim( (string) $value ) : null;
 	}
 
-	/** Resolve canonical carryover policy without copying risky values. */
+	/**
+	 * Resolve canonical carryover policy without copying risky values.
+	 *
+	 * @param string|null         $canonical    Legacy canonical URL.
+	 * @param string              $source_path  Rescued public path.
+	 * @param array<string,mixed>|null $manifest Rescue Manifest.
+	 * @param list<string>        $review_items Review items accumulator.
+	 */
 	private function canonical_strategy( ?string $canonical, string $source_path, ?array $manifest, array &$review_items ): string {
 		if ( null === $canonical ) {
 			return 'native-self-canonical';
@@ -308,7 +336,12 @@ final class CorporatePageSeoHandoff {
 		return 'custom-canonical-review-required';
 	}
 
-	/** Resolve source indexability from legacy metadata. */
+	/**
+	 * Resolve source indexability from legacy metadata.
+	 *
+	 * @param array<string,mixed> $seo      Captured SEO metadata.
+	 * @param string              $provider Provider family.
+	 */
 	private function indexability( array $seo, string $provider ): string {
 		if ( 'yoast' === $provider ) {
 			$noindex  = (string) ( $seo['_yoast_wpseo_meta-robots-noindex'] ?? '' );
@@ -334,7 +367,13 @@ final class CorporatePageSeoHandoff {
 		return IndexabilityResolver::INDEXABLE;
 	}
 
-	/** Write one scalar override or delete it when absent. */
+	/**
+	 * Write one scalar override or delete it when absent.
+	 *
+	 * @param int    $post_id  Post ID.
+	 * @param string $meta_key Native metadata key.
+	 * @param mixed  $value    Override value.
+	 */
 	private function write_or_delete( int $post_id, string $meta_key, mixed $value ): void {
 		if ( is_scalar( $value ) && '' !== trim( (string) $value ) ) {
 			update_post_meta( $post_id, $meta_key, (string) $value );
@@ -344,7 +383,12 @@ final class CorporatePageSeoHandoff {
 		delete_post_meta( $post_id, $meta_key );
 	}
 
-	/** Whether one provider family has any captured value. */
+	/**
+	 * Whether one provider family has any captured value.
+	 *
+	 * @param array<string,mixed> $seo  Captured SEO metadata.
+	 * @param list<string>        $keys Provider metadata keys.
+	 */
 	private function has_any_key( array $seo, array $keys ): bool {
 		foreach ( $keys as $key ) {
 			if ( array_key_exists( $key, $seo ) ) {
@@ -355,7 +399,13 @@ final class CorporatePageSeoHandoff {
 		return false;
 	}
 
-	/** Find one rescued resource by source ID. */
+	/**
+	 * Find one rescued resource by source ID.
+	 *
+	 * @param array<string,mixed> $manifest  Rescue Manifest.
+	 * @param int                 $source_id Source post ID.
+	 * @return array<string,mixed>|null
+	 */
 	private function resource( array $manifest, int $source_id ): ?array {
 		foreach ( is_array( $manifest['resources'] ?? null ) ? $manifest['resources'] : array() as $resource ) {
 			if ( is_array( $resource ) && (int) ( $resource['id'] ?? 0 ) === $source_id ) {
@@ -366,14 +416,22 @@ final class CorporatePageSeoHandoff {
 		return null;
 	}
 
-	/** Normalize one URL path. */
+	/**
+	 * Normalize one URL path.
+	 *
+	 * @param string $path URL path.
+	 */
 	private function normalize_path( string $path ): string {
 		$path = '/' . trim( $path, '/' );
 
 		return '/' === $path ? '/' : $path . '/';
 	}
 
-	/** Confirm rescued source content still matches provenance. */
+	/**
+	 * Confirm rescued source content still matches provenance.
+	 *
+	 * @param int $draft_id Clean page draft ID.
+	 */
 	private function source_unchanged( int $draft_id ): bool {
 		$source_id  = (int) get_post_meta( $draft_id, CleanCorporatePageRebuilder::SOURCE_ID_META, true );
 		$source_sha = (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::SOURCE_SHA_META, true );
@@ -382,7 +440,12 @@ final class CorporatePageSeoHandoff {
 		return is_string( $content ) && '' !== $source_sha && hash_equals( $source_sha, hash( 'sha256', $content ) );
 	}
 
-	/** Confirm source permalink still matches the rescued path. */
+	/**
+	 * Confirm source permalink still matches the rescued path.
+	 *
+	 * @param int    $source_id     Source page ID.
+	 * @param string $expected_path Rescued public path.
+	 */
 	private function source_path_matches( int $source_id, string $expected_path ): bool {
 		if ( 0 >= $source_id || '' === $expected_path ) {
 			return false;
