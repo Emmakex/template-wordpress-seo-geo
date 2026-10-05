@@ -2951,7 +2951,7 @@ Rules:
 
 ### 10E.4E — Remaining page rebuild + clean-site acceptance
 
-Status: **active — 10E.4E.1 / Migration Bridge 0.8.57 candidate**
+Status: **active — 10E.4E.3 / Migration Bridge 0.8.58 candidate**
 
 The Home path is accepted. Product development now continues through the remaining Corporate pages before the final whole-site acceptance gate. The real `/nuevaweb/` Home field pilot remains a parallel execution task and does not justify duplicating Home infrastructure.
 
@@ -2992,7 +2992,7 @@ Accepted behavior:
 
 #### 10E.4E.2 — Services semantic content contract
 
-Status: **active — current development pointer**
+Status: **accepted — PR #231 / 11 of 11 CI gates green / merge `6d4f816e2ec47fee2251ef04cb74ae919339b788`**
 
 Goal:
 
@@ -3019,6 +3019,46 @@ Next after acceptance:
 - then reuse the generic scaffold for Work, About and Contact;
 - implement Insights as a dynamic native archive/index;
 - finish with whole-site acceptance.
+
+#### 10E.4E.3 — Complete Corporate page pipeline + Insights + whole-site readiness
+
+Status: **active — PR #232 / Migration Bridge 0.8.58 candidate / current development pointer**
+
+Goal:
+
+Finish the reusable product before any real `/nuevaweb/` browser testing, so the pilot validates the complete architecture rather than an incomplete Home-only path.
+
+Candidate behavior:
+
+- Services, Work, About and Contact share one generic Blueprint/Content Kit → native hydration → SEO/GEO handoff → readiness runtime;
+- page/source binding remains explicit, immutable and URL-preserving;
+- Work requires a verified case-study group;
+- About requires real identity/provenance content;
+- Contact requires at least one reviewed direct contact method;
+- proof/FAQ sections are omitted rather than filled with invented evidence or filler;
+- Insights is a native dynamic WordPress posts index using the rescued page as `page_for_posts`;
+- Theme `home.html` owns dynamic Query Loop rendering and does not render legacy builder content;
+- Insights assignment/native metadata are reversible;
+- final `CorporateSiteReadiness` requires Home + Services + Work + About + Contact + Insights ready together;
+- duplicate source/path bindings, front/posts authority conflicts, placeholder `href="#"` and unsafe links block global readiness;
+- operator surfaces exist for page pipeline, Insights and whole-site readiness;
+- no automatic production cutover.
+
+Acceptance target:
+
+- WPCS + PHPStan level 6 green;
+- dedicated Corporate Page Pipeline CI green;
+- WordPress Smoke, Foundation, Theme, multilingual, accessibility/responsive, performance and release/package gates green;
+- deterministic Migration Bridge 0.8.58 and Emmake field pack artifacts.
+
+Next only after acceptance:
+
+- freeze functional development;
+- install the accepted Theme + Migration Bridge 0.8.58 candidate on `/nuevaweb/`;
+- execute the complete machine pipeline for all surfaces;
+- require global readiness green;
+- perform the full browser QA matrix page by page and whole-site;
+- production cutover remains a separate explicit decision.
 
 #### 10E.4E.final — Clean-site acceptance
 
