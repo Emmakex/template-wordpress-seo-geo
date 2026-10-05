@@ -20,6 +20,12 @@ final class CorporatePageReadiness {
 
 	/**
 	 * Construct the readiness gate.
+	 *
+	 * @param RescueManifest              $manifest Rescue Manifest authority.
+	 * @param CloneResetEngine            $reset    Clone reset authority.
+	 * @param CleanCorporatePageRebuilder $builder  Clean Corporate page builder.
+	 * @param NativeCorporatePageHydrator $hydrator Native Corporate page hydrator.
+	 * @param CorporatePageSeoHandoff     $handoff  Native SEO handoff authority.
 	 */
 	public function __construct(
 		private RescueManifest $manifest,
@@ -95,7 +101,7 @@ final class CorporatePageReadiness {
 		$checks['draft_ready'] = $draft instanceof WP_Post
 			&& 'page' === $draft->post_type
 			&& 'draft' === $draft->post_status
-			&& $page_key === (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::PAGE_KEY_META, true )
+			&& (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::PAGE_KEY_META, true ) === $page_key
 			&& NativeCorporatePageHydrator::CONTENT_STATE === (string) get_post_meta( $draft_id, CleanCorporatePageRebuilder::CONTENT_STATE_META, true );
 		if ( ! $checks['draft_ready'] ) {
 			$blockers[] = 'hydrated-clean-page-draft-required';
@@ -123,7 +129,7 @@ final class CorporatePageReadiness {
 		}
 
 		$checks['seo_handoff_applied'] = is_array( $seo_report )
-			&& $page_key === (string) ( $seo_report['page_key'] ?? '' )
+			&& (string) ( $seo_report['page_key'] ?? '' ) === $page_key
 			&& in_array( (string) ( $seo_report['status'] ?? '' ), array( 'applied', 'existing' ), true )
 			&& true === ( $seo_report['source_unchanged'] ?? false )
 			&& true === ( $seo_report['source_path_unchanged'] ?? false )
@@ -200,7 +206,12 @@ final class CorporatePageReadiness {
 		);
 	}
 
-	/** Confirm rescued source still matches the Manifest fingerprint. */
+	/**
+	 * Confirm rescued source still matches the Manifest fingerprint.
+	 *
+	 * @param array<string,mixed>|null $manifest  Rescue Manifest.
+	 * @param int                      $source_id Source page ID.
+	 */
 	private function source_matches_manifest( ?array $manifest, int $source_id ): bool {
 		if ( ! is_array( $manifest ) || 0 >= $source_id ) {
 			return false;
@@ -218,7 +229,12 @@ final class CorporatePageReadiness {
 		return false;
 	}
 
-	/** Confirm source permalink still matches the rescued path. */
+	/**
+	 * Confirm source permalink still matches the rescued path.
+	 *
+	 * @param int    $source_id     Source page ID.
+	 * @param string $expected_path Rescued public path.
+	 */
 	private function source_path_matches( int $source_id, string $expected_path ): bool {
 		if ( 0 >= $source_id || '' === $expected_path ) {
 			return false;
@@ -231,14 +247,23 @@ final class CorporatePageReadiness {
 		return $this->normalize_path( $path ) === $this->normalize_path( $expected_path );
 	}
 
-	/** Normalize one URL path. */
+	/**
+	 * Normalize one URL path.
+	 *
+	 * @param string $path URL path.
+	 */
 	private function normalize_path( string $path ): string {
 		$path = '/' . trim( $path, '/' );
 
 		return '/' === $path ? '/' : $path . '/';
 	}
 
-	/** Detect legacy presentation-runtime debris. */
+	/**
+	 * Detect legacy presentation-runtime debris.
+	 *
+	 * @param string $content Native page content.
+	 * @return list<string>
+	 */
 	private function legacy_markers( string $content ): array {
 		$patterns = array(
 			'et_pb_'          => '/\bet_pb_[a-z0-9_-]+/i',
@@ -258,7 +283,12 @@ final class CorporatePageReadiness {
 		return $found;
 	}
 
-	/** Detect known untouched preset placeholder copy. */
+	/**
+	 * Detect known untouched preset placeholder copy.
+	 *
+	 * @param string $content Native page content.
+	 * @return list<string>
+	 */
 	private function placeholder_markers( string $content ): array {
 		$needles = array(
 			'Replace this with a real customer question',
