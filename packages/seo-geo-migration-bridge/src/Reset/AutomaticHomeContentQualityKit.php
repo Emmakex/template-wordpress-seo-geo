@@ -16,7 +16,11 @@ use WP_Post;
  * Refines automatic Home classification using rescued content quality signals.
  */
 final class AutomaticHomeContentQualityKit {
-	/** Base accepted automatic Home generator. */
+	/**
+	 * Base accepted automatic Home generator.
+	 *
+	 * @var AutomaticHomeContentKit
+	 */
 	private AutomaticHomeContentKit $base;
 
 	/**
@@ -69,13 +73,15 @@ final class AutomaticHomeContentQualityKit {
 
 		$values['hero-lead']          = $lead;
 		$values['capabilities-intro'] = $this->capabilities_intro( $services, $lead );
-		$values                       = $this->apply_capabilities( $values, $services );
-		$values                       = $this->improve_process( $values, $sentences, $lead );
+
+		$values = $this->apply_capabilities( $values, $services );
+		$values = $this->improve_process( $values, $sentences, $lead );
 
 		$plan['values']       = $values;
 		$plan['home_heading'] = $this->home_heading( $source, $lead );
 		$plan['quality_pass'] = 'content-classification-v2';
 		$plan['detected']     = is_array( $plan['detected'] ?? null ) ? $plan['detected'] : array();
+
 		$plan['detected']['capabilities']      = count( $services );
 		$plan['detected']['capability_titles'] = array_values(
 			array_map(
@@ -190,6 +196,7 @@ final class AutomaticHomeContentQualityKit {
 				'body'  => '' !== $body ? $body : $lead,
 				'path'  => '',
 			);
+
 			$services = $this->unique_capabilities( $services );
 		}
 
@@ -269,6 +276,7 @@ final class AutomaticHomeContentQualityKit {
 			$sentences,
 			array( 'proceso', 'metod', 'estrateg', 'analiz', 'process', 'method', 'strategy' )
 		);
+
 		$values['process-intro'] = '' !== $intro ? $intro : $lead;
 
 		return $values;
@@ -389,6 +397,7 @@ final class AutomaticHomeContentQualityKit {
 				continue;
 			}
 			$lower = strtolower( $sentence );
+
 			$score = 10 * $this->match_count( $lower, $keywords );
 			$score -= 15 * $this->match_count( $lower, $penalties );
 			if ( $score > $best_score ) {
