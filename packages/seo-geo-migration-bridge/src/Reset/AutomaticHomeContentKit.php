@@ -242,7 +242,7 @@ final class AutomaticHomeContentKit {
 
 		foreach ( array_slice( $services, 0, 3 ) as $index => $service ) {
 			$number       = $index + 1;
-			$service_path = trim( (string) ( $service['path'] ?? '' ) );
+			$service_path = trim( (string) $service['path'] );
 			if ( '' === $service_path ) {
 				$service_path = $contact_path;
 			}
