@@ -32,7 +32,8 @@ add_action( 'after_setup_theme', 'seo_geo_theme_setup' );
  *
  * Presets share one bounded geometry/motion layer while keeping their own art
  * direction isolated. A preset may optionally ship a later "premium" layer;
- * it is loaded only for that active preset and always after its base CSS.
+ * it is attached inline after the base preset stylesheet so the premium visual
+ * layer does not add another render-blocking CSS request.
  */
 function seo_geo_theme_enqueue_styles(): void {
 	$stylesheet = get_stylesheet_directory() . '/style.css';
@@ -80,12 +81,11 @@ function seo_geo_theme_enqueue_styles(): void {
 		return;
 	}
 
-	wp_enqueue_style(
-		$preset_handle . '-premium',
-		get_stylesheet_directory_uri() . '/assets/css/presets/' . $preset_id . '-premium.css',
-		array( $preset_handle ),
-		(string) filemtime( $premium_stylesheet )
-	);
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Trusted Theme-owned static stylesheet.
+	$premium_css = file_get_contents( $premium_stylesheet );
+	if ( is_string( $premium_css ) && '' !== trim( $premium_css ) ) {
+		wp_add_inline_style( $preset_handle, $premium_css );
+	}
 }
 add_action( 'wp_enqueue_scripts', 'seo_geo_theme_enqueue_styles' );
 
