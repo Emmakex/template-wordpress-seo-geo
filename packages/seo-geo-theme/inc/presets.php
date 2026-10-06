@@ -48,7 +48,7 @@ function seo_geo_theme_preset_document( string $preset_id, string $filename ): ?
 		return null;
 	}
 
-	if ( ! in_array( $filename, array( 'preset.json', 'content-map.json', 'patterns.json', 'page-models.json' ), true ) ) {
+	if ( ! in_array( $filename, array( 'preset.json', 'content-map.json', 'patterns.json', 'page-models.json', 'mockup.json' ), true ) ) {
 		return null;
 	}
 
@@ -75,6 +75,20 @@ function seo_geo_theme_active_preset_id(): ?string {
 	$value = sanitize_key( $value );
 
 	return in_array( $value, seo_geo_theme_preset_ids(), true ) ? $value : null;
+}
+
+/**
+ * Resolve the active preset's optional final-mockup contract.
+ *
+ * The contract describes complete page compositions and the placeholder policy
+ * used before rescued/client content is hydrated into stable semantic slots.
+ *
+ * @return array<string,mixed>|null
+ */
+function seo_geo_theme_active_mockup_contract(): ?array {
+	$preset_id = seo_geo_theme_active_preset_id();
+
+	return null === $preset_id ? null : seo_geo_theme_preset_document( $preset_id, 'mockup.json' );
 }
 
 /**
