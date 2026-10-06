@@ -28,7 +28,6 @@
     "seo-geo-theme/author-profile"
   ],
   "preset_patterns": [
-    "seo-geo-theme/corporate-home-final",
     "seo-geo-theme/corporate-case-study",
     "seo-geo-theme/corporate-stats",
     "seo-geo-theme/corporate-testimonials",
@@ -40,6 +39,7 @@
   ],
   "final_mockup": {
     "contract": "mockup.json",
+    "home_pattern": "seo-geo-theme/corporate-home-final",
     "strategy": "complete-layout-before-client-content",
     "placeholder_copy_allowed_in_sandbox": true,
     "placeholder_media_allowed_in_sandbox": true,
