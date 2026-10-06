@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "preset": "corporate",
+  "version": "1.0.0",
+  "mode": "final-mockup-first",
+  "principle": "layout-first-then-hydrate-rescued-content",
+  "pages": {
+    "home": {
+      "required": true,
+      "pattern": "seo-geo-theme/corporate-home-final",
+      "composition": [
+        "masthead",
+        "hero-support",
+        "capabilities",
+        "featured-work",
+        "method",
+        "about",
+        "insights",
+        "final-cta"
+      ]
+    },
+    "services": {
+      "required": true,
+      "composition": ["masthead", "service-intro", "service-grid", "method", "faq-when-useful", "final-cta"]
+    },
+    "work": {
+      "required": true,
+      "composition": ["masthead", "work-index", "verified-case-study", "final-cta"]
+    },
+    "about": {
+      "required": true,
+      "composition": ["masthead", "company-story", "team-or-authority", "method", "verified-proof-when-available", "final-cta"]
+    },
+    "insights": {
+      "required": true,
+      "composition": ["masthead", "featured-article", "article-grid", "topic-navigation"]
+    },
+    "contact": {
+      "required": true,
+      "composition": ["masthead", "contact-intro", "contact-methods", "native-form", "expectation-setting"]
+    },
+    "single": {
+      "required": true,
+      "composition": ["article-header", "provenance", "article-body", "related-internal-links", "author"]
+    },
+    "archive": {
+      "required": true,
+      "composition": ["archive-header", "crawlable-grid", "pagination"]
+    },
+    "404": {
+      "required": true,
+      "composition": ["error-message", "recovery-navigation", "primary-cta"]
+    }
+  },
+  "placeholder_policy": {
+    "sandbox_allowed": true,
+    "production_allowed": false,
+    "text_marker_class": "seo-geo-placeholder--copy",
+    "media_marker_class": "seo-geo-placeholder--media",
+    "rules": [
+      "placeholder copy may use lorem ipsum or clearly generic demo copy",
+      "placeholder media must be local and non-evidentiary",
+      "placeholder content must never become structured-data evidence",
+      "production readiness must fail while required placeholder markers remain",
+      "hydration replaces content inside stable semantic slots without redesigning the page"
+    ]
+  },
+  "bundled_placeholder_media": [
+    "assets/images/presets/corporate/placeholder-hero.svg",
+    "assets/images/presets/corporate/placeholder-case.svg",
+    "assets/images/presets/corporate/placeholder-about.svg"
+  ],
+  "media_contract": {
+    "responsive_images": "wordpress-srcset-sizes-after-hydration",
+    "placeholder_format": "local-svg",
+    "lcp_placeholder": "eager-high-priority",
+    "below_fold_placeholders": "lazy",
+    "client_media_preferred": true,
+    "legacy_layout_position_preserved": false,
+    "legacy_media_asset_may_be_reused": true
+  },
+  "acceptance": [
+    "complete visual composition on a blank WordPress install",
+    "no page-builder runtime dependency",
+    "no remote visual dependency",
+    "zero project JavaScript required for baseline presentation",
+    "semantic server-rendered HTML",
+    "single-H1 contract preserved",
+    "SEO/GEO runtime remains authoritative",
+    "responsive from mobile through wide desktop",
+    "WCAG-aware keyboard and contrast behavior",
+    "performance budgets are not relaxed for visual design"
+  ]
+}
