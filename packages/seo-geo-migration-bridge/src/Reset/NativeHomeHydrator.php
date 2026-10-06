@@ -155,6 +155,8 @@ final class NativeHomeHydrator {
 		$current_kit  = (string) get_post_meta( $draft_id, self::KIT_SHA_META, true );
 
 		if ( hash_equals( $current_sha, $hydrated_sha ) && hash_equals( $current_kit, (string) $plan['kit_sha256'] ) ) {
+			PlaceholderResolutionTracker::commit_after_hydration( $draft_id );
+
 			return array(
 				'schema_version' => 1,
 				'mode'           => 'corporate-home-native-hydration',
@@ -187,6 +189,7 @@ final class NativeHomeHydrator {
 		update_post_meta( $draft_id, self::APPLIED_SHA_META, $hydrated_sha );
 		update_post_meta( $draft_id, self::APPLIED_AT_META, gmdate( DATE_ATOM ) );
 		update_post_meta( $draft_id, CleanHomeRebuilder::CONTENT_STATE_META, self::CONTENT_STATE );
+		PlaceholderResolutionTracker::commit_after_hydration( $draft_id );
 
 		return array(
 			'schema_version' => 1,
@@ -238,6 +241,7 @@ final class NativeHomeHydrator {
 		delete_post_meta( $draft_id, self::APPLIED_AT_META );
 		delete_post_meta( $draft_id, self::BACKUP_META );
 		delete_post_meta( $draft_id, self::BACKUP_SHA_META );
+		delete_post_meta( $draft_id, PlaceholderResolutionTracker::PENDING_META );
 		update_post_meta( $draft_id, CleanHomeRebuilder::CONTENT_STATE_META, self::SCAFFOLD_STATE );
 
 		return array(
@@ -379,7 +383,7 @@ final class NativeHomeHydrator {
 		$html = is_string( $block['innerHTML'] ?? null ) ? ltrim( $block['innerHTML'] ) : '';
 		if (
 			'' !== $html
-			&& 1 === preg_match( '/^<[^>]*\\bclass=(["\\\'])(.*?)\\1/is', $html, $matches )
+			&& 1 === preg_match( '/^<[^>]*\bclass=([\x22\x27])(.*?)\1/is', $html, $matches )
 		) {
 			$classes[] = trim( $matches[2] );
 		}
@@ -450,8 +454,8 @@ final class NativeHomeHydrator {
 			'#<a\b([^>]*)>(.*?)</a>#is',
 			static function ( array $matches ) use ( $label, $url ): string {
 				$attrs = (string) $matches[1];
-				if ( 1 === preg_match( '/\bhref=(["\']).*?\1/i', $attrs ) ) {
-					$attrs = (string) preg_replace( '/\bhref=(["\']).*?\1/i', 'href="' . esc_attr( $url ) . '"', $attrs, 1 );
+				if ( 1 === preg_match( '/\bhref=([\x22\x27]).*?\1/i', $attrs ) ) {
+					$attrs = (string) preg_replace( '/\bhref=([\x22\x27]).*?\1/i', 'href="' . esc_attr( $url ) . '"', $attrs, 1 );
 				} else {
 					$attrs .= ' href="' . esc_attr( $url ) . '"';
 				}

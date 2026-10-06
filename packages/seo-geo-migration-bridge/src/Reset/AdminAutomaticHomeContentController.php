@@ -22,11 +22,11 @@ final class AdminAutomaticHomeContentController {
 	/**
 	 * Construct the operator controller.
 	 *
-	 * @param AutomaticHomeContentQualityKit $automatic Automatic content extraction and hydration service.
-	 * @param CleanHomeRebuilder             $builder   Clean Corporate Home builder.
+	 * @param AutomaticHomeContentStateKit $automatic Automatic content-state extraction and hydration service.
+	 * @param CleanHomeRebuilder           $builder   Clean Corporate Home builder.
 	 */
 	public function __construct(
-		private AutomaticHomeContentQualityKit $automatic,
+		private AutomaticHomeContentStateKit $automatic,
 		private CleanHomeRebuilder $builder
 	) {
 	}
@@ -46,7 +46,8 @@ final class AdminAutomaticHomeContentController {
 			return;
 		}
 
-		( new self( new AutomaticHomeContentQualityKit( $manifest, $builder, $kit, $hydrator ), $builder ) )->boot();
+		$quality = new AutomaticHomeContentQualityKit( $manifest, $builder, $kit, $hydrator );
+		( new self( new AutomaticHomeContentStateKit( $quality, $kit, $hydrator ), $builder ) )->boot();
 	}
 
 	/** Register the notice and mutation action. */
@@ -71,7 +72,9 @@ final class AdminAutomaticHomeContentController {
 			return;
 		}
 
-		$plan = $this->automatic->plan();
+		$plan          = $this->automatic->plan();
+		$content_state = is_array( $plan['content_state'] ?? null ) ? $plan['content_state'] : array();
+		$placeholders  = is_array( $content_state['placeholder_slots'] ?? null ) ? $content_state['placeholder_slots'] : array();
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only status returned by our own redirect.
 		$status = isset( $_GET['seo_geo_auto_home_status'] ) ? sanitize_key( wp_unslash( $_GET['seo_geo_auto_home_status'] ) ) : '';
 		?>
@@ -79,12 +82,15 @@ final class AdminAutomaticHomeContentController {
 			<p><strong><?php echo esc_html__( 'Recommended: Automatic Home Content', 'seo-geo-migration-bridge' ); ?></strong></p>
 			<?php if ( 'applied' === $status ) : ?>
 				<p><strong><?php echo esc_html__( 'Automatic content generated and hydrated successfully.', 'seo-geo-migration-bridge' ); ?></strong> <?php echo esc_html__( 'Evidence sections remain disabled until explicitly verified.', 'seo-geo-migration-bridge' ); ?></p>
+				<?php if ( array() !== $placeholders ) : ?>
+					<p><strong><?php echo esc_html__( 'Draft placeholders are still present.', 'seo-geo-migration-bridge' ); ?></strong> <?php echo esc_html__( 'They keep the design complete for review, but publishing is blocked until they are replaced.', 'seo-geo-migration-bridge' ); ?> <code><?php echo esc_html( implode( ', ', array_map( 'strval', $placeholders ) ) ); ?></code></p>
+				<?php endif; ?>
 				<?php $preview = get_preview_post_link( $draft_id ); ?>
 				<?php if ( is_string( $preview ) && '' !== $preview ) : ?>
 					<p><a class="button button-primary" href="<?php echo esc_url( $preview ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Preview generated Home', 'seo-geo-migration-bridge' ); ?></a></p>
 				<?php endif; ?>
 			<?php elseif ( true === ( $plan['ready'] ?? false ) ) : ?>
-				<p><?php echo esc_html__( 'The plugin can now read the preserved Home and related pages, extract useful authored text, map it to the Corporate semantic model and hydrate the clean draft automatically. Legacy builder layout is never executed or copied.', 'seo-geo-migration-bridge' ); ?></p>
+				<p><?php echo esc_html__( 'The plugin reads the preserved Home and related pages, maps useful authored text into the Corporate semantic model and fills only missing editorial slots with explicit draft placeholders. Legacy builder layout is never executed or copied.', 'seo-geo-migration-bridge' ); ?></p>
 				<p>
 					<?php echo esc_html__( 'Detected:', 'seo-geo-migration-bridge' ); ?>
 					<strong><?php echo esc_html( (string) (int) ( $plan['detected']['sentences'] ?? 0 ) ); ?></strong> <?php echo esc_html__( 'content units', 'seo-geo-migration-bridge' ); ?> ·
@@ -94,6 +100,9 @@ final class AdminAutomaticHomeContentController {
 					<?php endif; ?> ·
 					<?php echo esc_html__( 'contact target', 'seo-geo-migration-bridge' ); ?> <code><?php echo esc_html( (string) ( $plan['detected']['contact_path'] ?? '' ) ); ?></code>
 				</p>
+				<?php if ( array() !== $placeholders ) : ?>
+					<p><strong><?php echo esc_html( (string) count( $placeholders ) ); ?></strong> <?php echo esc_html__( 'semantic draft placeholders will be used to keep the preset visually complete.', 'seo-geo-migration-bridge' ); ?> <?php echo esc_html__( 'The generated page remains non-publishable until they are resolved.', 'seo-geo-migration-bridge' ); ?></p>
+				<?php endif; ?>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION ); ?>">
 					<input type="hidden" name="confirm" value="generate-and-hydrate-home">
@@ -102,7 +111,7 @@ final class AdminAutomaticHomeContentController {
 				</form>
 				<p class="description"><?php echo esc_html__( 'Manual Content Kit fields below are advanced fallback/editing tools, not the normal migration path.', 'seo-geo-migration-bridge' ); ?></p>
 			<?php else : ?>
-				<p><?php echo esc_html__( 'Automatic extraction needs attention only for the missing items below; the rest of the rescued content does not need to be entered manually.', 'seo-geo-migration-bridge' ); ?></p>
+				<p><?php echo esc_html__( 'Automatic generation is blocked only by structural or safety requirements below. Missing editorial copy alone is handled with semantic draft placeholders.', 'seo-geo-migration-bridge' ); ?></p>
 				<p><code><?php echo esc_html( implode( ', ', is_array( $plan['blockers'] ?? null ) ? $plan['blockers'] : array() ) ); ?></code></p>
 			<?php endif; ?>
 		</div>

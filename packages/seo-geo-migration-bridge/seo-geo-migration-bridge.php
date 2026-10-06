@@ -3,7 +3,7 @@
  * Plugin Name: SEO/GEO Migration Bridge
  * Plugin URI: https://github.com/Emmakex/template-wordpress-seo-geo
  * Description: Scan, clone, rescue and reset-first rebuild tooling for SEO/GEO WordPress migrations.
- * Version: 0.8.60
+ * Version: 0.8.61
  * Requires at least: 7.1
  * Requires PHP: 8.2
  * Author: Eduardo Yauri
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEO_GEO_MIGRATION_BRIDGE_VERSION', '0.8.60' );
+define( 'SEO_GEO_MIGRATION_BRIDGE_VERSION', '0.8.61' );
 define( 'SEO_GEO_MIGRATION_BRIDGE_DIR', plugin_dir_path( __FILE__ ) );
 
 spl_autoload_register(
@@ -39,6 +39,8 @@ spl_autoload_register(
 );
 
 SeoGeo\MigrationBridge\Plugin::boot();
+SeoGeo\MigrationBridge\Reset\PlaceholderPublishingGuard::boot();
+SeoGeo\MigrationBridge\Reset\PlaceholderResolutionTracker::boot();
 SeoGeo\MigrationBridge\Reset\AdminAutomaticHomeContentController::boot_from_plugin();
 SeoGeo\MigrationBridge\Reset\AdminCorporatePagePipelineController::boot_from_plugin();
 SeoGeo\MigrationBridge\Reset\AdminCorporateInsightsController::boot_from_plugin();

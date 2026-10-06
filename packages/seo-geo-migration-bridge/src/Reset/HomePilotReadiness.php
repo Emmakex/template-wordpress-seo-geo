@@ -149,6 +149,20 @@ final class HomePilotReadiness {
 			$blockers[] = 'preset-placeholder-content-detected';
 		}
 
+		$semantic_placeholders = get_post_meta( $draft_id, AutomaticHomeContentStateKit::PLACEHOLDER_META, true );
+		$semantic_placeholders = is_array( $semantic_placeholders )
+			? array_values( array_filter( $semantic_placeholders, 'is_string' ) )
+			: array();
+		$pending_resolution    = get_post_meta( $draft_id, PlaceholderResolutionTracker::PENDING_META, true );
+		$pending_resolution    = is_array( $pending_resolution )
+			? array_values( array_filter( $pending_resolution, 'is_string' ) )
+			: array();
+
+		$checks['semantic_placeholders_resolved'] = array() === $semantic_placeholders;
+		if ( ! $checks['semantic_placeholders_resolved'] ) {
+			$blockers[] = 'semantic-placeholder-content-unresolved';
+		}
+
 		$verified_groups = is_array( $hydration_plan['verified_groups'] ?? null ) ? $hydration_plan['verified_groups'] : array();
 
 		$checks['evidence_groups_reviewed'] = ! in_array( true, array_values( $verified_groups ), true );
@@ -166,17 +180,19 @@ final class HomePilotReadiness {
 		sort( $warnings );
 
 		$material = array(
-			'schema_version'        => 1,
-			'mode'                  => self::MODE,
-			'draft_id'              => $draft_id,
-			'source_id'             => $source_id,
-			'front_page_id'         => $current_front_id,
-			'checks'                => $checks,
-			'legacy_markers'        => $legacy_markers,
-			'placeholder_markers'   => $placeholder_markers,
-			'seo_review_items'      => is_array( $seo_report['review_items'] ?? null ) ? $seo_report['review_items'] : array(),
-			'verified_groups'       => $verified_groups,
-			'manual_browser_checks' => array(
+			'schema_version'                 => 1,
+			'mode'                           => self::MODE,
+			'draft_id'                       => $draft_id,
+			'source_id'                      => $source_id,
+			'front_page_id'                  => $current_front_id,
+			'checks'                         => $checks,
+			'legacy_markers'                 => $legacy_markers,
+			'placeholder_markers'            => $placeholder_markers,
+			'semantic_placeholder_slots'     => $semantic_placeholders,
+			'pending_placeholder_resolution' => $pending_resolution,
+			'seo_review_items'               => is_array( $seo_report['review_items'] ?? null ) ? $seo_report['review_items'] : array(),
+			'verified_groups'                => $verified_groups,
+			'manual_browser_checks'          => array(
 				'visual-layout',
 				'responsive-behavior',
 				'accessibility',
