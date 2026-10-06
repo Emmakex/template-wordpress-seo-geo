@@ -68,9 +68,10 @@ $page_keys = array( 'product', 'features', 'solutions', 'integrations', 'pricing
 
 $mockup_path = SAAS_INNER_PRESET_DIR . '/mockup.json';
 $mockup      = saas_inner_json( $mockup_path );
+$stage       = $mockup['current_stage'] ?? null;
 
-if ( 'inner-pages-candidate' !== ( $mockup['current_stage'] ?? null ) ) {
-	fail_saas_final_inner( 'stage-contract', 'SaaS roadmap stage must explicitly identify the inner-page candidate.', $mockup_path . '#current_stage', 'inner-pages-candidate', $mockup['current_stage'] ?? null );
+if ( ! is_string( $stage ) || ! in_array( $stage, array( 'inner-pages-candidate', 'system-surfaces-candidate' ), true ) ) {
+	fail_saas_final_inner( 'stage-contract', 'SaaS inner-page contract must remain valid while the preset advances through its final system-surface stage.', $mockup_path . '#current_stage', 'inner-pages-candidate or system-surfaces-candidate', $stage );
 }
 
 foreach ( $page_keys as $page_key ) {
@@ -86,10 +87,12 @@ foreach ( $page_keys as $page_key ) {
 	}
 }
 
-foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
-	$status = $mockup['pages'][ $system_page ]['status'] ?? null;
-	if ( 'next-microphase' !== $status ) {
-		fail_saas_final_inner( 'system-surface-honesty', 'SaaS must not claim system surfaces complete before their dedicated microphase.', $mockup_path . '#pages.' . $system_page, 'next-microphase', $status );
+if ( 'inner-pages-candidate' === $stage ) {
+	foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
+		$status = $mockup['pages'][ $system_page ]['status'] ?? null;
+		if ( 'next-microphase' !== $status ) {
+			fail_saas_final_inner( 'system-surface-honesty', 'SaaS must not claim system surfaces complete before their dedicated microphase.', $mockup_path . '#pages.' . $system_page, 'next-microphase', $status );
+		}
 	}
 }
 
