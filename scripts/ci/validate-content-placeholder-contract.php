@@ -9,15 +9,16 @@ declare(strict_types=1);
 
 $root = dirname( __DIR__, 2 );
 
-$state_file = $root . '/packages/seo-geo-migration-bridge/src/Reset/AutomaticHomeContentStateKit.php';
-$guard_file = $root . '/packages/seo-geo-migration-bridge/src/Reset/PlaceholderPublishingGuard.php';
-$controller = $root . '/packages/seo-geo-migration-bridge/src/Reset/AdminAutomaticHomeContentController.php';
-$bootstrap  = $root . '/packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php';
-$docs       = $root . '/docs/CONTENT_PLACEHOLDERS.md';
+$state_file   = $root . '/packages/seo-geo-migration-bridge/src/Reset/AutomaticHomeContentStateKit.php';
+$guard_file   = $root . '/packages/seo-geo-migration-bridge/src/Reset/PlaceholderPublishingGuard.php';
+$tracker_file = $root . '/packages/seo-geo-migration-bridge/src/Reset/PlaceholderResolutionTracker.php';
+$controller   = $root . '/packages/seo-geo-migration-bridge/src/Reset/AdminAutomaticHomeContentController.php';
+$bootstrap    = $root . '/packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php';
+$docs         = $root . '/docs/CONTENT_PLACEHOLDERS.md';
 
 $failures = array();
 
-foreach ( array( $state_file, $guard_file, $controller, $bootstrap, $docs ) as $file ) {
+foreach ( array( $state_file, $guard_file, $tracker_file, $controller, $bootstrap, $docs ) as $file ) {
 	if ( ! is_file( $file ) ) {
 		$failures[] = 'missing-file:' . str_replace( $root . '/', '', $file );
 	}
@@ -74,6 +75,20 @@ require_markers(
 );
 
 require_markers(
+	$tracker_file,
+	array(
+		'updated_option',
+		'CorporateHomeContentKit::OPTION',
+		'AutomaticHomeContentStateKit::PLACEHOLDER_META',
+		"'authored'",
+		"'reviewed-content'",
+		"'publishable'",
+	),
+	$failures,
+	'placeholder-resolution'
+);
+
+require_markers(
 	$controller,
 	array(
 		'AutomaticHomeContentStateKit',
@@ -86,7 +101,10 @@ require_markers(
 
 require_markers(
 	$bootstrap,
-	array( 'PlaceholderPublishingGuard::boot();' ),
+	array(
+		'PlaceholderPublishingGuard::boot();',
+		'PlaceholderResolutionTracker::boot();',
+	),
 	$failures,
 	'bootstrap'
 );
@@ -97,7 +115,9 @@ require_markers(
 		'`source`',
 		'`derived`',
 		'`placeholder`',
+		'`authored`',
 		'not publishable',
+		'progressively unlock publication',
 	),
 	$failures,
 	'docs'
