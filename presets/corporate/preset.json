@@ -37,6 +37,16 @@
     "seo-geo-theme/corporate-native-process",
     "seo-geo-theme/corporate-native-insights"
   ],
+  "final_mockup": {
+    "contract": "mockup.json",
+    "home_pattern": "seo-geo-theme/corporate-home-final",
+    "strategy": "complete-layout-before-client-content",
+    "placeholder_copy_allowed_in_sandbox": true,
+    "placeholder_media_allowed_in_sandbox": true,
+    "placeholders_block_production": true,
+    "client_content_hydrates_stable_slots": true,
+    "legacy_visual_layout_reuse": false
+  },
   "schema": {
     "expected_entities": [
       "Organization",
@@ -81,7 +91,8 @@
     "one H1 owned by the page/template composition",
     "Organization Schema only after explicit confirmed identity",
     "BlogPosting/Person provenance only on eligible public content",
-    "private and draft resources excluded from discovery surfaces"
+    "private and draft resources excluded from discovery surfaces",
+    "placeholder content cannot pass production readiness"
   ],
   "optional_integrations": [],
   "explicitly_disabled": [
@@ -92,9 +103,11 @@
   ],
   "visual": {
     "stylesheet": "assets/css/presets/corporate.css",
+    "presentation_layer": "assets/css/presets/corporate-v2.css",
     "body_class": "seo-geo-preset-corporate",
     "design_system": "corporate-native-v1",
     "principles": [
+      "complete-site-mockup",
       "modern-product-site",
       "editorial-typography",
       "native-wordpress-components",
@@ -103,7 +116,7 @@
       "responsive-container-aware",
       "accessible-interactions",
       "brand-adaptable",
-      "content-first-replatforming",
+      "layout-first-content-hydration",
       "no-legacy-visual-parity"
     ]
   },
@@ -154,6 +167,8 @@
       "disciplined-asymmetry",
       "bounded-whitespace",
       "selective-oversized-statements",
+      "large-purposeful-media",
+      "alternating-composition-rhythm",
       "restrained-brand-accent",
       "outcome-led-proof"
     ],
@@ -162,6 +177,7 @@
       "unexplained-counters",
       "decorative-carousels",
       "autoplay-video-backgrounds",
+      "placeholder-as-production-content",
       "legacy-visual-parity"
     ]
   },
@@ -170,6 +186,7 @@
     "legacy_visual_parity": false,
     "native_composition_required": true,
     "source_content_may_be_restructured": true,
+    "source_media_may_fill_new_visual_slots": true,
     "source_facts_must_not_be_fabricated": true
   }
 }

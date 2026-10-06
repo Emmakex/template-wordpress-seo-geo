@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Corporate about placeholder</title>
+  <desc id="desc">Abstract team and collaboration composition used until verified company photography is available.</desc>
+  <rect width="1200" height="760" rx="44" fill="#dff5ef"/>
+  <rect x="54" y="54" width="1092" height="652" rx="34" fill="#f5f7f3"/>
+  <rect x="92" y="92" width="650" height="576" rx="28" fill="#0d2b35"/>
+  <circle cx="260" cy="300" r="104" fill="#31d1ba" opacity=".9"/>
+  <circle cx="462" cy="274" r="88" fill="#e5a46c" opacity=".86"/>
+  <circle cx="602" cy="386" r="118" fill="#08a892" opacity=".7"/>
+  <path d="M146 542c92-76 179-92 262-47 87 47 169 42 260-48" fill="none" stroke="#f5f7f3" stroke-width="22" stroke-linecap="round" opacity=".92"/>
+  <rect x="790" y="112" width="260" height="26" rx="13" fill="#08a892"/>
+  <rect x="790" y="170" width="286" height="74" rx="20" fill="#071b24"/>
+  <rect x="790" y="286" width="250" height="18" rx="9" fill="#6f8b8d"/>
+  <rect x="790" y="322" width="220" height="18" rx="9" fill="#91a5a4"/>
+  <rect x="790" y="358" width="274" height="18" rx="9" fill="#aab9b6"/>
+  <rect x="790" y="448" width="136" height="54" rx="27" fill="#071b24"/>
+  <rect x="790" y="548" width="316" height="82" rx="22" fill="#ffffff" stroke="#cbdad6"/>
+</svg>

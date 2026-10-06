@@ -10,8 +10,8 @@
  */
 
 ?>
-<!-- wp:group {"align":"full","backgroundColor":"accent","textColor":"accent-contrast","style":{"spacing":{"padding":{"top":"var:preset|spacing|2xl","bottom":"var:preset|spacing|2xl","left":"var:preset|spacing|lg","right":"var:preset|spacing|lg"}}},"layout":{"type":"constrained"}} -->
-<div class="wp-block-group alignfull has-accent-contrast-color has-accent-background-color has-text-color has-background" style="padding-top:var(--wp--preset--spacing--2-xl);padding-right:var(--wp--preset--spacing--lg);padding-bottom:var(--wp--preset--spacing--2-xl);padding-left:var(--wp--preset--spacing--lg)">
+<!-- wp:group {"align":"full","backgroundColor":"accent","textColor":"accent-contrast","className":"seo-geo-final-cta","style":{"spacing":{"padding":{"top":"var:preset|spacing|2xl","bottom":"var:preset|spacing|2xl","left":"var:preset|spacing|lg","right":"var:preset|spacing|lg"}}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group alignfull seo-geo-final-cta has-accent-contrast-color has-accent-background-color has-text-color has-background" style="padding-top:var(--wp--preset--spacing--2-xl);padding-right:var(--wp--preset--spacing--lg);padding-bottom:var(--wp--preset--spacing--2-xl);padding-left:var(--wp--preset--spacing--lg)">
 	<!-- wp:heading {"textColor":"accent-contrast","fontSize":"2xl","className":"seo-geo-content-slot--final-cta-heading"} -->
 	<h2 class="wp-block-heading has-accent-contrast-color has-text-color has-2-xl-font-size seo-geo-content-slot--final-cta-heading"><?php esc_html_e( 'State the next useful step clearly', 'seo-geo-theme' ); ?></h2>
 	<!-- /wp:heading -->
