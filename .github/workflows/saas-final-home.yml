@@ -1,4 +1,4 @@
-name: SaaS Final Home CI
+name: SaaS Final Preset CI
 
 on:
   pull_request:
@@ -7,10 +7,12 @@ on:
       - 'packages/seo-geo-theme/assets/css/design-system.css'
       - 'packages/seo-geo-theme/assets/css/presets/saas-digital-product.css'
       - 'packages/seo-geo-theme/preset-patterns/saas-home-final.php'
+      - 'packages/seo-geo-theme/preset-patterns/saas-inner-final.php'
       - 'packages/seo-geo-theme/inc/presets.php'
       - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-saas-digital-product-preset.php'
       - 'scripts/ci/validate-saas-final-home.php'
+      - 'scripts/ci/validate-saas-final-inner.php'
       - '.github/workflows/saas-final-home.yml'
   push:
     branches:
@@ -20,22 +22,24 @@ on:
       - 'packages/seo-geo-theme/assets/css/design-system.css'
       - 'packages/seo-geo-theme/assets/css/presets/saas-digital-product.css'
       - 'packages/seo-geo-theme/preset-patterns/saas-home-final.php'
+      - 'packages/seo-geo-theme/preset-patterns/saas-inner-final.php'
       - 'packages/seo-geo-theme/inc/presets.php'
       - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-saas-digital-product-preset.php'
       - 'scripts/ci/validate-saas-final-home.php'
+      - 'scripts/ci/validate-saas-final-inner.php'
       - '.github/workflows/saas-final-home.yml'
 
 permissions:
   contents: read
 
 concurrency:
-  group: saas-final-home-${{ github.workflow }}-${{ github.ref }}
+  group: saas-final-preset-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   contract:
-    name: SaaS final Home + preset contract
+    name: SaaS final Home + inner pages + preset contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -54,11 +58,16 @@ jobs:
           php -l packages/seo-geo-theme/functions.php
           php -l packages/seo-geo-theme/inc/presets.php
           php -l packages/seo-geo-theme/preset-patterns/saas-home-final.php
+          php -l packages/seo-geo-theme/preset-patterns/saas-inner-final.php
           php -l scripts/ci/validate-saas-digital-product-preset.php
           php -l scripts/ci/validate-saas-final-home.php
+          php -l scripts/ci/validate-saas-final-inner.php
 
       - name: Validate existing SaaS semantic contract
         run: php scripts/ci/validate-saas-digital-product-preset.php
 
       - name: Validate final SaaS Home contract
         run: php scripts/ci/validate-saas-final-home.php
+
+      - name: Validate final SaaS inner-page contract
+        run: php scripts/ci/validate-saas-final-inner.php
