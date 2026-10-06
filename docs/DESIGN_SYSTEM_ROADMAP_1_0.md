@@ -42,7 +42,7 @@ Acceptance:
 
 ## Phase DS-2 — Corporate Premium reference preset
 
-**Status: next**
+**Status: in progress**
 
 Home composition:
 
@@ -73,17 +73,20 @@ Acceptance:
 
 ## Phase DS-3 — Placeholder and content-state engine
 
-**Status: planned**
+**Status: implemented in PR #235; CI validation pending**
 
-Deliverables:
+Delivered:
 
-- explicit slot state: rescued / authored / generated-draft / placeholder / verified-evidence;
-- automatic semantic placeholder generation for empty non-evidence slots;
-- placeholder detection in Site Readiness;
-- final publication blocked while unresolved placeholders remain;
-- evidence groups remain opt-in verified only.
+- explicit semantic slot state: `source`, `derived`, `placeholder`;
+- automatic semantic placeholder scaffold when rescued copy cannot satisfy the required Home model;
+- only editorial-content shortages are recoverable; structural/safety blockers remain hard blockers;
+- placeholder slot list and `publishable` state are exposed by the automatic plan;
+- placeholder state is persisted on the clean Home draft;
+- WordPress public/scheduled status writes are forced back to `draft` while placeholder slots remain;
+- evidence groups remain opt-in verified only;
+- detailed contract in `docs/CONTENT_PLACEHOLDERS.md`.
 
-The content optimizer can later replace placeholders with researched/optimized content without changing the visual component contract.
+The content optimizer can later replace placeholder slots first, improve weak derived/source copy and retain provenance without changing the visual component contract.
 
 ## Phase DS-4 — Remaining presets
 
@@ -111,7 +114,8 @@ Extend CI to cover:
 - contrast/focus/reduced motion;
 - print/PDF layout sanity;
 - no remote font/design dependency;
-- no mandatory frontend JS for static presentation.
+- no mandatory frontend JS for static presentation;
+- placeholder publication guard.
 
 ## Phase DS-6 — EMMAKE regeneration
 
