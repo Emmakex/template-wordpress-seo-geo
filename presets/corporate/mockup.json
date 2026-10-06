@@ -18,36 +18,32 @@
     "home": {
       "required": true,
       "pattern": "seo-geo-theme/corporate-home-final",
-      "composition": [
-        "masthead",
-        "hero-support",
-        "capabilities",
-        "featured-work",
-        "method",
-        "about",
-        "insights",
-        "final-cta"
-      ]
+      "composition": ["masthead", "hero-support", "capabilities", "featured-work", "method", "about", "insights", "final-cta"]
     },
     "services": {
       "required": true,
+      "pattern": "seo-geo-theme/corporate-services-final",
       "composition": ["masthead", "service-intro", "service-grid", "method", "faq-when-useful", "final-cta"]
     },
     "work": {
       "required": true,
-      "composition": ["masthead", "work-index", "verified-case-study", "final-cta"]
+      "pattern": "seo-geo-theme/corporate-work-final",
+      "composition": ["masthead", "work-index", "verified-proof-when-available", "verified-case-study", "final-cta"]
     },
     "about": {
       "required": true,
+      "pattern": "seo-geo-theme/corporate-about-final",
       "composition": ["masthead", "company-story", "team-or-authority", "method", "verified-proof-when-available", "final-cta"]
     },
     "insights": {
       "required": true,
-      "composition": ["masthead", "featured-article", "article-grid", "topic-navigation"]
+      "pattern": "seo-geo-theme/corporate-insights-final",
+      "composition": ["masthead", "article-grid", "pagination", "final-cta"]
     },
     "contact": {
       "required": true,
-      "composition": ["masthead", "contact-intro", "contact-methods", "native-form", "expectation-setting"]
+      "pattern": "seo-geo-theme/corporate-contact-final",
+      "composition": ["masthead", "contact-intro", "contact-methods", "native-form-after-hydration", "expectation-setting", "final-cta"]
     },
     "single": {
       "required": true,
