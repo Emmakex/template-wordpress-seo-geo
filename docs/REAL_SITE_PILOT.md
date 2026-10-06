@@ -2,7 +2,7 @@
 
 This document is the current operational source for the first real-site acceptance of the self-contained SEO/GEO Theme.
 
-Historical clone and migration milestones are preserved below for context, but they are not allowed to override the frozen current candidate.
+Historical clone, migration and earlier Corporate milestones are preserved below for context. They do not override the frozen current candidate.
 
 ## Current authority
 
@@ -10,26 +10,66 @@ The canonical machine-readable candidate is:
 
 `release/emmake-phase10e-candidate.json`
 
-Current field identity:
+Current Corporate v3 field identity:
 
 - site ID: `emmake-com`;
 - production origin: `https://emmake.com/`;
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen source commit: `d3f4022ff2f46c2ee965bae561217b990bf2edf0`;
-- Theme ZIP SHA-256: `313796fde03e0204a334d204098222e5d0521b9efeb2ec622fbd92c0522b8c15`;
+- frozen source commit: `8d983183be02b38dece4b2b68c447c68c107d98d`;
+- Theme ZIP SHA-256: `376a2775dc243e2fbfb38b88a2d0b0d19b63a392bef6f5ab30a4938b98b51ebe`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `6a84f39d2a5944eec57d60b74f09171a1e40303f4a53732bd922c0b5b4b01999`;
+- deterministic field-pilot pack SHA-256: `790d560db976caa19365c6d6170c9ce235b68341fbb707d3994b40b16231ce24`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
 Do not substitute an older Theme, older Migration Bridge or an earlier pilot ZIP for this candidate. If any packaged component changes, freeze and validate a new candidate first.
 
-## What is already proven
+## Current pilot position
 
-The pilot already has useful historical field evidence:
+The technical Reset & Rebuild sequence has already reached Step 7 on the real `/nuevaweb/` clone:
+
+- Rescue Manifest completed;
+- Clone Reset completed;
+- Corporate bootstrap completed;
+- clean Home draft created;
+- rescued/client content hydrated into native semantic slots;
+- Yoast detected as external provider without becoming Theme authority;
+- native SEO/GEO handoff reported SEO-ready;
+- machine preflight reported `ready_for_browser_qa=true`.
+
+The first browser QA then rejected the old Corporate visual presentation. This is now an explicit field finding, not something CI is allowed to hide.
+
+The rejected presentation showed:
+
+- generic equal-card composition;
+- long service headings breaking poorly at compact/tablet widths;
+- weak contrast in the dark method section;
+- cramped Insights cards;
+- an overall visual result below the product target of a modern custom-designed site.
+
+Those defects belong to the reusable Corporate preset. No EMMAKE-only CSS patch is permitted. Corporate v3 replaces the reusable presentation layer while preserving the already proven semantic hydration and SEO/GEO state.
+
+## Corporate v3 master-preset rule
+
+Corporate v3 is the only active visual preset until this pilot approves it.
+
+SaaS, Local Pro, Publisher and Ecommerce visual iteration is frozen. They may inherit approved technical primitives only after Corporate v3 passes its real browser gate.
+
+The Home must be accepted at these product widths:
+
+- `1440` desktop;
+- `1024` compact desktop/tablet landscape;
+- `768` tablet;
+- `390` mobile.
+
+The existing `320` compact-mobile automated check remains as an extra stress case.
+
+Do not advance Step 8, inner-page rollout, production cutover or stable promotion before the Corporate Home itself is approved.
+
+## What is already proven
 
 ### Production baseline and dependency review
 
@@ -53,7 +93,7 @@ Bounded evidence remains in:
 
 `release/emmake-divi-migration-field-milestone-20261003.json`
 
-This proves a migration capability, not final replatform acceptance.
+This proves migration capability, not final replatform acceptance.
 
 ### 2026-10-04 Corporate preset milestone
 
@@ -63,7 +103,7 @@ Bounded evidence remains in:
 
 `release/emmake-corporate-preset-application-20261004.json`
 
-This historical application occurred before the current frozen `0.1.1` five-preset candidate and therefore does not close Phase 10E.
+This historical application and the later successful Reset & Rebuild technical pass do not close Phase 10E because browser visual acceptance is still pending.
 
 ## Replatforming rule
 
@@ -87,7 +127,7 @@ Replace legacy presentation debt:
 - decorative builder structure;
 - plugins whose only purpose was the previous presentation layer.
 
-The target is a fresh Corporate site built from reusable SEO/GEO Theme primitives.
+The target is a fresh Corporate site built from reusable SEO/GEO Theme primitives and approved as a real product, not merely a technically valid WordPress render.
 
 ## Sandbox safety boundary
 
@@ -115,35 +155,30 @@ Also require:
 
 No credentials, dumps, private form submissions, arbitrary option payloads or customer data enter the repository.
 
-## Field execution
+## Field execution for Corporate v3
 
-Use the deterministic pack identified above and follow `docs/EMMAKE_HOME_FIELD_PILOT.md`.
+The destructive/reset portion does **not** need to be repeated merely to test the new presentation layer because the existing Home draft is already hydrated into the stable semantic content slots.
 
-The accepted order is:
+For the Corporate v3 visual candidate:
 
-1. verify outer pack and nested component SHA-256 values;
-2. confirm `/nuevaweb/` backup and sandbox guards;
-3. install Theme `0.1.1` prestable candidate;
-4. install and activate Migration Bridge `0.8.60`;
-5. create or refresh the Rescue Manifest;
-6. apply Clone Reset, retaining only genuine business dependencies;
-7. bootstrap Corporate;
-8. create the clean private Home draft;
-9. generate and hydrate native Home content from rescued/client material;
-10. apply native SEO/GEO handoff;
-11. run field-pilot readiness;
-12. continue only when Step 7 reports `ready_for_browser_qa=true`.
+1. verify the new Theme ZIP SHA-256;
+2. update the Theme only on `/nuevaweb/`;
+3. keep Migration Bridge `0.8.60` active and preserve the existing Step 1–7 state;
+4. clear relevant WordPress/host/browser caches;
+5. preview the already hydrated clean Home draft;
+6. re-run browser QA at `1440 / 1024 / 768 / 390`;
+7. do not advance Step 8 until the Home receives explicit visual approval.
 
-The source Home and production front-page assignment remain unchanged during this flow.
+If the semantic draft or Step 7 state has drifted, stop and investigate rather than recreating evidence casually.
 
 ## Browser QA acceptance
 
-After Step 7 is ready, record all five browser checks from the field evidence template:
+Record all five browser checks from the field evidence template:
 
-1. `visual-layout` — hierarchy, spacing, CTAs and content order on representative desktop/mobile views;
-2. `responsive-behavior` — no overflow, broken controls or unusable mobile composition;
-3. `accessibility` — headings, landmarks, keyboard/focus behavior, contrast and meaningful links;
-4. `seo-geo-rendered-output` — title, description, canonical, robots, Schema/discovery output and internal links;
+1. `visual-layout` — the result must feel like a modern custom-designed Corporate site, with clear hierarchy, intentional rhythm, strong hero, purposeful section variety and coherent CTAs;
+2. `responsive-behavior` — no overflow, broken controls, squeezed desktop layouts, pathological word wrapping or unusable mobile composition at the four master widths;
+3. `accessibility` — headings, landmarks, keyboard/focus behavior, meaningful links and sufficient contrast, especially on dark/full-bleed sections;
+4. `seo-geo-rendered-output` — title, description, canonical, robots, Schema/discovery output and internal links remain correct after the visual replacement;
 5. `performance` — no material asset/runtime regression and acceptable measured sandbox performance.
 
 Any blocker keeps the pilot in `pending` state.
@@ -180,7 +215,8 @@ Intentional differences must be explicitly reviewed rather than silently accepte
 
 The sandbox becomes eligible for production-entry review only when:
 
-- the exact frozen artifacts are installed;
+- the exact frozen Corporate v3 artifacts are installed;
+- Corporate Home passes the explicit product-quality visual gate;
 - no unexplained URL loss remains;
 - no required legacy builder runtime remains;
 - no unresolved SEO/GEO review item remains;
@@ -214,7 +250,7 @@ Material canonical/indexability/sitemap/hreflang/redirect regression, a broken c
 
 The stable gate does not wait for SEO/GEO Manager. Manager is a separate later product roadmap.
 
-Theme `0.1.1` may move from `prestable` to `stable` only after real production acceptance exists and a bounded reference is recorded.
+Theme `0.1.1` may move from `prestable` to `stable` only after Corporate v3 real-site browser acceptance and later controlled production acceptance exist with bounded evidence.
 
 Until then:
 
