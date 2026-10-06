@@ -17,8 +17,9 @@ use WP_Post;
  * when a legacy Home does not contain enough authored copy to satisfy the native model.
  */
 final class AutomaticHomeContentStateKit {
-	public const STATE_META       = '_seo_geo_home_semantic_content_state_v1';
-	public const PLACEHOLDER_META = '_seo_geo_home_placeholder_slots_v1';
+	public const STATE_META                = '_seo_geo_home_semantic_content_state_v1';
+	public const PLACEHOLDER_META          = '_seo_geo_home_placeholder_slots_v1';
+	public const PLACEHOLDER_BASELINE_META = '_seo_geo_home_placeholder_baseline_v1';
 
 	/**
 	 * Content-only blockers that may be recovered with a semantic placeholder scaffold.
@@ -181,19 +182,28 @@ final class AutomaticHomeContentStateKit {
 			return $hydration;
 		}
 
-		$state = is_array( $plan['content_state'] ?? null ) ? $plan['content_state'] : array();
-		update_post_meta( (int) $plan['draft_id'], self::STATE_META, $state );
-		update_post_meta(
-			(int) $plan['draft_id'],
-			self::PLACEHOLDER_META,
-			is_array( $state['placeholder_slots'] ?? null ) ? array_values( $state['placeholder_slots'] ) : array()
-		);
+		$draft_id          = (int) $plan['draft_id'];
+		$state             = is_array( $plan['content_state'] ?? null ) ? $plan['content_state'] : array();
+		$placeholder_slots = is_array( $state['placeholder_slots'] ?? null ) ? array_values( $state['placeholder_slots'] ) : array();
+		$values            = is_array( $plan['values'] ?? null ) ? $plan['values'] : array();
+		$baseline          = array();
+
+		foreach ( $placeholder_slots as $slot_id ) {
+			if ( is_string( $slot_id ) && array_key_exists( $slot_id, $values ) ) {
+				$baseline[ $slot_id ] = PlaceholderResolutionTracker::fingerprint_value( $values[ $slot_id ] );
+			}
+		}
+
+		update_post_meta( $draft_id, self::STATE_META, $state );
+		update_post_meta( $draft_id, self::PLACEHOLDER_META, $placeholder_slots );
+		update_post_meta( $draft_id, self::PLACEHOLDER_BASELINE_META, $baseline );
+		delete_post_meta( $draft_id, PlaceholderResolutionTracker::PENDING_META );
 
 		return array(
 			'schema_version' => 3,
 			'mode'           => 'automatic-corporate-home-content-state',
 			'status'         => 'applied',
-			'draft_id'       => (int) $plan['draft_id'],
+			'draft_id'       => $draft_id,
 			'source_id'      => (int) $plan['source_id'],
 			'kit_sha256'     => (string) ( $kit['kit_sha256'] ?? '' ),
 			'content_sha256' => (string) ( $hydration['content_sha256'] ?? '' ),
