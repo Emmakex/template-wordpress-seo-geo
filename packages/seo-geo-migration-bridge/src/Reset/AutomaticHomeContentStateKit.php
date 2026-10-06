@@ -112,22 +112,22 @@ final class AutomaticHomeContentStateKit {
 			$slot_states['hero-lead'] = 'source';
 		}
 
-		$plan['ready']         = true;
-		$plan['blockers']      = array();
-		$plan['values']        = $values;
-		$plan['home_heading']  = $this->fallback_heading( $source, $lead );
-		$plan['quality_pass']  = 'semantic-placeholder-fallback-v1';
-		$plan['fallback_from'] = $blockers;
-		$plan['content_state'] = array(
+		$plan['ready']                                 = true;
+		$plan['blockers']                              = array();
+		$plan['values']                                = $values;
+		$plan['home_heading']                          = $this->fallback_heading( $source, $lead );
+		$plan['quality_pass']                          = 'semantic-placeholder-fallback-v1';
+		$plan['fallback_from']                         = $blockers;
+		$plan['content_state']                         = array(
 			'mode'              => 'semantic-placeholder-scaffold',
 			'publishable'       => false,
 			'placeholder_slots' => $placeholder_slots,
 			'slot_states'       => $slot_states,
 		);
-		$plan['safety'] = is_array( $plan['safety'] ?? null ) ? $plan['safety'] : array();
+		$plan['safety']                                = is_array( $plan['safety'] ?? null ) ? $plan['safety'] : array();
 		$plan['safety']['placeholder_content_present'] = true;
-		$plan['detected'] = $detected;
-		$plan['detected']['placeholder_slots'] = count( $placeholder_slots );
+		$plan['detected']                              = $detected;
+		$plan['detected']['placeholder_slots']         = count( $placeholder_slots );
 
 		return $plan;
 	}
@@ -231,13 +231,13 @@ final class AutomaticHomeContentStateKit {
 			$slot_states[ $slot_id ] = in_array( $slot_id, $derived, true ) ? 'derived' : 'source';
 		}
 
-		$plan['content_state'] = array(
+		$plan['content_state']                         = array(
 			'mode'              => 'rescued-content',
 			'publishable'       => true,
 			'placeholder_slots' => array(),
 			'slot_states'       => $slot_states,
 		);
-		$plan['safety'] = is_array( $plan['safety'] ?? null ) ? $plan['safety'] : array();
+		$plan['safety']                                = is_array( $plan['safety'] ?? null ) ? $plan['safety'] : array();
 		$plan['safety']['placeholder_content_present'] = false;
 
 		return $plan;
