@@ -1,4 +1,4 @@
-name: Local Pro Final Home CI
+name: Local Pro Final Preset CI
 
 on:
   pull_request:
@@ -6,8 +6,12 @@ on:
       - 'presets/local-business/**'
       - 'packages/seo-geo-theme/assets/css/presets/local-business.css'
       - 'packages/seo-geo-theme/preset-patterns/local-business-home-final.php'
+      - 'packages/seo-geo-theme/preset-patterns/local-business-inner-final.php'
+      - 'packages/seo-geo-theme/inc/LocalBusiness/FinalInnerPatterns.php'
       - 'packages/seo-geo-theme/inc/presets.php'
+      - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-local-business-final-home.php'
+      - 'scripts/ci/validate-local-business-final-inner.php'
       - '.github/workflows/local-business-final-home.yml'
   push:
     branches:
@@ -16,20 +20,24 @@ on:
       - 'presets/local-business/**'
       - 'packages/seo-geo-theme/assets/css/presets/local-business.css'
       - 'packages/seo-geo-theme/preset-patterns/local-business-home-final.php'
+      - 'packages/seo-geo-theme/preset-patterns/local-business-inner-final.php'
+      - 'packages/seo-geo-theme/inc/LocalBusiness/FinalInnerPatterns.php'
       - 'packages/seo-geo-theme/inc/presets.php'
+      - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-local-business-final-home.php'
+      - 'scripts/ci/validate-local-business-final-inner.php'
       - '.github/workflows/local-business-final-home.yml'
 
 permissions:
   contents: read
 
 concurrency:
-  group: local-pro-final-home-${{ github.workflow }}-${{ github.ref }}
+  group: local-pro-final-preset-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   contract:
-    name: Local Pro final Home contract
+    name: Local Pro final Home + inner pages contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -45,12 +53,19 @@ jobs:
 
       - name: PHP syntax
         run: |
+          php -l packages/seo-geo-theme/functions.php
           php -l packages/seo-geo-theme/inc/presets.php
+          php -l packages/seo-geo-theme/inc/LocalBusiness/FinalInnerPatterns.php
           php -l packages/seo-geo-theme/preset-patterns/local-business-home-final.php
+          php -l packages/seo-geo-theme/preset-patterns/local-business-inner-final.php
           php -l scripts/ci/validate-local-business-final-home.php
+          php -l scripts/ci/validate-local-business-final-inner.php
 
       - name: Validate existing Local Business semantic contract
         run: php scripts/ci/validate-local-business-preset.php
 
       - name: Validate final Local Pro Home contract
         run: php scripts/ci/validate-local-business-final-home.php
+
+      - name: Validate final Local Pro inner-page contract
+        run: php scripts/ci/validate-local-business-final-inner.php

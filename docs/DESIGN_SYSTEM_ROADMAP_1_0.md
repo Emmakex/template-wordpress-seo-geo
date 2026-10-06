@@ -119,11 +119,9 @@ Turn `local-business` into a 99%-finished Local Pro preset with location/service
 
 #### DS-4A — Final Home
 
-**Status: implementation candidate**
+**Status: complete in code/CI**
 
-Current branch: `feat/local-business-final-home`.
-
-Candidate composition:
+Delivered and merged on PR #243 with 13/13 workflows green:
 
 - local-trust Hero with no fabricated address, phone, hours or coverage;
 - clear enquiry / service-discovery actions;
@@ -139,23 +137,37 @@ Candidate composition:
 
 The front-page template retains H1 ownership. Address, contact, hours, service-area and location facts remain marked as placeholders and block publication until authoritative hydration. LocalBusiness Schema stays governed by the existing visible-fact confirmation contract.
 
+PR #243 passed the existing Local Business semantic contract, dedicated Local Pro Home contract, WPCS/PHPStan, WordPress 7.1/PHP 8.2 activation, zero-plugin self-contained Theme, accessibility/responsive, native multilingual and Lighthouse without relaxing budgets.
+
 #### DS-4B — Local Pro inner pages
 
-**Status: next after Home acceptance**
+**Status: implementation candidate**
 
-Build final Services, Locations, About, FAQ and Contact compositions with distinct local value, verified facts and no place-name doorway duplication.
+Current branch: `feat/local-business-final-inner-pages`.
+
+Candidate compositions:
+
+- Services — real offer, scope, exclusions and next-step structure without keyword-variant duplicate pages;
+- Locations — verified locations/service areas only, with meaningful local operational differences and an explicit no-doorway/no-city-clone rule;
+- About — sourced history, method, people and authority without invented age, awards, credentials or team size;
+- FAQ — visible, maintainable answers aligned with authoritative service, coverage, hours and contact facts;
+- Contact — public channels, customer-facing location and hours remain fact-gated until verified.
+
+All five reuse the accepted Local Pro visual system instead of adding another stylesheet. ES/EN provisional copy lives outside the renderer. The page template retains document-H1 ownership. Locations and Contact expose fact placeholders independently from editorial copy so hydration can insert authoritative local facts without redesigning the page.
+
+DS-4B must pass the existing semantic contract, the accepted Home contract and a dedicated inner-page contract before merge. Single, Archive and 404 remain explicitly outside this microphase.
 
 #### DS-4C — Local Pro system surfaces
 
 **Status: queued after inner pages**
 
-Add preset-owned Single, Archive and 404 surfaces only after Home and inner pages are accepted.
+Add preset-owned Single, Archive and 404 surfaces only after Home and inner pages are accepted. Reuse the generalized template runtime while preserving Site Editor custom-template precedence and neutral fallback.
 
 #### DS-4D — Local Pro visual/performance acceptance
 
-**Status: active with DS-4A**
+**Status: active with DS-4B**
 
-Require existing Local Business semantic contract, dedicated final-Home contract, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets. Performance limits must not be raised to make the new visual layer pass.
+Require existing Local Business semantic contract, Home + inner-page contracts, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets. Performance limits must not be raised to make the new visual layer pass.
 
 ### DS-5 — Publisher / Creative transition
 

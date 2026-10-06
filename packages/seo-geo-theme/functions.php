@@ -16,6 +16,7 @@ require_once get_template_directory() . '/inc/presets.php';
 require_once get_template_directory() . '/inc/setup.php';
 require_once get_template_directory() . '/inc/Forms/ContactFormRuntime.php';
 require_once get_template_directory() . '/inc/Insights/InsightsIndexRuntime.php';
+require_once get_template_directory() . '/inc/LocalBusiness/FinalInnerPatterns.php';
 require_once get_template_directory() . '/inc/Navigation/PresetNavigationRuntime.php';
 require_once get_template_directory() . '/inc/Templates/PresetTemplateRuntime.php';
 

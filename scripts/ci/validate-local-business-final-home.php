@@ -66,9 +66,10 @@ function local_final_json( string $path ): array {
 
 $mockup_path = LOCAL_FINAL_PRESET_DIR . '/mockup.json';
 $mockup      = local_final_json( $mockup_path );
+$stage       = $mockup['current_stage'] ?? null;
 
-if ( 'home-candidate' !== ( $mockup['current_stage'] ?? null ) ) {
-	fail_local_final_home( 'stage-contract', 'Local Pro roadmap stage must identify the final Home candidate.', $mockup_path . '#current_stage', 'home-candidate', $mockup['current_stage'] ?? null );
+if ( ! in_array( $stage, array( 'home-candidate', 'inner-pages-candidate' ), true ) ) {
+	fail_local_final_home( 'stage-contract', 'Local Pro roadmap stage must preserve the accepted Home while DS-4 advances.', $mockup_path . '#current_stage', 'home-candidate or inner-pages-candidate', $stage );
 }
 
 $home = $mockup['pages']['home'] ?? null;
@@ -82,10 +83,28 @@ if (
 	fail_local_final_home( 'home-contract', 'Local Pro Home lost its final-composition or H1 ownership contract.', $mockup_path . '#pages.home', 'required candidate with template-owned H1', $home );
 }
 
-foreach ( array( 'services', 'locations', 'about', 'faq', 'contact', 'single', 'archive', '404' ) as $pending_page ) {
-	$status = $mockup['pages'][ $pending_page ]['status'] ?? null;
-	if ( 'next-microphase' !== $status ) {
-		fail_local_final_home( 'roadmap-honesty', 'Local Pro must not claim unfinished pages complete.', $mockup_path . '#pages.' . $pending_page, 'next-microphase', $status );
+if ( 'home-candidate' === $stage ) {
+	foreach ( array( 'services', 'locations', 'about', 'faq', 'contact', 'single', 'archive', '404' ) as $pending_page ) {
+		$status = $mockup['pages'][ $pending_page ]['status'] ?? null;
+		if ( 'next-microphase' !== $status ) {
+			fail_local_final_home( 'roadmap-honesty', 'Local Pro Home stage must not claim later pages complete.', $mockup_path . '#pages.' . $pending_page, 'next-microphase', $status );
+		}
+	}
+}
+
+if ( 'inner-pages-candidate' === $stage ) {
+	foreach ( array( 'services', 'locations', 'about', 'faq', 'contact' ) as $inner_page ) {
+		$status = $mockup['pages'][ $inner_page ]['status'] ?? null;
+		if ( 'candidate' !== $status ) {
+			fail_local_final_home( 'inner-stage-honesty', 'When DS-4B is active, all five inner pages must be explicit candidates.', $mockup_path . '#pages.' . $inner_page, 'candidate', $status );
+		}
+	}
+
+	foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
+		$status = $mockup['pages'][ $system_page ]['status'] ?? null;
+		if ( 'next-microphase' !== $status ) {
+			fail_local_final_home( 'system-stage-honesty', 'DS-4B must leave system surfaces for their dedicated microphase.', $mockup_path . '#pages.' . $system_page, 'next-microphase', $status );
+		}
 	}
 }
 
