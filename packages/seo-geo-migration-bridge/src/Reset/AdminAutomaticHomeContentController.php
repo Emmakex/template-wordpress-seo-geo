@@ -47,7 +47,7 @@ final class AdminAutomaticHomeContentController {
 		}
 
 		$quality = new AutomaticHomeContentQualityKit( $manifest, $builder, $kit, $hydrator );
-		( new self( new AutomaticHomeContentStateKit( $quality, $builder, $kit, $hydrator ), $builder ) )->boot();
+		( new self( new AutomaticHomeContentStateKit( $quality, $kit, $hydrator ), $builder ) )->boot();
 	}
 
 	/** Register the notice and mutation action. */
