@@ -105,7 +105,7 @@
     "stylesheet": "assets/css/presets/corporate.css",
     "presentation_layer": "assets/css/presets/corporate-v2.css",
     "body_class": "seo-geo-preset-corporate",
-    "design_system": "corporate-final-v1",
+    "design_system": "corporate-native-v1",
     "principles": [
       "complete-site-mockup",
       "modern-product-site",
