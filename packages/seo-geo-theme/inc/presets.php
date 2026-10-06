@@ -80,9 +80,6 @@ function seo_geo_theme_active_preset_id(): ?string {
 /**
  * Resolve the active preset's optional final-mockup contract.
  *
- * The contract describes complete page compositions and the placeholder policy
- * used before rescued/client content is hydrated into stable semantic slots.
- *
  * @return array<string,mixed>|null
  */
 function seo_geo_theme_active_mockup_contract(): ?array {
@@ -124,6 +121,45 @@ function seo_geo_theme_preset_localized_value( $localized, string $key ): ?strin
 	}
 
 	return null;
+}
+
+/**
+ * Register one preset-owned PHP pattern outside the neutral Theme pattern set.
+ *
+ * Keeping these patterns outside /patterns preserves the generic Theme contract
+ * while allowing each preset to ship complete final mockups.
+ */
+function seo_geo_theme_register_final_mockup_pattern( string $preset_id, string $category_slug ): void {
+	if ( 'corporate' !== $preset_id || ! function_exists( 'register_block_pattern' ) ) {
+		return;
+	}
+
+	$path = get_template_directory() . '/preset-patterns/corporate-home-final.php';
+	if ( ! is_readable( $path ) ) {
+		return;
+	}
+
+	ob_start();
+	include $path;
+	$content = ob_get_clean();
+
+	if ( ! is_string( $content ) || '' === trim( $content ) ) {
+		return;
+	}
+
+	$is_es = 'es_ES' === seo_geo_theme_preset_locale();
+	register_block_pattern(
+		'seo-geo-theme/corporate-home-final',
+		array(
+			'title'         => $is_es ? 'Corporate — Home final' : 'Corporate — final Home',
+			'description'   => $is_es
+				? 'Maquetación Home Corporate completa con copy e imágenes provisionales sustituibles durante la hidratación.'
+				: 'Complete Corporate Home mockup with replaceable provisional copy and media for later hydration.',
+			'categories'    => array( $category_slug ),
+			'content'       => $content,
+			'viewportWidth' => 1440,
+		)
+	);
 }
 
 /**
@@ -188,5 +224,7 @@ function seo_geo_theme_register_active_preset_patterns(): void {
 
 		register_block_pattern( $pattern['slug'], $args );
 	}
+
+	seo_geo_theme_register_final_mockup_pattern( $preset_id, $category_slug );
 }
 add_action( 'init', 'seo_geo_theme_register_active_preset_patterns', 20 );
