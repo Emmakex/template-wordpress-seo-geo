@@ -1,0 +1,56 @@
+name: Local Pro Final Home CI
+
+on:
+  pull_request:
+    paths:
+      - 'presets/local-business/**'
+      - 'packages/seo-geo-theme/assets/css/presets/local-business.css'
+      - 'packages/seo-geo-theme/preset-patterns/local-business-home-final.php'
+      - 'packages/seo-geo-theme/inc/presets.php'
+      - 'scripts/ci/validate-local-business-final-home.php'
+      - '.github/workflows/local-business-final-home.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'presets/local-business/**'
+      - 'packages/seo-geo-theme/assets/css/presets/local-business.css'
+      - 'packages/seo-geo-theme/preset-patterns/local-business-home-final.php'
+      - 'packages/seo-geo-theme/inc/presets.php'
+      - 'scripts/ci/validate-local-business-final-home.php'
+      - '.github/workflows/local-business-final-home.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-pro-final-home-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Local Pro final Home contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: PHP syntax
+        run: |
+          php -l packages/seo-geo-theme/inc/presets.php
+          php -l packages/seo-geo-theme/preset-patterns/local-business-home-final.php
+          php -l scripts/ci/validate-local-business-final-home.php
+
+      - name: Validate existing Local Business semantic contract
+        run: php scripts/ci/validate-local-business-preset.php
+
+      - name: Validate final Local Pro Home contract
+        run: php scripts/ci/validate-local-business-final-home.php
