@@ -204,3 +204,48 @@ function seo_geo_theme_preset_template_runtime(): \SeoGeo\Theme\Templates\Preset
 }
 
 seo_geo_theme_preset_template_runtime()->register();
+
+/**
+ * Normalize bounded legacy migration placeholders before they reach visitors
+ * or downstream SEO/GEO text resolvers.
+ *
+ * Older Divi exports can contain a brace-wrapped 64-character hexadecimal
+ * placeholder where a percent sign was intended. This normalization is
+ * deliberately narrow so ordinary authored braces remain untouched.
+ *
+ * @param string $value Rendered/authored text.
+ */
+function seo_geo_theme_normalize_migrated_text( string $value ): string {
+	if ( '' === $value || ! str_contains( $value, '{' ) ) {
+		return $value;
+	}
+
+	$normalized = preg_replace( '/\{[a-f0-9]{64}\}/i', '%', $value );
+
+	return is_string( $normalized ) ? $normalized : $value;
+}
+add_filter( 'the_content', 'seo_geo_theme_normalize_migrated_text', 20 );
+add_filter( 'seo_geo_normalize_authored_text', 'seo_geo_theme_normalize_migrated_text', 20 );
+
+/**
+ * Preserve the shared one-H1 contract on singular public documents.
+ *
+ * Page/post templates own the document H1 through core/post-title. Migrated
+ * builder content may also contain a legacy H1; render it as H2 on the public
+ * document so the semantic outline stays deterministic without rewriting the
+ * stored migration backup/source.
+ *
+ * @param string               $block_content Rendered Heading block HTML.
+ * @param array<string, mixed> $block         Parsed block data.
+ */
+function seo_geo_theme_guard_singular_content_h1( string $block_content, array $block ): string {
+	if ( is_admin() || ! is_singular() || 1 !== (int) ( $block['attrs']['level'] ?? 2 ) ) {
+		return $block_content;
+	}
+
+	$block_content = preg_replace( '/<h1\b/i', '<h2', $block_content, 1 );
+	$block_content = preg_replace( '/<\/h1>/i', '</h2>', $block_content, 1 );
+
+	return is_string( $block_content ) ? $block_content : '';
+}
+add_filter( 'render_block_core/heading', 'seo_geo_theme_guard_singular_content_h1', 20, 2 );
