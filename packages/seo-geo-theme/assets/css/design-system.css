@@ -1,13 +1,3 @@
-/*
- * SEO/GEO Design System 1.0 — shared runtime primitives.
- *
- * Purpose:
- * - keep preset geometry and motion consistent;
- * - preserve theme.json as the editor/semantic token authority;
- * - require zero frontend JavaScript for static presentation;
- * - give presets reusable modern layout primitives without client patches.
- */
-
 :root {
 	--sg-shell: min(1240px, calc(100vw - 2rem));
 	--sg-shell-narrow: min(980px, calc(100vw - 2rem));
@@ -26,7 +16,6 @@
 	--sg-ease: cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 
-/* Stable page geometry shared by presets. */
 .seo-geo-layout-shell {
 	box-sizing: border-box;
 	width: var(--sg-shell);
@@ -50,7 +39,6 @@
 	margin-block: var(--sg-section-space-compact) !important;
 }
 
-/* Editorial section heading primitive. */
 .seo-geo-section-intro {
 	display: grid;
 	grid-template-columns: minmax(0, 0.75fr) minmax(18rem, 1.25fr);
@@ -67,7 +55,6 @@
 	margin-bottom: 0;
 }
 
-/* Bento primitive: unequal tiles carry intentional information hierarchy. */
 .seo-geo-bento {
 	display: grid !important;
 	grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -98,7 +85,6 @@
 	grid-column: span 4;
 }
 
-/* Featured-first editorial grid for Insights/work collections. */
 .seo-geo-editorial-grid {
 	display: grid !important;
 	grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -119,7 +105,6 @@
 	grid-column: span 5;
 }
 
-/* Process/timeline primitive. */
 .seo-geo-process-sequence {
 	position: relative;
 	display: grid !important;
@@ -156,7 +141,6 @@
 	content: "";
 }
 
-/* Shared card surface. Presets supply colors. */
 .seo-geo-surface-card {
 	box-sizing: border-box;
 	border-radius: var(--sg-radius-lg);
@@ -174,7 +158,6 @@
 	}
 }
 
-/* CTA primitive. Preset supplies the art direction and color pair. */
 .seo-geo-final-cta {
 	box-sizing: border-box;
 	width: var(--sg-shell);
@@ -192,7 +175,6 @@
 	margin-bottom: 0;
 }
 
-/* Long headings should wrap naturally instead of producing narrow word columns. */
 .seo-geo-safe-copy,
 .seo-geo-safe-copy :where(h1, h2, h3, h4, p, a) {
 	word-break: normal;
@@ -200,7 +182,6 @@
 	hyphens: auto;
 }
 
-/* Motion is decorative; never required for access to content. */
 @media (prefers-reduced-motion: reduce) {
 	:root {
 		--sg-motion-fast: 0ms;
