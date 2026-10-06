@@ -11,7 +11,7 @@
 
 declare(strict_types=1);
 
-$seo_geo_saas_inner_key = isset( $seo_geo_pattern_key ) && is_string( $seo_geo_pattern_key ) ? $seo_geo_pattern_key : '';
+$seo_geo_saas_inner_key  = isset( $seo_geo_pattern_key ) && is_string( $seo_geo_pattern_key ) ? $seo_geo_pattern_key : '';
 $seo_geo_saas_inner_path = seo_geo_theme_preset_root() . '/saas-digital-product/mockup-inner-copy.json';
 $seo_geo_saas_inner_doc  = is_readable( $seo_geo_saas_inner_path ) && function_exists( 'wp_json_file_decode' )
 	? wp_json_file_decode( $seo_geo_saas_inner_path, array( 'associative' => true ) )
@@ -136,6 +136,7 @@ $seo_geo_saas_inner_variant = sanitize_html_class( $seo_geo_saas_inner_key );
 $seo_geo_saas_inner_cta_title  = $seo_geo_saas_inner_cta['title'] ?? '';
 $seo_geo_saas_inner_cta_body   = $seo_geo_saas_inner_cta['body'] ?? '';
 $seo_geo_saas_inner_cta_button = $seo_geo_saas_inner_cta['button'] ?? '';
+$seo_geo_saas_inner_cta_url    = home_url( '/#contact-demo' );
 ?>
 <!-- wp:group {"tagName":"section","align":"full","anchor":"next-step","className":"seo-geo-saas-section seo-geo-saas-final-cta","layout":{"type":"constrained"}} -->
 <section id="next-step" class="wp-block-group alignfull seo-geo-saas-section seo-geo-saas-final-cta">
@@ -143,7 +144,7 @@ $seo_geo_saas_inner_cta_button = $seo_geo_saas_inner_cta['button'] ?? '';
 	<div class="wp-block-group seo-geo-layout-shell">
 		<h2 class="wp-block-heading seo-geo-content-slot--cta-heading seo-geo-placeholder--copy"><?php echo esc_html( is_string( $seo_geo_saas_inner_cta_title ) ? $seo_geo_saas_inner_cta_title : '' ); ?></h2>
 		<p class="seo-geo-content-slot--cta-body seo-geo-placeholder--copy"><?php echo esc_html( is_string( $seo_geo_saas_inner_cta_body ) ? $seo_geo_saas_inner_cta_body : '' ); ?></p>
-		<!-- wp:buttons --><div class="wp-block-buttons"><!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="#next-step"><?php echo esc_html( is_string( $seo_geo_saas_inner_cta_button ) ? $seo_geo_saas_inner_cta_button : '' ); ?></a></div><!-- /wp:button --></div><!-- /wp:buttons -->
+		<!-- wp:buttons --><div class="wp-block-buttons"><!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $seo_geo_saas_inner_cta_url ); ?>"><?php echo esc_html( is_string( $seo_geo_saas_inner_cta_button ) ? $seo_geo_saas_inner_cta_button : '' ); ?></a></div><!-- /wp:button --></div><!-- /wp:buttons -->
 	</div>
 	<!-- /wp:group -->
 </section>
