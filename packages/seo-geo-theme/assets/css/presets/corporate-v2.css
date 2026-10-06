@@ -1,55 +1,11 @@
 /* Corporate final mockup layer: high-impact, zero-JS, asset-light. */
 body.seo-geo-preset-corporate {
 	--cf-night: #071b24;
-	--cf-night-2: #0d2b35;
 	--cf-teal: #08a892;
 	--cf-mint: #dff5ef;
 	--cf-cream: #f5f7f3;
 	--cf-copy: #29424b;
-	--cf-line: #cbdad6;
-	--cf-warm: #e5a46c;
 	background: var(--cf-cream);
-}
-
-.seo-geo-preset-corporate .seo-geo-site-header {
-	border-bottom-color: rgb(7 27 36 / 10%);
-	background: rgb(245 247 243 / 94%);
-	box-shadow: 0 8px 28px rgb(7 27 36 / 5%);
-}
-
-.seo-geo-preset-corporate .seo-geo-site-header__inner {
-	min-height: 78px;
-}
-
-.seo-geo-preset-corporate .seo-geo-preset-navigation__item a {
-	font-weight: 720;
-	text-decoration: none;
-}
-
-.seo-geo-preset-corporate .seo-geo-page-shell {
-	width: 100%;
-	max-width: none;
-	padding-block: 0;
-}
-
-.seo-geo-preset-corporate .seo-geo-page-shell > .seo-geo-page-title {
-	box-sizing: border-box;
-	width: var(--corp-shell);
-	max-width: 14ch;
-	margin: 0 auto;
-	padding: clamp(4.5rem, 8vw, 7rem) 0;
-	background: var(--cf-night);
-	box-shadow: 0 0 0 100vmax var(--cf-night);
-	clip-path: inset(0 -100vmax);
-	color: #fff;
-	font-size: clamp(3.2rem, 7vw, 6.8rem);
-	line-height: 0.9;
-	letter-spacing: -0.065em;
-	text-wrap: balance;
-}
-
-.seo-geo-preset-corporate .seo-geo-page-shell > .wp-block-post-content {
-	padding-bottom: clamp(2rem, 5vw, 4rem);
 }
 
 .seo-geo-preset-corporate .seo-geo-front-page-hero {
@@ -322,36 +278,6 @@ body.seo-geo-preset-corporate {
 	letter-spacing: -0.045em;
 }
 
-.seo-geo-preset-corporate .seo-geo-corporate-native-insights {
-	box-sizing: border-box;
-	padding: clamp(2rem, 5vw, 4rem);
-	border-radius: 2rem;
-	background: #fff;
-}
-
-.seo-geo-preset-corporate .seo-geo-corporate-insights-query .wp-block-post-template {
-	gap: 1rem;
-}
-
-.seo-geo-preset-corporate .seo-geo-corporate-insight-card {
-	min-height: 100%;
-	border: 1px solid var(--cf-line);
-	border-radius: 1.35rem;
-	background: var(--cf-cream);
-	padding: clamp(1.3rem, 3vw, 2rem);
-}
-
-.seo-geo-preset-corporate .seo-geo-corporate-insight-card .wp-block-post-title {
-	margin-top: 1rem;
-	font-size: clamp(1.35rem, 3vw, 1.9rem);
-	line-height: 1.1;
-}
-
-.seo-geo-preset-corporate .seo-geo-corporate-insight-card .wp-block-post-title a {
-	color: var(--cf-night);
-	text-decoration: none;
-}
-
 .seo-geo-preset-corporate .seo-geo-final-cta {
 	box-sizing: border-box;
 	padding: clamp(4rem, 8vw, 7rem) max(1rem, calc((100vw - 1180px) / 2));
@@ -383,16 +309,6 @@ body.seo-geo-preset-corporate {
 	text-decoration: none;
 }
 
-.seo-geo-preset-corporate .seo-geo-site-footer {
-	padding-block: clamp(2rem, 5vw, 4rem);
-	background: var(--cf-night);
-	color: #fff;
-}
-
-.seo-geo-preset-corporate .seo-geo-site-footer :where(a, .wp-block-site-title) {
-	color: #fff;
-}
-
 @media (max-width: 900px) {
 	.seo-geo-preset-corporate .seo-geo-front-page-hero {
 		min-height: auto;
@@ -407,21 +323,12 @@ body.seo-geo-preset-corporate {
 		display: block;
 	}
 
-	.seo-geo-preset-corporate .seo-geo-corporate-section-heading h2 {
-		max-width: 18ch;
-	}
-
 	.seo-geo-preset-corporate .seo-geo-corporate-card {
 		min-height: 300px;
 	}
 
 	.seo-geo-preset-corporate .seo-geo-corporate-process-step {
 		min-height: 250px;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-corporate-native-insights {
-		padding: 1.25rem;
-		border-radius: 1.35rem;
 	}
 
 	.seo-geo-preset-corporate .seo-geo-corporate-featured-work__grid,
@@ -435,42 +342,11 @@ body.seo-geo-preset-corporate {
 		font-size: clamp(3rem, 16vw, 4.5rem);
 	}
 
-	.seo-geo-preset-corporate .seo-geo-page-shell > .seo-geo-page-title {
-		font-size: clamp(2.8rem, 14vw, 4.3rem);
-	}
-
 	.seo-geo-preset-corporate .seo-geo-corporate-native-section {
 		margin-block: 3.25rem !important;
 	}
 
-	.seo-geo-preset-corporate .seo-geo-corporate-card {
-		border-radius: 1.25rem;
-	}
-
 	.seo-geo-preset-corporate .seo-geo-final-cta h2 {
 		font-size: clamp(2.7rem, 13vw, 4.2rem);
-	}
-}
-
-@media print {
-	.seo-geo-preset-corporate .seo-geo-site-header {
-		position: static !important;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-corporate-native-process,
-	.seo-geo-preset-corporate .seo-geo-final-cta,
-	.seo-geo-preset-corporate .seo-geo-site-footer {
-		background: #fff !important;
-		color: #111 !important;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-corporate-native-process :where(h2, h3, p),
-	.seo-geo-preset-corporate .seo-geo-final-cta :where(h2, p),
-	.seo-geo-preset-corporate .seo-geo-site-footer :where(a, .wp-block-site-title) {
-		color: #111 !important;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-corporate-mockup-media {
-		break-inside: avoid;
 	}
 }
