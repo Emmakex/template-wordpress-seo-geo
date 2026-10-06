@@ -65,9 +65,10 @@ function publisher_inner_json( string $path ): array {
 $page_keys   = array( 'articles', 'topics', 'authors', 'about', 'editorial-policy', 'contact' );
 $mockup_path = PUBLISHER_INNER_PRESET_DIR . '/mockup.json';
 $mockup      = publisher_inner_json( $mockup_path );
+$stage       = $mockup['current_stage'] ?? null;
 
-if ( 'inner-pages-candidate' !== ( $mockup['current_stage'] ?? null ) ) {
-	fail_publisher_final_inner( 'stage-contract', 'Publisher roadmap stage must explicitly identify the inner-page candidate.', $mockup_path . '#current_stage', 'inner-pages-candidate', $mockup['current_stage'] ?? null );
+if ( ! in_array( $stage, array( 'inner-pages-candidate', 'system-surfaces-candidate' ), true ) ) {
+	fail_publisher_final_inner( 'stage-contract', 'Publisher roadmap stage must preserve accepted inner pages while DS-5 advances.', $mockup_path . '#current_stage', 'inner-pages-candidate or system-surfaces-candidate', $stage );
 }
 
 foreach ( $page_keys as $page_key ) {
@@ -93,10 +94,21 @@ if ( true !== ( $mockup['pages']['contact']['verified_public_routes_required'] ?
 	fail_publisher_final_inner( 'contact-gate', 'Publisher Contact must require verified public routes.', $mockup_path . '#pages.contact', true, $mockup['pages']['contact'] ?? null );
 }
 
-foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
-	$status = $mockup['pages'][ $system_page ]['status'] ?? null;
-	if ( 'next-microphase' !== $status ) {
-		fail_publisher_final_inner( 'system-surface-honesty', 'DS-5B must not claim Publisher system surfaces complete.', $mockup_path . '#pages.' . $system_page, 'next-microphase', $status );
+if ( 'inner-pages-candidate' === $stage ) {
+	foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
+		$status = $mockup['pages'][ $system_page ]['status'] ?? null;
+		if ( 'next-microphase' !== $status ) {
+			fail_publisher_final_inner( 'system-surface-honesty', 'DS-5B must not claim Publisher system surfaces complete.', $mockup_path . '#pages.' . $system_page, 'next-microphase', $status );
+		}
+	}
+}
+
+if ( 'system-surfaces-candidate' === $stage ) {
+	foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
+		$status = $mockup['pages'][ $system_page ]['status'] ?? null;
+		if ( 'candidate' !== $status ) {
+			fail_publisher_final_inner( 'system-surface-candidate', 'DS-5C must expose Publisher system surfaces as candidates while preserving DS-5B.', $mockup_path . '#pages.' . $system_page, 'candidate', $status );
+		}
 	}
 }
 

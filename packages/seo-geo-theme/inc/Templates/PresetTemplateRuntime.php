@@ -34,12 +34,11 @@ final class PresetTemplateRuntime {
 	private const PRESET_TEMPLATE_PREFIXES = array(
 		'corporate'            => 'corporate',
 		'local-business'       => 'local-business',
+		'publisher'            => 'publisher',
 		'saas-digital-product' => 'saas-digital-product',
 	);
 
-	/**
-	 * Register runtime filters.
-	 */
+	/** Register runtime filters. */
 	public function register(): void {
 		add_filter( 'get_block_template', array( $this, 'filter_template' ), 20, 3 );
 	}

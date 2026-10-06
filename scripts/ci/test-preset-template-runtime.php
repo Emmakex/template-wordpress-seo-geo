@@ -2,7 +2,6 @@
 /**
  * Executable isolation/fallback test for PresetTemplateRuntime.
  */
-
 declare(strict_types=1);
 
 use SeoGeo\Theme\Templates\PresetTemplateRuntime;
@@ -18,7 +17,7 @@ class WP_Block_Template {
 	public string $content = 'neutral-template';
 }
 
-$GLOBALS['seo_geo_runtime_test_preset']       = 'saas-digital-product';
+$GLOBALS['seo_geo_runtime_test_preset']       = 'publisher';
 $GLOBALS['seo_geo_runtime_test_template_dir'] = dirname( __DIR__, 2 ) . '/packages/seo-geo-theme';
 
 /** No-op filter registration fixture. */
@@ -61,17 +60,13 @@ function home_url( string $path = '/' ): string {
 
 require_once dirname( __DIR__, 2 ) . '/packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php';
 
-/**
- * Fail test with an actionable message.
- */
+/** Fail test with an actionable message. */
 function runtime_test_fail( string $message ): never {
 	fwrite( STDERR, $message . "\n" );
 	exit( 1 );
 }
 
-/**
- * Build one block-template fixture.
- */
+/** Build one block-template fixture. */
 function runtime_test_template( string $slug, string $source = 'theme', string $content = 'neutral-template' ): WP_Block_Template {
 	$template          = new WP_Block_Template();
 	$template->slug    = $slug;
@@ -83,43 +78,36 @@ function runtime_test_template( string $slug, string $source = 'theme', string $
 $runtime = new PresetTemplateRuntime();
 $runtime->register();
 
-foreach ( array( 'single', 'archive', '404' ) as $slug ) {
-	$GLOBALS['seo_geo_runtime_test_preset'] = 'saas-digital-product';
-	$original = runtime_test_template( $slug );
-	$result   = $runtime->filter_template( $original, 'seo-geo-theme//' . $slug, 'wp_template' );
-	if ( ! $result instanceof WP_Block_Template || $result === $original || ! str_contains( $result->content, 'seo-geo-saas-system-surface' ) ) {
-		runtime_test_fail( 'SaaS did not receive its preset-owned ' . $slug . ' template.' );
+$owned_presets = array(
+	'corporate'            => 'seo-geo-corporate-system-surface',
+	'local-business'       => 'seo-geo-local-system-surface',
+	'publisher'            => 'seo-geo-publisher-system-surface',
+	'saas-digital-product' => 'seo-geo-saas-system-surface',
+);
+
+foreach ( $owned_presets as $preset_id => $marker ) {
+	foreach ( array( 'single', 'archive', '404' ) as $slug ) {
+		$GLOBALS['seo_geo_runtime_test_preset'] = $preset_id;
+		$original = runtime_test_template( $slug );
+		$result   = $runtime->filter_template( $original, 'seo-geo-theme//' . $slug, 'wp_template' );
+		if ( ! $result instanceof WP_Block_Template || $result === $original || ! str_contains( $result->content, $marker ) ) {
+			runtime_test_fail( $preset_id . ' did not receive its preset-owned ' . $slug . ' template.' );
+		}
 	}
 }
 
-foreach ( array( 'single', 'archive', '404' ) as $slug ) {
-	$GLOBALS['seo_geo_runtime_test_preset'] = 'local-business';
-	$original = runtime_test_template( $slug );
-	$result   = $runtime->filter_template( $original, 'seo-geo-theme//' . $slug, 'wp_template' );
-	if ( ! $result instanceof WP_Block_Template || $result === $original || ! str_contains( $result->content, 'seo-geo-local-system-surface' ) ) {
-		runtime_test_fail( 'Local Pro did not receive its preset-owned ' . $slug . ' template.' );
-	}
-}
-
-$GLOBALS['seo_geo_runtime_test_preset'] = 'corporate';
-$corporate_original = runtime_test_template( 'single' );
-$corporate_result   = $runtime->filter_template( $corporate_original, 'seo-geo-theme//single', 'wp_template' );
-if ( ! $corporate_result instanceof WP_Block_Template || $corporate_result === $corporate_original || ! str_contains( $corporate_result->content, 'seo-geo-corporate-system-surface' ) ) {
-	runtime_test_fail( 'Corporate runtime behavior regressed while adding Local Pro support.' );
-}
-
-$GLOBALS['seo_geo_runtime_test_preset'] = 'publisher';
+$GLOBALS['seo_geo_runtime_test_preset'] = 'ecommerce';
 $neutral_original = runtime_test_template( 'single', 'theme', 'keep-neutral' );
 $neutral_result   = $runtime->filter_template( $neutral_original, 'seo-geo-theme//single', 'wp_template' );
 if ( $neutral_result !== $neutral_original || 'keep-neutral' !== $neutral_result->content ) {
 	runtime_test_fail( 'A preset without final system templates did not keep the neutral Theme template.' );
 }
 
-$GLOBALS['seo_geo_runtime_test_preset'] = 'local-business';
+$GLOBALS['seo_geo_runtime_test_preset'] = 'publisher';
 $custom_original = runtime_test_template( 'single', 'custom', 'site-editor-custom' );
 $custom_result   = $runtime->filter_template( $custom_original, 'seo-geo-theme//single', 'wp_template' );
 if ( $custom_result !== $custom_original || 'site-editor-custom' !== $custom_result->content ) {
-	runtime_test_fail( 'Site Editor custom template was overridden by the Local Pro preset runtime.' );
+	runtime_test_fail( 'Site Editor custom template was overridden by the Publisher preset runtime.' );
 }
 
 $type_original = runtime_test_template( 'single', 'theme', 'wrong-type-neutral' );

@@ -78,8 +78,8 @@ foreach ( $expected_contract as $key => $expected ) {
 }
 
 $stage = $mockup['current_stage'] ?? null;
-if ( ! in_array( $stage, array( 'home-candidate', 'inner-pages-candidate' ), true ) ) {
-	fail_publisher_final_home( 'stage-contract', 'Publisher roadmap stage must preserve the accepted Home while DS-5 advances.', $mockup_path . '#current_stage', 'home-candidate or inner-pages-candidate', $stage );
+if ( ! in_array( $stage, array( 'home-candidate', 'inner-pages-candidate', 'system-surfaces-candidate' ), true ) ) {
+	fail_publisher_final_home( 'stage-contract', 'Publisher roadmap stage must preserve the accepted Home while DS-5 advances.', $mockup_path . '#current_stage', 'home-candidate, inner-pages-candidate or system-surfaces-candidate', $stage );
 }
 
 $home = $mockup['pages']['home'] ?? null;
@@ -103,18 +103,29 @@ if ( 'home-candidate' === $stage ) {
 	}
 }
 
-if ( 'inner-pages-candidate' === $stage ) {
+if ( in_array( $stage, array( 'inner-pages-candidate', 'system-surfaces-candidate' ), true ) ) {
 	foreach ( $inner_pages as $inner_page ) {
 		$status = $mockup['pages'][ $inner_page ]['status'] ?? null;
 		if ( 'candidate' !== $status ) {
-			fail_publisher_final_home( 'inner-stage-honesty', 'When DS-5B is active, every Publisher inner page must be an explicit candidate.', $mockup_path . '#pages.' . $inner_page, 'candidate', $status );
+			fail_publisher_final_home( 'inner-stage-honesty', 'Once DS-5B starts, every Publisher inner page must remain an explicit candidate.', $mockup_path . '#pages.' . $inner_page, 'candidate', $status );
 		}
 	}
+}
 
+if ( 'inner-pages-candidate' === $stage ) {
 	foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
 		$status = $mockup['pages'][ $system_page ]['status'] ?? null;
 		if ( 'next-microphase' !== $status ) {
 			fail_publisher_final_home( 'system-stage-honesty', 'DS-5B must leave Publisher system surfaces for their dedicated microphase.', $mockup_path . '#pages.' . $system_page, 'next-microphase', $status );
+		}
+	}
+}
+
+if ( 'system-surfaces-candidate' === $stage ) {
+	foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
+		$status = $mockup['pages'][ $system_page ]['status'] ?? null;
+		if ( 'candidate' !== $status ) {
+			fail_publisher_final_home( 'system-candidate-honesty', 'DS-5C must expose every Publisher system surface as an explicit candidate.', $mockup_path . '#pages.' . $system_page, 'candidate', $status );
 		}
 	}
 }
