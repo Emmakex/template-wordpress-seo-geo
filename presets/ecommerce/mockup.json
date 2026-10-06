@@ -3,7 +3,7 @@
   "preset": "ecommerce",
   "product_facing_name": "Commerce / Ecommerce",
   "target_state": "99-percent-finished-before-client-content",
-  "current_stage": "home-candidate",
+  "current_stage": "inner-pages-candidate",
   "design_rule": "final-layout-first-then-content-hydration",
   "legacy_layout_policy": "never-a-design-source",
   "visual_runtime": {
@@ -16,7 +16,7 @@
     "home": {
       "required": true,
       "composition": "ecommerce-home-final-v1",
-      "status": "candidate",
+      "status": "complete",
       "owns_h1": false,
       "sections": [
         "commerce-hero",
@@ -29,12 +29,12 @@
         "final-shop-action"
       ]
     },
-    "shop": {"required": true, "status": "next-microphase"},
-    "categories": {"required": true, "status": "next-microphase"},
-    "buying-guides": {"required": true, "status": "next-microphase"},
-    "about": {"required": true, "status": "next-microphase"},
-    "support": {"required": true, "status": "next-microphase"},
-    "contact": {"required": true, "status": "next-microphase"},
+    "shop": {"required": true, "composition": "ecommerce-shop-final-v1", "status": "candidate", "owns_h1": false},
+    "categories": {"required": true, "composition": "ecommerce-categories-final-v1", "status": "candidate", "owns_h1": false},
+    "buying-guides": {"required": true, "composition": "ecommerce-buying-guides-final-v1", "status": "candidate", "owns_h1": false},
+    "about": {"required": true, "composition": "ecommerce-about-final-v1", "status": "candidate", "owns_h1": false},
+    "support": {"required": true, "composition": "ecommerce-support-final-v1", "status": "candidate", "owns_h1": false},
+    "contact": {"required": true, "composition": "ecommerce-contact-final-v1", "status": "candidate", "owns_h1": false},
     "single": {"required": true, "status": "next-microphase"},
     "archive": {"required": true, "status": "next-microphase"},
     "404": {"required": true, "status": "next-microphase"}

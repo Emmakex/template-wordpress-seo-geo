@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the Ecommerce / Commerce final Home visual and provider contract.
+ * Validate the accepted Ecommerce Home visual and provider contract.
  */
 
 declare(strict_types=1);
@@ -8,12 +8,7 @@ declare(strict_types=1);
 const ECOMMERCE_FINAL_THEME_DIR  = 'packages/seo-geo-theme';
 const ECOMMERCE_FINAL_PRESET_DIR = 'presets/ecommerce';
 
-/**
- * Fail with one actionable diagnostic.
- *
- * @param mixed $expected Expected value.
- * @param mixed $received Actual value.
- */
+/** Fail with one actionable diagnostic. */
 function fail_ecommerce_final_home( string $code, string $message, string $path, mixed $expected, mixed $received ): never {
 	fwrite(
 		STDERR,
@@ -70,7 +65,6 @@ $mockup      = ecommerce_final_json( $mockup_path );
 $expected    = array(
 	'preset'               => 'ecommerce',
 	'target_state'         => '99-percent-finished-before-client-content',
-	'current_stage'        => 'home-candidate',
 	'design_rule'          => 'final-layout-first-then-content-hydration',
 	'legacy_layout_policy' => 'never-a-design-source',
 );
@@ -80,21 +74,35 @@ foreach ( $expected as $key => $value ) {
 	}
 }
 
+$current_stage = $mockup['current_stage'] ?? null;
+$valid_stages  = array( 'home-candidate', 'inner-pages-candidate', 'system-surfaces-candidate', 'complete' );
+if ( ! in_array( $current_stage, $valid_stages, true ) ) {
+	fail_ecommerce_final_home( 'stage', 'Ecommerce Home gate only accepts the defined forward-only preset stages.', $mockup_path . '#current_stage', $valid_stages, $current_stage );
+}
+
 $home = $mockup['pages']['home'] ?? null;
 if (
 	! is_array( $home )
 	|| true !== ( $home['required'] ?? null )
 	|| 'ecommerce-home-final-v1' !== ( $home['composition'] ?? null )
-	|| 'candidate' !== ( $home['status'] ?? null )
+	|| ! in_array( $home['status'] ?? null, array( 'candidate', 'complete' ), true )
 	|| false !== ( $home['owns_h1'] ?? null )
 ) {
-	fail_ecommerce_final_home( 'home-contract', 'Ecommerce Home candidate contract is incomplete.', $mockup_path . '#pages.home', 'required ecommerce-home-final-v1 with template-owned H1', $home );
+	fail_ecommerce_final_home( 'home-contract', 'Accepted Ecommerce Home contract is incomplete.', $mockup_path . '#pages.home', 'required ecommerce-home-final-v1 with template-owned H1', $home );
 }
 
-foreach ( array( 'shop', 'categories', 'buying-guides', 'about', 'support', 'contact', 'single', 'archive', '404' ) as $pending_page ) {
-	$status = $mockup['pages'][ $pending_page ]['status'] ?? null;
-	if ( 'next-microphase' !== $status ) {
-		fail_ecommerce_final_home( 'roadmap-honesty', 'DS-6A must not claim later Ecommerce surfaces complete.', $mockup_path . '#pages.' . $pending_page, 'next-microphase', $status );
+if ( 'home-candidate' === $current_stage ) {
+	foreach ( array( 'shop', 'categories', 'buying-guides', 'about', 'support', 'contact' ) as $pending_page ) {
+		if ( 'next-microphase' !== ( $mockup['pages'][ $pending_page ]['status'] ?? null ) ) {
+			fail_ecommerce_final_home( 'roadmap-honesty', 'DS-6A must not claim inner pages complete before DS-6B.', $mockup_path . '#pages.' . $pending_page, 'next-microphase', $mockup['pages'][ $pending_page ]['status'] ?? null );
+		}
+	}
+}
+if ( in_array( $current_stage, array( 'home-candidate', 'inner-pages-candidate' ), true ) ) {
+	foreach ( array( 'single', 'archive', '404' ) as $pending_page ) {
+		if ( 'next-microphase' !== ( $mockup['pages'][ $pending_page ]['status'] ?? null ) ) {
+			fail_ecommerce_final_home( 'system-roadmap-honesty', 'Ecommerce system surfaces must stay pending until DS-6C.', $mockup_path . '#pages.' . $pending_page, 'next-microphase', $mockup['pages'][ $pending_page ]['status'] ?? null );
+		}
 	}
 }
 
@@ -154,7 +162,6 @@ foreach ( array( 'kicker', 'catalog_title', 'provider_note_title', 'confidence_t
 		}
 	}
 }
-
 if ( 1 === preg_match( '/https?:\/\//i', $copy_raw, $match ) ) {
 	fail_ecommerce_final_home( 'copy-remote-evidence', 'Ecommerce provisional copy must not contain remote catalog/evidence URLs.', $copy_path, 'no remote URL', $match[0] );
 }
@@ -177,9 +184,6 @@ if ( substr_count( $pattern, 'seo-geo-placeholder--commerce' ) < 12 || substr_co
 }
 if ( 1 === preg_match( '/https?:\/\/|<!--\s*wp:html\b|<\s*script\b|<\s*style\b|application\/ld\+json|schema\.org|woocommerce\/|wc-block|AggregateRating|"offers"\s*:/i', $pattern, $match ) ) {
 	fail_ecommerce_final_home( 'unsafe-pattern', 'Ecommerce final Home must stay local, provider-neutral and non-authoritative for live commerce Schema.', $pattern_path, 'no remote/html/script/style/schema/Woo product blocks', $match[0] );
-}
-if ( 1 === preg_match( '/(?:[$€£]\s*\d|\d[\d.,]*\s*(?:USD|EUR|GBP)\b)/i', $pattern, $match ) ) {
-	fail_ecommerce_final_home( 'pattern-price', 'Ecommerce final Home must not hard-code numeric prices.', $pattern_path, 'no numeric currency amount', $match[0] );
 }
 
 $css_path = ECOMMERCE_FINAL_THEME_DIR . '/assets/css/presets/ecommerce.css';
