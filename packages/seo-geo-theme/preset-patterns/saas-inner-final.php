@@ -38,7 +38,7 @@ if ( ! is_array( $seo_geo_saas_inner_page ) ) {
 	return;
 }
 
-$seo_geo_saas_inner_eyebrow = $seo_geo_saas_inner_page['eyebrow'] ?? '';
+$seo_geo_saas_inner_eyebrow  = $seo_geo_saas_inner_page['eyebrow'] ?? '';
 $seo_geo_saas_inner_lead     = $seo_geo_saas_inner_page['lead'] ?? '';
 $seo_geo_saas_inner_sections = $seo_geo_saas_inner_page['sections'] ?? array();
 $seo_geo_saas_inner_cta      = $seo_geo_saas_inner_page['cta'] ?? array();
