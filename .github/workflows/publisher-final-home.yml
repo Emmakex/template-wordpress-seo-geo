@@ -7,10 +7,12 @@ on:
       - 'packages/seo-geo-theme/assets/css/design-system.css'
       - 'packages/seo-geo-theme/assets/css/presets/publisher.css'
       - 'packages/seo-geo-theme/preset-patterns/publisher-home-final.php'
+      - 'packages/seo-geo-theme/preset-patterns/publisher-inner-final.php'
       - 'packages/seo-geo-theme/inc/Publisher/FinalHomePattern.php'
       - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-publisher-preset.php'
       - 'scripts/ci/validate-publisher-final-home.php'
+      - 'scripts/ci/validate-publisher-final-inner.php'
       - '.github/workflows/publisher-final-home.yml'
   push:
     branches:
@@ -20,10 +22,12 @@ on:
       - 'packages/seo-geo-theme/assets/css/design-system.css'
       - 'packages/seo-geo-theme/assets/css/presets/publisher.css'
       - 'packages/seo-geo-theme/preset-patterns/publisher-home-final.php'
+      - 'packages/seo-geo-theme/preset-patterns/publisher-inner-final.php'
       - 'packages/seo-geo-theme/inc/Publisher/FinalHomePattern.php'
       - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-publisher-preset.php'
       - 'scripts/ci/validate-publisher-final-home.php'
+      - 'scripts/ci/validate-publisher-final-inner.php'
       - '.github/workflows/publisher-final-home.yml'
 
 permissions:
@@ -35,7 +39,7 @@ concurrency:
 
 jobs:
   contract:
-    name: Publisher final Home contract
+    name: Publisher final Home + inner pages contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -54,11 +58,16 @@ jobs:
           php -l packages/seo-geo-theme/functions.php
           php -l packages/seo-geo-theme/inc/Publisher/FinalHomePattern.php
           php -l packages/seo-geo-theme/preset-patterns/publisher-home-final.php
+          php -l packages/seo-geo-theme/preset-patterns/publisher-inner-final.php
           php -l scripts/ci/validate-publisher-preset.php
           php -l scripts/ci/validate-publisher-final-home.php
+          php -l scripts/ci/validate-publisher-final-inner.php
 
       - name: Validate existing Publisher semantic contract
         run: php scripts/ci/validate-publisher-preset.php
 
       - name: Validate final Publisher Home contract
         run: php scripts/ci/validate-publisher-final-home.php
+
+      - name: Validate final Publisher inner-page contract
+        run: php scripts/ci/validate-publisher-final-inner.php
