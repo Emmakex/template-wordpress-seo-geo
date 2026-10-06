@@ -124,45 +124,104 @@ function seo_geo_theme_preset_localized_value( $localized, string $key ): ?strin
 }
 
 /**
- * Register one preset-owned PHP pattern outside the neutral Theme pattern set.
+ * Register preset-owned final mockups outside the neutral Theme pattern set.
  *
  * Keeping these patterns outside /patterns preserves the generic Theme contract
- * while allowing each preset to ship complete final mockups.
+ * while allowing each preset to ship complete, production-shaped mockups.
  *
  * @param string $preset_id     Active allowlisted preset identifier.
  * @param string $category_slug Registered block-pattern category slug.
  */
-function seo_geo_theme_register_final_mockup_pattern( string $preset_id, string $category_slug ): void {
+function seo_geo_theme_register_final_mockup_patterns( string $preset_id, string $category_slug ): void {
 	if ( 'corporate' !== $preset_id || ! function_exists( 'register_block_pattern' ) ) {
 		return;
 	}
 
-	$path = get_template_directory() . '/preset-patterns/corporate-home-final.php';
-	if ( ! is_readable( $path ) ) {
-		return;
-	}
-
-	ob_start();
-	include $path;
-	$content = ob_get_clean();
-
-	if ( ! is_string( $content ) || '' === trim( $content ) ) {
-		return;
-	}
-
-	$is_es = 'es_ES' === seo_geo_theme_preset_locale();
-	register_block_pattern(
-		'seo-geo-theme/corporate-home-final',
+	$is_es    = 'es_ES' === seo_geo_theme_preset_locale();
+	$patterns = array(
 		array(
-			'title'         => $is_es ? 'Corporate — Home final' : 'Corporate — final Home',
-			'description'   => $is_es
-				? 'Maquetación Home Corporate completa con copy e imágenes provisionales sustituibles durante la hidratación.'
-				: 'Complete Corporate Home mockup with replaceable provisional copy and media for later hydration.',
-			'categories'    => array( $category_slug ),
-			'content'       => $content,
-			'viewportWidth' => 1440,
-		)
+			'slug'           => 'seo-geo-theme/corporate-home-final',
+			'file'           => 'corporate-home-final.php',
+			'key'            => 'home',
+			'title_es'       => 'Corporate — Home final',
+			'title_en'       => 'Corporate — final Home',
+			'description_es' => 'Home Corporate completa con copy e imágenes provisionales sustituibles durante la hidratación.',
+			'description_en' => 'Complete Corporate Home with replaceable provisional copy and media for later hydration.',
+		),
+		array(
+			'slug'           => 'seo-geo-theme/corporate-services-final',
+			'file'           => 'corporate-inner-final.php',
+			'key'            => 'services',
+			'title_es'       => 'Corporate — Servicios final',
+			'title_en'       => 'Corporate — final Services',
+			'description_es' => 'Página de servicios completa, visual y preparada para hidratar la oferta real sin rediseño.',
+			'description_en' => 'Complete visual Services page ready to hydrate the real offer without redesigning it.',
+		),
+		array(
+			'slug'           => 'seo-geo-theme/corporate-work-final',
+			'file'           => 'corporate-inner-final.php',
+			'key'            => 'work',
+			'title_es'       => 'Corporate — Proyectos final',
+			'title_en'       => 'Corporate — final Work',
+			'description_es' => 'Página de proyectos preparada para casos verificables y visuales reales, sin inventar evidencia.',
+			'description_en' => 'Work page prepared for verified cases and real visuals without fabricating evidence.',
+		),
+		array(
+			'slug'           => 'seo-geo-theme/corporate-about-final',
+			'file'           => 'corporate-inner-final.php',
+			'key'            => 'about',
+			'title_es'       => 'Corporate — Empresa final',
+			'title_en'       => 'Corporate — final About',
+			'description_es' => 'Página de empresa completa para historia, autoridad, equipo y método con procedencia real.',
+			'description_en' => 'Complete About page for story, authority, team and method with real provenance.',
+		),
+		array(
+			'slug'           => 'seo-geo-theme/corporate-contact-final',
+			'file'           => 'corporate-inner-final.php',
+			'key'            => 'contact',
+			'title_es'       => 'Corporate — Contacto final',
+			'title_en'       => 'Corporate — final Contact',
+			'description_es' => 'Página de contacto terminada visualmente y preparada para hidratar canales y formulario reales.',
+			'description_en' => 'Visually complete Contact page ready to hydrate real channels and form configuration.',
+		),
+		array(
+			'slug'           => 'seo-geo-theme/corporate-insights-final',
+			'file'           => 'corporate-inner-final.php',
+			'key'            => 'insights',
+			'title_es'       => 'Corporate — Insights final',
+			'title_en'       => 'Corporate — final Insights',
+			'description_es' => 'Índice editorial Corporate preparado para contenido dinámico, autoridad temática y enlazado interno.',
+			'description_en' => 'Corporate editorial index prepared for dynamic content, topical authority and internal linking.',
+		),
 	);
+
+	foreach ( $patterns as $pattern ) {
+		$path = get_template_directory() . '/preset-patterns/' . $pattern['file'];
+		if ( ! is_readable( $path ) ) {
+			continue;
+		}
+
+		$seo_geo_pattern_key = $pattern['key'];
+		ob_start();
+		include $path;
+		$content = ob_get_clean();
+		unset( $seo_geo_pattern_key );
+
+		if ( ! is_string( $content ) || '' === trim( $content ) ) {
+			continue;
+		}
+
+		register_block_pattern(
+			$pattern['slug'],
+			array(
+				'title'         => $is_es ? $pattern['title_es'] : $pattern['title_en'],
+				'description'   => $is_es ? $pattern['description_es'] : $pattern['description_en'],
+				'categories'    => array( $category_slug ),
+				'content'       => $content,
+				'viewportWidth' => 1440,
+			)
+		);
+	}
 }
 
 /**
@@ -228,6 +287,6 @@ function seo_geo_theme_register_active_preset_patterns(): void {
 		register_block_pattern( $pattern['slug'], $args );
 	}
 
-	seo_geo_theme_register_final_mockup_pattern( $preset_id, $category_slug );
+	seo_geo_theme_register_final_mockup_patterns( $preset_id, $category_slug );
 }
 add_action( 'init', 'seo_geo_theme_register_active_preset_patterns', 20 );
