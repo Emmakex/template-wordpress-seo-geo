@@ -149,15 +149,11 @@ final class HomePilotReadiness {
 			$blockers[] = 'preset-placeholder-content-detected';
 		}
 
-		$semantic_placeholders = 0 < $draft_id
-			? get_post_meta( $draft_id, AutomaticHomeContentStateKit::PLACEHOLDER_META, true )
-			: array();
+		$semantic_placeholders = get_post_meta( $draft_id, AutomaticHomeContentStateKit::PLACEHOLDER_META, true );
 		$semantic_placeholders = is_array( $semantic_placeholders )
 			? array_values( array_filter( $semantic_placeholders, 'is_string' ) )
 			: array();
-		$pending_resolution    = 0 < $draft_id
-			? get_post_meta( $draft_id, PlaceholderResolutionTracker::PENDING_META, true )
-			: array();
+		$pending_resolution    = get_post_meta( $draft_id, PlaceholderResolutionTracker::PENDING_META, true );
 		$pending_resolution    = is_array( $pending_resolution )
 			? array_values( array_filter( $pending_resolution, 'is_string' ) )
 			: array();
