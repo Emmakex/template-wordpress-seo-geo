@@ -19,9 +19,10 @@ final class PlaceholderPublishingGuard {
 	}
 
 	/**
-	 * Force an existing placeholder-bearing clean Home back to draft when a public
-	 * status is requested. This runs before the database write, so placeholder copy
-	 * never becomes publicly published or scheduled by that write.
+	 * Force an unfinished clean Home back to draft when a public status is requested.
+	 *
+	 * Both untouched preset scaffolds and hydrated drafts with unresolved semantic
+	 * placeholders are non-publishable. This runs before the database write.
 	 *
 	 * @param array<string,mixed> $data                Sanitized post data.
 	 * @param array<string,mixed> $postarr             Raw post payload.
@@ -46,8 +47,12 @@ final class PlaceholderPublishingGuard {
 			return $data;
 		}
 
-		$placeholders = get_post_meta( $post_id, AutomaticHomeContentStateKit::PLACEHOLDER_META, true );
-		if ( ! is_array( $placeholders ) || array() === array_filter( $placeholders, 'is_string' ) ) {
+		$content_state = (string) get_post_meta( $post_id, CleanHomeRebuilder::CONTENT_STATE_META, true );
+		$placeholders  = get_post_meta( $post_id, AutomaticHomeContentStateKit::PLACEHOLDER_META, true );
+		$has_prompts   = is_array( $placeholders ) && array() !== array_filter( $placeholders, 'is_string' );
+		$is_scaffold   = NativeHomeHydrator::SCAFFOLD_STATE === $content_state;
+
+		if ( ! $is_scaffold && ! $has_prompts ) {
 			return $data;
 		}
 
