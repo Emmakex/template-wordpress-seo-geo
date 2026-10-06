@@ -1,0 +1,377 @@
+.seo-geo-preset-ecommerce {
+	--commerce-ink: var(--wp--preset--color--contrast);
+	--commerce-base: var(--wp--preset--color--base);
+	--commerce-surface: var(--wp--preset--color--surface);
+	--commerce-muted: var(--wp--preset--color--muted);
+	--commerce-accent: var(--wp--preset--color--accent);
+	--commerce-accent-strong: var(--wp--preset--color--accent-strong);
+	background: var(--commerce-base);
+	color: var(--commerce-ink);
+}
+
+.seo-geo-commerce-home {
+	overflow: clip;
+}
+
+.seo-geo-commerce-hero,
+.seo-geo-commerce-section {
+	padding-block: var(--sg-section-space-compact);
+}
+
+.seo-geo-commerce-hero__grid {
+	display: grid;
+	grid-template-columns: minmax(0, 0.9fr) minmax(22rem, 1.1fr);
+	gap: clamp(2rem, 6vw, 7rem);
+	align-items: center;
+}
+
+.seo-geo-commerce-kicker {
+	margin: 0 0 0.9rem;
+	color: var(--commerce-accent-strong);
+	font-size: var(--wp--preset--font-size--xs);
+	font-weight: 750;
+	letter-spacing: 0.11em;
+	text-transform: uppercase;
+}
+
+.seo-geo-commerce-lead {
+	max-width: 44rem;
+	font-size: clamp(1.25rem, 2.8vw, 2.3rem);
+	line-height: 1.22;
+	letter-spacing: -0.035em;
+}
+
+.seo-geo-commerce-actions {
+	margin-top: 1.5rem;
+}
+
+.seo-geo-commerce-hero__visual {
+	position: relative;
+	display: grid;
+	grid-template-columns: 1.15fr 0.85fr;
+	gap: 1rem;
+	min-height: clamp(28rem, 46vw, 42rem);
+	padding: clamp(1rem, 3vw, 2rem);
+	background:
+		linear-gradient(145deg, color-mix(in srgb, var(--commerce-accent) 24%, transparent), transparent 56%),
+		var(--commerce-surface);
+	border: 1px solid color-mix(in srgb, var(--commerce-ink) 12%, transparent);
+}
+
+.seo-geo-commerce-product-visual {
+	position: relative;
+	min-height: 100%;
+	background: linear-gradient(160deg, color-mix(in srgb, var(--commerce-ink) 6%, var(--commerce-base)), var(--commerce-base));
+	overflow: hidden;
+}
+
+.seo-geo-commerce-product-visual::before {
+	position: absolute;
+	inset: 18% 16% 12%;
+	border-radius: 45% 45% 18% 18%;
+	background: linear-gradient(180deg, color-mix(in srgb, var(--commerce-accent) 72%, var(--commerce-base)), color-mix(in srgb, var(--commerce-ink) 10%, var(--commerce-base)));
+	content: "";
+}
+
+.seo-geo-commerce-product-visual::after {
+	position: absolute;
+	right: 12%;
+	bottom: 9%;
+	width: 34%;
+	aspect-ratio: 1;
+	border: 1px solid color-mix(in srgb, var(--commerce-ink) 20%, transparent);
+	border-radius: 50%;
+	content: "";
+}
+
+.seo-geo-commerce-hero__rail {
+	display: grid;
+	gap: 1rem;
+}
+
+.seo-geo-commerce-hero__note {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	min-height: 0;
+	padding: clamp(1.25rem, 3vw, 2rem);
+	background: var(--commerce-base);
+	border: 1px solid color-mix(in srgb, var(--commerce-ink) 10%, transparent);
+}
+
+.seo-geo-commerce-hero__note strong {
+	font-size: clamp(1.15rem, 2vw, 1.6rem);
+	line-height: 1.1;
+}
+
+.seo-geo-commerce-hero__note p {
+	color: var(--commerce-muted);
+}
+
+.seo-geo-commerce-section--surface {
+	background: var(--commerce-surface);
+}
+
+.seo-geo-commerce-section--ink {
+	background: var(--commerce-ink);
+	color: var(--commerce-base);
+}
+
+.seo-geo-commerce-section__heading {
+	max-width: 58rem;
+	margin-bottom: clamp(2rem, 5vw, 4rem);
+}
+
+.seo-geo-commerce-section__heading h2 {
+	max-width: 18ch;
+	font-size: clamp(2rem, 4.3vw, 4.2rem);
+	line-height: 1;
+	letter-spacing: -0.05em;
+}
+
+.seo-geo-commerce-section__heading > p:last-child {
+	max-width: 44rem;
+	color: var(--commerce-muted);
+}
+
+.seo-geo-commerce-section--ink .seo-geo-commerce-kicker {
+	color: color-mix(in srgb, var(--commerce-accent) 82%, var(--commerce-base));
+}
+
+.seo-geo-commerce-section--ink .seo-geo-commerce-section__heading > p:last-child {
+	color: color-mix(in srgb, var(--commerce-base) 70%, transparent);
+}
+
+.seo-geo-commerce-category-grid,
+.seo-geo-commerce-catalog-grid,
+.seo-geo-commerce-confidence-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.seo-geo-commerce-category-card,
+.seo-geo-commerce-product-card,
+.seo-geo-commerce-confidence-card {
+	position: relative;
+	padding: clamp(1.4rem, 3vw, 2.4rem);
+	border: 1px solid color-mix(in srgb, var(--commerce-ink) 11%, transparent);
+	background: var(--commerce-base);
+}
+
+.seo-geo-commerce-category-card {
+	min-height: 17rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+}
+
+.seo-geo-commerce-card-index {
+	position: absolute;
+	top: 1.35rem;
+	right: 1.35rem;
+	color: var(--commerce-accent-strong);
+	font-size: var(--wp--preset--font-size--xs);
+	font-weight: 750;
+	letter-spacing: 0.12em;
+}
+
+.seo-geo-commerce-category-card h3,
+.seo-geo-commerce-product-card h3,
+.seo-geo-commerce-confidence-card h3 {
+	margin-bottom: 0.65rem;
+	font-size: clamp(1.35rem, 2.5vw, 2rem);
+	line-height: 1.08;
+	letter-spacing: -0.03em;
+}
+
+.seo-geo-commerce-category-card p,
+.seo-geo-commerce-product-card p,
+.seo-geo-commerce-confidence-card p {
+	color: var(--commerce-muted);
+}
+
+.seo-geo-commerce-product-card {
+	padding: 0 0 clamp(1.4rem, 3vw, 2.4rem);
+	overflow: hidden;
+}
+
+.seo-geo-commerce-product-card > :not(.seo-geo-commerce-product-card__visual) {
+	margin-inline: clamp(1.4rem, 3vw, 2.4rem);
+}
+
+.seo-geo-commerce-product-card__visual {
+	position: relative;
+	min-height: 19rem;
+	margin-bottom: 1.5rem;
+	background:
+		radial-gradient(circle at 72% 26%, color-mix(in srgb, var(--commerce-accent) 40%, transparent) 0 14%, transparent 15%),
+		linear-gradient(145deg, color-mix(in srgb, var(--commerce-ink) 5%, var(--commerce-surface)), var(--commerce-base));
+}
+
+.seo-geo-commerce-product-card__visual::after {
+	position: absolute;
+	left: 28%;
+	bottom: 12%;
+	width: 44%;
+	height: 58%;
+	border-radius: 2rem 2rem 0.7rem 0.7rem;
+	background: color-mix(in srgb, var(--commerce-accent) 64%, var(--commerce-base));
+	content: "";
+}
+
+.seo-geo-commerce-product-action a,
+.seo-geo-commerce-text-link a {
+	font-weight: 750;
+	text-underline-offset: 0.25em;
+}
+
+.seo-geo-commerce-confidence-grid {
+	border-top: 1px solid color-mix(in srgb, var(--commerce-base) 22%, transparent);
+}
+
+.seo-geo-commerce-confidence-card {
+	border-color: color-mix(in srgb, var(--commerce-base) 18%, transparent);
+	background: transparent;
+}
+
+.seo-geo-commerce-confidence-card p {
+	color: color-mix(in srgb, var(--commerce-base) 70%, transparent);
+}
+
+.seo-geo-commerce-guide,
+.seo-geo-commerce-brand {
+	gap: clamp(2rem, 7vw, 7rem);
+	align-items: center !important;
+}
+
+.seo-geo-commerce-guide-list {
+	border-top: 1px solid color-mix(in srgb, var(--commerce-ink) 18%, transparent);
+}
+
+.seo-geo-commerce-guide-list p {
+	margin: 0;
+	border-bottom: 1px solid color-mix(in srgb, var(--commerce-ink) 12%, transparent);
+	padding-block: 1.3rem;
+	font-size: clamp(1.1rem, 2vw, 1.45rem);
+	font-weight: 700;
+}
+
+.seo-geo-commerce-brand-visual {
+	position: relative;
+	min-height: clamp(20rem, 36vw, 32rem);
+	background:
+		linear-gradient(35deg, color-mix(in srgb, var(--commerce-accent) 40%, transparent), transparent 60%),
+		var(--commerce-surface);
+	overflow: hidden;
+}
+
+.seo-geo-commerce-brand-visual::before,
+.seo-geo-commerce-brand-visual::after {
+	position: absolute;
+	content: "";
+}
+
+.seo-geo-commerce-brand-visual::before {
+	inset: 16% 46% 12% 10%;
+	border-radius: 999px 999px 1rem 1rem;
+	background: color-mix(in srgb, var(--commerce-accent) 52%, var(--commerce-base));
+}
+
+.seo-geo-commerce-brand-visual::after {
+	inset: 28% 12% 8% 52%;
+	border: 1px solid color-mix(in srgb, var(--commerce-ink) 18%, transparent);
+	background: color-mix(in srgb, var(--commerce-base) 70%, transparent);
+}
+
+.seo-geo-commerce-policy-links {
+	display: grid !important;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 0 !important;
+	border-top: 1px solid color-mix(in srgb, var(--commerce-ink) 16%, transparent);
+	border-bottom: 1px solid color-mix(in srgb, var(--commerce-ink) 16%, transparent);
+}
+
+.seo-geo-commerce-policy-links a {
+	padding: 1.25rem;
+	color: inherit;
+	font-weight: 700;
+	text-align: center;
+	text-decoration: none;
+}
+
+.seo-geo-commerce-policy-links a + a {
+	border-left: 1px solid color-mix(in srgb, var(--commerce-ink) 12%, transparent);
+}
+
+.seo-geo-commerce-final {
+	position: relative;
+	padding-block: clamp(3rem, 8vw, 7rem);
+	background: var(--commerce-accent);
+	overflow: hidden;
+}
+
+.seo-geo-commerce-final::after {
+	position: absolute;
+	right: -8rem;
+	bottom: -11rem;
+	width: 30rem;
+	aspect-ratio: 1;
+	border: 1px solid color-mix(in srgb, var(--commerce-ink) 22%, transparent);
+	border-radius: 50%;
+	content: "";
+}
+
+.seo-geo-commerce-final > * {
+	position: relative;
+	z-index: 1;
+	max-width: 50rem;
+}
+
+.seo-geo-commerce-final h2 {
+	font-size: clamp(2.2rem, 5vw, 5rem);
+	line-height: 0.98;
+	letter-spacing: -0.055em;
+}
+
+@media (max-width: 900px) {
+	.seo-geo-commerce-hero__grid,
+	.seo-geo-commerce-category-grid,
+	.seo-geo-commerce-catalog-grid,
+	.seo-geo-commerce-confidence-grid,
+	.seo-geo-commerce-policy-links {
+		grid-template-columns: 1fr;
+	}
+
+	.seo-geo-commerce-hero__visual {
+		min-height: 28rem;
+	}
+
+	.seo-geo-commerce-policy-links a + a {
+		border-top: 1px solid color-mix(in srgb, var(--commerce-ink) 12%, transparent);
+		border-left: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.seo-geo-commerce-home *,
+	.seo-geo-commerce-home *::before,
+	.seo-geo-commerce-home *::after {
+		scroll-behavior: auto !important;
+		transition: none !important;
+	}
+}
+
+@media print {
+	.seo-geo-commerce-product-card,
+	.seo-geo-commerce-category-card,
+	.seo-geo-commerce-confidence-card {
+		box-shadow: none !important;
+	}
+
+	.seo-geo-commerce-section--ink,
+	.seo-geo-commerce-final {
+		background: transparent !important;
+		color: inherit !important;
+	}
+}
