@@ -22,7 +22,7 @@ Ship one lightweight WordPress block Theme that can turn rescued content into a 
 
 ## Phase DS-1 — Shared design-system runtime
 
-**Status: in progress**
+**Status: implementation complete; final PR gates running**
 
 Deliverables:
 
@@ -30,6 +30,7 @@ Deliverables:
 - zero required JavaScript;
 - no remote font dependency;
 - preset styles load after shared primitives;
+- premium preset overrides attach after their base preset without an extra render-blocking stylesheet request;
 - reduced-motion contract preserved;
 - existing `theme.json` semantic/editor token contract preserved.
 
@@ -38,11 +39,12 @@ Acceptance:
 - Design System CI green;
 - Self-contained Theme CI green;
 - Accessibility & Responsive CI green;
+- Performance Baseline CI within the existing budget rather than relaxing it;
 - no visual runtime dependency on removed builders/plugins.
 
 ## Phase DS-2 — Corporate Premium reference preset
 
-**Status: in progress**
+**Status: implementation complete; acceptance running**
 
 Home composition:
 
@@ -68,29 +70,38 @@ Acceptance:
 - missing proof/case groups collapse cleanly;
 - mobile order remains semantic;
 - print/PDF does not create obvious orphaned headings where CSS can prevent it;
+- dark featured modules remain legible when browser background printing is disabled;
 - no low-contrast disabled-looking service card states;
-- existing field-pilot content can be regenerated without manual page design.
+- existing field-pilot content can be regenerated without manual page design;
+- Corporate Premium visual contract is protected by CI.
 
 ## Phase DS-3 — Placeholder and content-state engine
 
-**Status: implemented in PR #235; CI validation pending**
+**Status: implementation complete; acceptance running**
 
-Delivered:
+Deliverables:
 
-- explicit semantic slot state: `source`, `derived`, `placeholder`;
-- automatic semantic placeholder scaffold when rescued copy cannot satisfy the required Home model;
-- only editorial-content shortages are recoverable; structural/safety blockers remain hard blockers;
-- placeholder slot list and `publishable` state are exposed by the automatic plan;
-- placeholder state is persisted on the clean Home draft;
-- WordPress public/scheduled status writes are forced back to `draft` while placeholder slots remain;
-- evidence groups remain opt-in verified only;
-- detailed contract in `docs/CONTENT_PLACEHOLDERS.md`.
+- explicit slot state: `source`, `derived`, `placeholder`, `authored`;
+- automatic semantic placeholder generation for empty non-evidence slots;
+- generated-placeholder fingerprint baseline;
+- reviewed replacements become pending until successful native hydration;
+- placeholder detection in Home/Site Readiness;
+- final publication blocked while unresolved placeholders remain;
+- untouched preset scaffolds are also non-publishable;
+- evidence groups remain opt-in verified only.
 
-The content optimizer can later replace placeholder slots first, improve weak derived/source copy and retain provenance without changing the visual component contract.
+Publication safety rule:
+
+1. saving a reviewed Content Kit never unlocks publication by itself;
+2. changed placeholder values are compared with their original generated fingerprints;
+3. only successful `NativeHomeHydrator` application commits those replacements as `authored`;
+4. Site Readiness independently blocks while any semantic placeholder remains.
+
+The content optimizer can later replace placeholders with researched/optimized content without changing the visual component contract.
 
 ## Phase DS-4 — Remaining presets
 
-**Status: planned**
+**Status: next after PR #235 acceptance**
 
 Implement the same shared engine for:
 
@@ -103,7 +114,7 @@ Each preset gets its own composition/art direction but shares semantic tokens an
 
 ## Phase DS-5 — Automated visual/performance acceptance
 
-**Status: planned**
+**Status: partially implemented; expands with DS-4**
 
 Extend CI to cover:
 
@@ -114,8 +125,9 @@ Extend CI to cover:
 - contrast/focus/reduced motion;
 - print/PDF layout sanity;
 - no remote font/design dependency;
-- no mandatory frontend JS for static presentation;
-- placeholder publication guard.
+- no mandatory frontend JS for static presentation.
+
+Corporate Premium already has a dedicated static visual contract gate. The same contract pattern will be extended to each remaining preset.
 
 ## Phase DS-6 — EMMAKE regeneration
 
