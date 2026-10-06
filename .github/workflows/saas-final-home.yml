@@ -1,0 +1,64 @@
+name: SaaS Final Home CI
+
+on:
+  pull_request:
+    paths:
+      - 'presets/saas-digital-product/**'
+      - 'packages/seo-geo-theme/assets/css/design-system.css'
+      - 'packages/seo-geo-theme/assets/css/presets/saas-digital-product.css'
+      - 'packages/seo-geo-theme/preset-patterns/saas-home-final.php'
+      - 'packages/seo-geo-theme/inc/presets.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/validate-saas-digital-product-preset.php'
+      - 'scripts/ci/validate-saas-final-home.php'
+      - '.github/workflows/saas-final-home.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'presets/saas-digital-product/**'
+      - 'packages/seo-geo-theme/assets/css/design-system.css'
+      - 'packages/seo-geo-theme/assets/css/presets/saas-digital-product.css'
+      - 'packages/seo-geo-theme/preset-patterns/saas-home-final.php'
+      - 'packages/seo-geo-theme/inc/presets.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/validate-saas-digital-product-preset.php'
+      - 'scripts/ci/validate-saas-final-home.php'
+      - '.github/workflows/saas-final-home.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saas-final-home-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: SaaS final Home + preset contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: PHP syntax
+        run: |
+          php -l packages/seo-geo-theme/functions.php
+          php -l packages/seo-geo-theme/inc/presets.php
+          php -l packages/seo-geo-theme/preset-patterns/saas-home-final.php
+          php -l scripts/ci/validate-saas-digital-product-preset.php
+          php -l scripts/ci/validate-saas-final-home.php
+
+      - name: Validate existing SaaS semantic contract
+        run: php scripts/ci/validate-saas-digital-product-preset.php
+
+      - name: Validate final SaaS Home contract
+        run: php scripts/ci/validate-saas-final-home.php
