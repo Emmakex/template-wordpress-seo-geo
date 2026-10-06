@@ -155,6 +155,8 @@ final class NativeHomeHydrator {
 		$current_kit  = (string) get_post_meta( $draft_id, self::KIT_SHA_META, true );
 
 		if ( hash_equals( $current_sha, $hydrated_sha ) && hash_equals( $current_kit, (string) $plan['kit_sha256'] ) ) {
+			PlaceholderResolutionTracker::commit_after_hydration( $draft_id );
+
 			return array(
 				'schema_version' => 1,
 				'mode'           => 'corporate-home-native-hydration',
@@ -187,6 +189,7 @@ final class NativeHomeHydrator {
 		update_post_meta( $draft_id, self::APPLIED_SHA_META, $hydrated_sha );
 		update_post_meta( $draft_id, self::APPLIED_AT_META, gmdate( DATE_ATOM ) );
 		update_post_meta( $draft_id, CleanHomeRebuilder::CONTENT_STATE_META, self::CONTENT_STATE );
+		PlaceholderResolutionTracker::commit_after_hydration( $draft_id );
 
 		return array(
 			'schema_version' => 1,
@@ -238,6 +241,7 @@ final class NativeHomeHydrator {
 		delete_post_meta( $draft_id, self::APPLIED_AT_META );
 		delete_post_meta( $draft_id, self::BACKUP_META );
 		delete_post_meta( $draft_id, self::BACKUP_SHA_META );
+		delete_post_meta( $draft_id, PlaceholderResolutionTracker::PENDING_META );
 		update_post_meta( $draft_id, CleanHomeRebuilder::CONTENT_STATE_META, self::SCAFFOLD_STATE );
 
 		return array(
@@ -405,7 +409,6 @@ final class NativeHomeHydrator {
 			if ( is_array( $child ) && $this->contains_class( $child, $needle ) ) {
 				return true;
 			}
-		}
 
 		return false;
 	}
