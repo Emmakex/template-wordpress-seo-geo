@@ -4,13 +4,16 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DECISION_FILE = ROOT / "release/stable-release-decision.json"
+CANDIDATE_FILE = ROOT / "release/emmake-phase10e-candidate.json"
 VERSION_FILE = ROOT / "release/version.json"
 CHANGELOG_FILE = ROOT / "CHANGELOG.md"
 DECISION_DOC = ROOT / "docs/STABLE_RELEASE_DECISION.md"
+REAL_SITE_DOC = ROOT / "docs/REAL_SITE_PILOT.md"
 CORE_WRAPPER = ROOT / "packages/seo-geo-core/seo-geo-core.php"
 CORE_README = ROOT / "packages/seo-geo-core/README.md"
 ARCHITECTURE = ROOT / "docs/ARCHITECTURE.md"
@@ -21,12 +24,18 @@ def fail(message: str) -> None:
     raise SystemExit(message)
 
 
+def valid_sha(value: object, length: int) -> bool:
+    return isinstance(value, str) and re.fullmatch(rf"[0-9a-f]{{{length}}}", value) is not None
+
+
 def main() -> int:
     for path in (
         DECISION_FILE,
+        CANDIDATE_FILE,
         VERSION_FILE,
         CHANGELOG_FILE,
         DECISION_DOC,
+        REAL_SITE_DOC,
         CORE_README,
         ARCHITECTURE,
         BUILD_SCRIPT,
@@ -35,9 +44,11 @@ def main() -> int:
             fail(f"Required Phase 10E path is missing: {path.relative_to(ROOT)}")
 
     decision = json.loads(DECISION_FILE.read_text(encoding="utf-8"))
+    candidate = json.loads(CANDIDATE_FILE.read_text(encoding="utf-8"))
     version = json.loads(VERSION_FILE.read_text(encoding="utf-8"))
     changelog = CHANGELOG_FILE.read_text(encoding="utf-8")
     decision_doc = DECISION_DOC.read_text(encoding="utf-8")
+    real_site_doc = REAL_SITE_DOC.read_text(encoding="utf-8")
     core_readme = CORE_README.read_text(encoding="utf-8")
     architecture = ARCHITECTURE.read_text(encoding="utf-8")
     build_script = BUILD_SCRIPT.read_text(encoding="utf-8")
@@ -57,6 +68,44 @@ def main() -> int:
         fail("Stable-release decision identity is invalid")
     if decision["target_version"] != version["version"]:
         fail("Stable-release target version must match release/version.json")
+
+    candidate_keys = {
+        "schema_version",
+        "mode",
+        "site_id",
+        "target",
+        "target_version",
+        "release_channel",
+        "source_commit",
+        "theme",
+        "migration_bridge",
+        "field_pilot_pack",
+        "stable_decision",
+        "acceptance_status",
+        "candidate_frozen_on",
+    }
+    if set(candidate) != candidate_keys:
+        fail("Phase 10E candidate has an unexpected top-level schema")
+    if candidate["schema_version"] != 1 or candidate["mode"] != "emmake-phase10e-candidate":
+        fail("Phase 10E candidate identity is invalid")
+    if candidate["site_id"] != "emmake-com":
+        fail("Phase 10E candidate site identity is invalid")
+    if candidate["target"] != {
+        "production_origin": "https://emmake.com",
+        "sandbox_origin": "https://emmake.com/nuevaweb/",
+    }:
+        fail("Phase 10E candidate target is invalid")
+    if candidate["target_version"] != version["version"]:
+        fail("Phase 10E candidate target version must match release/version.json")
+    if candidate["release_channel"] != version["release_channel"]:
+        fail("Phase 10E candidate release channel must match release/version.json")
+    if candidate["theme"].get("version") != version["version"]:
+        fail("Phase 10E candidate Theme version must match release/version.json")
+    if not valid_sha(candidate["source_commit"], 40):
+        fail("Phase 10E candidate source commit must be a 40-character SHA")
+    for component in ("theme", "migration_bridge", "field_pilot_pack"):
+        if not valid_sha(candidate[component].get("sha256"), 64):
+            fail(f"Phase 10E candidate {component} SHA-256 is invalid")
 
     real_site = decision["real_site_acceptance"]
     if set(real_site) != {"required", "status", "reference"}:
@@ -83,6 +132,10 @@ def main() -> int:
     state = decision["decision"]
     if state not in {"no-go", "go"}:
         fail("Stable-release decision must be no-go or go")
+    if candidate["stable_decision"] != state:
+        fail("Canonical Phase 10E candidate decision drifted from stable-release decision")
+    if candidate["acceptance_status"] != real_site["status"]:
+        fail("Canonical Phase 10E candidate acceptance status drifted from stable-release decision")
 
     target = decision["target_version"]
     unreleased_heading = f"## [Unreleased] — target {target}"
@@ -113,10 +166,24 @@ def main() -> int:
         if released_heading not in changelog:
             fail("A go decision requires a released changelog heading for the target version")
 
+    required_candidate_markers = (
+        "release/emmake-phase10e-candidate.json",
+        candidate["source_commit"],
+        candidate["theme"]["sha256"],
+        candidate["migration_bridge"]["sha256"],
+        candidate["field_pilot_pack"]["sha256"],
+    )
+    for marker in required_candidate_markers:
+        if marker not in decision_doc:
+            fail(f"Stable-release document is missing canonical candidate marker: {marker}")
+        if marker not in real_site_doc:
+            fail(f"Real-site pilot document is missing canonical candidate marker: {marker}")
+
     print(
         "Phase 10E stable-release decision OK: "
         f"{target} decision={state}, channel={version['release_channel']}, "
-        f"wrapper={wrapper}, real-site={real_site['status']}."
+        f"wrapper={wrapper}, real-site={real_site['status']}, "
+        f"candidate={candidate['source_commit'][:12]}."
     )
     return 0
 
