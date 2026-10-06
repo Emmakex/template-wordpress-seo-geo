@@ -141,11 +141,9 @@ PR #243 passed the existing Local Business semantic contract, dedicated Local Pr
 
 #### DS-4B — Local Pro inner pages
 
-**Status: implementation candidate**
+**Status: complete in code/CI**
 
-Current branch: `feat/local-business-final-inner-pages`.
-
-Candidate compositions:
+Delivered and merged on PR #244 with 13/13 workflows green:
 
 - Services — real offer, scope, exclusions and next-step structure without keyword-variant duplicate pages;
 - Locations — verified locations/service areas only, with meaningful local operational differences and an explicit no-doorway/no-city-clone rule;
@@ -155,19 +153,32 @@ Candidate compositions:
 
 All five reuse the accepted Local Pro visual system instead of adding another stylesheet. ES/EN provisional copy lives outside the renderer. The page template retains document-H1 ownership. Locations and Contact expose fact placeholders independently from editorial copy so hydration can insert authoritative local facts without redesigning the page.
 
-DS-4B must pass the existing semantic contract, the accepted Home contract and a dedicated inner-page contract before merge. Single, Archive and 404 remain explicitly outside this microphase.
+PR #244 passed the existing semantic contract, accepted Home contract, dedicated inner-page contract, WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and Lighthouse without relaxing budgets.
 
 #### DS-4C — Local Pro system surfaces
 
-**Status: queued after inner pages**
+**Status: implementation candidate**
 
-Add preset-owned Single, Archive and 404 surfaces only after Home and inner pages are accepted. Reuse the generalized template runtime while preserving Site Editor custom-template precedence and neutral fallback.
+Current branch: `feat/local-business-final-system-surfaces`.
+
+Candidate surfaces:
+
+- Single — category, document H1, date/author, featured media, authored content, author context and previous/next navigation;
+- Archive — dynamic archive title/description, responsive post grid, no-results search and pagination;
+- 404 — localized ES/EN recovery copy, home action and native site search;
+- generalized preset-template runtime extended with `local-business` while preserving Corporate and SaaS behavior;
+- Site Editor `source=custom` templates remain authoritative;
+- unsupported presets/slugs and missing files fail safe to the neutral Theme template;
+- system templates contain no hard-coded address, phone, hours, service area, review, rating, LocalBusiness Schema or remote-map evidence;
+- no additional Local Pro CSS or required project JavaScript.
+
+DS-4C must pass the existing semantic, Home and inner-page contracts, the new system-surface contract, executable runtime isolation/fallback tests, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge.
 
 #### DS-4D — Local Pro visual/performance acceptance
 
-**Status: active with DS-4B**
+**Status: active with DS-4C**
 
-Require existing Local Business semantic contract, Home + inner-page contracts, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets. Performance limits must not be raised to make the new visual layer pass.
+Local Pro closes at implementation/CI level only after DS-4C is merged with the complete acceptance battery green. This still does not make the Theme stable; Phase 10E real-site acceptance remains a separate release gate.
 
 ### DS-5 — Publisher / Creative transition
 
