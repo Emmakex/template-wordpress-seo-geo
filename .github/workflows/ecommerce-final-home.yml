@@ -7,9 +7,11 @@ on:
       - 'packages/seo-geo-theme/assets/css/design-system.css'
       - 'packages/seo-geo-theme/assets/css/presets/ecommerce.css'
       - 'packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php'
+      - 'packages/seo-geo-theme/preset-patterns/ecommerce-inner-final.php'
       - 'packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php'
       - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-ecommerce-final-home.php'
+      - 'scripts/ci/validate-ecommerce-final-inner-pages.php'
       - '.github/workflows/ecommerce-final-home.yml'
   push:
     branches:
@@ -19,9 +21,11 @@ on:
       - 'packages/seo-geo-theme/assets/css/design-system.css'
       - 'packages/seo-geo-theme/assets/css/presets/ecommerce.css'
       - 'packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php'
+      - 'packages/seo-geo-theme/preset-patterns/ecommerce-inner-final.php'
       - 'packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php'
       - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-ecommerce-final-home.php'
+      - 'scripts/ci/validate-ecommerce-final-inner-pages.php'
       - '.github/workflows/ecommerce-final-home.yml'
 
 permissions:
@@ -33,7 +37,7 @@ concurrency:
 
 jobs:
   contract:
-    name: Ecommerce final Home contract
+    name: Ecommerce final preset contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -52,7 +56,12 @@ jobs:
           php -l packages/seo-geo-theme/functions.php
           php -l packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php
           php -l packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php
+          php -l packages/seo-geo-theme/preset-patterns/ecommerce-inner-final.php
           php -l scripts/ci/validate-ecommerce-final-home.php
+          php -l scripts/ci/validate-ecommerce-final-inner-pages.php
 
-      - name: Validate final Ecommerce Home contract
+      - name: Validate accepted Ecommerce Home contract
         run: php scripts/ci/validate-ecommerce-final-home.php
+
+      - name: Validate final Ecommerce inner-page contract
+        run: php scripts/ci/validate-ecommerce-final-inner-pages.php
