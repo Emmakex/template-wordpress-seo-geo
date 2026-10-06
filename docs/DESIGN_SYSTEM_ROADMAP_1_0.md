@@ -4,232 +4,192 @@
 
 The preset is the finished product, not a blank shell. A clean WordPress install must already look like a credible modern website before client content is hydrated.
 
+Legacy presentation is never a design source. The old site may contribute useful authored content, URLs, metadata, links, factual entities and media only. Legacy themes, builders, styling and plugin debt are not carried forward by default.
+
 The normal order is:
 
-`final preset -> safe provisional content/media -> rescued/client content -> hydration -> site ready -> SEO/GEO Manager refinement`
-
-Legacy presentation is never a design source. The old site may contribute useful authored content, URLs, metadata, links, factual entities and media only. Legacy themes, builders, styling and plugin debt are not carried forward by default.
+`finished preset -> rescued/client content -> semantic hydration -> real-site QA -> SEO/GEO Manager refinement`
 
 ## Current baseline — 2026-10-06
 
 - Theme: `seo-geo-theme` `0.1.1`, channel `prestable`.
-- Five-preset implementation closure: `14d309023f97bb4f54e24e7258b55cec2e5e703d`.
-- EMMAKE field-pilot version-contract closure: `d3f4022ff2f46c2ee965bae561217b990bf2edf0`.
-- Installable Theme SHA-256: `313796fde03e0204a334d204098222e5d0521b9efeb2ec622fbd92c0522b8c15`.
-- Migration Bridge for the EMMAKE field pilot: `0.8.60`.
-- Theme status: complete at implementation/CI level; **not stable yet**.
-- Remaining release blocker: Phase 10E real-site acceptance on EMMAKE `/nuevaweb/`.
+- Migration Bridge field-pilot version: `0.8.60`.
+- Rescue -> reset -> Corporate bootstrap -> clean Home -> hydration -> native SEO handoff -> machine preflight has passed end to end on EMMAKE `/nuevaweb/`.
+- The first real browser QA rejected the current Corporate visual result.
+- Stable-release decision remains `NO-GO`.
 
-The stable-release decision remains `NO-GO` until the real-site acceptance evidence is complete. Code/CI closure alone does not authorize production cutover.
+The current blocker is therefore no longer migration architecture. It is product-level visual acceptance of the reference preset.
+
+## Master preset strategy
+
+**Corporate v3 is now the only active visual preset.**
+
+SaaS, Local Pro, Publisher and Ecommerce remain frozen at their current implementation level until Corporate v3 is accepted on the real EMMAKE sandbox.
+
+This avoids polishing five different visual systems before the product has proven one complete reference implementation.
+
+Corporate v3 must establish the reusable quality baseline for:
+
+- shell/grid geometry;
+- typography and spacing rhythm;
+- navigation behavior;
+- responsive breakpoints;
+- semantic hydration slots;
+- media treatment;
+- accessibility/focus/contrast;
+- performance budgets;
+- real browser acceptance procedure.
+
+After Corporate v3 is approved, the other presets will derive from those proven primitives while keeping their own layout/commercial identity.
+
+See `docs/CORPORATE_V3_MASTER_PRESET.md` for the binding visual/product contract.
 
 ## DS-0 — Product and migration boundary
 
 **Status: complete**
 
-- Theme, Migration Bridge and SEO/GEO Manager are separate product responsibilities.
+- Theme, Migration Bridge and SEO/GEO Manager remain separate product responsibilities.
 - Migration Bridge rescues what is valuable and supports reset/rebuild; it does not preserve legacy presentation debt.
 - Theme owns reusable visual/layout/runtime behavior.
-- SEO/GEO Manager will own ongoing optimization after the rebuilt site is ready.
+- SEO/GEO Manager will own ongoing optimization after the rebuilt site is healthy.
 - Placeholders cannot fabricate evidence, pricing, certifications, customers, reviews or performance claims.
 
-## DS-1 — Corporate reference preset
+## DS-1 — Corporate v3 reference preset
 
-**Status: complete in code/CI**
+**Status: active — highest priority**
 
-Corporate is the reference implementation for the reusable preset contract:
+The previous Corporate implementation passed code/CI but failed the first real visual acceptance on EMMAKE `/nuevaweb/`.
 
-- final Home;
+Corporate v3 must now be finished before any other preset receives further visual work.
+
+Required scope:
+
+- final Home with bespoke-quality visual direction;
 - final Services, Work, About, Contact and Insights compositions;
 - preset-owned Single, Archive and 404 surfaces;
-- responsive/accessibility contracts;
+- graceful states when proof/case studies/media are unavailable;
+- semantic content slots that accept rescued content without reproducing legacy layout;
+- responsive behavior designed for 1440 / 1024 / 768 / 390 px;
+- no pathological wrapping, compressed cards or desktop navigation leaking into tablet/mobile;
+- accessible contrast/focus/landmarks;
 - strict performance budgets;
-- safe provisional copy/media that blocks readiness until hydrated;
 - Site Editor custom templates remain authoritative.
 
-Corporate is the preset selected for the first real EMMAKE `/nuevaweb/` hydration/acceptance pilot.
+Corporate is approved only after the real hydrated `/nuevaweb/` Home passes browser QA at all four viewport gates.
 
 ## DS-2 — Shared Design System primitives
 
-**Status: complete in code/CI**
+**Status: provisional until Corporate v3 acceptance**
 
-The shared opt-in layer provides reusable shell widths, spacing rhythm, cards, Bento/editorial grids, process sequences, motion/reduced-motion and print behavior.
+The existing shared layer remains available, but Corporate v3 is allowed to refine or replace primitives where the real pilot shows that the current abstraction produces a generic or weak result.
 
-It is not globally forced. Presets opt in only to the primitives they need so accepted designs do not gain unnecessary CSS, JavaScript or requests.
+Only primitives proven by Corporate v3 should become the base for the other presets.
 
-## DS-3 — Tech / SaaS / Digital Product
+## DS-3 — SaaS / Digital Product
 
-**Status: complete in code/CI**
+**Status: frozen pending Corporate v3 approval**
 
-Delivered through PRs `#240`–`#242`.
-
-Accepted scope:
-
-- final SaaS Home;
-- Product, Features, Solutions, Integrations, Pricing, Resources and Contact/Demo;
-- Single, Archive and localized 404;
-- EN/ES provisional copy contract;
-- no fabricated integrations, prices, customers, security claims or response times;
-- zero required project JavaScript for static presentation;
-- runtime isolation and neutral fallback behavior;
-- strict Lighthouse/performance, accessibility, multilingual and WordPress activation gates.
+Current code/CI work is retained. No further visual iteration until the master preset is accepted.
 
 ## DS-4 — Local Pro / Local Business
 
-**Status: complete in code/CI**
+**Status: frozen pending Corporate v3 approval**
 
-Delivered through PRs `#243`–`#245`.
+Current code/CI work is retained. No further visual iteration until the master preset is accepted.
 
-Accepted scope:
+## DS-5 — Publisher / Editorial
 
-- final local-service Home;
-- Services, Locations, About, FAQ and Contact;
-- Single, Archive and localized 404;
-- verified-fact gates for address, phone, hours and service area;
-- explicit anti-doorway / no-city-clone rules;
-- LocalBusiness Schema only when visible verified facts support it;
-- no fabricated reviews, ratings, maps, credentials or coverage claims;
-- full performance/accessibility/multilingual/runtime regression gates.
+**Status: frozen pending Corporate v3 approval**
 
-## DS-5 — Publisher / Editorial / Creative
-
-**Status: complete in code/CI**
-
-Delivered through PRs `#246`–`#248`.
-
-Accepted scope:
-
-- final editorial Home;
-- Articles, Topics, Authors, About, Editorial Policy and Contact;
-- Single, Archive and localized 404;
-- real WordPress authors/dates/content remain authoritative;
-- no fabricated authors, citations, readership, popularity, reviewer or fact-checker identities;
-- maintained taxonomy instead of thin keyword archives;
-- no required frontend JavaScript or remote visual dependency;
-- full runtime isolation and regression gates.
+Current code/CI work is retained. No further visual iteration until the master preset is accepted.
 
 ## DS-6 — Ecommerce
 
-**Status: complete in code/CI**
+**Status: frozen pending Corporate v3 approval**
 
-The fifth and final preset is closed through:
-
-- PR `#249` — final Ecommerce Home;
-- PR `#250` — final Ecommerce inner pages;
-- PR `#251` — final Ecommerce Single, Archive and 404 system surfaces.
-
-The final closure landed on `main` at `14d309023f97bb4f54e24e7258b55cec2e5e703d` with the complete post-merge workflow battery green.
-
-Accepted scope:
-
-- modern product-discovery Home;
-- Shop discovery shell, Categories, Buying Guides, About, Support and Contact;
-- native WordPress editorial Single/Archive plus localized 404;
-- provider-safe category/catalog placeholders until real commerce data exists;
-- verified policy/contact routes only;
-- no fabricated product identity, price, discount, stock, availability, reviews, ratings, shipping, returns, warranty, certification or payment method;
-- no Theme ownership of `single-product`, `archive-product`, cart, checkout or account;
-- Product/Offer/Review/AggregateRating Schema remains commerce-provider owned;
-- WooCommerce is the preferred provider, but live commerce capability requires an accepted adapter.
-
-### DS-6 performance/quality closure
-
-**Status: complete in code/CI**
-
-The Ecommerce closure passed the same shared gates as the earlier presets without relaxing budgets: PHP quality, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual, performance baseline and preset regressions.
-
-## DS-7 — Five-preset acceptance
-
-**Status: complete in code/CI; real-site acceptance pending**
-
-All five product-facing presets now satisfy the implementation contract:
-
-- credible clean-install visual composition;
-- desktop/mobile/tablet hierarchy;
-- keyboard/focus/contrast/reduced-motion support;
-- no required remote fonts or heavy frontend framework;
-- no required project JavaScript for static presentation;
-- strict Core Web Vitals/performance budgets without raising limits to make designs pass;
-- one-H1 ownership rules;
-- crawlable HTML navigation and internal links;
-- evidence/commercial-fact gates;
-- EN/ES baseline where required;
-- preset runtime isolation with safe neutral fallback;
-- Site Editor `source=custom` templates remain authoritative.
-
-This closes the **Design System and five-preset implementation phase**. It does not by itself declare Theme `stable`.
+Current code/CI work is retained. No further visual iteration until the master preset is accepted.
 
 ## Phase 10E — EMMAKE real-site acceptance
 
-**Status: active — final external release gate**
+**Status: active — Corporate v3 field laboratory**
 
 Target: `https://emmake.com/nuevaweb/`.
 
-The controlled pilot package contains:
+Already proven successfully:
 
-- SEO/GEO Theme `0.1.1` prestable;
-- Migration Bridge `0.8.60`;
-- Corporate Home blueprint fallback;
-- exact manifest/checksums;
-- evidence template;
-- field runbook.
+1. sandbox safety guards;
+2. Rescue Manifest;
+3. clone runtime reset;
+4. SEO/GEO Theme ownership;
+5. Corporate bootstrap;
+6. clean private Home creation;
+7. automatic content hydration;
+8. provider-neutral Yoast SEO handoff;
+9. machine preflight -> `ready for browser QA`.
 
-Execution sequence:
+First real browser QA result:
 
-1. verify recoverable sandbox database/files backup;
-2. install the exact Theme and Migration Bridge artifacts;
-3. create/refresh Rescue Manifest;
-4. reset the clone runtime while retaining only genuinely required business functions;
-5. bootstrap Corporate;
-6. create the clean private Home draft;
-7. automatically map useful rescued content into the native Corporate semantic model;
-8. apply provider-neutral native SEO/GEO handoff;
-9. obtain `ready_for_browser_qa=true` from field-pilot readiness;
-10. complete browser evidence for visual layout, responsive behavior, accessibility, rendered SEO/GEO output and performance.
+- visual-layout: fail;
+- responsive-behavior: fail;
+- accessibility/contrast: fail;
+- SEO/GEO rendered-output: pending browser validation;
+- performance: pending browser validation.
 
-Production Home replacement is **not automatic**. Passing the sandbox pilot only makes the rebuilt Home eligible for explicit cutover review.
+Do not continue the Services rebuild and do not move toward production cutover until the Corporate Home is visually approved.
 
-## EMMAKE role
+EMMAKE is a real acceptance environment, not a design source. Reusable defects found there must be fixed in Corporate v3, not patched only on the client site.
 
-EMMAKE `/nuevaweb/` is the first real hydration/acceptance client for Corporate. It is not the design source and must not receive one-off visual patches that belong in the reusable preset.
+## Corporate v3 acceptance gate
 
-If the real client reveals a reusable Theme defect, fix the reusable Theme and re-run acceptance. If the difference is factual/client content, hydrate the client content rather than changing the preset architecture.
+The same hydrated Home must pass at:
 
-## Stable release gate
+- 1440 px desktop;
+- 1024 px compact desktop/tablet landscape;
+- 768 px tablet;
+- 390 px mobile.
 
-SEO/GEO Theme 1.0 may move from `prestable` toward `stable` only after Phase 10E demonstrates on the real sandbox that:
+At every viewport verify:
 
-- reset/rebuild preserves the valuable SEO/content identity while discarding legacy presentation debt;
-- the Corporate preset renders as intended with real rescued content;
-- no legacy builder debris survives in rendered output;
-- SEO title/description/indexability/canonical behavior is correct;
-- Schema/discovery output is evidence-backed;
-- internal links and rescued URLs are coherent;
-- mobile/desktop accessibility and visual hierarchy pass;
-- measured performance is acceptable without loosening product budgets;
-- rollback/recovery remains available;
-- production cutover remains an explicit separate action.
+- hierarchy/composition;
+- no overflow or pathological word wrapping;
+- correct navigation mode;
+- readable typography and spacing;
+- contrast and keyboard focus;
+- logical content order and CTA clarity;
+- no legacy-builder debris or exposed placeholder copy;
+- acceptable performance without loosening budgets.
+
+The existing SEO/GEO and machine-readiness gates remain mandatory.
+
+## After Corporate approval
+
+Only after Corporate v3 is approved:
+
+1. extract the proven reusable primitives;
+2. lock the reference responsive/accessibility/performance contract;
+3. rebase SaaS on the approved foundation and accept it;
+4. rebase Local Pro and accept it;
+5. rebase Publisher and accept it;
+6. rebase Ecommerce and accept it;
+7. only then consider Theme 1.0 stable.
+
+The presets may share engineering primitives, but must not become visual clones of Corporate.
 
 ## Next product phase — SEO/GEO Manager
 
-**Status: queued after Phase 10E acceptance**
+**Status: queued after Theme acceptance**
 
-Once the reusable Theme is proven on the real site, development focus moves to the SEO/GEO Manager for continuous optimization rather than further expanding Theme scope.
+The Manager will own ongoing content optimization, landing/blog publishing, internal-link opportunities, metadata/structured-data refinement, keyword/topic/entity opportunities, GEO/discovery improvements, Search Console/Bing iteration and optimization history.
 
-Manager responsibilities include:
-
-- ongoing content optimization;
-- landing/blog publishing workflows;
-- internal-link opportunities;
-- metadata and structured-data refinement;
-- keyword/topic/entity opportunities;
-- GEO/discovery improvements;
-- Search Console/Bing-oriented iteration;
-- optimization history and controlled recommendations.
-
-The Manager must refine a healthy rebuilt site, not compensate for legacy layout debt or unfinished Theme presets.
+It must refine a healthy rebuilt site, not compensate for an unfinished Theme.
 
 ## Definition of done
 
-Design System SEO/GEO 1.0 is **complete in code/CI** because all five presets can create credible modern sites from a clean install while preserving the shared SEO/GEO, performance, accessibility, multilingual and evidence contracts.
+Design System SEO/GEO 1.0 is not complete merely because five preset implementations exist in code.
 
-The overall Theme product becomes **release-ready/stable only after Phase 10E real-site acceptance** is completed with recorded evidence.
+It becomes release-ready only when:
+
+1. Corporate v3 proves the product standard on the real EMMAKE sandbox;
+2. the other four presets are derived from the proven foundation and independently pass the same acceptance gates;
+3. SEO/GEO, accessibility and performance gates remain green;
+4. production cutover remains an explicit separate action.
