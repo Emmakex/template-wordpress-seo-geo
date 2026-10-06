@@ -31,6 +31,41 @@ function seo_geo_theme_setup(): void {
 add_action( 'after_setup_theme', 'seo_geo_theme_setup' );
 
 /**
+ * Decide whether the current singular document owns the Corporate v3 Home
+ * composition.
+ *
+ * Migration Bridge hydrates the clean Home through stable semantic classes.
+ * Detecting the composition from the stored native block content lets previews
+ * use the exact v3 presentation before the draft becomes the assigned front
+ * page, while ordinary Corporate inner pages keep the proven v1 base until
+ * their own v3 pass begins.
+ */
+function seo_geo_theme_corporate_master_home_layer(): bool {
+	$uses_master_home = false;
+
+	if ( 'corporate' === seo_geo_theme_active_preset_id() && is_singular() ) {
+		$queried = get_queried_object();
+
+		if ( $queried instanceof WP_Post ) {
+			$uses_master_home = str_contains(
+				(string) $queried->post_content,
+				'seo-geo-corporate-native-hero'
+			);
+		}
+	}
+
+	/**
+	 * Filter the Corporate v3 Home-layer decision.
+	 *
+	 * The disposable browser/performance fixture uses this filter to exercise
+	 * the exact Home asset path without changing production detection rules.
+	 *
+	 * @param bool $uses_master_home Whether the v3 Home presentation is active.
+	 */
+	return (bool) apply_filters( 'seo_geo_theme_corporate_master_home_layer', $uses_master_home );
+}
+
+/**
  * Load the neutral Theme foundation and the active preset's visual system.
  *
  * The shared Design System is opt-in while presets are migrated to their final
@@ -51,6 +86,38 @@ function seo_geo_theme_enqueue_styles(): void {
 
 	$preset_id = seo_geo_theme_active_preset_id();
 	if ( null === $preset_id ) {
+		return;
+	}
+
+	/*
+	 * Corporate v3 Home is a replacement presentation, not an additive skin.
+	 * Loading the former 22 KB Corporate stylesheet underneath v3 duplicated
+	 * most of the visual system and broke the strict CSS transfer budget. Keep
+	 * v1 for inner pages until their v3 pass; load only the master Home assets
+	 * for an actual/hydrated Corporate Home composition.
+	 */
+	if ( 'corporate' === $preset_id && seo_geo_theme_corporate_master_home_layer() ) {
+		$visual_stylesheet = get_stylesheet_directory() . '/assets/css/presets/corporate-v2.css';
+		$runtime_stylesheet = get_stylesheet_directory() . '/assets/css/presets/corporate-v3-runtime.css';
+
+		if ( ! is_readable( $visual_stylesheet ) || ! is_readable( $runtime_stylesheet ) ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'seo-geo-theme-preset-corporate-v2',
+			get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v2.css',
+			array( 'seo-geo-theme' ),
+			(string) filemtime( $visual_stylesheet )
+		);
+
+		wp_enqueue_style(
+			'seo-geo-theme-preset-corporate-v3-runtime',
+			get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v3-runtime.css',
+			array( 'seo-geo-theme-preset-corporate-v2' ),
+			(string) filemtime( $runtime_stylesheet )
+		);
+
 		return;
 	}
 
@@ -82,18 +149,6 @@ function seo_geo_theme_enqueue_styles(): void {
 		$preset_dependencies,
 		(string) filemtime( $preset_stylesheet )
 	);
-
-	if ( 'corporate' === $preset_id ) {
-		$visual_stylesheet = get_stylesheet_directory() . '/assets/css/presets/corporate-v2.css';
-		if ( is_readable( $visual_stylesheet ) ) {
-			wp_enqueue_style(
-				'seo-geo-theme-preset-corporate-v2',
-				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v2.css',
-				array( $preset_handle ),
-				(string) filemtime( $visual_stylesheet )
-			);
-		}
-	}
 }
 add_action( 'wp_enqueue_scripts', 'seo_geo_theme_enqueue_styles' );
 
