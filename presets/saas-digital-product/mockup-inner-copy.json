@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "provenance": "placeholder",
+  "publication_ready": false,
+  "page_contract": "final-layout-first-then-content-hydration",
+  "es_ES": {
+    "product": {
+      "eyebrow": "Producto",
+      "lead": "Una página preparada para explicar el producto con profundidad sin convertir la experiencia en documentación técnica ni inventar capacidades.",
+      "sections": [
+        {
+          "label": "Núcleo del producto",
+          "title": "De la entrada a una acción útil",
+          "body": "Sustituye estas guías por el flujo real del producto manteniendo la jerarquía visual y semántica ya terminada.",
+          "cards": [
+            {"title": "Entrada", "body": "Define qué dato, evento, tarea o señal inicia el flujo real."},
+            {"title": "Procesamiento", "body": "Explica únicamente las capacidades que el producto pueda demostrar."},
+            {"title": "Salida", "body": "Describe la acción, entrega o decisión observable que recibe el usuario."}
+          ]
+        },
+        {
+          "label": "Arquitectura de uso",
+          "title": "El producto se recorre, no se adivina",
+          "body": "La composición reserva espacio para enseñar estados, decisiones y límites con material real durante la hidratación.",
+          "cards": [
+            {"title": "Configurar", "body": "Qué necesita el usuario para empezar y qué requisitos existen."},
+            {"title": "Operar", "body": "Qué ocurre durante el uso cotidiano y qué controles están disponibles."},
+            {"title": "Revisar", "body": "Qué información permite comprobar el estado y continuar el trabajo."}
+          ]
+        }
+      ],
+      "cta": {"title": "Lleva el recorrido real del producto a esta arquitectura", "body": "La hidratación sustituye copy y visuales provisionales sin rediseñar la página.", "button": "Solicitar una demo"}
+    },
+    "features": {
+      "eyebrow": "Funcionalidades",
+      "lead": "Una página de funcionalidades diseñada para explicar qué hace cada capacidad, cuándo se usa y cuál es su límite verificable.",
+      "sections": [
+        {
+          "label": "Capacidades",
+          "title": "Funcionalidades agrupadas por trabajo, no por lista infinita",
+          "body": "Organiza las funciones reales por objetivo para que el usuario entienda el producto antes de comparar detalles.",
+          "cards": [
+            {"title": "Preparar", "body": "Agrupa aquí configuración, datos iniciales y preparación real del flujo."},
+            {"title": "Ejecutar", "body": "Describe las acciones principales soportadas por el producto."},
+            {"title": "Supervisar", "body": "Reserva este bloque para control, seguimiento o revisión demostrable."}
+          ]
+        },
+        {
+          "label": "Límites claros",
+          "title": "La confianza también se construye diciendo qué no hace",
+          "body": "Añade requisitos, límites, permisos o dependencias reales; no se generan promesas automáticas.",
+          "cards": [
+            {"title": "Requisitos", "body": "Sistemas, datos o configuración realmente necesarios."},
+            {"title": "Permisos", "body": "Roles, accesos o condiciones que existan en el producto real."},
+            {"title": "Exclusiones", "body": "Capacidades no disponibles o sujetas a validación antes de publicarse."}
+          ]
+        }
+      ],
+      "cta": {"title": "Convierte funciones reales en una narrativa fácil de evaluar", "body": "Mantén solo aquello que pueda comprobarse en producto o documentación oficial.", "button": "Ver el producto"}
+    },
+    "solutions": {
+      "eyebrow": "Soluciones",
+      "lead": "Una página preparada para conectar el mismo producto con distintos problemas reales sin duplicar promesas ni crear verticales ficticios.",
+      "sections": [
+        {
+          "label": "Por contexto",
+          "title": "Empieza por el trabajo que necesita resolverse",
+          "body": "Cada bloque puede hidratarse con un rol, equipo o escenario real que comparta el mismo núcleo de producto.",
+          "cards": [
+            {"title": "Operaciones", "body": "Describe una tarea repetible, su desencadenante y el flujo soportado."},
+            {"title": "Gestión", "body": "Explica la visibilidad o coordinación real que recibe un responsable."},
+            {"title": "Especialistas", "body": "Reserva este espacio para un caso avanzado que pueda demostrarse."}
+          ]
+        },
+        {
+          "label": "Elección",
+          "title": "Cada solución conduce a la misma verdad de producto",
+          "body": "La arquitectura evita landings inconexas: todos los casos vuelven a capacidades, límites y siguiente acción verificables.",
+          "cards": [
+            {"title": "Problema", "body": "Define una fricción concreta y observable."},
+            {"title": "Recorrido", "body": "Conecta la fricción con el flujo real del producto."},
+            {"title": "Evidencia", "body": "Añade prueba únicamente cuando exista una fuente autorizada."}
+          ]
+        }
+      ],
+      "cta": {"title": "Construye soluciones desde casos reales, no desde slogans", "body": "La hidratación puede especializar cada bloque manteniendo una arquitectura coherente.", "button": "Hablar de un caso"}
+    },
+    "integrations": {
+      "eyebrow": "Integraciones",
+      "lead": "Una página preparada para documentar conexiones reales, requisitos y límites sin mostrar logos ni compatibilidades que todavía no estén verificadas.",
+      "sections": [
+        {
+          "label": "Conectividad",
+          "title": "Agrupa integraciones por función",
+          "body": "Durante la hidratación, cada categoría recibe únicamente sistemas realmente soportados y una fuente de verificación.",
+          "cards": [
+            {"title": "Entradas", "body": "Fuentes, formularios, APIs o datos que realmente puedan iniciar el flujo."},
+            {"title": "Salidas", "body": "Destinos, acciones o sistemas donde el producto pueda entregar resultados."},
+            {"title": "Operación", "body": "Herramientas necesarias para administración, seguimiento o soporte real."}
+          ]
+        },
+        {
+          "label": "Confianza",
+          "title": "Compatibilidad con contexto y límites",
+          "body": "No basta un logo: explica autenticación, permisos, sincronización y restricciones cuando estén confirmados.",
+          "cards": [
+            {"title": "Acceso", "body": "Método de conexión y requisitos verificados."},
+            {"title": "Datos", "body": "Qué información entra o sale y bajo qué condiciones."},
+            {"title": "Límites", "body": "Frecuencia, alcance o restricciones operativas reales."}
+          ]
+        }
+      ],
+      "cta": {"title": "Publica integraciones solo cuando puedan demostrarse", "body": "Esta página ya está preparada para recibir catálogo, documentación y señales de confianza reales.", "button": "Consultar integración"}
+    },
+    "pricing": {
+      "eyebrow": "Planes y contratación",
+      "lead": "Una estructura comercial terminada para comparar opciones reales sin inventar precios, descuentos, pruebas ni condiciones de contratación.",
+      "sections": [
+        {
+          "label": "Estructura de planes",
+          "title": "Primero el criterio de elección, después el precio verificado",
+          "body": "Los valores económicos permanecen fuera hasta que exista una fuente comercial autorizada.",
+          "cards": [
+            {"title": "Plan principal", "body": "Nombre, alcance, límites y precio se hidratan desde datos oficiales."},
+            {"title": "Plan avanzado", "body": "Diferencias reales, capacidad adicional y criterio claro de elección."},
+            {"title": "Configuración a medida", "body": "Solo se publica si existe realmente un proceso comercial específico."}
+          ]
+        },
+        {
+          "label": "Antes de contratar",
+          "title": "Haz visibles las condiciones que cambian una decisión",
+          "body": "La página reserva espacio para facturación, límites, alta, soporte y cancelación cuando esos hechos estén confirmados.",
+          "cards": [
+            {"title": "Incluye", "body": "Capacidades y límites incluidos en cada opción real."},
+            {"title": "Requiere", "body": "Configuración, permanencia o condiciones verificadas."},
+            {"title": "Siguiente paso", "body": "Compra, demo, contacto o alta según el flujo comercial real."}
+          ]
+        }
+      ],
+      "cta": {"title": "Una página de pricing lista sin inventar una sola cifra", "body": "Cuando existan precios oficiales, la hidratación completa esta estructura sin cambiar el diseño.", "button": "Consultar condiciones"}
+    },
+    "resources": {
+      "eyebrow": "Recursos",
+      "lead": "Un centro de recursos preparado para convertir documentación, guías y contenido editorial real en autoridad temática y navegación útil.",
+      "sections": [
+        {
+          "label": "Aprender",
+          "title": "Organiza recursos por intención",
+          "body": "La arquitectura está preparada para contenido dinámico y enlazado interno, sin fabricar publicaciones inexistentes.",
+          "cards": [
+            {"title": "Primeros pasos", "body": "Guías reales para comprender y empezar a usar el producto."},
+            {"title": "Casos y métodos", "body": "Contenido que explica cómo abordar problemas concretos con evidencia disponible."},
+            {"title": "Referencia", "body": "Documentación, límites o conceptos que requieran consulta recurrente."}
+          ]
+        },
+        {
+          "label": "Descubrimiento",
+          "title": "Cada recurso debe conducir a una siguiente lectura útil",
+          "body": "La hidratación conectará clusters, categorías y contenidos existentes sin romper URLs ni señales SEO.",
+          "cards": [
+            {"title": "Tema", "body": "Agrupa por entidad, problema o capacidad real."},
+            {"title": "Profundidad", "body": "Conecta introducción, guía y referencia cuando existan."},
+            {"title": "Acción", "body": "Lleva al producto o a contacto solo cuando sea el siguiente paso lógico."}
+          ]
+        }
+      ],
+      "cta": {"title": "Convierte contenido existente en un sistema de conocimiento", "body": "El SEO/GEO Manager podrá mejorarlo después; el preset ya entrega la arquitectura visual.", "button": "Explorar recursos"}
+    },
+    "contact-demo": {
+      "eyebrow": "Contacto y demo",
+      "lead": "Una página de conversión preparada para explicar qué ocurrirá después del contacto sin fingir disponibilidad, tiempos de respuesta ni condiciones comerciales.",
+      "sections": [
+        {
+          "label": "Antes de enviar",
+          "title": "Da contexto suficiente para pedir una demo con intención",
+          "body": "Explica el tipo de conversación, la información útil y el alcance real cuando el proceso comercial esté definido.",
+          "cards": [
+            {"title": "Tu objetivo", "body": "Qué problema o flujo necesita resolver la persona."},
+            {"title": "Tu contexto", "body": "Equipo, sistemas o restricciones relevantes para evaluar el encaje."},
+            {"title": "Siguiente paso", "body": "Qué ocurrirá después, únicamente cuando el proceso esté confirmado."}
+          ]
+        },
+        {
+          "label": "Canales",
+          "title": "Formulario y contacto con procedencia real",
+          "body": "La hidratación conecta el formulario nativo o los canales autorizados. El preset no inventa emails, teléfonos ni calendarios.",
+          "cards": [
+            {"title": "Formulario", "body": "Slot preparado para la configuración nativa o migrada del cliente."},
+            {"title": "Contacto directo", "body": "Email, teléfono o canal solo si existe una fuente autorizada."},
+            {"title": "Disponibilidad", "body": "Horarios y tiempos de respuesta se publican únicamente si están confirmados."}
+          ]
+        }
+      ],
+      "cta": {"title": "Una conversión clara empieza por expectativas claras", "body": "Sustituye estas guías por el proceso comercial real durante la hidratación.", "button": "Solicitar una demo"}
+    }
+  },
+  "en_US": {
+    "product": {
+      "eyebrow": "Product",
+      "lead": "A page prepared to explain the product in depth without turning the experience into technical documentation or inventing capabilities.",
+      "sections": [
+        {"label": "Product core", "title": "From input to a useful action", "body": "Replace these guides with the real product workflow while preserving the finished visual and semantic hierarchy.", "cards": [{"title": "Input", "body": "Define the data, event, task or signal that starts the real workflow."}, {"title": "Processing", "body": "Explain only capabilities the product can demonstrate."}, {"title": "Output", "body": "Describe the observable action, delivery or decision the user receives."}]},
+        {"label": "Usage architecture", "title": "The product can be followed, not guessed", "body": "The composition reserves space to show states, decisions and boundaries with real material during hydration.", "cards": [{"title": "Configure", "body": "What the user needs to begin and which requirements exist."}, {"title": "Operate", "body": "What happens in everyday use and which controls are available."}, {"title": "Review", "body": "Which information helps verify status and continue the work."}]}
+      ],
+      "cta": {"title": "Bring the real product journey into this architecture", "body": "Hydration replaces provisional copy and visuals without redesigning the page.", "button": "Request a demo"}
+    },
+    "features": {
+      "eyebrow": "Features",
+      "lead": "A features page designed to explain what each capability does, when it is used and which verifiable boundary applies.",
+      "sections": [
+        {"label": "Capabilities", "title": "Features grouped by work, not an endless list", "body": "Organize real capabilities by goal so the user understands the product before comparing details.", "cards": [{"title": "Prepare", "body": "Group configuration, initial data and real workflow preparation here."}, {"title": "Execute", "body": "Describe the primary actions actually supported by the product."}, {"title": "Supervise", "body": "Reserve this block for demonstrable control, tracking or review."}]},
+        {"label": "Clear boundaries", "title": "Trust also comes from saying what it does not do", "body": "Add real requirements, limits, permissions or dependencies; promises are never generated automatically.", "cards": [{"title": "Requirements", "body": "Systems, data or configuration that are genuinely needed."}, {"title": "Permissions", "body": "Roles, access or conditions that exist in the real product."}, {"title": "Exclusions", "body": "Unavailable capabilities or claims that require verification before publication."}]}
+      ],
+      "cta": {"title": "Turn real capabilities into an easy-to-evaluate narrative", "body": "Keep only what can be verified in the product or official documentation.", "button": "See the product"}
+    },
+    "solutions": {
+      "eyebrow": "Solutions",
+      "lead": "A page prepared to connect one product with different real problems without duplicating promises or creating fictional verticals.",
+      "sections": [
+        {"label": "By context", "title": "Start with the work that needs to be solved", "body": "Each block can be hydrated with a real role, team or scenario sharing the same product core.", "cards": [{"title": "Operations", "body": "Describe a repeatable job, its trigger and the supported workflow."}, {"title": "Management", "body": "Explain the real visibility or coordination a decision-maker receives."}, {"title": "Specialists", "body": "Reserve this space for an advanced case that can be demonstrated."}]},
+        {"label": "Choice", "title": "Every solution leads back to the same product truth", "body": "The architecture avoids disconnected landing pages: every case returns to verifiable capabilities, boundaries and next steps.", "cards": [{"title": "Problem", "body": "Define a concrete, observable friction."}, {"title": "Journey", "body": "Connect the friction with the real product workflow."}, {"title": "Evidence", "body": "Add proof only when an authorized source exists."}]}
+      ],
+      "cta": {"title": "Build solutions from real cases, not slogans", "body": "Hydration can specialize every block while keeping one coherent architecture.", "button": "Discuss a use case"}
+    },
+    "integrations": {
+      "eyebrow": "Integrations",
+      "lead": "A page prepared to document real connections, requirements and boundaries without displaying logos or compatibility that has not been verified.",
+      "sections": [
+        {"label": "Connectivity", "title": "Group integrations by function", "body": "During hydration, each category receives only genuinely supported systems and a verification source.", "cards": [{"title": "Inputs", "body": "Sources, forms, APIs or data that can genuinely start the workflow."}, {"title": "Outputs", "body": "Destinations, actions or systems where the product can deliver results."}, {"title": "Operations", "body": "Tools actually required for administration, monitoring or support."}]},
+        {"label": "Trust", "title": "Compatibility with context and boundaries", "body": "A logo is not enough: explain authentication, permissions, synchronization and constraints when confirmed.", "cards": [{"title": "Access", "body": "Verified connection method and requirements."}, {"title": "Data", "body": "What information enters or leaves and under which conditions."}, {"title": "Limits", "body": "Real frequency, scope or operational constraints."}]}
+      ],
+      "cta": {"title": "Publish integrations only when they can be demonstrated", "body": "This page is already prepared for a real catalog, documentation and trust signals.", "button": "Ask about an integration"}
+    },
+    "pricing": {
+      "eyebrow": "Plans and buying",
+      "lead": "A finished commercial structure for comparing real options without inventing pricing, discounts, trials or buying conditions.",
+      "sections": [
+        {"label": "Plan structure", "title": "First the selection criteria, then verified pricing", "body": "Economic values stay out until an authorized commercial source exists.", "cards": [{"title": "Primary plan", "body": "Name, scope, limits and price hydrate from official data."}, {"title": "Advanced plan", "body": "Real differences, additional capacity and a clear selection criterion."}, {"title": "Custom setup", "body": "Publish only if a specific commercial process really exists."}]},
+        {"label": "Before buying", "title": "Make the conditions that change a decision visible", "body": "The page reserves space for billing, limits, onboarding, support and cancellation when these facts are confirmed.", "cards": [{"title": "Includes", "body": "Capabilities and limits included in each real option."}, {"title": "Requires", "body": "Verified setup, commitment or operating conditions."}, {"title": "Next step", "body": "Purchase, demo, contact or onboarding according to the real commercial flow."}]}
+      ],
+      "cta": {"title": "A pricing page ready without inventing a single number", "body": "When official pricing exists, hydration completes this structure without changing the design.", "button": "Ask about terms"}
+    },
+    "resources": {
+      "eyebrow": "Resources",
+      "lead": "A resource center prepared to turn real documentation, guides and editorial content into topical authority and useful navigation.",
+      "sections": [
+        {"label": "Learn", "title": "Organize resources by intent", "body": "The architecture is ready for dynamic content and internal linking without fabricating publications that do not exist.", "cards": [{"title": "Getting started", "body": "Real guides for understanding and beginning to use the product."}, {"title": "Cases and methods", "body": "Content explaining how to approach concrete problems with available evidence."}, {"title": "Reference", "body": "Documentation, boundaries or concepts that require recurring consultation."}]},
+        {"label": "Discovery", "title": "Every resource should lead to a useful next read", "body": "Hydration connects clusters, categories and existing content without breaking URLs or SEO signals.", "cards": [{"title": "Topic", "body": "Group by entity, problem or real capability."}, {"title": "Depth", "body": "Connect introduction, guide and reference where they exist."}, {"title": "Action", "body": "Lead to product or contact only when it is the logical next step."}]}
+      ],
+      "cta": {"title": "Turn existing content into a knowledge system", "body": "The SEO/GEO Manager can improve it later; the preset already provides the visual architecture.", "button": "Explore resources"}
+    },
+    "contact-demo": {
+      "eyebrow": "Contact and demo",
+      "lead": "A conversion page prepared to explain what happens after contact without pretending availability, response times or commercial terms.",
+      "sections": [
+        {"label": "Before sending", "title": "Give enough context to request a demo with intent", "body": "Explain the conversation type, useful information and real scope when the commercial process is defined.", "cards": [{"title": "Your goal", "body": "Which problem or workflow the person needs to solve."}, {"title": "Your context", "body": "Team, systems or constraints relevant to evaluating fit."}, {"title": "Next step", "body": "What happens afterward, only when the process is confirmed."}]},
+        {"label": "Channels", "title": "Forms and contact details with real provenance", "body": "Hydration connects the native form or authorized channels. The preset never invents emails, phone numbers or calendars.", "cards": [{"title": "Form", "body": "Slot prepared for the client's native or migrated form configuration."}, {"title": "Direct contact", "body": "Email, phone or channel only when an authorized source exists."}, {"title": "Availability", "body": "Hours and response times publish only when confirmed."}]}
+      ],
+      "cta": {"title": "Clear conversion starts with clear expectations", "body": "Replace these guides with the real commercial process during hydration.", "button": "Request a demo"}
+    }
+  }
+}
