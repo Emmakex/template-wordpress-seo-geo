@@ -1,1 +1,29 @@
-{}
+{
+  "schema_version": 1,
+  "mode": "emmake-phase10e-candidate",
+  "site_id": "emmake-com",
+  "target": {
+    "production_origin": "https://emmake.com",
+    "sandbox_origin": "https://emmake.com/nuevaweb/"
+  },
+  "target_version": "0.1.1",
+  "release_channel": "prestable",
+  "source_commit": "d3f4022ff2f46c2ee965bae561217b990bf2edf0",
+  "theme": {
+    "version": "0.1.1",
+    "file": "seo-geo-theme.zip",
+    "sha256": "313796fde03e0204a334d204098222e5d0521b9efeb2ec622fbd92c0522b8c15"
+  },
+  "migration_bridge": {
+    "version": "0.8.60",
+    "file": "seo-geo-migration-bridge.zip",
+    "sha256": "f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183"
+  },
+  "field_pilot_pack": {
+    "file": "emmake-home-field-pilot-pack.zip",
+    "sha256": "6a84f39d2a5944eec57d60b74f09171a1e40303f4a53732bd922c0b5b4b01999"
+  },
+  "stable_decision": "no-go",
+  "acceptance_status": "pending",
+  "candidate_frozen_on": "2026-10-06"
+}
