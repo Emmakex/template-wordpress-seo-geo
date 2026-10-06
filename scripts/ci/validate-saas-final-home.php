@@ -58,9 +58,9 @@ if ( ! is_array( $mockup ) ) {
 }
 
 $expected_contract = array(
-	'preset'             => 'saas-digital-product',
-	'target_state'       => '99-percent-finished-before-client-content',
-	'design_rule'        => 'final-layout-first-then-content-hydration',
+	'preset'               => 'saas-digital-product',
+	'target_state'         => '99-percent-finished-before-client-content',
+	'design_rule'          => 'final-layout-first-then-content-hydration',
 	'legacy_layout_policy' => 'never-a-design-source',
 );
 foreach ( $expected_contract as $key => $expected ) {
@@ -142,8 +142,8 @@ $functions      = saas_final_file( $functions_path );
 foreach (
 	array(
 		"\$design_system_presets = array( 'saas-digital-product' );",
-		"'/assets/css/design-system.css'",
-		"'corporate-v2.css'",
+		'/assets/css/design-system.css',
+		'corporate-v2.css',
 	) as $fragment
 ) {
 	if ( ! str_contains( $functions, $fragment ) ) {
