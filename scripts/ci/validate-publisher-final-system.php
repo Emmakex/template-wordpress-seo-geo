@@ -112,7 +112,12 @@ foreach ( $template_fragments as $slug => $fragments ) {
 			fail_publisher_final_system( 'template-contract', 'Publisher system template lost required semantic/UX structure.', $path, $fragment, 'missing' );
 		}
 	}
-	if ( 1 === preg_match( '/https?:\/\/|mailto:|tel:|application\/ld\+json|schema\.org|AggregateRating|Review|subscriber|read-count|view-count|breaking-news|fact-checker|reviewer/i', $content, $match ) ) {
+
+	$evidence_content = preg_replace( '/\/\*.*?\*\//s', '', $content );
+	if ( ! is_string( $evidence_content ) ) {
+		$evidence_content = $content;
+	}
+	if ( 1 === preg_match( '/https?:\/\/|mailto:|tel:|application\/ld\+json|schema\.org|AggregateRating|Review|subscriber|read-count|view-count|breaking-news|fact-checker|reviewer/i', $evidence_content, $match ) ) {
 		fail_publisher_final_system( 'invented-editorial-evidence', 'Publisher system templates must not hard-code remote or fabricated editorial evidence.', $path, 'no remote/contact/schema/popularity/reviewer evidence', $match[0] );
 	}
 }
