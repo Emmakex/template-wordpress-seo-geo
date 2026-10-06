@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "mode": "final-mockup-first",
   "principle": "layout-first-then-hydrate-rescued-content",
+  "pattern_ownership": "preset-owned-outside-neutral-pattern-set",
   "pages": {
     "home": {
       "required": true,
