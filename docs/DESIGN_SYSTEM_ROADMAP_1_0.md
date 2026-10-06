@@ -207,11 +207,11 @@ The front-page template retains H1 ownership. Provisional stories, topics and au
 
 #### DS-5B — Publisher inner pages
 
-**Status: implementation candidate**
+**Status: complete in code/CI**
 
-Current branch: `feat/publisher-final-inner-pages`.
+Delivered and merged on PR #247 with 12/12 workflows green. The merge landed on `main` as `2ecbe3f00b517ae087d7e495380c87ec4bc9b553`, and the complete 12-workflow post-merge battery also finished green.
 
-Candidate compositions:
+The accepted compositions are:
 
 - Articles — real published work, editorial priorities and maintained reading paths without fabricated freshness or popularity;
 - Topics — maintained taxonomy and distinct subject hubs, rejecting thin keyword-only archives;
@@ -224,19 +224,31 @@ All six use one shared renderer and reuse the accepted Publisher visual system p
 
 The page template retains document-H1 ownership. The existing Publisher authorities remain unchanged: public authors from approved WordPress users/profiles, dates from WordPress timestamps, and references from real editor-added sources.
 
-DS-5B must pass the existing semantic contract, accepted Home contract, dedicated inner-page contract, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge.
-
 #### DS-5C — Publisher system surfaces
 
-**Status: queued after inner pages**
+**Status: implementation candidate**
 
-Add preset-owned Single, Archive and 404 surfaces only after Home and inner pages are accepted. Reuse the generalized template runtime while preserving Site Editor custom-template precedence and neutral fallback.
+Current branch: `feat/publisher-final-system-surfaces`.
+
+Candidate scope:
+
+- Single — category, document H1, native WordPress date/author, featured media, authored content, author biography and previous/next navigation;
+- Archive — real archive title/description, real public posts, native dates/authors, no-results search and pagination;
+- 404 — localized ES/EN recovery copy, home route and native search;
+- generalized preset-template runtime extended to Publisher while preserving Corporate, SaaS and Local Pro behavior;
+- Site Editor `source=custom` templates remain authoritative;
+- unsupported presets/slugs and missing files continue to fail safe to the neutral Theme template;
+- `ecommerce` remains neutral until DS-6 and is used as the executable isolation control;
+- system templates contain no hard-coded authors, citations, source URLs, dates, popularity counters, reviewer/fact-checker identities, Schema evidence or remote content;
+- no additional Publisher CSS and no required project JavaScript.
+
+DS-5C must pass the existing Publisher semantic, Home and inner-page contracts, the dedicated system-surface contract, executable 4×3 runtime isolation/fallback coverage, WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge.
 
 #### DS-5D — Publisher visual/performance acceptance
 
-**Status: active with DS-5B**
+**Status: active with DS-5C**
 
-Publisher closes at implementation/CI level only after its Home, inner pages and system surfaces are merged with the complete acceptance battery green. Phase 10E real-site acceptance remains a separate release gate.
+Publisher closes at implementation/CI level only after DS-5C is merged with the complete acceptance battery green. Phase 10E real-site acceptance remains a separate release gate.
 
 ### DS-6 — Ecommerce final preset
 
