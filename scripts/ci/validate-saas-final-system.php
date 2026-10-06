@@ -108,7 +108,7 @@ $templates = array(
 	'404'     => SAAS_SYSTEM_THEME_DIR . '/preset-templates/saas-digital-product-404.php',
 );
 
-foreach ( $templates as $slug => $path ) {
+foreach ( $templates as $path ) {
 	$content = saas_system_file( $path );
 	if ( ! str_contains( $content, 'seo-geo-saas-system-surface' ) || ! str_contains( $content, 'tagName":"main' ) ) {
 		fail_saas_final_system( 'template-main', 'SaaS system surface must expose its preset class and main landmark.', $path, 'SaaS system class + main landmark', 'required fragment missing' );
@@ -117,18 +117,12 @@ foreach ( $templates as $slug => $path ) {
 	if ( 1 === preg_match( '/https?:\/\/|<!--\s*wp:html\b|<\s*script\b|<\s*style\b|application\/ld\+json|schema\.org/i', $content, $match ) ) {
 		fail_saas_final_system( 'unsafe-template', 'SaaS system surfaces must stay local, native and non-authoritative for Schema.', $path, 'no remote/html/script/style/schema payload', $match[0] );
 	}
-
-	$h1_blocks = substr_count( $content, '"level":1' ) + preg_match_all( '/<h1\b/i', $content );
-	if ( 1 !== $h1_blocks ) {
-		fail_saas_final_system( 'h1-contract', 'Each SaaS system surface must own exactly one document H1.', $path, 1, $h1_blocks );
-	}
-
-	if ( '404' !== $slug && ! str_contains( $content, 'wp:post-title' ) && ! str_contains( $content, 'wp:query-title' ) ) {
-		fail_saas_final_system( 'dynamic-title', 'SaaS content surfaces must keep dynamic WordPress title ownership.', $path, 'post-title or query-title block', 'dynamic title missing' );
-	}
 }
 
 $single = saas_system_file( $templates['single'] );
+if ( 1 !== substr_count( $single, 'wp:post-title {"level":1' ) || 0 !== preg_match_all( '/<h1\b/i', $single ) ) {
+	fail_saas_final_system( 'single-h1', 'SaaS Single must expose exactly one dynamic page-owned H1.', $templates['single'], 'one post-title level 1 and no literal H1', 'H1 contract mismatch' );
+}
 foreach ( array( 'wp:post-content', 'wp:post-author-name', 'wp:post-navigation-link' ) as $fragment ) {
 	if ( ! str_contains( $single, $fragment ) ) {
 		fail_saas_final_system( 'single-contract', 'SaaS Single lost a required authored-content or navigation surface.', $templates['single'], $fragment, 'fragment missing' );
@@ -136,6 +130,9 @@ foreach ( array( 'wp:post-content', 'wp:post-author-name', 'wp:post-navigation-l
 }
 
 $archive = saas_system_file( $templates['archive'] );
+if ( 1 !== substr_count( $archive, 'wp:query-title {"type":"archive"' ) || 0 !== preg_match_all( '/<h1\b/i', $archive ) ) {
+	fail_saas_final_system( 'archive-h1', 'SaaS Archive must leave document-title rendering to one archive query-title block.', $templates['archive'], 'one archive query-title and no literal H1', 'H1 contract mismatch' );
+}
 foreach ( array( 'wp:query', 'wp:post-template', 'wp:query-pagination', 'wp:search' ) as $fragment ) {
 	if ( ! str_contains( $archive, $fragment ) ) {
 		fail_saas_final_system( 'archive-contract', 'SaaS Archive lost a required discovery surface.', $templates['archive'], $fragment, 'fragment missing' );
@@ -143,6 +140,9 @@ foreach ( array( 'wp:query', 'wp:post-template', 'wp:query-pagination', 'wp:sear
 }
 
 $not_found = saas_system_file( $templates['404'] );
+if ( 1 !== substr_count( $not_found, 'wp:heading {"level":1' ) || 1 !== preg_match_all( '/<h1\b/i', $not_found ) ) {
+	fail_saas_final_system( '404-h1', 'SaaS 404 must expose exactly one localized literal H1.', $templates['404'], 'one level-1 heading block with one literal H1', 'H1 contract mismatch' );
+}
 foreach ( array( 'determine_locale', 'home_url( \'/\' )', 'wp:search', 'seo-geo-saas-kicker' ) as $fragment ) {
 	if ( ! str_contains( $not_found, $fragment ) ) {
 		fail_saas_final_system( '404-contract', 'SaaS 404 lost localized recovery navigation.', $templates['404'], $fragment, 'fragment missing' );
