@@ -19,7 +19,7 @@ Every generated semantic slot is classified as one of:
 - `source`: directly supported by rescued authored content;
 - `derived`: deterministic Theme/Bridge copy or a value derived from known site structure, locale or links;
 - `placeholder`: draft-only editorial guidance that still requires replacement or optimization;
-- `authored`: a former placeholder that has been deliberately replaced through the reviewed Content Kit workflow.
+- `authored`: a former placeholder that has been deliberately replaced and successfully hydrated through the reviewed Content Kit workflow.
 
 The automatic Home plan exposes `content_state.slot_states`, `content_state.placeholder_slots` and `content_state.publishable`.
 
@@ -40,14 +40,19 @@ Placeholders must never:
 
 A Home containing semantic placeholder slots is intentionally reviewable but not publishable.
 
-`AutomaticHomeContentStateKit` stores the placeholder slot list on the clean Home draft. `PlaceholderPublishingGuard` intercepts WordPress public/scheduled status writes and keeps that draft as `draft` while unresolved placeholder slots remain.
+`AutomaticHomeContentStateKit` stores the unresolved placeholder slot list and deterministic fingerprints of the generated prompt values on the clean Home draft. `PlaceholderPublishingGuard` intercepts WordPress public/scheduled status writes and keeps both untouched preset scaffolds and drafts with unresolved semantic placeholders as `draft`.
 
-`PlaceholderResolutionTracker` watches reviewed Corporate Home Content Kit updates. When a previously generated prompt is actually replaced, that slot becomes `authored` and is removed from the unresolved placeholder list. Publication becomes available only after the unresolved list is empty. Saving the same generated prompt does not count as resolution.
+`PlaceholderResolutionTracker` watches reviewed Corporate Home Content Kit updates. A changed value is first recorded as **pending resolution** by comparing it with the original generated fingerprint. Saving the Content Kit alone never unlocks publication. Only after `NativeHomeHydrator` successfully applies the reviewed kit does the tracker convert those slots to `authored`, remove them from the unresolved list and recalculate `publishable`.
 
-This gives the product three independent properties:
+If an editor changes a prompt and then reverts it before hydration, that slot is no longer pending resolution. A failed hydration therefore cannot accidentally unlock publication.
+
+`HomePilotReadiness` exposes unresolved semantic placeholder slots and blocks browser/cutover readiness while any remain. This is separate from the older literal preset-copy detector and does not depend on matching prompt sentences.
+
+This gives the product four independent properties:
 
 - the design can be generated and reviewed even with incomplete old content;
 - incomplete migration prompts cannot accidentally become the public indexed Home;
+- saving reviewed values is not enough: the values must actually reach the hydrated page before publication can unlock;
 - genuine reviewed replacements progressively unlock publication without requiring a hidden manual override.
 
 The sandbox crawler policy remains a separate defense-in-depth control.
@@ -84,4 +89,6 @@ Its job is to keep the Design System complete and deterministic. The future SEO/
 
 ## Acceptance
 
-For a content-poor legacy site the automatic flow must be able to produce a complete private Corporate Home without executing legacy builders. The plan must expose placeholder state, the generated Home must remain visually complete, evidence groups must remain unverified, and WordPress must refuse to make the placeholder-bearing draft public. Replacing placeholders through the reviewed Content Kit must shrink the unresolved list deterministically and unlock publication only when no placeholder remains.
+For a content-poor legacy site the automatic flow must be able to produce a complete private Corporate Home without executing legacy builders. The plan must expose placeholder state, the generated Home must remain visually complete, evidence groups must remain unverified, and WordPress must refuse to make the placeholder-bearing draft public.
+
+Replacing placeholders through the reviewed Content Kit must create a pending-resolution set without changing publishability. A successful hydration must shrink the unresolved list deterministically, update the corresponding slots to `authored`, and unlock publication only when no placeholder remains. Site Readiness must independently report and block any unresolved semantic placeholder slots.
