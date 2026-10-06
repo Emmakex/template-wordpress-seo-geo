@@ -113,9 +113,9 @@ Tech / SaaS is closed at implementation/CI level. This does not make the Theme s
 
 ### DS-4 — Local Business final preset
 
-**Status: active**
+**Status: complete in code/CI**
 
-Turn `local-business` into a 99%-finished Local Pro preset with location/service hierarchy, strong contact intent, verified local facts and LocalBusiness Schema only when visible facts support it.
+`local-business` is now a 99%-finished Local Pro preset with location/service hierarchy, strong contact intent, verified-local-fact gates and LocalBusiness Schema only when visible facts support it.
 
 #### DS-4A — Final Home
 
@@ -157,11 +157,9 @@ PR #244 passed the existing semantic contract, accepted Home contract, dedicated
 
 #### DS-4C — Local Pro system surfaces
 
-**Status: implementation candidate**
+**Status: complete in code/CI**
 
-Current branch: `feat/local-business-final-system-surfaces`.
-
-Candidate surfaces:
+Delivered and merged on PR #245 with 13/13 workflows green:
 
 - Single — category, document H1, date/author, featured media, authored content, author context and previous/next navigation;
 - Archive — dynamic archive title/description, responsive post grid, no-results search and pagination;
@@ -172,19 +170,60 @@ Candidate surfaces:
 - system templates contain no hard-coded address, phone, hours, service area, review, rating, LocalBusiness Schema or remote-map evidence;
 - no additional Local Pro CSS or required project JavaScript.
 
-DS-4C must pass the existing semantic, Home and inner-page contracts, the new system-surface contract, executable runtime isolation/fallback tests, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge.
+The merge landed on `main` as `0aef943d83cd2a404a92322e829a499fa0a6a6da`. The complete 13-workflow post-merge battery also passed with zero failures.
 
 #### DS-4D — Local Pro visual/performance acceptance
 
-**Status: active with DS-4C**
+**Status: complete in code/CI**
 
-Local Pro closes at implementation/CI level only after DS-4C is merged with the complete acceptance battery green. This still does not make the Theme stable; Phase 10E real-site acceptance remains a separate release gate.
+Local Pro is closed at implementation/CI level. This still does not make the Theme stable; Phase 10E real-site acceptance remains a separate release gate.
 
 ### DS-5 — Publisher / Creative transition
 
-**Status: queued**
+**Status: active**
 
-Upgrade the existing `publisher` compatibility surface into the final editorial/creative product direction without silently breaking existing preset IDs or migrations.
+Upgrade the existing `publisher` compatibility surface into the final editorial/creative product direction without silently breaking the existing preset ID, editorial model or migrations.
+
+#### DS-5A — Publisher final Home
+
+**Status: implementation candidate**
+
+Current branch: `feat/publisher-final-home`.
+
+Candidate direction:
+
+- type-led editorial identity and calm reading surface;
+- finished lead-story composition without inventing a real article;
+- mixed-scale priority-story grid rather than a flat feed;
+- topic discovery prepared for the real taxonomy, not keyword-only archive pages;
+- visible editorial-trust module for authorship, sourcing and native WordPress dates;
+- evergreen-resource module for real guides, explainers or cornerstone content;
+- author-discovery surface that only hydrates from approved public WordPress users;
+- final follow/newsletter CTA that adds no external subscription dependency by itself;
+- EN/ES provisional copy outside the renderer;
+- zero required frontend JavaScript, remote fonts or third-party visual dependencies.
+
+The front-page template retains H1 ownership. Provisional stories, topics and author surfaces remain non-publishable until hydration. The existing Publisher semantic contract remains authoritative for real authors, dates, references, BlogPosting eligibility and provenance.
+
+DS-5A must pass the existing Publisher semantic contract, a dedicated final-Home contract, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge.
+
+#### DS-5B — Publisher inner pages
+
+**Status: queued after Home**
+
+Finish Articles, Topics, Authors, About, Editorial Policy and Contact while preserving real-content provenance and avoiding fabricated author expertise, citations or dates.
+
+#### DS-5C — Publisher system surfaces
+
+**Status: queued after inner pages**
+
+Add preset-owned Single, Archive and 404 surfaces only after Home and inner pages are accepted. Reuse the generalized template runtime while preserving Site Editor custom-template precedence and neutral fallback.
+
+#### DS-5D — Publisher visual/performance acceptance
+
+**Status: active with DS-5A**
+
+Publisher closes at implementation/CI level only after its Home, inner pages and system surfaces are merged with the complete acceptance battery green. Phase 10E real-site acceptance remains a separate release gate.
 
 ### DS-6 — Ecommerce final preset
 
@@ -194,7 +233,7 @@ Create a complete Commerce/Product direction while preserving WooCommerce/provid
 
 ### DS-7 — Five-preset acceptance
 
-**Status: blocked by DS-4 through DS-6**
+**Status: blocked by DS-5 through DS-6**
 
 All five product-facing presets must pass:
 
