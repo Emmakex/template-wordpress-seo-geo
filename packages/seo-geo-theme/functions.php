@@ -18,6 +18,7 @@ require_once get_template_directory() . '/inc/Forms/ContactFormRuntime.php';
 require_once get_template_directory() . '/inc/Insights/InsightsIndexRuntime.php';
 require_once get_template_directory() . '/inc/LocalBusiness/FinalInnerPatterns.php';
 require_once get_template_directory() . '/inc/Navigation/PresetNavigationRuntime.php';
+require_once get_template_directory() . '/inc/Publisher/FinalHomePattern.php';
 require_once get_template_directory() . '/inc/Templates/PresetTemplateRuntime.php';
 
 /**
@@ -58,7 +59,7 @@ function seo_geo_theme_enqueue_styles(): void {
 	}
 
 	$preset_dependencies   = array( 'seo-geo-theme' );
-	$design_system_presets = array( 'saas-digital-product' );
+	$design_system_presets = array( 'saas-digital-product', 'publisher' );
 
 	if ( in_array( $preset_id, $design_system_presets, true ) ) {
 		$design_system = get_stylesheet_directory() . '/assets/css/design-system.css';
