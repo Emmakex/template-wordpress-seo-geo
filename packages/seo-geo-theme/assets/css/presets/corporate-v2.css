@@ -1,46 +1,340 @@
-body.seo-geo-preset-corporate{--cf-night:#071b24;--cf-teal:#08a892;--cf-mint:#dff5ef;--cf-cream:#f5f7f3;--cf-copy:#29424b;background:var(--cf-cream)}
-.seo-geo-preset-corporate .seo-geo-front-page-hero{position:relative;isolation:isolate;min-height:min(70vh,720px);display:flex;align-items:center;padding:clamp(4rem,8vw,8rem) 1rem;background:radial-gradient(circle at 84% 16%,rgb(49 209 186 / 20%),transparent 25rem),linear-gradient(135deg,#061820,#0a2630 58%,#0c3439);color:#fff;overflow:hidden}
-.seo-geo-preset-corporate .seo-geo-front-page-hero::after{position:absolute;z-index:-1;right:7%;bottom:-8%;width:clamp(14rem,30vw,28rem);aspect-ratio:1;border:1px solid rgb(255 255 255 / 12%);border-radius:2rem;background:linear-gradient(145deg,rgb(255 255 255 / 7%),transparent);transform:rotate(12deg);content:""}
-.seo-geo-preset-corporate .seo-geo-front-page-title{max-width:12ch;color:#fff;font-size:clamp(3.6rem,8vw,7.3rem);line-height:.88;letter-spacing:-.07em;text-wrap:balance}
-.seo-geo-preset-corporate .seo-geo-corporate-native-hero{position:relative;z-index:2;margin:clamp(-3rem,-4vw,-2rem) auto clamp(4rem,8vw,7rem);padding:clamp(1rem,2vw,1.4rem);border:1px solid rgb(7 27 36 / 9%);border-radius:2rem;background:#fff;box-shadow:0 28px 76px rgb(7 27 36 / 13%)}
-.seo-geo-preset-corporate .seo-geo-corporate-native-hero__grid{gap:clamp(1rem,3vw,2rem);align-items:center;margin-bottom:0}
-.seo-geo-preset-corporate .seo-geo-corporate-native-hero__copy{padding:clamp(1.35rem,4vw,3rem)}
-.seo-geo-preset-corporate .seo-geo-corporate-lead{max-width:31ch;font-size:clamp(1.3rem,2.2vw,1.95rem)!important;line-height:1.22!important;letter-spacing:-.025em}
-.seo-geo-preset-corporate .seo-geo-corporate-eyebrow{color:var(--cf-teal);font-size:.76rem!important;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
-.seo-geo-preset-corporate .seo-geo-corporate-actions .wp-block-button__link{border:1px solid var(--cf-night);border-radius:999px;padding:.85rem 1.3rem;background:var(--cf-night);color:#fff;font-weight:760;text-decoration:none}
-.seo-geo-preset-corporate .seo-geo-corporate-actions .is-style-outline .wp-block-button__link{background:transparent;color:var(--cf-night)}
-.seo-geo-preset-corporate .seo-geo-corporate-mockup-media{margin:0;border-radius:1.5rem;overflow:hidden;background:var(--cf-night)}
-.seo-geo-preset-corporate .seo-geo-corporate-mockup-media img{display:block;width:100%;height:auto}
-.seo-geo-preset-corporate .seo-geo-corporate-native-section{margin-block:clamp(3.5rem,7vw,6rem)!important}
-.seo-geo-preset-corporate .seo-geo-corporate-section-heading{display:grid;grid-template-columns:minmax(0,.35fr) minmax(0,1fr);gap:.6rem clamp(1.5rem,5vw,5rem);max-width:none;margin-bottom:clamp(2rem,4vw,3rem);align-items:start}
-.seo-geo-preset-corporate .seo-geo-corporate-section-heading .seo-geo-corporate-eyebrow{grid-column:1;margin-top:.6rem}
-.seo-geo-preset-corporate .seo-geo-corporate-section-heading h2,.seo-geo-preset-corporate .seo-geo-corporate-section-heading>p:last-child{grid-column:2}
-.seo-geo-preset-corporate .seo-geo-corporate-section-heading h2{max-width:15ch;margin-bottom:.7rem;font-size:clamp(2.5rem,5vw,4.8rem)!important;line-height:.95;letter-spacing:-.055em;text-wrap:balance}
-.seo-geo-preset-corporate .seo-geo-corporate-section-heading>p:last-child{max-width:58ch;margin-top:0;font-size:clamp(1.05rem,1.2vw,1.18rem);line-height:1.6}
-.seo-geo-preset-corporate .seo-geo-corporate-card-grid{gap:clamp(.9rem,2vw,1.3rem)}
-.seo-geo-preset-corporate .seo-geo-corporate-card{min-height:370px;display:flex;flex-direction:column;border:1px solid rgb(7 27 36 / 11%);border-radius:1.6rem;padding:clamp(1.5rem,3vw,2.2rem);background:#fff;box-shadow:0 14px 34px rgb(7 27 36 / 8%);overflow:hidden}
-.seo-geo-preset-corporate .seo-geo-corporate-card:nth-child(2){background:var(--cf-mint)}
-.seo-geo-preset-corporate .seo-geo-corporate-card--featured{border-color:transparent;background:radial-gradient(circle at 90% 10%,rgb(49 209 186 / 22%),transparent 13rem),linear-gradient(150deg,#071b24,#0d323a);color:#fff}
-.seo-geo-preset-corporate .seo-geo-corporate-card__index{width:fit-content;margin-bottom:auto;border:1px solid rgb(7 27 36 / 12%);border-radius:999px;padding:.32rem .58rem;background:rgb(255 255 255 / 62%);color:var(--cf-teal)}
-.seo-geo-preset-corporate .seo-geo-corporate-card--featured .seo-geo-corporate-card__index{border-color:rgb(255 255 255 / 18%);background:rgb(255 255 255 / 8%);color:#31d1ba}
-.seo-geo-preset-corporate .seo-geo-corporate-card h3{margin-top:clamp(2.5rem,6vw,5rem);font-size:clamp(1.7rem,3vw,2.4rem);line-height:1;letter-spacing:-.04em}
-.seo-geo-preset-corporate .seo-geo-corporate-card p:not(.seo-geo-corporate-card__index){color:var(--cf-copy)}
-.seo-geo-preset-corporate .seo-geo-corporate-card--featured p:not(.seo-geo-corporate-card__index){color:rgb(255 255 255 / 82%)}
-.seo-geo-preset-corporate .seo-geo-corporate-card a{margin-top:auto;color:inherit;font-weight:780}
-.seo-geo-preset-corporate .seo-geo-corporate-featured-work__grid,.seo-geo-preset-corporate .seo-geo-corporate-about-feature__grid{gap:clamp(2rem,6vw,5rem)}
-.seo-geo-preset-corporate .seo-geo-corporate-featured-work h2,.seo-geo-preset-corporate .seo-geo-corporate-about-feature h2{font-size:clamp(2.4rem,4.5vw,4.5rem);line-height:.98;letter-spacing:-.05em;text-wrap:balance}
-.seo-geo-preset-corporate .seo-geo-corporate-featured-work p,.seo-geo-preset-corporate .seo-geo-corporate-about-feature p{max-width:54ch}
-.seo-geo-preset-corporate .seo-geo-corporate-featured-work a,.seo-geo-preset-corporate .seo-geo-corporate-about-feature a{font-weight:780}
-.seo-geo-preset-corporate .seo-geo-corporate-native-process{box-sizing:border-box;width:100%;max-width:none;padding:clamp(4rem,8vw,7rem) max(1rem,calc((100vw - 1180px)/2));background:radial-gradient(circle at 14% 12%,rgb(49 209 186 / 14%),transparent 24rem),var(--cf-night);color:#fff}
-.seo-geo-preset-corporate .seo-geo-corporate-native-process :where(h2,h3,p){color:#fff}
-.seo-geo-preset-corporate .seo-geo-corporate-native-process .seo-geo-corporate-eyebrow{color:#31d1ba}
-.seo-geo-preset-corporate .seo-geo-corporate-process-grid{gap:clamp(.8rem,2vw,1.2rem)}
-.seo-geo-preset-corporate .seo-geo-corporate-process-step{min-height:300px;border:1px solid rgb(255 255 255 / 12%);border-radius:1.45rem;padding:clamp(1.4rem,3vw,2.1rem);background:rgb(255 255 255 / 5%)}
-.seo-geo-preset-corporate .seo-geo-corporate-process-step__number{width:fit-content;border:1px solid rgb(255 255 255 / 15%);border-radius:999px;padding:.32rem .58rem;color:#31d1ba!important;font-size:.76rem!important;font-weight:800;letter-spacing:.12em}
-.seo-geo-preset-corporate .seo-geo-corporate-process-step h3{margin-top:clamp(3rem,6vw,5rem);font-size:clamp(1.8rem,3vw,2.5rem);letter-spacing:-.045em}
-.seo-geo-preset-corporate .seo-geo-final-cta{box-sizing:border-box;padding:clamp(4rem,8vw,7rem) max(1rem,calc((100vw - 1180px)/2));background:var(--cf-teal);color:#fff}
-.seo-geo-preset-corporate .seo-geo-final-cta h2{max-width:13ch;margin-bottom:1rem;color:#fff;font-size:clamp(3rem,6vw,6rem);line-height:.92;letter-spacing:-.06em;text-wrap:balance}
-.seo-geo-preset-corporate .seo-geo-final-cta>p{max-width:52ch;color:#fff;font-size:clamp(1.1rem,1.8vw,1.35rem)}
-.seo-geo-preset-corporate .seo-geo-final-cta .wp-block-button__link{border-radius:999px;background:var(--cf-night);color:#fff;font-weight:780;text-decoration:none}
-@media(max-width:900px){.seo-geo-preset-corporate .seo-geo-front-page-hero{min-height:auto}.seo-geo-preset-corporate .seo-geo-corporate-native-hero{margin-top:-1.5rem;border-radius:1.35rem}.seo-geo-preset-corporate .seo-geo-corporate-section-heading{display:block}.seo-geo-preset-corporate .seo-geo-corporate-card{min-height:300px}.seo-geo-preset-corporate .seo-geo-corporate-process-step{min-height:250px}.seo-geo-preset-corporate .seo-geo-corporate-featured-work__grid,.seo-geo-preset-corporate .seo-geo-corporate-about-feature__grid{gap:1.5rem}}
-@media(max-width:600px){.seo-geo-preset-corporate .seo-geo-front-page-title{font-size:clamp(3rem,16vw,4.5rem)}.seo-geo-preset-corporate .seo-geo-corporate-native-section{margin-block:3.25rem!important}.seo-geo-preset-corporate .seo-geo-final-cta h2{font-size:clamp(2.7rem,13vw,4.2rem)}}
+body.seo-geo-preset-corporate {
+	--cf-night: #071b24;
+	--cf-teal: #08a892;
+	background: #f5f7f3;
+}
+
+.seo-geo-preset-corporate .seo-geo-front-page-hero {
+	min-height: min(70vh, 720px);
+	display: flex;
+	align-items: center;
+	padding: clamp(4rem, 8vw, 8rem) 1rem;
+	background: radial-gradient(circle at 84% 16%, rgb(49 209 186 / 20%), transparent 25rem), linear-gradient(135deg, #061820, #0a2630 58%, #0c3439);
+	color: #fff;
+	overflow: hidden;
+}
+
+.seo-geo-preset-corporate .seo-geo-front-page-hero::after {
+	position: absolute;
+	z-index: -1;
+	right: 7%;
+	bottom: -8%;
+	width: clamp(14rem, 30vw, 28rem);
+	aspect-ratio: 1;
+	border: 1px solid rgb(255 255 255 / 12%);
+	border-radius: 2rem;
+	background: linear-gradient(145deg, rgb(255 255 255 / 7%), transparent);
+	transform: rotate(12deg);
+	content: "";
+}
+
+.seo-geo-preset-corporate .seo-geo-front-page-title {
+	max-width: 12ch;
+	color: #fff;
+	font-size: clamp(3.6rem, 8vw, 7.3rem);
+	line-height: 0.88;
+	letter-spacing: -0.07em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero {
+	position: relative;
+	z-index: 2;
+	margin: clamp(-3rem, -4vw, -2rem) auto clamp(4rem, 8vw, 7rem);
+	padding: clamp(1rem, 2vw, 1.4rem);
+	border: 1px solid rgb(7 27 36 / 9%);
+	border-radius: 2rem;
+	background: #fff;
+	box-shadow: 0 28px 76px rgb(7 27 36 / 13%);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero__grid {
+	gap: clamp(1rem, 3vw, 2rem);
+	align-items: center;
+	margin-bottom: 0;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-hero__copy {
+	padding: clamp(1.35rem, 4vw, 3rem);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-lead {
+	max-width: 31ch;
+	font-size: clamp(1.3rem, 2.2vw, 1.95rem) !important;
+	line-height: 1.22 !important;
+	letter-spacing: -0.025em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-eyebrow {
+	color: var(--cf-teal);
+	font-size: 0.76rem !important;
+	letter-spacing: 0.18em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-actions .wp-block-button__link {
+	border: 1px solid var(--cf-night);
+	border-radius: 999px;
+	padding: 0.85rem 1.3rem;
+	background: var(--cf-night);
+	color: #fff;
+	font-weight: 760;
+	text-decoration: none;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-actions .is-style-outline .wp-block-button__link {
+	background: transparent;
+	color: var(--cf-night);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-mockup-media {
+	margin: 0;
+	border-radius: 1.5rem;
+	overflow: hidden;
+	background: var(--cf-night);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-mockup-media img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-section {
+	margin-block: clamp(3.5rem, 7vw, 6rem) !important;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading {
+	display: grid;
+	grid-template-columns: minmax(0, 0.35fr) minmax(0, 1fr);
+	gap: 0.6rem clamp(1.5rem, 5vw, 5rem);
+	max-width: none;
+	margin-bottom: clamp(2rem, 4vw, 3rem);
+	align-items: start;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading .seo-geo-corporate-eyebrow {
+	grid-column: 1;
+	margin-top: 0.6rem;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading h2,
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading > p:last-child {
+	grid-column: 2;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading h2 {
+	max-width: 15ch;
+	margin-bottom: 0.7rem;
+	font-size: clamp(2.5rem, 5vw, 4.8rem) !important;
+	line-height: 0.95;
+	letter-spacing: -0.055em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-section-heading > p:last-child {
+	max-width: 58ch;
+	margin-top: 0;
+	font-size: clamp(1.05rem, 1.2vw, 1.18rem);
+	line-height: 1.6;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card-grid {
+	gap: clamp(0.9rem, 2vw, 1.3rem);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card {
+	min-height: 370px;
+	display: flex;
+	flex-direction: column;
+	border: 1px solid rgb(7 27 36 / 11%);
+	border-radius: 1.6rem;
+	padding: clamp(1.5rem, 3vw, 2.2rem);
+	box-shadow: 0 14px 34px rgb(7 27 36 / 8%);
+	overflow: hidden;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card:nth-child(2) {
+	background: #dff5ef;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card--featured {
+	border-color: transparent;
+	background: radial-gradient(circle at 90% 10%, rgb(49 209 186 / 22%), transparent 13rem), linear-gradient(150deg, #071b24, #0d323a);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card__index {
+	width: fit-content;
+	margin-bottom: auto;
+	border: 1px solid rgb(7 27 36 / 12%);
+	border-radius: 999px;
+	padding: 0.32rem 0.58rem;
+	background: rgb(255 255 255 / 62%);
+	color: var(--cf-teal);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card--featured .seo-geo-corporate-card__index {
+	border-color: rgb(255 255 255 / 18%);
+	background: rgb(255 255 255 / 8%);
+	color: #31d1ba;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card h3 {
+	margin-top: clamp(2.5rem, 6vw, 5rem);
+	font-size: clamp(1.7rem, 3vw, 2.4rem);
+	line-height: 1;
+	letter-spacing: -0.04em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card p:not(.seo-geo-corporate-card__index) {
+	color: #29424b;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card--featured p:not(.seo-geo-corporate-card__index) {
+	color: rgb(255 255 255 / 82%);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-card a {
+	margin-top: auto;
+	color: inherit;
+	font-weight: 780;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-featured-work__grid,
+.seo-geo-preset-corporate .seo-geo-corporate-about-feature__grid {
+	gap: clamp(2rem, 6vw, 5rem);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-featured-work h2,
+.seo-geo-preset-corporate .seo-geo-corporate-about-feature h2 {
+	font-size: clamp(2.4rem, 4.5vw, 4.5rem);
+	line-height: 0.98;
+	letter-spacing: -0.05em;
+	text-wrap: balance;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-featured-work p,
+.seo-geo-preset-corporate .seo-geo-corporate-about-feature p {
+	max-width: 54ch;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-featured-work a,
+.seo-geo-preset-corporate .seo-geo-corporate-about-feature a {
+	font-weight: 780;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-process {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: none;
+	padding: clamp(4rem, 8vw, 7rem) max(1rem, calc((100vw - 1180px) / 2));
+	background: radial-gradient(circle at 14% 12%, rgb(49 209 186 / 14%), transparent 24rem), var(--cf-night);
+	color: #fff;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-process :where(h2, h3, p) {
+	color: #fff;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-native-process .seo-geo-corporate-eyebrow {
+	color: #31d1ba;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-process-grid {
+	gap: clamp(0.8rem, 2vw, 1.2rem);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-process-step {
+	min-height: 300px;
+	border: 1px solid rgb(255 255 255 / 12%);
+	border-radius: 1.45rem;
+	padding: clamp(1.4rem, 3vw, 2.1rem);
+	background: rgb(255 255 255 / 5%);
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-process-step__number {
+	width: fit-content;
+	border: 1px solid rgb(255 255 255 / 15%);
+	border-radius: 999px;
+	padding: 0.32rem 0.58rem;
+	color: #31d1ba !important;
+	font-size: 0.76rem !important;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+}
+
+.seo-geo-preset-corporate .seo-geo-corporate-process-step h3 {
+	margin-top: clamp(3rem, 6vw, 5rem);
+	font-size: clamp(1.8rem, 3vw, 2.5rem);
+	letter-spacing: -0.045em;
+}
+
+.seo-geo-preset-corporate .seo-geo-final-cta {
+	box-sizing: border-box;
+	padding: clamp(4rem, 8vw, 7rem) max(1rem, calc((100vw - 1180px) / 2));
+	background: var(--cf-teal);
+	color: #fff;
+}
+
+.seo-geo-preset-corporate .seo-geo-final-cta h2 {
+	max-width: 13ch;
+	margin-bottom: 1rem;
+	color: #fff;
+	font-size: clamp(3rem, 6vw, 6rem);
+	line-height: 0.92;
+	letter-spacing: -0.06em;
+	text-wrap: balance;
+}
+
+.seo-geo-preset-corporate .seo-geo-final-cta > p {
+	max-width: 52ch;
+	color: #fff;
+	font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+}
+
+.seo-geo-preset-corporate .seo-geo-final-cta .wp-block-button__link {
+	border-radius: 999px;
+	background: var(--cf-night);
+	color: #fff;
+	font-weight: 780;
+	text-decoration: none;
+}
+
+@media (max-width: 900px) {
+	.seo-geo-preset-corporate .seo-geo-front-page-hero {
+		min-height: auto;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-corporate-native-hero {
+		margin-top: -1.5rem;
+		border-radius: 1.35rem;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-corporate-section-heading {
+		display: block;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-corporate-card {
+		min-height: 300px;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-corporate-process-step {
+		min-height: 250px;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-corporate-featured-work__grid,
+	.seo-geo-preset-corporate .seo-geo-corporate-about-feature__grid {
+		gap: 1.5rem;
+	}
+}
+
+@media (max-width: 600px) {
+	.seo-geo-preset-corporate .seo-geo-front-page-title {
+		font-size: clamp(3rem, 16vw, 4.5rem);
+	}
+
+	.seo-geo-preset-corporate .seo-geo-corporate-native-section {
+		margin-block: 3.25rem !important;
+	}
+
+	.seo-geo-preset-corporate .seo-geo-final-cta h2 {
+		font-size: clamp(2.7rem, 13vw, 4.2rem);
+	}
+}
