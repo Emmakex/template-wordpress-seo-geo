@@ -51,9 +51,9 @@ The shared layer is not globally loaded. A preset adopts it only when its final 
 
 #### DS-3A — Final Home
 
-**Status: implementation candidate**
+**Status: complete in code/CI**
 
-Target composition:
+Delivered and merged on PR #240:
 
 1. plain-language product Hero;
 2. abstract non-evidentiary product preview;
@@ -63,27 +63,44 @@ Target composition:
 6. use cases;
 7. pricing-plan structure without invented prices;
 8. FAQ;
-9. one clear final CTA.
+9. one clear final CTA;
+10. EN/ES provisional copy outside the renderer;
+11. dedicated SaaS contract CI;
+12. zero required project JavaScript and no Corporate performance regression.
 
-The front-page template keeps ownership of the H1. The final Home pattern must not add a competing H1.
+The front-page template keeps ownership of the H1. The final Home pattern does not add a competing H1.
 
 #### DS-3B — SaaS inner pages
 
-**Status: next**
+**Status: implementation candidate**
 
-Build final Product, Features, Solutions, Integrations, Pricing, Resources and Contact/Demo pages. Each must look finished before hydration and must keep unsupported product/commercial claims provisional.
+Current branch: `feat/saas-final-inner-pages`.
+
+Implemented candidate compositions:
+
+- Product;
+- Features;
+- Solutions;
+- Integrations;
+- Pricing;
+- Resources;
+- Contact/Demo.
+
+All seven reuse the accepted SaaS visual primitives instead of adding another stylesheet. Copy is stored in an explicit ES/EN placeholder contract, remains non-publishable until hydrated and cannot introduce numeric pricing, fabricated integrations, contact details, response times or remote evidence.
+
+The page template keeps document-H1 ownership. The preset-owned renderer starts below the title and exposes stable hydration slots for page lead, sections, cards, provisional product visual and CTA.
 
 #### DS-3C — SaaS system surfaces
 
-**Status: next after inner pages**
+**Status: next after inner-page acceptance**
 
 Build SaaS-owned Single, Archive and 404 surfaces using the same preset runtime rule proven by Corporate, while preserving Site Editor custom templates.
 
 #### DS-3D — SaaS visual/performance acceptance
 
-**Status: next after full preset**
+**Status: active with DS-3B**
 
-Require PHP/WPCS/PHPStan, WordPress activation, accessibility/responsive, multilingual behavior, self-contained Theme, dedicated SaaS contract and strict Lighthouse budgets before merge.
+Require PHP/WPCS/PHPStan, WordPress activation, accessibility/responsive, multilingual behavior, self-contained Theme, dedicated SaaS contract and strict Lighthouse budgets before merge. Performance budgets must not be raised to make the new visual work pass.
 
 ### DS-4 — Local Business final preset
 
