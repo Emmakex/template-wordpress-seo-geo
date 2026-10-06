@@ -3,7 +3,7 @@
   "preset": "publisher",
   "product_facing_name": "Editorial / Publisher",
   "target_state": "99-percent-finished-before-client-content",
-  "current_stage": "home-candidate",
+  "current_stage": "inner-pages-candidate",
   "design_rule": "final-layout-first-then-content-hydration",
   "legacy_layout_policy": "never-a-design-source",
   "visual_runtime": {
@@ -28,12 +28,12 @@
         "newsletter-follow"
       ]
     },
-    "articles": {"required": true, "status": "next-microphase"},
-    "topics": {"required": true, "status": "next-microphase"},
-    "authors": {"required": true, "status": "next-microphase"},
-    "about": {"required": true, "status": "next-microphase"},
-    "editorial-policy": {"required": true, "status": "next-microphase"},
-    "contact": {"required": true, "status": "next-microphase"},
+    "articles": {"required": true, "composition": "publisher-inner-final-v1", "status": "candidate", "owns_h1": false},
+    "topics": {"required": true, "composition": "publisher-inner-final-v1", "status": "candidate", "owns_h1": false},
+    "authors": {"required": true, "composition": "publisher-inner-final-v1", "status": "candidate", "owns_h1": false, "real_public_authors_required": true},
+    "about": {"required": true, "composition": "publisher-inner-final-v1", "status": "candidate", "owns_h1": false},
+    "editorial-policy": {"required": true, "composition": "publisher-inner-final-v1", "status": "candidate", "owns_h1": false, "real_policy_required": true},
+    "contact": {"required": true, "composition": "publisher-inner-final-v1", "status": "candidate", "owns_h1": false, "verified_public_routes_required": true},
     "single": {"required": true, "status": "next-microphase"},
     "archive": {"required": true, "status": "next-microphase"},
     "404": {"required": true, "status": "next-microphase"}

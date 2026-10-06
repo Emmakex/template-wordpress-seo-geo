@@ -186,11 +186,11 @@ Upgrade the existing `publisher` compatibility surface into the final editorial/
 
 #### DS-5A — Publisher final Home
 
-**Status: implementation candidate**
+**Status: complete in code/CI**
 
-Current branch: `feat/publisher-final-home`.
+Delivered and merged on PR #246 with 14/14 workflows green. The merge landed on `main` as `a24ee895ce746448e7c56e17d0f70062622b0388`, and the complete post-merge battery also finished green.
 
-Candidate direction:
+The accepted Home provides:
 
 - type-led editorial identity and calm reading surface;
 - finished lead-story composition without inventing a real article;
@@ -205,13 +205,26 @@ Candidate direction:
 
 The front-page template retains H1 ownership. Provisional stories, topics and author surfaces remain non-publishable until hydration. The existing Publisher semantic contract remains authoritative for real authors, dates, references, BlogPosting eligibility and provenance.
 
-DS-5A must pass the existing Publisher semantic contract, a dedicated final-Home contract, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge.
-
 #### DS-5B — Publisher inner pages
 
-**Status: queued after Home**
+**Status: implementation candidate**
 
-Finish Articles, Topics, Authors, About, Editorial Policy and Contact while preserving real-content provenance and avoiding fabricated author expertise, citations or dates.
+Current branch: `feat/publisher-final-inner-pages`.
+
+Candidate compositions:
+
+- Articles — real published work, editorial priorities and maintained reading paths without fabricated freshness or popularity;
+- Topics — maintained taxonomy and distinct subject hubs, rejecting thin keyword-only archives;
+- Authors — approved public WordPress users and real authored work only, with no inferred credentials or ghost identities;
+- About — sourced publication purpose, scope, governance and accountability;
+- Editorial Policy — real operating standards, sourcing, corrections and conflict rules without invented review or fact-checking claims;
+- Contact — verified public editorial, contributor and business routes without invented departments, addresses or response times.
+
+All six use one shared renderer and reuse the accepted Publisher visual system plus shared Design System primitives. DS-5B adds no new stylesheet and no required frontend JavaScript. EN/ES provisional copy lives outside the renderer and remains publication-blocking until hydrated.
+
+The page template retains document-H1 ownership. The existing Publisher authorities remain unchanged: public authors from approved WordPress users/profiles, dates from WordPress timestamps, and references from real editor-added sources.
+
+DS-5B must pass the existing semantic contract, accepted Home contract, dedicated inner-page contract, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge.
 
 #### DS-5C — Publisher system surfaces
 
@@ -221,7 +234,7 @@ Add preset-owned Single, Archive and 404 surfaces only after Home and inner page
 
 #### DS-5D — Publisher visual/performance acceptance
 
-**Status: active with DS-5A**
+**Status: active with DS-5B**
 
 Publisher closes at implementation/CI level only after its Home, inner pages and system surfaces are merged with the complete acceptance battery green. Phase 10E real-site acceptance remains a separate release gate.
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Validate the final Publisher / Editorial Home visual/product contract.
+ * Validate the accepted Publisher / Editorial Home visual/product contract.
  */
 
 declare(strict_types=1);
@@ -29,9 +29,7 @@ function fail_publisher_final_home( string $code, string $message, string $path,
 	exit( 1 );
 }
 
-/**
- * Read one required UTF-8 file.
- */
+/** Read one required UTF-8 file. */
 function publisher_final_file( string $path ): string {
 	if ( ! is_file( $path ) ) {
 		fail_publisher_final_home( 'missing-file', 'Required Publisher final Home file is missing.', $path, 'existing file', 'missing' );
@@ -70,7 +68,6 @@ $mockup      = publisher_final_json( $mockup_path );
 $expected_contract = array(
 	'preset'               => 'publisher',
 	'target_state'         => '99-percent-finished-before-client-content',
-	'current_stage'        => 'home-candidate',
 	'design_rule'          => 'final-layout-first-then-content-hydration',
 	'legacy_layout_policy' => 'never-a-design-source',
 );
@@ -78,6 +75,11 @@ foreach ( $expected_contract as $key => $expected ) {
 	if ( $expected !== ( $mockup[ $key ] ?? null ) ) {
 		fail_publisher_final_home( 'mockup-contract', 'Publisher final product rule changed unexpectedly.', $mockup_path . '#' . $key, $expected, $mockup[ $key ] ?? null );
 	}
+}
+
+$stage = $mockup['current_stage'] ?? null;
+if ( ! in_array( $stage, array( 'home-candidate', 'inner-pages-candidate' ), true ) ) {
+	fail_publisher_final_home( 'stage-contract', 'Publisher roadmap stage must preserve the accepted Home while DS-5 advances.', $mockup_path . '#current_stage', 'home-candidate or inner-pages-candidate', $stage );
 }
 
 $home = $mockup['pages']['home'] ?? null;
@@ -91,10 +93,29 @@ if (
 	fail_publisher_final_home( 'home-contract', 'Publisher Home candidate contract is incomplete.', $mockup_path . '#pages.home', 'required publisher-home-final-v1 with template-owned H1', $home );
 }
 
-foreach ( array( 'articles', 'topics', 'authors', 'about', 'editorial-policy', 'contact', 'single', 'archive', '404' ) as $pending_page ) {
-	$status = $mockup['pages'][ $pending_page ]['status'] ?? null;
-	if ( 'next-microphase' !== $status ) {
-		fail_publisher_final_home( 'roadmap-honesty', 'DS-5A must not claim later Publisher surfaces complete.', $mockup_path . '#pages.' . $pending_page, 'next-microphase', $status );
+$inner_pages = array( 'articles', 'topics', 'authors', 'about', 'editorial-policy', 'contact' );
+if ( 'home-candidate' === $stage ) {
+	foreach ( array_merge( $inner_pages, array( 'single', 'archive', '404' ) ) as $pending_page ) {
+		$status = $mockup['pages'][ $pending_page ]['status'] ?? null;
+		if ( 'next-microphase' !== $status ) {
+			fail_publisher_final_home( 'roadmap-honesty', 'Publisher Home stage must not claim later surfaces complete.', $mockup_path . '#pages.' . $pending_page, 'next-microphase', $status );
+		}
+	}
+}
+
+if ( 'inner-pages-candidate' === $stage ) {
+	foreach ( $inner_pages as $inner_page ) {
+		$status = $mockup['pages'][ $inner_page ]['status'] ?? null;
+		if ( 'candidate' !== $status ) {
+			fail_publisher_final_home( 'inner-stage-honesty', 'When DS-5B is active, every Publisher inner page must be an explicit candidate.', $mockup_path . '#pages.' . $inner_page, 'candidate', $status );
+		}
+	}
+
+	foreach ( array( 'single', 'archive', '404' ) as $system_page ) {
+		$status = $mockup['pages'][ $system_page ]['status'] ?? null;
+		if ( 'next-microphase' !== $status ) {
+			fail_publisher_final_home( 'system-stage-honesty', 'DS-5B must leave Publisher system surfaces for their dedicated microphase.', $mockup_path . '#pages.' . $system_page, 'next-microphase', $status );
+		}
 	}
 }
 
@@ -103,7 +124,7 @@ if (
 	|| false !== ( $mockup['visual_runtime']['remote_fonts'] ?? null )
 	|| false !== ( $mockup['visual_runtime']['remote_visual_dependencies'] ?? null )
 ) {
-	fail_publisher_final_home( 'visual-runtime', 'Publisher final Home must remain zero-JS and free of remote visual/font dependencies.', $mockup_path . '#visual_runtime', 'all remote/JS requirements false', $mockup['visual_runtime'] ?? null );
+	fail_publisher_final_home( 'visual-runtime', 'Publisher must remain zero-JS and free of remote visual/font dependencies.', $mockup_path . '#visual_runtime', 'all remote/JS requirements false', $mockup['visual_runtime'] ?? null );
 }
 
 if (
@@ -114,7 +135,7 @@ if (
 	|| true !== ( $mockup['acceptance']['real_reference_source_required'] ?? null )
 	|| true !== ( $mockup['acceptance']['real_post_dates_required'] ?? null )
 ) {
-	fail_publisher_final_home( 'editorial-safety', 'Publisher final Home lost publication, evidence or authority safeguards.', $mockup_path, 'all editorial safeguards true', $mockup['acceptance'] ?? null );
+	fail_publisher_final_home( 'editorial-safety', 'Publisher lost publication, evidence or authority safeguards.', $mockup_path, 'all editorial safeguards true', $mockup['acceptance'] ?? null );
 }
 
 $copy_path = PUBLISHER_FINAL_PRESET_DIR . '/mockup-copy.json';
@@ -127,13 +148,13 @@ if (
 	|| false !== ( $copy_doc['publication_ready'] ?? null )
 	|| 'final-layout-first-then-content-hydration' !== ( $copy_doc['page_contract'] ?? null )
 ) {
-	fail_publisher_final_home( 'copy-provenance', 'Publisher provisional copy must remain explicit placeholder data and non-publishable.', $copy_path, 'publisher + placeholder + publication_ready=false', $copy_doc );
+	fail_publisher_final_home( 'copy-provenance', 'Publisher provisional Home copy must remain explicit placeholder data and non-publishable.', $copy_path, 'publisher + placeholder + publication_ready=false', $copy_doc );
 }
 
 $copy_en = $copy_doc['en_US'] ?? null;
 $copy_es = $copy_doc['es_ES'] ?? null;
 if ( ! is_array( $copy_en ) || ! is_array( $copy_es ) ) {
-	fail_publisher_final_home( 'copy-locales', 'Publisher provisional copy requires complete EN and ES locale maps.', $copy_path, 'en_US + es_ES objects', array_keys( $copy_doc ) );
+	fail_publisher_final_home( 'copy-locales', 'Publisher provisional Home copy requires EN and ES locale maps.', $copy_path, 'en_US + es_ES objects', array_keys( $copy_doc ) );
 }
 
 $keys_en = array_keys( $copy_en );
@@ -141,25 +162,24 @@ $keys_es = array_keys( $copy_es );
 sort( $keys_en );
 sort( $keys_es );
 if ( $keys_en !== $keys_es || count( $keys_en ) < 45 ) {
-	fail_publisher_final_home( 'copy-parity', 'Publisher provisional copy locales must expose the same complete hydration-slot contract.', $copy_path, 'matching EN/ES keys with at least 45 slots', array( 'en' => count( $keys_en ), 'es' => count( $keys_es ) ) );
+	fail_publisher_final_home( 'copy-parity', 'Publisher Home copy locales must expose the same complete hydration-slot contract.', $copy_path, 'matching EN/ES keys with at least 45 slots', array( 'en' => count( $keys_en ), 'es' => count( $keys_es ) ) );
 }
 
 foreach ( array( 'lead_title', 'story_1_title', 'topics_title', 'standards_title', 'resources_title', 'authors_title', 'follow_title' ) as $required_key ) {
 	foreach ( array( 'en_US' => $copy_en, 'es_ES' => $copy_es ) as $locale => $localized_copy ) {
 		$value = $localized_copy[ $required_key ] ?? null;
 		if ( ! is_string( $value ) || '' === trim( $value ) ) {
-			fail_publisher_final_home( 'copy-required', 'Publisher provisional copy lost a required hydration slot.', $copy_path . '#' . $locale . '.' . $required_key, 'non-empty string', $value );
+			fail_publisher_final_home( 'copy-required', 'Publisher provisional Home copy lost a required hydration slot.', $copy_path . '#' . $locale . '.' . $required_key, 'non-empty string', $value );
 		}
 	}
 }
 
 if ( 1 === preg_match( '/https?:\/\//i', $copy_raw, $match ) ) {
-	fail_publisher_final_home( 'copy-remote-evidence', 'Publisher provisional copy must not contain remote source/evidence URLs.', $copy_path, 'no remote URL', $match[0] );
+	fail_publisher_final_home( 'copy-remote-evidence', 'Publisher provisional Home copy must not contain remote source/evidence URLs.', $copy_path, 'no remote URL', $match[0] );
 }
 
 $pattern_path = PUBLISHER_FINAL_THEME_DIR . '/preset-patterns/publisher-home-final.php';
 $pattern      = publisher_final_file( $pattern_path );
-
 if ( str_contains( $pattern, '"level":1' ) || 1 === preg_match( '/<h1\b/i', $pattern ) ) {
 	fail_publisher_final_home( 'duplicate-h1', 'Publisher final Home must leave the page H1 to front-page.html.', $pattern_path, 'no H1', 'H1 found' );
 }
@@ -186,13 +206,7 @@ foreach ( $required_pattern_fragments as $fragment ) {
 }
 
 if ( substr_count( $pattern, 'seo-geo-placeholder--copy' ) < 24 || substr_count( $pattern, 'seo-geo-placeholder--media' ) < 3 ) {
-	fail_publisher_final_home(
-		'placeholder-provenance',
-		'Publisher provisional content/media must stay visibly marked for hydration safety.',
-		$pattern_path,
-		'at least 24 copy and 3 media placeholder markers',
-		array( 'copy' => substr_count( $pattern, 'seo-geo-placeholder--copy' ), 'media' => substr_count( $pattern, 'seo-geo-placeholder--media' ) )
-	);
+	fail_publisher_final_home( 'placeholder-provenance', 'Publisher Home provisional content/media must stay visibly marked.', $pattern_path, 'at least 24 copy and 3 media markers', array( 'copy' => substr_count( $pattern, 'seo-geo-placeholder--copy' ), 'media' => substr_count( $pattern, 'seo-geo-placeholder--media' ) ) );
 }
 
 if ( 1 === preg_match( '/https?:\/\/|<!--\s*wp:html\b|<\s*script\b|<\s*style\b|application\/ld\+json|schema\.org/i', $pattern, $match ) ) {
@@ -227,7 +241,7 @@ $registration_path = PUBLISHER_FINAL_THEME_DIR . '/inc/Publisher/FinalHomePatter
 $registration      = publisher_final_file( $registration_path );
 foreach ( array( "'publisher' !== seo_geo_theme_active_preset_id()", "'seo-geo-theme/publisher-home-final'", "array( 'seo-geo-publisher' )", 'publisher-home-final.php' ) as $fragment ) {
 	if ( ! str_contains( $registration, $fragment ) ) {
-		fail_publisher_final_home( 'pattern-registration', 'Publisher final Home registration lost active-preset isolation or category ownership.', $registration_path, $fragment, 'fragment missing' );
+		fail_publisher_final_home( 'pattern-registration', 'Publisher Home registration lost active-preset isolation or category ownership.', $registration_path, $fragment, 'fragment missing' );
 	}
 }
 
@@ -239,7 +253,7 @@ if (
 	|| 'wordpress-user' !== ( $manifest['schema']['author_source'] ?? null )
 	|| 'wordpress-post-dates' !== ( $manifest['schema']['dates_source'] ?? null )
 ) {
-	fail_publisher_final_home( 'semantic-regression', 'Publisher final visual layer must preserve the existing real-author/source/date authorities.', PUBLISHER_FINAL_PRESET_DIR . '/preset.json', 'real references + no inference + WordPress author/dates', $manifest['editorial_model'] ?? null );
+	fail_publisher_final_home( 'semantic-regression', 'Publisher visual layer must preserve real-author/source/date authorities.', PUBLISHER_FINAL_PRESET_DIR . '/preset.json', 'real references + no inference + WordPress author/dates', $manifest['editorial_model'] ?? null );
 }
 
 echo "Publisher final Home contract: OK\n";
