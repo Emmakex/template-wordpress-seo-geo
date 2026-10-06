@@ -18,7 +18,8 @@ Every generated semantic slot is classified as one of:
 
 - `source`: directly supported by rescued authored content;
 - `derived`: deterministic Theme/Bridge copy or a value derived from known site structure, locale or links;
-- `placeholder`: draft-only editorial guidance that still requires replacement or optimization.
+- `placeholder`: draft-only editorial guidance that still requires replacement or optimization;
+- `authored`: a former placeholder that has been deliberately replaced through the reviewed Content Kit workflow.
 
 The automatic Home plan exposes `content_state.slot_states`, `content_state.placeholder_slots` and `content_state.publishable`.
 
@@ -41,10 +42,13 @@ A Home containing semantic placeholder slots is intentionally reviewable but not
 
 `AutomaticHomeContentStateKit` stores the placeholder slot list on the clean Home draft. `PlaceholderPublishingGuard` intercepts WordPress public/scheduled status writes and keeps that draft as `draft` while unresolved placeholder slots remain.
 
-This gives the product two independent properties:
+`PlaceholderResolutionTracker` watches reviewed Corporate Home Content Kit updates. When a previously generated prompt is actually replaced, that slot becomes `authored` and is removed from the unresolved placeholder list. Publication becomes available only after the unresolved list is empty. Saving the same generated prompt does not count as resolution.
+
+This gives the product three independent properties:
 
 - the design can be generated and reviewed even with incomplete old content;
-- incomplete migration prompts cannot accidentally become the public indexed Home.
+- incomplete migration prompts cannot accidentally become the public indexed Home;
+- genuine reviewed replacements progressively unlock publication without requiring a hidden manual override.
 
 The sandbox crawler policy remains a separate defense-in-depth control.
 
@@ -75,8 +79,9 @@ Its job is to keep the Design System complete and deterministic. The future SEO/
 1. replace `placeholder` slots first;
 2. improve weak `derived` copy where appropriate;
 3. preserve or deliberately optimize `source` copy with provenance retained;
-4. validate intent, entities, internal links, geography and evidence before publication.
+4. preserve reviewed `authored` copy unless the operator intentionally requests optimization;
+5. validate intent, entities, internal links, geography and evidence before publication.
 
 ## Acceptance
 
-For a content-poor legacy site the automatic flow must be able to produce a complete private Corporate Home without executing legacy builders. The plan must expose placeholder state, the generated Home must remain visually complete, evidence groups must remain unverified, and WordPress must refuse to make the placeholder-bearing draft public.
+For a content-poor legacy site the automatic flow must be able to produce a complete private Corporate Home without executing legacy builders. The plan must expose placeholder state, the generated Home must remain visually complete, evidence groups must remain unverified, and WordPress must refuse to make the placeholder-bearing draft public. Replacing placeholders through the reviewed Content Kit must shrink the unresolved list deterministically and unlock publication only when no placeholder remains.
