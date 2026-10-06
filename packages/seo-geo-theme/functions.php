@@ -17,6 +17,7 @@ require_once get_template_directory() . '/inc/setup.php';
 require_once get_template_directory() . '/inc/Forms/ContactFormRuntime.php';
 require_once get_template_directory() . '/inc/Insights/InsightsIndexRuntime.php';
 require_once get_template_directory() . '/inc/Navigation/PresetNavigationRuntime.php';
+require_once get_template_directory() . '/inc/Templates/PresetTemplateRuntime.php';
 
 /**
  * Load project-owned translations.
@@ -173,6 +174,21 @@ function seo_geo_theme_preset_navigation_runtime(): \SeoGeo\Theme\Navigation\Pre
 seo_geo_theme_preset_navigation_runtime()->register();
 
 /**
+ * Register preset-owned final system templates.
+ */
+function seo_geo_theme_preset_template_runtime(): \SeoGeo\Theme\Templates\PresetTemplateRuntime {
+	static $runtime = null;
+
+	if ( ! $runtime instanceof \SeoGeo\Theme\Templates\PresetTemplateRuntime ) {
+		$runtime = new \SeoGeo\Theme\Templates\PresetTemplateRuntime();
+	}
+
+	return $runtime;
+}
+
+seo_geo_theme_preset_template_runtime()->register();
+
+/**
  * Normalize bounded legacy migration placeholders before they reach visitors
  * or downstream SEO/GEO text resolvers.
  *
@@ -187,7 +203,7 @@ function seo_geo_theme_normalize_migrated_text( string $value ): string {
 		return $value;
 	}
 
-	$normalized = preg_replace( '/\\{[a-f0-9]{64}\\}/i', '%', $value );
+	$normalized = preg_replace( '/\{[a-f0-9]{64}\}/i', '%', $value );
 
 	return is_string( $normalized ) ? $normalized : $value;
 }
@@ -210,8 +226,8 @@ function seo_geo_theme_guard_singular_content_h1( string $block_content, array $
 		return $block_content;
 	}
 
-	$block_content = preg_replace( '/<h1\\b/i', '<h2', $block_content, 1 );
-	$block_content = preg_replace( '/<\\/h1>/i', '</h2>', $block_content, 1 );
+	$block_content = preg_replace( '/<h1\b/i', '<h2', $block_content, 1 );
+	$block_content = preg_replace( '/<\/h1>/i', '</h2>', $block_content, 1 );
 
 	return is_string( $block_content ) ? $block_content : '';
 }

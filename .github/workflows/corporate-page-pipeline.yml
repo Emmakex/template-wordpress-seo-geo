@@ -10,6 +10,7 @@ on:
       - 'examples/content-blueprints/**'
       - 'scripts/ci/validate-corporate-page-pipeline.php'
       - 'scripts/ci/validate-corporate-site-readiness.php'
+      - 'scripts/ci/validate-corporate-system-surfaces.php'
       - '.github/workflows/corporate-page-pipeline.yml'
   push:
     branches:
@@ -22,6 +23,7 @@ on:
       - 'examples/content-blueprints/**'
       - 'scripts/ci/validate-corporate-page-pipeline.php'
       - 'scripts/ci/validate-corporate-site-readiness.php'
+      - 'scripts/ci/validate-corporate-system-surfaces.php'
       - '.github/workflows/corporate-page-pipeline.yml'
 
 permissions:
@@ -33,7 +35,7 @@ concurrency:
 
 jobs:
   contract:
-    name: Corporate pages + Insights + site readiness
+    name: Corporate pages + Insights + system surfaces + site readiness
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -48,6 +50,7 @@ jobs:
         run: |
           php -l scripts/ci/validate-corporate-page-pipeline.php
           php -l scripts/ci/validate-corporate-site-readiness.php
+          php -l scripts/ci/validate-corporate-system-surfaces.php
           php -l packages/seo-geo-migration-bridge/src/Reset/CorporatePageContentKit.php
           php -l packages/seo-geo-migration-bridge/src/Reset/NativeCorporatePageHydrator.php
           php -l packages/seo-geo-migration-bridge/src/Reset/CorporatePageSeoHandoff.php
@@ -58,9 +61,16 @@ jobs:
           php -l packages/seo-geo-migration-bridge/src/Reset/CorporateSiteReadiness.php
           php -l packages/seo-geo-migration-bridge/src/Reset/AdminCorporateSiteReadinessController.php
           php -l packages/seo-geo-theme/inc/Insights/InsightsIndexRuntime.php
+          php -l packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php
+          php -l packages/seo-geo-theme/preset-templates/corporate-single.php
+          php -l packages/seo-geo-theme/preset-templates/corporate-archive.php
+          php -l packages/seo-geo-theme/preset-templates/corporate-404.php
 
       - name: Validate Corporate page pipeline contract
         run: php scripts/ci/validate-corporate-page-pipeline.php
+
+      - name: Validate Corporate final system surfaces
+        run: php scripts/ci/validate-corporate-system-surfaces.php
 
       - name: Validate whole-site readiness contract
         run: php scripts/ci/validate-corporate-site-readiness.php
