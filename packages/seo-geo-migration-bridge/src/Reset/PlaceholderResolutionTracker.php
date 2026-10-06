@@ -57,7 +57,7 @@ final class PlaceholderResolutionTracker {
 		foreach ( $placeholder_slots as $slot_id ) {
 			if ( ! is_string( $slot_id ) || '' === $slot_id || ! isset( $baseline[ $slot_id ] ) ) {
 				continue;
-		}
+			}
 			if ( ! array_key_exists( $slot_id, $new_values ) ) {
 				continue;
 			}
