@@ -5,6 +5,15 @@
   "mode": "final-mockup-first",
   "principle": "layout-first-then-hydrate-rescued-content",
   "pattern_ownership": "preset-owned-outside-neutral-pattern-set",
+  "delivery_contract": {
+    "target_state": "99-percent-finished-before-client-content",
+    "blank_install_experience": "finished-bespoke-website",
+    "client_content_role": "hydrate-stable-semantic-slots-only",
+    "legacy_site_role": "content-seo-links-and-useful-media-source-only",
+    "legacy_layout_is_design_source": false,
+    "manager_required_for_visual_completion": false,
+    "manager_role_after_hydration": "continuous-seo-geo-content-optimization"
+  },
   "pages": {
     "home": {
       "required": true,
@@ -82,6 +91,10 @@
   },
   "acceptance": [
     "complete visual composition on a blank WordPress install",
+    "looks production-designed before rescued or client content is hydrated",
+    "only content, SEO facts, links and useful media are inherited from the legacy site",
+    "legacy theme, builder structure and layout do not determine the new presentation",
+    "SEO/GEO Manager is not required to make the preset visually complete",
     "no page-builder runtime dependency",
     "no remote visual dependency",
     "zero project JavaScript required for baseline presentation",
