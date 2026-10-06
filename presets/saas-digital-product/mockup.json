@@ -17,7 +17,7 @@
     "home": {
       "required": true,
       "composition": "saas-home-final-v1",
-      "status": "complete",
+      "status": "candidate",
       "owns_h1": false,
       "sections": [
         "product-hero",
@@ -30,86 +30,22 @@
         "final-cta"
       ]
     },
-    "product": {
-      "required": true,
-      "composition": "saas-inner-final-v1",
-      "status": "candidate",
-      "owns_h1": false
-    },
-    "features": {
-      "required": true,
-      "composition": "saas-inner-final-v1",
-      "status": "candidate",
-      "owns_h1": false
-    },
-    "solutions": {
-      "required": true,
-      "composition": "saas-inner-final-v1",
-      "status": "candidate",
-      "owns_h1": false
-    },
-    "integrations": {
-      "required": true,
-      "composition": "saas-inner-final-v1",
-      "status": "candidate",
-      "owns_h1": false,
-      "verified_integration_facts_required": true
-    },
-    "pricing": {
-      "required": true,
-      "composition": "saas-inner-final-v1",
-      "status": "candidate",
-      "owns_h1": false,
-      "verified_commercial_facts_required": true
-    },
-    "resources": {
-      "required": true,
-      "composition": "saas-inner-final-v1",
-      "status": "candidate",
-      "owns_h1": false
-    },
-    "contact-demo": {
-      "required": true,
-      "composition": "saas-inner-final-v1",
-      "status": "candidate",
-      "owns_h1": false,
-      "verified_contact_facts_required": true
-    },
-    "single": {
-      "required": true,
-      "status": "next-microphase"
-    },
-    "archive": {
-      "required": true,
-      "status": "next-microphase"
-    },
-    "404": {
-      "required": true,
-      "status": "next-microphase"
-    }
+    "product": {"required": true, "composition": "saas-inner-final-v1", "status": "candidate", "owns_h1": false},
+    "features": {"required": true, "composition": "saas-inner-final-v1", "status": "candidate", "owns_h1": false},
+    "solutions": {"required": true, "composition": "saas-inner-final-v1", "status": "candidate", "owns_h1": false},
+    "integrations": {"required": true, "composition": "saas-inner-final-v1", "status": "candidate", "owns_h1": false, "verified_integration_facts_required": true},
+    "pricing": {"required": true, "composition": "saas-inner-final-v1", "status": "candidate", "owns_h1": false, "verified_commercial_facts_required": true},
+    "resources": {"required": true, "composition": "saas-inner-final-v1", "status": "candidate", "owns_h1": false},
+    "contact-demo": {"required": true, "composition": "saas-inner-final-v1", "status": "candidate", "owns_h1": false, "verified_contact_facts_required": true},
+    "single": {"required": true, "status": "next-microphase"},
+    "archive": {"required": true, "status": "next-microphase"},
+    "404": {"required": true, "status": "next-microphase"}
   },
   "placeholder_policy": {
     "allowed_in_private_candidate": true,
     "blocks_publication_until_resolved": true,
-    "allowed_types": [
-      "editorial-copy",
-      "abstract-product-visual",
-      "pricing-structure-without-values",
-      "integration-trust-slot",
-      "contact-channel-slot"
-    ],
-    "forbidden_claims": [
-      "customer-logos",
-      "testimonials",
-      "ratings",
-      "adoption-metrics",
-      "performance-results",
-      "certifications",
-      "integration-support",
-      "pricing-values",
-      "contact-details",
-      "response-times"
-    ]
+    "allowed_types": ["editorial-copy", "abstract-product-visual", "pricing-structure-without-values", "integration-trust-slot", "contact-channel-slot"],
+    "forbidden_claims": ["customer-logos", "testimonials", "ratings", "adoption-metrics", "performance-results", "certifications", "integration-support", "pricing-values", "contact-details", "response-times"]
   },
   "hydration_contract": {
     "preserve_layout": true,
