@@ -7,11 +7,15 @@ on:
       - 'packages/seo-geo-theme/assets/css/presets/local-business.css'
       - 'packages/seo-geo-theme/preset-patterns/local-business-home-final.php'
       - 'packages/seo-geo-theme/preset-patterns/local-business-inner-final.php'
+      - 'packages/seo-geo-theme/preset-templates/local-business-*.php'
       - 'packages/seo-geo-theme/inc/LocalBusiness/FinalInnerPatterns.php'
+      - 'packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php'
       - 'packages/seo-geo-theme/inc/presets.php'
       - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/test-preset-template-runtime.php'
       - 'scripts/ci/validate-local-business-final-home.php'
       - 'scripts/ci/validate-local-business-final-inner.php'
+      - 'scripts/ci/validate-local-business-final-system.php'
       - '.github/workflows/local-business-final-home.yml'
   push:
     branches:
@@ -21,11 +25,15 @@ on:
       - 'packages/seo-geo-theme/assets/css/presets/local-business.css'
       - 'packages/seo-geo-theme/preset-patterns/local-business-home-final.php'
       - 'packages/seo-geo-theme/preset-patterns/local-business-inner-final.php'
+      - 'packages/seo-geo-theme/preset-templates/local-business-*.php'
       - 'packages/seo-geo-theme/inc/LocalBusiness/FinalInnerPatterns.php'
+      - 'packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php'
       - 'packages/seo-geo-theme/inc/presets.php'
       - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/test-preset-template-runtime.php'
       - 'scripts/ci/validate-local-business-final-home.php'
       - 'scripts/ci/validate-local-business-final-inner.php'
+      - 'scripts/ci/validate-local-business-final-system.php'
       - '.github/workflows/local-business-final-home.yml'
 
 permissions:
@@ -37,7 +45,7 @@ concurrency:
 
 jobs:
   contract:
-    name: Local Pro final Home + inner pages contract
+    name: Local Pro final preset contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -56,10 +64,16 @@ jobs:
           php -l packages/seo-geo-theme/functions.php
           php -l packages/seo-geo-theme/inc/presets.php
           php -l packages/seo-geo-theme/inc/LocalBusiness/FinalInnerPatterns.php
+          php -l packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php
           php -l packages/seo-geo-theme/preset-patterns/local-business-home-final.php
           php -l packages/seo-geo-theme/preset-patterns/local-business-inner-final.php
+          php -l packages/seo-geo-theme/preset-templates/local-business-single.php
+          php -l packages/seo-geo-theme/preset-templates/local-business-archive.php
+          php -l packages/seo-geo-theme/preset-templates/local-business-404.php
+          php -l scripts/ci/test-preset-template-runtime.php
           php -l scripts/ci/validate-local-business-final-home.php
           php -l scripts/ci/validate-local-business-final-inner.php
+          php -l scripts/ci/validate-local-business-final-system.php
 
       - name: Validate existing Local Business semantic contract
         run: php scripts/ci/validate-local-business-preset.php
@@ -69,3 +83,9 @@ jobs:
 
       - name: Validate final Local Pro inner-page contract
         run: php scripts/ci/validate-local-business-final-inner.php
+
+      - name: Validate final Local Pro system-surface contract
+        run: php scripts/ci/validate-local-business-final-system.php
+
+      - name: Execute preset template runtime isolation/fallback test
+        run: php scripts/ci/test-preset-template-runtime.php

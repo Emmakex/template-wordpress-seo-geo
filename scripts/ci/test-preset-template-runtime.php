@@ -92,25 +92,34 @@ foreach ( array( 'single', 'archive', '404' ) as $slug ) {
 	}
 }
 
+foreach ( array( 'single', 'archive', '404' ) as $slug ) {
+	$GLOBALS['seo_geo_runtime_test_preset'] = 'local-business';
+	$original = runtime_test_template( $slug );
+	$result   = $runtime->filter_template( $original, 'seo-geo-theme//' . $slug, 'wp_template' );
+	if ( ! $result instanceof WP_Block_Template || $result === $original || ! str_contains( $result->content, 'seo-geo-local-system-surface' ) ) {
+		runtime_test_fail( 'Local Pro did not receive its preset-owned ' . $slug . ' template.' );
+	}
+}
+
 $GLOBALS['seo_geo_runtime_test_preset'] = 'corporate';
 $corporate_original = runtime_test_template( 'single' );
 $corporate_result   = $runtime->filter_template( $corporate_original, 'seo-geo-theme//single', 'wp_template' );
 if ( ! $corporate_result instanceof WP_Block_Template || $corporate_result === $corporate_original || ! str_contains( $corporate_result->content, 'seo-geo-corporate-system-surface' ) ) {
-	runtime_test_fail( 'Corporate runtime behavior regressed while adding SaaS support.' );
+	runtime_test_fail( 'Corporate runtime behavior regressed while adding Local Pro support.' );
 }
 
-$GLOBALS['seo_geo_runtime_test_preset'] = 'local-business';
+$GLOBALS['seo_geo_runtime_test_preset'] = 'publisher';
 $neutral_original = runtime_test_template( 'single', 'theme', 'keep-neutral' );
 $neutral_result   = $runtime->filter_template( $neutral_original, 'seo-geo-theme//single', 'wp_template' );
 if ( $neutral_result !== $neutral_original || 'keep-neutral' !== $neutral_result->content ) {
 	runtime_test_fail( 'A preset without final system templates did not keep the neutral Theme template.' );
 }
 
-$GLOBALS['seo_geo_runtime_test_preset'] = 'saas-digital-product';
+$GLOBALS['seo_geo_runtime_test_preset'] = 'local-business';
 $custom_original = runtime_test_template( 'single', 'custom', 'site-editor-custom' );
 $custom_result   = $runtime->filter_template( $custom_original, 'seo-geo-theme//single', 'wp_template' );
 if ( $custom_result !== $custom_original || 'site-editor-custom' !== $custom_result->content ) {
-	runtime_test_fail( 'Site Editor custom template was overridden by the SaaS preset runtime.' );
+	runtime_test_fail( 'Site Editor custom template was overridden by the Local Pro preset runtime.' );
 }
 
 $type_original = runtime_test_template( 'single', 'theme', 'wrong-type-neutral' );

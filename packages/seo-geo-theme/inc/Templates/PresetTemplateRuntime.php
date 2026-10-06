@@ -33,6 +33,7 @@ final class PresetTemplateRuntime {
 	 */
 	private const PRESET_TEMPLATE_PREFIXES = array(
 		'corporate'            => 'corporate',
+		'local-business'       => 'local-business',
 		'saas-digital-product' => 'saas-digital-product',
 	);
 
