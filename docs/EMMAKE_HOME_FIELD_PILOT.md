@@ -11,8 +11,8 @@ This runbook is the controlled field handoff for the first real reset-first Home
 
 ## Package contents
 
-- `seo-geo-theme.zip` — self-contained SEO/GEO Theme release candidate.
-- `seo-geo-migration-bridge.zip` — Migration Bridge 0.8.59.
+- `seo-geo-theme.zip` — self-contained SEO/GEO Theme 0.1.1 prestable release candidate.
+- `seo-geo-migration-bridge.zip` — Migration Bridge 0.8.60.
 - `emmake-home.es_ES.json` — reviewed portable Home Content Blueprint retained as an advanced fallback, not the normal migration path.
 - `pilot-manifest.json` — exact versions, SHA-256 identities and execution sequence.
 - `pilot-evidence-template.json` — field evidence record to complete after Step 7.
