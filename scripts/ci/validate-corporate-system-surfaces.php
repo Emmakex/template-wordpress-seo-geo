@@ -47,16 +47,18 @@ $runtime      = corporate_surface_file( $runtime_path );
 
 foreach (
 	array(
-		"private const CORPORATE_TEMPLATES = array( 'single', 'archive', '404' );",
+		"private const OWNED_TEMPLATES = array( 'single', 'archive', '404' );",
+		"'corporate'            => 'corporate'",
 		"'theme' !== \$template->source",
-		"'corporate' !== seo_geo_theme_active_preset_id()",
-		"'/preset-templates/corporate-' . \$slug . '.php'",
+		"! isset( self::PRESET_TEMPLATE_PREFIXES[ \$preset_id ] )",
+		'clone $template',
+		"'/preset-templates/' . \$prefix . '-' . \$slug . '.php'",
 	) as $required_runtime_fragment
 ) {
 	if ( ! str_contains( $runtime, $required_runtime_fragment ) ) {
 		fail_corporate_surface(
 			'runtime-contract',
-			'Preset template runtime no longer preserves the Corporate-only, untouched-theme replacement contract.',
+			'Preset template runtime no longer preserves the Corporate untouched-theme replacement and safe-fallback contract.',
 			$runtime_path,
 			$required_runtime_fragment,
 			'fragment missing'
@@ -88,7 +90,7 @@ $surface_paths = array(
 	'404'     => CORPORATE_SURFACE_THEME_DIR . '/preset-templates/corporate-404.php',
 );
 
-foreach ( $surface_paths as $slug => $path ) {
+foreach ( $surface_paths as $path ) {
 	$source = corporate_surface_file( $path );
 
 	foreach ( array( 'wp:template-part {"slug":"header"', 'seo-geo-corporate-system-surface', 'wp:template-part {"slug":"footer"' ) as $fragment ) {
