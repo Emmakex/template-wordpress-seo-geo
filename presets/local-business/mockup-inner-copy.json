@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "provenance": "placeholder",
+  "publication_ready": false,
+  "page_contract": "final-layout-first-then-content-hydration",
+  "en_US": {
+    "services": {
+      "eyebrow": "Services",
+      "lead": "A service page should help a local visitor understand fit, scope and the next real step without forcing them through keyword-heavy copy.",
+      "sections": [
+        {
+          "label": "What the business does",
+          "title": "Organize the real offer around customer needs.",
+          "body": "Replace the provisional groups with the verified service portfolio. Keep genuinely different services separate and avoid creating near-duplicate pages for search variants.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Core service", "body": "Explain the main problem solved, what is included and the real eligibility or scope boundaries."},
+            {"title": "Specialist service", "body": "Use this card for a distinct expert service with its own useful decision information."},
+            {"title": "Follow-up or maintenance", "body": "Describe recurring support only when it is genuinely offered and can be verified."}
+          ]
+        },
+        {
+          "label": "Before contact",
+          "title": "Answer the questions that determine service fit.",
+          "body": "Useful service pages clarify scope before conversion. Hydrate these cards with the real requirements, exclusions and preparation details customers need.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "What is included", "body": "State the real deliverables or service boundaries in plain language."},
+            {"title": "What may change", "body": "Explain variables such as access, complexity or service area only from the business's real operating model."},
+            {"title": "What happens next", "body": "Point to the verified enquiry, quotation, booking or visit flow without promising an invented response time."}
+          ]
+        }
+      ],
+      "cta": {"title": "Make the service choice easy to act on.", "body": "Hydrate the CTA with the real contact or booking route once the business has confirmed it.", "button": "Continue to contact"}
+    },
+    "locations": {
+      "eyebrow": "Locations and service areas",
+      "lead": "Show only places the business genuinely serves or operates from. Each public location or area must add real local value rather than repeating the same page with another place name.",
+      "sections": [
+        {
+          "label": "Verified local presence",
+          "title": "One useful surface for each real location or service area.",
+          "body": "These cards are fact-gated. Replace them with confirmed locations or service areas and the meaningful operational differences that help a visitor decide.",
+          "fact_gated": true,
+          "cards": [
+            {"title": "Verified location or area", "body": "Add the real public location or genuine service area and the specific service context that applies there."},
+            {"title": "Verified location or area", "body": "Use a second card only when another location or area genuinely exists and has useful local information."},
+            {"title": "Coverage boundary", "body": "State real limits, travel conditions or availability boundaries instead of implying universal coverage."}
+          ]
+        },
+        {
+          "label": "Anti-doorway rule",
+          "title": "Local pages must earn their place with distinct information.",
+          "body": "A place name alone is not enough. A location page is justified only when verified facts, access, availability, service differences or other useful local context make it meaningfully different.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Real operational difference", "body": "Document a genuine difference in access, availability, service scope or process."},
+            {"title": "Useful visitor context", "body": "Include travel, parking, appointment or coverage guidance only when it is accurate and maintained."},
+            {"title": "No generated city clones", "body": "Do not create pages by swapping a place name into otherwise identical content."}
+          ]
+        }
+      ],
+      "cta": {"title": "Confirm whether the business can serve the visitor.", "body": "Hydrate with the real coverage or location enquiry path; never infer availability from geography alone.", "button": "Check real coverage"}
+    },
+    "about": {
+      "eyebrow": "About the business",
+      "lead": "Use the About page to explain who provides the service, how the business works and why its public claims can be trusted—without inventing age, awards, team size or credentials.",
+      "sections": [
+        {
+          "label": "Business context",
+          "title": "Turn verified history and expertise into useful trust.",
+          "body": "Replace this provisional narrative with sourced information from the business. Prefer concrete operating context over generic claims such as 'the best' or 'leading'.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "What the business focuses on", "body": "Explain the real specialty and the customer situations the team is equipped to handle."},
+            {"title": "How the work is approached", "body": "Describe the actual process, standards or service philosophy in observable terms."},
+            {"title": "Who customers interact with", "body": "Add real people, roles or team context only from authorized and current information."}
+          ]
+        },
+        {
+          "label": "Evidence before adjectives",
+          "title": "Build authority from facts the site can support.",
+          "body": "Hydration can add qualifications, memberships, facilities, methods or experience when evidence exists. Unsupported superlatives stay out of the final site.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Qualifications", "body": "Show relevant qualifications or licenses only when they are current, applicable and verified."},
+            {"title": "Method", "body": "Explain repeatable operating steps that customers can actually expect."},
+            {"title": "Local accountability", "body": "Connect the business to its real public location, service area and contact routes once confirmed."}
+          ]
+        }
+      ],
+      "cta": {"title": "Let the real business story support the next step.", "body": "Replace this CTA with the verified contact route most appropriate after reading the About page.", "button": "Contact the business"}
+    },
+    "faq": {
+      "eyebrow": "Frequently asked questions",
+      "lead": "A useful local FAQ removes practical uncertainty. Answers must reflect the real offer, coverage and process rather than broad promises written only for search engines.",
+      "faq": [
+        {"q": "Which services are actually available?", "a": "Replace this answer with the current verified service scope and direct visitors to the relevant service detail."},
+        {"q": "Which areas do you serve?", "a": "Replace this answer with maintained coverage facts. Do not infer cities, neighborhoods or travel limits."},
+        {"q": "How do I request a quote, booking or visit?", "a": "Explain the real customer flow and use only the public contact route configured by the business."},
+        {"q": "What information should I prepare?", "a": "List the real details that help the business evaluate the request without collecting unnecessary personal data."},
+        {"q": "Can I visit a physical location?", "a": "Answer from verified location facts. If customers are not served at a premises, explain the real service model instead."}
+      ],
+      "sections": [
+        {
+          "label": "Keep answers maintainable",
+          "title": "FAQ content should stay aligned with real operations.",
+          "body": "Do not turn FAQ into a second sales page. Keep answers concise, factual and linked to the authoritative service, location or contact surface when more detail is needed.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Coverage changes", "body": "Update the authoritative coverage source first, then keep FAQ wording consistent with it."},
+            {"title": "Hours and contact", "body": "Use the same maintained public facts shown elsewhere on the site."},
+            {"title": "No FAQ Schema inflation", "body": "Visible FAQ content comes first; structured data must never claim hidden or unsupported answers."}
+          ]
+        }
+      ],
+      "cta": {"title": "Still need a specific answer?", "body": "Hydrate this CTA with the real enquiry route instead of inventing availability or response times.", "button": "Ask the business"}
+    },
+    "contact": {
+      "eyebrow": "Contact",
+      "lead": "The contact page should expose the real maintained routes, location and availability facts customers need—without publishing guessed telephone numbers, addresses or opening hours.",
+      "sections": [
+        {
+          "label": "Verified contact routes",
+          "title": "Give every contact method a clear purpose.",
+          "body": "These cards are fact-gated. Hydrate them only with channels the business actually monitors and wants customers to use.",
+          "fact_gated": true,
+          "cards": [
+            {"title": "Primary contact route", "body": "Add the maintained telephone, form, booking route or email chosen as the main public channel."},
+            {"title": "Physical location", "body": "Add a customer-facing address and access details only when visits are genuinely supported there."},
+            {"title": "Public availability", "body": "Add current opening or service hours only from an authoritative maintained source."}
+          ]
+        },
+        {
+          "label": "A better enquiry",
+          "title": "Ask for only the information needed to route the request.",
+          "body": "The final form or booking flow should match the business process. This page provides the information architecture without inventing fields, integrations or service-level promises.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Service needed", "body": "Help the visitor identify the relevant real service or problem category."},
+            {"title": "Location or service area", "body": "Collect geographic context only when it is genuinely required to establish coverage."},
+            {"title": "Useful request details", "body": "Ask only for information needed for the next step and keep sensitive data out unless the real process requires it."}
+          ]
+        }
+      ],
+      "cta": {"title": "Use the real route the business maintains.", "body": "The final button remains a hydration slot until a verified public contact or booking destination is configured.", "button": "Start the enquiry"}
+    }
+  },
+  "es_ES": {
+    "services": {
+      "eyebrow": "Servicios",
+      "lead": "Una página de servicios debe ayudar al visitante local a entender encaje, alcance y siguiente paso real sin obligarle a recorrer textos cargados de palabras clave.",
+      "sections": [
+        {
+          "label": "Qué hace el negocio",
+          "title": "Organiza la oferta real alrededor de necesidades del cliente.",
+          "body": "Sustituye los grupos provisionales por el catálogo verificado. Mantén separados los servicios realmente distintos y evita crear páginas casi duplicadas para variantes de búsqueda.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Servicio principal", "body": "Explica el problema principal que resuelve, qué incluye y cuáles son los límites reales de alcance o elegibilidad."},
+            {"title": "Servicio especializado", "body": "Usa esta tarjeta para un servicio experto realmente distinto y con información propia para decidir."},
+            {"title": "Seguimiento o mantenimiento", "body": "Describe soporte recurrente solo cuando se ofrezca realmente y pueda verificarse."}
+          ]
+        },
+        {
+          "label": "Antes del contacto",
+          "title": "Responde las preguntas que determinan si el servicio encaja.",
+          "body": "Una página útil aclara el alcance antes de convertir. Hidrata estas tarjetas con requisitos, exclusiones y preparación reales que el cliente necesita conocer.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Qué está incluido", "body": "Indica entregables o límites reales del servicio con lenguaje sencillo."},
+            {"title": "Qué puede variar", "body": "Explica variables como acceso, complejidad o zona de servicio solo desde el modelo operativo real."},
+            {"title": "Qué ocurre después", "body": "Dirige al flujo verificado de consulta, presupuesto, reserva o visita sin prometer tiempos de respuesta inventados."}
+          ]
+        }
+      ],
+      "cta": {"title": "Haz que elegir un servicio sea fácil de convertir en acción.", "body": "Hidrata el CTA con la vía real de contacto o reserva cuando el negocio la haya confirmado.", "button": "Continuar a contacto"}
+    },
+    "locations": {
+      "eyebrow": "Ubicaciones y zonas de servicio",
+      "lead": "Muestra solo lugares donde el negocio opera o presta servicio realmente. Cada ubicación o zona pública debe aportar valor local propio y no repetir la misma página cambiando el nombre del lugar.",
+      "sections": [
+        {
+          "label": "Presencia local verificada",
+          "title": "Una superficie útil para cada ubicación o zona real.",
+          "body": "Estas tarjetas están bloqueadas por verificación. Sustitúyelas por ubicaciones o zonas confirmadas y por diferencias operativas relevantes que ayuden a decidir.",
+          "fact_gated": true,
+          "cards": [
+            {"title": "Ubicación o zona verificada", "body": "Añade la ubicación pública o zona de servicio real y el contexto específico que aplica allí."},
+            {"title": "Ubicación o zona verificada", "body": "Usa una segunda tarjeta solo si existe otro lugar o zona real con información local útil."},
+            {"title": "Límite de cobertura", "body": "Indica límites, desplazamientos o disponibilidad reales en lugar de insinuar cobertura universal."}
+          ]
+        },
+        {
+          "label": "Regla anti-doorway",
+          "title": "Las páginas locales deben justificar su existencia con información distinta.",
+          "body": "Un nombre de ciudad no basta. Una página local se justifica solo cuando datos verificados, acceso, disponibilidad, diferencias de servicio u otro contexto local útil la hacen realmente distinta.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Diferencia operativa real", "body": "Documenta una diferencia auténtica de acceso, disponibilidad, alcance o proceso."},
+            {"title": "Contexto útil para el visitante", "body": "Incluye desplazamiento, aparcamiento, cita o cobertura únicamente cuando la información sea exacta y mantenida."},
+            {"title": "Sin clones por ciudad", "body": "No crees páginas sustituyendo el nombre del lugar dentro de contenido idéntico."}
+          ]
+        }
+      ],
+      "cta": {"title": "Confirma si el negocio puede atender al visitante.", "body": "Hidrata con el flujo real de consulta de cobertura o ubicación; nunca infieras disponibilidad solo por geografía.", "button": "Comprobar cobertura real"}
+    },
+    "about": {
+      "eyebrow": "Sobre el negocio",
+      "lead": "Usa esta página para explicar quién presta el servicio, cómo trabaja el negocio y por qué pueden confiarse sus afirmaciones públicas, sin inventar antigüedad, premios, tamaño del equipo o credenciales.",
+      "sections": [
+        {
+          "label": "Contexto empresarial",
+          "title": "Convierte historia y experiencia verificadas en confianza útil.",
+          "body": "Sustituye esta narrativa provisional por información con procedencia real. Prioriza contexto operativo concreto frente a afirmaciones genéricas como 'los mejores' o 'líderes'.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "En qué se especializa", "body": "Explica la especialidad real y las situaciones de cliente que el equipo puede atender."},
+            {"title": "Cómo aborda el trabajo", "body": "Describe proceso, estándares o filosofía de servicio mediante aspectos observables."},
+            {"title": "Con quién interactúa el cliente", "body": "Añade personas, roles o equipo solo con información autorizada y actual."}
+          ]
+        },
+        {
+          "label": "Evidencia antes que adjetivos",
+          "title": "Construye autoridad con hechos que la web pueda respaldar.",
+          "body": "La hidratación puede añadir titulaciones, membresías, instalaciones, métodos o experiencia cuando exista evidencia. Los superlativos sin soporte quedan fuera.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Cualificaciones", "body": "Muestra titulaciones o licencias relevantes solo cuando sean actuales, aplicables y verificadas."},
+            {"title": "Método", "body": "Explica pasos operativos repetibles que el cliente pueda esperar realmente."},
+            {"title": "Responsabilidad local", "body": "Conecta el negocio con su ubicación pública, zona de servicio y vías de contacto reales cuando estén confirmadas."}
+          ]
+        }
+      ],
+      "cta": {"title": "Deja que la historia real del negocio apoye el siguiente paso.", "body": "Sustituye este CTA por la vía de contacto verificada más apropiada después de leer esta página.", "button": "Contactar con el negocio"}
+    },
+    "faq": {
+      "eyebrow": "Preguntas frecuentes",
+      "lead": "Una FAQ local útil elimina incertidumbre práctica. Las respuestas deben reflejar oferta, cobertura y proceso reales, no promesas amplias escritas solo para buscadores.",
+      "faq": [
+        {"q": "¿Qué servicios están disponibles realmente?", "a": "Sustituye esta respuesta por el alcance de servicios actualizado y dirige al detalle correspondiente."},
+        {"q": "¿Qué zonas atendéis?", "a": "Sustituye esta respuesta por datos de cobertura mantenidos. No infieras ciudades, barrios ni límites de desplazamiento."},
+        {"q": "¿Cómo solicito presupuesto, reserva o visita?", "a": "Explica el flujo real del cliente y usa únicamente la vía pública configurada por el negocio."},
+        {"q": "¿Qué información debo preparar?", "a": "Enumera solo los datos reales necesarios para evaluar la solicitud, evitando recopilar información personal innecesaria."},
+        {"q": "¿Puedo acudir a una ubicación física?", "a": "Responde desde datos verificados. Si no se atiende al público en un local, explica el modelo real de servicio."}
+      ],
+      "sections": [
+        {
+          "label": "Respuestas mantenibles",
+          "title": "La FAQ debe mantenerse alineada con la operación real.",
+          "body": "No conviertas la FAQ en una segunda página comercial. Mantén respuestas breves, factuales y enlazadas a servicios, ubicaciones o contacto cuando haga falta más detalle.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Cambios de cobertura", "body": "Actualiza primero la fuente autoritativa de cobertura y después mantén coherente la FAQ."},
+            {"title": "Horario y contacto", "body": "Usa los mismos datos públicos mantenidos que aparecen en el resto de la web."},
+            {"title": "Sin inflar FAQ Schema", "body": "El contenido visible va primero; los datos estructurados nunca deben afirmar respuestas ocultas o sin respaldo."}
+          ]
+        }
+      ],
+      "cta": {"title": "¿Aún necesitas una respuesta concreta?", "body": "Hidrata este CTA con el canal real de consulta, sin inventar disponibilidad ni tiempos de respuesta.", "button": "Preguntar al negocio"}
+    },
+    "contact": {
+      "eyebrow": "Contacto",
+      "lead": "La página de contacto debe mostrar las vías reales mantenidas, la ubicación y la disponibilidad que el cliente necesita, sin publicar teléfonos, direcciones u horarios deducidos.",
+      "sections": [
+        {
+          "label": "Vías de contacto verificadas",
+          "title": "Da a cada canal un propósito claro.",
+          "body": "Estas tarjetas están bloqueadas por verificación. Hidrátalas solo con canales que el negocio supervise realmente y quiera que utilicen sus clientes.",
+          "fact_gated": true,
+          "cards": [
+            {"title": "Canal principal", "body": "Añade teléfono, formulario, reserva o email mantenidos y elegidos como vía pública principal."},
+            {"title": "Ubicación física", "body": "Añade dirección de atención y acceso solo cuando las visitas estén realmente admitidas allí."},
+            {"title": "Disponibilidad pública", "body": "Añade horario de apertura o servicio actual únicamente desde una fuente autoritativa mantenida."}
+          ]
+        },
+        {
+          "label": "Una consulta mejor",
+          "title": "Pide solo la información necesaria para dirigir la solicitud.",
+          "body": "El formulario o reserva final debe corresponder al proceso real del negocio. Esta página aporta la arquitectura sin inventar campos, integraciones ni compromisos de servicio.",
+          "fact_gated": false,
+          "cards": [
+            {"title": "Servicio necesario", "body": "Ayuda al visitante a identificar el servicio real o categoría de problema relevante."},
+            {"title": "Ubicación o zona", "body": "Recoge contexto geográfico solo cuando sea necesario para determinar cobertura."},
+            {"title": "Detalles útiles", "body": "Solicita únicamente información necesaria para el siguiente paso y evita datos sensibles salvo que el proceso real los requiera."}
+          ]
+        }
+      ],
+      "cta": {"title": "Usa la vía real que el negocio mantiene.", "body": "El botón final sigue siendo un slot de hidratación hasta configurar un destino público de contacto o reserva verificado.", "button": "Iniciar consulta"}
+    }
+  }
+}
