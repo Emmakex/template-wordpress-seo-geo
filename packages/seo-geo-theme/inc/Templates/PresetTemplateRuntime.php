@@ -69,6 +69,8 @@ final class PresetTemplateRuntime {
 
 	/**
 	 * Render one bundled Corporate template source.
+	 *
+	 * @param string $slug Template slug to resolve.
 	 */
 	private function corporate_template_content( string $slug ): ?string {
 		if ( ! in_array( $slug, self::CORPORATE_TEMPLATES, true ) ) {
