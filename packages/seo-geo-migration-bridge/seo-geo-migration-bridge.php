@@ -40,6 +40,7 @@ spl_autoload_register(
 
 SeoGeo\MigrationBridge\Plugin::boot();
 SeoGeo\MigrationBridge\Reset\PlaceholderPublishingGuard::boot();
+SeoGeo\MigrationBridge\Reset\PlaceholderResolutionTracker::boot();
 SeoGeo\MigrationBridge\Reset\AdminAutomaticHomeContentController::boot_from_plugin();
 SeoGeo\MigrationBridge\Reset\AdminCorporatePagePipelineController::boot_from_plugin();
 SeoGeo\MigrationBridge\Reset\AdminCorporateInsightsController::boot_from_plugin();
