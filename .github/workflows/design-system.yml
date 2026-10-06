@@ -7,12 +7,18 @@ on:
       - 'packages/seo-geo-theme/assets/css/design-system.css'
       - 'packages/seo-geo-theme/assets/css/presets/*.css'
       - 'packages/seo-geo-theme/functions.php'
+      - 'packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php'
+      - 'packages/seo-geo-migration-bridge/src/Reset/AutomaticHomeContentStateKit.php'
+      - 'packages/seo-geo-migration-bridge/src/Reset/PlaceholderPublishingGuard.php'
+      - 'packages/seo-geo-migration-bridge/src/Reset/AdminAutomaticHomeContentController.php'
       - 'scripts/ci/validate-design-system.php'
+      - 'scripts/ci/validate-content-placeholder-contract.php'
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
       - 'docs/DESIGN_BENCHMARK_2026.md'
       - 'docs/DESIGN_SYSTEM_ROADMAP_1_0.md'
+      - 'docs/CONTENT_PLACEHOLDERS.md'
   push:
     branches:
       - main
@@ -21,12 +27,18 @@ on:
       - 'packages/seo-geo-theme/assets/css/design-system.css'
       - 'packages/seo-geo-theme/assets/css/presets/*.css'
       - 'packages/seo-geo-theme/functions.php'
+      - 'packages/seo-geo-migration-bridge/seo-geo-migration-bridge.php'
+      - 'packages/seo-geo-migration-bridge/src/Reset/AutomaticHomeContentStateKit.php'
+      - 'packages/seo-geo-migration-bridge/src/Reset/PlaceholderPublishingGuard.php'
+      - 'packages/seo-geo-migration-bridge/src/Reset/AdminAutomaticHomeContentController.php'
       - 'scripts/ci/validate-design-system.php'
+      - 'scripts/ci/validate-content-placeholder-contract.php'
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
       - 'docs/DESIGN_BENCHMARK_2026.md'
       - 'docs/DESIGN_SYSTEM_ROADMAP_1_0.md'
+      - 'docs/CONTENT_PLACEHOLDERS.md'
 
 permissions:
   contents: read
@@ -37,7 +49,7 @@ concurrency:
 
 jobs:
   design-system:
-    name: Theme token contract
+    name: Theme token + content-state contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -57,5 +69,11 @@ jobs:
       - name: Validate design-system script syntax
         run: bash scripts/ci/php-lint-diagnostic.sh scripts/ci/validate-design-system.php
 
+      - name: Validate semantic placeholder script syntax
+        run: bash scripts/ci/php-lint-diagnostic.sh scripts/ci/validate-content-placeholder-contract.php
+
       - name: Validate semantic tokens and contrast
         run: php scripts/ci/validate-design-system.php
+
+      - name: Validate semantic placeholder and publish-safety contract
+        run: php scripts/ci/validate-content-placeholder-contract.php
