@@ -80,6 +80,7 @@ $runtime->register();
 
 $owned_presets = array(
 	'corporate'            => 'seo-geo-corporate-system-surface',
+	'ecommerce'            => 'seo-geo-commerce-system-surface',
 	'local-business'       => 'seo-geo-local-system-surface',
 	'publisher'            => 'seo-geo-publisher-system-surface',
 	'saas-digital-product' => 'seo-geo-saas-system-surface',
@@ -96,18 +97,18 @@ foreach ( $owned_presets as $preset_id => $marker ) {
 	}
 }
 
-$GLOBALS['seo_geo_runtime_test_preset'] = 'ecommerce';
+$GLOBALS['seo_geo_runtime_test_preset'] = 'future-neutral-preset';
 $neutral_original = runtime_test_template( 'single', 'theme', 'keep-neutral' );
 $neutral_result   = $runtime->filter_template( $neutral_original, 'seo-geo-theme//single', 'wp_template' );
 if ( $neutral_result !== $neutral_original || 'keep-neutral' !== $neutral_result->content ) {
 	runtime_test_fail( 'A preset without final system templates did not keep the neutral Theme template.' );
 }
 
-$GLOBALS['seo_geo_runtime_test_preset'] = 'publisher';
+$GLOBALS['seo_geo_runtime_test_preset'] = 'ecommerce';
 $custom_original = runtime_test_template( 'single', 'custom', 'site-editor-custom' );
 $custom_result   = $runtime->filter_template( $custom_original, 'seo-geo-theme//single', 'wp_template' );
 if ( $custom_result !== $custom_original || 'site-editor-custom' !== $custom_result->content ) {
-	runtime_test_fail( 'Site Editor custom template was overridden by the Publisher preset runtime.' );
+	runtime_test_fail( 'Site Editor custom template was overridden by the Ecommerce preset runtime.' );
 }
 
 $type_original = runtime_test_template( 'single', 'theme', 'wrong-type-neutral' );
