@@ -133,9 +133,11 @@ def main() -> int:
     require(
         stable,
         (
-            "## Product-portfolio boundary",
-            "not** a new dependency or blocker for Theme 0.1.1",
-            "deprecated standalone Core wrapper is not renamed or promoted into Manager",
+            "## Product boundary",
+            "SEO/GEO Manager is a separate future plugin product.",
+            "not a dependency or blocker for Theme `0.1.1` stable acceptance",
+            "Migration Bridge is the accepted migration/reset implementation for this Theme pilot.",
+            "deprecated-retained-nondistributed",
         ),
         "STABLE_RELEASE_DECISION.md",
     )
@@ -143,9 +145,10 @@ def main() -> int:
     require(
         pilot,
         (
-            "## Two-product scope",
-            "Theme 0.1.0 stable gate does **not** wait for the future SEO/GEO Manager",
-            "Theme + Manager",
+            "## Stable promotion boundary",
+            "The stable gate does not wait for SEO/GEO Manager.",
+            "Manager is a separate later product roadmap.",
+            "Theme `0.1.1` may move from `prestable` to `stable` only after real production acceptance exists",
         ),
         "REAL_SITE_PILOT.md",
     )

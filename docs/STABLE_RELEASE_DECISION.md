@@ -1,90 +1,113 @@
 # Stable release decision
 
-Phase 10E is the final gate for promoting the self-contained SEO/GEO theme from `prestable` to the first stable release.
+Phase 10E is the final gate for promoting the self-contained SEO/GEO Theme from `prestable` to the first stable release.
 
 ## Current decision
 
 **NO-GO for stable release.**
 
-The target remains `0.1.1` with `release_channel=prestable`.
+Target release: `0.1.1`.
 
-Technical implementation, release packaging, onboarding, upgrade/rollback, client-delivery and production-readiness contracts are complete through Phase 10D. The remaining blocker is deliberately external to repository-only acceptance:
+Release channel: `prestable`.
 
-- a selected real WordPress site must complete sandbox validation;
-- the accepted candidate must then complete the bounded production verification from Phase 10D;
-- the resulting real-site acceptance must be recorded by reference without copying secrets/private payloads into the repository.
+The Theme, five-preset Design System, packaging, onboarding, upgrade/rollback, client delivery and repository-side production-readiness contracts are complete. The remaining blocker is real-site acceptance on EMMAKE followed by bounded production verification.
 
-No real-site production acceptance is fabricated by this repository.
+A green repository build alone is not sufficient to declare stable.
+
+## Canonical Phase 10E candidate
+
+The machine-readable source of truth is:
+
+`release/emmake-phase10e-candidate.json`
+
+The currently frozen field candidate is:
+
+- source commit: `d3f4022ff2f46c2ee965bae561217b990bf2edf0`;
+- Theme: `0.1.1` / `prestable`;
+- Theme ZIP SHA-256: `313796fde03e0204a334d204098222e5d0521b9efeb2ec622fbd92c0522b8c15`;
+- Migration Bridge: `0.8.60`;
+- Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
+- deterministic EMMAKE field-pilot pack SHA-256: `6a84f39d2a5944eec57d60b74f09171a1e40303f4a53732bd922c0b5b4b01999`.
+
+The repository may advance with documentation or validation-only commits after the source commit above. That does not silently change the frozen field artifact. Any Theme, Migration Bridge, runbook, blueprint or pack-content change requires a new deterministic pack and an explicit update of `release/emmake-phase10e-candidate.json`.
+
+`EMMAKE Field Pilot Pack CI` rebuilds the package and rejects any version or SHA drift from this canonical record.
 
 ## Selected real-site pilot
 
-The first acceptance target is `https://emmake.com`.
+Production origin: `https://emmake.com/`.
 
-The current prestable repository candidate is `7240b9de067e81fb189dff06aa842e6ce79d141e`, with deterministic Theme release ZIP SHA-256 `ad2ec2365ba1dfef5b79ef2df78671adc379af37604d36577d35b72b546b498e` and Migration Bridge `0.8.60` ZIP SHA-256 `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`.
+Sandbox: `https://emmake.com/nuevaweb/`.
 
-PR #234 was merged as `7240b9de067e81fb189dff06aa842e6ce79d141e`. The post-merge Release Artifact, Migration Bridge Release and Accessibility & Responsive jobs were re-run after runner-side cancellations and completed successfully. The detailed pilot sequence is documented in `docs/REAL_SITE_PILOT.md`.
+The working `/nuevaweb/` clone already proved the product-owned clone path and historical Divi-to-native migration work. Those milestones are useful evidence, but they do not substitute for acceptance of the frozen Theme `0.1.1` candidate.
 
-The real clone to `https://emmake.com/nuevaweb/` was field-verified on 2026-10-03 using Migration Bridge 1.0.8. That removes the practical clone-transport blocker, but the current Theme 0.1.1 / Migration Bridge 0.8.60 candidate still needs real-sandbox browser/content/SEO-GEO acceptance and the public production origin still needs Phase 10D verification. Therefore the stable decision remains **NO-GO**.
+The current field sequence is defined in `docs/EMMAKE_HOME_FIELD_PILOT.md` and summarized in `docs/REAL_SITE_PILOT.md`.
 
-## Product-portfolio boundary
+## Remaining stable-release blocker
 
-The new SEO/GEO Manager roadmap is **not** a new dependency or blocker for Theme 0.1.1. Theme stable acceptance still depends only on the existing Phase 10E real-site sandbox + production evidence.
+Phase 10E remains `no-go` until all of the following are real and recorded:
 
-SEO/GEO Manager is a separate future plugin product with its own version/release acceptance. The current Migration Bridge may be used for the Theme pilot, then its accepted capabilities can be absorbed into Manager in a later phase with regression parity.
+1. the frozen candidate is installed only on the isolated `/nuevaweb/` sandbox;
+2. Reset & Rebuild completes without carrying legacy presentation debt;
+3. the Corporate preset is hydrated from rescued/client facts and content;
+4. native SEO/GEO handoff has no unresolved review blocker;
+5. field-pilot Step 7 reports `ready_for_browser_qa=true`;
+6. browser QA passes visual, responsive, accessibility, SEO/GEO rendered-output and performance checks;
+7. the sandbox is explicitly accepted for controlled production entry;
+8. production verification completes without a rollback trigger;
+9. only a bounded acceptance reference, never credentials or private payloads, is stored in the repository.
 
-The deprecated standalone Core wrapper is not renamed or promoted into Manager.
+Until production acceptance exists, `release/stable-release-decision.json` must remain:
 
-## Transitional Core wrapper decision
+- `decision=no-go`;
+- `real_site_acceptance.status=pending`;
+- `real_site_acceptance.reference=null`;
+- blocker `real-site-production-acceptance-pending` present.
 
-The standalone `packages/seo-geo-core/seo-geo-core.php` wrapper is:
+## Product boundary
+
+SEO/GEO Manager is a separate future plugin product. It is not a dependency or blocker for Theme `0.1.1` stable acceptance.
+
+Migration Bridge is the accepted migration/reset implementation for this Theme pilot. Its later absorption or reuse inside Manager must preserve regression parity, but that later roadmap cannot postpone the Theme release gate.
+
+## Transitional Core wrapper
+
+The standalone `packages/seo-geo-core/seo-geo-core.php` wrapper remains:
 
 **deprecated-retained-nondistributed**
 
-Meaning:
+It is retained only as a temporary source/development compatibility path, is not a baseline dependency and is not included in the self-contained Theme release ZIP.
 
-- deprecated for new installation/deployment paths;
-- retained temporarily in source for compatibility/development workflows;
-- not a baseline dependency;
-- not included in the deterministic single-theme release ZIP;
-- not required by self-contained, onboarding, upgrade or production-readiness acceptance;
-- removal is deferred until after the first stable-release acceptance confirms no remaining supported workflow depends on the wrapper.
-
-New client deployments must use the self-contained theme artifact rather than installing the Core wrapper.
-
-## Why retain it for now
-
-Removing the wrapper before the first real-site acceptance would not simplify the distributed artifact because the wrapper is already absent from that artifact. It would only remove a compatibility/development entry point before the final field validation is complete.
-
-Retention therefore has no production-runtime cost while preserving a controlled fallback for development during the first stable-release gate.
+New client deployments use the self-contained Theme artifact rather than installing the Core wrapper.
 
 ## Automated decision contract
 
-`release/stable-release-decision.json` is the machine-readable Phase 10E decision.
-
 `scripts/ci/validate-stable-release-decision.py` enforces:
 
-- target version consistency with `release/version.json`;
-- `no-go` requires `release_channel=prestable`;
-- `go` requires `release_channel=stable`;
-- a stable `go` requires real-site acceptance status `accepted` and a non-empty bounded reference;
-- a `no-go` must keep at least one explicit blocker;
-- wrapper disposition must match the actual repository/distribution boundary;
-- changelog state must match the decision.
+- stable decision ↔ `release/version.json` consistency;
+- stable decision ↔ canonical Phase 10E candidate consistency;
+- candidate target, versions and SHA syntax;
+- candidate identity markers in this document and `docs/REAL_SITE_PILOT.md`;
+- `no-go` ↔ `prestable` and pending real-site evidence;
+- `go` ↔ `stable` and accepted bounded evidence;
+- changelog state;
+- Core wrapper distribution boundary.
 
-Release Artifact CI and Foundation CI both enforce this contract.
+`EMMAKE Field Pilot Pack CI` separately rebuilds Theme, Migration Bridge and the field pack byte-for-byte and verifies their SHA-256 identities against `release/emmake-phase10e-candidate.json`.
 
 ## Promotion from no-go to go
 
-Only after real-site sandbox + production acceptance:
+Only after real sandbox and production acceptance:
 
-1. complete the client-owned production acceptance record using the Phase 10D schema;
-2. store only a bounded evidence reference in `release/stable-release-decision.json`;
-3. change `real_site_acceptance.status` to `accepted`;
-4. clear all blockers;
-5. change `decision` to `go`;
-6. change `release/version.json` from `prestable` to `stable`;
-7. convert the target changelog entry from Unreleased to a released `0.1.1` entry;
-8. run Foundation + Release Artifact CI and all gates required by any code/content changes made during the real-site acceptance cycle;
-9. publish a stable release only after those gates are green.
+1. complete the bounded production acceptance record;
+2. store its reference in `release/stable-release-decision.json`;
+3. update the canonical Phase 10E candidate acceptance state;
+4. change real-site acceptance to `accepted`;
+5. clear blockers;
+6. change the stable decision to `go`;
+7. change `release/version.json` from `prestable` to `stable`;
+8. convert the target changelog entry from Unreleased to released `0.1.1`;
+9. run Foundation, Release Artifact, field-pilot and any affected quality gates again;
+10. publish stable only when all required checks are green.
 
-A successful repository CI run without the real-site acceptance reference is insufficient to promote the release.
+No production evidence is fabricated or inferred from repository CI.

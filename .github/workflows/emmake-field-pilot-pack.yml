@@ -9,6 +9,7 @@ on:
       - 'examples/content-blueprints/emmake-home.es_ES.json'
       - 'docs/EMMAKE_HOME_FIELD_PILOT.md'
       - 'release/version.json'
+      - 'release/emmake-phase10e-candidate.json'
       - 'scripts/build-migration-bridge-release.py'
       - 'scripts/build-theme-package.sh'
       - 'scripts/build-theme-release.py'
@@ -25,6 +26,7 @@ on:
       - 'examples/content-blueprints/emmake-home.es_ES.json'
       - 'docs/EMMAKE_HOME_FIELD_PILOT.md'
       - 'release/version.json'
+      - 'release/emmake-phase10e-candidate.json'
       - 'scripts/build-migration-bridge-release.py'
       - 'scripts/build-theme-package.sh'
       - 'scripts/build-theme-release.py'
@@ -59,14 +61,17 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
-          python3 -m py_compile             scripts/build-emmake-field-pilot-pack.py             scripts/ci/emmake-field-pilot-pack-acceptance.py
+          python3 -m py_compile \
+            scripts/build-emmake-field-pilot-pack.py \
+            scripts/ci/emmake-field-pilot-pack-acceptance.py
 
       - name: Field-pilot pack acceptance
         run: python3 scripts/ci/emmake-field-pilot-pack-acceptance.py
 
       - name: Build field-pilot pack
         run: |
-          python3 scripts/build-emmake-field-pilot-pack.py             --output dist-field-pilot/emmake-home-field-pilot-pack.zip
+          python3 scripts/build-emmake-field-pilot-pack.py \
+            --output dist-field-pilot/emmake-home-field-pilot-pack.zip
 
       - name: Preserve field-pilot pack
         uses: actions/upload-artifact@v4
