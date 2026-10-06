@@ -54,12 +54,25 @@ function seo_geo_theme_enqueue_styles(): void {
 		return;
 	}
 
+	$preset_handle = 'seo-geo-theme-preset-' . $preset_id;
 	wp_enqueue_style(
-		'seo-geo-theme-preset-' . $preset_id,
+		$preset_handle,
 		get_stylesheet_directory_uri() . '/assets/css/presets/' . $preset_id . '.css',
 		array( 'seo-geo-theme' ),
 		(string) filemtime( $preset_stylesheet )
 	);
+
+	if ( 'corporate' === $preset_id ) {
+		$visual_stylesheet = get_stylesheet_directory() . '/assets/css/presets/corporate-v2.css';
+		if ( is_readable( $visual_stylesheet ) ) {
+			wp_enqueue_style(
+				'seo-geo-theme-preset-corporate-v2',
+				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v2.css',
+				array( $preset_handle ),
+				(string) filemtime( $visual_stylesheet )
+			);
+		}
+	}
 }
 add_action( 'wp_enqueue_scripts', 'seo_geo_theme_enqueue_styles' );
 
