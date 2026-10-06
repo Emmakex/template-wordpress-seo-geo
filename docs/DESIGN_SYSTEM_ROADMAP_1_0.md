@@ -180,9 +180,9 @@ Local Pro is closed at implementation/CI level. This still does not make the The
 
 ### DS-5 — Publisher / Creative transition
 
-**Status: active**
+**Status: complete in code/CI**
 
-Upgrade the existing `publisher` compatibility surface into the final editorial/creative product direction without silently breaking the existing preset ID, editorial model or migrations.
+The existing `publisher` compatibility surface is now the final editorial/creative preset direction without breaking its preset ID, editorial model or migrations.
 
 #### DS-5A — Publisher final Home
 
@@ -226,11 +226,11 @@ The page template retains document-H1 ownership. The existing Publisher authorit
 
 #### DS-5C — Publisher system surfaces
 
-**Status: implementation candidate**
+**Status: complete in code/CI**
 
-Current branch: `feat/publisher-final-system-surfaces`.
+Delivered and merged on PR #248 with 14/14 workflows green. The merge landed on `main` as `a3d6137c50f28017e5e4f78658946dae14878890`; the complete 14-workflow post-merge battery also passed with zero failures.
 
-Candidate scope:
+The accepted system layer provides:
 
 - Single — category, document H1, native WordPress date/author, featured media, authored content, author biography and previous/next navigation;
 - Archive — real archive title/description, real public posts, native dates/authors, no-results search and pagination;
@@ -238,27 +238,71 @@ Candidate scope:
 - generalized preset-template runtime extended to Publisher while preserving Corporate, SaaS and Local Pro behavior;
 - Site Editor `source=custom` templates remain authoritative;
 - unsupported presets/slugs and missing files continue to fail safe to the neutral Theme template;
-- `ecommerce` remains neutral until DS-6 and is used as the executable isolation control;
 - system templates contain no hard-coded authors, citations, source URLs, dates, popularity counters, reviewer/fact-checker identities, Schema evidence or remote content;
 - no additional Publisher CSS and no required project JavaScript.
 
-DS-5C must pass the existing Publisher semantic, Home and inner-page contracts, the dedicated system-surface contract, executable 4×3 runtime isolation/fallback coverage, WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge.
+The runtime now has four finished preset owners — Corporate, SaaS, Local Pro and Publisher — each with Single/Archive/404 isolation. Ecommerce remains neutral until its dedicated DS-6 system-surface microphase.
 
 #### DS-5D — Publisher visual/performance acceptance
 
-**Status: active with DS-5C**
+**Status: complete in code/CI**
 
-Publisher closes at implementation/CI level only after DS-5C is merged with the complete acceptance battery green. Phase 10E real-site acceptance remains a separate release gate.
+Publisher is closed at implementation/CI level. Phase 10E real-site acceptance remains a separate release gate and Theme stable is not declared from preset CI alone.
 
 ### DS-6 — Ecommerce final preset
 
-**Status: queued**
+**Status: active**
 
-Create a complete Commerce/Product direction while preserving WooCommerce/provider boundaries and avoiding fabricated products, reviews, prices or stock claims.
+Create the fifth and final 99%-finished preset while preserving commerce-provider authority. A clean install must look like a modern store, but the Theme must never fabricate a product, price, discount, stock state, availability, rating, review, shipping promise, return window, warranty, certification or payment method.
+
+WooCommerce is the preferred provider, but live commerce support requires an accepted adapter. Product/Offer/Review/AggregateRating Schema, price, availability, reviews, cart, checkout and account remain provider-owned.
+
+#### DS-6A — Ecommerce final Home
+
+**Status: implementation candidate**
+
+Current branch: `feat/ecommerce-final-home`.
+
+Candidate scope:
+
+- product-discovery Hero with provisional local-only visual media;
+- useful category-entry hierarchy without keyword-only duplicates;
+- featured-catalog layout slots that cannot masquerade as real products;
+- provider authority surface that keeps product identity and commerce facts external until an adapter is active;
+- decision-confidence layer for delivery, returns and support, all blocked until verified store policy is hydrated;
+- buying-guidance module for comparison and fit questions;
+- brand/editorial surface without unsupported quality or leadership claims;
+- crawlable policy-navigation structure;
+- final shop action that remains a verified-route placeholder until a real shop route exists;
+- complete EN/ES provisional copy outside the renderer;
+- explicit `seo-geo-placeholder--commerce` gates for catalog, routes and policies;
+- zero required frontend JavaScript, remote fonts or third-party visual dependencies.
+
+The front-page template retains document-H1 ownership. DS-6A may look visually complete without WooCommerce, but it does not claim live-commerce capability until a supported adapter exists.
+
+DS-6A must pass the dedicated Ecommerce Home/provider contract, PHP/WPCS/PHPStan, WordPress activation, self-contained Theme, accessibility/responsive, native multilingual and strict Lighthouse budgets before merge. Performance limits may not be raised to accommodate the new visual layer.
+
+#### DS-6B — Ecommerce inner/editorial-commerce pages
+
+**Status: queued after Home**
+
+Finish Shop discovery shell, Categories, Buying Guides, About, Support and Contact while preserving provider-owned product facts and verified policy/contact routes.
+
+#### DS-6C — Ecommerce system/provider surfaces
+
+**Status: queued after inner pages**
+
+Add Ecommerce-owned Single/Archive/404 surfaces only after Home and inner pages are accepted. Product/PLP/PDP/cart/checkout/account behavior remains provider/adapter-owned rather than being silently reimplemented by the Theme.
+
+#### DS-6D — Ecommerce visual/performance acceptance
+
+**Status: active with DS-6A**
+
+Ecommerce closes at implementation/CI level only after DS-6A/B/C are merged with the complete acceptance battery green. Phase 10E real-site acceptance remains a separate release gate.
 
 ### DS-7 — Five-preset acceptance
 
-**Status: blocked by DS-5 through DS-6**
+**Status: blocked by DS-6**
 
 All five product-facing presets must pass:
 
