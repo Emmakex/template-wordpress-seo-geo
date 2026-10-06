@@ -128,6 +128,9 @@ function seo_geo_theme_preset_localized_value( $localized, string $key ): ?strin
  *
  * Keeping these patterns outside /patterns preserves the generic Theme contract
  * while allowing each preset to ship complete final mockups.
+ *
+ * @param string $preset_id     Active allowlisted preset identifier.
+ * @param string $category_slug Registered block-pattern category slug.
  */
 function seo_geo_theme_register_final_mockup_pattern( string $preset_id, string $category_slug ): void {
 	if ( 'corporate' !== $preset_id || ! function_exists( 'register_block_pattern' ) ) {
