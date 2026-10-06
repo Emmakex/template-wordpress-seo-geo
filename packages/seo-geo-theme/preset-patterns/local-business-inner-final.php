@@ -40,8 +40,8 @@ $seo_geo_local_inner_page = is_array( $seo_geo_local_inner_current )
 	? array_replace_recursive( $seo_geo_local_inner_fallback, $seo_geo_local_inner_current )
 	: $seo_geo_local_inner_fallback;
 
-$seo_geo_local_inner_eyebrow = $seo_geo_local_inner_page['eyebrow'] ?? '';
-$seo_geo_local_inner_lead    = $seo_geo_local_inner_page['lead'] ?? '';
+$seo_geo_local_inner_eyebrow  = $seo_geo_local_inner_page['eyebrow'] ?? '';
+$seo_geo_local_inner_lead     = $seo_geo_local_inner_page['lead'] ?? '';
 $seo_geo_local_inner_sections = $seo_geo_local_inner_page['sections'] ?? array();
 $seo_geo_local_inner_cta      = $seo_geo_local_inner_page['cta'] ?? array();
 $seo_geo_local_inner_faq      = $seo_geo_local_inner_page['faq'] ?? array();
