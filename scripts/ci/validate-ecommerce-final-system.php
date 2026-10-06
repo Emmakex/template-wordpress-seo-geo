@@ -121,8 +121,8 @@ foreach ( $template_fragments as $slug => $fragments ) {
 	if ( ! is_string( $evidence_content ) ) {
 		$evidence_content = $content;
 	}
-	if ( 1 === preg_match( '/https?:\/\/|mailto:|tel:|application\/ld\+json|schema\.org|Product|Offer|AggregateRating|Review|woocommerce\/|wc-block|single-product|archive-product|add-to-cart|checkout|my-account|[$€£]\s*\d/i', $evidence_content, $match ) ) {
-		fail_ecommerce_final_system( 'invented-commerce-evidence', 'Ecommerce system templates must not hard-code provider-owned commerce evidence, blocks, routes or prices.', $path, 'no remote/contact/schema/product/price/provider evidence', $match[0] );
+	if ( 1 === preg_match( '/https?:\/\/|mailto:|tel:|application\/ld\+json|schema\.org|AggregateRating|woocommerce\/|wc-block|single-product|archive-product|add-to-cart|checkout|my-account|\bprice\b|\bstock\b|\bavailability\b|\brating\b|\breview\b|[$€£]\s*\d/i', $evidence_content, $match ) ) {
+		fail_ecommerce_final_system( 'invented-commerce-evidence', 'Ecommerce system templates must not hard-code provider-owned commerce evidence, blocks, routes or prices.', $path, 'no remote/contact/schema/price/stock/rating/provider evidence', $match[0] );
 	}
 }
 
