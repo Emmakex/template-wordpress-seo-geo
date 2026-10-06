@@ -6,7 +6,7 @@ Phase 10E is the final gate for promoting the self-contained SEO/GEO theme from 
 
 **NO-GO for stable release.**
 
-The target remains `0.1.0` with `release_channel=prestable`.
+The target remains `0.1.1` with `release_channel=prestable`.
 
 Technical implementation, release packaging, onboarding, upgrade/rollback, client-delivery and production-readiness contracts are complete through Phase 10D. The remaining blocker is deliberately external to repository-only acceptance:
 
@@ -20,15 +20,15 @@ No real-site production acceptance is fabricated by this repository.
 
 The first acceptance target is `https://emmake.com`.
 
-The accepted repository candidate is `d3ff8353c08cfce6c796837a74e372ba7daf0073`, with deterministic release ZIP SHA-256 `dae8da490526fd3584387324bc1bc596d17ad5e681513927c0468b48e786ebba`.
+The current prestable repository candidate is `7240b9de067e81fb189dff06aa842e6ce79d141e`, with deterministic Theme release ZIP SHA-256 `ad2ec2365ba1dfef5b79ef2df78671adc379af37604d36577d35b72b546b498e` and Migration Bridge `0.8.60` ZIP SHA-256 `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`.
 
-PR #111 candidate and post-merge `main` both passed all seven triggered gates. The detailed pilot sequence is documented in `docs/REAL_SITE_PILOT.md`.
+PR #234 was merged as `7240b9de067e81fb189dff06aa842e6ce79d141e`. The post-merge Release Artifact, Migration Bridge Release and Accessibility & Responsive jobs were re-run after runner-side cancellations and completed successfully. The detailed pilot sequence is documented in `docs/REAL_SITE_PILOT.md`.
 
-The real clone to `https://emmake.com/nuevaweb/` was field-verified on 2026-10-03 using Migration Bridge 1.0.8. That removes the practical clone-transport blocker, but the Theme candidate still needs sandbox migration/parity/quality acceptance and the public production origin still needs Phase 10D verification. Therefore the stable decision remains **NO-GO**.
+The real clone to `https://emmake.com/nuevaweb/` was field-verified on 2026-10-03 using Migration Bridge 1.0.8. That removes the practical clone-transport blocker, but the current Theme 0.1.1 / Migration Bridge 0.8.60 candidate still needs real-sandbox browser/content/SEO-GEO acceptance and the public production origin still needs Phase 10D verification. Therefore the stable decision remains **NO-GO**.
 
 ## Product-portfolio boundary
 
-The new SEO/GEO Manager roadmap is **not** a new dependency or blocker for Theme 0.1.0. Theme stable acceptance still depends only on the existing Phase 10E real-site sandbox + production evidence.
+The new SEO/GEO Manager roadmap is **not** a new dependency or blocker for Theme 0.1.1. Theme stable acceptance still depends only on the existing Phase 10E real-site sandbox + production evidence.
 
 SEO/GEO Manager is a separate future plugin product with its own version/release acceptance. The current Migration Bridge may be used for the Theme pilot, then its accepted capabilities can be absorbed into Manager in a later phase with regression parity.
 
@@ -83,7 +83,7 @@ Only after real-site sandbox + production acceptance:
 4. clear all blockers;
 5. change `decision` to `go`;
 6. change `release/version.json` from `prestable` to `stable`;
-7. convert the target changelog entry from Unreleased to a released `0.1.0` entry;
+7. convert the target changelog entry from Unreleased to a released `0.1.1` entry;
 8. run Foundation + Release Artifact CI and all gates required by any code/content changes made during the real-site acceptance cycle;
 9. publish a stable release only after those gates are green.
 

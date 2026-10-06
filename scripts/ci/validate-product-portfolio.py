@@ -134,7 +134,7 @@ def main() -> int:
         stable,
         (
             "## Product-portfolio boundary",
-            "not** a new dependency or blocker for Theme 0.1.0",
+            "not** a new dependency or blocker for Theme 0.1.1",
             "deprecated standalone Core wrapper is not renamed or promoted into Manager",
         ),
         "STABLE_RELEASE_DECISION.md",
