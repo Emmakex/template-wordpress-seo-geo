@@ -45,17 +45,29 @@ function saas_final_file( string $path ): string {
 	return $content;
 }
 
-$mockup_path = SAAS_FINAL_PRESET_DIR . '/mockup.json';
-$mockup_raw  = saas_final_file( $mockup_path );
-try {
-	$mockup = json_decode( $mockup_raw, true, 512, JSON_THROW_ON_ERROR );
-} catch ( JsonException $exception ) {
-	fail_saas_final_home( 'mockup-json', 'SaaS mockup contract is invalid JSON.', $mockup_path, 'valid JSON', $exception->getMessage() );
+/**
+ * Decode one required JSON object.
+ *
+ * @return array<string,mixed>
+ */
+function saas_final_json( string $path ): array {
+	$raw = saas_final_file( $path );
+
+	try {
+		$value = json_decode( $raw, true, 512, JSON_THROW_ON_ERROR );
+	} catch ( JsonException $exception ) {
+		fail_saas_final_home( 'json-invalid', 'Required SaaS contract is invalid JSON.', $path, 'valid JSON object', $exception->getMessage() );
+	}
+
+	if ( ! is_array( $value ) ) {
+		fail_saas_final_home( 'json-object', 'Required SaaS contract must decode to an object.', $path, 'JSON object', gettype( $value ) );
+	}
+
+	return $value;
 }
 
-if ( ! is_array( $mockup ) ) {
-	fail_saas_final_home( 'mockup-object', 'SaaS mockup must decode to an object.', $mockup_path, 'JSON object', gettype( $mockup ) );
-}
+$mockup_path = SAAS_FINAL_PRESET_DIR . '/mockup.json';
+$mockup      = saas_final_json( $mockup_path );
 
 $expected_contract = array(
 	'preset'               => 'saas-digital-product',
@@ -88,6 +100,51 @@ if ( true !== ( $mockup['acceptance']['performance_budgets_must_not_be_relaxed']
 	fail_saas_final_home( 'budget-policy', 'SaaS final Home must preserve existing performance budgets.', $mockup_path . '#acceptance.performance_budgets_must_not_be_relaxed', true, $mockup['acceptance']['performance_budgets_must_not_be_relaxed'] ?? null );
 }
 
+$copy_path = SAAS_FINAL_PRESET_DIR . '/mockup-copy.json';
+$copy_raw  = saas_final_file( $copy_path );
+$copy_doc  = saas_final_json( $copy_path );
+
+if ( 'placeholder' !== ( $copy_doc['provenance'] ?? null ) || false !== ( $copy_doc['publication_ready'] ?? null ) ) {
+	fail_saas_final_home(
+		'copy-provenance',
+		'SaaS provisional mockup copy must remain explicitly placeholder and non-publishable.',
+		$copy_path,
+		array( 'provenance' => 'placeholder', 'publication_ready' => false ),
+		array( 'provenance' => $copy_doc['provenance'] ?? null, 'publication_ready' => $copy_doc['publication_ready'] ?? null )
+	);
+}
+
+$copy_es = $copy_doc['es_ES'] ?? null;
+$copy_en = $copy_doc['en_US'] ?? null;
+if ( ! is_array( $copy_es ) || ! is_array( $copy_en ) ) {
+	fail_saas_final_home( 'copy-locales', 'SaaS provisional mockup copy requires complete ES and EN locale maps.', $copy_path, 'es_ES + en_US objects', array_keys( $copy_doc ) );
+}
+
+$keys_es = array_keys( $copy_es );
+$keys_en = array_keys( $copy_en );
+sort( $keys_es );
+sort( $keys_en );
+if ( $keys_es !== $keys_en || count( $keys_en ) < 40 ) {
+	fail_saas_final_home( 'copy-parity', 'SaaS provisional copy locales must expose the same complete slot contract.', $copy_path, 'matching ES/EN keys with at least 40 slots', array( 'es' => count( $keys_es ), 'en' => count( $keys_en ) ) );
+}
+
+foreach ( array( 'kicker', 'lead', 'primary', 'secondary', 'preview_note', 'value_title', 'integration_empty', 'plans_title', 'faq_title', 'cta_title', 'cta_button' ) as $required_key ) {
+	foreach ( array( 'es_ES' => $copy_es, 'en_US' => $copy_en ) as $locale => $localized_copy ) {
+		$value = $localized_copy[ $required_key ] ?? null;
+		if ( ! is_string( $value ) || '' === trim( $value ) ) {
+			fail_saas_final_home( 'copy-required', 'SaaS provisional copy lost a required hydration slot.', $copy_path . '#' . $locale . '.' . $required_key, 'non-empty string', $value );
+		}
+	}
+}
+
+if ( 1 === preg_match( '/https?:\/\//i', $copy_raw, $match ) ) {
+	fail_saas_final_home( 'copy-remote-url', 'Provisional SaaS copy must not smuggle remote evidence or dependencies into the mockup.', $copy_path, 'no remote URL', $match[0] );
+}
+
+if ( 1 === preg_match( '/(?:€|\$|£)\s*[0-9]|[0-9]\s*(?:€|\$|£)/', $copy_raw, $match ) ) {
+	fail_saas_final_home( 'copy-invented-pricing', 'SaaS provisional copy must not contain numeric pricing before verified commercial hydration.', $copy_path, 'no numeric currency values', $match[0] );
+}
+
 $pattern_path = SAAS_FINAL_THEME_DIR . '/preset-patterns/saas-home-final.php';
 $pattern      = saas_final_file( $pattern_path );
 
@@ -96,6 +153,8 @@ if ( str_contains( $pattern, '"level":1' ) || 1 === preg_match( '/<h1\b/i', $pat
 }
 
 $required_pattern_fragments = array(
+	'mockup-copy.json',
+	'wp_json_file_decode',
 	'seo-geo-saas-hero',
 	'seo-geo-saas-product-frame',
 	'seo-geo-bento',
@@ -120,10 +179,6 @@ if ( substr_count( $pattern, 'seo-geo-placeholder--copy' ) < 12 ) {
 
 if ( 1 === preg_match( '/https?:\/\/|<!--\s*wp:html\b|<\s*script\b|<\s*style\b|application\/ld\+json|schema\.org/i', $pattern, $match ) ) {
 	fail_saas_final_home( 'unsafe-pattern', 'SaaS final Home must stay local, native and non-authoritative for Schema.', $pattern_path, 'no remote/html/script/style/schema payload', $match[0] );
-}
-
-if ( 1 === preg_match( '/(?:€|\$|£)\s*[0-9]|[0-9]\s*(?:€|\$|£)/', $pattern, $match ) ) {
-	fail_saas_final_home( 'invented-pricing', 'SaaS final Home must not ship numeric pricing before verified commercial hydration.', $pattern_path, 'no numeric currency values', $match[0] );
 }
 
 $design_css_path = SAAS_FINAL_THEME_DIR . '/assets/css/design-system.css';
