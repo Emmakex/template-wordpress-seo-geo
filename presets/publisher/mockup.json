@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "preset": "publisher",
+  "product_facing_name": "Editorial / Publisher",
+  "target_state": "99-percent-finished-before-client-content",
+  "current_stage": "home-candidate",
+  "design_rule": "final-layout-first-then-content-hydration",
+  "legacy_layout_policy": "never-a-design-source",
+  "visual_runtime": {
+    "required_frontend_javascript": false,
+    "remote_fonts": false,
+    "remote_visual_dependencies": false,
+    "real_media_policy": "replace-provisional-visuals-only-with-authorized-editorial-media"
+  },
+  "pages": {
+    "home": {
+      "required": true,
+      "composition": "publisher-home-final-v1",
+      "status": "candidate",
+      "owns_h1": false,
+      "sections": [
+        "editorial-lead",
+        "priority-stories",
+        "topic-navigation",
+        "editorial-standards",
+        "evergreen-resources",
+        "author-discovery",
+        "newsletter-follow"
+      ]
+    },
+    "articles": {"required": true, "status": "next-microphase"},
+    "topics": {"required": true, "status": "next-microphase"},
+    "authors": {"required": true, "status": "next-microphase"},
+    "about": {"required": true, "status": "next-microphase"},
+    "editorial-policy": {"required": true, "status": "next-microphase"},
+    "contact": {"required": true, "status": "next-microphase"},
+    "single": {"required": true, "status": "next-microphase"},
+    "archive": {"required": true, "status": "next-microphase"},
+    "404": {"required": true, "status": "next-microphase"}
+  },
+  "placeholder_policy": {
+    "allowed_in_private_candidate": true,
+    "blocks_publication_until_resolved": true,
+    "allowed_types": [
+      "editorial-copy",
+      "topic-labels",
+      "story-titles",
+      "story-summaries",
+      "author-discovery-copy",
+      "newsletter-copy",
+      "provisional-editorial-visual"
+    ],
+    "forbidden_claims": [
+      "fabricated-author-identity",
+      "fabricated-author-credentials",
+      "fabricated-citations",
+      "fabricated-source-urls",
+      "fabricated-publication-dates",
+      "fabricated-modification-dates",
+      "fabricated-read-counts",
+      "fabricated-subscriber-counts",
+      "fabricated-awards",
+      "fabricated-breaking-news-status"
+    ]
+  },
+  "hydration_contract": {
+    "preserve_layout": true,
+    "preserve_component_hierarchy": true,
+    "replace_placeholder_copy": true,
+    "replace_story_slots_from_real_content": true,
+    "replace_author_slots_from_public_wordpress_users": true,
+    "replace_source_slots_only_from_editor_added_references": true,
+    "replace_dates_only_from_wordpress_post_timestamps": true,
+    "replace_media_only_from_authorized_source": true,
+    "seo_geo_manager_required_for_initial_visual_completion": false
+  },
+  "acceptance": {
+    "clean_install_looks_finished": true,
+    "scan_before_read_hierarchy": true,
+    "calm_reading_surfaces": true,
+    "mobile_semantic_order": true,
+    "one_page_h1_owned_by_template": true,
+    "zero_required_project_js": true,
+    "zero_third_party_requests": true,
+    "performance_budgets_must_not_be_relaxed": true,
+    "evidence_must_not_be_fabricated": true,
+    "real_author_source_required": true,
+    "real_reference_source_required": true,
+    "real_post_dates_required": true
+  }
+}
