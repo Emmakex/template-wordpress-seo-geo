@@ -47,7 +47,7 @@ The shared layer is not globally loaded. A preset adopts it only when its final 
 
 ### DS-3 — Tech / SaaS final preset
 
-**Status: active**
+**Status: active — final system surfaces**
 
 #### DS-3A — Final Home
 
@@ -72,11 +72,9 @@ The front-page template keeps ownership of the H1. The final Home pattern does n
 
 #### DS-3B — SaaS inner pages
 
-**Status: implementation candidate**
+**Status: complete in code/CI**
 
-Current branch: `feat/saas-final-inner-pages`.
-
-Implemented candidate compositions:
+Delivered and merged on PR #241:
 
 - Product;
 - Features;
@@ -90,17 +88,31 @@ All seven reuse the accepted SaaS visual primitives instead of adding another st
 
 The page template keeps document-H1 ownership. The preset-owned renderer starts below the title and exposes stable hydration slots for page lead, sections, cards, provisional product visual and CTA.
 
+PR #241 passed SaaS contract, WPCS/PHPStan, WordPress 7.1/PHP 8.2 activation, zero-plugin self-contained Theme, accessibility/responsive, native multilingual and Lighthouse budgets before merge.
+
 #### DS-3C — SaaS system surfaces
 
-**Status: next after inner-page acceptance**
+**Status: implementation candidate**
 
-Build SaaS-owned Single, Archive and 404 surfaces using the same preset runtime rule proven by Corporate, while preserving Site Editor custom templates.
+Current branch: `feat/saas-final-system-surfaces`.
+
+Implemented candidate surfaces:
+
+- Single with category, document H1, author/date, featured media, authored content, author context and previous/next navigation;
+- Archive with dynamic archive title/description, responsive post grid, search fallback and pagination;
+- localized ES/EN 404 with home recovery and native search.
+
+The preset-template runtime is generalized through an explicit allowlist so Corporate behavior remains unchanged while SaaS can own the same three system surfaces. Only untouched `source=theme` templates are replaced. Site Editor `source=custom` templates always win; unsupported presets/slugs and missing files fail safe to the neutral Theme template.
+
+No new CSS, frontend JavaScript, remote dependency or fabricated evidence is introduced by the system surfaces.
 
 #### DS-3D — SaaS visual/performance acceptance
 
-**Status: active with DS-3B**
+**Status: active with DS-3C**
 
-Require PHP/WPCS/PHPStan, WordPress activation, accessibility/responsive, multilingual behavior, self-contained Theme, dedicated SaaS contract and strict Lighthouse budgets before merge. Performance budgets must not be raised to make the new visual work pass.
+Require PHP/WPCS/PHPStan, WordPress activation, accessibility/responsive, multilingual behavior, self-contained Theme, dedicated SaaS contract, executable runtime isolation/fallback tests and strict Lighthouse budgets before merge. Performance budgets must not be raised to make the new visual work pass.
+
+When DS-3C/DS-3D close green, Tech / SaaS is complete in code/CI and the Design System roadmap moves to Local Business. This does not make the Theme stable; Phase 10E real-site acceptance remains a separate release gate.
 
 ### DS-4 — Local Business final preset
 

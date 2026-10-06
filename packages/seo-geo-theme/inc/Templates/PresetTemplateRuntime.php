@@ -20,11 +20,21 @@ use WP_Block_Template;
  */
 final class PresetTemplateRuntime {
 	/**
-	 * Corporate template slugs owned by this runtime.
+	 * Template slugs that presets may replace.
 	 *
 	 * @var list<string>
 	 */
-	private const CORPORATE_TEMPLATES = array( 'single', 'archive', '404' );
+	private const OWNED_TEMPLATES = array( 'single', 'archive', '404' );
+
+	/**
+	 * Preset IDs mapped to their bundled system-template filename prefix.
+	 *
+	 * @var array<string, string>
+	 */
+	private const PRESET_TEMPLATE_PREFIXES = array(
+		'corporate'            => 'corporate',
+		'saas-digital-product' => 'saas-digital-product',
+	);
 
 	/**
 	 * Register runtime filters.
@@ -52,11 +62,12 @@ final class PresetTemplateRuntime {
 			return $template;
 		}
 
-		if ( 'corporate' !== seo_geo_theme_active_preset_id() || ! in_array( $template->slug, self::CORPORATE_TEMPLATES, true ) ) {
+		$preset_id = seo_geo_theme_active_preset_id();
+		if ( null === $preset_id || ! isset( self::PRESET_TEMPLATE_PREFIXES[ $preset_id ] ) || ! in_array( $template->slug, self::OWNED_TEMPLATES, true ) ) {
 			return $template;
 		}
 
-		$content = $this->corporate_template_content( $template->slug );
+		$content = $this->preset_template_content( $preset_id, $template->slug );
 		if ( null === $content ) {
 			return $template;
 		}
@@ -68,16 +79,21 @@ final class PresetTemplateRuntime {
 	}
 
 	/**
-	 * Render one bundled Corporate template source.
+	 * Render one bundled preset template source.
 	 *
-	 * @param string $slug Template slug to resolve.
+	 * Missing or unreadable preset templates fail safe to the neutral Theme
+	 * template supplied by WordPress.
+	 *
+	 * @param string $preset_id Active preset identifier.
+	 * @param string $slug      Template slug to resolve.
 	 */
-	private function corporate_template_content( string $slug ): ?string {
-		if ( ! in_array( $slug, self::CORPORATE_TEMPLATES, true ) ) {
+	private function preset_template_content( string $preset_id, string $slug ): ?string {
+		if ( ! isset( self::PRESET_TEMPLATE_PREFIXES[ $preset_id ] ) || ! in_array( $slug, self::OWNED_TEMPLATES, true ) ) {
 			return null;
 		}
 
-		$path = get_template_directory() . '/preset-templates/corporate-' . $slug . '.php';
+		$prefix = self::PRESET_TEMPLATE_PREFIXES[ $preset_id ];
+		$path   = get_template_directory() . '/preset-templates/' . $prefix . '-' . $slug . '.php';
 		if ( ! is_readable( $path ) ) {
 			return null;
 		}

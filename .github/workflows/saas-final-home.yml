@@ -8,11 +8,15 @@ on:
       - 'packages/seo-geo-theme/assets/css/presets/saas-digital-product.css'
       - 'packages/seo-geo-theme/preset-patterns/saas-home-final.php'
       - 'packages/seo-geo-theme/preset-patterns/saas-inner-final.php'
+      - 'packages/seo-geo-theme/preset-templates/saas-digital-product-*.php'
+      - 'packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php'
       - 'packages/seo-geo-theme/inc/presets.php'
       - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-saas-digital-product-preset.php'
       - 'scripts/ci/validate-saas-final-home.php'
       - 'scripts/ci/validate-saas-final-inner.php'
+      - 'scripts/ci/validate-saas-final-system.php'
+      - 'scripts/ci/test-preset-template-runtime.php'
       - '.github/workflows/saas-final-home.yml'
   push:
     branches:
@@ -23,11 +27,15 @@ on:
       - 'packages/seo-geo-theme/assets/css/presets/saas-digital-product.css'
       - 'packages/seo-geo-theme/preset-patterns/saas-home-final.php'
       - 'packages/seo-geo-theme/preset-patterns/saas-inner-final.php'
+      - 'packages/seo-geo-theme/preset-templates/saas-digital-product-*.php'
+      - 'packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php'
       - 'packages/seo-geo-theme/inc/presets.php'
       - 'packages/seo-geo-theme/functions.php'
       - 'scripts/ci/validate-saas-digital-product-preset.php'
       - 'scripts/ci/validate-saas-final-home.php'
       - 'scripts/ci/validate-saas-final-inner.php'
+      - 'scripts/ci/validate-saas-final-system.php'
+      - 'scripts/ci/test-preset-template-runtime.php'
       - '.github/workflows/saas-final-home.yml'
 
 permissions:
@@ -39,7 +47,7 @@ concurrency:
 
 jobs:
   contract:
-    name: SaaS final Home + inner pages + preset contract
+    name: SaaS final preset contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -57,11 +65,17 @@ jobs:
         run: |
           php -l packages/seo-geo-theme/functions.php
           php -l packages/seo-geo-theme/inc/presets.php
+          php -l packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php
           php -l packages/seo-geo-theme/preset-patterns/saas-home-final.php
           php -l packages/seo-geo-theme/preset-patterns/saas-inner-final.php
+          php -l packages/seo-geo-theme/preset-templates/saas-digital-product-single.php
+          php -l packages/seo-geo-theme/preset-templates/saas-digital-product-archive.php
+          php -l packages/seo-geo-theme/preset-templates/saas-digital-product-404.php
           php -l scripts/ci/validate-saas-digital-product-preset.php
           php -l scripts/ci/validate-saas-final-home.php
           php -l scripts/ci/validate-saas-final-inner.php
+          php -l scripts/ci/validate-saas-final-system.php
+          php -l scripts/ci/test-preset-template-runtime.php
 
       - name: Validate existing SaaS semantic contract
         run: php scripts/ci/validate-saas-digital-product-preset.php
@@ -71,3 +85,9 @@ jobs:
 
       - name: Validate final SaaS inner-page contract
         run: php scripts/ci/validate-saas-final-inner.php
+
+      - name: Validate final SaaS system-surface contract
+        run: php scripts/ci/validate-saas-final-system.php
+
+      - name: Exercise preset template runtime isolation and fallback
+        run: php scripts/ci/test-preset-template-runtime.php
