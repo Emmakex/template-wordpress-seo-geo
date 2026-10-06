@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "preset": "local-business",
+  "product_facing_name": "Local Pro",
+  "target_state": "99-percent-finished-before-client-content",
+  "current_stage": "home-candidate",
+  "design_rule": "final-layout-first-then-content-hydration",
+  "legacy_layout_policy": "never-a-design-source",
+  "visual_runtime": {
+    "required_frontend_javascript": false,
+    "remote_fonts": false,
+    "remote_visual_dependencies": false,
+    "map_policy": "no-remote-map-required-for-visual-completion",
+    "real_photography_policy": "replace-provisional-visuals-only-with-authorized-real-media"
+  },
+  "pages": {
+    "home": {
+      "required": true,
+      "composition": "local-business-home-final-v1",
+      "status": "candidate",
+      "owns_h1": false,
+      "sections": [
+        "local-trust-hero",
+        "action-surface",
+        "services",
+        "service-area",
+        "decision-process",
+        "verified-local-facts",
+        "faq",
+        "final-contact-cta"
+      ]
+    },
+    "services": {"required": true, "status": "next-microphase"},
+    "locations": {"required": true, "status": "next-microphase"},
+    "about": {"required": true, "status": "next-microphase"},
+    "faq": {"required": true, "status": "next-microphase"},
+    "contact": {"required": true, "status": "next-microphase"},
+    "single": {"required": true, "status": "next-microphase"},
+    "archive": {"required": true, "status": "next-microphase"},
+    "404": {"required": true, "status": "next-microphase"}
+  },
+  "placeholder_policy": {
+    "allowed_in_private_candidate": true,
+    "blocks_publication_until_resolved": true,
+    "allowed_types": [
+      "editorial-copy",
+      "service-labels",
+      "service-area-facts",
+      "physical-address",
+      "public-contact-route",
+      "opening-hours",
+      "local-operational-facts",
+      "provisional-local-visual"
+    ],
+    "forbidden_claims": [
+      "review-stars",
+      "review-counts",
+      "customer-counts",
+      "years-in-business",
+      "response-times",
+      "physical-address-without-verification",
+      "service-area-without-verification",
+      "opening-hours-without-verification",
+      "coordinates-without-verification",
+      "certifications",
+      "awards"
+    ]
+  },
+  "hydration_contract": {
+    "preserve_layout": true,
+    "preserve_component_hierarchy": true,
+    "replace_placeholder_copy": true,
+    "replace_local_facts_only_from_authoritative_source": true,
+    "replace_media_only_from_authorized_source": true,
+    "local_business_schema_requires_confirmed_visible_facts": true,
+    "seo_geo_manager_required_for_initial_visual_completion": false
+  },
+  "acceptance": {
+    "clean_install_looks_finished": true,
+    "mobile_semantic_order": true,
+    "one_page_h1_owned_by_template": true,
+    "zero_required_project_js": true,
+    "zero_third_party_requests": true,
+    "remote_map_not_required": true,
+    "performance_budgets_must_not_be_relaxed": true,
+    "evidence_must_not_be_fabricated": true,
+    "doorway_pages_forbidden": true
+  }
+}

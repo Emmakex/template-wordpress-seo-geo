@@ -207,6 +207,20 @@ function seo_geo_theme_final_mockup_definitions( string $preset_id ): array {
 		);
 	}
 
+	if ( 'local-business' === $preset_id ) {
+		return array(
+			array(
+				'slug'           => 'seo-geo-theme/local-business-home-final',
+				'file'           => 'local-business-home-final.php',
+				'key'            => null,
+				'title_es'       => 'Local Pro — Home final',
+				'title_en'       => 'Local Pro — final Home',
+				'description_es' => 'Home local visualmente terminada con servicios, cobertura, datos públicos y contacto sujetos a verificación durante la hidratación.',
+				'description_en' => 'Visually finished local-business Home with services, coverage, public facts and contact gated by verified hydration.',
+			),
+		);
+	}
+
 	if ( 'corporate' !== $preset_id ) {
 		return array();
 	}
