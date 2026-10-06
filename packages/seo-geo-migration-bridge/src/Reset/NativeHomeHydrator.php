@@ -409,6 +409,7 @@ final class NativeHomeHydrator {
 			if ( is_array( $child ) && $this->contains_class( $child, $needle ) ) {
 				return true;
 			}
+		}
 
 		return false;
 	}
@@ -453,8 +454,8 @@ final class NativeHomeHydrator {
 			'#<a\b([^>]*)>(.*?)</a>#is',
 			static function ( array $matches ) use ( $label, $url ): string {
 				$attrs = (string) $matches[1];
-				if ( 1 === preg_match( '/\bhref=(["\']).*?\1/i', $attrs ) ) {
-					$attrs = (string) preg_replace( '/\bhref=(["\']).*?\1/i', 'href="' . esc_attr( $url ) . '"', $attrs, 1 );
+				if ( 1 === preg_match( '/\bhref=([\x22\x27]).*?\1/i', $attrs ) ) {
+					$attrs = (string) preg_replace( '/\bhref=([\x22\x27]).*?\1/i', 'href="' . esc_attr( $url ) . '"', $attrs, 1 );
 				} else {
 					$attrs .= ' href="' . esc_attr( $url ) . '"';
 				}
