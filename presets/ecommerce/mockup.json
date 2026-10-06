@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "preset": "ecommerce",
+  "product_facing_name": "Commerce / Ecommerce",
+  "target_state": "99-percent-finished-before-client-content",
+  "current_stage": "home-candidate",
+  "design_rule": "final-layout-first-then-content-hydration",
+  "legacy_layout_policy": "never-a-design-source",
+  "visual_runtime": {
+    "required_frontend_javascript": false,
+    "remote_fonts": false,
+    "remote_visual_dependencies": false,
+    "real_media_policy": "replace-provisional-product-visuals-only-with-authorized-catalog-media"
+  },
+  "pages": {
+    "home": {
+      "required": true,
+      "composition": "ecommerce-home-final-v1",
+      "status": "candidate",
+      "owns_h1": false,
+      "sections": [
+        "commerce-hero",
+        "category-discovery",
+        "featured-catalog",
+        "decision-confidence",
+        "buying-guidance",
+        "brand-editorial",
+        "policy-navigation",
+        "final-shop-action"
+      ]
+    },
+    "shop": {"required": true, "status": "next-microphase"},
+    "categories": {"required": true, "status": "next-microphase"},
+    "buying-guides": {"required": true, "status": "next-microphase"},
+    "about": {"required": true, "status": "next-microphase"},
+    "support": {"required": true, "status": "next-microphase"},
+    "contact": {"required": true, "status": "next-microphase"},
+    "single": {"required": true, "status": "next-microphase"},
+    "archive": {"required": true, "status": "next-microphase"},
+    "404": {"required": true, "status": "next-microphase"}
+  },
+  "placeholder_policy": {
+    "allowed_in_private_candidate": true,
+    "blocks_publication_until_resolved": true,
+    "allowed_types": [
+      "editorial-copy",
+      "category-labels",
+      "catalog-titles",
+      "catalog-summaries",
+      "policy-copy",
+      "provisional-product-visual"
+    ],
+    "forbidden_claims": [
+      "fabricated-product-identity",
+      "fabricated-price",
+      "fabricated-discount",
+      "fabricated-stock",
+      "fabricated-availability",
+      "fabricated-rating",
+      "fabricated-review",
+      "fabricated-sales-count",
+      "fabricated-shipping-time",
+      "fabricated-return-window",
+      "fabricated-warranty",
+      "fabricated-certification",
+      "fabricated-payment-method"
+    ]
+  },
+  "commerce_authority": {
+    "preferred_provider": "woocommerce",
+    "live_commerce_requires_supported_adapter": true,
+    "product_identity_source": "commerce-provider",
+    "price_source": "commerce-provider",
+    "availability_source": "commerce-provider",
+    "review_rating_source": "commerce-provider",
+    "cart_checkout_account_source": "commerce-provider",
+    "theme_emits_product_offer_schema": false,
+    "theme_may_infer_commerce_facts": false
+  },
+  "hydration_contract": {
+    "preserve_layout": true,
+    "preserve_component_hierarchy": true,
+    "replace_placeholder_copy": true,
+    "replace_catalog_slots_only_from_real_catalog": true,
+    "replace_policy_slots_only_from_verified_store_policy": true,
+    "replace_routes_only_from_verified_public_routes": true,
+    "replace_media_only_from_authorized_source": true,
+    "seo_geo_manager_required_for_initial_visual_completion": false
+  },
+  "acceptance": {
+    "clean_install_looks_finished": true,
+    "product_discovery_is_primary": true,
+    "decision_confidence_before_conversion": true,
+    "mobile_semantic_order": true,
+    "one_page_h1_owned_by_template": true,
+    "zero_required_project_js": true,
+    "zero_third_party_requests": true,
+    "performance_budgets_must_not_be_relaxed": true,
+    "commerce_evidence_must_not_be_fabricated": true,
+    "provider_owned_schema_not_duplicated": true,
+    "provider_owned_price_availability_not_inferred": true,
+    "provider_owned_reviews_ratings_not_inferred": true
+  }
+}
