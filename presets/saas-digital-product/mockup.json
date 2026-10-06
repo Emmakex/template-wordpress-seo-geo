@@ -3,7 +3,7 @@
   "preset": "saas-digital-product",
   "product_facing_name": "Tech / SaaS",
   "target_state": "99-percent-finished-before-client-content",
-  "current_stage": "home-reference-candidate",
+  "current_stage": "inner-pages-candidate",
   "design_rule": "final-layout-first-then-content-hydration",
   "legacy_layout_policy": "never-a-design-source",
   "visual_runtime": {
@@ -17,7 +17,7 @@
     "home": {
       "required": true,
       "composition": "saas-home-final-v1",
-      "status": "candidate",
+      "status": "complete",
       "owns_h1": false,
       "sections": [
         "product-hero",
@@ -32,32 +32,48 @@
     },
     "product": {
       "required": true,
-      "status": "next-microphase"
+      "composition": "saas-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false
     },
     "features": {
       "required": true,
-      "status": "next-microphase"
+      "composition": "saas-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false
     },
     "solutions": {
       "required": true,
-      "status": "next-microphase"
+      "composition": "saas-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false
     },
     "integrations": {
       "required": true,
-      "status": "next-microphase"
+      "composition": "saas-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false,
+      "verified_integration_facts_required": true
     },
     "pricing": {
       "required": true,
-      "status": "next-microphase",
+      "composition": "saas-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false,
       "verified_commercial_facts_required": true
     },
     "resources": {
       "required": true,
-      "status": "next-microphase"
+      "composition": "saas-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false
     },
     "contact-demo": {
       "required": true,
-      "status": "next-microphase"
+      "composition": "saas-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false,
+      "verified_contact_facts_required": true
     },
     "single": {
       "required": true,
@@ -79,7 +95,8 @@
       "editorial-copy",
       "abstract-product-visual",
       "pricing-structure-without-values",
-      "integration-trust-slot"
+      "integration-trust-slot",
+      "contact-channel-slot"
     ],
     "forbidden_claims": [
       "customer-logos",
@@ -89,7 +106,9 @@
       "performance-results",
       "certifications",
       "integration-support",
-      "pricing-values"
+      "pricing-values",
+      "contact-details",
+      "response-times"
     ]
   },
   "hydration_contract": {
@@ -98,6 +117,8 @@
     "replace_placeholder_copy": true,
     "replace_product_visual_when_verified": true,
     "replace_commercial_facts_only_from_authoritative_source": true,
+    "replace_integration_facts_only_from_authoritative_source": true,
+    "replace_contact_facts_only_from_authoritative_source": true,
     "seo_geo_manager_required_for_initial_visual_completion": false
   },
   "acceptance": {
