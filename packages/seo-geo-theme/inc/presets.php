@@ -124,21 +124,31 @@ function seo_geo_theme_preset_localized_value( $localized, string $key ): ?strin
 }
 
 /**
- * Register preset-owned final mockups outside the neutral Theme pattern set.
+ * Return final mockup definitions owned by one preset.
  *
- * Keeping these patterns outside /patterns preserves the generic Theme contract
- * while allowing each preset to ship complete, production-shaped mockups.
- *
- * @param string $preset_id     Active allowlisted preset identifier.
- * @param string $category_slug Registered block-pattern category slug.
+ * @param string $preset_id Active allowlisted preset identifier.
+ * @return list<array<string, string|null>>
  */
-function seo_geo_theme_register_final_mockup_patterns( string $preset_id, string $category_slug ): void {
-	if ( 'corporate' !== $preset_id || ! function_exists( 'register_block_pattern' ) ) {
-		return;
+function seo_geo_theme_final_mockup_definitions( string $preset_id ): array {
+	if ( 'saas-digital-product' === $preset_id ) {
+		return array(
+			array(
+				'slug'           => 'seo-geo-theme/saas-home-final',
+				'file'           => 'saas-home-final.php',
+				'key'            => null,
+				'title_es'       => 'Tech / SaaS — Home final',
+				'title_en'       => 'Tech / SaaS — final Home',
+				'description_es' => 'Home SaaS visualmente terminada con producto conceptual, Bento funcional y contenido provisional seguro para hidratar después.',
+				'description_en' => 'Visually finished SaaS Home with conceptual product preview, functional Bento hierarchy and safe provisional content for later hydration.',
+			),
+		);
 	}
 
-	$is_es    = 'es_ES' === seo_geo_theme_preset_locale();
-	$patterns = array(
+	if ( 'corporate' !== $preset_id ) {
+		return array();
+	}
+
+	return array(
 		array(
 			'slug'           => 'seo-geo-theme/corporate-home-final',
 			'file'           => 'corporate-home-final.php',
@@ -194,6 +204,28 @@ function seo_geo_theme_register_final_mockup_patterns( string $preset_id, string
 			'description_en' => 'Corporate editorial index prepared for dynamic content, topical authority and internal linking.',
 		),
 	);
+}
+
+/**
+ * Register preset-owned final mockups outside the neutral Theme pattern set.
+ *
+ * Keeping these patterns outside /patterns preserves the generic Theme contract
+ * while allowing each preset to ship complete, production-shaped mockups.
+ *
+ * @param string $preset_id     Active allowlisted preset identifier.
+ * @param string $category_slug Registered block-pattern category slug.
+ */
+function seo_geo_theme_register_final_mockup_patterns( string $preset_id, string $category_slug ): void {
+	if ( ! function_exists( 'register_block_pattern' ) ) {
+		return;
+	}
+
+	$patterns = seo_geo_theme_final_mockup_definitions( $preset_id );
+	if ( array() === $patterns ) {
+		return;
+	}
+
+	$is_es = 'es_ES' === seo_geo_theme_preset_locale();
 
 	foreach ( $patterns as $pattern ) {
 		$path = get_template_directory() . '/preset-patterns/' . $pattern['file'];

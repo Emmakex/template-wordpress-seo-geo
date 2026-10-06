@@ -30,9 +30,10 @@ add_action( 'after_setup_theme', 'seo_geo_theme_setup' );
 /**
  * Load the neutral Theme foundation and the active preset's visual system.
  *
- * Each preset owns its own stylesheet. This keeps Corporate, Local Business,
- * Publisher, Ecommerce and SaaS/Digital Product visually isolated while they
- * continue to share the same Theme/Core runtime.
+ * The shared Design System is opt-in while presets are migrated to their final
+ * 99%-finished visual layer. This protects already accepted preset budgets from
+ * an unnecessary global stylesheet while still keeping one reusable primitive
+ * contract for presets that explicitly adopt it.
  */
 function seo_geo_theme_enqueue_styles(): void {
 	$stylesheet = get_stylesheet_directory() . '/style.css';
@@ -55,11 +56,27 @@ function seo_geo_theme_enqueue_styles(): void {
 		return;
 	}
 
+	$preset_dependencies   = array( 'seo-geo-theme' );
+	$design_system_presets = array( 'saas-digital-product' );
+
+	if ( in_array( $preset_id, $design_system_presets, true ) ) {
+		$design_system = get_stylesheet_directory() . '/assets/css/design-system.css';
+		if ( is_readable( $design_system ) ) {
+			wp_enqueue_style(
+				'seo-geo-theme-design-system',
+				get_stylesheet_directory_uri() . '/assets/css/design-system.css',
+				array( 'seo-geo-theme' ),
+				(string) filemtime( $design_system )
+			);
+			$preset_dependencies = array( 'seo-geo-theme-design-system' );
+		}
+	}
+
 	$preset_handle = 'seo-geo-theme-preset-' . $preset_id;
 	wp_enqueue_style(
 		$preset_handle,
 		get_stylesheet_directory_uri() . '/assets/css/presets/' . $preset_id . '.css',
-		array( 'seo-geo-theme' ),
+		$preset_dependencies,
 		(string) filemtime( $preset_stylesheet )
 	);
 
