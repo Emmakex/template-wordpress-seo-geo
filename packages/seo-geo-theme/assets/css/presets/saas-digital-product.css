@@ -1,0 +1,291 @@
+.seo-geo-preset-saas-digital-product {
+	--saas-ink: var(--wp--preset--color--contrast);
+	--saas-base: var(--wp--preset--color--base);
+	--saas-surface: var(--wp--preset--color--surface);
+	--saas-muted: var(--wp--preset--color--muted);
+	--saas-accent: var(--wp--preset--color--accent);
+	--saas-accent-strong: var(--wp--preset--color--accent-strong);
+	background: var(--saas-base);
+	color: var(--saas-ink);
+}
+
+.seo-geo-saas-home {
+	overflow: clip;
+}
+
+.seo-geo-saas-hero {
+	position: relative;
+	padding-block: clamp(3.5rem, 8vw, 7rem);
+}
+
+.seo-geo-saas-hero::before {
+	position: absolute;
+	z-index: -1;
+	top: -12rem;
+	right: -12rem;
+	width: min(42rem, 70vw);
+	aspect-ratio: 1;
+	border-radius: 50%;
+	background: radial-gradient(circle, color-mix(in srgb, var(--saas-accent) 20%, transparent), transparent 68%);
+	content: "";
+	pointer-events: none;
+}
+
+.seo-geo-saas-hero__grid {
+	gap: clamp(2.5rem, 6vw, 6rem);
+	align-items: center !important;
+}
+
+.seo-geo-saas-kicker {
+	margin-bottom: 1rem;
+	color: var(--saas-accent-strong);
+	font-size: var(--wp--preset--font-size--sm);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.seo-geo-saas-hero__copy > * {
+	max-width: 42rem;
+}
+
+.seo-geo-saas-lead {
+	max-width: 39rem;
+	color: var(--saas-muted);
+	font-size: clamp(1.08rem, 2vw, 1.35rem);
+	line-height: 1.55;
+}
+
+.seo-geo-saas-actions {
+	margin-top: 1.75rem;
+}
+
+.seo-geo-saas-product-frame {
+	position: relative;
+	min-height: clamp(25rem, 46vw, 36rem);
+	border: 1px solid color-mix(in srgb, var(--saas-ink) 12%, transparent);
+	border-radius: clamp(1.5rem, 3vw, 2.4rem);
+	background: linear-gradient(145deg, color-mix(in srgb, var(--saas-surface) 86%, var(--saas-base)), var(--saas-base));
+	box-shadow: 0 2rem 5rem color-mix(in srgb, var(--saas-ink) 12%, transparent);
+	overflow: hidden;
+}
+
+.seo-geo-saas-product-frame::before {
+	display: block;
+	height: 2.9rem;
+	border-bottom: 1px solid color-mix(in srgb, var(--saas-ink) 10%, transparent);
+	background: linear-gradient(90deg, color-mix(in srgb, var(--saas-accent) 12%, transparent), transparent);
+	content: "";
+}
+
+.seo-geo-saas-product-frame__rail {
+	position: absolute;
+	top: 4.5rem;
+	bottom: 1.5rem;
+	left: 1.5rem;
+	width: 23%;
+	border-radius: var(--sg-radius-md);
+	background: color-mix(in srgb, var(--saas-ink) 7%, transparent);
+}
+
+.seo-geo-saas-product-frame__canvas {
+	position: absolute;
+	top: 4.5rem;
+	right: 1.5rem;
+	bottom: 1.5rem;
+	left: calc(23% + 2.5rem);
+	display: grid;
+	grid-template-rows: 0.7fr 1fr;
+	gap: 1rem;
+}
+
+.seo-geo-saas-product-frame__panel,
+.seo-geo-saas-product-frame__metric {
+	border: 1px solid color-mix(in srgb, var(--saas-ink) 10%, transparent);
+	border-radius: var(--sg-radius-md);
+	background: color-mix(in srgb, var(--saas-base) 92%, transparent);
+}
+
+.seo-geo-saas-product-frame__panel {
+	position: relative;
+	overflow: hidden;
+}
+
+.seo-geo-saas-product-frame__panel::after {
+	position: absolute;
+	right: 1rem;
+	bottom: 1rem;
+	left: 1rem;
+	height: 44%;
+	border-radius: var(--sg-radius-sm);
+	background: linear-gradient(90deg, color-mix(in srgb, var(--saas-accent) 12%, transparent), color-mix(in srgb, var(--saas-accent) 35%, transparent));
+	content: "";
+}
+
+.seo-geo-saas-product-frame__metrics {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.seo-geo-saas-section {
+	padding-block: var(--sg-section-space-compact);
+}
+
+.seo-geo-saas-section--surface {
+	background: var(--saas-surface);
+}
+
+.seo-geo-saas-section__heading {
+	max-width: 48rem;
+	margin-bottom: clamp(2rem, 5vw, 4rem);
+}
+
+.seo-geo-saas-section__heading p:last-child {
+	max-width: 42rem;
+	color: var(--saas-muted);
+}
+
+.seo-geo-saas-card {
+	padding: clamp(1.35rem, 3vw, 2.35rem);
+	border: 1px solid color-mix(in srgb, var(--saas-ink) 10%, transparent);
+	background: var(--saas-base);
+}
+
+.seo-geo-saas-card--primary {
+	background: var(--saas-ink);
+	color: var(--saas-base);
+}
+
+.seo-geo-saas-card--primary p,
+.seo-geo-saas-card--primary .seo-geo-saas-card__label {
+	color: color-mix(in srgb, var(--saas-base) 78%, transparent);
+}
+
+.seo-geo-saas-card__label {
+	color: var(--saas-accent-strong);
+	font-size: var(--wp--preset--font-size--xs);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.seo-geo-saas-card h3 {
+	margin-top: clamp(2.2rem, 5vw, 4rem);
+}
+
+.seo-geo-saas-card p:last-child {
+	color: var(--saas-muted);
+}
+
+.seo-geo-saas-flow > * {
+	padding-top: 3rem;
+}
+
+.seo-geo-saas-split {
+	gap: clamp(2rem, 6vw, 6rem);
+	align-items: center !important;
+}
+
+.seo-geo-saas-proof-placeholder {
+	padding: clamp(1.5rem, 4vw, 3rem);
+	border: 1px dashed color-mix(in srgb, var(--saas-ink) 28%, transparent);
+	border-radius: var(--sg-radius-lg);
+	background: color-mix(in srgb, var(--saas-surface) 72%, transparent);
+}
+
+.seo-geo-saas-proof-placeholder p {
+	color: var(--saas-muted);
+}
+
+.seo-geo-saas-use-cases {
+	display: grid !important;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--sg-grid-gap) !important;
+}
+
+.seo-geo-saas-use-cases > * {
+	min-width: 0;
+}
+
+.seo-geo-saas-faq {
+	max-width: 56rem;
+}
+
+.seo-geo-saas-faq details {
+	padding-block: 1.25rem;
+	border-top: 1px solid color-mix(in srgb, var(--saas-ink) 12%, transparent);
+}
+
+.seo-geo-saas-faq details:last-child {
+	border-bottom: 1px solid color-mix(in srgb, var(--saas-ink) 12%, transparent);
+}
+
+.seo-geo-saas-faq summary {
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.seo-geo-saas-final-cta {
+	background: var(--saas-ink);
+	color: var(--saas-base);
+}
+
+.seo-geo-saas-final-cta p {
+	max-width: 42rem;
+	color: color-mix(in srgb, var(--saas-base) 75%, transparent);
+}
+
+.seo-geo-saas-final-cta .wp-block-button__link {
+	background: var(--saas-base);
+	color: var(--saas-ink);
+}
+
+@media (max-width: 900px) {
+	.seo-geo-saas-hero {
+		padding-top: 2.5rem;
+	}
+
+	.seo-geo-saas-product-frame {
+		min-height: 24rem;
+	}
+
+	.seo-geo-saas-use-cases {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 600px) {
+	.seo-geo-saas-product-frame__rail {
+		display: none;
+	}
+
+	.seo-geo-saas-product-frame__canvas {
+		left: 1rem;
+		right: 1rem;
+	}
+
+	.seo-geo-saas-product-frame__metrics {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.seo-geo-saas-product-frame,
+	.seo-geo-saas-card {
+		scroll-behavior: auto;
+	}
+}
+
+@media print {
+	.seo-geo-saas-hero::before {
+		display: none;
+	}
+
+	.seo-geo-saas-product-frame,
+	.seo-geo-saas-card,
+	.seo-geo-saas-proof-placeholder {
+		box-shadow: none;
+		break-inside: avoid;
+	}
+}
