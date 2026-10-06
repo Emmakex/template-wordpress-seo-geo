@@ -8,10 +8,14 @@ on:
       - 'packages/seo-geo-theme/assets/css/presets/ecommerce.css'
       - 'packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php'
       - 'packages/seo-geo-theme/preset-patterns/ecommerce-inner-final.php'
+      - 'packages/seo-geo-theme/preset-templates/ecommerce-*.php'
       - 'packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php'
+      - 'packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php'
       - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/test-preset-template-runtime.php'
       - 'scripts/ci/validate-ecommerce-final-home.php'
       - 'scripts/ci/validate-ecommerce-final-inner-pages.php'
+      - 'scripts/ci/validate-ecommerce-final-system.php'
       - '.github/workflows/ecommerce-final-home.yml'
   push:
     branches:
@@ -22,10 +26,14 @@ on:
       - 'packages/seo-geo-theme/assets/css/presets/ecommerce.css'
       - 'packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php'
       - 'packages/seo-geo-theme/preset-patterns/ecommerce-inner-final.php'
+      - 'packages/seo-geo-theme/preset-templates/ecommerce-*.php'
       - 'packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php'
+      - 'packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php'
       - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/test-preset-template-runtime.php'
       - 'scripts/ci/validate-ecommerce-final-home.php'
       - 'scripts/ci/validate-ecommerce-final-inner-pages.php'
+      - 'scripts/ci/validate-ecommerce-final-system.php'
       - '.github/workflows/ecommerce-final-home.yml'
 
 permissions:
@@ -37,7 +45,7 @@ concurrency:
 
 jobs:
   contract:
-    name: Ecommerce final preset contract
+    name: Ecommerce final Home + inner + system contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -55,13 +63,25 @@ jobs:
         run: |
           php -l packages/seo-geo-theme/functions.php
           php -l packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php
+          php -l packages/seo-geo-theme/inc/Templates/PresetTemplateRuntime.php
           php -l packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php
           php -l packages/seo-geo-theme/preset-patterns/ecommerce-inner-final.php
+          php -l packages/seo-geo-theme/preset-templates/ecommerce-single.php
+          php -l packages/seo-geo-theme/preset-templates/ecommerce-archive.php
+          php -l packages/seo-geo-theme/preset-templates/ecommerce-404.php
+          php -l scripts/ci/test-preset-template-runtime.php
           php -l scripts/ci/validate-ecommerce-final-home.php
           php -l scripts/ci/validate-ecommerce-final-inner-pages.php
+          php -l scripts/ci/validate-ecommerce-final-system.php
 
       - name: Validate accepted Ecommerce Home contract
         run: php scripts/ci/validate-ecommerce-final-home.php
 
       - name: Validate final Ecommerce inner-page contract
         run: php scripts/ci/validate-ecommerce-final-inner-pages.php
+
+      - name: Validate preset template runtime isolation
+        run: php scripts/ci/test-preset-template-runtime.php
+
+      - name: Validate final Ecommerce system-surface contract
+        run: php scripts/ci/validate-ecommerce-final-system.php
