@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Corporate case study placeholder</title>
+  <desc id="desc">Abstract project preview used until a verified client case visual is available.</desc>
+  <rect width="1200" height="760" rx="44" fill="#f5f7f3"/>
+  <rect x="48" y="48" width="1104" height="664" rx="32" fill="#ffffff" stroke="#cbdad6"/>
+  <rect x="88" y="92" width="420" height="576" rx="26" fill="#071b24"/>
+  <rect x="128" y="138" width="160" height="20" rx="10" fill="#31d1ba"/>
+  <rect x="128" y="190" width="300" height="62" rx="16" fill="#f5f7f3"/>
+  <rect x="128" y="280" width="270" height="16" rx="8" fill="#70969c"/>
+  <rect x="128" y="312" width="320" height="16" rx="8" fill="#567b82"/>
+  <rect x="128" y="344" width="236" height="16" rx="8" fill="#567b82"/>
+  <rect x="128" y="512" width="180" height="54" rx="27" fill="#08a892"/>
+  <rect x="558" y="92" width="550" height="258" rx="28" fill="#dff5ef"/>
+  <circle cx="686" cy="220" r="76" fill="#08a892" opacity=".84"/>
+  <rect x="798" y="148" width="252" height="34" rx="17" fill="#173c46"/>
+  <rect x="798" y="208" width="212" height="18" rx="9" fill="#7fa09f"/>
+  <rect x="798" y="244" width="244" height="18" rx="9" fill="#9ab2af"/>
+  <rect x="558" y="382" width="260" height="286" rx="28" fill="#e7eeeb"/>
+  <rect x="848" y="382" width="260" height="286" rx="28" fill="#0d2b35"/>
+  <path d="M606 594c52-74 99-92 139-54 40 39 69 30 111-31" fill="none" stroke="#08a892" stroke-width="14" stroke-linecap="round"/>
+  <rect x="886" y="430" width="116" height="18" rx="9" fill="#31d1ba"/>
+  <rect x="886" y="478" width="164" height="18" rx="9" fill="#87a6aa"/>
+  <rect x="886" y="514" width="132" height="18" rx="9" fill="#668a90"/>
+</svg>
