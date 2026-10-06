@@ -250,7 +250,7 @@ Material canonical/indexability/sitemap/hreflang/redirect regression, a broken c
 
 The stable gate does not wait for SEO/GEO Manager. Manager is a separate later product roadmap.
 
-Theme `0.1.1` may move from `prestable` to `stable` only after Corporate v3 real-site browser acceptance and later controlled production acceptance exist with bounded evidence.
+Theme `0.1.1` may move from `prestable` to `stable` only after real production acceptance exists. Corporate v3 real-site browser acceptance is a required prerequisite before that production acceptance can even be considered.
 
 Until then:
 
