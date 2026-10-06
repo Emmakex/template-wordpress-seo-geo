@@ -3,7 +3,7 @@
   "preset": "local-business",
   "product_facing_name": "Local Pro",
   "target_state": "99-percent-finished-before-client-content",
-  "current_stage": "home-candidate",
+  "current_stage": "inner-pages-candidate",
   "design_rule": "final-layout-first-then-content-hydration",
   "legacy_layout_policy": "never-a-design-source",
   "visual_runtime": {
@@ -30,11 +30,42 @@
         "final-contact-cta"
       ]
     },
-    "services": {"required": true, "status": "next-microphase"},
-    "locations": {"required": true, "status": "next-microphase"},
-    "about": {"required": true, "status": "next-microphase"},
-    "faq": {"required": true, "status": "next-microphase"},
-    "contact": {"required": true, "status": "next-microphase"},
+    "services": {
+      "required": true,
+      "composition": "local-business-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false
+    },
+    "locations": {
+      "required": true,
+      "composition": "local-business-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false,
+      "verified_local_facts_required": true,
+      "doorway_pages_forbidden": true,
+      "distinct_local_value_required": true
+    },
+    "about": {
+      "required": true,
+      "composition": "local-business-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false
+    },
+    "faq": {
+      "required": true,
+      "composition": "local-business-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false
+    },
+    "contact": {
+      "required": true,
+      "composition": "local-business-inner-final-v1",
+      "status": "candidate",
+      "owns_h1": false,
+      "verified_contact_facts_required": true,
+      "verified_location_facts_required": true,
+      "verified_hours_required": true
+    },
     "single": {"required": true, "status": "next-microphase"},
     "archive": {"required": true, "status": "next-microphase"},
     "404": {"required": true, "status": "next-microphase"}
@@ -84,6 +115,7 @@
     "remote_map_not_required": true,
     "performance_budgets_must_not_be_relaxed": true,
     "evidence_must_not_be_fabricated": true,
-    "doorway_pages_forbidden": true
+    "doorway_pages_forbidden": true,
+    "location_pages_require_distinct_local_value": true
   }
 }
