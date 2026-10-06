@@ -84,6 +84,21 @@ def main() -> int:
         }:
             raise RuntimeError("Pilot safety contract drifted")
 
+        if evidence["migration_bridge_version"] != manifest["migration_bridge"]["version"]:
+            raise RuntimeError("Evidence template Migration Bridge version drifted from manifest")
+        if evidence["theme_version"] != manifest["theme"]["version"]:
+            raise RuntimeError("Evidence template Theme version drifted from manifest")
+
+        runbook_bridge_marker = f"Migration Bridge {manifest['migration_bridge']['version']}"
+        if runbook_bridge_marker not in runbook:
+            raise RuntimeError("Runbook Migration Bridge version drifted from manifest")
+        runbook_theme_marker = (
+            f"SEO/GEO Theme {manifest['theme']['version']} "
+            f"{manifest['theme']['release_channel']} release candidate"
+        )
+        if runbook_theme_marker not in runbook:
+            raise RuntimeError("Runbook Theme version/channel drifted from manifest")
+
         forbidden = {"draft_id", "source_id", "plan_sha256", "kit_sha256", "saved_at", "blueprint_sha256"}
         if forbidden.intersection(blueprint):
             raise RuntimeError("Blueprint carries runtime identity")
