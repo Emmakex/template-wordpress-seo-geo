@@ -1,0 +1,64 @@
+name: Publisher Final Preset CI
+
+on:
+  pull_request:
+    paths:
+      - 'presets/publisher/**'
+      - 'packages/seo-geo-theme/assets/css/design-system.css'
+      - 'packages/seo-geo-theme/assets/css/presets/publisher.css'
+      - 'packages/seo-geo-theme/preset-patterns/publisher-home-final.php'
+      - 'packages/seo-geo-theme/inc/Publisher/FinalHomePattern.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/validate-publisher-preset.php'
+      - 'scripts/ci/validate-publisher-final-home.php'
+      - '.github/workflows/publisher-final-home.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'presets/publisher/**'
+      - 'packages/seo-geo-theme/assets/css/design-system.css'
+      - 'packages/seo-geo-theme/assets/css/presets/publisher.css'
+      - 'packages/seo-geo-theme/preset-patterns/publisher-home-final.php'
+      - 'packages/seo-geo-theme/inc/Publisher/FinalHomePattern.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/validate-publisher-preset.php'
+      - 'scripts/ci/validate-publisher-final-home.php'
+      - '.github/workflows/publisher-final-home.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publisher-final-preset-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Publisher final Home contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: PHP syntax
+        run: |
+          php -l packages/seo-geo-theme/functions.php
+          php -l packages/seo-geo-theme/inc/Publisher/FinalHomePattern.php
+          php -l packages/seo-geo-theme/preset-patterns/publisher-home-final.php
+          php -l scripts/ci/validate-publisher-preset.php
+          php -l scripts/ci/validate-publisher-final-home.php
+
+      - name: Validate existing Publisher semantic contract
+        run: php scripts/ci/validate-publisher-preset.php
+
+      - name: Validate final Publisher Home contract
+        run: php scripts/ci/validate-publisher-final-home.php
