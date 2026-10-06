@@ -1,0 +1,58 @@
+name: Ecommerce Final Preset CI
+
+on:
+  pull_request:
+    paths:
+      - 'presets/ecommerce/**'
+      - 'packages/seo-geo-theme/assets/css/design-system.css'
+      - 'packages/seo-geo-theme/assets/css/presets/ecommerce.css'
+      - 'packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php'
+      - 'packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/validate-ecommerce-final-home.php'
+      - '.github/workflows/ecommerce-final-home.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'presets/ecommerce/**'
+      - 'packages/seo-geo-theme/assets/css/design-system.css'
+      - 'packages/seo-geo-theme/assets/css/presets/ecommerce.css'
+      - 'packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php'
+      - 'packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/validate-ecommerce-final-home.php'
+      - '.github/workflows/ecommerce-final-home.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ecommerce-final-preset-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Ecommerce final Home contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: PHP syntax
+        run: |
+          php -l packages/seo-geo-theme/functions.php
+          php -l packages/seo-geo-theme/inc/Ecommerce/FinalHomePattern.php
+          php -l packages/seo-geo-theme/preset-patterns/ecommerce-home-final.php
+          php -l scripts/ci/validate-ecommerce-final-home.php
+
+      - name: Validate final Ecommerce Home contract
+        run: php scripts/ci/validate-ecommerce-final-home.php
