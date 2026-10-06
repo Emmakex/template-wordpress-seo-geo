@@ -383,7 +383,7 @@ final class NativeHomeHydrator {
 		$html = is_string( $block['innerHTML'] ?? null ) ? ltrim( $block['innerHTML'] ) : '';
 		if (
 			'' !== $html
-			&& 1 === preg_match( '/^<[^>]*\\bclass=(["\\\'])(.*?)\\1/is', $html, $matches )
+			&& 1 === preg_match( '/^<[^>]*\bclass=([\x22\x27])(.*?)\1/is', $html, $matches )
 		) {
 			$classes[] = trim( $matches[2] );
 		}
