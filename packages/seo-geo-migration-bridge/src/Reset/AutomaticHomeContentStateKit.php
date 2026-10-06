@@ -36,10 +36,13 @@ final class AutomaticHomeContentStateKit {
 
 	/**
 	 * Construct the semantic content-state layer.
+	 *
+	 * @param AutomaticHomeContentQualityKit $quality  Automatic quality/content resolver.
+	 * @param CorporateHomeContentKit        $kit      Corporate semantic content authority.
+	 * @param NativeHomeHydrator             $hydrator Native Home hydration authority.
 	 */
 	public function __construct(
 		private AutomaticHomeContentQualityKit $quality,
-		private CleanHomeRebuilder $builder,
 		private CorporateHomeContentKit $kit,
 		private NativeHomeHydrator $hydrator
 	) {
@@ -57,7 +60,7 @@ final class AutomaticHomeContentStateKit {
 			return $this->decorate_resolved_plan( $plan );
 		}
 
-		$blockers = is_array( $plan['blockers'] ?? null )
+		$blockers      = is_array( $plan['blockers'] ?? null )
 			? array_values( array_filter( array_map( 'strval', $plan['blockers'] ) ) )
 			: array();
 		$hard_blockers = array_values( array_diff( $blockers, self::RECOVERABLE_BLOCKERS ) );
@@ -109,21 +112,21 @@ final class AutomaticHomeContentStateKit {
 			$slot_states['hero-lead'] = 'source';
 		}
 
-		$plan['ready']          = true;
-		$plan['blockers']       = array();
-		$plan['values']         = $values;
-		$plan['home_heading']   = $this->fallback_heading( $source, $lead );
-		$plan['quality_pass']   = 'semantic-placeholder-fallback-v1';
-		$plan['fallback_from']  = $blockers;
-		$plan['content_state']  = array(
+		$plan['ready']         = true;
+		$plan['blockers']      = array();
+		$plan['values']        = $values;
+		$plan['home_heading']  = $this->fallback_heading( $source, $lead );
+		$plan['quality_pass']  = 'semantic-placeholder-fallback-v1';
+		$plan['fallback_from'] = $blockers;
+		$plan['content_state'] = array(
 			'mode'              => 'semantic-placeholder-scaffold',
 			'publishable'       => false,
 			'placeholder_slots' => $placeholder_slots,
 			'slot_states'       => $slot_states,
 		);
-		$plan['safety']         = is_array( $plan['safety'] ?? null ) ? $plan['safety'] : array();
+		$plan['safety'] = is_array( $plan['safety'] ?? null ) ? $plan['safety'] : array();
 		$plan['safety']['placeholder_content_present'] = true;
-		$plan['detected']       = $detected;
+		$plan['detected'] = $detected;
 		$plan['detected']['placeholder_slots'] = count( $placeholder_slots );
 
 		return $plan;
@@ -242,6 +245,8 @@ final class AutomaticHomeContentStateKit {
 
 	/**
 	 * Return a safe draft summary from authored source content without executing it.
+	 *
+	 * @param WP_Post $source Preserved front-page source.
 	 */
 	private function source_summary( WP_Post $source ): string {
 		$excerpt = trim( sanitize_text_field( (string) $source->post_excerpt ) );
@@ -259,6 +264,10 @@ final class AutomaticHomeContentStateKit {
 	/**
 	 * Build the minimum complete semantic Home model using explicit draft prompts.
 	 *
+	 * @param string $organization Organization/site name.
+	 * @param string $contact      Known safe contact path.
+	 * @param string $about        Optional known About path.
+	 * @param string $lead         Optional rescued source summary.
 	 * @return array<string,mixed>
 	 */
 	private function placeholder_values( string $organization, string $contact, string $about, string $lead ): array {
@@ -283,13 +292,22 @@ final class AutomaticHomeContentStateKit {
 			),
 			'capability-1-title'   => $this->localized( 'Servicio principal', 'Primary service' ),
 			'capability-1-body'    => $this->localized( 'Explica el problema que resuelve, para quién y qué resultado debería esperar el cliente.', 'Explain the problem it solves, who it is for and the outcome the customer should expect.' ),
-			'capability-1-link'    => array( 'label' => $this->localized( 'Más información', 'Learn more' ), 'url' => $contact ),
+			'capability-1-link'    => array(
+				'label' => $this->localized( 'Más información', 'Learn more' ),
+				'url'   => $contact,
+			),
 			'capability-2-title'   => $this->localized( 'Servicio complementario', 'Supporting service' ),
 			'capability-2-body'    => $this->localized( 'Describe una segunda capacidad real y diferenciada que complete la propuesta principal.', 'Describe a second real and distinct capability that complements the primary offer.' ),
-			'capability-2-link'    => array( 'label' => $this->localized( 'Más información', 'Learn more' ), 'url' => $contact ),
+			'capability-2-link'    => array(
+				'label' => $this->localized( 'Más información', 'Learn more' ),
+				'url'   => $contact,
+			),
 			'capability-3-title'   => $this->localized( 'Capacidad especializada', 'Specialist capability' ),
 			'capability-3-body'    => $this->localized( 'Añade una capacidad especializada, metodología o ventaja concreta que tenga sentido para este negocio.', 'Add a specialist capability, method or concrete advantage that is meaningful for this business.' ),
-			'capability-3-link'    => array( 'label' => $this->localized( 'Más información', 'Learn more' ), 'url' => $contact ),
+			'capability-3-link'    => array(
+				'label' => $this->localized( 'Más información', 'Learn more' ),
+				'url'   => $contact,
+			),
 			'process-heading'      => $this->localized( 'Cómo trabajamos', 'How we work' ),
 			'process-intro'        => $this->localized( 'Sustituye este texto por el método real de trabajo de la organización.', 'Replace this copy with the organization’s real working method.' ),
 			'process-1-title'      => $this->localized( 'Entender', 'Understand' ),
@@ -321,6 +339,7 @@ final class AutomaticHomeContentStateKit {
 	/**
 	 * Return slots that remain editorial placeholders in the fallback scaffold.
 	 *
+	 * @param bool $has_source_lead Whether a rescued Hero lead is available.
 	 * @return list<string>
 	 */
 	private function placeholder_slots( bool $has_source_lead ): array {
@@ -346,6 +365,9 @@ final class AutomaticHomeContentStateKit {
 
 	/**
 	 * Resolve a safe fallback document heading.
+	 *
+	 * @param WP_Post $source Preserved front-page source.
+	 * @param string  $lead   Optional rescued Hero lead.
 	 */
 	private function fallback_heading( WP_Post $source, string $lead ): string {
 		$title = trim( get_the_title( $source ) );
@@ -361,6 +383,9 @@ final class AutomaticHomeContentStateKit {
 
 	/**
 	 * Localize one internal fallback string without external translation calls.
+	 *
+	 * @param string $spanish Spanish fallback copy.
+	 * @param string $english English fallback copy.
 	 */
 	private function localized( string $spanish, string $english ): string {
 		return str_starts_with( strtolower( get_locale() ), 'es' ) ? $spanish : $english;
