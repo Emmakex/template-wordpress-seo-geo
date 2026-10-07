@@ -10,6 +10,13 @@ declare(strict_types=1);
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+$site_name        = (string) get_bloginfo( 'name' );
+$site_description = (string) get_bloginfo( 'description' );
+$home_url         = home_url( '/' );
+$primary_nav      = do_blocks( '<!-- wp:seo-geo/preset-navigation {"location":"primary"} /-->' );
+$footer_nav       = do_blocks( '<!-- wp:seo-geo/preset-navigation {"location":"footer"} /-->' );
+$custom_logo      = has_custom_logo() ? get_custom_logo() : '';
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -21,11 +28,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 <a class="screen-reader-text skip-link" href="#seo-geo-main"><?php esc_html_e( 'Skip to content', 'seo-geo-theme' ); ?></a>
-<?php if ( function_exists( 'block_template_part' ) ) : ?>
-	<header class="seo-geo-strategic-header">
-		<?php block_template_part( 'header' ); ?>
-	</header>
-<?php endif; ?>
+
+<header class="seo-geo-strategic-header" role="banner">
+	<div class="seo-geo-strategic-header__inner">
+		<div class="seo-geo-strategic-brand">
+			<?php if ( '' !== $custom_logo ) : ?>
+				<div class="seo-geo-strategic-brand__logo">
+					<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core-generated custom logo markup. ?>
+					<?php echo $custom_logo; ?>
+				</div>
+			<?php endif; ?>
+			<a class="seo-geo-strategic-brand__name" href="<?php echo esc_url( $home_url ); ?>" rel="home"><?php echo esc_html( $site_name ); ?></a>
+		</div>
+		<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Server-rendered registered navigation block. ?>
+		<?php echo $primary_nav; ?>
+	</div>
+</header>
 
 <?php
 if ( function_exists( 'seo_geo_theme_strategic_surface_runtime' ) ) {
@@ -35,11 +53,19 @@ if ( function_exists( 'seo_geo_theme_strategic_surface_runtime' ) ) {
 }
 ?>
 
-<?php if ( function_exists( 'block_template_part' ) ) : ?>
-	<footer class="seo-geo-strategic-footer">
-		<?php block_template_part( 'footer' ); ?>
-	</footer>
-<?php endif; ?>
+<footer class="seo-geo-strategic-footer" role="contentinfo">
+	<div class="seo-geo-strategic-footer__inner">
+		<div class="seo-geo-strategic-footer__brand">
+			<a href="<?php echo esc_url( $home_url ); ?>" rel="home"><?php echo esc_html( $site_name ); ?></a>
+			<?php if ( '' !== trim( $site_description ) ) : ?>
+				<p><?php echo esc_html( $site_description ); ?></p>
+			<?php endif; ?>
+		</div>
+		<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Server-rendered registered navigation block. ?>
+		<?php echo $footer_nav; ?>
+		<p class="seo-geo-strategic-footer__meta">&copy; <?php echo esc_html( wp_date( 'Y' ) ); ?> <?php echo esc_html( $site_name ); ?></p>
+	</div>
+</footer>
 
 <?php wp_footer(); ?>
 </body>
