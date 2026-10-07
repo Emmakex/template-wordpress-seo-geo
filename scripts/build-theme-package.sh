@@ -6,7 +6,8 @@ THEME_SOURCE="packages/seo-geo-theme"
 CORE_SOURCE="packages/seo-geo-core/src"
 PRESET_SOURCE="presets"
 BUNDLED_CORE_DIR="${OUTPUT_DIR}/inc/seo-geo-core"
-CORPORATE_V5_BUNDLE="${OUTPUT_DIR}/assets/css/presets/corporate-v5-bundle.css"
+CORPORATE_V5_RUNTIME="${OUTPUT_DIR}/assets/css/presets/corporate-v5-runtime.css"
+CORPORATE_V5_MARKER="${OUTPUT_DIR}/assets/css/presets/corporate-v5-bundled.marker"
 CORPORATE_V5_SOURCES=(
   "${THEME_SOURCE}/style.css"
   "${THEME_SOURCE}/assets/css/presets/corporate-v2.css"
@@ -53,16 +54,18 @@ for source in "${CORPORATE_V5_SOURCES[@]}"; do
   fi
 done
 
-mkdir -p "$(dirname "$CORPORATE_V5_BUNDLE")"
+CORPORATE_V5_TMP="${CORPORATE_V5_RUNTIME}.tmp"
 {
   printf '/* Corporate v5 client bundle: foundation + visual system + strategic canvas. */\n'
   for source in "${CORPORATE_V5_SOURCES[@]}"; do
     cat "$source"
     printf '\n'
   done
-} >"$CORPORATE_V5_BUNDLE"
+} >"$CORPORATE_V5_TMP"
+mv "$CORPORATE_V5_TMP" "$CORPORATE_V5_RUNTIME"
+printf 'corporate-v5-css-bundle-v1\n' >"$CORPORATE_V5_MARKER"
 
-if [[ ! -s "$CORPORATE_V5_BUNDLE" ]]; then
+if [[ ! -s "$CORPORATE_V5_RUNTIME" || ! -s "$CORPORATE_V5_MARKER" ]]; then
   printf 'Corporate v5 client CSS bundle was not generated.\n' >&2
   exit 1
 fi
