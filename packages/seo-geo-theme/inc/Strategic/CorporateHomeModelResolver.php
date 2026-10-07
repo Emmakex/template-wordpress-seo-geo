@@ -127,6 +127,11 @@ final class CorporateHomeModelResolver {
 	/**
 	 * Traverse parsed blocks and collect semantic slot values.
 	 *
+	 * Some accepted Corporate patterns keep semantic markers on HTML descendants
+	 * inside a parent block rather than on independent Gutenberg blocks. The
+	 * second extraction path below deliberately reads that stored semantic HTML
+	 * as data; it is never emitted as the v5 public layout.
+	 *
 	 * @param array<int, array<string, mixed>>                $blocks      Parsed blocks.
 	 * @param array<string, array{type:string,required:bool}> $definitions Slot contract.
 	 * @param array<string, mixed>                            $slots       Collected values.
@@ -160,6 +165,11 @@ final class CorporateHomeModelResolver {
 				}
 			}
 
+			$inner_html = $block['innerHTML'] ?? null;
+			if ( is_string( $inner_html ) && str_contains( $inner_html, self::SLOT_PREFIX ) ) {
+				$this->collect_slots_from_html( $inner_html, $definitions, $slots );
+			}
+
 			$inner_blocks = $block['innerBlocks'] ?? null;
 			if ( is_array( $inner_blocks ) && array() !== $inner_blocks ) {
 				$this->collect_slots( $inner_blocks, $definitions, $slots );
@@ -168,30 +178,76 @@ final class CorporateHomeModelResolver {
 	}
 
 	/**
-	 * Extract one bounded slot value.
+	 * Collect semantic descendants stored inside one block's HTML payload.
+	 *
+	 * The matcher is intentionally limited to elements carrying the canonical
+	 * slot-class prefix. It does not interpret arbitrary legacy layout markup.
+	 *
+	 * @param string                                            $html        Stored block HTML.
+	 * @param array<string, array{type:string,required:bool}>   $definitions Slot contract.
+	 * @param array<string, mixed>                              $slots       Collected values.
+	 */
+	private function collect_slots_from_html( string $html, array $definitions, array &$slots ): void {
+		$prefix  = preg_quote( self::SLOT_PREFIX, '/' );
+		$pattern = '/<([a-z0-9]+)\b[^>]*class=(?:"|\')([^"\']*' . $prefix . '([a-z0-9_-]+)[^"\']*)(?:"|\')[^>]*>(.*?)<\/\1>/is';
+
+		if ( 1 > preg_match_all( $pattern, $html, $matches, PREG_SET_ORDER ) ) {
+			return;
+		}
+
+		foreach ( $matches as $match ) {
+			$slot_id = isset( $match[3] ) ? sanitize_key( $match[3] ) : '';
+			if ( '' === $slot_id || ! isset( $definitions[ $slot_id ] ) || array_key_exists( $slot_id, $slots ) ) {
+				continue;
+			}
+
+			$element = isset( $match[0] ) ? $match[0] : '';
+			if ( '' === $element ) {
+				continue;
+			}
+
+			$value = $this->extract_html_value( $element, $definitions[ $slot_id ]['type'] );
+			if ( null !== $value ) {
+				$slots[ $slot_id ] = $value;
+			}
+		}
+	}
+
+	/**
+	 * Extract one bounded slot value from a parsed block.
 	 *
 	 * @param array<string, mixed> $block Parsed block.
 	 * @param string               $type  Contract slot type.
 	 * @return string|array<string, string>|list<string>|null
 	 */
 	private function extract_value( array $block, string $type ) {
-		$rendered = render_block( $block );
-		if ( '' === trim( $rendered ) ) {
+		return $this->extract_html_value( render_block( $block ), $type );
+	}
+
+	/**
+	 * Extract one bounded slot value from semantic HTML.
+	 *
+	 * @param string $html Semantic-slot HTML.
+	 * @param string $type Contract slot type.
+	 * @return string|array<string, string>|list<string>|null
+	 */
+	private function extract_html_value( string $html, string $type ) {
+		if ( '' === trim( $html ) ) {
 			return null;
 		}
 
 		if ( 'text' === $type ) {
-			$value = trim( wp_strip_all_tags( $rendered, true ) );
+			$value = trim( wp_strip_all_tags( $html, true ) );
 
 			return '' === $value ? null : html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, $this->charset() );
 		}
 
 		if ( 'link' === $type ) {
-			return $this->extract_link( $rendered );
+			return $this->extract_link( $html );
 		}
 
 		if ( 'list' === $type ) {
-			return $this->extract_list( $rendered );
+			return $this->extract_list( $html );
 		}
 
 		return null;
