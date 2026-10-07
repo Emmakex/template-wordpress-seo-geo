@@ -10,9 +10,9 @@ Target release: `0.1.1`.
 
 Release channel: `prestable`.
 
-The migration/reset/hydration/SEO-GEO engine, packaging, onboarding, upgrade/rollback, client delivery and repository-side production-readiness contracts are working. Real EMMAKE browser QA rejected both the original Corporate presentation and the later Corporate v3 presentation as below the premium/WOW product bar. Corporate v4 is therefore the current master visual candidate and remains the active release blocker until real browser approval.
+The migration/reset/hydration/SEO-GEO engine, packaging, onboarding, upgrade/rollback, client delivery and repository-side production-readiness contracts are working. Real EMMAKE browser QA rejected the original Corporate presentation and Corporate v3. Corporate v4 established the correct premium/WOW art direction, but its first real screenshot still exposed composition defects: an over-narrow hero headline, squeezed secondary service/Insights columns, decoration overpowering the method/CTA and a preview-page title strip. Corporate v4.1 is therefore the current master field candidate and remains the active release blocker until real browser approval.
 
-SaaS, Local Pro, Publisher and Ecommerce visual iteration remains frozen until Corporate v4 is approved on the real sandbox. A green repository build alone is not sufficient to declare stable.
+SaaS, Local Pro, Publisher and Ecommerce visual iteration remains frozen until Corporate v4.1 is approved on the real sandbox. A green repository build alone is not sufficient to declare stable.
 
 ## Canonical Phase 10E candidate
 
@@ -20,14 +20,14 @@ The machine-readable source of truth is:
 
 `release/emmake-phase10e-candidate.json`
 
-The currently frozen Corporate v4 field candidate is:
+The currently frozen Corporate v4.1 field candidate is:
 
-- source commit: `cad67b33f752779cbb55a4eb5b0f540d78947f42`;
+- source commit: `efdb0456ac684c95f1f320b4e76c533ba9f71efd`;
 - Theme: `0.1.1` / `prestable`;
-- Theme ZIP SHA-256: `c266b3265f44618ad593f24a8d0b83a04983b366755db6d5db96e158516a6320`;
+- Theme ZIP SHA-256: `01a558d9de8d8014ad3568d0661785741d784a3182db9280d5902889cff0c82f`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic EMMAKE field-pilot pack SHA-256: `ae752a819d409a780e360fc43d65eef205b955c4722e7328b8d914b92086b72c`.
+- deterministic EMMAKE field-pilot pack SHA-256: `c95c1fb142f858d949ccb72079bd7d423afca7a79eca6db2053bb4f74652066d`.
 
 The source commit above is the immutable Theme-content source for the frozen field artifact. Repository history may advance with candidate-record, documentation or validation-only commits without changing those packaged bytes. Any Theme, Migration Bridge, runbook, blueprint or pack-content change requires a new deterministic pack and an explicit update of `release/emmake-phase10e-candidate.json`.
 
@@ -35,17 +35,17 @@ The source commit above is the immutable Theme-content source for the frozen fie
 
 ## Candidate technical evidence
 
-The frozen Corporate v4 Theme passed the repository-side technical gates required before returning to the real browser:
+The frozen Corporate v4.1 Theme passed the repository-side technical gates required before returning to the real browser:
 
-- PHP quality and static/runtime contracts already established for Theme `0.1.1`;
+- PHP quality and static/runtime contracts established for Theme `0.1.1`;
 - WordPress 7.1 / PHP 8.2 activation smoke;
 - self-contained Theme and deterministic release-artifact integrity;
 - multilingual and preset regression contracts;
-- Corporate page-pipeline and v4 WOW visual-contract gates;
+- Corporate page-pipeline and v4.1 field-composition contract gates;
 - accessibility/responsive browser automation, including `1440 / 1024 / 768 / 390` plus compact-mobile stress coverage;
 - Lighthouse performance budget without relaxing the budget.
 
-The Corporate v4 Lighthouse median is performance `100`, FCP/LCP `903.33 ms`, CLS `0`, TBT `0`, zero third-party requests, zero project JavaScript bytes and `8087` transferred CSS bytes against the `8192` byte Corporate CSS budget. The static Corporate CSS proxy was tightened to `7100` bytes so future iterations retain real headroom against the browser budget.
+The Corporate v4.1 Lighthouse median is performance `100`, FCP/LCP `903.18 ms`, CLS `0`, TBT `0`, zero third-party requests, zero project JavaScript bytes and `7551` transferred CSS bytes against the `8192` byte Corporate CSS budget. The static Corporate CSS proxy is `6559` bytes against a `7100` byte internal ceiling.
 
 This evidence proves technical readiness for field QA. It does **not** prove visual acceptance, production acceptance or stable-release readiness.
 
@@ -53,9 +53,11 @@ This evidence proves technical readiness for field QA. It does **not** prove vis
 
 The earlier candidates successfully proved Rescue Manifest, Clone Reset, Corporate bootstrap, clean Home creation, content hydration, native SEO/GEO handoff and Step 7 machine readiness on `/nuevaweb/`.
 
-The first visual candidate failed for generic card composition, weak responsive behavior and contrast. Corporate v3 fixed those engineering defects and passed all repository gates, but its real browser presentation was still **not accepted**: it remained too card-like, too restrained in scale, carried too much passive whitespace, gave navigation insufficient presence and closed with a weak CTA for the intended premium product.
+The first visual candidate failed for generic card composition, weak responsive behavior and contrast. Corporate v3 fixed those engineering defects but remained visually below the premium product bar. Corporate v4 then established the intended direction with a full-bleed hero, stronger editorial scale, asymmetric capability panels, a cinematic method section, magazine-style Insights and a dominant closing CTA.
 
-Corporate v4 therefore changes the reusable art direction rather than patching EMMAKE: full-bleed dominant hero, stronger editorial scale, asymmetric statement panels, a cinematic method section, magazine-style Insights and a near-screen-height closing CTA. The semantic hydration model, rescued content, URLs and SEO/GEO state remain preserved.
+The real v4 screenshot confirmed that direction but exposed composition-level defects rather than a failed art direction: the hero title was forced into a word-by-word waterfall, secondary cards were too narrow, method decoration competed with the content, Insights repeated the same squeezing problem, the final CTA decoration outweighed its message, and the private-draft preview exposed the template-owned page title above the Home.
+
+Corporate v4.1 keeps the v4 art direction and corrects those proportions. It widens reading measures, balances two-column ratios, reduces decorative dominance, strengthens the CTA message, deliberately recomposes tablet/mobile, and visually hides the preview-only template H1 without removing the semantic heading from the document. The semantic hydration model, rescued content, URLs and SEO/GEO state remain preserved.
 
 ## Selected real-site pilot
 
@@ -63,7 +65,7 @@ Production origin: `https://emmake.com/`.
 
 Sandbox: `https://emmake.com/nuevaweb/`.
 
-The working `/nuevaweb/` clone already proved the product-owned clone path, reset-first replatforming, hydration and native SEO handoff. Those milestones do not substitute for browser acceptance of Corporate v4.
+The working `/nuevaweb/` clone already proved the product-owned clone path, reset-first replatforming, hydration and native SEO handoff. Those milestones do not substitute for browser acceptance of Corporate v4.1.
 
 The current field sequence is defined in `docs/EMMAKE_HOME_FIELD_PILOT.md` and summarized in `docs/REAL_SITE_PILOT.md`.
 
@@ -71,12 +73,12 @@ The current field sequence is defined in `docs/EMMAKE_HOME_FIELD_PILOT.md` and s
 
 Phase 10E remains `no-go` until all of the following are real and recorded:
 
-1. the exact frozen Corporate v4 candidate is installed only on the isolated `/nuevaweb/` sandbox;
+1. the exact frozen Corporate v4.1 candidate is installed only on the isolated `/nuevaweb/` sandbox;
 2. the already proven Reset & Rebuild state remains intact without carrying legacy presentation debt;
 3. the Corporate Home remains hydrated from rescued/client facts and content;
 4. native SEO/GEO handoff has no unresolved review blocker;
 5. field-pilot Step 7 reports `ready_for_browser_qa=true`;
-6. Corporate v4 browser QA passes visual, responsive, accessibility, SEO/GEO rendered-output and performance checks at `1440 / 1024 / 768 / 390`;
+6. Corporate v4.1 browser QA passes visual, responsive, accessibility, SEO/GEO rendered-output and performance checks at `1440 / 1024 / 768 / 390`;
 7. the Corporate Home is explicitly accepted as a product-quality master preset with the intended premium/WOW standard before Step 8 or inner-page rollout advances;
 8. the sandbox is explicitly accepted for controlled production entry;
 9. production verification completes without a rollback trigger;
@@ -120,7 +122,7 @@ New client deployments use the self-contained Theme artifact rather than install
 
 `EMMAKE Field Pilot Pack CI` separately rebuilds Theme, Migration Bridge and the field pack byte-for-byte and verifies their SHA-256 identities against `release/emmake-phase10e-candidate.json`.
 
-Corporate v4 has a dedicated WOW visual-contract CI gate and browser acceptance includes the product master widths in addition to the compact-mobile stress check.
+Corporate v4.1 has a dedicated field-composition CI gate and browser acceptance includes the product master widths in addition to the compact-mobile stress check.
 
 ## Promotion from no-go to go
 

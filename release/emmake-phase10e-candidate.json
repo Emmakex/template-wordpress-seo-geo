@@ -8,11 +8,11 @@
   },
   "target_version": "0.1.1",
   "release_channel": "prestable",
-  "source_commit": "cad67b33f752779cbb55a4eb5b0f540d78947f42",
+  "source_commit": "efdb0456ac684c95f1f320b4e76c533ba9f71efd",
   "theme": {
     "version": "0.1.1",
     "file": "seo-geo-theme.zip",
-    "sha256": "c266b3265f44618ad593f24a8d0b83a04983b366755db6d5db96e158516a6320"
+    "sha256": "01a558d9de8d8014ad3568d0661785741d784a3182db9280d5902889cff0c82f"
   },
   "migration_bridge": {
     "version": "0.8.60",
@@ -21,7 +21,7 @@
   },
   "field_pilot_pack": {
     "file": "emmake-home-field-pilot-pack.zip",
-    "sha256": "ae752a819d409a780e360fc43d65eef205b955c4722e7328b8d914b92086b72c"
+    "sha256": "c95c1fb142f858d949ccb72079bd7d423afca7a79eca6db2053bb4f74652066d"
   },
   "stable_decision": "no-go",
   "acceptance_status": "pending",
