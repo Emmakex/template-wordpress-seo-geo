@@ -16,8 +16,14 @@ use WP_Post;
  * public master-layout authority.
  */
 final class StrategicSurfaceRuntime {
+	/** Active strategic page for the current request. */
 	private ?WP_Post $active_post = null;
 
+	/**
+	 * Build the strategic runtime.
+	 *
+	 * @param CorporateHomeRenderer $corporate_home_renderer Corporate Home renderer.
+	 */
 	public function __construct( private readonly CorporateHomeRenderer $corporate_home_renderer ) {}
 
 	/** Register the strategic-template selector. */
@@ -30,6 +36,8 @@ final class StrategicSurfaceRuntime {
 	/**
 	 * Replace the normal block-template canvas only for an accepted strategic
 	 * surface. Ordinary pages, posts and Gutenberg-managed content are untouched.
+	 *
+	 * @param string $template WordPress-resolved template path.
 	 */
 	public function filter_template( string $template ): string {
 		$this->active_post = null;
@@ -68,9 +76,10 @@ final class StrategicSurfaceRuntime {
 	}
 
 	/**
-	 * Corporate v5 no longer needs the Gutenberg width-escape stylesheet.
-	 * Keep the proven art-direction stylesheet, then add only the tiny v5 canvas
-	 * normalization layer required by the Theme-owned document.
+	 * Replace the legacy Gutenberg escape layer with the v5 canvas runtime.
+	 *
+	 * Corporate v5 keeps the proven art-direction stylesheet and adds only the
+	 * tiny Theme-owned canvas normalization required by the strategic document.
 	 */
 	public function replace_legacy_layout_runtime(): void {
 		if ( ! $this->is_active() ) {
@@ -84,7 +93,11 @@ final class StrategicSurfaceRuntime {
 			return;
 		}
 
-		$version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $path ) : '0.1.1';
+		$version = '0.1.1';
+		if ( function_exists( 'seo_geo_theme_asset_version' ) ) {
+			$version = seo_geo_theme_asset_version( $path );
+		}
+
 		wp_enqueue_style(
 			'seo-geo-theme-preset-corporate-v5-runtime',
 			get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-runtime.css',
