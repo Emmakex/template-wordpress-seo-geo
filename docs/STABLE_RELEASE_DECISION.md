@@ -24,9 +24,9 @@ The machine-readable source of truth is:
 
 Current frozen Corporate v4.3 identity:
 
-- source commit: `24977936c887ff1fb9febdb495343172ca70df60`;
+- source commit: `095e2f6471264ef4ba21c3242467a93d8e2b88ac`;
 - Theme: `0.1.1` / `prestable`;
-- Theme ZIP SHA-256: `852b4c47db7e46a42d24ee7f084a81395ecfe1f720f2428f042f7b3243c3eebf`;
+- Theme ZIP SHA-256: `11540b3bea463a5f5cabe4d527f628de2e1d3fe6ad4b0d7cdb11a60ec85f99d2`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
 - deterministic EMMAKE field-pilot pack SHA-256: `d82fa628b96e29bf1f522dd76822a9efd4ce4766b7771069457cb5463478e671`.
