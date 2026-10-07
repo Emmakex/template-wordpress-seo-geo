@@ -2,7 +2,7 @@
 
 ## Authority
 
-This document is the **current execution pointer** for work after the EMMAKE Corporate v4.x real-site findings.
+This document is the **current execution pointer** for work after the EMMAKE Corporate real-site findings.
 
 `docs/ROADMAP.md` remains the historical/global phase record. Where an older roadmap item assumes Gutenberg/native blocks are the canonical strategic-page renderer, this current roadmap plus `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md` supersede that rendering assumption.
 
@@ -11,11 +11,13 @@ The project rule remains **finish before advancing**.
 ## Current product state
 
 - Migration/Reset/Rescue/Hydration/SEO-GEO technical path: accepted through the current EMMAKE sandbox evidence.
-- Corporate v4.3: technically reproducible and CI-valid, but visual/architectural NO-GO on the real sandbox.
-- Stable Theme promotion: NO-GO.
-- Current execution pointer: **Corporate v5 — Theme-owned frontend**.
-- SaaS / Local Pro / Publisher / Ecommerce master-surface visual rollout: frozen until Corporate v5 proves the reusable renderer boundary.
-- SEO/GEO Manager implementation: planned after the Theme renderer/model boundary is proven; architecture and publishing contracts are documented now.
+- Corporate v4.x: retained as historical technical evidence; visual/architectural direction superseded by v5.
+- Corporate v5 A1 — renderer/model boundary: **complete**.
+- Corporate v5 A2 — clean Theme-owned strategic Home/chrome: **complete as architecture/implementation baseline**.
+- Corporate v5 A3 — lighter real-site visual refinement: **current execution pointer**.
+- Stable Theme promotion: **NO-GO** pending exact `/nuevaweb/` browser/product acceptance.
+- SaaS / Local Pro / Publisher / Ecommerce master-surface rollout: frozen until Corporate v5 passes the real-site premium/WOW gate and its renderer contract is generalized.
+- SEO/GEO Manager implementation: planned after the Theme renderer/model boundary is generalized enough to consume safely; architecture and publishing contracts are already documented.
 
 ## Architectural ownership
 
@@ -29,53 +31,80 @@ WordPress remains the CMS/resource authority.
 
 ### A1 — Renderer/model boundary
 
-Status: **next implementation step**
+Status: **complete**.
 
-Deliver:
+Delivered:
 
 - Theme-side semantic model registry/reader;
 - `corporate-home-v1` renderer contract;
-- server-side renderer independent from Gutenberg master layout;
+- server-side strategic renderer independent from Gutenberg master layout;
 - WordPress resource identity preserved;
 - existing hydrated Home content reused;
-- no Reset/regeneration/rehydration merely to change renderer architecture.
+- no Reset/regeneration/rehydration required merely to change renderer architecture.
 
-Acceptance:
+Accepted boundary:
 
 - no strategic dependency on Gutenberg `contentSize`, `wideSize`, `is-layout-constrained` or `wp-block-post-content`;
 - one coherent master shell;
 - semantic headings and links preserved;
-- existing SEO/GEO output remains correct;
+- existing SEO/GEO output path remains valid;
 - zero required Manager dependency.
 
 ### A2 — Corporate v5 Home implementation
 
-Deliver:
+Status: **complete as structural/architectural baseline; real-site visual result superseded by A3 refinement**.
 
-- premium/WOW Corporate renderer using the accepted semantic content;
-- hero, capabilities, process, insights and final CTA as Theme-owned components;
-- article/query references resolved through WordPress data, not visual block-position contracts;
-- responsive behavior at `1440 / 1024 / 768 / 390`, with `320` as stress case;
-- accessibility and performance budgets preserved.
+Delivered:
+
+- premium Corporate renderer using the accepted semantic content;
+- Theme-owned strategic header, Home and footer;
+- hero, capabilities, process, Insights and final CTA as Theme-owned components;
+- article/query references resolved through WordPress data rather than visual block-position contracts;
+- removal of legacy Corporate v4 presentation debt from v5 client delivery;
+- responsive behavior at `1440 / 1024 / 768 / 390`, with `320` as automated stress case;
+- accessibility and performance budgets preserved as repository gates.
+
+Real `/nuevaweb/` QA validated the architecture but showed the palette remained too dark and some secondary surfaces lacked separation. That field finding created A3 rather than reopening the renderer boundary.
+
+### A3 — Corporate v5 lighter field refinement
+
+Status: **current**.
+
+Scope is presentation only:
+
+- lighter teal hero and primary feature surfaces;
+- improved secondary text/card separation;
+- light mint/white Method section;
+- light final CTA with dark ink and strong green action;
+- lighter high-contrast featured cards;
+- branded teal footer with stronger hierarchy and pill navigation;
+- matching mobile-menu palette;
+- no content, URL, SEO/GEO, Reset, hydration, Migration Bridge or production change.
 
 Acceptance:
 
-- repository gates green;
-- deterministic candidate frozen;
-- real `/nuevaweb/` screenshot passes the human premium/WOW gate;
-- no section-level alignment drift from editor layout context.
+- exact deterministic candidate identity frozen;
+- repository gates green on that exact candidate;
+- install only the frozen Theme on `/nuevaweb/`;
+- preserve existing Step 1–7 state and hydrated Home;
+- real QA at `1440 / 1024 / 768 / 390`;
+- explicit premium/WOW visual approval;
+- no SEO/GEO, accessibility or performance regression.
 
-### A3 — Generalize renderer contract
+Do not begin renderer generalization until this field gate is closed.
 
-Only after Corporate v5 Home passes real-site QA:
+### A4 — Generalize renderer contract
+
+Only after Corporate v5 A3 passes real-site QA:
 
 - extract reusable semantic renderer interfaces/helpers;
 - define model-version compatibility behavior;
 - define missing/optional/evidence-sensitive slot behavior;
 - define renderer fallback/error behavior;
-- keep public HTML server-rendered and local to WordPress.
+- keep public HTML server-rendered and local to WordPress;
+- make the contract suitable for future SEO/GEO Manager structured landing models without coupling Manager to Theme layout internals.
 
-### A4 — Remaining preset master surfaces
+### A5 — Remaining preset master surfaces
 
 Move master strategic surfaces to the same architecture in this order:
 
@@ -90,7 +119,7 @@ Gutenberg/editorial body usage may differ by preset, but it does not become mast
 
 ## Track B — SEO/GEO Manager publishing foundation
 
-Starts after the Theme semantic renderer contract is proven enough to consume safely.
+Starts after the Theme semantic renderer contract is proven and generalized enough to consume safely.
 
 ### B1 — Manager package + independent release boundary
 
@@ -271,10 +300,12 @@ Strategic SEO/GEO growth pages should preferentially use Manager because that pa
 
 ## Current stop/go rule
 
-Do **not** begin another Corporate CSS patch cycle on top of v4.3.
+Do **not** rerun Reset or hydration merely to test A3 presentation.
 
 Do **not** roll the other four preset master surfaces forward yet.
 
+Do **not** begin A4 renderer generalization until the exact A3 field candidate passes `/nuevaweb/` visual/browser acceptance.
+
 Do **not** require SEO/GEO Manager to render the frontend.
 
-Next implementation begins with **Corporate v5 semantic Theme renderer** while preserving the current `/nuevaweb/` content and SEO/GEO state.
+Current execution is: **close Corporate v5 A3 → freeze/verify deterministic candidate → real `/nuevaweb/` QA → explicit premium/WOW acceptance → A4 renderer generalization**.
