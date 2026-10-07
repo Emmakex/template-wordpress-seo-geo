@@ -90,7 +90,9 @@ These are repository/fixture results. They do not substitute for the human visua
 
 ## SEO/GEO Manager relationship
 
-SEO/GEO Manager remains a separate future plugin product and is not required for Theme stable runtime.
+SEO/GEO Manager is a separate plugin product.
+
+SEO/GEO Manager remains a future product and is not required for Theme stable runtime.
 
 The v5 renderer boundary supports the future Manager direction:
 
@@ -131,7 +133,9 @@ Until production acceptance exists, `release/stable-release-decision.json` remai
 
 ## Product boundary
 
-SEO/GEO Manager is a separate plugin product and is not a mandatory dependency for Theme `0.1.1` stable runtime.
+SEO/GEO Manager is a separate plugin product.
+
+It is not a mandatory dependency for Theme `0.1.1` stable runtime.
 
 Migration Bridge `0.8.60` remains the accepted migration/reset implementation for this pilot.
 
