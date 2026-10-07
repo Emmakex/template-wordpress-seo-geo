@@ -1,10 +1,10 @@
 <?php
 /**
- * Browser-acceptance locale fixture.
+ * Browser-acceptance locale and preset fixture.
  *
  * This MU-plugin is copied only into the disposable CI WordPress install. It
- * lets one fixture exercise EN and ES requests without pretending that native
- * single-language WordPress is a multilingual provider.
+ * lets one fixture exercise EN and ES requests and one isolated request exercise
+ * Corporate without persisting those test-only choices into WordPress state.
  *
  * @package SeoGeoAcceptance
  */
@@ -47,9 +47,29 @@ add_filter( 'locale', 'seo_geo_acceptance_fixture_locale', 999 );
 add_filter( 'determine_locale', 'seo_geo_acceptance_fixture_locale', 999 );
 
 /**
- * Make the isolated Corporate performance fixture exercise the exact v3 Home
- * asset path. This filter exists only in the disposable acceptance MU-plugin;
- * production still detects v3 from the hydrated native Home content marker.
+ * Activate Corporate only for the isolated acceptance request.
+ *
+ * Returning the incoming pre-option value for every other request leaves the
+ * real persisted preset state untouched.
+ *
+ * @param mixed $pre_option Existing short-circuit value.
+ * @return mixed
+ */
+function seo_geo_acceptance_fixture_active_preset( $pre_option ) {
+	if ( ! isset( $_GET['fixture_preset'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only CI fixture selector.
+		return $pre_option;
+	}
+
+	$requested = sanitize_key( wp_unslash( (string) $_GET['fixture_preset'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only CI fixture selector.
+
+	return 'corporate' === $requested ? 'corporate' : $pre_option;
+}
+
+add_filter( 'pre_option_seo_geo_active_preset', 'seo_geo_acceptance_fixture_active_preset', 999 );
+
+/**
+ * Make the isolated Corporate performance/visual fixture exercise the master
+ * Home asset path. This exists only in the disposable acceptance MU-plugin.
  *
  * @param bool $uses_master_home Theme-detected Home state.
  */
