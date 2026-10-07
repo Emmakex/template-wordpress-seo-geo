@@ -81,7 +81,7 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
-		$visual = $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false );
+		$visual = $this->decorative_image( 'hero-global-connectivity.webp', 'seo-geo-corporate-hero-visual__image', 1200, 675, false );
 
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'
@@ -112,6 +112,7 @@ final class CorporateHomeRenderer {
 
 			$cards .= '<article class="seo-geo-corporate-card seo-geo-corporate-card--' . $index . '">'
 				. '<p class="seo-geo-corporate-card__index">0' . $index . '</p>'
+				. $this->capability_media( $index )
 				. '<h3>' . esc_html( $title ) . '</h3>'
 				. '<p>' . esc_html( $body ) . '</p>'
 				. '<p class="seo-geo-corporate-card__link"><a href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['label'] ) . '</a></p>'
@@ -127,6 +128,29 @@ final class CorporateHomeRenderer {
 			)
 			. '<div class="seo-geo-corporate-card-grid">' . $cards . '</div>'
 			. '</section>';
+	}
+
+	/**
+	 * Render local capability media without making imagery a semantic dependency.
+	 *
+	 * @param int $index Capability position.
+	 */
+	private function capability_media( int $index ): string {
+		$assets = array(
+			1 => array( 'capability-marketing-funnel.webp', 720, 720 ),
+			2 => array( 'capability-market-research.webp', 720, 540 ),
+			3 => array( 'capability-ai-automation.webp', 720, 540 ),
+		);
+
+		if ( ! isset( $assets[ $index ] ) ) {
+			return '';
+		}
+
+		$asset = $assets[ $index ];
+
+		return '<div class="seo-geo-corporate-card__media" aria-hidden="true">'
+			. $this->decorative_image( $asset[0], 'seo-geo-corporate-card__media-image', $asset[1], $asset[2] )
+			. '</div>';
 	}
 
 	/**
@@ -282,7 +306,7 @@ final class CorporateHomeRenderer {
 	 * @param bool   $lazy      Whether to lazy-load the asset.
 	 */
 	private function decorative_image( string $filename, string $css_class, int $width, int $height, bool $lazy = true ): string {
-		$loading = $lazy ? ' loading="lazy"' : '';
+		$loading = $lazy ? ' loading="lazy"' : ' loading="eager" fetchpriority="high"';
 
 		return '<img class="' . esc_attr( $css_class ) . '" src="' . esc_url( $this->asset_uri( $filename ) ) . '" alt="" width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '" decoding="async"' . $loading . '>';
 	}
