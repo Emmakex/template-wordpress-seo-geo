@@ -29,7 +29,7 @@ done
 
 printf '[corporate-v5] Checking semantic model boundary.\n'
 require_text "$CONTENT_MAP" '"corporate-home-v1"' 'canonical corporate-home-v1 model missing'
-require_text "$MODEL" "private const MODEL_ID = 'corporate-home-v1';" 'resolver is not bound to corporate-home-v1'
+grep -Eq "private const MODEL_ID[[:space:]]*=[[:space:]]*'corporate-home-v1';" "$MODEL" || fail 'resolver is not bound to corporate-home-v1'
 require_text "$MODEL" "seo_geo_theme_preset_document( 'corporate', 'content-map.json' )" 'resolver must read the canonical Corporate content contract'
 require_text "$MODEL" "apply_filters( 'seo_geo_theme_corporate_home_model'" 'Manager/external model handoff filter missing'
 require_text "$MODEL" "'source'   => 'hydrated-semantic-blocks'" 'transition source must be explicit'
