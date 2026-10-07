@@ -8,22 +8,22 @@ Canonical machine-readable candidate:
 
 `release/emmake-phase10e-candidate.json`
 
-Frozen Corporate v5 A1 field identity:
+Frozen Corporate v5 A2 field identity:
 
 - site ID: `emmake-com`;
 - production origin: `https://emmake.com/`;
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen Theme-content source commit: `1acf5e0956fc456e48c9df5d039ad644959a0efd`;
-- Theme ZIP SHA-256: `b3cc616b22e18cc5d1e260419eeef628006f281c66c30092cc1cc1646ec50981`;
+- frozen Theme-content source commit: `df63d7c4d05cd5eee5440e85a4232b8404e489d7`;
+- Theme ZIP SHA-256: `fca2ae8cc64304051713e4a37601b3af49bfcc153d0bc3c69e24acdeed8ab340`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `e32a3b34adc4a00fc5a86fa79fc9fc39d101af661bb21770e3467d938dee18bb`;
+- deterministic field-pilot pack SHA-256: `f490d3e36cdd484c521bf9721e080a157822f91b16d54bffce9418af6ed6de5d`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
-This Corporate v5 A1 identity is the only current technical field candidate. Repository gates are green for the Theme-content source, but that is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
+This Corporate v5 A2 identity is the only current technical field candidate. Repository gates are green for the Theme-content source, but that is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
 
 ## Current pilot position
 
@@ -38,25 +38,33 @@ The technical Reset & Rebuild sequence has already reached Step 7 on the real `/
 - native SEO/GEO handoff reported SEO-ready;
 - machine preflight reported `ready_for_browser_qa=true`.
 
-Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge merely because the renderer architecture changes. The semantic draft and SEO/GEO state are already proven.
+Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge merely because the renderer/presentation changes. The semantic draft and SEO/GEO state are already proven.
 
-Corporate v5 A1 now also proves repository-side Theme-owned rendering, semantic landmarks, responsive/reflow behavior, keyboard/focus behavior, reduced-motion handling, WCAG AA automated contrast, deterministic packaging and performance budgets. These automated checks do not replace the real sandbox visual gate.
+## A1 field result and A2 response
 
-## v4.x field finding
+Corporate v5 A1 proved the Theme-owned strategic Home renderer but failed the human visual gate on the real sandbox. The A1 full-page screenshot showed:
 
-Corporate v4 established the intended premium/WOW art direction. v4.1 corrected the first composition defects. v4.2 improved reading measure and introduced content-hash CSS versioning. v4.3 then attempted to escape inherited Gutenberg constrained-content widths while preserving the same semantic content.
+- a broken header composed from legacy/database-customized block template-part state;
+- hero imbalance with excessive unused space;
+- services/capabilities still reading like a template rather than a premium composition;
+- residual list markers in Insights;
+- a final CTA inheriting the default WordPress blue button;
+- a weak residual footer;
+- visual debt from carrying the old Corporate v4 stylesheet into the v5 client bundle.
 
-The real-site v4.3 screenshot demonstrated that this remained insufficient as a reusable product architecture. Different master sections still resolved against different layout contexts and appeared visually misaligned. The page could be patched further with CSS, but doing so would turn the Theme into a growing layer of exceptions around Gutenberg layout behavior.
+The field conclusion is that the strategic Theme must own not only `<main>` but the **entire strategic document chrome**.
 
-The field conclusion is therefore architectural:
+Corporate v5 A2 therefore:
 
-> **Gutenberg remains an editor, but it is no longer the master layout authority for strategic SEO/GEO Theme surfaces.**
-
-v4.3 is recorded as technically valid but **visual/architectural NO-GO**.
+- renders a Theme-owned strategic header and footer directly server-side;
+- keeps preset navigation as navigation authority without database-overridable `block_template_part()` presentation;
+- removes legacy Corporate v2/v3 presentation from strategic requests;
+- builds the client release from the neutral Theme foundation plus the clean v5 strategic stylesheet only;
+- rebalances hero, capabilities, method, Insights, final CTA and footer as one coherent v5 visual system;
+- explicitly resets list markers and customizes CTA buttons;
+- preserves the existing hydrated content and SEO/GEO state unchanged.
 
 ## Corporate v5 — Theme-owned frontend
-
-The active Corporate checkpoint is **Corporate v5 — Theme-owned frontend**.
 
 Canonical architecture: `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`.
 
@@ -69,9 +77,9 @@ corporate-home-v1
         ↓
 Corporate Theme renderer
         ↓
-server-rendered semantic HTML
+server-rendered semantic strategic document
         ↓
-Theme-owned layout / CSS / responsive behavior
+Theme-owned header / Home / footer / CSS / responsive behavior
 ```
 
 The master Home no longer depends on Gutenberg constructs such as:
@@ -80,17 +88,40 @@ The master Home no longer depends on Gutenberg constructs such as:
 - `is-layout-constrained` for strategic composition;
 - `contentSize` / `wideSize` as the Corporate page-width authority;
 - nested Group/Columns blocks as the renderer contract;
-- generated Gutenberg layout CSS to determine master section alignment.
+- generated Gutenberg layout CSS to determine master section alignment;
+- database-overridable block template parts for the Corporate strategic header/footer.
 
 WordPress remains the CMS and resource authority. Gutenberg remains available for blog/editorial content and simple client pages.
+
+## Corporate v5 A2 repository acceptance
+
+The frozen A2 source passes the repository-side contract for:
+
+- Theme-owned semantic header/main/footer and one strategic H1;
+- server-side rendering and dynamic WordPress Insights;
+- no strategic `wp-block-post-content` authority;
+- no legacy Corporate v4 visual CSS in the v5 client bundle;
+- keyboard/focus and reduced-motion behavior;
+- automated WCAG/accessibility checks;
+- responsive/reflow checks at `320 / 390 / 768 / 1024 / 1440`;
+- WordPress 7.1 / PHP 8.2 smoke, upgrade and rollback;
+- PHP Quality / PHPStan level 6;
+- deterministic self-contained packaging;
+- Lighthouse performance score `100` for Corporate;
+- FCP/LCP `752.5 ms`, CLS `0`, TBT `0`;
+- transferred Corporate CSS `4794` bytes;
+- zero project frontend JavaScript and zero third-party requests;
+- static Corporate CSS gzip proxy `4554 / 7100` bytes.
+
+These automated results do **not** replace the real `/nuevaweb/` visual/product gate.
 
 ## Corporate v5 acceptance rule
 
 Corporate v5 must prove all of the following before the other preset master surfaces continue:
 
-- reuse the existing rescued/hydrated content without casually rerunning Reset or migration;
+- reuse the existing rescued/hydrated content without rerunning Reset or migration;
 - render the Corporate Home from the existing semantic model/content slots;
-- make the Theme the sole strategic layout authority;
+- make the Theme the sole strategic layout/chrome authority;
 - preserve one correct semantic heading hierarchy;
 - preserve internal links and SEO/GEO output;
 - preserve accessibility and server-side rendering;
@@ -99,9 +130,9 @@ Corporate v5 must prove all of the following before the other preset master surf
 - meet the premium/WOW visual gate on the real `/nuevaweb/` sandbox;
 - establish a reusable renderer boundary that SEO/GEO Manager can later use for generated landings.
 
-The existing `320` compact-mobile automated check remains an additional stress case.
+The `320` compact-mobile automated check remains an additional stress case.
 
-The repository-side portions of this rule are satisfied by the frozen A1 source. Real `/nuevaweb/` field behavior and explicit visual approval remain pending.
+Repository-side portions are satisfied by A2. Real `/nuevaweb/` behavior and explicit visual approval remain pending.
 
 ## Relationship with SEO/GEO Manager
 
@@ -121,7 +152,7 @@ This Manager roadmap does **not** require Manager to run the public frontend. Th
 
 ## Existing milestones remain valid
 
-The product-owned clone from `https://emmake.com/` to `https://emmake.com/nuevaweb/`, Rescue Manifest, Reset, content rescue, clean semantic Home creation, hydration and SEO/GEO handoff remain accepted evidence. They do not need to be repeated merely because presentation architecture changes.
+The product-owned clone from `https://emmake.com/` to `https://emmake.com/nuevaweb/`, Rescue Manifest, Reset, content rescue, clean semantic Home creation, hydration and SEO/GEO handoff remain accepted evidence. They do not need to be repeated because presentation architecture changes.
 
 The replatforming rule remains: preserve authored content, URLs/redirects, valid SEO signals, important links, useful media, verified organization/contact facts and required business behavior; replace legacy theme/builder presentation debt rather than copying it into the new site.
 
@@ -141,20 +172,21 @@ define( 'SEO_GEO_MIGRATION_BACKUPS_READY', true );
 
 Search visibility, canonical/hreflang/sitemap authority, production `home`/`siteurl` and rollback boundaries must remain isolated from production. No credentials, dumps, private submissions or customer data enter the repository.
 
-## Field execution for Corporate v5
+## Field execution for Corporate v5 A2
 
-The destructive/reset portion must **not** be repeated for this renderer migration unless a real data/state failure is proven.
+The destructive/reset portion must **not** be repeated unless a real data/state failure is proven.
 
 1. Keep the existing `/nuevaweb/` clone and Step 1–7 evidence.
-2. Keep Migration Bridge `0.8.60` unless a separate migration defect requires changing it.
+2. Keep Migration Bridge `0.8.60`.
 3. Preserve the existing clean hydrated Home data/content.
-4. Verify the Theme ZIP SHA-256 is exactly `b3cc616b22e18cc5d1e260419eeef628006f281c66c30092cc1cc1646ec50981` before installation.
-5. Install that frozen Corporate v5 Theme candidate **only** on `/nuevaweb/`.
+4. Verify the Theme ZIP SHA-256 is exactly `fca2ae8cc64304051713e4a37601b3af49bfcc153d0bc3c69e24acdeed8ab340` before installation.
+5. Replace the Theme with that frozen Corporate v5 A2 candidate **only** on `/nuevaweb/`.
 6. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
-7. Preview the same logical Home through the new Theme-owned renderer.
-8. Verify that all master sections share the intended renderer shell/alignment.
-9. Run browser QA at `1440 / 1024 / 768 / 390`.
-10. Do not advance Step 8 until the Home receives explicit visual approval.
+7. Open the same logical hydrated Home through the Theme-owned renderer.
+8. Verify first that the header is a single coherent strategic header and that no legacy list/title/`Menu` stack remains.
+9. Review the full desktop composition before advancing to narrower viewports.
+10. After desktop visual direction is accepted, run field QA at `1024 / 768 / 390` one viewport at a time.
+11. Do not advance Step 8 until the Home receives explicit visual approval.
 
 If the semantic data or Step 7 state has drifted, stop and investigate instead of recreating evidence casually.
 
@@ -169,6 +201,17 @@ Record the five field checks:
 5. `performance` — no material runtime/asset regression and acceptable measured sandbox performance.
 
 A technically valid result that still fails the premium/WOW standard remains a blocker.
+
+For the next A2 desktop screenshot specifically verify:
+
+- one clean premium header, with no stray bullets or duplicate `EMMAKE`/`Menu` surfaces;
+- purposeful hero right-side visual balance;
+- readable services/capabilities without excessive dead air;
+- premium three-step method hierarchy;
+- zero stray Insights bullets;
+- mint Theme CTA instead of the WordPress default blue button;
+- deliberate branded footer;
+- coherent vertical rhythm and no forced text wrapping/overflow.
 
 ## Representative SEO/GEO regression set
 
@@ -190,6 +233,6 @@ Until Corporate v5 and later production acceptance exist:
 
 - `release/stable-release-decision.json` remains `no-go`;
 - real-site acceptance remains `pending`;
-- the Corporate v5 A1 candidate above is the frozen technical field authority;
-- the v4.3 candidate remains historical technical evidence only;
+- Corporate v5 A2 is the frozen technical field authority;
+- Corporate v5 A1 and v4.3 remain historical field/technical evidence;
 - no stable release is published.
