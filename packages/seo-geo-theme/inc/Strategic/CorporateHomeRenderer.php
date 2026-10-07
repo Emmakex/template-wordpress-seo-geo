@@ -81,6 +81,10 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
+		$visual = '<figure class="seo-geo-corporate-hero-visual">'
+			. $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false )
+			. '</figure>';
+
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'
 			. '<div class="wp-block-column"><div class="seo-geo-corporate-native-hero__copy">'
@@ -88,7 +92,7 @@ final class CorporateHomeRenderer {
 			. '<h1 id="seo-geo-corporate-v5-title" class="seo-geo-corporate-lead">' . esc_html( $lead ) . '</h1>'
 			. $actions
 			. '</div></div>'
-			. '<div class="wp-block-column" aria-hidden="true"></div>'
+			. '<div class="wp-block-column seo-geo-corporate-native-hero__visual-column" aria-hidden="true">' . $visual . '</div>'
 			. '</div></section>';
 	}
 
@@ -108,12 +112,25 @@ final class CorporateHomeRenderer {
 				continue;
 			}
 
-			$cards .= '<article class="seo-geo-corporate-card">'
+			$visual = '';
+			if ( 1 === $index ) {
+				$visual = '<div class="seo-geo-corporate-card__media" aria-hidden="true">'
+					. $this->decorative_image( 'capability-marketing.svg', 'seo-geo-corporate-card__media-image', 560, 360 )
+					. '</div>';
+			} elseif ( 2 === $index ) {
+				$visual = $this->icon( 'research', 'seo-geo-corporate-card__icon' );
+			} elseif ( 3 === $index ) {
+				$visual = $this->icon( 'automation', 'seo-geo-corporate-card__icon' );
+			}
+
+			$cards .= '<article class="seo-geo-corporate-card seo-geo-corporate-card--' . $index . '">'
+				. $visual
 				. '<p class="seo-geo-corporate-card__index">0' . $index . '</p>'
+				. '<div class="seo-geo-corporate-card__content">'
 				. '<h3>' . esc_html( $title ) . '</h3>'
 				. '<p>' . esc_html( $body ) . '</p>'
 				. '<p><a href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['label'] ) . '</a></p>'
-				. '</article>';
+				. '</div></article>';
 		}
 
 		return '<section class="seo-geo-corporate-native-section seo-geo-corporate-native-capabilities" aria-labelledby="seo-geo-capabilities-title">'
@@ -134,10 +151,14 @@ final class CorporateHomeRenderer {
 	 * @param bool                 $is_es Whether Spanish preset copy is active.
 	 */
 	private function render_process( array $slots, bool $is_es ): string {
-		$steps = '';
+		$steps      = '';
+		$icon_names = array( 1 => 'understand', 2 => 'define', 3 => 'measure' );
 		for ( $index = 1; $index <= 3; ++$index ) {
-			$steps .= '<article class="seo-geo-corporate-process-step">'
+			$steps .= '<article class="seo-geo-corporate-process-step seo-geo-corporate-process-step--' . $index . '">'
+				. '<div class="seo-geo-corporate-process-step__top">'
 				. '<p class="seo-geo-corporate-process-step__number">0' . $index . '</p>'
+				. $this->icon( $icon_names[ $index ], 'seo-geo-corporate-process-step__icon' )
+				. '</div>'
 				. '<h3>' . esc_html( $this->text( $slots, 'process-' . $index . '-title' ) ) . '</h3>'
 				. '<p>' . esc_html( $this->text( $slots, 'process-' . $index . '-body' ) ) . '</p>'
 				. '</article>';
@@ -170,7 +191,8 @@ final class CorporateHomeRenderer {
 			)
 		);
 
-		$items = '';
+		$items    = '';
+		$position = 0;
 		foreach ( $query->posts as $article ) {
 			if ( ! $article instanceof WP_Post ) {
 				continue;
@@ -181,14 +203,18 @@ final class CorporateHomeRenderer {
 				continue;
 			}
 
+			++$position;
 			$excerpt = trim( wp_strip_all_tags( get_the_excerpt( $article ), true ) );
 			$excerpt = wp_trim_words( $excerpt, 30, '…' );
+			$media   = 1 === $position ? $this->insight_media( $article ) : '';
 
 			$items .= '<li><article class="seo-geo-corporate-insight-card">'
+				. $media
+				. '<div class="seo-geo-corporate-insight-card__content">'
 				. '<time class="wp-block-post-date" datetime="' . esc_attr( get_the_date( DATE_W3C, $article ) ) . '">' . esc_html( get_the_date( '', $article ) ) . '</time>'
 				. '<h3 class="wp-block-post-title"><a href="' . esc_url( $permalink ) . '">' . esc_html( get_the_title( $article ) ) . '</a></h3>'
 				. '<div class="wp-block-post-excerpt"><p>' . esc_html( $excerpt ) . '</p></div>'
-				. '</article></li>';
+				. '</div></article></li>';
 		}
 
 		wp_reset_postdata();
@@ -202,6 +228,33 @@ final class CorporateHomeRenderer {
 			)
 			. ( '' === $items ? '' : '<ul class="wp-block-post-template">' . $items . '</ul>' )
 			. '</section>';
+	}
+
+	/**
+	 * Render featured editorial media, preferring WordPress-authored media.
+	 *
+	 * @param WP_Post $article Article resource.
+	 */
+	private function insight_media( WP_Post $article ): string {
+		if ( has_post_thumbnail( $article ) ) {
+			$image = get_the_post_thumbnail(
+				$article,
+				'large',
+				array(
+					'class'    => 'seo-geo-corporate-insight-card__image',
+					'loading'  => 'lazy',
+					'decoding' => 'async',
+					'sizes'    => '(max-width: 820px) calc(100vw - 2rem), 46vw',
+				)
+			);
+			if ( is_string( $image ) && '' !== $image ) {
+				return '<div class="seo-geo-corporate-insight-card__media">' . $image . '</div>';
+			}
+		}
+
+		return '<div class="seo-geo-corporate-insight-card__media" aria-hidden="true">'
+			. $this->decorative_image( 'insights-featured.svg', 'seo-geo-corporate-insight-card__image', 720, 420 )
+			. '</div>';
 	}
 
 	/**
@@ -236,6 +289,38 @@ final class CorporateHomeRenderer {
 			. '<h2 id="' . esc_attr( $id ) . '">' . esc_html( $heading ) . '</h2>'
 			. '<p>' . esc_html( $intro ) . '</p>'
 			. '</header>';
+	}
+
+	/**
+	 * Render a reusable decorative SVG icon from the local sprite.
+	 *
+	 * @param string $symbol Symbol ID.
+	 * @param string $class  CSS class.
+	 */
+	private function icon( string $symbol, string $class ): string {
+		$href = $this->asset_uri( 'icon-sprite.svg' ) . '#' . $symbol;
+
+		return '<svg class="' . esc_attr( $class ) . '" aria-hidden="true" focusable="false"><use href="' . esc_url( $href ) . '"></use></svg>';
+	}
+
+	/**
+	 * Render a local decorative image with intrinsic dimensions.
+	 *
+	 * @param string $filename Asset filename.
+	 * @param string $class    CSS class.
+	 * @param int    $width    Intrinsic width.
+	 * @param int    $height   Intrinsic height.
+	 * @param bool   $lazy     Whether to lazy-load the asset.
+	 */
+	private function decorative_image( string $filename, string $class, int $width, int $height, bool $lazy = true ): string {
+		$loading = $lazy ? ' loading="lazy"' : '';
+
+		return '<img class="' . esc_attr( $class ) . '" src="' . esc_url( $this->asset_uri( $filename ) ) . '" alt="" width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '" decoding="async"' . $loading . '>';
+	}
+
+	/** Resolve one Corporate v5 local asset URL. */
+	private function asset_uri( string $filename ): string {
+		return trailingslashit( get_template_directory_uri() ) . 'assets/images/presets/corporate/v5/' . ltrim( $filename, '/' );
 	}
 
 	/**
