@@ -318,7 +318,9 @@ Do **not** touch production.
 
 Do **not** roll the other four preset master surfaces forward yet.
 
-Do **not** begin A4 renderer generalization until the exact A3.1 field candidate passes `/nuevaweb/` visual/browser acceptance.
+Do **not** begin A4 renderer generalization until the exact A3 field candidate passes `/nuevaweb/` visual/browser acceptance.
+
+For current execution, that A3 field gate is materialized by the exact frozen A3.1 candidate documented above; A3.1 must pass the real sandbox before A4 starts.
 
 Do **not** require SEO/GEO Manager to render the frontend.
 
