@@ -97,9 +97,9 @@ final class StrategicSurfaceRuntime {
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' );
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
 
-		$path              = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
-		$closure_path      = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
-		$bundle_marker     = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
+		$path          = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
+		$closure_path  = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
+		$bundle_marker = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
 		if ( ! is_readable( $path ) ) {
 			return;
 		}
