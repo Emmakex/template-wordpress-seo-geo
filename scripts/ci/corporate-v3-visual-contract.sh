@@ -45,7 +45,7 @@ require_text "$RUNTIME" '.seo-geo-corporate-native-section{width:var(--cv4-shell
 require_text "$RUNTIME" '.seo-geo-corporate-native-insights>.wp-block-query' 'Insights query width escape missing'
 require_text "$RUNTIME" '.seo-geo-corporate-process-grid{width:100%!important;max-width:none!important;margin-inline:auto!important}' 'process grid width escape missing'
 require_text "$RUNTIME" 'max-width:50ch!important;' 'process body reading measure missing'
-require_text "$RUNTIME" 'max-width:18ch!important;font-size:clamp(2.8rem,3.7vw,4.3rem)!important;' 'featured Insight title measure missing'
+require_text "$RUNTIME" 'max-width:18ch!important;font-size:clamp(2.8rem,3.7vw,4.3rem)!important' 'featured Insight title measure missing'
 require_text "$CSS" 'min-height:min(600px,70vh);' 'rebalanced closing CTA scene missing'
 require_text "$CSS" 'content:"↗";' 'CTA directional visual cue missing'
 require_text "$CSS" '.seo-geo-page-shell:has(.seo-geo-corporate-native-hero) > .seo-geo-page-title' 'draft preview title-collapse contract missing'
