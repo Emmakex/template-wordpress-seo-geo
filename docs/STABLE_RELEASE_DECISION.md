@@ -77,9 +77,13 @@ Until production acceptance exists, `release/stable-release-decision.json` remai
 
 ## Product boundary
 
-SEO/GEO Manager is a separate future plugin product and is not a dependency or blocker for Theme `0.1.1` stable acceptance.
+SEO/GEO Manager is a separate future plugin product.
 
-Migration Bridge remains the accepted migration/reset implementation for this pilot. The standalone Core wrapper remains `deprecated-retained-nondistributed` and is not included in the self-contained Theme release ZIP.
+It is not a dependency or blocker for Theme `0.1.1` stable acceptance.
+
+Migration Bridge is the accepted migration/reset implementation for this Theme pilot.
+
+The standalone Core wrapper remains `deprecated-retained-nondistributed` and is not included in the self-contained Theme release ZIP.
 
 ## Automated decision contract
 
