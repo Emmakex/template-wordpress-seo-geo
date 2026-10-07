@@ -251,7 +251,7 @@ final class CorporateHomeRenderer {
 					'sizes'    => '(max-width: 820px) calc(100vw - 2rem), 46vw',
 				)
 			);
-			if ( is_string( $image ) && '' !== $image ) {
+			if ( '' !== $image ) {
 				return '<div class="seo-geo-corporate-insight-card__media">' . $image . '</div>';
 			}
 		}
