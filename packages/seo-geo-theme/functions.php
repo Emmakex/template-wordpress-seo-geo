@@ -71,6 +71,9 @@ function seo_geo_theme_corporate_master_home_layer(): bool {
  * Release ZIPs are deterministic and therefore may preserve identical file
  * timestamps across different candidate contents. Content-derived versions
  * ensure browser/CDN caches see a new URL whenever an asset really changes.
+ *
+ * @param string $path Absolute asset filesystem path.
+ * @return string Content-derived asset version.
  */
 function seo_geo_theme_asset_version( string $path ): string {
 	if ( ! is_readable( $path ) ) {
