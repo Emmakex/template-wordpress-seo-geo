@@ -81,7 +81,7 @@ function seo_geo_theme_asset_version( string $path ): string {
 	}
 
 	$hash = hash_file( 'sha256', $path );
-	if ( is_string( $hash ) && '' !== $hash ) {
+	if ( is_string( $hash ) ) {
 		return substr( $hash, 0, 16 );
 	}
 
