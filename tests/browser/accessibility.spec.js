@@ -17,6 +17,12 @@ const fixtures = [
     path: '/migration-parity-fixture/?fixture_lang=en',
     htmlLang: /^en(?:-|$)/i,
   },
+  {
+    language: 'CORPORATE-V5',
+    path: '/corporate-v5-fixture/?fixture_lang=en&fixture_preset=corporate',
+    htmlLang: /^en(?:-|$)/i,
+    strategicV5: true,
+  },
 ];
 
 const wcagTags = [
@@ -53,6 +59,19 @@ for (const fixture of fixtures) {
       await expect(page.getByRole('contentinfo')).toHaveCount(1);
       await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
 
+      if (fixture.strategicV5) {
+        await expect(page.locator('body')).toHaveClass(/seo-geo-corporate-home-v5/);
+        await expect(page.locator('main.seo-geo-corporate-v5-home')).toHaveCount(1);
+        await expect(page.locator('.wp-block-post-content')).toHaveCount(0);
+        await expect(page.locator('link[href*="corporate-v5-runtime.css"]')).toHaveCount(1);
+        await expect(page.locator('link[href*="corporate-v3-runtime.css"]')).toHaveCount(0);
+        await expect(page.getByRole('heading', {
+          level: 1,
+          name: 'Theme-owned strategic frontend without Gutenberg layout authority.',
+        })).toHaveCount(1);
+        await expect(page.locator('.seo-geo-corporate-insight-card')).toHaveCount(3);
+      }
+
       const headings = await page.locator('h1, h2, h3, h4, h5, h6').evaluateAll((nodes) =>
         nodes.map((node) => ({
           level: Number(node.tagName.substring(1)),
@@ -61,7 +80,7 @@ for (const fixture of fixtures) {
       );
 
       expect(headings.length, 'Representative fixture should have a useful heading structure').toBeGreaterThan(1);
-      expect(headings[0].level, 'The page title must own the first H1').toBe(1);
+      expect(headings[0].level, 'The first content heading must be H1').toBe(1);
       expect(headings.every((heading) => heading.text.length > 0), 'Headings must not be empty').toBeTruthy();
 
       for (let index = 1; index < headings.length; index += 1) {
