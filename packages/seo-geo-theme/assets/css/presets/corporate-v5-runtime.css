@@ -8,3 +8,9 @@
 .seo-geo-corporate-v5-home .seo-geo-corporate-card-grid,
 .seo-geo-corporate-v5-home .seo-geo-corporate-process-grid,
 .seo-geo-corporate-v5-home .wp-block-post-template{box-sizing:border-box}
+
+@media (prefers-reduced-motion:reduce){
+.seo-geo-corporate-home-v5 *,
+.seo-geo-corporate-home-v5 *::before,
+.seo-geo-corporate-home-v5 *::after{scroll-behavior:auto!important;transition-duration:0s!important;transition-delay:0s!important;animation-duration:0s!important;animation-delay:0s!important;animation-iteration-count:1!important}
+}
