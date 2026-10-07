@@ -66,8 +66,8 @@ total_gzip=$(( foundation_gzip + visual_gzip + runtime_gzip ))
 printf '[corporate-v4] CSS gzip proxy: foundation=%s visual=%s runtime=%s total=%s bytes.\n' \
   "$foundation_gzip" "$visual_gzip" "$runtime_gzip" "$total_gzip"
 
-if (( total_gzip > 7900 )); then
-  fail "Corporate v4 Home CSS gzip proxy ${total_gzip} exceeds 7900-byte safety ceiling below the 8192-byte network budget"
+if (( total_gzip > 7100 )); then
+  fail "Corporate v4 Home CSS gzip proxy ${total_gzip} exceeds 7100-byte safety ceiling calibrated below the 8192-byte Lighthouse network budget"
 fi
 
 printf '[corporate-v4] PASS: WOW Home composition and lean-asset contracts present.\n'
