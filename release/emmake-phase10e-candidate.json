@@ -21,7 +21,7 @@
   },
   "field_pilot_pack": {
     "file": "emmake-home-field-pilot-pack.zip",
-    "sha256": "6227c0c008e81454c521ee716333529d31548bc53885e068cb08296a32dbdb66"
+    "sha256": "d82fa628b96e29bf1f522dd76822a9efd4ce4766b7771069457cb5463478e671"
   },
   "stable_decision": "no-go",
   "acceptance_status": "pending",
