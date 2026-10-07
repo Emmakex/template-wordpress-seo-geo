@@ -39,6 +39,8 @@ This identity is reproducible technical evidence and is the only Corporate v5 ca
 
 Earlier candidates proved Rescue Manifest, Clone Reset, Corporate bootstrap, clean Home creation, content hydration, native SEO/GEO handoff and Step 7 machine readiness on `/nuevaweb/`.
 
+Corporate v4.3 passed the repository-side technical gates, but **failed the human visual/architectural acceptance gate** on the real sandbox. Its evidence remains historical and explains the move to **Corporate v5 — Theme-owned frontend**.
+
 Corporate v4 established the premium/WOW art direction, but v4.3 real-site evidence showed that a premium strategic Home should not depend on Gutenberg as its master layout engine. Corporate v5 A1 then moved the Home to a Theme-owned semantic server renderer.
 
 The A1 real-site screenshot confirmed the new master-section alignment direction but rejected the visual result. The main field defects were:
@@ -137,7 +139,9 @@ SEO/GEO Manager is a separate plugin product.
 
 It is not a mandatory dependency or blocker for Theme `0.1.1` stable runtime.
 
-Migration Bridge `0.8.60` remains the accepted migration/reset implementation for this pilot.
+Migration Bridge is the accepted migration/reset implementation for this Theme pilot.
+
+Migration Bridge `0.8.60` remains the frozen implementation for this field candidate.
 
 The standalone Core wrapper remains `deprecated-retained-nondistributed` and is not included in the self-contained Theme release ZIP.
 
