@@ -85,9 +85,9 @@ final class StrategicSurfaceRuntime {
 	 * visual stylesheet: the strategic renderer and its CSS are a clean product
 	 * boundary rather than another override layer.
 	 *
-	 * The installable release prepends the neutral Theme foundation to the v5
-	 * runtime and writes a marker. Source installs keep the foundation as a normal
-	 * dependency while still avoiding legacy Corporate layout CSS.
+	 * The installable release prepends the neutral Theme foundation and A3.1
+	 * closure to the v5 runtime and writes a marker. Source installs keep those
+	 * files separate for development while client packages emit one CSS request.
 	 */
 	public function replace_legacy_layout_runtime(): void {
 		if ( ! $this->is_active() ) {
@@ -98,13 +98,15 @@ final class StrategicSurfaceRuntime {
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
 
 		$path          = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
+		$closure_path  = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
 		$bundle_marker = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
 		if ( ! is_readable( $path ) ) {
 			return;
 		}
 
+		$is_bundled   = is_readable( $bundle_marker );
 		$dependencies = array( 'seo-geo-theme' );
-		if ( is_readable( $bundle_marker ) ) {
+		if ( $is_bundled ) {
 			wp_dequeue_style( 'seo-geo-theme' );
 			$dependencies = array();
 		}
@@ -120,6 +122,16 @@ final class StrategicSurfaceRuntime {
 			$dependencies,
 			$version
 		);
+
+		if ( ! $is_bundled && is_readable( $closure_path ) ) {
+			$closure_version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $closure_path ) : '0.1.1';
+			wp_enqueue_style(
+				'seo-geo-theme-preset-corporate-v5-a3-1',
+				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-a3-1.css',
+				array( 'seo-geo-theme-preset-corporate-v5-runtime' ),
+				$closure_version
+			);
+		}
 	}
 
 	/**
