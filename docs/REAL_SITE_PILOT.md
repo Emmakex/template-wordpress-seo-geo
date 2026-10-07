@@ -10,18 +10,18 @@ The canonical machine-readable candidate is:
 
 `release/emmake-phase10e-candidate.json`
 
-Current Corporate v4.1 field identity:
+Current Corporate v4.2 field identity:
 
 - site ID: `emmake-com`;
 - production origin: `https://emmake.com/`;
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen source commit: `efdb0456ac684c95f1f320b4e76c533ba9f71efd`;
-- Theme ZIP SHA-256: `01a558d9de8d8014ad3568d0661785741d784a3182db9280d5902889cff0c82f`;
+- frozen source commit: `0e7c9d8a71369e4bf46eba8ab99acfa2b3f6f64a`;
+- Theme ZIP SHA-256: `769e81cdf1224c58b9bf8457c96553eb6a30f05b42b6852558a0a5b5227aee52`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `c95c1fb142f858d949ccb72079bd7d423afca7a79eca6db2053bb4f74652066d`;
+- deterministic field-pilot pack SHA-256: `a3637ce694b16f539f5a94c78bb1424b0fd368226ba0109408ebd47590a1ccdd`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
@@ -42,15 +42,17 @@ The technical Reset & Rebuild sequence has already reached Step 7 on the real `/
 - native SEO/GEO handoff reported SEO-ready;
 - machine preflight reported `ready_for_browser_qa=true`.
 
-Earlier visual candidates were not accepted. Corporate v4 finally established the intended premium/WOW art direction, but the first real v4 screenshot still exposed reusable composition defects: the hero headline became a word-by-word waterfall, secondary Services and Insights content was squeezed into columns that were too narrow, the method decoration competed with the steps, the closing CTA decoration outweighed its message, and the private-draft preview exposed the template-owned page title above the Home.
+Earlier visual candidates were not accepted. Corporate v4 established the intended premium/WOW art direction. Corporate v4.1 then fixed the first reusable composition defects found in the real browser: pathological hero wrapping, squeezed secondary panels, excessive decorative dominance and the preview-only page-title strip.
 
-Those are Theme-level defects, not EMMAKE-only exceptions. Corporate v4.1 keeps the v4 art direction and fixes proportions, reading measures, section rhythm and preview behavior while preserving the proven semantic hydration and SEO/GEO state.
+The subsequent v4.1 field screenshot confirmed that those changes were moving in the right direction, but still exposed a horizontal reading-measure problem. Text-heavy titles and paragraphs in Services, Process and Insights remained too narrow, forcing unnecessary vertical growth on desktop and landscape screens. This is a Theme-level issue, not an EMMAKE-only exception.
 
-## Corporate v4.1 master-preset rule
+Corporate v4.2 keeps the same art direction and rebalances the typography/layout system around usable horizontal measure rather than increasing card height or reducing content.
 
-Corporate v4.1 is the only active visual preset until this pilot approves it.
+## Corporate v4.2 master-preset rule
 
-SaaS, Local Pro, Publisher and Ecommerce visual iteration is frozen. They may inherit approved technical primitives only after Corporate v4.1 passes its real browser gate.
+Corporate v4.2 is the only active visual preset until this pilot approves it.
+
+SaaS, Local Pro, Publisher and Ecommerce visual iteration is frozen. They may inherit approved technical primitives only after Corporate v4.2 passes its real browser gate.
 
 The Home must be accepted at these product widths:
 
@@ -63,7 +65,7 @@ The existing `320` compact-mobile automated check remains as an additional stres
 
 Do not advance Step 8, inner-page rollout, production cutover or stable promotion before the Corporate Home itself is approved.
 
-## Repository-side readiness of the frozen v4.1 candidate
+## Repository-side readiness of the frozen v4.2 candidate
 
 The exact Theme-content source completed the technical checks needed to return to `/nuevaweb/`:
 
@@ -74,9 +76,9 @@ The exact Theme-content source completed the technical checks needed to return t
 - accessibility/responsive browser automation at the product widths;
 - deterministic release packaging;
 - Lighthouse performance budgets without raising those budgets;
-- a dedicated v4.1 field-composition contract covering hero reading measure, balanced capability/Insights columns, content-first method section, preview-H1 handling and closing CTA proportions.
+- a dedicated v4.2 horizontal reading-measure contract covering the 1400px master shell, wider hero copy, wider text-heavy capability/Insights panels, Process reading measure and the dedicated 1200px laptop tuning layer.
 
-The Corporate v4.1 Lighthouse median records performance `100`, FCP/LCP `903.18 ms`, CLS `0`, TBT `0`, zero third-party requests, zero project JavaScript bytes and `7551` CSS bytes against an `8192` byte budget. The static gzip proxy is `6559` bytes against a `7100` byte internal ceiling.
+The Corporate v4.2 Lighthouse median records performance `100`, FCP/LCP `902.68 ms`, CLS `0`, TBT `0`, zero third-party requests, zero project JavaScript bytes and `7534` CSS bytes against an `8192` byte budget. The static gzip proxy is `6530` bytes against a `7100` byte internal ceiling.
 
 The deterministic pack is rebuilt using fixed timestamps, ordering, file permissions and compression, and must reproduce the canonical SHA-256 listed above before field use.
 
@@ -116,7 +118,7 @@ Bounded evidence remains in:
 
 `release/emmake-corporate-preset-application-20261004.json`
 
-That historical application and the successful Reset & Rebuild technical pass do not close Phase 10E because Corporate v4.1 browser visual acceptance remains pending.
+That historical application and the successful Reset & Rebuild technical pass do not close Phase 10E because Corporate v4.2 browser visual acceptance remains pending.
 
 ## Replatforming rule
 
@@ -160,18 +162,18 @@ Also require independent mutable state from production, recoverable database/fil
 
 No credentials, dumps, private form submissions, arbitrary option payloads or customer data enter the repository.
 
-## Field execution for Corporate v4.1
+## Field execution for Corporate v4.2
 
 The destructive/reset portion does **not** need to be repeated because the existing Home draft is already hydrated into stable semantic content slots and Step 7 is already technically ready for browser QA.
 
-For the frozen Corporate v4.1 candidate:
+For the frozen Corporate v4.2 candidate:
 
-1. verify the Theme ZIP SHA-256 is `01a558d9de8d8014ad3568d0661785741d784a3182db9280d5902889cff0c82f`;
+1. verify the Theme ZIP SHA-256 is `769e81cdf1224c58b9bf8457c96553eb6a30f05b42b6852558a0a5b5227aee52`;
 2. update the Theme only on `/nuevaweb/`;
 3. keep Migration Bridge `0.8.60` active and preserve the existing Step 1–7 state;
 4. clear relevant WordPress/host/browser caches;
 5. preview the already hydrated clean Home draft;
-6. confirm the preview-only page-title strip no longer consumes visible layout space;
+6. verify that headings and paragraphs use the added horizontal measure instead of forming unnecessarily tall text stacks;
 7. re-run browser QA at `1440 / 1024 / 768 / 390`;
 8. do not advance Step 8 until the Home receives explicit visual approval.
 
@@ -182,12 +184,12 @@ If the semantic draft or Step 7 state has drifted, stop and investigate rather t
 Record all five browser checks from the field evidence template:
 
 1. `visual-layout` — the result must feel like a modern custom-designed Corporate site from a top-tier agency: immediate visual impact, premium hierarchy, intentional rhythm, section variety, coherent visual language and decisive CTAs; “better” or merely technically correct is not sufficient;
-2. `responsive-behavior` — no overflow, broken controls, squeezed desktop layouts, pathological word wrapping or weak mobile recomposition at the four master widths;
+2. `responsive-behavior` — no overflow, broken controls, squeezed desktop layouts, pathological word wrapping, excessively vertical text blocks or weak mobile recomposition at the four master widths;
 3. `accessibility` — headings, landmarks, keyboard/focus behavior, meaningful links and sufficient contrast, especially on dark/full-bleed sections;
 4. `seo-geo-rendered-output` — title, description, canonical, robots, Schema/discovery output and internal links remain correct after the visual replacement;
 5. `performance` — no material asset/runtime regression and acceptable measured sandbox performance.
 
-Any blocker keeps the pilot in `pending` state. A technically valid result that does not create the intended premium/WOW impression is also a blocker because Corporate v4.1 is the master product reference for every later preset.
+Any blocker keeps the pilot in `pending` state. A technically valid result that does not create the intended premium/WOW impression is also a blocker because Corporate v4.2 is the master product reference for every later preset.
 
 ## Representative SEO/GEO regression set
 
@@ -201,7 +203,7 @@ Intentional differences must be explicitly reviewed rather than silently accepte
 
 The sandbox becomes eligible for production-entry review only when:
 
-- the exact frozen Corporate v4.1 artifacts are installed;
+- the exact frozen Corporate v4.2 artifacts are installed;
 - Corporate Home passes the explicit product-quality visual/WOW gate;
 - no unexplained URL loss remains;
 - no required legacy builder runtime remains;
@@ -228,7 +230,7 @@ Material canonical/indexability/sitemap/hreflang/redirect regression, a broken c
 
 The stable gate does not wait for SEO/GEO Manager. Manager is a separate later product roadmap.
 
-Theme `0.1.1` may move from `prestable` to `stable` only after real production acceptance exists. Corporate v4.1 real-site browser acceptance is a required prerequisite before that production acceptance can even be considered.
+Theme `0.1.1` may move from `prestable` to `stable` only after real production acceptance exists. Corporate v4.2 real-site browser acceptance is a required prerequisite before that production acceptance can even be considered.
 
 Until then:
 
