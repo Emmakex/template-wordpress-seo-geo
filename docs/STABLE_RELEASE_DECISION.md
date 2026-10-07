@@ -22,12 +22,12 @@ The machine-readable source of truth is:
 
 The currently frozen Corporate v4.2 field candidate is:
 
-- source commit: `500e36bbecd9b0fab449dad57a85ce12965ea0a3`;
+- source commit: `dea41aaf3eddac37eb2c91484198af7762e1c565`;
 - Theme: `0.1.1` / `prestable`;
-- Theme ZIP SHA-256: `ad1678a2c8fa2175945f6226af3ec5c7c1f98a9b28f3d385835abd21715e2bd0`;
+- Theme ZIP SHA-256: `fc19a2e5c4137a524d8bf96682832de6b4b3eb560f7562e2c728e083fc927713`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic EMMAKE field-pilot pack SHA-256: `f1751cc9105d1a68a2eb913d0374f0ad5afce746c04192e44bb6f45912107996`.
+- deterministic EMMAKE field-pilot pack SHA-256: `20e01026cf3ba49d2ee50ce31a8f0a53364008d2e272680a2dad99d097617aa5`.
 
 The source commit above is the immutable Theme-content source for the frozen field artifact. Repository history may advance with candidate-record, documentation or validation-only commits without changing those packaged bytes. Any Theme, Migration Bridge, runbook, blueprint or pack-content change requires a new deterministic pack and an explicit update of `release/emmake-phase10e-candidate.json`.
 
