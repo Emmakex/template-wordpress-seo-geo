@@ -132,7 +132,7 @@ Manager must not become a second uncontrolled public-output owner. When the SEO/
 
 Manager frontend behavior must remain local to WordPress; normal page rendering cannot require a live remote service.
 
-Detailed contracts live in `docs/PRODUCT_PORTFOLIO.md`, `docs/SEO_GEO_MANAGER.md`, `docs/CONTENT_PUBLISHING.md` and `docs/PORTABLE_SANDBOX.md`.
+Detailed contracts live in `docs/PRODUCT_PORTFOLIO.md`, `docs/SEO_GEO_MANAGER.md`, `docs/CONTENT_PUBLISHING.md`, `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md` and `docs/PORTABLE_SANDBOX.md`.
 
 ## Optional plugin wrapper
 
@@ -142,16 +142,19 @@ The context-neutral `SeoGeo\Core\Runtime` prevents duplicate initialization if b
 
 ## WordPress baseline
 
-The theme is a native block theme using `theme.json` version 3 and WordPress block templates. This keeps the product close to WordPress core and minimizes custom frontend code.
+The theme remains a native WordPress theme using `theme.json` version 3, WordPress content entities and core APIs. WordPress is the CMS and editorial platform, but **Gutenberg is not the layout authority for strategic SEO/GEO surfaces**.
 
 Use WordPress core before custom infrastructure when core already provides the required primitive, including:
 
 - `wp_robots` for robots output;
 - WordPress sitemaps as the default sitemap engine;
 - responsive image handling;
-- block templates/patterns;
 - semantic HTML APIs;
-- native rewrite and canonical primitives where appropriate.
+- native rewrite and canonical primitives where appropriate;
+- normal post/page identity, revisions, authors, taxonomies and media;
+- Gutenberg for editorial article bodies and simple client-managed pages.
+
+Strategic surfaces such as Home, commercial landings, service pages, location pages, campaign pages and preset master hubs use **Theme-owned server renderers** from versioned semantic content models. Their master layout must not depend on Gutenberg `contentSize`, `wideSize`, `is-layout-constrained`, nested Group blocks or generated block-layout CSS.
 
 Elementor, Divi and other builders may be detected and migrated through optional adoption adapters, but no builder is a baseline dependency. Unsupported builder modules are reported as blockers/manual-review items rather than silently discarded.
 
@@ -219,6 +222,33 @@ For existing-site adoption, a second invariant applies: production remains on th
 
 For the Manager product, a third invariant applies: publishing must be draft-first by default, idempotent, authority-aware and rollback-capable. Theme + Manager and Manager + external-provider combinations must resolve exactly one owner for every overlapping SEO/GEO signal.
 
+A fourth invariant now applies to the frontend architecture:
+
+> Strategic Theme surfaces are rendered from versioned semantic models by Theme-owned renderers; Gutenberg may edit content where useful, but cannot silently become the master layout engine for those surfaces.
+
+Manager-created blog posts are normal WordPress posts and remain editable in Gutenberg, while the Theme owns the public article shell, reading width, responsive composition and SEO/GEO presentation.
+
+## Theme/Manager/Gutenberg ownership boundary
+
+The canonical detailed contract is `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`.
+
+In summary:
+
+- **Gutenberg** = client/editor autonomy for blog bodies and simple pages;
+- **SEO/GEO Manager** = automation, research-to-draft, landing generation, automated blog generation, scheduling, publishing, refresh, internal linking and rollback;
+- **SEO/GEO Theme** = strategic renderers, frontend design, semantic HTML, responsive behavior, accessibility, baseline SEO/GEO and performance;
+- **WordPress** = CMS/resource identity, users, revisions, permissions, taxonomies, media and local persistent state.
+
+The Manager Blog Engine is explicitly allowed to create complete blog entries automatically. It uses a structured article model for generation/validation and materializes an ordinary WordPress post that authorized users can later edit in Gutenberg. This does not transfer frontend layout authority to Gutenberg.
+
+## Corporate v5 architecture checkpoint
+
+The EMMAKE Corporate v4.x real-site pilot exposed a reusable architectural limitation: even with premium Theme CSS, Gutenberg constrained layout can fragment master widths and force the Theme into repeated override rules.
+
+Therefore the next Corporate milestone is **Corporate v5 — Theme-owned frontend**. It must prove that the existing `corporate-home-v1` semantic content can render without Gutenberg controlling master composition, while preserving migration evidence, SEO/GEO state and performance budgets.
+
+Do not roll the other four master presets forward visually until this renderer boundary is proven and reusable.
+
 ## Extensibility
 
-Public modules should expose documented WordPress filters/actions rather than requiring edits to internal files. New presets compose existing runtime services and patterns instead of forking the core.
+Public modules should expose documented WordPress filters/actions rather than requiring edits to internal files. New presets compose existing runtime services and semantic renderer contracts instead of forking the core.

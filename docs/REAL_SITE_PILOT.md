@@ -1,6 +1,6 @@
 # Phase 10E real-site pilot — emmake.com
 
-This document is the operational source for the first real-site acceptance of the self-contained SEO/GEO Theme. Historical clone, migration and earlier Corporate milestones remain evidence, but they do not override the frozen current candidate.
+This document is the operational source for the first real-site acceptance of the self-contained SEO/GEO Theme. Historical clone, migration and earlier Corporate milestones remain evidence, but they do not override the current product decision.
 
 ## Current authority
 
@@ -8,7 +8,7 @@ Canonical machine-readable candidate:
 
 `release/emmake-phase10e-candidate.json`
 
-Current Corporate v4.3 field identity:
+Last frozen Corporate v4.3 field identity:
 
 - site ID: `emmake-com`;
 - production origin: `https://emmake.com/`;
@@ -23,7 +23,7 @@ Current Corporate v4.3 field identity:
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
-Do not substitute an older Theme, Migration Bridge or pilot ZIP for this candidate. A Theme-content change requires a new deterministic Theme SHA and a newly frozen candidate.
+This v4.3 identity remains valid **technical evidence**, but it is no longer the visual architecture target after real-site review. Do not treat repository green status as visual acceptance.
 
 ## Current pilot position
 
@@ -38,65 +38,92 @@ The technical Reset & Rebuild sequence has already reached Step 7 on the real `/
 - native SEO/GEO handoff reported SEO-ready;
 - machine preflight reported `ready_for_browser_qa=true`.
 
-Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge just to test v4.3. The semantic draft and SEO/GEO state are already proven; this iteration is Theme presentation only.
+Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge merely because the renderer architecture changes. The semantic draft and SEO/GEO state are already proven.
 
-## Why Corporate v4.3 is required
+## v4.x field finding
 
-Corporate v4 established the intended premium/WOW art direction. v4.1 fixed its first field composition defects. v4.2 improved horizontal reading measure and changed Theme CSS versioning from file timestamps to SHA-256 content hashes, preventing deterministic ZIP timestamps from keeping stale CSS in browser/CDN caches.
+Corporate v4 established the intended premium/WOW art direction. v4.1 corrected the first composition defects. v4.2 improved reading measure and introduced content-hash CSS versioning. v4.3 then attempted to escape inherited Gutenberg constrained-content widths while preserving the same semantic content.
 
-The real screenshot after installing that cache-safe v4.2 candidate proved the new CSS was active, but exposed a deeper reusable WordPress layout issue: the master surfaces still inherited Gutenberg constrained-content widths. As a result:
+The real-site v4.3 screenshot demonstrated that this remained insufficient as a reusable product architecture. Different master sections still resolved against different layout contexts and appeared visually misaligned. The page could be patched further with CSS, but doing so would turn the Theme into a growing layer of exceptions around Gutenberg layout behavior.
 
-- the hero still wrapped across too many lines;
-- Services occupied only a narrow central band instead of the intended master shell;
-- Process text remained in narrow vertical strips;
-- Insights remained visually compressed despite the wider v4.2 typography rules.
+The field conclusion is therefore architectural:
 
-Corporate v4.3 keeps the v4 art direction but makes the Theme own its horizontal composition instead of inheriting Gutenberg's generic constrained width.
+> **Gutenberg remains an editor, but it is no longer the master layout authority for strategic SEO/GEO Theme surfaces.**
 
-## Corporate v4.3 master-preset rule
+v4.3 is recorded as technically valid but **visual/architectural NO-GO**.
 
-Corporate v4.3 is the only active visual preset until this pilot approves it. SaaS, Local Pro, Publisher and Ecommerce visual iteration remains frozen.
+## Corporate v5 — Theme-owned frontend
 
-The v4.3 field pass explicitly:
+The next active Corporate checkpoint is **Corporate v5 — Theme-owned frontend**.
 
-- expands the hero grid to the Corporate master shell;
-- widens headline measure while moderating maximum display size;
-- forces native Corporate sections to escape inherited `content-size` constraints;
-- widens Services and its text-heavy cards;
-- gives Process three readable desktop columns with broader text measure;
-- lets Insights and the underlying Query/Post Template use the available shell;
-- preserves the existing stacked mobile composition at `820px` and below;
-- keeps content-hash asset versioning so the new CSS gets a distinct URL automatically.
+Canonical architecture: `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`.
 
-The Home must be accepted at `1440`, `1024`, `768` and `390` widths. The existing `320` compact-mobile automated check remains an additional stress case.
+Corporate v5 must preserve the existing content/SEO state while changing who owns rendering:
 
-Do not advance Step 8, inner-page rollout, production cutover or stable promotion before the Corporate Home itself is approved.
+```text
+existing hydrated semantic content
+        ↓
+corporate-home-v1
+        ↓
+Corporate Theme renderer
+        ↓
+server-rendered semantic HTML
+        ↓
+Theme-owned layout / CSS / responsive behavior
+```
 
-## Repository-side technical gate
+The master Home must no longer depend on Gutenberg constructs such as:
 
-Before field use, the frozen v4.3 Theme must retain:
+- `wp-block-post-content` as the master layout surface;
+- `is-layout-constrained` for strategic composition;
+- `contentSize` / `wideSize` as the Corporate page-width authority;
+- nested Group/Columns blocks as the renderer contract;
+- generated Gutenberg layout CSS to determine master section alignment.
 
-- WordPress 7.1 / PHP 8.2 activation and upgrade/rollback acceptance;
-- self-contained Theme and deterministic release integrity;
-- Foundation, Design System and Corporate page-pipeline contracts;
-- multilingual and preset regression checks;
-- accessibility/responsive browser automation;
-- performance budgets without relaxing them;
-- content-hash asset versioning;
-- the v4.3 Gutenberg width-escape contract;
-- Corporate CSS gzip proxy below the existing `7100` byte internal safety ceiling.
+WordPress remains the CMS and resource authority. Gutenberg remains available for blog/editorial content and simple client pages.
 
-Repository success proves technical readiness only. It does not satisfy real visual acceptance.
+## Corporate v5 acceptance rule
+
+Corporate v5 must prove all of the following before the other preset master surfaces continue:
+
+- reuse the existing rescued/hydrated content without casually rerunning Reset or migration;
+- render the Corporate Home from the existing semantic model/content slots;
+- make the Theme the sole strategic layout authority;
+- preserve one correct semantic heading hierarchy;
+- preserve internal links and SEO/GEO output;
+- preserve accessibility and server-side rendering;
+- remain within performance budgets;
+- remain stable at `1440 / 1024 / 768 / 390`;
+- meet the premium/WOW visual gate on the real `/nuevaweb/` sandbox;
+- establish a reusable renderer boundary that SEO/GEO Manager can later use for generated landings.
+
+The existing `320` compact-mobile automated check remains an additional stress case.
+
+## Relationship with SEO/GEO Manager
+
+The v5 renderer boundary is intentionally designed for the future Manager.
+
+Manager will be able to:
+
+- create/update structured strategic landing models without generating Gutenberg layout trees;
+- create complete blog posts automatically;
+- materialize automated articles as normal WordPress posts;
+- let authorized clients edit those articles in Gutenberg;
+- schedule/publish/refresh content under explicit policy;
+- maintain internal-link/cluster plans;
+- resolve SEO/GEO output ownership without duplicating Theme output.
+
+This Manager roadmap does **not** require Manager to run the public frontend. Theme rendering remains local to WordPress.
 
 ## Existing milestones remain valid
 
-The product-owned clone from `https://emmake.com/` to `https://emmake.com/nuevaweb/`, Divi-to-native conversion, Corporate preset application and Reset & Rebuild technical sequence have already been proven and recorded. They do not need to be repeated for each Theme visual candidate.
+The product-owned clone from `https://emmake.com/` to `https://emmake.com/nuevaweb/`, Rescue Manifest, Reset, content rescue, clean semantic Home creation, hydration and SEO/GEO handoff remain accepted evidence. They do not need to be repeated merely because presentation architecture changes.
 
 The replatforming rule remains: preserve authored content, URLs/redirects, valid SEO signals, important links, useful media, verified organization/contact facts and required business behavior; replace legacy theme/builder presentation debt rather than copying it into the new site.
 
 ## Sandbox safety boundary
 
-Corporate v4.3 is installed only on `/nuevaweb/` until acceptance. Production remains untouched.
+All Corporate v5 work remains isolated to `/nuevaweb/` until acceptance. Production remains untouched.
 
 The sandbox safety constants already used by this pilot remain required:
 
@@ -110,20 +137,20 @@ define( 'SEO_GEO_MIGRATION_BACKUPS_READY', true );
 
 Search visibility, canonical/hreflang/sitemap authority, production `home`/`siteurl` and rollback boundaries must remain isolated from production. No credentials, dumps, private submissions or customer data enter the repository.
 
-## Field execution for Corporate v4.3
+## Field execution for Corporate v5
 
-The destructive/reset portion must **not** be repeated for this visual iteration.
+The destructive/reset portion must **not** be repeated for this renderer migration unless a real data/state failure is proven.
 
-1. Verify Theme ZIP SHA-256 `11540b3bea463a5f5cabe4d527f628de2e1d3fe6ad4b0d7cdb11a60ec85f99d2`.
-2. Replace only the Theme on `/nuevaweb/`.
-3. Keep Migration Bridge `0.8.60` active.
-4. Keep the existing clean hydrated Home draft and Step 1–7 state untouched.
-5. Preview the same Home draft; content-hash CSS versioning should invalidate the previous stylesheet URL automatically.
-6. Check that the hero, Services, Process and Insights now consume the intended horizontal master shell rather than narrow Gutenberg content columns.
+1. Keep the existing `/nuevaweb/` clone and Step 1–7 evidence.
+2. Keep Migration Bridge `0.8.60` unless a separate migration defect requires changing it.
+3. Preserve the existing clean hydrated Home data/content.
+4. Install only a frozen Corporate v5 Theme candidate when repository-side gates are green.
+5. Preview the same logical Home through the new Theme-owned renderer.
+6. Verify that all master sections share the intended renderer shell/alignment.
 7. Run browser QA at `1440 / 1024 / 768 / 390`.
 8. Do not advance Step 8 until the Home receives explicit visual approval.
 
-If the semantic draft or Step 7 state has drifted, stop and investigate instead of recreating evidence casually.
+If the semantic data or Step 7 state has drifted, stop and investigate instead of recreating evidence casually.
 
 ## Browser QA acceptance — premium/WOW gate
 
@@ -135,7 +162,7 @@ Record the five field checks:
 4. `seo-geo-rendered-output` — title, description, canonical, robots, Schema/discovery output and important internal links remain correct;
 5. `performance` — no material runtime/asset regression and acceptable measured sandbox performance.
 
-A technically valid result that still fails the intended premium/WOW standard remains a blocker. Corporate v4.3 is the product master reference, not merely a patch for EMMAKE.
+A technically valid result that still fails the premium/WOW standard remains a blocker.
 
 ## Representative SEO/GEO regression set
 
@@ -143,23 +170,19 @@ At minimum validate Home, Sobre Nosotros, Trabaja con Nosotros, blog index, one 
 
 ## Sandbox acceptance exit
 
-The sandbox becomes eligible for production-entry review only when the exact frozen Corporate v4.3 artifact is installed, the Home passes the product-quality visual gate, no URL/SEO/GEO blocker remains, no required legacy builder runtime remains, responsive/accessibility/performance checks pass, critical navigation/forms work, browser evidence is complete and rollback remains available.
+The sandbox becomes eligible for production-entry review only when the exact frozen Corporate v5 artifact is installed, the Theme-owned Home passes the product-quality visual gate, no URL/SEO/GEO blocker remains, no required legacy builder runtime remains, responsive/accessibility/performance checks pass, critical navigation/forms work, browser evidence is complete and rollback remains available.
 
 This is **not** automatic production cutover.
 
 ## Stable promotion boundary
 
-The stable gate does not wait for SEO/GEO Manager.
+Theme stable promotion remains **NO-GO**.
 
-Manager is a separate later product roadmap.
+SEO/GEO Manager is a separate product and is not itself a dependency for Theme stable acceptance. However, the Theme renderer architecture must be suitable for the future Manager Landing Engine before the Corporate master is considered product-complete.
 
-Theme `0.1.1` may move from `prestable` to `stable` only after real production acceptance exists.
-
-Corporate v4.3 real-site browser acceptance is a required prerequisite before that later production acceptance can be considered.
-
-Until then:
+Until Corporate v5 and later production acceptance exist:
 
 - `release/stable-release-decision.json` remains `no-go`;
 - real-site acceptance remains `pending`;
-- `release/emmake-phase10e-candidate.json` remains the frozen identity;
+- the v4.3 candidate record remains technical historical evidence until superseded by a newly frozen v5 candidate;
 - no stable release is published.
