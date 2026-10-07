@@ -21,7 +21,7 @@
 }
 @media(max-width:600px){.seo-geo-preset-corporate .seo-geo-site-brand .wp-block-site-title{display:none}}
 
-/* Corporate v4.3 field pass: escape Gutenberg constrained widths on master surfaces. */
+/* Corporate v4.3: Gutenberg width escape. */
 @media (min-width:821px){
 .seo-geo-preset-corporate .seo-geo-corporate-native-hero__grid{width:min(1400px,100%)!important;max-width:none!important;margin-inline:auto!important;grid-template-columns:minmax(0,1.55fr) minmax(220px,.45fr)!important;gap:clamp(2rem,3vw,3.25rem)!important}
 .seo-geo-preset-corporate .seo-geo-corporate-native-hero__copy{max-width:1080px!important}
