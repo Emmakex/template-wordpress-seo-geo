@@ -133,10 +133,6 @@ final class CorporateHomeModelResolver {
 	 */
 	private function collect_slots( array $blocks, array $definitions, array &$slots ): void {
 		foreach ( $blocks as $block ) {
-			if ( ! is_array( $block ) ) {
-				continue;
-			}
-
 			$class_name = '';
 			$attrs      = $block['attrs'] ?? null;
 			if ( is_array( $attrs ) && isset( $attrs['className'] ) && is_string( $attrs['className'] ) ) {
@@ -250,17 +246,13 @@ final class CorporateHomeModelResolver {
 
 		$items = array();
 		foreach ( $matches[1] as $item ) {
-			if ( ! is_string( $item ) ) {
-				continue;
-			}
-
 			$value = trim( wp_strip_all_tags( $item, true ) );
 			if ( '' !== $value ) {
 				$items[] = html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, $this->charset() );
 			}
 		}
 
-		return array() === $items ? null : array_values( $items );
+		return array() === $items ? null : $items;
 	}
 
 	/**
@@ -306,6 +298,6 @@ final class CorporateHomeModelResolver {
 	private function charset(): string {
 		$charset = get_bloginfo( 'charset' );
 
-		return is_string( $charset ) && '' !== $charset ? $charset : 'UTF-8';
+		return '' !== $charset ? $charset : 'UTF-8';
 	}
 }
