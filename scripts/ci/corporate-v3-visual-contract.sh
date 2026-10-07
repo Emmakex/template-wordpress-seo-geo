@@ -25,7 +25,7 @@ require_text() {
 
 printf '[corporate-v4.3] Checking master presentation ownership.\n'
 require_text "$CSS" 'Corporate v4.2 WOW master visual layer.' 'Corporate v4 base ownership marker missing'
-require_text "$RUNTIME" 'Corporate v4.3 field pass: escape Gutenberg constrained widths on master surfaces.' 'Corporate v4.3 field-pass marker missing'
+require_text "$RUNTIME" 'Corporate v4.3: Gutenberg width escape.' 'Corporate v4.3 field-pass marker missing'
 require_text "$FUNCTIONS" 'seo_geo_theme_corporate_master_home_layer' 'Corporate master Home detector missing'
 require_text "$FUNCTIONS" "assets/css/presets/corporate-v2.css" 'Corporate master presentation asset is not loaded'
 require_text "$FUNCTIONS" "assets/css/presets/corporate-v3-runtime.css" 'Corporate master runtime asset is not loaded'
