@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "surface": "corporate-home-v1",
+  "iteration": "A3.1",
+  "status": "implementation_complete_pending_ci_and_field_qa",
+  "assets": [
+    {"id":"A3IMG-01","status":"integrated","path":"assets/images/presets/corporate/v5/hero-intelligence.svg","role":"primary_hero_visual"},
+    {"id":"A3IMG-02","status":"created_not_loaded","path":"assets/images/presets/corporate/v5/hero-intelligence-alt.svg","role":"hero_evaluation_alternate"},
+    {"id":"A3IMG-03","status":"integrated","path":"assets/images/presets/corporate/v5/capability-marketing.svg","role":"featured_marketing_capability_visual"},
+    {"id":"A3IMG-04","status":"integrated","path":"assets/images/presets/corporate/v5/icon-sprite.svg#research","role":"market_research_mark"},
+    {"id":"A3IMG-05","status":"integrated","path":"assets/images/presets/corporate/v5/icon-sprite.svg#automation","role":"ai_automation_mark"},
+    {"id":"A3IMG-06","status":"integrated","path":"assets/images/presets/corporate/v5/icon-sprite.svg#understand","role":"method_understand_icon"},
+    {"id":"A3IMG-07","status":"integrated","path":"assets/images/presets/corporate/v5/icon-sprite.svg#define","role":"method_define_icon"},
+    {"id":"A3IMG-08","status":"integrated","path":"assets/images/presets/corporate/v5/icon-sprite.svg#measure","role":"method_measure_icon"},
+    {"id":"A3IMG-09","status":"integrated_css","path":"assets/css/presets/corporate-v5-a3-1.css","role":"method_process_connector"},
+    {"id":"A3IMG-10","status":"integrated_css","path":"assets/css/presets/corporate-v5-a3-1.css","role":"method_number_treatment"},
+    {"id":"A3IMG-11","status":"integrated_fallback","path":"assets/images/presets/corporate/v5/insights-featured.svg","role":"featured_insights_fallback","note":"WordPress featured media has priority when present."},
+    {"id":"A3IMG-12","status":"created_library","path":"assets/images/presets/corporate/v5/editorial-marketing.svg","role":"marketing_editorial_base"},
+    {"id":"A3IMG-13","status":"created_library","path":"assets/images/presets/corporate/v5/editorial-ai.svg","role":"ai_editorial_base"},
+    {"id":"A3IMG-14","status":"created_library","path":"assets/images/presets/corporate/v5/editorial-automation.svg","role":"automation_data_editorial_base"},
+    {"id":"A3IMG-15","status":"created_library","path":"assets/images/presets/corporate/v5/editorial-strategy.svg","role":"strategy_content_editorial_base"},
+    {"id":"A3IMG-16","status":"created_library","path":"assets/images/presets/corporate/v5/editorial-analytics.svg","role":"analytics_research_editorial_base"},
+    {"id":"A3IMG-17","status":"deliberately_not_required","role":"final_cta_support","reason":"Existing lightweight CSS composition already supplies the required visual hierarchy; another asset would add no product value."},
+    {"id":"A3IMG-18","status":"deliberately_not_required","role":"footer_micro_detail","reason":"A3 branded footer is already visually complete without another decorative request."}
+  ],
+  "integration_rules": {
+    "critical_copy_inside_images": false,
+    "external_visual_requests_required": false,
+    "decorative_assets_have_empty_alt": true,
+    "wordpress_featured_media_preferred_for_editorial": true,
+    "reset_or_rehydration_required": false,
+    "production_mutation_allowed": false
+  }
+}
