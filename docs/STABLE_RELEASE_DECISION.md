@@ -14,13 +14,14 @@ The migration/reset/hydration/SEO-GEO engine, deterministic packaging, onboardin
 
 A3.2 keeps the accepted A2/A3/A3.1 architecture and hydrated content state intact while:
 
-- replacing the synthetic hero visual with an optimized local WebP generated for the EMMAKE visual language;
-- adding optimized local media to Marketing, Market Research and AI/Automation capability cards;
-- keeping the hero eager/high-priority while below-fold capability media remains lazy/async;
+- replacing the synthetic hero visual with an optimized local AVIF generated for the EMMAKE visual language;
+- combining the three approved capability visuals into one optimized AVIF atlas so Marketing, Market Research and AI/Automation share one network request;
+- keeping the hero eager/high-priority while the shared capability atlas is reused by CSS;
 - preserving intrinsic dimensions to protect CLS;
 - removing redundant pseudo-art where real media now owns the visual role;
 - retaining server-rendered semantic HTML and zero required project frontend JavaScript;
-- preserving the existing Reset, hydration, URL, content, SEO/GEO and Migration Bridge state.
+- preserving the existing Reset, hydration, URL, content, SEO/GEO and Migration Bridge state;
+- preserving the existing strict request and transfer budgets rather than relaxing them for imagery.
 
 Stable promotion remains blocked by real-site product acceptance. Repository CI, deterministic hashes and fixture performance are necessary evidence but cannot declare the visual product accepted.
 
@@ -34,12 +35,12 @@ The machine-readable source of truth remains:
 
 Frozen Corporate v5 A3.2 technical identity:
 
-- Theme implementation source commit: `3008da3d3f971360386382e6c99c267c51563b88`;
+- Theme implementation source commit: `59049c5aebc7e1a01a8c4ec433ccd3d6bfedc00f`;
 - Theme: `0.1.1` / `prestable`;
-- Theme ZIP SHA-256: `22b238a6480cedd3d4139d1f859a857323cea86aea43d34af858d55a664141cf`;
+- Theme ZIP SHA-256: `02eacf06c0e044e6520b6e633800a61f0f8628c5bea1f336b9e6a5a7f70a4df4`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic EMMAKE field-pilot pack SHA-256: `3d54623456f8fadacfead74930bb14db4b25c8a648280b5e4863d2102563dc77`.
+- deterministic EMMAKE field-pilot pack SHA-256: `971c825b2010907b7285a949abad37c0484a4f76db94bdeef55b8dd45a8441cc`.
 
 This identity is reproducible technical evidence for the next `/nuevaweb/` field pass. It is **not** an accepted stable or production candidate. Any Theme implementation change requires a new deterministic Theme SHA and a newly frozen candidate before field installation.
 
@@ -55,9 +56,11 @@ A3.1 remains historical technical evidence. It was installed on `/nuevaweb/` and
 
 ## A3.2 repository acceptance
 
-A3.2 is deliberately bounded to real local media and the CSS geometry needed to present it. The deterministic Theme package for implementation commit `3008da3d3f971360386382e6c99c267c51563b88` has SHA-256 `22b238a6480cedd3d4139d1f859a857323cea86aea43d34af858d55a664141cf`.
+A3.2 is deliberately bounded to real local media and the CSS geometry needed to present it. The first straightforward WebP implementation retained Lighthouse `100`, CLS `0` and TBT `0`, but exceeded the existing Corporate transfer/request budgets. The budget was **not** relaxed. The approved visuals were recomposed into one compact `640×360` AVIF hero plus one shared `320×720` AVIF capability atlas so all three service cards retain distinct imagery while paying for one shared request.
 
-The deterministic EMMAKE field pack for the same Theme bytes, with Migration Bridge still frozen at `0.8.60`, has SHA-256 `3d54623456f8fadacfead74930bb14db4b25c8a648280b5e4863d2102563dc77`.
+The deterministic Theme package for implementation commit `59049c5aebc7e1a01a8c4ec433ccd3d6bfedc00f` has SHA-256 `02eacf06c0e044e6520b6e633800a61f0f8628c5bea1f336b9e6a5a7f70a4df4`.
+
+The deterministic EMMAKE field pack for the same Theme bytes, with Migration Bridge still frozen at `0.8.60`, has SHA-256 `971c825b2010907b7285a949abad37c0484a4f76db94bdeef55b8dd45a8441cc`.
 
 `EMMAKE Field Pilot Pack CI` must pass only when those exact hashes agree with `release/emmake-phase10e-candidate.json`. Weakening or bypassing the deterministic hash gate is forbidden.
 
