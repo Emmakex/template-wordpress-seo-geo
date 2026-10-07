@@ -15,11 +15,11 @@ Current Corporate v4.3 field identity:
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen Theme-content source commit: `f0ea48d311dadbec4ab7287c51f4bdd920c3e548`;
-- Theme ZIP SHA-256: `b45b575f96a4163bc07d09de0cd65775e9558bba467e641e7d7a31c99a2ce234`;
+- frozen Theme-content source commit: `24977936c887ff1fb9febdb495343172ca70df60`;
+- Theme ZIP SHA-256: `852b4c47db7e46a42d24ee7f084a81395ecfe1f720f2428f042f7b3243c3eebf`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `8d397831a289ba856e401a7c8c6cdf3d51da944a6317fdd99158f30aeffe0520`;
+- deterministic field-pilot pack SHA-256: `6227c0c008e81454c521ee716333529d31548bc53885e068cb08296a32dbdb66`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
@@ -114,7 +114,7 @@ Search visibility, canonical/hreflang/sitemap authority, production `home`/`site
 
 The destructive/reset portion must **not** be repeated for this visual iteration.
 
-1. Verify Theme ZIP SHA-256 `b45b575f96a4163bc07d09de0cd65775e9558bba467e641e7d7a31c99a2ce234`.
+1. Verify Theme ZIP SHA-256 `852b4c47db7e46a42d24ee7f084a81395ecfe1f720f2428f042f7b3243c3eebf`.
 2. Replace only the Theme on `/nuevaweb/`.
 3. Keep Migration Bridge `0.8.60` active.
 4. Keep the existing clean hydrated Home draft and Step 1–7 state untouched.
