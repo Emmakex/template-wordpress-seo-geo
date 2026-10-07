@@ -40,6 +40,8 @@ The technical Reset & Rebuild sequence has already reached Step 7 on the real `/
 
 Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge merely because the renderer/presentation changes. The semantic draft and SEO/GEO state are already proven.
 
+v4.3 is recorded as technically valid but **visual/architectural NO-GO**.
+
 ## A1 field result and A2 response
 
 Corporate v5 A1 proved the Theme-owned strategic Home renderer but failed the human visual gate on the real sandbox. The A1 full-page screenshot showed:
