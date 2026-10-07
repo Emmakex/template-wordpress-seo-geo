@@ -8,11 +8,11 @@
   },
   "target_version": "0.1.1",
   "release_channel": "prestable",
-  "source_commit": "24977936c887ff1fb9febdb495343172ca70df60",
+  "source_commit": "095e2f6471264ef4ba21c3242467a93d8e2b88ac",
   "theme": {
     "version": "0.1.1",
     "file": "seo-geo-theme.zip",
-    "sha256": "852b4c47db7e46a42d24ee7f084a81395ecfe1f720f2428f042f7b3243c3eebf"
+    "sha256": "11540b3bea463a5f5cabe4d527f628de2e1d3fe6ad4b0d7cdb11a60ec85f99d2"
   },
   "migration_bridge": {
     "version": "0.8.60",
