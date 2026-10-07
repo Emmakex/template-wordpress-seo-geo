@@ -45,7 +45,7 @@ final class CorporateHomeRenderer {
 			. $this->render_hero( $slots )
 			. $this->render_capabilities( $slots, $is_es )
 			. $this->render_process( $slots, $is_es )
-			. $this->render_insights( $slots, $is_es )
+			. $this->render_insights( $slots )
 			. $this->render_final_cta( $slots )
 			. '</main>';
 	}
@@ -59,8 +59,11 @@ final class CorporateHomeRenderer {
 		$primary   = $this->link( $slots, 'hero-primary-cta' );
 		$secondary = $this->link( $slots, 'hero-secondary-cta' );
 
-		$actions = '<div class="wp-block-buttons seo-geo-corporate-actions">'
-			. $this->button( $primary, false );
+		if ( null === $primary ) {
+			return '';
+		}
+
+		$actions = '<div class="wp-block-buttons seo-geo-corporate-actions">' . $this->button( $primary, false );
 		if ( null !== $secondary ) {
 			$actions .= $this->button( $secondary, true );
 		}
@@ -86,6 +89,9 @@ final class CorporateHomeRenderer {
 			$title = $this->text( $slots, 'capability-' . $index . '-title' );
 			$body  = $this->text( $slots, 'capability-' . $index . '-body' );
 			$link  = $this->link( $slots, 'capability-' . $index . '-link' );
+			if ( null === $link ) {
+				continue;
+			}
 
 			$cards .= '<article class="seo-geo-corporate-card">'
 				. '<p class="seo-geo-corporate-card__index">0' . $index . '</p>'
@@ -133,7 +139,7 @@ final class CorporateHomeRenderer {
 	/**
 	 * @param array<string, mixed> $slots Semantic slots.
 	 */
-	private function render_insights( array $slots, bool $is_es ): string {
+	private function render_insights( array $slots ): string {
 		$query = new WP_Query(
 			array(
 				'post_type'           => 'post',
@@ -183,6 +189,9 @@ final class CorporateHomeRenderer {
 	 */
 	private function render_final_cta( array $slots ): string {
 		$link = $this->link( $slots, 'final-cta-button' );
+		if ( null === $link ) {
+			return '';
+		}
 
 		return '<section class="seo-geo-final-cta" aria-labelledby="seo-geo-final-cta-title">'
 			. '<h2 id="seo-geo-final-cta-title">' . esc_html( $this->text( $slots, 'final-cta-heading' ) ) . '</h2>'
