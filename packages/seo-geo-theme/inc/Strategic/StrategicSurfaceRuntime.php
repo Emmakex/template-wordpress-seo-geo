@@ -24,6 +24,7 @@ final class StrategicSurfaceRuntime {
 	public function register(): void {
 		add_filter( 'template_include', array( $this, 'filter_template' ), 99 );
 		add_filter( 'body_class', array( $this, 'body_classes' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'replace_legacy_layout_runtime' ), 30 );
 	}
 
 	/**
@@ -64,6 +65,32 @@ final class StrategicSurfaceRuntime {
 		}
 
 		return $this->corporate_home_renderer->render( $this->active_post );
+	}
+
+	/**
+	 * Corporate v5 no longer needs the Gutenberg width-escape stylesheet.
+	 * Keep the proven art-direction stylesheet, then add only the tiny v5 canvas
+	 * normalization layer required by the Theme-owned document.
+	 */
+	public function replace_legacy_layout_runtime(): void {
+		if ( ! $this->is_active() ) {
+			return;
+		}
+
+		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
+
+		$path = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
+		if ( ! is_readable( $path ) ) {
+			return;
+		}
+
+		$version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $path ) : '0.1.1';
+		wp_enqueue_style(
+			'seo-geo-theme-preset-corporate-v5-runtime',
+			get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-runtime.css',
+			array( 'seo-geo-theme-preset-corporate-v2' ),
+			$version
+		);
 	}
 
 	/**
