@@ -14,7 +14,7 @@
 .seo-geo-preset-corporate .seo-geo-corporate-card:nth-child(1)::after,.seo-geo-preset-corporate .seo-geo-corporate-process-step:nth-child(1)::after{content:"01"}
 .seo-geo-preset-corporate .seo-geo-corporate-card:nth-child(2)::after,.seo-geo-preset-corporate .seo-geo-corporate-process-step:nth-child(2)::after{content:"02"}
 .seo-geo-preset-corporate .seo-geo-corporate-card:nth-child(3)::after,.seo-geo-preset-corporate .seo-geo-corporate-process-step:nth-child(3)::after{content:"03"}
-@media(max-width:1100px){
+@media (max-width: 1100px){
 .seo-geo-preset-corporate .seo-geo-preset-navigation__desktop{display:none}
 .seo-geo-preset-corporate .seo-geo-preset-navigation__mobile{position:relative;display:block}
 .seo-geo-preset-corporate .seo-geo-preset-navigation__mobile>summary{box-sizing:border-box;min-height:44px;border:1px solid var(--cv3-line);border-radius:999px;background:rgb(255 255 255/92%);padding:.65rem .95rem;color:var(--cv3-ink);font-weight:800;cursor:pointer;list-style:none}
