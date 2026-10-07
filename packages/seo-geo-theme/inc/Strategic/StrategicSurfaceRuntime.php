@@ -85,9 +85,9 @@ final class StrategicSurfaceRuntime {
 	 * visual stylesheet: the strategic renderer and its CSS are a clean product
 	 * boundary rather than another override layer.
 	 *
-	 * The installable release prepends the neutral Theme foundation to the v5
-	 * runtime and writes a marker. Source installs keep the foundation as a normal
-	 * dependency while still avoiding legacy Corporate layout CSS.
+	 * The installable release prepends the neutral Theme foundation and A3.1
+	 * closure to the v5 runtime and writes a marker. Source installs keep those
+	 * files separate for development while client packages emit one CSS request.
 	 */
 	public function replace_legacy_layout_runtime(): void {
 		if ( ! $this->is_active() ) {
@@ -104,8 +104,9 @@ final class StrategicSurfaceRuntime {
 			return;
 		}
 
+		$is_bundled   = is_readable( $bundle_marker );
 		$dependencies = array( 'seo-geo-theme' );
-		if ( is_readable( $bundle_marker ) ) {
+		if ( $is_bundled ) {
 			wp_dequeue_style( 'seo-geo-theme' );
 			$dependencies = array();
 		}
@@ -122,7 +123,7 @@ final class StrategicSurfaceRuntime {
 			$version
 		);
 
-		if ( is_readable( $closure_path ) ) {
+		if ( ! $is_bundled && is_readable( $closure_path ) ) {
 			$closure_version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $closure_path ) : '0.1.1';
 			wp_enqueue_style(
 				'seo-geo-theme-preset-corporate-v5-a3-1',
