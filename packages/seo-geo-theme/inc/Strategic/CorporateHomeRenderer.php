@@ -152,9 +152,13 @@ final class CorporateHomeRenderer {
 	 */
 	private function render_process( array $slots, bool $is_es ): string {
 		$steps      = '';
-		$icon_names = array( 1 => 'understand', 2 => 'define', 3 => 'measure' );
+		$icon_names = array(
+			1 => 'understand',
+			2 => 'define',
+			3 => 'measure',
+		);
 		for ( $index = 1; $index <= 3; ++$index ) {
-			$steps .= '<article class="seo-geo-corporate-process-step seo-geo-corporate-process-step--' . $index . '">'
+			$steps .= '<article class="seo-geo-corporate-process-step seo-geo-corporate-process-step--' . $index . '" data-step="0' . $index . '">'
 				. '<div class="seo-geo-corporate-process-step__top">'
 				. '<p class="seo-geo-corporate-process-step__number">0' . $index . '</p>'
 				. $this->icon( $icon_names[ $index ], 'seo-geo-corporate-process-step__icon' )
@@ -294,31 +298,35 @@ final class CorporateHomeRenderer {
 	/**
 	 * Render a reusable decorative SVG icon from the local sprite.
 	 *
-	 * @param string $symbol Symbol ID.
-	 * @param string $class  CSS class.
+	 * @param string $symbol    Symbol ID.
+	 * @param string $css_class CSS class.
 	 */
-	private function icon( string $symbol, string $class ): string {
+	private function icon( string $symbol, string $css_class ): string {
 		$href = $this->asset_uri( 'icon-sprite.svg' ) . '#' . $symbol;
 
-		return '<svg class="' . esc_attr( $class ) . '" aria-hidden="true" focusable="false"><use href="' . esc_url( $href ) . '"></use></svg>';
+		return '<svg class="' . esc_attr( $css_class ) . '" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="' . esc_url( $href ) . '"></use></svg>';
 	}
 
 	/**
 	 * Render a local decorative image with intrinsic dimensions.
 	 *
-	 * @param string $filename Asset filename.
-	 * @param string $class    CSS class.
-	 * @param int    $width    Intrinsic width.
-	 * @param int    $height   Intrinsic height.
-	 * @param bool   $lazy     Whether to lazy-load the asset.
+	 * @param string $filename  Asset filename.
+	 * @param string $css_class CSS class.
+	 * @param int    $width     Intrinsic width.
+	 * @param int    $height    Intrinsic height.
+	 * @param bool   $lazy      Whether to lazy-load the asset.
 	 */
-	private function decorative_image( string $filename, string $class, int $width, int $height, bool $lazy = true ): string {
+	private function decorative_image( string $filename, string $css_class, int $width, int $height, bool $lazy = true ): string {
 		$loading = $lazy ? ' loading="lazy"' : '';
 
-		return '<img class="' . esc_attr( $class ) . '" src="' . esc_url( $this->asset_uri( $filename ) ) . '" alt="" width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '" decoding="async"' . $loading . '>';
+		return '<img class="' . esc_attr( $css_class ) . '" src="' . esc_url( $this->asset_uri( $filename ) ) . '" alt="" width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '" decoding="async"' . $loading . '>';
 	}
 
-	/** Resolve one Corporate v5 local asset URL. */
+	/**
+	 * Resolve one Corporate v5 local asset URL.
+	 *
+	 * @param string $filename Asset filename.
+	 */
 	private function asset_uri( string $filename ): string {
 		return trailingslashit( get_template_directory_uri() ) . 'assets/images/presets/corporate/v5/' . ltrim( $filename, '/' );
 	}
