@@ -8,22 +8,22 @@ Canonical machine-readable candidate:
 
 `release/emmake-phase10e-candidate.json`
 
-Frozen Corporate v5 A3.1 field identity:
+Frozen Corporate v5 A3.2 field identity:
 
 - site ID: `emmake-com`;
 - production origin: `https://emmake.com/`;
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen Theme implementation source commit: `c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00`;
-- Theme ZIP SHA-256: `f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f`;
+- frozen Theme implementation source commit: `3008da3d3f971360386382e6c99c267c51563b88`;
+- Theme ZIP SHA-256: `22b238a6480cedd3d4139d1f859a857323cea86aea43d34af858d55a664141cf`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `1736d8b6dfb9aeec8cc8132a4ee1c42d5d9e4a3afb4510934edfd0cecd5a9fe2`;
+- deterministic field-pilot pack SHA-256: `3d54623456f8fadacfead74930bb14db4b25c8a648280b5e4863d2102563dc77`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
-This Corporate v5 A3.1 identity is the only current technical field candidate. Deterministic repository evidence is necessary, but it is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
+This Corporate v5 A3.2 identity is the only current technical field candidate. Deterministic repository evidence is necessary, but it is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
 
 ## Current pilot position
 
@@ -52,47 +52,37 @@ The permanent conclusion is that the strategic Theme must own not only `<main>` 
 
 ### A2 — clean Theme-owned strategic system
 
-Corporate v5 A2:
-
-- renders a Theme-owned strategic header and footer directly server-side;
-- keeps preset navigation as navigation authority without database-overridable `block_template_part()` presentation;
-- removes legacy Corporate v4 presentation from strategic requests;
-- builds the client release from the neutral Theme foundation plus the clean v5 strategic stylesheet;
-- rebalances hero, capabilities, method, Insights, final CTA and footer as one coherent v5 visual system;
-- explicitly resets list markers and owns CTA button styling;
-- preserves the existing hydrated content and SEO/GEO state unchanged.
+Corporate v5 A2 moved the strategic header/footer and Home presentation into Theme-owned server rendering, removed legacy Corporate v4 presentation from strategic requests, rebalanced the major sections and preserved the existing hydrated content and SEO/GEO state unchanged.
 
 Real `/nuevaweb/` A2 QA confirmed the architecture was moving in the right direction, but the page still used too many near-black surfaces and lost visual separation in secondary text/cards.
 
 ### A3 — lighter field refinement
 
-Corporate v5 A3 kept A2 architecture intact and changed presentation only:
-
-- lighter teal hero and primary feature surfaces;
-- stronger secondary text/card separation;
-- Method moved from near-black to a light mint/white premium surface;
-- final CTA moved to a light mint surface with dark ink and a strong green CTA;
-- featured dark cards retained high contrast while moving several tones lighter;
-- footer moved from near-black to branded teal with stronger hierarchy and pill navigation;
-- mobile menu followed the same lighter strategic palette;
-- no content, URL, SEO/GEO, Reset, hydration, Migration Bridge or production mutation.
+Corporate v5 A3 kept A2 architecture intact and changed presentation only: lighter teal hero/feature surfaces, stronger secondary separation, a light Method surface, a lighter final CTA, a branded teal footer and a matching mobile palette, with no content, URL, SEO/GEO, Reset, hydration, Migration Bridge or production mutation.
 
 ### A3.1 — bounded visual/media closure
 
-Corporate v5 A3.1 is the exact frozen technical candidate for the next single sandbox pass. It keeps the accepted A2/A3 semantic architecture and content state while:
+Corporate v5 A3.1 compacted the hero, introduced Theme-owned media slots, strengthened Method hierarchy and process continuity, let the first Insights card prefer WordPress featured media with a local fallback, added a reusable editorial visual library and kept the public Home server-rendered with zero required project frontend JavaScript and zero third-party visual requests.
 
-- compacting the hero so the primary actions fit the practical first desktop viewport;
-- adding a real local Theme-owned hero visual;
-- adding stable capability visual treatment without remote dependencies;
-- strengthening Method hierarchy and process continuity;
-- allowing the first Insights card to prefer WordPress featured media and use a local Theme fallback when absent;
-- adding a reusable local editorial visual library for marketing, AI, automation/data, strategy/content and analytics/research;
-- keeping the public strategic Home server-rendered with zero required project frontend JavaScript;
-- retaining zero third-party visual requests.
+Its final repository fixture recorded Lighthouse `100`, FCP `751.72 ms`, LCP `901.72 ms`, CLS `0`, TBT `0`, `8` total requests, `0` third-party requests, `0` project JavaScript bytes and `118` DOM nodes.
 
-The final repository performance fixture for Corporate A3.1 records Lighthouse `100`, FCP `751.72 ms`, LCP `901.72 ms`, CLS `0`, TBT `0`, `8` total requests, `0` third-party requests, `0` project JavaScript bytes and `118` DOM nodes.
+A3.1 was then installed on `/nuevaweb/`. The real screenshot confirmed a clear improvement in structure, hierarchy and modern visual language. The remaining field finding was specific: the synthetic media treatment still left avoidable visual potential compared with the approved generated imagery. That finding created A3.2 without reopening A1/A2 architecture.
 
-A temporary 13-request regression was traced to five decorative SVG data URIs. Those decorative icons were replaced with local CSS/pseudo-element treatment rather than weakening the eight-request product budget. Hero and Insights retain their meaningful media slots.
+### A3.2 — optimized real media
+
+Corporate v5 A3.2 is the exact current frozen technical candidate for the next single sandbox pass. It keeps all accepted semantic and SEO/GEO state while:
+
+- replacing the synthetic hero visual with the approved local `hero-global-connectivity.webp` asset;
+- adding approved optimized local media for Marketing, Market Research and AI/Automation capability cards;
+- keeping the hero eager with `fetchpriority=high`;
+- keeping below-fold capability media lazy/async;
+- preserving intrinsic image dimensions to prevent layout shift;
+- removing redundant pseudo-art now that real imagery carries those visual roles;
+- adding responsive image geometry for desktop, tablet and mobile;
+- preserving WordPress-authored featured-image precedence for Insights;
+- preserving zero third-party visual dependencies and zero required project frontend JavaScript.
+
+A3.2 does **not** change content, URLs, SEO/GEO ownership, Reset, hydration, Migration Bridge or production.
 
 ## Corporate v5 — Theme-owned frontend
 
@@ -125,7 +115,11 @@ WordPress remains the CMS and resource authority. Gutenberg remains available fo
 
 ## Repository acceptance boundary
 
-The exact A3.1 implementation source `c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00` has passed the repository gates for Foundation, Design System, Corporate Page Pipeline, Package, Release Artifact, PHP Quality/PHPStan, Native Multilingual, Self-contained Theme, WordPress Smoke, Accessibility/Responsive and Performance Baseline.
+The A3.2 implementation source is `3008da3d3f971360386382e6c99c267c51563b88`.
+
+Its deterministic Theme ZIP SHA-256 is `22b238a6480cedd3d4139d1f859a857323cea86aea43d34af858d55a664141cf` and its deterministic EMMAKE field pack SHA-256 is `3d54623456f8fadacfead74930bb14db4b25c8a648280b5e4863d2102563dc77`.
+
+Migration Bridge remains `0.8.60` with SHA-256 `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`.
 
 The accepted v5 baseline covers:
 
@@ -163,17 +157,7 @@ The `320` compact-mobile automated check remains an additional stress case.
 
 ## Relationship with SEO/GEO Manager
 
-The v5 renderer boundary is intentionally designed for the future Manager.
-
-Manager will be able to:
-
-- create/update structured strategic landing models without generating Gutenberg layout trees;
-- create complete blog posts automatically;
-- materialize automated articles as normal WordPress posts;
-- let authorized clients edit those articles in Gutenberg;
-- schedule/publish/refresh content under explicit policy;
-- maintain internal-link/cluster plans;
-- resolve SEO/GEO output ownership without duplicating Theme output.
+The v5 renderer boundary is intentionally designed for the future Manager. Manager may create/update structured strategic landing models and normal WordPress posts, but the Theme continues to own the public strategic renderer and exactly one SEO/GEO output owner remains active per signal.
 
 This Manager roadmap does **not** require Manager to run the public frontend. Theme rendering remains local to WordPress.
 
@@ -199,20 +183,20 @@ define( 'SEO_GEO_MIGRATION_BACKUPS_READY', true );
 
 Search visibility, canonical/hreflang/sitemap authority, production `home`/`siteurl` and rollback boundaries must remain isolated from production. No credentials, dumps, private submissions or customer data enter the repository.
 
-## Field execution for Corporate v5 A3.1
+## Field execution for Corporate v5 A3.2
 
 The destructive/reset portion must **not** be repeated unless a real data/state failure is proven.
 
 1. Keep the existing `/nuevaweb/` clone and Step 1–7 evidence.
 2. Keep Migration Bridge `0.8.60` unchanged.
 3. Preserve the existing clean hydrated Home data/content.
-4. Verify the Theme ZIP SHA-256 is exactly `f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f` before installation.
-5. Replace the Theme with that frozen Corporate v5 A3.1 candidate **only** on `/nuevaweb/`.
+4. Verify the Theme ZIP SHA-256 is exactly `22b238a6480cedd3d4139d1f859a857323cea86aea43d34af858d55a664141cf` before installation.
+5. Replace the Theme with that frozen Corporate v5 A3.2 candidate **only** on `/nuevaweb/`.
 6. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
 7. Open the same logical hydrated Home through the Theme-owned renderer.
-8. Verify first that the header is a single coherent strategic header and that no legacy list/title/`Menu` stack remains.
-9. Review the full desktop composition before advancing to narrower viewports.
-10. After desktop visual direction is accepted, run field QA at `1024 / 768 / 390` one viewport at a time.
+8. Verify the hero uses the approved real media, remains balanced against the copy and keeps the actions visible in the practical first desktop viewport.
+9. Verify all three capability cards use their intended real media with no stretch, crop failure or layout instability.
+10. Review the full desktop composition at `1440` before advancing to `1024 / 768 / 390` one viewport at a time.
 11. Do not advance the next roadmap stage until the Home receives explicit visual approval.
 
 If the semantic data or Step 7 state has drifted, stop and investigate instead of recreating evidence casually.
@@ -229,15 +213,15 @@ Record the five field checks:
 
 A technically valid result that still fails the premium/WOW standard remains a blocker.
 
-For the next A3.1 desktop screenshot specifically verify:
+For the A3.2 desktop screenshot specifically verify:
 
 - one clean premium header, with no stray bullets or duplicate `EMMAKE`/`Menu` surfaces;
 - hero actions visible in the practical first desktop viewport;
-- the hero visual provides purposeful right-side balance without dominating the copy;
-- readable capabilities with clear separation between featured and secondary cards;
-- Method feels premium and connected without becoming a dark visual wall;
+- real hero media is crisp, purposeful and balanced rather than decorative noise;
+- all three capability cards have coherent media crops and readable copy hierarchy;
+- Method remains premium and connected without becoming a dark visual wall;
 - zero stray Insights bullets and correct featured media/fallback behavior;
-- final CTA is deliberate, light and strongly actionable;
+- final CTA remains deliberate, light and strongly actionable;
 - branded teal footer has clear hierarchy and usable navigation;
 - coherent vertical rhythm and no forced wrapping/overflow.
 
@@ -247,7 +231,7 @@ At minimum validate Home, Sobre Nosotros, Trabaja con Nosotros, blog index, one 
 
 ## Sandbox acceptance exit
 
-The sandbox becomes eligible for production-entry review only when the exact frozen Corporate v5 A3.1 artifact is installed, the Theme-owned Home passes the product-quality visual gate, no URL/SEO/GEO blocker remains, no required legacy builder runtime remains, responsive/accessibility/performance checks pass, critical navigation/forms work, browser evidence is complete and rollback remains available.
+The sandbox becomes eligible for production-entry review only when the exact frozen Corporate v5 A3.2 artifact is installed, the Theme-owned Home passes the product-quality visual gate, no URL/SEO/GEO blocker remains, no required legacy builder runtime remains, responsive/accessibility/performance checks pass, critical navigation/forms work, browser evidence is complete and rollback remains available.
 
 This is **not** automatic production cutover.
 
@@ -257,10 +241,10 @@ Theme stable promotion remains **NO-GO**.
 
 SEO/GEO Manager is a separate product and is not itself a dependency for Theme stable acceptance. However, the Theme renderer architecture must be suitable for the future Manager Landing Engine before the Corporate master is considered product-complete.
 
-Until Corporate v5 A3.1 and later production acceptance exist:
+Until Corporate v5 A3.2 and later production acceptance exist:
 
 - `release/stable-release-decision.json` remains `no-go`;
 - real-site acceptance remains `pending`;
-- Corporate v5 A3.1 is the frozen technical field authority;
-- Corporate v5 A1/A2/A3 and v4.3 remain historical field/technical evidence;
+- Corporate v5 A3.2 is the frozen technical field authority;
+- Corporate v5 A1/A2/A3/A3.1 and v4.3 remain historical field/technical evidence;
 - no stable release is published.
