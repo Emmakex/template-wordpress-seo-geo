@@ -5,7 +5,13 @@ on:
     paths:
       - 'packages/seo-geo-theme/theme.json'
       - 'packages/seo-geo-theme/functions.php'
+      - 'packages/seo-geo-theme/inc/setup.php'
+      - 'packages/seo-geo-theme/inc/strategic.php'
+      - 'packages/seo-geo-theme/inc/Strategic/**'
+      - 'packages/seo-geo-theme/strategic-templates/**'
       - 'packages/seo-geo-theme/assets/css/presets/corporate-v2.css'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-v5-runtime.css'
+      - 'presets/corporate/content-map.json'
       - 'scripts/ci/validate-design-system.php'
       - 'scripts/ci/corporate-v3-visual-contract.sh'
       - 'scripts/ci/php-lint-diagnostic.sh'
@@ -17,7 +23,13 @@ on:
     paths:
       - 'packages/seo-geo-theme/theme.json'
       - 'packages/seo-geo-theme/functions.php'
+      - 'packages/seo-geo-theme/inc/setup.php'
+      - 'packages/seo-geo-theme/inc/strategic.php'
+      - 'packages/seo-geo-theme/inc/Strategic/**'
+      - 'packages/seo-geo-theme/strategic-templates/**'
       - 'packages/seo-geo-theme/assets/css/presets/corporate-v2.css'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-v5-runtime.css'
+      - 'presets/corporate/content-map.json'
       - 'scripts/ci/validate-design-system.php'
       - 'scripts/ci/corporate-v3-visual-contract.sh'
       - 'scripts/ci/php-lint-diagnostic.sh'
@@ -33,7 +45,7 @@ concurrency:
 
 jobs:
   design-system:
-    name: Theme token + Corporate v3 contract
+    name: Theme token + Corporate v5 contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -56,8 +68,8 @@ jobs:
       - name: Validate semantic tokens and contrast
         run: php scripts/ci/validate-design-system.php
 
-      - name: Validate Corporate v3 contract syntax
+      - name: Validate Corporate v5 contract syntax
         run: bash -n scripts/ci/corporate-v3-visual-contract.sh
 
-      - name: Validate Corporate v3 master Home contract
+      - name: Validate Corporate v5 Theme-owned Home contract
         run: bash scripts/ci/corporate-v3-visual-contract.sh
