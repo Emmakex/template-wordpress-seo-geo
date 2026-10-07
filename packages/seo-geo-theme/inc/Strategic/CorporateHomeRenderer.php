@@ -81,7 +81,7 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
-		$visual = $this->decorative_image( 'hero-global-connectivity.webp', 'seo-geo-corporate-hero-visual__image', 1200, 675, false );
+		$visual = $this->decorative_image( 'hero-global-connectivity.avif', 'seo-geo-corporate-hero-visual__image', 640, 360, false );
 
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'
@@ -133,24 +133,16 @@ final class CorporateHomeRenderer {
 	/**
 	 * Render local capability media without making imagery a semantic dependency.
 	 *
+	 * All three cards share one AVIF atlas so the browser pays for one request.
+	 *
 	 * @param int $index Capability position.
 	 */
 	private function capability_media( int $index ): string {
-		$assets = array(
-			1 => array( 'capability-marketing-funnel.webp', 720, 720 ),
-			2 => array( 'capability-market-research.webp', 720, 540 ),
-			3 => array( 'capability-ai-automation.webp', 720, 540 ),
-		);
-
-		if ( ! isset( $assets[ $index ] ) ) {
+		if ( $index < 1 || $index > 3 ) {
 			return '';
 		}
 
-		$asset = $assets[ $index ];
-
-		return '<div class="seo-geo-corporate-card__media" aria-hidden="true">'
-			. $this->decorative_image( $asset[0], 'seo-geo-corporate-card__media-image', $asset[1], $asset[2] )
-			. '</div>';
+		return '<div class="seo-geo-corporate-card__media seo-geo-corporate-card__media--' . $index . '" aria-hidden="true"></div>';
 	}
 
 	/**
