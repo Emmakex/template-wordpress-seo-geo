@@ -243,7 +243,7 @@ The portfolio is successful only when all of the following remain true:
 - Theme + Manager do not duplicate SEO/GEO ownership;
 - strategic Theme pages render without Gutenberg governing their master layout;
 - existing-provider sites can be analyzed without destructive mutation;
-- strategic landings can be previewed, published idempotently and rolled back;
+- Landings/blogs can be previewed, published idempotently and rolled back.
 - complete blog posts can be created automatically by Manager;
 - Manager-created blog posts remain editable in Gutenberg;
 - existing blog posts can be refreshed without silently overwriting newer human revisions;
