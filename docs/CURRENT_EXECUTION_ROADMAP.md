@@ -2,7 +2,7 @@
 
 ## Authority
 
-This document is the **current execution pointer** for work after the EMMAKE Corporate real-site findings.
+This document is the **current execution pointer** after the EMMAKE Corporate real-site findings.
 
 `docs/ROADMAP.md` remains the historical/global phase record. Where an older roadmap item assumes Gutenberg/native blocks are the canonical strategic-page renderer, this current roadmap plus `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md` supersede that rendering assumption.
 
@@ -11,13 +11,16 @@ The project rule remains **finish before advancing**.
 ## Current product state
 
 - Migration/Reset/Rescue/Hydration/SEO-GEO technical path: accepted through the current EMMAKE sandbox evidence.
+- Migration Bridge: frozen at `0.8.60`; do not change it for Theme presentation work.
 - Corporate v4.x: retained as historical technical evidence; visual/architectural direction superseded by v5.
 - Corporate v5 A1 — renderer/model boundary: **complete**.
-- Corporate v5 A2 — clean Theme-owned strategic Home/chrome: **complete as architecture/implementation baseline**.
-- Corporate v5 A3 — lighter real-site visual refinement: **current execution pointer**.
+- Corporate v5 A2 — clean Theme-owned strategic Home/chrome: **complete**.
+- Corporate v5 A3 — lighter field palette/presentation refinement: **complete as the base visual refinement**.
+- Corporate v5 A3.1 — bounded visual/media closure: **repository implementation complete and technically green; exact field candidate frozen; real `/nuevaweb/` acceptance pending**.
 - Stable Theme promotion: **NO-GO** pending exact `/nuevaweb/` browser/product acceptance.
-- SaaS / Local Pro / Publisher / Ecommerce master-surface rollout: frozen until Corporate v5 passes the real-site premium/WOW gate and its renderer contract is generalized.
-- SEO/GEO Manager implementation: planned after the Theme renderer/model boundary is generalized enough to consume safely; architecture and publishing contracts are already documented.
+- Renderer generalization: frozen until A3.1 passes the real-site premium/WOW gate.
+- SaaS / Local Pro / Publisher / Ecommerce master-surface rollout: frozen until the Corporate renderer contract is accepted and generalized.
+- SEO/GEO Manager implementation: planned after the Theme semantic renderer/model boundary is proven reusable; architecture and publishing contracts are already documented.
 
 ## Architectural ownership
 
@@ -52,7 +55,7 @@ Accepted boundary:
 
 ### A2 — Corporate v5 Home implementation
 
-Status: **complete as structural/architectural baseline; real-site visual result superseded by A3 refinement**.
+Status: **complete**.
 
 Delivered:
 
@@ -62,40 +65,78 @@ Delivered:
 - article/query references resolved through WordPress data rather than visual block-position contracts;
 - removal of legacy Corporate v4 presentation debt from v5 client delivery;
 - responsive behavior at `1440 / 1024 / 768 / 390`, with `320` as automated stress case;
-- accessibility and performance budgets preserved as repository gates.
+- accessibility and performance budgets as repository gates.
 
-Real `/nuevaweb/` QA validated the architecture but showed the palette remained too dark and some secondary surfaces lacked separation. That field finding created A3 rather than reopening the renderer boundary.
+Real `/nuevaweb/` QA validated the architecture and exposed presentation issues rather than renderer-boundary failures. That evidence produced the bounded A3/A3.1 refinement path instead of reopening A1/A2.
 
-### A3 — Corporate v5 lighter field refinement
+### A3 — Lighter field refinement
 
-Status: **current**.
+Status: **complete as visual baseline**.
 
-Scope is presentation only:
+Delivered without changing content/URLs/SEO-GEO/Reset/hydration/Migration Bridge/production:
 
 - lighter teal hero and primary feature surfaces;
-- improved secondary text/card separation;
-- light mint/white Method section;
-- light final CTA with dark ink and strong green action;
-- lighter high-contrast featured cards;
-- branded teal footer with stronger hierarchy and pill navigation;
-- matching mobile-menu palette;
-- no content, URL, SEO/GEO, Reset, hydration, Migration Bridge or production change.
+- stronger secondary-text/card separation;
+- lighter Method/final CTA treatment;
+- branded teal footer and matching mobile palette;
+- improved contrast and hierarchy while retaining the Theme-owned renderer.
 
-Acceptance:
+### A3.1 — Visual/media closure
 
-- exact deterministic candidate identity frozen;
-- repository gates green on that exact candidate;
-- install only the frozen Theme on `/nuevaweb/`;
-- preserve existing Step 1–7 state and hydrated Home;
-- real QA at `1440 / 1024 / 768 / 390`;
+Status: **technically complete; frozen field candidate; field QA pending**.
+
+Implementation source commit:
+
+`c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00`
+
+Frozen technical identity:
+
+- Theme `0.1.1` / `prestable`;
+- Theme ZIP SHA-256 `f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f`;
+- Migration Bridge `0.8.60` / SHA-256 `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
+- deterministic field pack SHA-256 `1736d8b6dfb9aeec8cc8132a4ee1c42d5d9e4a3afb4510934edfd0cecd5a9fe2`.
+
+Delivered:
+
+- compact hero geometry so the primary actions fit the practical first desktop viewport;
+- local Theme-owned hero visual slot;
+- capability media/decorative treatment without remote dependencies;
+- stronger Method/process hierarchy;
+- featured Insights media that prefers WordPress featured media and falls back to a local Theme visual;
+- reusable local editorial visual library for marketing, AI, automation/data, strategy/content and analytics/research;
+- visual treatment optimized to preserve the existing performance budget rather than widening it.
+
+Repository acceptance on the final implementation includes:
+
+- Lighthouse performance `100`;
+- Corporate FCP `751.72 ms`;
+- Corporate LCP `901.72 ms`;
+- CLS `0`;
+- TBT `0`;
+- `8` total Corporate requests;
+- `0` third-party requests;
+- `0` project JavaScript bytes;
+- `118` DOM nodes;
+- Foundation, Design System, Corporate Pipeline, Package, Release Artifact, PHP Quality/PHPStan, Multilingual, Self-contained, WordPress Smoke and Accessibility/Responsive gates green.
+
+A temporary 13-request regression was traced to five decorative SVG data URIs. Those were replaced with local CSS/pseudo-element treatment. The existing request budget was preserved; it was not relaxed.
+
+Field acceptance still requires:
+
+- install only the exact frozen Theme on `/nuevaweb/`;
+- keep the current clean/hydrated state;
+- do not rerun Reset or hydration;
+- real review at `1440 / 1024 / 768 / 390`;
 - explicit premium/WOW visual approval;
-- no SEO/GEO, accessibility or performance regression.
+- no SEO/GEO, accessibility, responsive or performance regression in the real sandbox.
 
-Do not begin renderer generalization until this field gate is closed.
+Repository CI closes the technical candidate; it does **not** infer human field acceptance.
 
 ### A4 — Generalize renderer contract
 
-Only after Corporate v5 A3 passes real-site QA:
+Status: **blocked by A3.1 real-site acceptance**.
+
+Only after Corporate v5 A3.1 passes real-site QA:
 
 - extract reusable semantic renderer interfaces/helpers;
 - define model-version compatibility behavior;
@@ -104,9 +145,11 @@ Only after Corporate v5 A3 passes real-site QA:
 - keep public HTML server-rendered and local to WordPress;
 - make the contract suitable for future SEO/GEO Manager structured landing models without coupling Manager to Theme layout internals.
 
+This is the formal renderer-generalization phase. It must not be confused with the A3/A3.1 visual field iterations.
+
 ### A5 — Remaining preset master surfaces
 
-Move master strategic surfaces to the same architecture in this order:
+After A4 closes, move strategic master surfaces to the same architecture in this order:
 
 1. SaaS / Digital Product;
 2. Local Pro;
@@ -199,42 +242,15 @@ Automated blog creation is a **core Manager capability**.
 
 ### D1 — Structured article generation
 
-Support:
-
-- topic/keyword/search intent;
-- cluster relationship;
-- title/excerpt;
-- outline/headings/body;
-- source/reference provenance;
-- author binding;
-- categories/tags under policy;
-- internal links;
-- related landing/service/product links;
-- media references;
-- SEO metadata intent;
-- Article/BlogPosting intent;
-- locale/translation relationships.
+Support topic/search intent, cluster relationships, title/excerpt, structured body, provenance, author binding, taxonomies under policy, internal links, related commercial resources, media references, SEO metadata intent, Article/BlogPosting intent and locale/translation relationships.
 
 ### D2 — Normal WordPress post materialization
 
-Manager-created articles become normal WordPress posts.
-
-They remain editable by authorized users in Gutenberg.
+Manager-created articles become normal WordPress posts and remain editable by authorized users in Gutenberg.
 
 The editable body uses a minimal stable editorial representation; it does not encode the Theme's premium page layout.
 
-Theme owns the public article shell:
-
-- reading width;
-- typography;
-- header/hero;
-- author/date/provenance;
-- related content;
-- CTAs;
-- responsive behavior;
-- accessibility;
-- Schema/public metadata integration;
-- performance.
+Theme owns the public article shell: reading width, typography, header/hero, author/date/provenance, related content, CTAs, responsive behavior, accessibility, Schema/public metadata integration and performance.
 
 ### D3 — Automated publication modes
 
@@ -249,15 +265,7 @@ Draft-first must always remain available.
 
 ### D4 — Blog refresh/update
 
-Support:
-
-- stale-content refresh;
-- search-opportunity refresh;
-- new source/fact updates;
-- internal-link improvement;
-- cluster expansion;
-- expected-revision protection so automation cannot silently overwrite newer human edits;
-- rollback and public verification.
+Support stale-content refresh, search-opportunity refresh, new-source/fact updates, internal-link improvement, cluster expansion, expected-revision protection, rollback and public verification.
 
 ## Track E — Growth and feedback loops
 
@@ -300,12 +308,18 @@ Strategic SEO/GEO growth pages should preferentially use Manager because that pa
 
 ## Current stop/go rule
 
-Do **not** rerun Reset or hydration merely to test A3 presentation.
+Do **not** rerun Reset or hydration for A3.1 presentation.
+
+Do **not** change Migration Bridge for A3.1.
+
+Do **not** touch production.
 
 Do **not** roll the other four preset master surfaces forward yet.
 
-Do **not** begin A4 renderer generalization until the exact A3 field candidate passes `/nuevaweb/` visual/browser acceptance.
+Do **not** begin A4 renderer generalization until the exact A3.1 field candidate passes `/nuevaweb/` visual/browser acceptance.
 
 Do **not** require SEO/GEO Manager to render the frontend.
 
-Current execution is: **close Corporate v5 A3 → freeze/verify deterministic candidate → real `/nuevaweb/` QA → explicit premium/WOW acceptance → A4 renderer generalization**.
+Current execution is:
+
+**freeze/verify exact A3.1 candidate → one Theme-only `/nuevaweb/` install → real QA at 1440/1024/768/390 → explicit premium/WOW acceptance → A4 renderer generalization → SaaS / Digital Product**.
