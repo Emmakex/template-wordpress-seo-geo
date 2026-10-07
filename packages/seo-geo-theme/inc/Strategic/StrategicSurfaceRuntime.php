@@ -82,8 +82,11 @@ final class StrategicSurfaceRuntime {
 	/**
 	 * Replace the legacy Gutenberg escape layer with the v5 canvas runtime.
 	 *
-	 * Corporate v5 keeps the proven art-direction stylesheet and adds only the
-	 * tiny Theme-owned canvas normalization required by the strategic document.
+	 * The installable Theme build carries one deterministic Corporate v5 CSS
+	 * bundle containing the neutral foundation, proven Corporate visual system
+	 * and strategic-canvas rules. That removes two render-blocking requests from
+	 * the premium Home without async CSS or frontend JavaScript. Monorepo/source
+	 * installs keep the separate files as a safe development fallback.
 	 */
 	public function replace_legacy_layout_runtime(): void {
 		if ( ! $this->is_active() ) {
@@ -91,6 +94,26 @@ final class StrategicSurfaceRuntime {
 		}
 
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
+
+		$bundle_path = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundle.css';
+		if ( is_readable( $bundle_path ) ) {
+			wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' );
+			wp_dequeue_style( 'seo-geo-theme' );
+
+			$version = '0.1.1';
+			if ( function_exists( 'seo_geo_theme_asset_version' ) ) {
+				$version = seo_geo_theme_asset_version( $bundle_path );
+			}
+
+			wp_enqueue_style(
+				'seo-geo-theme-preset-corporate-v5-bundle',
+				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-bundle.css',
+				array(),
+				$version
+			);
+
+			return;
+		}
 
 		$path = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
 		if ( ! is_readable( $path ) ) {
