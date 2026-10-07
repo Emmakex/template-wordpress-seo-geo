@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace SeoGeo\Theme\Strategic;
 
-use WP_Block;
 use WP_HTML_Tag_Processor;
 use WP_Post;
 
@@ -22,7 +21,7 @@ use WP_Post;
  * without changing the renderer or public HTML contract.
  */
 final class CorporateHomeModelResolver {
-	private const MODEL_ID = 'corporate-home-v1';
+	private const MODEL_ID    = 'corporate-home-v1';
 	private const SLOT_PREFIX = 'seo-geo-content-slot--';
 
 	/**
@@ -63,6 +62,8 @@ final class CorporateHomeModelResolver {
 
 	/**
 	 * Check whether the page has enough semantic data for Theme-owned rendering.
+	 *
+	 * @param WP_Post $post Source WordPress page.
 	 */
 	public function supports( WP_Post $post ): bool {
 		return null !== $this->resolve( $post );
@@ -126,9 +127,9 @@ final class CorporateHomeModelResolver {
 	/**
 	 * Traverse parsed blocks and collect semantic slot values.
 	 *
-	 * @param array<int, array<string, mixed>>              $blocks      Parsed blocks.
+	 * @param array<int, array<string, mixed>>                $blocks      Parsed blocks.
 	 * @param array<string, array{type:string,required:bool}> $definitions Slot contract.
-	 * @param array<string, mixed>                           $slots       Collected values.
+	 * @param array<string, mixed>                            $slots       Collected values.
 	 */
 	private function collect_slots( array $blocks, array $definitions, array &$slots ): void {
 		foreach ( $blocks as $block ) {
@@ -142,7 +143,12 @@ final class CorporateHomeModelResolver {
 				$class_name = $attrs['className'];
 			}
 
-			foreach ( preg_split( '/\s+/', trim( $class_name ) ) ?: array() as $class ) {
+			$classes = preg_split( '/\s+/', trim( $class_name ) );
+			if ( ! is_array( $classes ) ) {
+				$classes = array();
+			}
+
+			foreach ( $classes as $class ) {
 				if ( ! str_starts_with( $class, self::SLOT_PREFIX ) ) {
 					continue;
 				}
@@ -169,6 +175,7 @@ final class CorporateHomeModelResolver {
 	 * Extract one bounded slot value.
 	 *
 	 * @param array<string, mixed> $block Parsed block.
+	 * @param string               $type  Contract slot type.
 	 * @return string|array<string, string>|list<string>|null
 	 */
 	private function extract_value( array $block, string $type ) {
@@ -180,7 +187,7 @@ final class CorporateHomeModelResolver {
 		if ( 'text' === $type ) {
 			$value = trim( wp_strip_all_tags( $rendered, true ) );
 
-			return '' === $value ? null : html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ?: 'UTF-8' );
+			return '' === $value ? null : html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, $this->charset() );
 		}
 
 		if ( 'link' === $type ) {
@@ -197,6 +204,7 @@ final class CorporateHomeModelResolver {
 	/**
 	 * Extract the first authored anchor from a semantic link slot.
 	 *
+	 * @param string $html Rendered semantic-slot HTML.
 	 * @return array{label:string,url:string}|null
 	 */
 	private function extract_link( string $html ): ?array {
@@ -208,7 +216,7 @@ final class CorporateHomeModelResolver {
 					$label = trim( wp_strip_all_tags( $html, true ) );
 					if ( '' !== $label ) {
 						return array(
-							'label' => html_entity_decode( $label, ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ?: 'UTF-8' ),
+							'label' => html_entity_decode( $label, ENT_QUOTES | ENT_HTML5, $this->charset() ),
 							'url'   => $url,
 						);
 					}
@@ -220,8 +228,8 @@ final class CorporateHomeModelResolver {
 			$label = trim( wp_strip_all_tags( $matches[2], true ) );
 			if ( '' !== $label && '' !== trim( $matches[1] ) ) {
 				return array(
-					'label' => html_entity_decode( $label, ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ?: 'UTF-8' ),
-					'url'   => html_entity_decode( $matches[1], ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ?: 'UTF-8' ),
+					'label' => html_entity_decode( $label, ENT_QUOTES | ENT_HTML5, $this->charset() ),
+					'url'   => html_entity_decode( $matches[1], ENT_QUOTES | ENT_HTML5, $this->charset() ),
 				);
 			}
 		}
@@ -232,6 +240,7 @@ final class CorporateHomeModelResolver {
 	/**
 	 * Extract list text without carrying block/layout markup into the model.
 	 *
+	 * @param string $html Rendered list slot HTML.
 	 * @return list<string>|null
 	 */
 	private function extract_list( string $html ): ?array {
@@ -247,7 +256,7 @@ final class CorporateHomeModelResolver {
 
 			$value = trim( wp_strip_all_tags( $item, true ) );
 			if ( '' !== $value ) {
-				$items[] = html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ?: 'UTF-8' );
+				$items[] = html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, $this->charset() );
 			}
 		}
 
@@ -291,5 +300,12 @@ final class CorporateHomeModelResolver {
 		}
 
 		return true;
+	}
+
+	/** Resolve the WordPress document charset with a safe HTML default. */
+	private function charset(): string {
+		$charset = get_bloginfo( 'charset' );
+
+		return is_string( $charset ) && '' !== $charset ? $charset : 'UTF-8';
 	}
 }
