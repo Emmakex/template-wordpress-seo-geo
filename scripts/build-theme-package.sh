@@ -10,7 +10,6 @@ CORPORATE_V5_RUNTIME="${OUTPUT_DIR}/assets/css/presets/corporate-v5-runtime.css"
 CORPORATE_V5_MARKER="${OUTPUT_DIR}/assets/css/presets/corporate-v5-bundled.marker"
 CORPORATE_V5_SOURCES=(
   "${THEME_SOURCE}/style.css"
-  "${THEME_SOURCE}/assets/css/presets/corporate-v2.css"
   "${THEME_SOURCE}/assets/css/presets/corporate-v5-runtime.css"
 )
 
@@ -56,14 +55,14 @@ done
 
 CORPORATE_V5_TMP="${CORPORATE_V5_RUNTIME}.tmp"
 {
-  printf '/* Corporate v5 client bundle: foundation + visual system + strategic canvas. */\n'
+  printf '/* Corporate v5 client bundle: foundation + clean strategic visual system. */\n'
   for source in "${CORPORATE_V5_SOURCES[@]}"; do
     cat "$source"
     printf '\n'
   done
 } >"$CORPORATE_V5_TMP"
 mv "$CORPORATE_V5_TMP" "$CORPORATE_V5_RUNTIME"
-printf 'corporate-v5-css-bundle-v1\n' >"$CORPORATE_V5_MARKER"
+printf 'corporate-v5-css-bundle-v2\n' >"$CORPORATE_V5_MARKER"
 
 if [[ ! -s "$CORPORATE_V5_RUNTIME" || ! -s "$CORPORATE_V5_MARKER" ]]; then
   printf 'Corporate v5 client CSS bundle was not generated.\n' >&2

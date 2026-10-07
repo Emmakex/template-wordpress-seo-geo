@@ -80,19 +80,21 @@ final class StrategicSurfaceRuntime {
 	}
 
 	/**
-	 * Replace the legacy Gutenberg escape layer with the v5 canvas runtime.
+	 * Replace all legacy Corporate presentation layers with the v5 strategic
+	 * runtime. Corporate v5 intentionally does not carry the previous Gutenberg
+	 * visual stylesheet: the strategic renderer and its CSS are a clean product
+	 * boundary rather than another override layer.
 	 *
-	 * The installable Theme build replaces corporate-v5-runtime.css with one
-	 * deterministic bundle containing the neutral foundation, Corporate visual
-	 * system and strategic-canvas rules. A marker created by the build allows us
-	 * to remove the two superseded stylesheet requests without heuristics. Source
-	 * installs keep the three files separate as a safe development fallback.
+	 * The installable release prepends the neutral Theme foundation to the v5
+	 * runtime and writes a marker. Source installs keep the foundation as a normal
+	 * dependency while still avoiding legacy Corporate layout CSS.
 	 */
 	public function replace_legacy_layout_runtime(): void {
 		if ( ! $this->is_active() ) {
 			return;
 		}
 
+		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' );
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
 
 		$path          = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
@@ -101,9 +103,8 @@ final class StrategicSurfaceRuntime {
 			return;
 		}
 
-		$dependencies = array( 'seo-geo-theme-preset-corporate-v2' );
+		$dependencies = array( 'seo-geo-theme' );
 		if ( is_readable( $bundle_marker ) ) {
-			wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' );
 			wp_dequeue_style( 'seo-geo-theme' );
 			$dependencies = array();
 		}

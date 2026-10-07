@@ -12,9 +12,10 @@
   <file>packages/seo-geo-migration-bridge</file>
 
   <exclude-pattern>*/vendor/*</exclude-pattern>
-  <!-- Corporate master CSS is intentionally compact to stay under the strict transfer budget. -->
+  <!-- Corporate visual CSS is intentionally compact and protected by dedicated Design System / browser gates. -->
   <exclude-pattern>packages/seo-geo-theme/assets/css/presets/corporate-v2.css</exclude-pattern>
   <exclude-pattern>packages/seo-geo-theme/assets/css/presets/corporate-v3-runtime.css</exclude-pattern>
+  <exclude-pattern>packages/seo-geo-theme/assets/css/presets/corporate-v5-runtime.css</exclude-pattern>
 
   <config name="minimum_supported_wp_version" value="7.1"/>
 
