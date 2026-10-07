@@ -125,13 +125,13 @@ def main() -> int:
         current_roadmap,
         (
             "# Current execution roadmap",
-            "Corporate v5 — Theme-owned frontend",
+            "## Track A — Corporate v5 Theme-owned frontend",
             ownership_rule,
             "Track C — SEO/GEO Manager Landing Engine",
             "Track D — SEO/GEO Manager Automated Blog Engine",
             "Manager-created articles become normal WordPress posts.",
             "remain editable by authorized users in Gutenberg",
-            "Do **not** begin another Corporate CSS patch cycle on top of v4.3.",
+            "Do **not** begin A4 renderer generalization until the exact A3 field candidate passes `/nuevaweb/` visual/browser acceptance.",
         ),
         "CURRENT_EXECUTION_ROADMAP.md",
     )
@@ -185,9 +185,9 @@ def main() -> int:
             "not a mandatory dependency or blocker for Theme `0.1.1` stable runtime",
             "Migration Bridge is the accepted migration/reset implementation for this Theme pilot.",
             "deprecated-retained-nondistributed",
-            "Corporate v4.3 passed the repository-side technical gates",
+            "Corporate v4.3 passed repository-side technical gates",
             "failed the human visual/architectural acceptance gate",
-            "Corporate v5 — Theme-owned frontend",
+            "Corporate v5 A3",
         ),
         "STABLE_RELEASE_DECISION.md",
     )
@@ -198,7 +198,7 @@ def main() -> int:
             "## Stable promotion boundary",
             "Theme stable promotion remains **NO-GO**.",
             "Corporate v5 — Theme-owned frontend",
-            "v4.3 is recorded as technically valid but **visual/architectural NO-GO**.",
+            "Corporate v4.3 remains historical evidence: technically valid but **visual/architectural NO-GO**.",
             "Do **not** rerun Reset, regenerate the Home, rehydrate content",
         ),
         "REAL_SITE_PILOT.md",
@@ -207,7 +207,7 @@ def main() -> int:
     print(
         "Product portfolio contract OK: WordPress CMS ownership, Gutenberg editorial autonomy, "
         "Theme-owned strategic rendering, automated Manager landing/blog operations, single SEO/GEO authority, "
-        "rollback-safe publishing and Corporate v5 execution direction are documented."
+        "rollback-safe publishing and Corporate v5 A3 execution direction are documented."
     )
     return 0
 
