@@ -135,7 +135,7 @@ Until production acceptance exists, `release/stable-release-decision.json` remai
 
 SEO/GEO Manager is a separate plugin product.
 
-It is not a mandatory dependency for Theme `0.1.1` stable runtime.
+It is not a mandatory dependency or blocker for Theme `0.1.1` stable runtime.
 
 Migration Bridge `0.8.60` remains the accepted migration/reset implementation for this pilot.
 
