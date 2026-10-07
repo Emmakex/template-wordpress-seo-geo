@@ -15,11 +15,11 @@ Frozen Corporate v5 A3.2 field identity:
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen Theme implementation source commit: `3008da3d3f971360386382e6c99c267c51563b88`;
-- Theme ZIP SHA-256: `22b238a6480cedd3d4139d1f859a857323cea86aea43d34af858d55a664141cf`;
+- frozen Theme implementation source commit: `59049c5aebc7e1a01a8c4ec433ccd3d6bfedc00f`;
+- Theme ZIP SHA-256: `02eacf06c0e044e6520b6e633800a61f0f8628c5bea1f336b9e6a5a7f70a4df4`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `3d54623456f8fadacfead74930bb14db4b25c8a648280b5e4863d2102563dc77`;
+- deterministic field-pilot pack SHA-256: `971c825b2010907b7285a949abad37c0484a4f76db94bdeef55b8dd45a8441cc`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
@@ -72,15 +72,17 @@ A3.1 was then installed on `/nuevaweb/`. The real screenshot confirmed a clear i
 
 Corporate v5 A3.2 is the exact current frozen technical candidate for the next single sandbox pass. It keeps all accepted semantic and SEO/GEO state while:
 
-- replacing the synthetic hero visual with the approved local `hero-global-connectivity.webp` asset;
-- adding approved optimized local media for Marketing, Market Research and AI/Automation capability cards;
-- keeping the hero eager with `fetchpriority=high`;
-- keeping below-fold capability media lazy/async;
-- preserving intrinsic image dimensions to prevent layout shift;
+- replacing the synthetic hero visual with the approved local `hero-global-connectivity.avif` asset;
+- combining the three approved Marketing, Market Research and AI/Automation visuals into one local `capability-media-sprite.avif` atlas;
+- positioning the atlas independently per capability card so all three retain distinct imagery while sharing one browser request;
+- keeping the hero eager with `fetchpriority=high` and intrinsic `640×360` dimensions to prevent layout shift;
 - removing redundant pseudo-art now that real imagery carries those visual roles;
 - adding responsive image geometry for desktop, tablet and mobile;
 - preserving WordPress-authored featured-image precedence for Insights;
-- preserving zero third-party visual dependencies and zero required project frontend JavaScript.
+- preserving zero third-party visual dependencies and zero required project frontend JavaScript;
+- preserving the existing strict request/transfer budgets instead of widening them for imagery.
+
+The first straightforward WebP implementation retained Lighthouse `100`, CLS `0` and TBT `0`, but exceeded the existing Corporate byte/request budgets. Those limits were not relaxed. The approved media was recomposed into one compact AVIF hero plus one shared AVIF capability atlas, reducing the critical real-media payload to roughly 12 KB across two local requests.
 
 A3.2 does **not** change content, URLs, SEO/GEO ownership, Reset, hydration, Migration Bridge or production.
 
@@ -115,9 +117,9 @@ WordPress remains the CMS and resource authority. Gutenberg remains available fo
 
 ## Repository acceptance boundary
 
-The A3.2 implementation source is `3008da3d3f971360386382e6c99c267c51563b88`.
+The A3.2 implementation source is `59049c5aebc7e1a01a8c4ec433ccd3d6bfedc00f`.
 
-Its deterministic Theme ZIP SHA-256 is `22b238a6480cedd3d4139d1f859a857323cea86aea43d34af858d55a664141cf` and its deterministic EMMAKE field pack SHA-256 is `3d54623456f8fadacfead74930bb14db4b25c8a648280b5e4863d2102563dc77`.
+Its deterministic Theme ZIP SHA-256 is `02eacf06c0e044e6520b6e633800a61f0f8628c5bea1f336b9e6a5a7f70a4df4` and its deterministic EMMAKE field-pilot pack SHA-256 is `971c825b2010907b7285a949abad37c0484a4f76db94bdeef55b8dd45a8441cc`.
 
 Migration Bridge remains `0.8.60` with SHA-256 `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`.
 
@@ -190,12 +192,12 @@ The destructive/reset portion must **not** be repeated unless a real data/state 
 1. Keep the existing `/nuevaweb/` clone and Step 1–7 evidence.
 2. Keep Migration Bridge `0.8.60` unchanged.
 3. Preserve the existing clean hydrated Home data/content.
-4. Verify the Theme ZIP SHA-256 is exactly `22b238a6480cedd3d4139d1f859a857323cea86aea43d34af858d55a664141cf` before installation.
+4. Verify the Theme ZIP SHA-256 is exactly `02eacf06c0e044e6520b6e633800a61f0f8628c5bea1f336b9e6a5a7f70a4df4` before installation.
 5. Replace the Theme with that frozen Corporate v5 A3.2 candidate **only** on `/nuevaweb/`.
 6. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
 7. Open the same logical hydrated Home through the Theme-owned renderer.
-8. Verify the hero uses the approved real media, remains balanced against the copy and keeps the actions visible in the practical first desktop viewport.
-9. Verify all three capability cards use their intended real media with no stretch, crop failure or layout instability.
+8. Verify the hero uses the approved real AVIF media, remains balanced against the copy and keeps the actions visible in the practical first desktop viewport.
+9. Verify all three capability cards use their intended atlas crop with no stretch, wrong panel, crop failure or layout instability.
 10. Review the full desktop composition at `1440` before advancing to `1024 / 768 / 390` one viewport at a time.
 11. Do not advance the next roadmap stage until the Home receives explicit visual approval.
 
@@ -218,7 +220,7 @@ For the A3.2 desktop screenshot specifically verify:
 - one clean premium header, with no stray bullets or duplicate `EMMAKE`/`Menu` surfaces;
 - hero actions visible in the practical first desktop viewport;
 - real hero media is crisp, purposeful and balanced rather than decorative noise;
-- all three capability cards have coherent media crops and readable copy hierarchy;
+- all three capability cards have the correct distinct atlas crop and readable copy hierarchy;
 - Method remains premium and connected without becoming a dark visual wall;
 - zero stray Insights bullets and correct featured media/fallback behavior;
 - final CTA remains deliberate, light and strongly actionable;
