@@ -4,7 +4,10 @@ on:
   pull_request:
     paths:
       - 'packages/seo-geo-theme/theme.json'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-v2.css'
       - 'scripts/ci/validate-design-system.php'
+      - 'scripts/ci/corporate-v3-visual-contract.sh'
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
@@ -13,7 +16,10 @@ on:
       - main
     paths:
       - 'packages/seo-geo-theme/theme.json'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-v2.css'
       - 'scripts/ci/validate-design-system.php'
+      - 'scripts/ci/corporate-v3-visual-contract.sh'
       - 'scripts/ci/php-lint-diagnostic.sh'
       - '.github/workflows/design-system.yml'
       - 'docs/DESIGN_SYSTEM.md'
@@ -27,7 +33,7 @@ concurrency:
 
 jobs:
   design-system:
-    name: Theme token contract
+    name: Theme token + Corporate v3 contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -49,3 +55,9 @@ jobs:
 
       - name: Validate semantic tokens and contrast
         run: php scripts/ci/validate-design-system.php
+
+      - name: Validate Corporate v3 contract syntax
+        run: bash -n scripts/ci/corporate-v3-visual-contract.sh
+
+      - name: Validate Corporate v3 master Home contract
+        run: bash scripts/ci/corporate-v3-visual-contract.sh

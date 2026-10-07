@@ -45,3 +45,22 @@ function seo_geo_acceptance_fixture_locale( string $locale ): string {
 
 add_filter( 'locale', 'seo_geo_acceptance_fixture_locale', 999 );
 add_filter( 'determine_locale', 'seo_geo_acceptance_fixture_locale', 999 );
+
+/**
+ * Make the isolated Corporate performance fixture exercise the exact v3 Home
+ * asset path. This filter exists only in the disposable acceptance MU-plugin;
+ * production still detects v3 from the hydrated native Home content marker.
+ *
+ * @param bool $uses_master_home Theme-detected Home state.
+ */
+function seo_geo_acceptance_fixture_corporate_master_home( bool $uses_master_home ): bool {
+	if ( ! isset( $_GET['fixture_preset'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only CI fixture selector.
+		return $uses_master_home;
+	}
+
+	$requested = sanitize_key( wp_unslash( (string) $_GET['fixture_preset'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only CI fixture selector.
+
+	return 'corporate' === $requested ? true : $uses_master_home;
+}
+
+add_filter( 'seo_geo_theme_corporate_master_home_layer', 'seo_geo_acceptance_fixture_corporate_master_home', 999 );

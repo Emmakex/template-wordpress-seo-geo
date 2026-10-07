@@ -29,9 +29,21 @@ module.exports = defineConfig({
       },
     },
     {
+      name: 'mobile-390',
+      use: {
+        viewport: { width: 390, height: 844 },
+      },
+    },
+    {
       name: 'tablet-768',
       use: {
         viewport: { width: 768, height: 1024 },
+      },
+    },
+    {
+      name: 'compact-desktop-1024',
+      use: {
+        viewport: { width: 1024, height: 900 },
       },
     },
     {
