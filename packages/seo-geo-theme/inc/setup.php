@@ -26,6 +26,7 @@ require_once __DIR__ . '/Setup/SetupExecutor.php';
 require_once __DIR__ . '/Wizard/SetupWizardCopy.php';
 require_once __DIR__ . '/Wizard/SetupWizardPreview.php';
 require_once __DIR__ . '/Wizard/AdminSetupWizard.php';
+require_once __DIR__ . '/strategic.php';
 
 use SeoGeo\Theme\Setup\SetupPlanner;
 
@@ -78,9 +79,7 @@ function seo_geo_theme_setup_report(): ?array {
 	return ( new \SeoGeo\Theme\Setup\SetupReportStore() )->latest();
 }
 
-/**
- * Return the theme-owned setup wizard singleton.
- */
+/** Return the theme-owned setup wizard singleton. */
 function seo_geo_theme_setup_wizard(): \SeoGeo\Theme\Wizard\AdminSetupWizard {
 	static $wizard = null;
 
