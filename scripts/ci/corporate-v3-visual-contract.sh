@@ -30,6 +30,10 @@ require_text "$FUNCTIONS" "assets/css/presets/corporate-v2.css" 'Corporate maste
 require_text "$FUNCTIONS" "assets/css/presets/corporate-v3-runtime.css" 'Corporate master runtime asset is not loaded'
 require_text "$FUNCTIONS" "array( 'seo-geo-theme' )" 'Corporate master must load directly from the Theme foundation, not legacy Corporate CSS'
 require_text "$FUNCTIONS" 'return;' 'Corporate master asset branch must exit before legacy preset enqueue'
+require_text "$FUNCTIONS" 'function seo_geo_theme_asset_version' 'content-derived asset version helper missing'
+require_text "$FUNCTIONS" "hash_file( 'sha256', \$path )" 'asset version must be derived from content bytes'
+require_text "$FUNCTIONS" 'seo_geo_theme_asset_version( $visual_stylesheet )' 'Corporate visual asset is not cache-busted by content hash'
+require_text "$FUNCTIONS" 'seo_geo_theme_asset_version( $runtime_stylesheet )' 'Corporate runtime asset is not cache-busted by content hash'
 
 printf '[corporate-v4.2] Checking horizontal reading-measure contract.\n'
 require_text "$CSS" '--cv4-shell:min(1400px,calc(100vw - 4rem));' '1400px horizontal master shell missing'
@@ -77,4 +81,4 @@ if (( total_gzip > 7100 )); then
   fail "Corporate v4.2 Home CSS gzip proxy ${total_gzip} exceeds 7100-byte safety ceiling calibrated below the 8192-byte Lighthouse network budget"
 fi
 
-printf '[corporate-v4.2] PASS: horizontal reading measure and lean-asset contracts present.\n'
+printf '[corporate-v4.2] PASS: horizontal reading measure, cache-safe assets and lean-asset contracts present.\n'

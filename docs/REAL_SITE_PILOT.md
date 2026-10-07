@@ -17,11 +17,11 @@ Current Corporate v4.2 field identity:
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen source commit: `0e7c9d8a71369e4bf46eba8ab99acfa2b3f6f64a`;
-- Theme ZIP SHA-256: `769e81cdf1224c58b9bf8457c96553eb6a30f05b42b6852558a0a5b5227aee52`;
+- frozen source commit: `dea41aaf3eddac37eb2c91484198af7762e1c565`;
+- Theme ZIP SHA-256: `fc19a2e5c4137a524d8bf96682832de6b4b3eb560f7562e2c728e083fc927713`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `a3637ce694b16f539f5a94c78bb1424b0fd368226ba0109408ebd47590a1ccdd`;
+- deterministic field-pilot pack SHA-256: `20e01026cf3ba49d2ee50ce31a8f0a53364008d2e272680a2dad99d097617aa5`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
@@ -46,7 +46,7 @@ Earlier visual candidates were not accepted. Corporate v4 established the intend
 
 The subsequent v4.1 field screenshot confirmed that those changes were moving in the right direction, but still exposed a horizontal reading-measure problem. Text-heavy titles and paragraphs in Services, Process and Insights remained too narrow, forcing unnecessary vertical growth on desktop and landscape screens. This is a Theme-level issue, not an EMMAKE-only exception.
 
-Corporate v4.2 keeps the same art direction and rebalances the typography/layout system around usable horizontal measure rather than increasing card height or reducing content.
+Corporate v4.2 keeps the same art direction and rebalances the typography/layout system around usable horizontal measure rather than increasing card height or reducing content. Its field-delivery path also uses content-derived CSS versions, so deterministic ZIP timestamps cannot cause a browser or CDN to reuse an older Corporate stylesheet URL.
 
 ## Corporate v4.2 master-preset rule
 
@@ -76,7 +76,7 @@ The exact Theme-content source completed the technical checks needed to return t
 - accessibility/responsive browser automation at the product widths;
 - deterministic release packaging;
 - Lighthouse performance budgets without raising those budgets;
-- a dedicated v4.2 horizontal reading-measure contract covering the 1400px master shell, wider hero copy, wider text-heavy capability/Insights panels, Process reading measure and the dedicated 1200px laptop tuning layer.
+- a dedicated v4.2 horizontal reading-measure contract covering the 1400px master shell, wider hero copy, wider text-heavy capability/Insights panels, Process reading measure, the dedicated 1200px laptop tuning layer and cache-safe content-hash asset versioning.
 
 The Corporate v4.2 Lighthouse median records performance `100`, FCP/LCP `902.68 ms`, CLS `0`, TBT `0`, zero third-party requests, zero project JavaScript bytes and `7534` CSS bytes against an `8192` byte budget. The static gzip proxy is `6530` bytes against a `7100` byte internal ceiling.
 
@@ -168,14 +168,13 @@ The destructive/reset portion does **not** need to be repeated because the exist
 
 For the frozen Corporate v4.2 candidate:
 
-1. verify the Theme ZIP SHA-256 is `769e81cdf1224c58b9bf8457c96553eb6a30f05b42b6852558a0a5b5227aee52`;
+1. verify the Theme ZIP SHA-256 is `fc19a2e5c4137a524d8bf96682832de6b4b3eb560f7562e2c728e083fc927713`;
 2. update the Theme only on `/nuevaweb/`;
 3. keep Migration Bridge `0.8.60` active and preserve the existing Step 1–7 state;
-4. clear relevant WordPress/host/browser caches;
-5. preview the already hydrated clean Home draft;
-6. verify that headings and paragraphs use the added horizontal measure instead of forming unnecessarily tall text stacks;
-7. re-run browser QA at `1440 / 1024 / 768 / 390`;
-8. do not advance Step 8 until the Home receives explicit visual approval.
+4. preview the already hydrated clean Home draft; the Theme now changes CSS query versions from the asset content itself, so cache invalidation does not depend on release file timestamps;
+5. verify that headings and paragraphs use the added horizontal measure instead of forming unnecessarily tall text stacks;
+6. re-run browser QA at `1440 / 1024 / 768 / 390`;
+7. do not advance Step 8 until the Home receives explicit visual approval.
 
 If the semantic draft or Step 7 state has drifted, stop and investigate rather than recreating evidence casually.
 

@@ -66,6 +66,29 @@ function seo_geo_theme_corporate_master_home_layer(): bool {
 }
 
 /**
+ * Build a cache-busting version from the actual asset bytes.
+ *
+ * Release ZIPs are deterministic and therefore may preserve identical file
+ * timestamps across different candidate contents. Content-derived versions
+ * ensure browser/CDN caches see a new URL whenever an asset really changes.
+ *
+ * @param string $path Absolute asset filesystem path.
+ * @return string Content-derived asset version.
+ */
+function seo_geo_theme_asset_version( string $path ): string {
+	if ( ! is_readable( $path ) ) {
+		return '0.1.1';
+	}
+
+	$hash = hash_file( 'sha256', $path );
+	if ( is_string( $hash ) ) {
+		return substr( $hash, 0, 16 );
+	}
+
+	return (string) filemtime( $path );
+}
+
+/**
  * Load the neutral Theme foundation and the active preset's visual system.
  *
  * The shared Design System is opt-in while presets are migrated to their final
@@ -75,7 +98,7 @@ function seo_geo_theme_corporate_master_home_layer(): bool {
  */
 function seo_geo_theme_enqueue_styles(): void {
 	$stylesheet = get_stylesheet_directory() . '/style.css';
-	$version    = is_readable( $stylesheet ) ? (string) filemtime( $stylesheet ) : '0.1.0';
+	$version    = seo_geo_theme_asset_version( $stylesheet );
 
 	wp_enqueue_style(
 		'seo-geo-theme',
@@ -108,14 +131,14 @@ function seo_geo_theme_enqueue_styles(): void {
 			'seo-geo-theme-preset-corporate-v2',
 			get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v2.css',
 			array( 'seo-geo-theme' ),
-			(string) filemtime( $visual_stylesheet )
+			seo_geo_theme_asset_version( $visual_stylesheet )
 		);
 
 		wp_enqueue_style(
 			'seo-geo-theme-preset-corporate-v3-runtime',
 			get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v3-runtime.css',
 			array( 'seo-geo-theme-preset-corporate-v2' ),
-			(string) filemtime( $runtime_stylesheet )
+			seo_geo_theme_asset_version( $runtime_stylesheet )
 		);
 
 		return;
@@ -136,7 +159,7 @@ function seo_geo_theme_enqueue_styles(): void {
 				'seo-geo-theme-design-system',
 				get_stylesheet_directory_uri() . '/assets/css/design-system.css',
 				array( 'seo-geo-theme' ),
-				(string) filemtime( $design_system )
+				seo_geo_theme_asset_version( $design_system )
 			);
 			$preset_dependencies = array( 'seo-geo-theme-design-system' );
 		}
@@ -147,7 +170,7 @@ function seo_geo_theme_enqueue_styles(): void {
 		$preset_handle,
 		get_stylesheet_directory_uri() . '/assets/css/presets/' . $preset_id . '.css',
 		$preset_dependencies,
-		(string) filemtime( $preset_stylesheet )
+		seo_geo_theme_asset_version( $preset_stylesheet )
 	);
 }
 add_action( 'wp_enqueue_scripts', 'seo_geo_theme_enqueue_styles' );
