@@ -2,7 +2,7 @@
 
 This document is the current operational source for the first real-site acceptance of the self-contained SEO/GEO Theme.
 
-Historical clone, migration and earlier Corporate milestones are preserved below for context. They do not override the frozen current candidate.
+Historical clone, migration and earlier Corporate milestones are preserved for context. They do not override the frozen current candidate.
 
 ## Current authority
 
@@ -17,15 +17,17 @@ Current Corporate v3 field identity:
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen source commit: `8d983183be02b38dece4b2b68c447c68c107d98d`;
-- Theme ZIP SHA-256: `376a2775dc243e2fbfb38b88a2d0b0d19b63a392bef6f5ab30a4938b98b51ebe`;
+- frozen source commit: `45285f5c95cb3e1772200bb46de9e60f3f6c352c`;
+- Theme ZIP SHA-256: `c813007f24fed485b2b256ddc6b8733258fdd0a384c12f3ef81f01037065a95b`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `790d560db976caa19365c6d6170c9ce235b68341fbb707d3994b40b16231ce24`;
+- deterministic field-pilot pack SHA-256: `d7dbef0183bde8c949dba77df1d604eb66a600ff1f515023602d8f5e054e0461`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
-Do not substitute an older Theme, older Migration Bridge or an earlier pilot ZIP for this candidate. If any packaged component changes, freeze and validate a new candidate first.
+Do not substitute an older Theme, older Migration Bridge or earlier pilot ZIP for this candidate. Any packaged-content change requires a newly frozen and validated candidate before field use.
+
+The source commit identifies the exact Theme-content state. Later candidate-record/documentation-only commits do not redefine the packaged Theme bytes.
 
 ## Current pilot position
 
@@ -40,15 +42,9 @@ The technical Reset & Rebuild sequence has already reached Step 7 on the real `/
 - native SEO/GEO handoff reported SEO-ready;
 - machine preflight reported `ready_for_browser_qa=true`.
 
-The first browser QA then rejected the old Corporate visual presentation. This is now an explicit field finding, not something CI is allowed to hide.
+The first browser QA then rejected the old Corporate visual presentation. This is an explicit field finding, not something CI is allowed to hide.
 
-The rejected presentation showed:
-
-- generic equal-card composition;
-- long service headings breaking poorly at compact/tablet widths;
-- weak contrast in the dark method section;
-- cramped Insights cards;
-- an overall visual result below the product target of a modern custom-designed site.
+The rejected presentation showed generic equal-card composition, long service headings breaking poorly at compact/tablet widths, weak contrast in the dark method section, cramped Insights cards and an overall visual result below the target of a modern custom-designed site.
 
 Those defects belong to the reusable Corporate preset. No EMMAKE-only CSS patch is permitted. Corporate v3 replaces the reusable presentation layer while preserving the already proven semantic hydration and SEO/GEO state.
 
@@ -65,17 +61,36 @@ The Home must be accepted at these product widths:
 - `768` tablet;
 - `390` mobile.
 
-The existing `320` compact-mobile automated check remains as an extra stress case.
+The existing `320` compact-mobile automated check remains as an additional stress case.
 
 Do not advance Step 8, inner-page rollout, production cutover or stable promotion before the Corporate Home itself is approved.
+
+## Repository-side readiness of the frozen v3 candidate
+
+Before freezing the candidate, the exact Theme-content source completed the technical checks needed to return to `/nuevaweb/`:
+
+- WPCS and PHPStan;
+- WordPress activation smoke;
+- self-contained Theme and upgrade/rollback contracts;
+- Foundation, Design System and Corporate page-pipeline contracts;
+- multilingual and other-preset regression checks;
+- accessibility/responsive browser automation at the product widths;
+- deterministic release packaging;
+- Lighthouse performance budgets without raising those budgets.
+
+The Corporate Lighthouse sample recorded performance `100`, FCP/LCP about `906 ms`, CLS `0`, TBT `0`, zero third-party requests and `8047` CSS bytes against an `8192` byte budget.
+
+The deterministic field-pilot builder independently reproduced the canonical Theme, Bridge and pack SHA-256 values listed above.
+
+These checks prove technical field readiness only. They do not satisfy the required human/browser visual acceptance.
 
 ## What is already proven
 
 ### Production baseline and dependency review
 
-The production baseline and UNKNOWN dependency review were completed in September 2026. This established the useful content/URL/SEO/link/media inventory and reviewed the dependency boundary without authorizing production mutation.
+The production baseline and UNKNOWN dependency review established the useful content/URL/SEO/link/media inventory and reviewed the dependency boundary without authorizing production mutation.
 
-### 2026-10-03 product-owned clone milestone
+### Product-owned clone milestone
 
 Migration Bridge successfully transported and activated a real clone from `https://emmake.com/` to `https://emmake.com/nuevaweb/` using persistent multipart packaging and destination URL rewrite.
 
@@ -85,9 +100,9 @@ Bounded evidence remains in:
 
 This proves clone transport and activation only. It does not prove acceptance of the current Theme candidate.
 
-### 2026-10-03 Divi-to-native milestone
+### Divi-to-native milestone
 
-Eleven resources containing Divi content were inventoried and converted to native WordPress/Theme-owned content with rollback paths. The Contact page was also functionally verified, including successful mail delivery.
+Resources containing Divi content were inventoried and converted to native WordPress/Theme-owned content with rollback paths. Contact behavior was functionally verified during that milestone.
 
 Bounded evidence remains in:
 
@@ -95,7 +110,7 @@ Bounded evidence remains in:
 
 This proves migration capability, not final replatform acceptance.
 
-### 2026-10-04 Corporate preset milestone
+### Earlier Corporate preset milestone
 
 The reusable Corporate preset was applied successfully on `/nuevaweb/`, with WordPress locale authority preserved and Yoast treated as an advisory external SEO provider.
 
@@ -103,7 +118,7 @@ Bounded evidence remains in:
 
 `release/emmake-corporate-preset-application-20261004.json`
 
-This historical application and the later successful Reset & Rebuild technical pass do not close Phase 10E because browser visual acceptance is still pending.
+That historical application and the successful Reset & Rebuild technical pass do not close Phase 10E because Corporate v3 browser visual acceptance remains pending.
 
 ## Replatforming rule
 
@@ -143,15 +158,7 @@ define( 'SEO_GEO_MIGRATION_OUTBOUND_SAFE', true );
 define( 'SEO_GEO_MIGRATION_BACKUPS_READY', true );
 ```
 
-Also require:
-
-- independent mutable database/table state from production;
-- independent uploads/plugins/themes copies;
-- recoverable database/files backups;
-- WordPress search visibility disabled on the sandbox;
-- no sandbox canonical/hreflang/sitemap target exposed as production authority;
-- production `home` and `siteurl` unchanged;
-- a known rollback path.
+Also require independent mutable state from production, recoverable database/files backups, search visibility disabled on the sandbox, no sandbox canonical/hreflang/sitemap authority exposed as production, production `home` and `siteurl` unchanged, and a known rollback path.
 
 No credentials, dumps, private form submissions, arbitrary option payloads or customer data enter the repository.
 
@@ -159,9 +166,9 @@ No credentials, dumps, private form submissions, arbitrary option payloads or cu
 
 The destructive/reset portion does **not** need to be repeated merely to test the new presentation layer because the existing Home draft is already hydrated into the stable semantic content slots.
 
-For the Corporate v3 visual candidate:
+For the frozen Corporate v3 candidate:
 
-1. verify the new Theme ZIP SHA-256;
+1. verify the Theme ZIP SHA-256 is `c813007f24fed485b2b256ddc6b8733258fdd0a384c12f3ef81f01037065a95b`;
 2. update the Theme only on `/nuevaweb/`;
 3. keep Migration Bridge `0.8.60` active and preserve the existing Step 1–7 state;
 4. clear relevant WordPress/host/browser caches;
@@ -171,43 +178,23 @@ For the Corporate v3 visual candidate:
 
 If the semantic draft or Step 7 state has drifted, stop and investigate rather than recreating evidence casually.
 
-## Browser QA acceptance
+## Browser QA acceptance — premium/WOW gate
 
 Record all five browser checks from the field evidence template:
 
-1. `visual-layout` — the result must feel like a modern custom-designed Corporate site, with clear hierarchy, intentional rhythm, strong hero, purposeful section variety and coherent CTAs;
-2. `responsive-behavior` — no overflow, broken controls, squeezed desktop layouts, pathological word wrapping or unusable mobile composition at the four master widths;
+1. `visual-layout` — the result must feel like a modern custom-designed Corporate site, with a strong first impression, premium hierarchy, intentional rhythm, section variety, coherent visual language and decisive CTAs; passing technical rendering without the intended WOW effect is not sufficient;
+2. `responsive-behavior` — no overflow, broken controls, squeezed desktop layouts, pathological word wrapping or weak mobile recomposition at the four master widths;
 3. `accessibility` — headings, landmarks, keyboard/focus behavior, meaningful links and sufficient contrast, especially on dark/full-bleed sections;
 4. `seo-geo-rendered-output` — title, description, canonical, robots, Schema/discovery output and internal links remain correct after the visual replacement;
 5. `performance` — no material asset/runtime regression and acceptable measured sandbox performance.
 
-Any blocker keeps the pilot in `pending` state.
+Any blocker keeps the pilot in `pending` state. A technically valid but visually generic result is also a blocker because Corporate v3 is the master product reference for the remaining presets.
 
 ## Representative SEO/GEO regression set
 
-At minimum compare the preserved/current behavior for:
+At minimum compare preserved/current behavior for Home, Sobre Nosotros, Trabaja con Nosotros, blog index, one representative recent article, Contacto and every additional URL class discovered by the Rescue Manifest.
 
-- Home;
-- Sobre Nosotros;
-- Trabaja con Nosotros;
-- blog index;
-- one representative recent article;
-- Contacto;
-- every additional URL class discovered by the Rescue Manifest.
-
-For each representative URL validate:
-
-- HTTP status;
-- canonical;
-- robots/indexability;
-- title/meta description;
-- Open Graph;
-- Schema graph;
-- hreflang/x-default when configured;
-- redirects;
-- sitemap membership;
-- visible organization/contact facts;
-- important internal links.
+For each representative URL validate HTTP status, canonical, robots/indexability, title/meta description, Open Graph, Schema graph, hreflang/x-default when configured, redirects, sitemap membership, visible organization/contact facts and important internal links.
 
 Intentional differences must be explicitly reviewed rather than silently accepted.
 
@@ -216,7 +203,7 @@ Intentional differences must be explicitly reviewed rather than silently accepte
 The sandbox becomes eligible for production-entry review only when:
 
 - the exact frozen Corporate v3 artifacts are installed;
-- Corporate Home passes the explicit product-quality visual gate;
+- Corporate Home passes the explicit product-quality visual/WOW gate;
 - no unexplained URL loss remains;
 - no required legacy builder runtime remains;
 - no unresolved SEO/GEO review item remains;
@@ -234,15 +221,7 @@ This is still not automatic production cutover.
 
 Production is changed only after explicit sandbox acceptance.
 
-Immediately after controlled cutover execute `docs/PRODUCTION_VERIFICATION.md` and cover:
-
-- runtime identity;
-- SEO/GEO output;
-- redirects and indexability;
-- navigation/forms and critical functionality;
-- accessibility;
-- performance;
-- relevant logs.
+Immediately after any later controlled cutover execute `docs/PRODUCTION_VERIFICATION.md` and cover runtime identity, SEO/GEO output, redirects/indexability, navigation/forms, critical functionality, accessibility, performance and relevant logs.
 
 Material canonical/indexability/sitemap/hreflang/redirect regression, a broken critical form, private-content exposure, fatal/5xx response or artifact identity mismatch triggers rollback/recovery according to `docs/ROLLBACK_RECOVERY.md`.
 
