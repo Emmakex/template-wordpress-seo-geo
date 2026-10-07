@@ -36,7 +36,7 @@
 .seo-geo-preset-corporate .seo-geo-corporate-process-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 .seo-geo-preset-corporate .seo-geo-corporate-process-step{min-height:320px;padding:clamp(1.8rem,2.2vw,2.5rem)!important}
 .seo-geo-preset-corporate .seo-geo-corporate-process-step h3{max-width:22ch!important;font-size:clamp(1.8rem,2.2vw,2.5rem)!important}
-.seo-geo-preset-corporate .seo-geo-corporate-process-step p:not(.seo-geo-corporate-process-step__number){max-width:50ch!important}
+.seo-geo-preset-corporate .seo-geo-corporate-process-step p:not(.seo-geo-corporate-process-step__number){max-width:50ch!important;}
 .seo-geo-preset-corporate .seo-geo-corporate-native-insights .wp-block-post-template{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
 .seo-geo-preset-corporate .seo-geo-corporate-native-insights .wp-block-post-template>li:first-child .wp-block-post-title{max-width:18ch!important;font-size:clamp(2.8rem,3.7vw,4.3rem)!important}
 }
