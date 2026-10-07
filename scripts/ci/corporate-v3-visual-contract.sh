@@ -66,17 +66,21 @@ if grep -Fq ':has(' "$V5_RUNTIME"; then
   fail 'Corporate v5 runtime must not use selector hacks to escape Gutenberg layout'
 fi
 
-printf '[corporate-v5] Checking clean A2 visual system.\n'
-require_text "$V5_RUNTIME" 'Corporate v5 A2: clean Theme-owned strategic visual system.' 'A2 clean visual-system marker missing'
+printf '[corporate-v5] Checking A3 lighter visual system.\n'
+require_text "$V5_RUNTIME" 'Corporate v5 A3: lighter Theme-owned strategic visual system.' 'A3 lighter visual-system marker missing'
 require_text "$V5_RUNTIME" '--v5-shell:min(1400px,calc(100vw - 4rem));' '1400px strategic shell missing'
 require_text "$V5_RUNTIME" '.seo-geo-strategic-header__inner' 'strategic header layout missing'
 require_text "$V5_RUNTIME" '.seo-geo-corporate-native-hero__grid' 'strategic hero grid missing'
 require_text "$V5_RUNTIME" '.seo-geo-corporate-card-grid' 'capabilities grid missing'
 require_text "$V5_RUNTIME" '.seo-geo-corporate-process-grid' 'process grid missing'
+require_text "$V5_RUNTIME" 'linear-gradient(145deg,#edf8f3,#dcefe8)' 'A3 light Method surface missing'
+require_text "$V5_RUNTIME" 'linear-gradient(135deg,#d9f5eb,#f5fbf8)' 'A3 light final CTA surface missing'
+require_text "$V5_RUNTIME" 'background:linear-gradient(135deg,#143f43,#0d3034)' 'A3 branded teal footer missing'
 require_text "$V5_RUNTIME" '.seo-geo-corporate-native-insights .wp-block-post-template' 'Insights magazine grid missing'
 require_text "$V5_RUNTIME" 'list-style:none' 'Insights/navigation list reset missing'
 require_text "$V5_RUNTIME" '.seo-geo-final-cta>p:last-child a' 'final CTA button styling missing'
 require_text "$V5_RUNTIME" '.seo-geo-strategic-footer__inner' 'strategic footer layout missing'
+require_text "$V5_RUNTIME" '.seo-geo-strategic-footer .seo-geo-preset-navigation__item a' 'footer navigation treatment missing'
 require_text "$V5_RUNTIME" '@media(max-width:1200px)' 'wide-laptop typography contract missing'
 require_text "$V5_RUNTIME" '@media(max-width:1100px)' '1024-class responsive contract missing'
 require_text "$V5_RUNTIME" '@media(max-width:820px)' '768-class responsive contract missing'
@@ -104,4 +108,4 @@ if (( total_gzip > 7100 )); then
   fail "Corporate v5 Home CSS gzip proxy ${total_gzip} exceeds the existing 7100-byte safety ceiling"
 fi
 
-printf '[corporate-v5] PASS: clean Theme-owned chrome, semantic renderer, responsive visual system and lean bundle contracts present.\n'
+printf '[corporate-v5] PASS: Theme-owned chrome, semantic renderer, A3 lighter palette and lean responsive bundle contracts present.\n'
