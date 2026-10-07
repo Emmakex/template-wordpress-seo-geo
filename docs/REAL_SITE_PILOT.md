@@ -149,7 +149,13 @@ This is **not** automatic production cutover.
 
 ## Stable promotion boundary
 
-Theme `0.1.1` remains `prestable` until real sandbox approval and later controlled production verification are accepted. SEO/GEO Manager is a separate future product and is not a blocker for this Theme release.
+The stable gate does not wait for SEO/GEO Manager.
+
+Manager is a separate later product roadmap.
+
+Theme `0.1.1` may move from `prestable` to `stable` only after real production acceptance exists.
+
+Corporate v4.3 real-site browser acceptance is a required prerequisite before that later production acceptance can be considered.
 
 Until then:
 
