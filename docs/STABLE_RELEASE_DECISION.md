@@ -22,12 +22,12 @@ The machine-readable source of truth is:
 
 The currently frozen Corporate v4.2 field candidate is:
 
-- source commit: `0e7c9d8a71369e4bf46eba8ab99acfa2b3f6f64a`;
+- source commit: `500e36bbecd9b0fab449dad57a85ce12965ea0a3`;
 - Theme: `0.1.1` / `prestable`;
-- Theme ZIP SHA-256: `769e81cdf1224c58b9bf8457c96553eb6a30f05b42b6852558a0a5b5227aee52`;
+- Theme ZIP SHA-256: `ad1678a2c8fa2175945f6226af3ec5c7c1f98a9b28f3d385835abd21715e2bd0`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic EMMAKE field-pilot pack SHA-256: `a3637ce694b16f539f5a94c78bb1424b0fd368226ba0109408ebd47590a1ccdd`.
+- deterministic EMMAKE field-pilot pack SHA-256: `f1751cc9105d1a68a2eb913d0374f0ad5afce746c04192e44bb6f45912107996`.
 
 The source commit above is the immutable Theme-content source for the frozen field artifact. Repository history may advance with candidate-record, documentation or validation-only commits without changing those packaged bytes. Any Theme, Migration Bridge, runbook, blueprint or pack-content change requires a new deterministic pack and an explicit update of `release/emmake-phase10e-candidate.json`.
 
@@ -58,6 +58,8 @@ The first visual candidate failed for generic card composition, weak responsive 
 The next real v4.1 screenshot confirmed the art direction and the v4.1 corrections, but showed that the typography system still forced too much vertical growth on horizontal screens. Long titles and paragraphs in Services, Process and Insights needed more usable width rather than larger heights or smaller visual ambition.
 
 Corporate v4.2 keeps the same v4 art direction and rebalances horizontal measure: a `1400px` master shell where available, a wider hero copy ratio, wider text-heavy secondary panels, larger character measures, lower unnecessary card heights, a dedicated `1200px` laptop tuning layer and slightly more restrained maximum type scales. The semantic hydration model, rescued content, URLs and SEO/GEO state remain preserved.
+
+The field delivery path also now versions Theme CSS from its SHA-256 content rather than file timestamps. Deterministic release ZIPs intentionally preserve fixed timestamps, so content-derived asset URLs prevent browser/CDN caches from serving an older Corporate stylesheet after a new candidate is installed.
 
 ## Selected real-site pilot
 
@@ -122,7 +124,7 @@ New client deployments use the self-contained Theme artifact rather than install
 
 `EMMAKE Field Pilot Pack CI` separately rebuilds Theme, Migration Bridge and the field pack byte-for-byte and verifies their SHA-256 identities against `release/emmake-phase10e-candidate.json`.
 
-Corporate v4.2 has a dedicated horizontal reading-measure CI gate and browser acceptance includes the product master widths in addition to the compact-mobile stress check.
+Corporate v4.2 has a dedicated horizontal reading-measure and cache-safe asset-version CI gate, and browser acceptance includes the product master widths in addition to the compact-mobile stress check.
 
 ## Promotion from no-go to go
 
