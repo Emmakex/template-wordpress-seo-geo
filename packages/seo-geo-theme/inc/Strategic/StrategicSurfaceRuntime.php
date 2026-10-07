@@ -82,11 +82,11 @@ final class StrategicSurfaceRuntime {
 	/**
 	 * Replace the legacy Gutenberg escape layer with the v5 canvas runtime.
 	 *
-	 * The installable Theme build carries one deterministic Corporate v5 CSS
-	 * bundle containing the neutral foundation, proven Corporate visual system
-	 * and strategic-canvas rules. That removes two render-blocking requests from
-	 * the premium Home without async CSS or frontend JavaScript. Monorepo/source
-	 * installs keep the separate files as a safe development fallback.
+	 * The installable Theme build replaces corporate-v5-runtime.css with one
+	 * deterministic bundle containing the neutral foundation, Corporate visual
+	 * system and strategic-canvas rules. A marker created by the build allows us
+	 * to remove the two superseded stylesheet requests without heuristics. Source
+	 * installs keep the three files separate as a safe development fallback.
 	 */
 	public function replace_legacy_layout_runtime(): void {
 		if ( ! $this->is_active() ) {
@@ -95,29 +95,17 @@ final class StrategicSurfaceRuntime {
 
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
 
-		$bundle_path = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundle.css';
-		if ( is_readable( $bundle_path ) ) {
-			wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' );
-			wp_dequeue_style( 'seo-geo-theme' );
-
-			$version = '0.1.1';
-			if ( function_exists( 'seo_geo_theme_asset_version' ) ) {
-				$version = seo_geo_theme_asset_version( $bundle_path );
-			}
-
-			wp_enqueue_style(
-				'seo-geo-theme-preset-corporate-v5-bundle',
-				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-bundle.css',
-				array(),
-				$version
-			);
-
+		$path          = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
+		$bundle_marker = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
+		if ( ! is_readable( $path ) ) {
 			return;
 		}
 
-		$path = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
-		if ( ! is_readable( $path ) ) {
-			return;
+		$dependencies = array( 'seo-geo-theme-preset-corporate-v2' );
+		if ( is_readable( $bundle_marker ) ) {
+			wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' );
+			wp_dequeue_style( 'seo-geo-theme' );
+			$dependencies = array();
 		}
 
 		$version = '0.1.1';
@@ -128,7 +116,7 @@ final class StrategicSurfaceRuntime {
 		wp_enqueue_style(
 			'seo-geo-theme-preset-corporate-v5-runtime',
 			get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-runtime.css',
-			array( 'seo-geo-theme-preset-corporate-v2' ),
+			$dependencies,
 			$version
 		);
 	}
