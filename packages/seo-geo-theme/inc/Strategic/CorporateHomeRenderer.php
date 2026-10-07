@@ -177,7 +177,7 @@ final class CorporateHomeRenderer {
 			}
 
 			$permalink = get_permalink( $article );
-			if ( ! is_string( $permalink ) || '' === $permalink ) {
+			if ( '' === $permalink ) {
 				continue;
 			}
 
