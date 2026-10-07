@@ -91,7 +91,10 @@ def main() -> int:
         if candidate["field_pilot_pack"]["file"] != "emmake-home-field-pilot-pack.zip":
             raise RuntimeError("Canonical field-pilot pack filename is invalid")
         if candidate["field_pilot_pack"]["sha256"] != pack_sha256:
-            raise RuntimeError("Built field-pilot pack does not match canonical Phase 10E SHA-256")
+            raise RuntimeError(
+                "Built field-pilot pack does not match canonical Phase 10E SHA-256: "
+                f"expected={candidate['field_pilot_pack']['sha256']} received={pack_sha256}"
+            )
 
         with zipfile.ZipFile(first_path) as archive:
             names = set(archive.namelist())
