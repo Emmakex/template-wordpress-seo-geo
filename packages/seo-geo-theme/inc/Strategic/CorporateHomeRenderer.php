@@ -19,9 +19,18 @@ use WP_Query;
  * values, but it does not own the public layout, wrapper widths or hierarchy.
  */
 final class CorporateHomeRenderer {
+	/**
+	 * Build the Corporate Home renderer.
+	 *
+	 * @param CorporateHomeModelResolver $resolver Semantic model resolver.
+	 */
 	public function __construct( private readonly CorporateHomeModelResolver $resolver ) {}
 
-	/** Check whether this page has a complete v5-compatible Home model. */
+	/**
+	 * Check whether this page has a complete v5-compatible Home model.
+	 *
+	 * @param WP_Post $post Source WordPress page.
+	 */
 	public function supports( WP_Post $post ): bool {
 		return $this->resolver->supports( $post );
 	}
@@ -29,6 +38,7 @@ final class CorporateHomeRenderer {
 	/**
 	 * Render one Corporate Home.
 	 *
+	 * @param WP_Post $post Source WordPress page.
 	 * @return string Trusted Theme HTML with all content values escaped here.
 	 */
 	public function render( WP_Post $post ): string {
@@ -51,6 +61,8 @@ final class CorporateHomeRenderer {
 	}
 
 	/**
+	 * Render the strategic hero and primary actions.
+	 *
 	 * @param array<string, mixed> $slots Semantic slots.
 	 */
 	private function render_hero( array $slots ): string {
@@ -81,7 +93,10 @@ final class CorporateHomeRenderer {
 	}
 
 	/**
+	 * Render the three capability cards.
+	 *
 	 * @param array<string, mixed> $slots Semantic slots.
+	 * @param bool                 $is_es Whether Spanish preset copy is active.
 	 */
 	private function render_capabilities( array $slots, bool $is_es ): string {
 		$cards = '';
@@ -113,7 +128,10 @@ final class CorporateHomeRenderer {
 	}
 
 	/**
+	 * Render the three-step working method.
+	 *
 	 * @param array<string, mixed> $slots Semantic slots.
+	 * @param bool                 $is_es Whether Spanish preset copy is active.
 	 */
 	private function render_process( array $slots, bool $is_es ): string {
 		$steps = '';
@@ -137,6 +155,8 @@ final class CorporateHomeRenderer {
 	}
 
 	/**
+	 * Render the latest three published WordPress posts.
+	 *
 	 * @param array<string, mixed> $slots Semantic slots.
 	 */
 	private function render_insights( array $slots ): string {
@@ -185,6 +205,8 @@ final class CorporateHomeRenderer {
 	}
 
 	/**
+	 * Render the closing call to action.
+	 *
 	 * @param array<string, mixed> $slots Semantic slots.
 	 */
 	private function render_final_cta( array $slots ): string {
@@ -200,6 +222,14 @@ final class CorporateHomeRenderer {
 			. '</section>';
 	}
 
+	/**
+	 * Render one reusable section header.
+	 *
+	 * @param string $eyebrow Compact section label.
+	 * @param string $id      Heading element ID.
+	 * @param string $heading Visible section heading.
+	 * @param string $intro   Supporting copy.
+	 */
 	private function section_heading( string $eyebrow, string $id, string $heading, string $intro ): string {
 		return '<header class="seo-geo-corporate-section-heading">'
 			. '<p class="seo-geo-corporate-eyebrow">' . esc_html( $eyebrow ) . '</p>'
@@ -209,7 +239,10 @@ final class CorporateHomeRenderer {
 	}
 
 	/**
-	 * @param array{label:string,url:string} $link Link value.
+	 * Render one CTA button.
+	 *
+	 * @param array{label:string,url:string} $link    Link value.
+	 * @param bool                           $outline Whether to use outline styling.
 	 */
 	private function button( array $link, bool $outline ): string {
 		$class = $outline ? 'wp-block-button is-style-outline' : 'wp-block-button';
@@ -218,7 +251,10 @@ final class CorporateHomeRenderer {
 	}
 
 	/**
+	 * Resolve one text slot.
+	 *
 	 * @param array<string, mixed> $slots Semantic slots.
+	 * @param string               $id    Slot identifier.
 	 */
 	private function text( array $slots, string $id ): string {
 		$value = $slots[ $id ] ?? '';
@@ -227,7 +263,10 @@ final class CorporateHomeRenderer {
 	}
 
 	/**
+	 * Resolve one link slot.
+	 *
 	 * @param array<string, mixed> $slots Semantic slots.
+	 * @param string               $id    Slot identifier.
 	 * @return array{label:string,url:string}|null
 	 */
 	private function link( array $slots, string $id ): ?array {
