@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 620" role="img" aria-hidden="true">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#78e8c8"/><stop offset="1" stop-color="#ffffff" stop-opacity=".18"/></linearGradient><filter id="s"><feGaussianBlur stdDeviation="18"/></filter></defs>
+<circle cx="382" cy="306" r="210" fill="none" stroke="#78e8c8" stroke-opacity=".34"/>
+<circle cx="382" cy="306" r="154" fill="#78e8c8" fill-opacity=".06" stroke="#fff" stroke-opacity=".18"/>
+<path d="M190 338C262 208 361 174 521 216" fill="none" stroke="url(#g)" stroke-width="3"/>
+<path d="M214 402C326 470 465 453 563 336" fill="none" stroke="#fff" stroke-opacity=".26" stroke-width="2"/>
+<g fill="#78e8c8"><circle cx="190" cy="338" r="8"/><circle cx="298" cy="228" r="7"/><circle cx="414" cy="199" r="9"/><circle cx="521" cy="216" r="7"/><circle cx="563" cy="336" r="9"/><circle cx="447" cy="442" r="7"/><circle cx="314" cy="446" r="8"/></g>
+<g stroke="#fff" stroke-opacity=".38"><path d="M298 228 382 306 414 199M382 306 521 216M382 306 563 336M382 306 447 442M382 306 314 446"/></g>
+<rect x="289" y="259" width="187" height="96" rx="28" fill="#0b3034" fill-opacity=".64" stroke="#78e8c8" stroke-opacity=".55"/>
+<path d="M327 325v-30m37 30v-48m37 48v-20m37 20v-58" stroke="#78e8c8" stroke-width="9" stroke-linecap="round"/>
+<circle cx="587" cy="126" r="62" fill="#78e8c8" fill-opacity=".14" filter="url(#s)"/>
+</svg>
