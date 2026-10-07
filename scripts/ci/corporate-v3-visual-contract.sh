@@ -39,7 +39,7 @@ require_text "$SURFACE_RUNTIME" "add_filter( 'template_include'" 'strategic temp
 require_text "$SURFACE_RUNTIME" "strategic-templates/corporate-home.php" 'Corporate strategic document template missing from selector'
 require_text "$SURFACE_RUNTIME" "'corporate' !== seo_geo_theme_active_preset_id()" 'Corporate preset guard missing'
 require_text "$RENDERER" 'seo-geo-corporate-v5-home' 'v5 root renderer marker missing'
-require_text "$RENDERER" '<h1 id=\"seo-geo-corporate-v5-title\" class=\"seo-geo-corporate-lead\">' 'renderer must own the single visible Home H1'
+require_text "$RENDERER" '<h1 id="seo-geo-corporate-v5-title" class="seo-geo-corporate-lead">' 'renderer must own the single visible Home H1'
 require_text "$RENDERER" 'seo-geo-corporate-native-capabilities' 'capabilities renderer missing'
 require_text "$RENDERER" 'seo-geo-corporate-native-process' 'process renderer missing'
 require_text "$RENDERER" 'seo-geo-corporate-native-insights' 'Insights renderer missing'
