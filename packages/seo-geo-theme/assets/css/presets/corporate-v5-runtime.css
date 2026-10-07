@@ -9,6 +9,15 @@
 .seo-geo-corporate-v5-home .seo-geo-corporate-process-grid,
 .seo-geo-corporate-v5-home .wp-block-post-template{box-sizing:border-box}
 
+/* WCAG AA contrast corrections for light Corporate v5 surfaces. */
+.seo-geo-corporate-home-v5 .seo-geo-corporate-native-capabilities .seo-geo-corporate-section-heading .seo-geo-corporate-eyebrow,
+.seo-geo-corporate-home-v5 .seo-geo-corporate-native-insights .seo-geo-corporate-section-heading .seo-geo-corporate-eyebrow,
+.seo-geo-corporate-home-v5 .seo-geo-corporate-card:nth-child(2) .seo-geo-corporate-card__index,
+.seo-geo-corporate-home-v5 .seo-geo-corporate-card:nth-child(3) .seo-geo-corporate-card__index,
+.seo-geo-corporate-home-v5 .wp-block-post-template>li:nth-child(2) .seo-geo-corporate-insight-card time,
+.seo-geo-corporate-home-v5 .wp-block-post-template>li:nth-child(3) .seo-geo-corporate-insight-card time{color:var(--cv3-accent-strong,#057760)}
+.seo-geo-corporate-home-v5 .seo-geo-site-footer .wp-block-site-title a{color:var(--cv4-mint,#67e7c4)}
+
 @media (prefers-reduced-motion:reduce){
 .seo-geo-corporate-home-v5 *,
 .seo-geo-corporate-home-v5 *::before,
