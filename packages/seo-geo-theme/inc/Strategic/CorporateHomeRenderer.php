@@ -81,9 +81,7 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
-		$visual = '<figure class="seo-geo-corporate-hero-visual">'
-			. $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false )
-			. '</figure>';
+		$visual = $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false );
 
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'
@@ -112,25 +110,12 @@ final class CorporateHomeRenderer {
 				continue;
 			}
 
-			$visual = '';
-			if ( 1 === $index ) {
-				$visual = '<div class="seo-geo-corporate-card__media" aria-hidden="true">'
-					. $this->decorative_image( 'capability-marketing.svg', 'seo-geo-corporate-card__media-image', 560, 360 )
-					. '</div>';
-			} elseif ( 2 === $index ) {
-				$visual = $this->icon( 'research', 'seo-geo-corporate-card__icon' );
-			} elseif ( 3 === $index ) {
-				$visual = $this->icon( 'automation', 'seo-geo-corporate-card__icon' );
-			}
-
 			$cards .= '<article class="seo-geo-corporate-card seo-geo-corporate-card--' . $index . '">'
-				. $visual
 				. '<p class="seo-geo-corporate-card__index">0' . $index . '</p>'
-				. '<div class="seo-geo-corporate-card__content">'
 				. '<h3>' . esc_html( $title ) . '</h3>'
 				. '<p>' . esc_html( $body ) . '</p>'
-				. '<p><a href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['label'] ) . '</a></p>'
-				. '</div></article>';
+				. '<p class="seo-geo-corporate-card__link"><a href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['label'] ) . '</a></p>'
+				. '</article>';
 		}
 
 		return '<section class="seo-geo-corporate-native-section seo-geo-corporate-native-capabilities" aria-labelledby="seo-geo-capabilities-title">'
@@ -151,18 +136,10 @@ final class CorporateHomeRenderer {
 	 * @param bool                 $is_es Whether Spanish preset copy is active.
 	 */
 	private function render_process( array $slots, bool $is_es ): string {
-		$steps      = '';
-		$icon_names = array(
-			1 => 'understand',
-			2 => 'define',
-			3 => 'measure',
-		);
+		$steps = '';
 		for ( $index = 1; $index <= 3; ++$index ) {
 			$steps .= '<article class="seo-geo-corporate-process-step seo-geo-corporate-process-step--' . $index . '" data-step="0' . $index . '">'
-				. '<div class="seo-geo-corporate-process-step__top">'
 				. '<p class="seo-geo-corporate-process-step__number">0' . $index . '</p>'
-				. $this->icon( $icon_names[ $index ], 'seo-geo-corporate-process-step__icon' )
-				. '</div>'
 				. '<h3>' . esc_html( $this->text( $slots, 'process-' . $index . '-title' ) ) . '</h3>'
 				. '<p>' . esc_html( $this->text( $slots, 'process-' . $index . '-body' ) ) . '</p>'
 				. '</article>';
@@ -256,7 +233,7 @@ final class CorporateHomeRenderer {
 			}
 		}
 
-		return '<div class="seo-geo-corporate-insight-card__media" aria-hidden="true">'
+		return '<div class="seo-geo-corporate-insight-card__media seo-geo-corporate-insight-card__media--fallback" aria-hidden="true">'
 			. $this->decorative_image( 'insights-featured.svg', 'seo-geo-corporate-insight-card__image', 720, 420 )
 			. '</div>';
 	}
@@ -293,18 +270,6 @@ final class CorporateHomeRenderer {
 			. '<h2 id="' . esc_attr( $id ) . '">' . esc_html( $heading ) . '</h2>'
 			. '<p>' . esc_html( $intro ) . '</p>'
 			. '</header>';
-	}
-
-	/**
-	 * Render a reusable decorative SVG icon from the local sprite.
-	 *
-	 * @param string $symbol    Symbol ID.
-	 * @param string $css_class CSS class.
-	 */
-	private function icon( string $symbol, string $css_class ): string {
-		$href = $this->asset_uri( 'icon-sprite.svg' ) . '#' . $symbol;
-
-		return '<svg class="' . esc_attr( $css_class ) . '" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="' . esc_url( $href ) . '"></use></svg>';
 	}
 
 	/**
