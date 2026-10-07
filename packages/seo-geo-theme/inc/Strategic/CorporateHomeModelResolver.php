@@ -183,9 +183,9 @@ final class CorporateHomeModelResolver {
 	 * The matcher is intentionally limited to elements carrying the canonical
 	 * slot-class prefix. It does not interpret arbitrary legacy layout markup.
 	 *
-	 * @param string                                            $html        Stored block HTML.
-	 * @param array<string, array{type:string,required:bool}>   $definitions Slot contract.
-	 * @param array<string, mixed>                              $slots       Collected values.
+	 * @param string                                          $html        Stored block HTML.
+	 * @param array<string, array{type:string,required:bool}> $definitions Slot contract.
+	 * @param array<string, mixed>                            $slots       Collected values.
 	 */
 	private function collect_slots_from_html( string $html, array $definitions, array &$slots ): void {
 		$prefix  = preg_quote( self::SLOT_PREFIX, '/' );
