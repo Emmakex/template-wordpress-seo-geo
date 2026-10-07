@@ -97,7 +97,7 @@ function seo_geo_theme_enqueue_styles(): void {
 	 * for an actual/hydrated Corporate Home composition.
 	 */
 	if ( 'corporate' === $preset_id && seo_geo_theme_corporate_master_home_layer() ) {
-		$visual_stylesheet = get_stylesheet_directory() . '/assets/css/presets/corporate-v2.css';
+		$visual_stylesheet  = get_stylesheet_directory() . '/assets/css/presets/corporate-v2.css';
 		$runtime_stylesheet = get_stylesheet_directory() . '/assets/css/presets/corporate-v3-runtime.css';
 
 		if ( ! is_readable( $visual_stylesheet ) || ! is_readable( $runtime_stylesheet ) ) {
