@@ -41,55 +41,6 @@ a:hover {
 	overflow: hidden !important;
 }
 
-/* Corporate Insights need an explicit bounded grid so long editorial titles remain readable. */
-.seo-geo-preset-corporate .seo-geo-corporate-insights-query .wp-block-post-template {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 1rem;
-	padding: 0;
-}
-
-.seo-geo-preset-corporate .seo-geo-corporate-insights-query .wp-block-post-template > li,
-.seo-geo-preset-corporate .seo-geo-corporate-insight-card {
-	min-width: 0;
-}
-
-.seo-geo-preset-corporate .seo-geo-corporate-insight-card :where(
-	.wp-block-post-title,
-	.wp-block-post-title a,
-	.wp-block-post-excerpt
-) {
-	word-break: normal;
-	overflow-wrap: break-word;
-	hyphens: auto;
-}
-
-@media (max-width: 900px) {
-	.seo-geo-preset-corporate .seo-geo-corporate-insights-query .wp-block-post-template {
-		grid-template-columns: 1fr;
-	}
-}
-
-@media print {
-	.seo-geo-preset-corporate .seo-geo-site-header {
-		position: static !important;
-		backdrop-filter: none !important;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-corporate-insights-query .wp-block-post-template {
-		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-corporate-insight-card {
-		break-inside: avoid;
-		page-break-inside: avoid;
-	}
-
-	.seo-geo-preset-corporate .seo-geo-corporate-insight-card .wp-block-post-title {
-		font-size: 1.35rem !important;
-	}
-}
-
 @media (prefers-reduced-motion: reduce) {
 	html {
 		scroll-behavior: auto;
