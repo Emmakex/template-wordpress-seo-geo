@@ -8,22 +8,22 @@ Canonical machine-readable candidate:
 
 `release/emmake-phase10e-candidate.json`
 
-Last frozen Corporate v4.3 field identity:
+Frozen Corporate v5 A1 field identity:
 
 - site ID: `emmake-com`;
 - production origin: `https://emmake.com/`;
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen Theme-content source commit: `095e2f6471264ef4ba21c3242467a93d8e2b88ac`;
-- Theme ZIP SHA-256: `11540b3bea463a5f5cabe4d527f628de2e1d3fe6ad4b0d7cdb11a60ec85f99d2`;
+- frozen Theme-content source commit: `1acf5e0956fc456e48c9df5d039ad644959a0efd`;
+- Theme ZIP SHA-256: `b3cc616b22e18cc5d1e260419eeef628006f281c66c30092cc1cc1646ec50981`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `d82fa628b96e29bf1f522dd76822a9efd4ce4766b7771069457cb5463478e671`;
+- deterministic field-pilot pack SHA-256: `e32a3b34adc4a00fc5a86fa79fc9fc39d101af661bb21770e3467d938dee18bb`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
-This v4.3 identity remains valid **technical evidence**, but it is no longer the visual architecture target after real-site review. Do not treat repository green status as visual acceptance.
+This Corporate v5 A1 identity is the only current technical field candidate. Repository gates are green for the Theme-content source, but that is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
 
 ## Current pilot position
 
@@ -40,6 +40,8 @@ The technical Reset & Rebuild sequence has already reached Step 7 on the real `/
 
 Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge merely because the renderer architecture changes. The semantic draft and SEO/GEO state are already proven.
 
+Corporate v5 A1 now also proves repository-side Theme-owned rendering, semantic landmarks, responsive/reflow behavior, keyboard/focus behavior, reduced-motion handling, WCAG AA automated contrast, deterministic packaging and performance budgets. These automated checks do not replace the real sandbox visual gate.
+
 ## v4.x field finding
 
 Corporate v4 established the intended premium/WOW art direction. v4.1 corrected the first composition defects. v4.2 improved reading measure and introduced content-hash CSS versioning. v4.3 then attempted to escape inherited Gutenberg constrained-content widths while preserving the same semantic content.
@@ -54,11 +56,11 @@ v4.3 is recorded as technically valid but **visual/architectural NO-GO**.
 
 ## Corporate v5 — Theme-owned frontend
 
-The next active Corporate checkpoint is **Corporate v5 — Theme-owned frontend**.
+The active Corporate checkpoint is **Corporate v5 — Theme-owned frontend**.
 
 Canonical architecture: `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`.
 
-Corporate v5 must preserve the existing content/SEO state while changing who owns rendering:
+Corporate v5 preserves the existing content/SEO state while changing who owns rendering:
 
 ```text
 existing hydrated semantic content
@@ -72,7 +74,7 @@ server-rendered semantic HTML
 Theme-owned layout / CSS / responsive behavior
 ```
 
-The master Home must no longer depend on Gutenberg constructs such as:
+The master Home no longer depends on Gutenberg constructs such as:
 
 - `wp-block-post-content` as the master layout surface;
 - `is-layout-constrained` for strategic composition;
@@ -98,6 +100,8 @@ Corporate v5 must prove all of the following before the other preset master surf
 - establish a reusable renderer boundary that SEO/GEO Manager can later use for generated landings.
 
 The existing `320` compact-mobile automated check remains an additional stress case.
+
+The repository-side portions of this rule are satisfied by the frozen A1 source. Real `/nuevaweb/` field behavior and explicit visual approval remain pending.
 
 ## Relationship with SEO/GEO Manager
 
@@ -144,11 +148,13 @@ The destructive/reset portion must **not** be repeated for this renderer migrati
 1. Keep the existing `/nuevaweb/` clone and Step 1–7 evidence.
 2. Keep Migration Bridge `0.8.60` unless a separate migration defect requires changing it.
 3. Preserve the existing clean hydrated Home data/content.
-4. Install only a frozen Corporate v5 Theme candidate when repository-side gates are green.
-5. Preview the same logical Home through the new Theme-owned renderer.
-6. Verify that all master sections share the intended renderer shell/alignment.
-7. Run browser QA at `1440 / 1024 / 768 / 390`.
-8. Do not advance Step 8 until the Home receives explicit visual approval.
+4. Verify the Theme ZIP SHA-256 is exactly `b3cc616b22e18cc5d1e260419eeef628006f281c66c30092cc1cc1646ec50981` before installation.
+5. Install that frozen Corporate v5 Theme candidate **only** on `/nuevaweb/`.
+6. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
+7. Preview the same logical Home through the new Theme-owned renderer.
+8. Verify that all master sections share the intended renderer shell/alignment.
+9. Run browser QA at `1440 / 1024 / 768 / 390`.
+10. Do not advance Step 8 until the Home receives explicit visual approval.
 
 If the semantic data or Step 7 state has drifted, stop and investigate instead of recreating evidence casually.
 
@@ -184,5 +190,6 @@ Until Corporate v5 and later production acceptance exist:
 
 - `release/stable-release-decision.json` remains `no-go`;
 - real-site acceptance remains `pending`;
-- the v4.3 candidate record remains technical historical evidence until superseded by a newly frozen v5 candidate;
+- the Corporate v5 A1 candidate above is the frozen technical field authority;
+- the v4.3 candidate remains historical technical evidence only;
 - no stable release is published.
