@@ -81,6 +81,76 @@ $migration_content = '<!-- wp:heading --><h2 class="wp-block-heading">Representa
 	. "\n\n" . '<!-- wp:separator --><hr class="wp-block-separator has-alpha-channel-opacity"/><!-- /wp:separator -->'
 	. "\n\n" . '<!-- wp:spacer {"height":"32px"} --><div style="height:32px" aria-hidden="true" class="wp-block-spacer"></div><!-- /wp:spacer -->';
 
+/**
+ * Create one semantic text slot for the Corporate v5 transition fixture.
+ *
+ * @param string $id    Canonical slot ID.
+ * @param string $value Visible fixture value.
+ */
+$corporate_text_slot = static function ( string $id, string $value ): string {
+	$class = 'seo-geo-content-slot--' . $id;
+
+	return sprintf(
+		'<!-- wp:paragraph {"className":"%1$s"} --><p class="wp-block-paragraph %1$s">%2$s</p><!-- /wp:paragraph -->',
+		esc_attr( $class ),
+		esc_html( $value )
+	);
+};
+
+/**
+ * Create one semantic link slot for the Corporate v5 transition fixture.
+ *
+ * @param string $id    Canonical slot ID.
+ * @param string $label Visible link label.
+ * @param string $url   Fixture target URL.
+ */
+$corporate_link_slot = static function ( string $id, string $label, string $url ): string {
+	$class = 'seo-geo-content-slot--' . $id;
+
+	return sprintf(
+		'<!-- wp:paragraph {"className":"%1$s"} --><p class="wp-block-paragraph %1$s"><a href="%2$s">%3$s</a></p><!-- /wp:paragraph -->',
+		esc_attr( $class ),
+		esc_url( $url ),
+		esc_html( $label )
+	);
+};
+
+$corporate_v5_slots = array(
+	$corporate_text_slot( 'hero-eyebrow', 'Corporate v5 acceptance' ),
+	$corporate_text_slot( 'hero-lead', 'Theme-owned strategic frontend without Gutenberg layout authority.' ),
+	$corporate_link_slot( 'hero-primary-cta', 'Start a project', '/contact/' ),
+	$corporate_link_slot( 'hero-secondary-cta', 'Explore capabilities', '#capabilities' ),
+	$corporate_text_slot( 'capabilities-heading', 'Services and capabilities' ),
+	$corporate_text_slot( 'capabilities-intro', 'A representative strategic surface rendered from a semantic model.' ),
+	$corporate_text_slot( 'capability-1-title', 'Digital strategy' ),
+	$corporate_text_slot( 'capability-1-body', 'Structured planning connected to measurable business and user needs.' ),
+	$corporate_link_slot( 'capability-1-link', 'Learn about strategy', '/services/strategy/' ),
+	$corporate_text_slot( 'capability-2-title', 'Research' ),
+	$corporate_text_slot( 'capability-2-body', 'Evidence-led discovery used to define priorities and useful content.' ),
+	$corporate_link_slot( 'capability-2-link', 'Learn about research', '/services/research/' ),
+	$corporate_text_slot( 'capability-3-title', 'Automation' ),
+	$corporate_text_slot( 'capability-3-body', 'Reliable workflows that reduce repetitive work without hiding ownership.' ),
+	$corporate_link_slot( 'capability-3-link', 'Learn about automation', '/services/automation/' ),
+	$corporate_text_slot( 'process-heading', 'How we work' ),
+	$corporate_text_slot( 'process-intro', 'Three readable stages with the Theme controlling the public composition.' ),
+	$corporate_text_slot( 'process-1-title', 'Understand' ),
+	$corporate_text_slot( 'process-1-body', 'Clarify context, constraints, evidence and the real decision that matters.' ),
+	$corporate_text_slot( 'process-2-title', 'Define' ),
+	$corporate_text_slot( 'process-2-body', 'Turn findings into a bounded strategy, semantic model and implementation plan.' ),
+	$corporate_text_slot( 'process-3-title', 'Improve' ),
+	$corporate_text_slot( 'process-3-body', 'Measure the result, learn from real signals and iterate deliberately.' ),
+	$corporate_text_slot( 'insights-heading', 'Latest thinking' ),
+	$corporate_text_slot( 'insights-intro', 'Published WordPress posts remain dynamic content inside the strategic shell.' ),
+	$corporate_text_slot( 'final-cta-heading', 'Ready to talk?' ),
+	$corporate_text_slot( 'final-cta-body', 'Share the context and we will define the next useful step.' ),
+	$corporate_link_slot( 'final-cta-button', 'Contact us', '/contact/' ),
+);
+
+$corporate_v5_content = '<!-- wp:group {"className":"seo-geo-corporate-native-hero seo-geo-corporate-v5-source-fixture"} -->'
+	. '<div class="wp-block-group seo-geo-corporate-native-hero seo-geo-corporate-v5-source-fixture">'
+	. implode( "\n", $corporate_v5_slots )
+	. '</div><!-- /wp:group -->';
+
 $pages = array(
 	array(
 		'slug'    => 'acceptance-en',
@@ -96,6 +166,11 @@ $pages = array(
 		'slug'    => 'migration-parity-fixture',
 		'title'   => 'Migration parity representative',
 		'content' => $migration_content,
+	),
+	array(
+		'slug'    => 'corporate-v5-fixture',
+		'title'   => 'Corporate v5 strategic renderer fixture',
+		'content' => $corporate_v5_content,
 	),
 );
 
@@ -125,4 +200,48 @@ foreach ( $pages as $page ) {
 	WP_CLI::log( sprintf( 'Seeded %s as page %d.', $page['slug'], (int) $result ) );
 }
 
-WP_CLI::success( 'Representative EN/ES plus post-migration accessibility fixtures seeded.' );
+$corporate_posts = array(
+	array(
+		'slug'    => 'corporate-v5-insight-one',
+		'title'   => 'Strategic systems need clear ownership',
+		'excerpt' => 'A bounded acceptance article for the dynamic Corporate v5 Insights surface.',
+	),
+	array(
+		'slug'    => 'corporate-v5-insight-two',
+		'title'   => 'Semantic models keep content portable',
+		'excerpt' => 'A second acceptance article proving Insights is sourced from normal WordPress posts.',
+	),
+	array(
+		'slug'    => 'corporate-v5-insight-three',
+		'title'   => 'Editorial autonomy and frontend control can coexist',
+		'excerpt' => 'A third acceptance article for the server-rendered strategic Home.',
+	),
+);
+
+foreach ( $corporate_posts as $article ) {
+	$existing = get_page_by_path( $article['slug'], OBJECT, 'post' );
+	$post_id  = $existing instanceof WP_Post ? $existing->ID : 0;
+
+	$result = wp_insert_post(
+		wp_slash(
+			array(
+				'ID'           => $post_id,
+				'post_type'    => 'post',
+				'post_status'  => 'publish',
+				'post_name'    => $article['slug'],
+				'post_title'   => $article['title'],
+				'post_excerpt' => $article['excerpt'],
+				'post_content' => '<!-- wp:paragraph --><p>' . esc_html( $article['excerpt'] ) . '</p><!-- /wp:paragraph -->',
+			)
+		),
+		true
+	);
+
+	if ( is_wp_error( $result ) ) {
+		WP_CLI::error( sprintf( 'Could not seed %s: %s', $article['slug'], $result->get_error_message() ) );
+	}
+
+	update_post_meta( (int) $result, '_seo_geo_acceptance_fixture', '1' );
+}
+
+WP_CLI::success( 'Representative EN/ES, migration and Corporate v5 strategic fixtures seeded.' );

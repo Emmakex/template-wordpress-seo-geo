@@ -194,7 +194,7 @@ wp_cli core install \
   --admin_password=wordpress-browser-admin \
   --admin_email=admin@example.test \
   --skip-email >/dev/null \
-  || fail_acceptance "core-install" "WP-CLI could not install WordPress" "core install succeeds" "wp core install failed" "wp core install"
+  || fail_acceptance "core-install" "WP-CLI could not install WordPress" "core install succeeds" "wp core install"
 
 wp_cli theme activate seo-geo-theme >/dev/null \
   || fail_acceptance "theme-activate" "SEO GEO Starter could not be activated" "theme active" "activation failed" "wp theme activate seo-geo-theme"
@@ -217,14 +217,16 @@ wp_cli rewrite structure '/%postname%/' --hard >/dev/null \
 wp_cli rewrite flush --hard >/dev/null \
   || fail_acceptance "permalink-flush" "Could not flush rewrite rules" "rewrite rules flushed" "rewrite flush failed" "wp rewrite flush"
 
-printf '[browser] Seeding representative EN/ES pages from registered theme patterns.\n'
+printf '[browser] Seeding representative EN/ES, migration and Corporate v5 fixtures.\n'
 wp_cli eval-file /var/www/html/wp-content/seed-acceptance.php \
-  || fail_acceptance "fixture-seed" "Representative browser fixtures could not be seeded" "EN and ES pages published" "wp eval-file failed" "wp eval-file seed-acceptance.php"
+  || fail_acceptance "fixture-seed" "Representative browser fixtures could not be seeded" "EN, ES, migration and Corporate v5 pages published" "wp eval-file failed" "wp eval-file seed-acceptance.php"
 
 wait_for_fixture "${BASE_URL}/acceptance-en/?fixture_lang=en" \
   || fail_acceptance "fixture-en-http" "English acceptance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl acceptance-en"
 wait_for_fixture "${BASE_URL}/acceptance-es/?fixture_lang=es" \
   || fail_acceptance "fixture-es-http" "Spanish acceptance fixture did not become reachable" "HTTP 2xx" "fixture request timeout" "curl acceptance-es"
+wait_for_fixture "${BASE_URL}/corporate-v5-fixture/?fixture_lang=en&fixture_preset=corporate" \
+  || fail_acceptance "fixture-corporate-v5-http" "Corporate v5 strategic fixture did not become reachable" "HTTP 2xx through Theme-owned renderer" "fixture request timeout" "curl corporate-v5-fixture"
 
 printf '[browser] Running Playwright + axe accessibility/responsive acceptance.\n'
 set +e
@@ -248,4 +250,4 @@ ACTIVE_PLUGINS_AFTER="$(wp_cli plugin list --status=active --field=name 2>/dev/n
 [[ -z "$ACTIVE_PLUGINS_AFTER" ]] \
   || fail_acceptance "zero-plugins-after-browser" "Phase 9F onboarding must finish with zero active plugins" "empty active-plugin list" "$ACTIVE_PLUGINS_AFTER" "wp plugin list --status=active"
 
-printf 'Browser acceptance OK: Phase 9F ran the self-contained theme with zero active plugins; EN/ES pages and onboarding passed Chromium at 320/768/1440 with axe WCAG A/AA, responsive reflow, keyboard/focus and persistent Apply acceptance.\n'
+printf 'Browser acceptance OK: zero-plugin Theme plus EN/ES, migration and Corporate v5 strategic renderer passed Chromium at 320/390/768/1024/1440 with axe WCAG A/AA, reflow, keyboard/focus and reduced-motion acceptance.\n'
