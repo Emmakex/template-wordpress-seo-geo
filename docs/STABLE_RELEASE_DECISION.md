@@ -10,9 +10,18 @@ Target release: `0.1.1`.
 
 Release channel: `prestable`.
 
-The migration/reset/hydration/SEO-GEO engine, deterministic packaging, onboarding, upgrade/rollback and the Corporate v5 Theme-owned renderer boundary are working. Corporate v5 A1 proved the renderer/model boundary. Corporate v5 A2 proved the clean Theme-owned strategic chrome and removed the inherited v4 presentation debt. The current field candidate is **Corporate v5 A3**, a presentation-only refinement based on real `/nuevaweb/` QA.
+The migration/reset/hydration/SEO-GEO engine, deterministic packaging, onboarding, upgrade/rollback and the Corporate v5 Theme-owned renderer boundary are working. Corporate v5 A1 proved the renderer/model boundary. Corporate v5 A2 proved clean Theme-owned strategic chrome and removed inherited v4 presentation debt. Corporate v5 A3 lightened the real-site visual system. The current exact field candidate is **Corporate v5 A3.1**, the bounded visual closure before the next `/nuevaweb/` pass.
 
-A3 keeps the accepted A2 structure and content state intact while lightening the strategic palette, improving secondary-text/card separation, moving Method and the final CTA to lighter premium surfaces, refining the branded footer and aligning the mobile menu with the same visual system.
+A3.1 keeps the accepted A2/A3 architecture and hydrated content state intact while:
+
+- compacting the hero so the primary actions fit the practical desktop first viewport;
+- adding a real local hero visual slot;
+- adding stable capability visual treatment without external dependencies;
+- strengthening Method hierarchy and process continuity;
+- allowing the featured Insights card to prefer a WordPress featured image with a local Theme fallback;
+- adding a reusable local editorial visual library for future article/publication use;
+- preserving zero required project frontend JavaScript and zero third-party requests;
+- preserving the existing Reset, hydration, URL, content, SEO/GEO and Migration Bridge state.
 
 Stable promotion remains blocked by real-site product acceptance. Repository CI, deterministic hashes and fixture performance are necessary evidence but cannot declare the visual product accepted.
 
@@ -24,16 +33,54 @@ The machine-readable source of truth remains:
 
 `release/emmake-phase10e-candidate.json`
 
-Frozen Corporate v5 A3 technical identity:
+Frozen Corporate v5 A3.1 technical identity:
 
-- Theme-content source commit: `82e3a6e0c2a4659d8d24cc473429d4fb1892eaaa`;
+- Theme implementation source commit: `c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00`;
 - Theme: `0.1.1` / `prestable`;
-- Theme ZIP SHA-256: `7286b4e06af2ee5b0818bf748f8a7c5e01bb7fa7ff13cb0e46124b5d0a9e0708`;
+- Theme ZIP SHA-256: `f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic EMMAKE field-pilot pack SHA-256: `6ddb9e8e4d5ab0f2443ee08e3b860e4c9abfc7b6ca46f7f3bc4a07be07422be1`.
+- deterministic EMMAKE field-pilot pack SHA-256: `1736d8b6dfb9aeec8cc8132a4ee1c42d5d9e4a3afb4510934edfd0cecd5a9fe2`.
 
-This identity is reproducible technical evidence for the next `/nuevaweb/` field pass. It is **not** an accepted stable or production candidate. Any Theme-content change requires a new deterministic Theme SHA and a newly frozen candidate before field installation.
+This identity is reproducible technical evidence for the next `/nuevaweb/` field pass. It is **not** an accepted stable or production candidate. Any Theme implementation change requires a new deterministic Theme SHA and a newly frozen candidate before field installation.
+
+The candidate metadata may be committed after the implementation source commit without changing the Theme package. `source_commit` intentionally identifies the implementation bytes being frozen rather than self-referencing the metadata commit.
+
+## A3.1 repository acceptance
+
+The exact A3.1 implementation passed the repository gates for:
+
+- Foundation;
+- Design System;
+- Corporate Page Pipeline;
+- Phase 1 Package;
+- Release Artifact;
+- PHP Quality / WPCS / PHPStan level 6;
+- Native Multilingual;
+- Self-contained zero-plugin Theme runtime;
+- WordPress 7.1 / PHP 8.2 smoke;
+- Accessibility & Responsive acceptance;
+- Performance Baseline.
+
+The Corporate performance fixture on the frozen implementation recorded:
+
+- Lighthouse performance: `100`;
+- FCP: `751.72 ms`;
+- LCP: `901.72 ms`;
+- CLS: `0`;
+- TBT: `0 ms`;
+- Speed Index: `751.72 ms`;
+- transferred bytes: `28,466`;
+- Corporate CSS bytes: `6,520`;
+- image bytes: `2,794`;
+- total requests: `8`;
+- third-party requests: `0`;
+- project JavaScript bytes: `0`;
+- DOM nodes: `118`.
+
+A3.1 originally exposed a useful product-budget regression: five decorative SVG data URIs were counted as extra image requests. The implementation was corrected rather than weakening the budget. Those decorative icons now use local CSS/pseudo-element treatment while the hero and Insights retain their meaningful media slots. The final implementation satisfies the existing eight-request Corporate budget.
+
+`EMMAKE Field Pilot Pack CI` is expected to pass only after the candidate record is aligned with the exact A3.1 Theme and field-pack hashes above. A red run produced solely by the previous frozen identity is not a Theme/runtime regression; weakening or bypassing the deterministic hash gate is forbidden.
 
 ## Architecture and field evidence
 
@@ -41,42 +88,36 @@ Earlier candidates proved Rescue Manifest, Clone Reset, Corporate bootstrap, cle
 
 Corporate v4.3 passed repository-side technical gates but failed the human visual/architectural acceptance gate. Corporate v5 therefore moved premium strategic rendering out of Gutenberg master-layout authority and into a Theme-owned semantic server renderer.
 
-Corporate v5 A1 established the renderer/model boundary. Real-site A1 QA exposed broken database-overridable strategic chrome, hero imbalance, template-like capability hierarchy, residual list markers, default WordPress CTA styling, a weak footer and presentation debt from the previous Corporate stylesheet.
+Corporate v5 A1 established the renderer/model boundary. Corporate v5 A2 corrected strategic chrome and presentation ownership. Corporate v5 A3 refined the palette after real `/nuevaweb/` findings. Corporate v5 A3.1 closes the remaining bounded visual/asset treatment before the next single sandbox installation.
 
-Corporate v5 A2 corrected those issues at the architectural presentation boundary:
-
-- Theme-owned strategic header/main/footer;
-- preset navigation rendered by the Theme rather than database-overridable block template parts;
-- clean v5 strategic CSS without the old Corporate v4 presentation layer;
-- coherent hero, capabilities, method, Insights, final CTA and footer;
-- preserved rescued/hydrated content and SEO/GEO state.
-
-Real `/nuevaweb/` QA of A2 confirmed that architecture was moving in the correct direction but the result still used too many near-black surfaces and lost separation in secondary content. Corporate v5 A3 therefore refines **presentation only**. It does not change Reset, hydration, Migration Bridge, content, URLs or SEO/GEO ownership.
+A3.1 does **not** change Reset, hydration, Migration Bridge, content, URLs or SEO/GEO ownership.
 
 The permanent ownership rule remains:
 
 > **Gutenberg provides editorial autonomy. SEO/GEO Manager provides automation and growth. SEO/GEO Theme provides frontend rendering, strategic chrome, design, semantic HTML and performance.**
 
+WordPress remains the CMS/resource authority.
+
 Canonical architecture: `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`.
 
 ## Corporate v5 repository baseline
 
-The v5 strategic master surface no longer depends on:
+The v5 strategic master surface does not depend on:
 
 - Gutenberg `contentSize` / `wideSize` as page-width authority;
 - `is-layout-constrained` for master sections;
 - `wp-block-post-content` as the strategic layout surface;
 - nested layout blocks as the renderer contract;
 - database-overridable block template parts for Corporate strategic chrome;
-- the legacy Corporate v4 visual stylesheet in v5 client delivery.
+- the legacy Corporate v4 visual stylesheet in v5 client delivery;
+- remote frontend visual dependencies;
+- project frontend JavaScript for the strategic Home.
 
-The accepted A2 repository baseline already demonstrated semantic header/main/footer landmarks, one strategic H1, server-side dynamic Insights, keyboard/focus and reduced-motion behavior, WCAG/reflow automation, WordPress smoke/upgrade/rollback, PHP quality, self-contained deterministic packaging, zero project frontend JavaScript and zero third-party requests. A3 must preserve those gates while changing only the approved visual layer.
-
-The frozen A3 identity above is the candidate that must be used for the next deterministic field pack and `/nuevaweb/` review. CI reruns for that exact candidate are authoritative; no result is inferred from A2.
+The accepted repository baseline preserves semantic header/main/footer landmarks, one strategic H1, server-side dynamic Insights, keyboard/focus and reduced-motion behavior, responsive/reflow automation, WordPress smoke/upgrade/rollback, PHP quality, self-contained deterministic packaging and native SEO/GEO output ownership.
 
 ## SEO/GEO Manager relationship
 
-SEO/GEO Manager is a separate plugin product and is not required for Theme stable runtime.
+SEO/GEO Manager is a separate future plugin product and is not required for Theme stable runtime.
 
 The v5 renderer boundary supports the future Manager direction:
 
@@ -96,6 +137,8 @@ Sandbox: `https://emmake.com/nuevaweb/`.
 
 The sandbox already has a hydrated clean Home state and Step 7 readiness. **Do not** rerun Reset, regenerate the Home, rehydrate content or change Migration Bridge merely because Theme presentation changes.
 
+The next field action is one bounded Theme-only install of the exact A3.1 candidate on `/nuevaweb/`.
+
 ## Remaining stable-release blocker
 
 Phase 10E remains `no-go` until all of the following are real and recorded:
@@ -111,15 +154,13 @@ Phase 10E remains `no-go` until all of the following are real and recorded:
 9. the sandbox is explicitly accepted before any production-entry decision;
 10. later production verification completes without a rollback trigger.
 
-Item 1 is satisfied by the frozen Corporate v5 A3 identity above. Items 2–10 remain field/acceptance work. Repository CI cannot satisfy them by inference.
+Item 1 is satisfied by the frozen Corporate v5 A3.1 identity above once deterministic CI reconfirms it. Items 2–10 remain field/acceptance work. Repository CI cannot satisfy them by inference.
 
 Until production acceptance exists, `release/stable-release-decision.json` remains `decision=no-go`, real-site acceptance remains `pending`, its reference remains `null`, and blocker `real-site-production-acceptance-pending` stays present.
 
 ## Product boundary
 
-SEO/GEO Manager is a separate plugin product.
-
-It is not a mandatory dependency or blocker for Theme `0.1.1` stable runtime.
+SEO/GEO Manager is a separate plugin product. It is not a mandatory dependency or blocker for Theme `0.1.1` stable runtime.
 
 Migration Bridge is the accepted migration/reset implementation for this Theme pilot. Migration Bridge `0.8.60` remains frozen for the current field candidate.
 
@@ -131,7 +172,7 @@ The standalone Core wrapper remains `deprecated-retained-nondistributed` and is 
 
 `EMMAKE Field Pilot Pack CI` rebuilds Theme, Migration Bridge and the field pack byte-for-byte and verifies their SHA-256 identities against `release/emmake-phase10e-candidate.json`.
 
-Corporate v5 A1 and A2 remain historical technical/field evidence. Corporate v5 A3 is the current frozen technical field candidate and still requires exact `/nuevaweb/` browser and visual acceptance before stable or production decisions.
+Corporate v5 A1/A2/A3 remain historical technical/field evidence. Corporate v5 A3.1 is the current frozen technical field candidate and still requires exact `/nuevaweb/` browser and visual acceptance before stable or production decisions.
 
 ## Promotion from no-go to go
 
