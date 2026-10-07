@@ -246,7 +246,9 @@ Support topic/search intent, cluster relationships, title/excerpt, structured bo
 
 ### D2 — Normal WordPress post materialization
 
-Manager-created articles become normal WordPress posts and remain editable by authorized users in Gutenberg.
+Manager-created articles become normal WordPress posts.
+
+They remain editable by authorized users in Gutenberg.
 
 The editable body uses a minimal stable editorial representation; it does not encode the Theme's premium page layout.
 
