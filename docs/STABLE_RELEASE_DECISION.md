@@ -29,7 +29,7 @@ Current frozen Corporate v4.3 identity:
 - Theme ZIP SHA-256: `852b4c47db7e46a42d24ee7f084a81395ecfe1f720f2428f042f7b3243c3eebf`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic EMMAKE field-pilot pack SHA-256: `6227c0c008e81454c521ee716333529d31548bc53885e068cb08296a32dbdb66`.
+- deterministic EMMAKE field-pilot pack SHA-256: `d82fa628b96e29bf1f522dd76822a9efd4ce4766b7771069457cb5463478e671`.
 
 The source commit identifies the immutable Theme-content state. Later record, documentation or validation-only commits do not redefine those Theme bytes. Any Theme, Migration Bridge, runbook, blueprint or pack-content change requires a newly frozen candidate.
 
