@@ -11,6 +11,7 @@ namespace SeoGeo\Manager;
 
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\HealthController;
+use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
 
 final class Plugin {
@@ -29,6 +30,7 @@ final class Plugin {
 				HealthController::register_routes();
 				ContentController::register_routes();
 				SiteSnapshotController::register_routes();
+				SiteIntelligenceController::register_routes();
 			}
 		);
 	}
