@@ -132,6 +132,17 @@ final class Dashboard {
 				</div>
 			</section>
 
+			<section class="seo-geo-manager-admin__panel">
+				<div class="seo-geo-manager-admin__panel-heading">
+					<div>
+						<p class="seo-geo-manager-admin__eyebrow"><?php esc_html_e( 'Actionable diagnostics', 'seo-geo-manager' ); ?></p>
+						<h2><?php esc_html_e( 'Problemas únicos agrupados por causa raíz', 'seo-geo-manager' ); ?></h2>
+						<p class="description"><?php esc_html_e( 'Las repeticiones se consolidan para preparar una sola corrección y aplicarla después con Preview → Apply → Verify → Rollback.', 'seo-geo-manager' ); ?></p>
+					</div>
+				</div>
+				<div data-seo-geo-actionables><p class="description">—</p></div>
+			</section>
+
 			<section class="seo-geo-manager-admin__grid">
 				<div class="seo-geo-manager-admin__panel">
 					<h2><?php esc_html_e( 'Estructura y contenido', 'seo-geo-manager' ); ?></h2>
