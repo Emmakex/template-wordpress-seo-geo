@@ -97,12 +97,11 @@ final class StrategicSurfaceRuntime {
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' );
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
 
-		$path                   = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
-		$closure_path           = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
-		$field_css_path         = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-mf08-3.css';
-		$field_media_path       = get_template_directory() . '/assets/images/presets/corporate/v5/mf08-media-atlas.webp';
-		$navigation_script_path = get_stylesheet_directory() . '/assets/js/preset-navigation.js';
-		$bundle_marker          = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
+		$path             = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
+		$closure_path     = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
+		$field_css_path   = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-mf08-3.css';
+		$field_media_path = get_template_directory() . '/assets/images/presets/corporate/v5/mf08-media-atlas.webp';
+		$bundle_marker    = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
 		if ( ! is_readable( $path ) ) {
 			return;
 		}
@@ -136,20 +135,15 @@ final class StrategicSurfaceRuntime {
 			);
 		}
 
-		if ( is_readable( $navigation_script_path ) ) {
-			$navigation_script_version = '0.1.1';
-			if ( function_exists( 'seo_geo_theme_asset_version' ) ) {
-				$navigation_script_version = seo_geo_theme_asset_version( $navigation_script_path );
-			}
-
-			wp_enqueue_script(
-				'seo-geo-theme-preset-navigation',
-				get_stylesheet_directory_uri() . '/assets/js/preset-navigation.js',
-				array(),
-				$navigation_script_version,
-				true
-			);
-		}
+		wp_register_script(
+			'seo-geo-theme-preset-navigation',
+			false,
+			array(),
+			'0.1.1',
+			true
+		);
+		wp_enqueue_script( 'seo-geo-theme-preset-navigation' );
+		wp_add_inline_script( 'seo-geo-theme-preset-navigation', $this->navigation_script() );
 
 		if ( is_readable( $field_media_path ) && is_readable( $field_css_path ) ) {
 			$field_dependencies = $is_bundled
@@ -163,6 +157,47 @@ final class StrategicSurfaceRuntime {
 				$field_version
 			);
 		}
+	}
+
+	/**
+	 * Return the tiny no-request mobile navigation runtime.
+	 */
+	private function navigation_script(): string {
+		return <<<'JS'
+(() => {
+	'use strict';
+	const selector = '.seo-geo-preset-navigation__mobile';
+	const close = (details, restoreFocus = false) => {
+		if (!(details instanceof HTMLDetailsElement) || !details.open) return;
+		details.open = false;
+		if (restoreFocus) details.querySelector('summary')?.focus();
+	};
+	document.addEventListener('click', (event) => {
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const summary = target.closest(`${selector} > summary`);
+		if (summary) {
+			const details = summary.parentElement;
+			if (details instanceof HTMLDetailsElement) {
+				event.preventDefault();
+				details.open = !details.open;
+			}
+			return;
+		}
+		const link = target.closest(`${selector} a`);
+		if (link) close(link.closest(selector));
+	});
+	document.addEventListener('pointerdown', (event) => {
+		document.querySelectorAll(`${selector}[open]`).forEach((details) => {
+			if (!details.contains(event.target)) close(details);
+		});
+	});
+	document.addEventListener('keydown', (event) => {
+		if (event.key !== 'Escape') return;
+		document.querySelectorAll(`${selector}[open]`).forEach((details) => close(details, true));
+	});
+})();
+JS;
 	}
 
 	/**
