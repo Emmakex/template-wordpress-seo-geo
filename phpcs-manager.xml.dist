@@ -9,6 +9,7 @@
 
   <file>packages/seo-geo-manager</file>
   <exclude-pattern>*/vendor/*</exclude-pattern>
+  <exclude-pattern>*/assets/*</exclude-pattern>
 
   <config name="minimum_supported_wp_version" value="6.7"/>
 
