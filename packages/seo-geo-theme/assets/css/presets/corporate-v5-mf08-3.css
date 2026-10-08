@@ -57,11 +57,17 @@
 	}
 
 	.seo-geo-corporate-home-v5 .seo-geo-strategic-header summary {
-		min-width: 112px;
+		position: relative;
+		z-index: 3;
+		min-width: 96px;
+		min-height: 44px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		padding: .55rem .8rem;
 		text-align: center;
+		touch-action: manipulation;
+		-webkit-tap-highlight-color: transparent;
 	}
 
 	.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] summary {
@@ -73,6 +79,27 @@
 		font-size: 1.55rem;
 		font-weight: 500;
 		line-height: 1;
+		pointer-events: none;
+	}
+
+	.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__list {
+		top: calc(100% + .45rem);
+		gap: .1rem;
+		padding: .55rem;
+	}
+
+	.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__item a {
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+		padding: .6rem .75rem;
+	}
+
+	.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__item:last-child a {
+		min-height: 52px;
+		justify-content: center;
+		padding: .65rem .9rem;
+		text-align: center;
 	}
 }
 
@@ -106,7 +133,13 @@
 
 	.seo-geo-corporate-v5-home--media-atlas .seo-geo-corporate-card--2::before,
 	.seo-geo-corporate-v5-home--media-atlas .seo-geo-corporate-card--3::before {
-		opacity: .32;
+		width: 40%;
+		opacity: .42;
+	}
+
+	.seo-geo-corporate-v5-home--media-atlas .seo-geo-corporate-card--2 h3,
+	.seo-geo-corporate-v5-home--media-atlas .seo-geo-corporate-card--3 h3 {
+		margin-top: clamp(4.75rem, 20vw, 5.25rem);
 	}
 
 	.seo-geo-corporate-v5-home--media-atlas .seo-geo-corporate-native-process::after {
