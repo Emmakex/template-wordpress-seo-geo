@@ -1,14 +1,42 @@
 # SEO/GEO Manager
 
-SEO/GEO Manager is the WordPress control-plane endpoint for ongoing content creation, modification and optimization after a site has been rebuilt with the SEO/GEO Theme.
+SEO/GEO Manager is the independent WordPress control plane for **finishing, optimizing and growing** a site throughout its lifecycle.
 
 It is deliberately separate from both the Theme and Migration Bridge:
 
 - **SEO/GEO Theme** owns rendering, design, semantic HTML, accessibility and frontend performance.
 - **SEO/GEO Migration Bridge** owns scan/clone/rescue/reset-first migration workflows.
-- **SEO/GEO Manager** owns ongoing site intelligence, content operations, SEO/GEO optimization, publishing, revisions and rollback.
+- **SEO/GEO Manager** owns site intelligence, Build / Finish operations, SEO/GEO optimization, content operations, publishing, revisions, rollback and growth.
 
-The architecture follows `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md` and `docs/CONTENT_PUBLISHING.md`.
+The architecture follows:
+
+- `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`
+- `docs/CONTENT_PUBLISHING.md`
+- `docs/SEO_GEO_MANAGER_MVP.md`
+- `docs/SEO_GEO_MANAGER_PRODUCT_MODES.md`
+
+## Product modes
+
+### Build / Finish
+
+For a new site or recently migrated site. Manager inventories the real WordPress state, detects missing/incomplete strategic content, clone-domain leakage, broken internal navigation, metadata gaps, missing internal links and launch-readiness blockers. It then prepares bounded changes that can be previewed, applied, verified and rolled back.
+
+Typical flow:
+
+```text
+new site:      SEO/GEO Theme -> Manager Build / Finish -> launch -> Optimize / Grow
+migrated site: Migration Bridge -> SEO/GEO Theme -> Manager Build / Finish -> launch -> Optimize / Grow
+```
+
+EMMAKE `/nuevaweb/` is the first reference target for this mode.
+
+### Optimize
+
+For an existing site. Manager analyzes intent, entities, headings, content completeness, internal linking, metadata, Schema consistency, GEO signals, stale content and duplicate/cannibalization candidates, then prepares controlled improvements.
+
+### Grow
+
+For continuous operation after launch. Manager creates/refreshes landings and blog content, maintains clusters/internal links, schedules/publishes under policy and later consumes Search Console, Bing, analytics and other accepted signals to prioritize the next iteration.
 
 ## MVP direction
 
@@ -21,7 +49,8 @@ Initial foundations:
 3. stable resource fingerprint for optimistic concurrency;
 4. WordPress-generated permalinks so clones/staging installations never inherit hardcoded production navigation;
 5. WordPress Application Password compatible authentication through normal REST authentication;
-6. capability checks on every non-public operation.
+6. capability checks on every non-public operation;
+7. bounded site snapshot for Build / Finish and later launch-readiness analysis.
 
 ## API v1
 
@@ -45,7 +74,7 @@ Supported query arguments:
 - `per_page` (1-100)
 - `page`
 
-Returns normalized WordPress resources, current environment permalinks and a deterministic fingerprint.
+Returns normalized WordPress resources, current-environment permalinks and a deterministic fingerprint.
 
 ### `GET /content/{id}`
 
@@ -53,17 +82,35 @@ Authenticated. Requires permission to edit the requested resource.
 
 Returns the normalized resource plus raw editable body/excerpt and identity fields required by the future preview/diff/update pipeline.
 
+### `GET /site/snapshot`
+
+Authenticated. Requires `edit_posts`.
+
+M1 foundation endpoint. Returns a bounded snapshot including:
+
+- current `home_url` and `site_url`;
+- WordPress/language/permalink environment;
+- Manager/Bridge/Core presence when detectable;
+- active Theme identity and SEO/GEO Theme detection;
+- page/post/attachment counts;
+- front-page/blog-page identity;
+- menu and taxonomy counts;
+- known SEO-provider detection state;
+- robots and native WordPress sitemap discovery URLs.
+
+This endpoint is intentionally read-only. Link-graph, clone-domain leakage, readiness scoring and deeper SEO/GEO signals are added incrementally in M1.
+
 ## Next endpoints
 
-The next implementation slice adds:
+The next implementation slices add:
 
-- `/site/snapshot`
-- `/changes/preview`
-- `/changes/apply`
-- `/changes/{operation_id}`
-- `/changes/{operation_id}/rollback`
-- `/optimize/analyze`
-- `/publish/draft`
+- richer `/site/snapshot` intelligence and launch readiness;
+- `/changes/preview`;
+- `/changes/apply`;
+- `/changes/{operation_id}`;
+- `/changes/{operation_id}/rollback`;
+- `/optimize/analyze`;
+- `/publish/draft`.
 
 Writes remain draft-first and idempotent. No endpoint may silently publish, overwrite a newer human revision or create duplicate URL intent.
 
