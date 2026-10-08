@@ -1,0 +1,51 @@
+name: SEO GEO Manager WordPress CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
+      - '.github/workflows/seo-geo-manager-wordpress.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
+      - '.github/workflows/seo-geo-manager-wordpress.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-geo-manager-wordpress-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manager-wordpress:
+    name: M1/M2 runtime acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate acceptance script
+        run: |
+          bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+          php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
+
+      - name: Pull pinned WordPress fixture images
+        run: |
+          docker pull wordpress:7.1.0-php8.2-apache
+          docker pull wordpress:cli-2.12.0-php8.2
+          docker pull mariadb:11.8.9
+
+      - name: Manager WordPress acceptance
+        run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
