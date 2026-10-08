@@ -44,11 +44,11 @@ final class ThemeStructuredContentAdapter {
 			'slots'          => $prepared['slot_diff'],
 			'has_changes'    => true === ( $engine['has_changes'] ?? false ),
 			'policy'         => array(
-				'layout_preserved'          => true,
-				'arbitrary_html_blocked'    => true,
-				'verified_groups'           => $prepared['verified_groups'],
-				'published_target_blocked'  => $engine['policy']['published_target_blocked'] ?? false,
-				'allow_published_target'    => $engine['policy']['allow_published_target'] ?? false,
+				'layout_preserved'         => true,
+				'arbitrary_html_blocked'   => true,
+				'verified_groups'          => $prepared['verified_groups'],
+				'published_target_blocked' => $engine['policy']['published_target_blocked'] ?? false,
+				'allow_published_target'   => $engine['policy']['allow_published_target'] ?? false,
 			),
 		);
 	}
@@ -71,12 +71,12 @@ final class ThemeStructuredContentAdapter {
 		}
 
 		$result['structured_model'] = array(
-			'preset'            => $prepared['preset'],
-			'page_key'          => $prepared['page_key'],
-			'model_id'          => $prepared['model_id'],
-			'slots'             => $prepared['slot_diff'],
-			'verified_groups'   => $prepared['verified_groups'],
-			'layout_preserved'  => true,
+			'preset'           => $prepared['preset'],
+			'page_key'         => $prepared['page_key'],
+			'model_id'         => $prepared['model_id'],
+			'slots'            => $prepared['slot_diff'],
+			'verified_groups'  => $prepared['verified_groups'],
+			'layout_preserved' => true,
 		);
 
 		return $result;
@@ -209,7 +209,7 @@ final class ThemeStructuredContentAdapter {
 			}
 			$resource = isset( $page['resource'] ) && is_array( $page['resource'] ) ? $page['resource'] : array();
 			$model    = isset( $page['model'] ) && is_array( $page['model'] ) ? $page['model'] : array();
-			if ( $target_id !== (int) ( $resource['id'] ?? 0 ) || $model_id !== ( $model['model_id'] ?? '' ) ) {
+			if ( (int) ( $resource['id'] ?? 0 ) !== $target_id || ( $model['model_id'] ?? '' ) !== $model_id ) {
 				continue;
 			}
 
@@ -244,7 +244,7 @@ final class ThemeStructuredContentAdapter {
 		if ( ! is_array( $document ) ) {
 			$path = trailingslashit( get_template_directory() ) . 'presets/' . sanitize_key( $preset ) . '/page-models.json';
 			if ( is_readable( $path ) && function_exists( 'wp_json_file_decode' ) ) {
-				$value = wp_json_file_decode( $path, array( 'associative' => true ) );
+				$value    = wp_json_file_decode( $path, array( 'associative' => true ) );
 				$document = is_array( $value ) ? $value : null;
 			}
 		}
@@ -316,7 +316,7 @@ final class ThemeStructuredContentAdapter {
 				return new WP_Error( 'seo_geo_manager_structured_slot_invalid', 'Structured slot IDs must be strings.', array( 'status' => 400 ) );
 			}
 
-			$slot_id = sanitize_key( $slot_id );
+			$slot_id    = sanitize_key( $slot_id );
 			$definition = $definitions[ $slot_id ] ?? null;
 			if ( ! is_array( $definition ) ) {
 				return new WP_Error(
@@ -421,15 +421,15 @@ final class ThemeStructuredContentAdapter {
 					'seo_geo_manager_structured_slot_cardinality',
 					'The Theme slot marker must exist exactly once in stored page content.',
 					array(
-						'status' => 409,
+						'status'  => 409,
 						'slot_id' => $slot_id,
-						'found' => is_int( $count ) ? $count : 0,
+						'found'   => is_int( $count ) ? $count : 0,
 					)
 				);
 			}
 
-			$match = $matches[0];
-			$type  = isset( $definitions[ $slot_id ]['type'] ) && is_string( $definitions[ $slot_id ]['type'] )
+			$match        = $matches[0];
+			$type         = isset( $definitions[ $slot_id ]['type'] ) && is_string( $definitions[ $slot_id ]['type'] )
 				? sanitize_key( $definitions[ $slot_id ]['type'] )
 				: 'text';
 			$before_inner = isset( $match['inner'] ) && is_string( $match['inner'] ) ? $match['inner'] : '';
@@ -472,7 +472,12 @@ final class ThemeStructuredContentAdapter {
 				return new WP_Error( 'seo_geo_manager_structured_slot_type_unsupported', 'Unsupported structured slot type.', array( 'status' => 400 ) );
 			}
 
-			$updated = preg_replace( $pattern, addcslashes( $replacement, '\\$' ), $content, 1 );
+			$updated = preg_replace_callback(
+				$pattern,
+				static fn ( array $ignored ): string => $replacement,
+				$content,
+				1
+			);
 			if ( ! is_string( $updated ) ) {
 				return new WP_Error( 'seo_geo_manager_structured_replace_failed', 'Could not safely replace the Theme slot.', array( 'status' => 500 ) );
 			}
