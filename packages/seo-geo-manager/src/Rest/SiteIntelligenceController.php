@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
+use SeoGeo\Manager\Intelligence\ActionableDiagnostics;
 use SeoGeo\Manager\Intelligence\BuildFinishReadiness;
 use SeoGeo\Manager\Intelligence\MediaIntelligenceScanner;
 use SeoGeo\Manager\Intelligence\SeoAuthorityScanner;
@@ -52,6 +53,7 @@ final class SiteIntelligenceController {
 		$site['theme_contract']         = $theme;
 		$site['seo_authority']          = $seo;
 		$site['media_intelligence']     = $media;
+		$site['actionable_diagnostics'] = ActionableDiagnostics::build( $site, $theme );
 		$site['build_finish_readiness'] = BuildFinishReadiness::aggregate( $site, $theme, $seo, $media );
 
 		return new WP_REST_Response( $site, 200 );
