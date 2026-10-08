@@ -137,7 +137,11 @@ final class StrategicSurfaceRuntime {
 		}
 
 		if ( is_readable( $navigation_script_path ) ) {
-			$navigation_script_version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $navigation_script_path ) : '0.1.1';
+			$navigation_script_version = '0.1.1';
+			if ( function_exists( 'seo_geo_theme_asset_version' ) ) {
+				$navigation_script_version = seo_geo_theme_asset_version( $navigation_script_path );
+			}
+
 			wp_enqueue_script(
 				'seo-geo-theme-preset-navigation',
 				get_stylesheet_directory_uri() . '/assets/js/preset-navigation.js',
