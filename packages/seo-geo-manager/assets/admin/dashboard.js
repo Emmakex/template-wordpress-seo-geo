@@ -11,6 +11,7 @@
 	const renderedToggle = root.querySelector( '[data-seo-geo-rendered]' );
 	const statusBox = root.querySelector( '[data-seo-geo-status]' );
 	const checksBox = root.querySelector( '[data-seo-geo-checks]' );
+	const actionablesBox = root.querySelector( '[data-seo-geo-actionables]' );
 	const structureBox = root.querySelector( '[data-seo-geo-structure]' );
 	const navigationBox = root.querySelector( '[data-seo-geo-navigation]' );
 	const rawBox = root.querySelector( '[data-seo-geo-raw]' );
@@ -50,6 +51,16 @@
 			blocker: 'Bloqueo',
 		};
 		return labels[ value ] || String( value || '—' );
+	}
+
+	function classificationLabel( value ) {
+		const labels = {
+			'auto-fixable': 'Autocorregible',
+			hydrate: 'Hidratar',
+			'evidence-required': 'Evidencia requerida',
+			review: 'Revisar',
+		};
+		return labels[ value ] || String( value || 'Revisar' );
 	}
 
 	function renderMetrics( data ) {
@@ -94,15 +105,94 @@
 		} );
 	}
 
+	function renderActionables( data ) {
+		if ( ! actionablesBox ) {
+			return;
+		}
+		clear( actionablesBox );
+		const diagnostics = object( data.actionable_diagnostics );
+		const summary = object( diagnostics.summary );
+		const items = array( diagnostics.items );
+
+		if ( ! items.length ) {
+			actionablesBox.appendChild( text( 'p', 'No se detectaron causas raíz accionables dentro del alcance actual.', 'description' ) );
+			return;
+		}
+
+		const facts = document.createElement( 'ul' );
+		facts.className = 'seo-geo-manager-admin__facts';
+		[
+			[ 'Problemas únicos', summary.unique_issues ?? items.length ],
+			[ 'Detecciones agrupadas', summary.raw_occurrences ?? items.length ],
+			[ 'Autocorregibles', summary.auto_fixable ?? 0 ],
+			[ 'Revisión manual', summary.review_required ?? 0 ],
+			[ 'Evidencia requerida', summary.evidence_required ?? 0 ],
+		].forEach( ( [ label, value ] ) => {
+			const item = document.createElement( 'li' );
+			item.appendChild( text( 'span', label ) );
+			item.appendChild( text( 'strong', value ) );
+			facts.appendChild( item );
+		} );
+		actionablesBox.appendChild( facts );
+
+		const list = document.createElement( 'div' );
+		list.className = 'seo-geo-manager-admin__checks';
+		items.slice( 0, 20 ).forEach( ( item ) => {
+			const row = document.createElement( 'article' );
+			row.className = `seo-geo-manager-admin__check is-${ item.severity || 'warning' }`;
+
+			const heading = document.createElement( 'div' );
+			heading.className = 'seo-geo-manager-admin__check-heading';
+			heading.appendChild( text( 'strong', item.title || item.code || 'Diagnóstico' ) );
+			heading.appendChild( text( 'span', classificationLabel( item.classification ), 'seo-geo-manager-admin__badge' ) );
+			row.appendChild( heading );
+
+			const occurrences = Number( item.occurrences || 1 );
+			row.appendChild( text( 'p', `${ item.category || 'diagnóstico' } · ${ occurrences } detección(es)` ) );
+
+			if ( item.current_url ) {
+				row.appendChild( text( 'code', item.current_url ) );
+			}
+			if ( item.suggested_url ) {
+				row.appendChild( text( 'p', `Destino propuesto: ${ item.suggested_url }` ) );
+			}
+			if ( item.next_action ) {
+				row.appendChild( text( 'p', `Siguiente acción: ${ item.next_action }`, 'description' ) );
+			}
+
+			const sources = array( item.sources );
+			if ( sources.length ) {
+				const details = document.createElement( 'details' );
+				details.appendChild( text( 'summary', `Ver orígenes (${ sources.length })` ) );
+				const sourceList = document.createElement( 'ul' );
+				sources.forEach( ( source ) => {
+					const value = source.permalink || `${ source.kind || 'origen' } #${ source.id || '—' }`;
+					sourceList.appendChild( text( 'li', value ) );
+				} );
+				details.appendChild( sourceList );
+				row.appendChild( details );
+			}
+
+			list.appendChild( row );
+		} );
+		actionablesBox.appendChild( list );
+	}
+
 	function renderStructure( data ) {
 		clear( structureBox );
 		const contract = object( data.theme_contract );
 		const summary = object( contract.summary );
+		const pages = array( contract.pages );
 
 		if ( contract.applicable !== true ) {
 			structureBox.appendChild( text( 'p', 'No hay un contrato de preset SEO/GEO activo. El análisis genérico sigue disponible.' ) );
 			return;
 		}
+
+		const unhydrated = pages.filter( ( page ) => {
+			const model = object( page && page.model );
+			return array( model.required_slots ).length > 0 && array( model.present_required_slots ).length === 0 && array( model.missing_required_slots ).length > 0;
+		} ).length;
 
 		const list = document.createElement( 'ul' );
 		list.className = 'seo-geo-manager-admin__facts';
@@ -111,8 +201,8 @@
 			[ 'Páginas esperadas', summary.expected_pages ?? 0 ],
 			[ 'Páginas resueltas', summary.resolved_pages ?? 0 ],
 			[ 'Páginas ausentes', summary.missing_pages ?? 0 ],
-			[ 'Modelos incompletos', summary.incomplete_model_pages ?? 0 ],
-			[ 'Slots requeridos ausentes', summary.missing_required_slots ?? 0 ],
+			[ 'Modelos pendientes de hidratar', unhydrated ],
+			[ 'Slots detectados como ausentes', summary.missing_required_slots ?? 0 ],
 		].forEach( ( [ label, value ] ) => {
 			const item = document.createElement( 'li' );
 			item.appendChild( text( 'span', label ) );
@@ -121,7 +211,7 @@
 		} );
 		structureBox.appendChild( list );
 
-		const missing = array( contract.pages ).filter( ( page ) => page && page.resolved !== true );
+		const missing = pages.filter( ( page ) => page && page.resolved !== true );
 		if ( missing.length ) {
 			structureBox.appendChild( text( 'h3', 'Páginas pendientes' ) );
 			const pending = document.createElement( 'ul' );
@@ -135,12 +225,13 @@
 		const links = object( data.links );
 		const leakage = array( links.environment_leakage_candidates );
 		const unresolved = array( links.unresolved_internal_path_candidates );
-		const orphans = array( links.published_orphan_page_candidates );
+		const orphans = array( links.orphan_page_candidates );
+		const highLeakage = leakage.filter( ( item ) => item && item.confidence === 'high' );
 
 		const list = document.createElement( 'ul' );
 		list.className = 'seo-geo-manager-admin__facts';
 		[
-			[ 'Fugas al dominio/ruta anterior', leakage.length ],
+			[ 'Fugas de entorno con confianza alta', highLeakage.length ],
 			[ 'Rutas internas no resueltas', unresolved.length ],
 			[ 'Páginas huérfanas candidatas', orphans.length ],
 		].forEach( ( [ label, value ] ) => {
@@ -151,13 +242,14 @@
 		} );
 		navigationBox.appendChild( list );
 
-		if ( leakage.length ) {
-			navigationBox.appendChild( text( 'h3', 'Fugas detectadas' ) );
+		if ( highLeakage.length ) {
+			navigationBox.appendChild( text( 'h3', 'Fugas de entorno detectadas' ) );
 			const pending = document.createElement( 'ul' );
-			leakage.slice( 0, 10 ).forEach( ( item ) => {
-				const source = item.source_url || item.source || 'Origen';
-				const target = item.url || item.target_url || item.href || 'Destino';
-				pending.appendChild( text( 'li', `${ source } → ${ target }` ) );
+			highLeakage.slice( 0, 10 ).forEach( ( item ) => {
+				const source = object( item.source );
+				const sourceLabel = source.permalink || `${ source.kind || 'origen' } #${ source.id || '—' }`;
+				const target = item.absolute_url || item.href || 'Destino';
+				pending.appendChild( text( 'li', `${ sourceLabel } → ${ target }` ) );
 			} );
 			navigationBox.appendChild( pending );
 		}
@@ -166,6 +258,7 @@
 	function render( data ) {
 		renderMetrics( data );
 		renderChecks( data );
+		renderActionables( data );
 		renderStructure( data );
 		renderNavigation( data );
 		if ( rawBox ) {
