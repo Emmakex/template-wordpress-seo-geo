@@ -37,6 +37,26 @@ For an existing site. Manager analyzes intent, entities, headings, content compl
 
 For continuous operation after launch. Manager creates/refreshes landings and blog content, maintains clusters/internal links, schedules/publishes under policy and later consumes Search Console, Bing, analytics and other accepted signals.
 
+## WordPress admin dashboard
+
+Manager 0.3.2 adds the first authenticated WordPress admin surface under **SEO/GEO Manager**.
+
+The Build / Finish dashboard uses the logged-in WordPress session and `wp-api-fetch`, so operators no longer need to open protected REST endpoints manually or construct REST nonces just to inspect the site.
+
+The first dashboard slice provides:
+
+- one-click **Analizar sitio** execution;
+- optional rendered-frontend verification;
+- overall Build / Finish readiness;
+- blocker and warning counts;
+- resolved SEO authority summary;
+- readiness checks with bounded evidence;
+- Theme/preset structure and required-content summary;
+- navigation/environment leakage summary;
+- raw diagnostic JSON for technical review.
+
+The dashboard is intentionally read-only in this first slice. M2 mutation endpoints remain available through their existing safety contract; later admin iterations will expose proposal, preview, apply, verify, history and rollback without weakening those guards.
+
 ## API v1
 
 Base namespace:
@@ -198,11 +218,14 @@ Structured Theme writes currently roll back by restoring the exact previous `pos
 
 For MVP automation use normal WordPress REST authentication with an authorized WordPress user, preferably Application Passwords over HTTPS. Authorization remains capability-based. Secrets are never stored in content manifests or committed to GitHub.
 
+Inside WordPress admin, the dashboard uses the authenticated session through WordPress' own REST nonce middleware. The protected `/site/intelligence` endpoint therefore remains private while still being usable from the Manager UI.
+
 ## Next implementation slices
 
+- dashboard proposal/preview/apply/verify/rollback controls;
 - provider-specific SEO metadata write adapters, starting with the accepted field authority;
 - creation manifests for new draft pages/posts;
-- operation history/admin surface;
+- operation history surface;
 - rendered verification after accepted writes;
 - M3 SEO/GEO Optimizer;
 - M4 Landing Engine;
