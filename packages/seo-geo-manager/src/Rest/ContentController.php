@@ -9,11 +9,12 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
+use SeoGeo\Manager\Support\ContentFingerprint;
+use WP_Error;
 use WP_Post;
 use WP_Query;
 use WP_REST_Request;
 use WP_REST_Response;
-use WP_Error;
 
 final class ContentController {
 	private const NAMESPACE = 'seo-geo-manager/v1';
@@ -128,31 +129,19 @@ final class ContentController {
 		return new WP_REST_Response( $data, 200 );
 	}
 
+	/**
+	 * @return array<string, mixed>
+	 */
 	private static function normalize_post( WP_Post $post ): array {
-		$permalink = get_permalink( $post );
-
 		return array(
-			'id'        => (int) $post->ID,
-			'type'      => (string) $post->post_type,
-			'status'    => (string) $post->post_status,
-			'slug'      => (string) $post->post_name,
-			'title'     => html_entity_decode( get_the_title( $post ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ),
-			'permalink' => is_string( $permalink ) ? $permalink : '',
-			'modified'  => (string) $post->post_modified_gmt,
-			'fingerprint' => hash(
-				'sha256',
-				implode(
-					'|',
-					array(
-						(string) $post->ID,
-						(string) $post->post_modified_gmt,
-						(string) $post->post_title,
-						(string) $post->post_name,
-						(string) $post->post_status,
-						(string) $post->post_content,
-					)
-				)
-			),
+			'id'          => (int) $post->ID,
+			'type'        => (string) $post->post_type,
+			'status'      => (string) $post->post_status,
+			'slug'        => (string) $post->post_name,
+			'title'       => html_entity_decode( get_the_title( $post ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ),
+			'permalink'   => (string) get_permalink( $post ),
+			'modified'    => (string) $post->post_modified_gmt,
+			'fingerprint' => ContentFingerprint::for_post( $post ),
 		);
 	}
 }
