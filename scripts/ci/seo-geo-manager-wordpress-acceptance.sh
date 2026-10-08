@@ -24,6 +24,7 @@ DB_ROOT_PASSWORD="manager-acceptance-root"
 
 TMP_DIR="$(mktemp -d)"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
+ACCEPTANCE_FIXTURE="${TMP_DIR}/seo-geo-manager-acceptance.php"
 
 signature() {
   printf '%s' "$1" | sha256sum | cut -c1-12
@@ -161,7 +162,13 @@ bash scripts/build-theme-package.sh "$SELF_CONTAINED_THEME" \
 docker cp "$SELF_CONTAINED_THEME/." "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
   || fail_acceptance "theme-copy" "Could not copy SEO/GEO Theme" "theme copied" "docker cp failed"
 
-docker cp scripts/ci/seo-geo-manager-wordpress-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-acceptance.php \
+# WP-CLI eval-file executes the fixture through eval(); strict_types is invalid there
+# because it is no longer the first statement in the generated code. Preserve the
+# source fixture for normal linting, but remove only that declaration for runtime.
+sed '/^declare(strict_types=1);$/d' scripts/ci/seo-geo-manager-wordpress-acceptance.php >"$ACCEPTANCE_FIXTURE" \
+  || fail_acceptance "fixture-prepare" "Could not prepare Manager acceptance fixture" "strict-types-free eval fixture" "sed failed"
+
+docker cp "$ACCEPTANCE_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-acceptance.php \
   || fail_acceptance "fixture-copy" "Could not copy Manager acceptance fixture" "fixture copied" "docker cp failed"
 
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
