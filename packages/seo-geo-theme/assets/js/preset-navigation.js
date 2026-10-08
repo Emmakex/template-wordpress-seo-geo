@@ -34,8 +34,8 @@ function seoGeoCloseNavigation( details, restoreFocus ) {
 
 document.addEventListener(
 	'click',
-	function( event ) {
-		const target = event.target;
+	function ( event ) {
+		const target  = event.target;
 		const summary = target instanceof Element ? target.closest( seoGeoMobileNavigationSelector + ' > summary' ) : null;
 		let details;
 		let link;
@@ -61,7 +61,7 @@ document.addEventListener(
 
 document.addEventListener(
 	'pointerdown',
-	function( event ) {
+	function ( event ) {
 		const target = event.target;
 
 		if ( ! ( target instanceof Node ) ) {
@@ -69,7 +69,7 @@ document.addEventListener(
 		}
 
 		document.querySelectorAll( seoGeoMobileNavigationSelector + '[open]' ).forEach(
-			function( details ) {
+			function ( details ) {
 				if ( details instanceof HTMLDetailsElement && ! details.contains( target ) ) {
 					seoGeoCloseNavigation( details, false );
 				}
@@ -80,13 +80,13 @@ document.addEventListener(
 
 document.addEventListener(
 	'keydown',
-	function( event ) {
+	function ( event ) {
 		if ( event.key !== 'Escape' ) {
 			return;
 		}
 
 		document.querySelectorAll( seoGeoMobileNavigationSelector + '[open]' ).forEach(
-			function( details ) {
+			function ( details ) {
 				if ( details instanceof HTMLDetailsElement ) {
 					seoGeoCloseNavigation( details, true );
 				}
