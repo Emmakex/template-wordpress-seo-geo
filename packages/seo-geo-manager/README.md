@@ -53,7 +53,13 @@ Initial foundations:
 7. bounded site snapshot for Build / Finish and launch-readiness analysis;
 8. resource inventory and internal-link graph;
 9. clone/current-environment leakage detection;
-10. orphan-page and unresolved internal-path review signals.
+10. orphan-page and unresolved internal-path review signals;
+11. active SEO/GEO Theme preset/contract detection;
+12. expected strategic-page resolution;
+13. required structured-slot completeness signals;
+14. bounded page/media alt hygiene signals;
+15. read-only SEO output-authority candidates;
+16. aggregated Build / Finish readiness by category.
 
 ## API v1
 
@@ -115,7 +121,14 @@ Build / Finish intelligence report including:
 - environment/clone leakage candidates;
 - unresolved same-environment path candidates;
 - published orphan-page candidates;
-- bounded launch-readiness checks.
+- active SEO/GEO Theme preset contract when available;
+- expected strategic-page mapping with resolution method/confidence;
+- semantic model ID and required-slot completeness;
+- required-any slot groups and required verified-group presence signals;
+- page-level featured/content-image signals;
+- bounded media-library missing-alt sample;
+- read-only SEO authority candidate map for title/meta, canonical, robots, OG, Schema, hreflang and sitemap;
+- aggregated Build / Finish readiness grouped into structure, content, navigation, SEO authority, media, frontend verification and operations.
 
 Optional query argument:
 
@@ -124,6 +137,10 @@ Optional query argument:
 A high-confidence leakage candidate is a link that maps to a real local WordPress resource but escapes the current WordPress `home_url()` path. This catches the EMMAKE clone case where a link on `/nuevaweb/` points to the equivalent production path instead of the clone path.
 
 External-host path matches are reported at medium confidence and require review rather than being treated as proof of an error.
+
+Theme-contract completeness is also evidence-based: missing required semantic slot markers are blockers for a Theme-owned structured model, while provenance-required proof remains a separate review signal rather than being invented or automatically accepted.
+
+SEO authority remains read-only in M1. Even when a likely Yoast, Rank Math, AIOSEO or Theme-native owner is detected, Manager will not write public SEO metadata until the M2/M3 Output Authority Resolver binds an accepted adapter.
 
 ## Next endpoints
 
