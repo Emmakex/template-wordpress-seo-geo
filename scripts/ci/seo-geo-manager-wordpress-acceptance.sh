@@ -25,8 +25,10 @@ DB_ROOT_PASSWORD="manager-acceptance-root"
 TMP_DIR="$(mktemp -d)"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 STRUCTURED_LOG="${TMP_DIR}/structured-runtime.log"
+AUTHORITY_LOG="${TMP_DIR}/seo-authority-runtime.log"
 ACCEPTANCE_FIXTURE="${TMP_DIR}/seo-geo-manager-acceptance.php"
 STRUCTURED_FIXTURE="${TMP_DIR}/seo-geo-manager-structured-acceptance.php"
+AUTHORITY_FIXTURE="${TMP_DIR}/seo-geo-manager-seo-authority-acceptance.php"
 
 signature() {
   printf '%s' "$1" | sha256sum | cut -c1-12
@@ -168,16 +170,21 @@ cp scripts/ci/seo-geo-manager-wordpress-acceptance.php "$ACCEPTANCE_FIXTURE" \
   || fail_acceptance "fixture-prepare" "Could not prepare Manager acceptance fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-structured-acceptance.php "$STRUCTURED_FIXTURE" \
   || fail_acceptance "structured-fixture-prepare" "Could not prepare structured Manager acceptance fixture" "fixture copied" "cp failed"
+cp scripts/ci/seo-geo-manager-seo-authority-acceptance.php "$AUTHORITY_FIXTURE" \
+  || fail_acceptance "authority-fixture-prepare" "Could not prepare SEO authority acceptance fixture" "fixture copied" "cp failed"
 
 docker cp "$ACCEPTANCE_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-acceptance.php \
   || fail_acceptance "fixture-copy" "Could not copy Manager acceptance fixture" "fixture copied" "docker cp failed"
 docker cp "$STRUCTURED_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-structured-acceptance.php \
   || fail_acceptance "structured-fixture-copy" "Could not copy structured Manager acceptance fixture" "fixture copied" "docker cp failed"
+docker cp "$AUTHORITY_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-seo-authority-acceptance.php \
+  || fail_acceptance "authority-fixture-copy" "Could not copy SEO authority acceptance fixture" "fixture copied" "docker cp failed"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-manager \
   /var/www/html/wp-content/themes/seo-geo-theme \
   /var/www/html/seo-geo-manager-acceptance.php \
   /var/www/html/seo-geo-manager-structured-acceptance.php \
+  /var/www/html/seo-geo-manager-seo-authority-acceptance.php \
   || fail_acceptance "package-permissions" "Could not set WordPress package permissions" "www-data owns packages" "chown failed"
 
 printf '[manager] Installing WordPress.\n'
@@ -224,6 +231,16 @@ fi
 cat "$STRUCTURED_LOG"
 grep -q '"ok":true' "$STRUCTURED_LOG" \
   || fail_acceptance "structured-result" "Structured Manager acceptance did not emit success marker" '"ok":true' "$(tail -c 500 "$STRUCTURED_LOG" | tr '\n' ' ')"
+
+printf '[manager] Running SEO output authority resolver acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-seo-authority-acceptance.php >"$AUTHORITY_LOG" 2>&1; then
+  cat "$AUTHORITY_LOG"
+  fail_acceptance "authority-runtime" "Manager SEO output authority acceptance failed" 'JSON with "ok":true' "$(tail -c 500 "$AUTHORITY_LOG" | tr '\n' ' ')"
+fi
+
+cat "$AUTHORITY_LOG"
+grep -q '"ok":true' "$AUTHORITY_LOG" \
+  || fail_acceptance "authority-result" "SEO authority acceptance did not emit success marker" '"ok":true' "$(tail -c 500 "$AUTHORITY_LOG" | tr '\n' ' ')"
 
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
