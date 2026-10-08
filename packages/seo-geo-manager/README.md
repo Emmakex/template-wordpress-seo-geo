@@ -65,6 +65,14 @@ Returns raw editable body/excerpt plus identity and fingerprint data used by con
 
 Authenticated bounded environment snapshot: current URLs, WordPress version/language/permalinks, Manager/Bridge/Core presence, Theme identity, content counts, front/blog page identity, menu/taxonomy counts, SEO-provider detection and discovery URLs.
 
+Manager 0.2.1 also exposes an explicit environment write contract inside `environment`:
+
+- `type`: the standard WordPress environment type (`production`, `staging`, `development` or `local`);
+- `fingerprint`: deterministic SHA-256 identity derived from environment type + current `home_url()` + current `site_url()`;
+- `write_approval_required`: `true` in production, `false` otherwise.
+
+The environment fingerprint is an acknowledgement token, not a secret. Automation must inspect the current site and echo the exact fingerprint before production mutation. If a clone, URL or environment type changes, the old fingerprint becomes stale automatically.
+
 ### `GET /site/intelligence`
 
 Authenticated Build / Finish intelligence. It currently includes:
@@ -96,7 +104,7 @@ Requires:
 - the target fingerprint obtained during inspection;
 - one or more supported changes.
 
-Preview checks stale state, permissions, slug collisions, destructive empty-content intent and published-target policy without writing WordPress state.
+Preview checks stale state, permissions, slug collisions, destructive empty-content intent and published-target policy without writing WordPress state. It also returns the current Manager environment contract so callers can carry the inspected fingerprint into an approved apply.
 
 ### `POST /changes/apply`
 
@@ -110,32 +118,39 @@ Apply adds:
 - pre-change revision attempt;
 - bounded previous-value capture;
 - exact post-apply verification;
-- persisted operation/rollback record.
+- persisted operation/rollback record;
+- explicit production environment approval;
+- operation-to-environment binding.
 
 Initial fields are `title`, `slug`, `excerpt`, `content` and `status`. Baseline status writes are limited to `draft` and `pending`.
 
-A currently published target is blocked unless the caller explicitly sends `allow_published_target=true` and has the post type publish capability. This is an explicit staging/approval escape hatch, not automatic production publication.
+When WordPress reports `production`, callers must include `environment_fingerprint` with the exact current fingerprint returned by `GET /site/snapshot`. Missing or stale approval is rejected before the mutation engine runs. Staging/development/local environments keep all M2 safety guards but do not require this extra acknowledgement.
+
+A currently published target is blocked unless the caller explicitly sends `allow_published_target=true` and has the post type publish capability. This remains a second, separate approval: environment approval confirms **where** the write is happening, while published-target approval confirms **what lifecycle state** is being changed.
 
 ### `GET /changes/{operation_id}`
 
-Reads one Manager operation when the current user can still edit the target.
+Reads one Manager operation when the current user can still edit the target. New operations include the environment contract they were applied under.
 
 ### `POST /changes/{operation_id}/rollback`
 
 Restores only fields changed by that Manager operation. Rollback is blocked if the current fingerprint differs from the recorded post-apply fingerprint, protecting newer human/plugin changes.
 
+Production rollback also requires the current `environment_fingerprint` and refuses an operation that is not bound to the same environment. This prevents operation metadata copied during a clone/migration from being replayed blindly against a different site.
+
 ## Safety invariants
 
 1. Inspect before mutate.
 2. No hardcoded production domain for internal resource identity.
-3. Draft-first baseline.
-4. Idempotent writes.
-5. Optimistic concurrency.
-6. Bounded rollback.
-7. One accepted SEO authority per public output.
-8. No fabricated proof/facts.
-9. Content is not layout on Theme-owned strategic surfaces.
-10. Normal blog posts remain normal WordPress posts.
+3. Production mutations require current-environment acknowledgement.
+4. Draft-first baseline.
+5. Idempotent writes.
+6. Optimistic concurrency.
+7. Bounded rollback.
+8. One accepted SEO authority per public output.
+9. No fabricated proof/facts.
+10. Content is not layout on Theme-owned strategic surfaces.
+11. Normal blog posts remain normal WordPress posts.
 
 ## Authentication
 
@@ -143,8 +158,6 @@ For MVP automation use normal WordPress REST authentication with an authorized W
 
 ## Next implementation slices
 
-- dedicated M2 acceptance tests;
-- explicit staging/production approval policy;
 - Theme structured-model write adapter;
 - SEO Output Authority Resolver adapters;
 - creation manifests for new draft pages/posts;
