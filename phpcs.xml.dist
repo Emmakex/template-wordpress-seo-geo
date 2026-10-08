@@ -10,7 +10,6 @@
   <file>packages/seo-geo-theme</file>
   <file>packages/seo-geo-core</file>
   <file>packages/seo-geo-migration-bridge</file>
-  <file>packages/seo-geo-manager</file>
 
   <exclude-pattern>*/vendor/*</exclude-pattern>
   <!-- Corporate visual CSS is intentionally compact and protected by dedicated Design System / browser gates. -->
@@ -22,10 +21,10 @@
 
   <rule ref="WordPress">
     <!--
-      Core and Manager intentionally use small namespaced autoloaders and
-      PSR-style class paths. The two filename sniffs below enforce classic
-      WordPress lowercase/class-*.php filenames, which are incompatible with
-      that deliberate autoload contract. Only filename convention is excluded;
+      The Core intentionally uses a small namespaced autoloader and PSR-style
+      class paths. The two filename sniffs below enforce classic WordPress
+      lowercase/class-*.php filenames, which are incompatible with that
+      deliberate autoload contract. Only filename convention is excluded;
       all naming, documentation, security and interoperability rules remain on.
     -->
     <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
