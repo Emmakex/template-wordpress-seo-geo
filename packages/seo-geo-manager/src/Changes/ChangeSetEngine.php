@@ -47,9 +47,9 @@ final class ChangeSetEngine {
 			'diff'           => $diff,
 			'has_changes'    => array() !== $diff,
 			'policy'         => array(
-				'draft_first'             => true,
-				'published_target_blocked'=> 'publish' === $post->post_status && ! $normalized['allow_published_target'],
-				'allow_published_target'  => $normalized['allow_published_target'],
+				'draft_first'              => true,
+				'published_target_blocked' => 'publish' === $post->post_status && ! $normalized['allow_published_target'],
+				'allow_published_target'   => $normalized['allow_published_target'],
 			),
 		);
 	}
@@ -64,6 +64,15 @@ final class ChangeSetEngine {
 		$normalized = self::normalize_payload( $payload, true );
 		if ( is_wp_error( $normalized ) ) {
 			return $normalized;
+		}
+
+		$payload_hash = self::payload_hash( $normalized );
+		$lookup       = OperationStore::lookup( $normalized['idempotency_key'], $payload_hash );
+		if ( is_wp_error( $lookup ) ) {
+			return $lookup;
+		}
+		if ( $lookup['existing'] ) {
+			return self::idempotent_operation( $lookup['operation_id'] );
 		}
 
 		$post = self::target_post( $normalized );
@@ -86,7 +95,6 @@ final class ChangeSetEngine {
 		}
 
 		$operation_id = wp_generate_uuid4();
-		$payload_hash = self::payload_hash( $normalized );
 		$reservation  = OperationStore::reserve(
 			$normalized['idempotency_key'],
 			$payload_hash,
@@ -97,18 +105,7 @@ final class ChangeSetEngine {
 		}
 
 		if ( $reservation['existing'] ) {
-			$existing = OperationStore::get( $reservation['operation_id'] );
-			if ( is_array( $existing ) ) {
-				$existing['idempotent_replay'] = true;
-
-				return $existing;
-			}
-
-			return new WP_Error(
-				'seo_geo_manager_idempotent_operation_missing',
-				'The idempotency key is reserved but its operation record is unavailable.',
-				array( 'status' => 409 )
-			);
+			return self::idempotent_operation( $reservation['operation_id'] );
 		}
 
 		$previous = self::previous_values( $post, array_keys( $normalized['changes'] ) );
@@ -118,13 +115,13 @@ final class ChangeSetEngine {
 
 		if ( is_wp_error( $result ) ) {
 			$failed = array(
-				'operation_id'   => $operation_id,
-				'status'         => 'failed',
-				'target_id'      => (int) $post->ID,
-				'payload_hash'   => $payload_hash,
-				'idempotency_key'=> $normalized['idempotency_key'],
-				'created_at_gmt' => gmdate( 'c' ),
-				'error'          => $result->get_error_message(),
+				'operation_id'    => $operation_id,
+				'status'          => 'failed',
+				'target_id'       => (int) $post->ID,
+				'payload_hash'    => $payload_hash,
+				'idempotency_key' => $normalized['idempotency_key'],
+				'created_at_gmt'  => gmdate( 'c' ),
+				'error'           => $result->get_error_message(),
 			);
 			OperationStore::save( $operation_id, $failed );
 
@@ -142,23 +139,23 @@ final class ChangeSetEngine {
 
 		$verification = self::verify_changes( $after, $normalized['changes'] );
 		$operation    = array(
-			'operation_id'       => $operation_id,
-			'schema_version'     => self::SCHEMA_VERSION,
-			'status'             => array() === $verification ? 'applied' : 'verification-failed',
-			'target_id'          => (int) $post->ID,
-			'target_type'        => (string) $post->post_type,
-			'idempotency_key'    => $normalized['idempotency_key'],
-			'payload_hash'       => $payload_hash,
-			'expected_fingerprint'=> $normalized['expected_fingerprint'],
-			'before_fingerprint' => ContentFingerprint::for_post( $post ),
-			'after_fingerprint'  => ContentFingerprint::for_post( $after ),
-			'before'             => $previous,
-			'changes'            => $normalized['changes'],
-			'diff'               => $diff,
-			'revision_id'        => is_numeric( $revision ) ? (int) $revision : 0,
-			'verification'       => $verification,
-			'created_at_gmt'     => gmdate( 'c' ),
-			'idempotent_replay'  => false,
+			'operation_id'         => $operation_id,
+			'schema_version'       => self::SCHEMA_VERSION,
+			'status'               => array() === $verification ? 'applied' : 'verification-failed',
+			'target_id'            => (int) $post->ID,
+			'target_type'          => (string) $post->post_type,
+			'idempotency_key'      => $normalized['idempotency_key'],
+			'payload_hash'         => $payload_hash,
+			'expected_fingerprint' => $normalized['expected_fingerprint'],
+			'before_fingerprint'   => ContentFingerprint::for_post( $post ),
+			'after_fingerprint'    => ContentFingerprint::for_post( $after ),
+			'before'               => $previous,
+			'changes'              => $normalized['changes'],
+			'diff'                 => $diff,
+			'revision_id'          => is_numeric( $revision ) ? (int) $revision : 0,
+			'verification'         => $verification,
+			'created_at_gmt'       => gmdate( 'c' ),
+			'idempotent_replay'    => false,
 		);
 
 		if ( ! OperationStore::save( $operation_id, $operation ) ) {
@@ -283,8 +280,8 @@ final class ChangeSetEngine {
 			);
 		}
 
-		$target = isset( $payload['target'] ) && is_array( $payload['target'] ) ? $payload['target'] : array();
-		$id     = isset( $target['id'] ) ? absint( $target['id'] ) : 0;
+		$target      = isset( $payload['target'] ) && is_array( $payload['target'] ) ? $payload['target'] : array();
+		$id          = isset( $target['id'] ) ? absint( $target['id'] ) : 0;
 		$fingerprint = isset( $target['expected_fingerprint'] ) && is_string( $target['expected_fingerprint'] ) ? trim( $target['expected_fingerprint'] ) : '';
 		if ( 1 > $id || '' === $fingerprint ) {
 			return new WP_Error(
@@ -317,13 +314,13 @@ final class ChangeSetEngine {
 		}
 
 		return array(
-			'schema_version'        => self::SCHEMA_VERSION,
-			'target_id'             => $id,
-			'expected_fingerprint'  => $fingerprint,
-			'idempotency_key'       => $idempotency_key,
-			'allow_published_target'=> true === ( $payload['allow_published_target'] ?? false ),
-			'allow_empty_content'   => true === ( $payload['allow_empty_content'] ?? false ),
-			'changes'               => $changes,
+			'schema_version'         => self::SCHEMA_VERSION,
+			'target_id'              => $id,
+			'expected_fingerprint'   => $fingerprint,
+			'idempotency_key'        => $idempotency_key,
+			'allow_published_target' => true === ( $payload['allow_published_target'] ?? false ),
+			'allow_empty_content'    => true === ( $payload['allow_empty_content'] ?? false ),
+			'changes'                => $changes,
 		);
 	}
 
@@ -512,6 +509,26 @@ final class ChangeSetEngine {
 		}
 
 		return $diff;
+	}
+
+	/**
+	 * Return one previously stored operation as an idempotent replay.
+	 *
+	 * @return array<string, mixed>|WP_Error
+	 */
+	private static function idempotent_operation( string $operation_id ) {
+		$existing = OperationStore::get( $operation_id );
+		if ( is_array( $existing ) ) {
+			$existing['idempotent_replay'] = true;
+
+			return $existing;
+		}
+
+		return new WP_Error(
+			'seo_geo_manager_idempotent_operation_missing',
+			'The idempotency key is reserved but its operation record is unavailable.',
+			array( 'status' => 409 )
+		);
 	}
 
 	/**
