@@ -60,12 +60,12 @@ final class SiteSnapshotController {
 				),
 			),
 			'theme'            => array(
-				'name'              => (string) $theme->get( 'Name' ),
-				'version'           => (string) $theme->get( 'Version' ),
-				'stylesheet'        => (string) $theme->get_stylesheet(),
-				'template'          => (string) $theme->get_template(),
-				'text_domain'       => (string) $theme->get( 'TextDomain' ),
-				'is_seo_geo_theme'  => self::is_seo_geo_theme( $theme->get_stylesheet(), $theme->get_template(), $theme->get( 'TextDomain' ) ),
+				'name'             => (string) $theme->get( 'Name' ),
+				'version'          => (string) $theme->get( 'Version' ),
+				'stylesheet'       => (string) $theme->get_stylesheet(),
+				'template'         => (string) $theme->get_template(),
+				'text_domain'      => (string) $theme->get( 'TextDomain' ),
+				'is_seo_geo_theme' => self::is_seo_geo_theme( $theme->get_stylesheet(), $theme->get_template(), $theme->get( 'TextDomain' ) ),
 			),
 			'content'          => array(
 				'pages'       => self::post_counts( 'page' ),
@@ -97,12 +97,11 @@ final class SiteSnapshotController {
 		return new WP_REST_Response( $data, 200 );
 	}
 
+	/**
+	 * @return array<string, int>
+	 */
 	private static function post_counts( string $post_type ): array {
 		$counts = wp_count_posts( $post_type );
-		if ( ! is_object( $counts ) ) {
-			return array();
-		}
-
 		$result = array();
 		foreach ( array( 'publish', 'future', 'draft', 'pending', 'private', 'inherit' ) as $status ) {
 			if ( isset( $counts->{$status} ) ) {
@@ -130,14 +129,18 @@ final class SiteSnapshotController {
 		return false !== strpos( $haystack, 'seo-geo' );
 	}
 
+	/**
+	 * @param list<string> $active_plugins Active plugin files.
+	 * @return list<string>
+	 */
 	private static function detect_seo_providers( array $active_plugins ): array {
 		$providers = array();
 		$map       = array(
-			'wordpress-seo/wp-seo.php'                 => 'yoast',
-			'seo-by-rank-math/rank-math.php'           => 'rank-math',
-			'rank-math/rank-math.php'                  => 'rank-math',
-			'all-in-one-seo-pack/all_in_one_seo_pack.php' => 'aioseo',
-			'all-in-one-seo-pack-pro/all_in_one_seo_pack.php' => 'aioseo-pro',
+			'wordpress-seo/wp-seo.php'                           => 'yoast',
+			'seo-by-rank-math/rank-math.php'                     => 'rank-math',
+			'rank-math/rank-math.php'                            => 'rank-math',
+			'all-in-one-seo-pack/all_in_one_seo_pack.php'         => 'aioseo',
+			'all-in-one-seo-pack-pro/all_in_one_seo_pack.php'     => 'aioseo-pro',
 		);
 
 		foreach ( $map as $plugin_file => $provider ) {
@@ -149,6 +152,9 @@ final class SiteSnapshotController {
 		return array_values( array_unique( $providers ) );
 	}
 
+	/**
+	 * @param list<string> $active_plugins Active plugin files.
+	 */
 	private static function seo_authority_state( array $active_plugins ): string {
 		$count = count( self::detect_seo_providers( $active_plugins ) );
 		if ( 0 === $count ) {
@@ -159,13 +165,12 @@ final class SiteSnapshotController {
 	}
 
 	private static function sitemap_url(): string {
-		if ( function_exists( 'wp_sitemaps_get_server' ) ) {
-			$server = wp_sitemaps_get_server();
-			if ( is_object( $server ) && method_exists( $server, 'sitemaps_enabled' ) && $server->sitemaps_enabled() ) {
-				return home_url( '/wp-sitemap.xml' );
-			}
+		if ( ! function_exists( 'wp_sitemaps_get_server' ) ) {
+			return '';
 		}
 
-		return '';
+		$server = wp_sitemaps_get_server();
+
+		return $server->sitemaps_enabled() ? home_url( '/wp-sitemap.xml' ) : '';
 	}
 }
