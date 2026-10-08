@@ -109,19 +109,19 @@ final class ActionableDiagnostics {
 			if ( ! isset( $groups[ $key ] ) ) {
 				$target_url = 0 < $target_id ? get_permalink( $target_id ) : '';
 				$groups[ $key ] = array(
-					'id'                => substr( hash( 'sha256', $key ), 0, 16 ),
-					'category'          => 'navigation',
-					'code'              => 'environment-link-leakage',
-					'severity'          => 'high' === $confidence ? 'blocker' : 'warning',
-					'classification'    => 'high' === $confidence && 0 < $target_id ? 'auto-fixable' : 'review',
-					'title'             => 'Internal destination escapes the current WordPress environment.',
-					'reason'            => $reason,
-					'confidence'        => $confidence,
-					'target_resource_id'=> $target_id,
-					'current_url'       => $absolute,
-					'suggested_url'     => is_string( $target_url ) ? $target_url : '',
-					'occurrences'       => 0,
-					'sources'           => array(),
+					'id'                 => substr( hash( 'sha256', $key ), 0, 16 ),
+					'category'           => 'navigation',
+					'code'               => 'environment-link-leakage',
+					'severity'           => 'high' === $confidence ? 'blocker' : 'warning',
+					'classification'     => 'high' === $confidence && 0 < $target_id ? 'auto-fixable' : 'review',
+					'title'              => 'Internal destination escapes the current WordPress environment.',
+					'reason'             => $reason,
+					'confidence'         => $confidence,
+					'target_resource_id' => $target_id,
+					'current_url'        => $absolute,
+					'suggested_url'      => is_string( $target_url ) ? $target_url : '',
+					'occurrences'        => 0,
+					'sources'            => array(),
 				);
 			}
 
@@ -133,10 +133,10 @@ final class ActionableDiagnostics {
 			if ( ! is_array( $candidate ) ) {
 				continue;
 			}
-			$path               = isset( $candidate['path'] ) && is_string( $candidate['path'] ) ? $candidate['path'] : '';
-			$absolute           = isset( $candidate['absolute_url'] ) && is_string( $candidate['absolute_url'] ) ? $candidate['absolute_url'] : '';
-			$key                = 'unresolved:' . hash( 'sha256', strtolower( untrailingslashit( '' !== $path ? $path : $absolute ) ) );
-			$broken_permalink   = self::looks_like_placeholder_permalink( $path . ' ' . $absolute );
+			$path             = isset( $candidate['path'] ) && is_string( $candidate['path'] ) ? $candidate['path'] : '';
+			$absolute         = isset( $candidate['absolute_url'] ) && is_string( $candidate['absolute_url'] ) ? $candidate['absolute_url'] : '';
+			$key              = 'unresolved:' . hash( 'sha256', strtolower( untrailingslashit( '' !== $path ? $path : $absolute ) ) );
+			$broken_permalink = self::looks_like_placeholder_permalink( $path . ' ' . $absolute );
 
 			if ( ! isset( $groups[ $key ] ) ) {
 				$groups[ $key ] = array(
@@ -257,7 +257,7 @@ final class ActionableDiagnostics {
 		$id   = isset( $source['id'] ) ? (int) $source['id'] : 0;
 		$kind = isset( $source['kind'] ) && is_string( $source['kind'] ) ? $source['kind'] : '';
 		foreach ( $sources as $existing ) {
-			if ( $id === (int) ( $existing['id'] ?? 0 ) && $kind === (string) ( $existing['kind'] ?? '' ) ) {
+			if ( (int) ( $existing['id'] ?? 0 ) === $id && (string) ( $existing['kind'] ?? '' ) === $kind ) {
 				return;
 			}
 		}
