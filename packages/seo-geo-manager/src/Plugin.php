@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager;
 
+use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\HealthController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
@@ -31,6 +32,7 @@ final class Plugin {
 				ContentController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
+				ChangeSetController::register_routes();
 			}
 		);
 	}
