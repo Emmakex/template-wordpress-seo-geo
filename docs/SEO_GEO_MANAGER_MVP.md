@@ -14,7 +14,7 @@ The three products remain separate:
 | --- | --- |
 | SEO/GEO Theme | frontend, preset renderers, semantic HTML, responsive design, accessibility, performance |
 | SEO/GEO Migration Bridge | scan, clone, rescue, reset-first migration, cutover support |
-| SEO/GEO Manager | ongoing content intelligence, creation, optimization, publishing, internal linking, revision control and growth loop |
+| SEO/GEO Manager | site intelligence, Build / Finish, optimization, publishing, internal linking, revision control and growth loop |
 
 Manager may consume output from Migration Bridge and render through SEO/GEO Theme, but it must also remain usable on a normal WordPress site through bounded adapters.
 
@@ -95,16 +95,45 @@ Goal: understand the site before changing it.
 Deliverables:
 
 - `/site/snapshot`;
+- `/site/intelligence`;
 - pages/posts/taxonomies/media inventory;
 - active Theme/preset and Manager/Bridge/Core version detection;
 - SEO provider detection;
 - canonical/indexability/schema authority map;
 - internal-link graph summary;
-- broken internal URL detection;
+- broken/unresolved internal URL candidate detection;
+- clone/current-environment leakage detection;
 - orphan/thin/duplicate-intent candidate signals;
-- current sitemap/discovery surface inventory.
+- current sitemap/discovery surface inventory;
+- bounded Build / Finish launch-readiness checks;
+- optional rendered-page scan for Theme-generated navigation/link verification.
 
 The scanner must remain bounded: it reports signals and evidence, not invented diagnoses.
+
+#### M1 implementation status
+
+Implemented on `feat/seo-geo-manager-mvp`:
+
+- environment/product/Theme/content snapshot;
+- SEO provider and sitemap discovery signals;
+- bounded page/post resource inventory;
+- current permalink + path + logical-path mapping;
+- stored-content internal-link graph;
+- WordPress menu link evidence;
+- high-confidence same-host clone-path leakage detection;
+- medium-confidence external-host/local-path leakage candidates;
+- unresolved same-environment content-path candidates;
+- published page orphan candidates;
+- optional rendered scan of up to 20 public pages;
+- first launch-readiness result with blocker/warning/pass evidence.
+
+Still required before M1 closure:
+
+- Theme preset/model awareness for required strategic surfaces and slots;
+- output-authority map beyond provider presence;
+- media inventory/detail signals;
+- duplicate-intent/cannibalization candidate model;
+- bounded content-completeness signals that understand Theme-owned structured content rather than only editor body content.
 
 ### M2 — Change Set / Preview / Apply
 
@@ -235,6 +264,6 @@ Initial development branch:
 
 ## Immediate next microphase
 
-M0 is now started. The next implementation step is **M1 Site Intelligence** followed immediately by **M2 preview/apply**, because those two capabilities unlock the useful development loop: inspect the real site, propose a bounded change, apply it safely, verify, and repeat.
+Finish M1 preset/model awareness and then start **M2 Preview / Apply / Rollback** immediately. The useful loop we need is already clear: inspect the real site, identify a bounded issue, preview the exact change, apply it safely, verify the current environment and retain rollback evidence.
 
-The Corporate pilot should be the first real Manager target. One known acceptance case is clone-safe navigation: a Blog/Insights link on `/nuevaweb/` must resolve to the clone/current site rather than the production hostname unless an explicit external link was intentionally configured.
+The Corporate pilot is the first real Manager target. One known acceptance case is clone-safe navigation: a Blog/Insights link on `/nuevaweb/` must resolve to the clone/current site rather than the production path unless an explicit external link was intentionally configured.
