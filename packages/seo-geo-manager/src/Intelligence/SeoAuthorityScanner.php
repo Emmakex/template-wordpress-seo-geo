@@ -85,12 +85,12 @@ final class SeoAuthorityScanner {
 	 */
 	private static function providers( array $active_plugins ): array {
 		$map       = array(
-			'wordpress-seo/wp-seo.php'                         => 'yoast',
-			'wordpress-seo-premium/wp-seo-premium.php'         => 'yoast-premium',
-			'seo-by-rank-math/rank-math.php'                   => 'rank-math',
-			'rank-math/rank-math.php'                          => 'rank-math',
-			'all-in-one-seo-pack/all_in_one_seo_pack.php'       => 'aioseo',
-			'all-in-one-seo-pack-pro/all_in_one_seo_pack.php'   => 'aioseo-pro',
+			'wordpress-seo/wp-seo.php'                    => 'yoast',
+			'wordpress-seo-premium/wp-seo-premium.php'    => 'yoast-premium',
+			'seo-by-rank-math/rank-math.php'              => 'rank-math',
+			'rank-math/rank-math.php'                     => 'rank-math',
+			'all-in-one-seo-pack/all_in_one_seo_pack.php' => 'aioseo',
+			'all-in-one-seo-pack-pro/all_in_one_seo_pack.php' => 'aioseo-pro',
 		);
 		$providers = array();
 		foreach ( $map as $plugin_file => $provider ) {
