@@ -7,6 +7,7 @@ on:
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   push:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   workflow_dispatch:
 
@@ -28,7 +30,7 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: M1/M2 runtime acceptance
+    name: M1/M2 + structured Theme runtime acceptance
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -36,10 +38,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Validate acceptance script
+      - name: Validate acceptance scripts
         run: |
           bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
           php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
+          php -l scripts/ci/seo-geo-manager-structured-acceptance.php
 
       - name: Pull pinned WordPress fixture images
         run: |
