@@ -50,7 +50,10 @@ Initial foundations:
 4. WordPress-generated permalinks so clones/staging installations never inherit hardcoded production navigation;
 5. WordPress Application Password compatible authentication through normal REST authentication;
 6. capability checks on every non-public operation;
-7. bounded site snapshot for Build / Finish and later launch-readiness analysis.
+7. bounded site snapshot for Build / Finish and launch-readiness analysis;
+8. resource inventory and internal-link graph;
+9. clone/current-environment leakage detection;
+10. orphan-page and unresolved internal-path review signals.
 
 ## API v1
 
@@ -86,7 +89,7 @@ Returns the normalized resource plus raw editable body/excerpt and identity fiel
 
 Authenticated. Requires `edit_posts`.
 
-M1 foundation endpoint. Returns a bounded snapshot including:
+Returns a bounded snapshot including:
 
 - current `home_url` and `site_url`;
 - WordPress/language/permalink environment;
@@ -98,13 +101,34 @@ M1 foundation endpoint. Returns a bounded snapshot including:
 - known SEO-provider detection state;
 - robots and native WordPress sitemap discovery URLs.
 
-This endpoint is intentionally read-only. Link-graph, clone-domain leakage, readiness scoring and deeper SEO/GEO signals are added incrementally in M1.
+### `GET /site/intelligence`
+
+Authenticated. Requires `edit_posts`.
+
+Build / Finish intelligence report including:
+
+- bounded page/post resource inventory;
+- current-environment permalink, path and logical-path mapping;
+- per-resource fingerprint and body word-count signal;
+- stored-content internal-link graph;
+- WordPress menu link evidence;
+- environment/clone leakage candidates;
+- unresolved same-environment path candidates;
+- published orphan-page candidates;
+- bounded launch-readiness checks.
+
+Optional query argument:
+
+- `include_rendered=1` — fetch and scan up to 20 rendered published pages so Theme-generated links can be checked too. This is intended for final Build / Finish verification rather than every routine request.
+
+A high-confidence leakage candidate is a link that maps to a real local WordPress resource but escapes the current WordPress `home_url()` path. This catches the EMMAKE clone case where a link on `/nuevaweb/` points to the equivalent production path instead of the clone path.
+
+External-host path matches are reported at medium confidence and require review rather than being treated as proof of an error.
 
 ## Next endpoints
 
 The next implementation slices add:
 
-- richer `/site/snapshot` intelligence and launch readiness;
 - `/changes/preview`;
 - `/changes/apply`;
 - `/changes/{operation_id}`;
