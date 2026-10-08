@@ -1,70 +1,96 @@
-(() => {
-	'use strict';
+/**
+ * Mobile preset navigation interactions for strategic Theme surfaces.
+ *
+ * @package SeoGeoTheme
+ */
 
-	const mobileNavigationSelector = '.seo-geo-preset-navigation__mobile';
+'use strict';
 
-	const closeNavigation = (details, restoreFocus = false) => {
-		if (!(details instanceof HTMLDetailsElement) || !details.open) {
-			return;
+const seoGeoMobileNavigationSelector = '.seo-geo-preset-navigation__mobile';
+
+/**
+ * Close one mobile navigation details element.
+ *
+ * @param {HTMLDetailsElement} details      Navigation details element.
+ * @param {boolean}            restoreFocus Whether focus should return to summary.
+ * @return {void}
+ */
+function seoGeoCloseNavigation( details, restoreFocus ) {
+	let summary;
+
+	if ( ! ( details instanceof HTMLDetailsElement ) || ! details.open ) {
+		return;
+	}
+
+	details.open = false;
+
+	if ( restoreFocus ) {
+		summary = details.querySelector( 'summary' );
+		if ( summary instanceof HTMLElement ) {
+			summary.focus();
 		}
+	}
+}
 
-		details.open = false;
-
-		if (restoreFocus) {
-			const summary = details.querySelector('summary');
-			if (summary instanceof HTMLElement) {
-				summary.focus();
-			}
-		}
-	};
-
-	document.addEventListener('click', (event) => {
+document.addEventListener(
+	'click',
+	function( event ) {
 		const target = event.target;
-		if (!(target instanceof Element)) {
-			return;
-		}
+		const summary = target instanceof Element ? target.closest( seoGeoMobileNavigationSelector + ' > summary' ) : null;
+		let details;
+		let link;
 
-		const summary = target.closest(`${mobileNavigationSelector} > summary`);
-		if (summary instanceof HTMLElement) {
-			const details = summary.parentElement;
-			if (details instanceof HTMLDetailsElement) {
+		if ( summary instanceof HTMLElement ) {
+			details = summary.parentElement;
+			if ( details instanceof HTMLDetailsElement ) {
 				event.preventDefault();
-				details.open = !details.open;
+				details.open = ! details.open;
 			}
 			return;
 		}
 
-		const link = target.closest(`${mobileNavigationSelector} a`);
-		if (link instanceof HTMLAnchorElement) {
-			const details = link.closest(mobileNavigationSelector);
-			if (details instanceof HTMLDetailsElement) {
-				closeNavigation(details);
+		link = target instanceof Element ? target.closest( seoGeoMobileNavigationSelector + ' a' ) : null;
+		if ( link instanceof HTMLAnchorElement ) {
+			details = link.closest( seoGeoMobileNavigationSelector );
+			if ( details instanceof HTMLDetailsElement ) {
+				seoGeoCloseNavigation( details, false );
 			}
 		}
-	});
+	}
+);
 
-	document.addEventListener('pointerdown', (event) => {
+document.addEventListener(
+	'pointerdown',
+	function( event ) {
 		const target = event.target;
-		if (!(target instanceof Node)) {
+
+		if ( ! ( target instanceof Node ) ) {
 			return;
 		}
 
-		document.querySelectorAll(`${mobileNavigationSelector}[open]`).forEach((details) => {
-			if (details instanceof HTMLDetailsElement && !details.contains(target)) {
-				closeNavigation(details);
+		document.querySelectorAll( seoGeoMobileNavigationSelector + '[open]' ).forEach(
+			function( details ) {
+				if ( details instanceof HTMLDetailsElement && ! details.contains( target ) ) {
+					seoGeoCloseNavigation( details, false );
+				}
 			}
-		});
-	});
+		);
+	}
+);
 
-	document.addEventListener('keydown', (event) => {
-		if (event.key !== 'Escape') {
+document.addEventListener(
+	'keydown',
+	function( event ) {
+		if ( event.key !== 'Escape' ) {
 			return;
 		}
 
-		document.querySelectorAll(`${mobileNavigationSelector}[open]`).forEach((details) => {
-			if (details instanceof HTMLDetailsElement) {
-				closeNavigation(details, true);
+		document.querySelectorAll( seoGeoMobileNavigationSelector + '[open]' ).forEach(
+			function( details ) {
+				if ( details instanceof HTMLDetailsElement ) {
+					seoGeoCloseNavigation( details, true );
+				}
 			}
-		});
-	});
-})();
+		);
+	}
+);
