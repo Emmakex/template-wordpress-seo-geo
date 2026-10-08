@@ -8,6 +8,7 @@ on:
       - 'phpcs.xml.dist'
       - 'phpcs-manager.xml.dist'
       - 'phpstan.neon'
+      - 'phpstan-manager.neon'
       - 'packages/**/*.php'
       - 'scripts/ci/php-quality.sh'
       - '.github/workflows/php-quality.yml'
@@ -20,6 +21,7 @@ on:
       - 'phpcs.xml.dist'
       - 'phpcs-manager.xml.dist'
       - 'phpstan.neon'
+      - 'phpstan-manager.neon'
       - 'packages/**/*.php'
       - 'scripts/ci/php-quality.sh'
       - '.github/workflows/php-quality.yml'
@@ -69,5 +71,8 @@ jobs:
       - name: SEO GEO Manager WordPress Coding Standards
         run: vendor/bin/phpcs --standard=phpcs-manager.xml.dist --report=full -q
 
-      - name: PHPStan level 6
+      - name: Existing products PHPStan level 6
         run: bash scripts/ci/php-quality.sh phpstan
+
+      - name: SEO GEO Manager PHPStan level 6
+        run: vendor/bin/phpstan analyse --configuration=phpstan-manager.neon --no-progress
