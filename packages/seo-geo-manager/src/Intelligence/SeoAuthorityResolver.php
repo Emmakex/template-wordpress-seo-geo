@@ -121,7 +121,7 @@ final class SeoAuthorityResolver {
 				'type'         => 'plugin',
 				'adapter'      => (string) ( $definition['adapter'] ?? '' ),
 				'label'        => (string) ( $definition['label'] ?? $family_id ),
-				'plugin_files' => array_values( $matched ),
+				'plugin_files' => $matched,
 			);
 		}
 
