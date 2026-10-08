@@ -50,6 +50,9 @@ test('Corporate mobile menu and field media stay usable without overlap', async 
   await details.locator('.seo-geo-preset-navigation__item a').first().click();
   await expect(details).not.toHaveAttribute('open', '');
 
+  await summary.click();
+  await expect(details).toHaveAttribute('open', '');
+
   const contactStyles = await contact.evaluate((element) => {
     const styles = getComputedStyle(element);
     return {
@@ -66,6 +69,9 @@ test('Corporate mobile menu and field media stay usable without overlap', async 
   expect(contactStyles.justifyContent).toBe('center');
   expect(contactStyles.textAlign).toBe('center');
   expect(contactStyles.minHeight).toBeGreaterThanOrEqual(52);
+
+  await summary.click();
+  await expect(details).not.toHaveAttribute('open', '');
 
   for (const selector of ['.seo-geo-corporate-card--2', '.seo-geo-corporate-card--3']) {
     const clearance = await page.locator(selector).evaluate((card) => {
