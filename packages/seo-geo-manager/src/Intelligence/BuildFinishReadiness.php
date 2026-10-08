@@ -30,14 +30,27 @@ final class BuildFinishReadiness {
 				array( 'missing_pages' => $missing_pages )
 			);
 
-			$incomplete = isset( $theme_summary['incomplete_model_pages'] ) ? (int) $theme_summary['incomplete_model_pages'] : 0;
-			$checks[]   = self::check(
+			$content_state = self::theme_content_state( $theme );
+			if ( 0 < $content_state['partial_pages'] ) {
+				$content_level   = 'blocker';
+				$content_message = 'Partially hydrated Theme models still have required content gaps.';
+			} elseif ( 0 < $content_state['unhydrated_pages'] || 0 < $content_state['evidence_pages'] ) {
+				$content_level   = 'warning';
+				$content_message = 'Theme-rendered pages still need Manager slot hydration and/or verified evidence review.';
+			} else {
+				$content_level   = 'pass';
+				$content_message = 'Required structured content is hydrated and evidence requirements are satisfied.';
+			}
+
+			$checks[] = self::check(
 				'content',
-				0 === $incomplete ? 'pass' : 'blocker',
-				0 === $incomplete ? 'Required structured content slots are present.' : 'Required structured content slots are missing.',
+				$content_level,
+				$content_message,
 				array(
-					'incomplete_model_pages' => $incomplete,
-					'missing_required_slots' => isset( $theme_summary['missing_required_slots'] ) ? (int) $theme_summary['missing_required_slots'] : 0,
+					'partial_model_pages'    => $content_state['partial_pages'],
+					'unhydrated_model_pages' => $content_state['unhydrated_pages'],
+					'evidence_review_pages'  => $content_state['evidence_pages'],
+					'raw_missing_slots'      => isset( $theme_summary['missing_required_slots'] ) ? (int) $theme_summary['missing_required_slots'] : 0,
 				)
 			);
 		} else {
@@ -49,17 +62,22 @@ final class BuildFinishReadiness {
 			);
 		}
 
-		$links      = isset( $site['links'] ) && is_array( $site['links'] ) ? $site['links'] : array();
-		$leakage    = isset( $links['environment_leakage_candidates'] ) && is_array( $links['environment_leakage_candidates'] ) ? count( $links['environment_leakage_candidates'] ) : 0;
-		$unresolved = isset( $links['unresolved_internal_path_candidates'] ) && is_array( $links['unresolved_internal_path_candidates'] ) ? count( $links['unresolved_internal_path_candidates'] ) : 0;
-		$checks[]   = self::check(
+		$navigation_state = self::navigation_state( $site );
+		if ( 0 < $navigation_state['blockers'] ) {
+			$navigation_level   = 'blocker';
+			$navigation_message = 'Actionable environment-link or permalink blockers remain.';
+		} elseif ( 0 < $navigation_state['warnings'] ) {
+			$navigation_level   = 'warning';
+			$navigation_message = 'Some internal navigation findings still require review.';
+		} else {
+			$navigation_level   = 'pass';
+			$navigation_message = 'No bounded navigation blockers were detected.';
+		}
+		$checks[] = self::check(
 			'navigation',
-			0 < $leakage ? 'blocker' : ( 0 < $unresolved ? 'warning' : 'pass' ),
-			0 < $leakage ? 'Environment/domain leakage candidates remain.' : ( 0 < $unresolved ? 'Some internal paths could not be resolved to known content.' : 'No bounded navigation blockers were detected.' ),
-			array(
-				'environment_leakage_candidates'      => $leakage,
-				'unresolved_internal_path_candidates' => $unresolved,
-			)
+			$navigation_level,
+			$navigation_message,
+			$navigation_state
 		);
 
 		$seo_state    = isset( $seo['state'] ) && is_string( $seo['state'] ) ? $seo['state'] : 'unresolved';
@@ -84,10 +102,10 @@ final class BuildFinishReadiness {
 			$seo_level,
 			$seo_message,
 			array(
-				'state'                  => $seo_state,
-				'authority_resolved'     => $seo_resolved,
-				'write_adapter_ready'    => $seo_writable,
-				'authority'              => $seo['authority'] ?? null,
+				'state'               => $seo_state,
+				'authority_resolved'  => $seo_resolved,
+				'write_adapter_ready' => $seo_writable,
+				'authority'           => $seo['authority'] ?? null,
 			)
 		);
 
@@ -143,6 +161,105 @@ final class BuildFinishReadiness {
 			'checks'   => $checks,
 			'note'     => 'Readiness is bounded diagnostic evidence, not a ranking or business-outcome guarantee.',
 		);
+	}
+
+	/**
+	 * Distinguish Theme defaults that are not hydrated from partially missing data.
+	 *
+	 * @param array<string, mixed> $theme Theme contract intelligence.
+	 * @return array{partial_pages:int,unhydrated_pages:int,evidence_pages:int}
+	 */
+	private static function theme_content_state( array $theme ): array {
+		$state = array(
+			'partial_pages'    => 0,
+			'unhydrated_pages' => 0,
+			'evidence_pages'   => 0,
+		);
+		$pages = isset( $theme['pages'] ) && is_array( $theme['pages'] ) ? $theme['pages'] : array();
+		foreach ( $pages as $page ) {
+			if ( ! is_array( $page ) || true !== ( $page['resolved'] ?? false ) ) {
+				continue;
+			}
+			$model = isset( $page['model'] ) && is_array( $page['model'] ) ? $page['model'] : array();
+			if ( ! isset( $model['model_id'] ) || ! is_string( $model['model_id'] ) || '' === $model['model_id'] ) {
+				continue;
+			}
+
+			$required = isset( $model['required_slots'] ) && is_array( $model['required_slots'] ) ? $model['required_slots'] : array();
+			$present  = isset( $model['present_required_slots'] ) && is_array( $model['present_required_slots'] ) ? $model['present_required_slots'] : array();
+			$missing  = isset( $model['missing_required_slots'] ) && is_array( $model['missing_required_slots'] ) ? $model['missing_required_slots'] : array();
+			$missing_any = isset( $model['missing_required_any'] ) && is_array( $model['missing_required_any'] ) ? $model['missing_required_any'] : array();
+			$missing_verified = isset( $model['missing_verified_groups'] ) && is_array( $model['missing_verified_groups'] ) ? $model['missing_verified_groups'] : array();
+
+			if ( array() !== $required && array() === $present && array() !== $missing ) {
+				++$state['unhydrated_pages'];
+			} elseif ( array() !== $missing || array() !== $missing_any ) {
+				++$state['partial_pages'];
+			}
+			if ( array() !== $missing_verified ) {
+				++$state['evidence_pages'];
+			}
+		}
+
+		return $state;
+	}
+
+	/**
+	 * Prefer grouped root causes when available, while retaining a safe fallback.
+	 *
+	 * @param array<string, mixed> $site Site intelligence.
+	 * @return array<string, int>
+	 */
+	private static function navigation_state( array $site ): array {
+		$state = array(
+			'blockers'                    => 0,
+			'warnings'                    => 0,
+			'unique_navigation_issues'    => 0,
+			'high_confidence_leakage'     => 0,
+			'unresolved_path_occurrences' => 0,
+		);
+		$diagnostics = isset( $site['actionable_diagnostics'] ) && is_array( $site['actionable_diagnostics'] ) ? $site['actionable_diagnostics'] : array();
+		$items       = isset( $diagnostics['items'] ) && is_array( $diagnostics['items'] ) ? $diagnostics['items'] : array();
+		if ( array() !== $items ) {
+			foreach ( $items as $item ) {
+				if ( ! is_array( $item ) ) {
+					continue;
+				}
+				$category = isset( $item['category'] ) && is_string( $item['category'] ) ? $item['category'] : '';
+				if ( 'navigation' !== $category && 'permalinks' !== $category ) {
+					continue;
+				}
+				++$state['unique_navigation_issues'];
+				if ( 'blocker' === ( $item['severity'] ?? '' ) ) {
+					++$state['blockers'];
+				} elseif ( 'warning' === ( $item['severity'] ?? '' ) ) {
+					++$state['warnings'];
+				}
+				if ( 'environment-link-leakage' === ( $item['code'] ?? '' ) && 'high' === ( $item['confidence'] ?? '' ) ) {
+					$state['high_confidence_leakage'] += max( 1, (int) ( $item['occurrences'] ?? 1 ) );
+				}
+				if ( 'unresolved-internal-path' === ( $item['code'] ?? '' ) || 'malformed-permalink-template' === ( $item['code'] ?? '' ) ) {
+					$state['unresolved_path_occurrences'] += max( 1, (int) ( $item['occurrences'] ?? 1 ) );
+				}
+			}
+
+			return $state;
+		}
+
+		$links      = isset( $site['links'] ) && is_array( $site['links'] ) ? $site['links'] : array();
+		$leakage    = isset( $links['environment_leakage_candidates'] ) && is_array( $links['environment_leakage_candidates'] ) ? $links['environment_leakage_candidates'] : array();
+		$unresolved = isset( $links['unresolved_internal_path_candidates'] ) && is_array( $links['unresolved_internal_path_candidates'] ) ? $links['unresolved_internal_path_candidates'] : array();
+		foreach ( $leakage as $candidate ) {
+			if ( is_array( $candidate ) && 'high' === ( $candidate['confidence'] ?? '' ) ) {
+				++$state['high_confidence_leakage'];
+			}
+		}
+		$state['unresolved_path_occurrences'] = count( $unresolved );
+		$state['blockers']                    = 0 < $state['high_confidence_leakage'] ? 1 : 0;
+		$state['warnings']                    = 0 < $state['unresolved_path_occurrences'] ? 1 : 0;
+		$state['unique_navigation_issues']    = $state['blockers'] + $state['warnings'];
+
+		return $state;
 	}
 
 	/**
