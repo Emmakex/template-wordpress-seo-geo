@@ -16,6 +16,23 @@ final class OperationStore {
 	private const OPERATION_PREFIX   = 'seo_geo_manager_op_';
 
 	/**
+	 * Look up an existing idempotency key before validating mutable target state.
+	 *
+	 * @return array{existing:bool,operation_id:string}|WP_Error
+	 */
+	public static function lookup( string $idempotency_key, string $payload_hash ) {
+		$existing = get_option( self::idempotency_option_name( $idempotency_key ), null );
+		if ( null === $existing || false === $existing ) {
+			return array(
+				'existing'     => false,
+				'operation_id' => '',
+			);
+		}
+
+		return self::validate_existing( $existing, $payload_hash );
+	}
+
+	/**
 	 * Reserve one idempotency key atomically.
 	 *
 	 * @return array{existing:bool,operation_id:string}|WP_Error
@@ -35,17 +52,26 @@ final class OperationStore {
 		}
 
 		$existing = get_option( $option_name, null );
+
+		return self::validate_existing( $existing, $payload_hash );
+	}
+
+	/**
+	 * @param mixed $existing Stored idempotency record.
+	 * @return array{existing:bool,operation_id:string}|WP_Error
+	 */
+	private static function validate_existing( $existing, string $payload_hash ) {
 		if ( ! is_array( $existing ) ) {
 			return new WP_Error(
 				'seo_geo_manager_idempotency_unavailable',
-				'Could not reserve the idempotency key.',
+				'Could not read the reserved idempotency key.',
 				array( 'status' => 409 )
 			);
 		}
 
 		$existing_id   = isset( $existing['operation_id'] ) && is_string( $existing['operation_id'] ) ? $existing['operation_id'] : '';
 		$existing_hash = isset( $existing['payload_hash'] ) && is_string( $existing['payload_hash'] ) ? $existing['payload_hash'] : '';
-		if ( '' === $existing_id || ! hash_equals( $existing_hash, $payload_hash ) ) {
+		if ( '' === $existing_id || '' === $existing_hash || ! hash_equals( $existing_hash, $payload_hash ) ) {
 			return new WP_Error(
 				'seo_geo_manager_idempotency_conflict',
 				'The idempotency key has already been used with a different payload.',
