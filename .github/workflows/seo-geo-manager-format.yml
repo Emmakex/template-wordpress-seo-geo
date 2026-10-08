@@ -1,0 +1,44 @@
+name: SEO GEO Manager Format Preview
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'phpcs.xml.dist'
+      - '.github/workflows/seo-geo-manager-format.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-geo-manager-format-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP toolchain
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install quality dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHPCBF on Manager
+        run: vendor/bin/phpcbf --standard=phpcs.xml.dist packages/seo-geo-manager || true
+
+      - name: Upload formatted Manager tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-geo-manager-phpcbf
+          path: packages/seo-geo-manager
+          if-no-files-found: error
+          retention-days: 1
