@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
+use SeoGeo\Manager\Support\EnvironmentPolicy;
 use WP_REST_Response;
 
 final class SiteSnapshotController {
@@ -34,16 +35,20 @@ final class SiteSnapshotController {
 		$theme          = wp_get_theme();
 		$active_plugins = get_option( 'active_plugins', array() );
 		$active_plugins = is_array( $active_plugins ) ? array_values( array_filter( $active_plugins, 'is_string' ) ) : array();
+		$environment    = EnvironmentPolicy::snapshot();
 
 		$data = array(
 			'generated_at_gmt' => gmdate( 'c' ),
 			'environment'      => array(
-				'home_url'            => home_url( '/' ),
-				'site_url'            => site_url( '/' ),
-				'wordpress_version'   => get_bloginfo( 'version' ),
-				'language'            => get_bloginfo( 'language' ),
-				'permalink_structure' => (string) get_option( 'permalink_structure', '' ),
-				'is_ssl'              => is_ssl(),
+				'home_url'                => home_url( '/' ),
+				'site_url'                => site_url( '/' ),
+				'wordpress_version'       => get_bloginfo( 'version' ),
+				'language'                => get_bloginfo( 'language' ),
+				'permalink_structure'     => (string) get_option( 'permalink_structure', '' ),
+				'is_ssl'                  => is_ssl(),
+				'type'                    => $environment['type'],
+				'fingerprint'             => $environment['fingerprint'],
+				'write_approval_required' => $environment['write_approval_required'],
 			),
 			'products'         => array(
 				'manager'          => array(
@@ -60,12 +65,12 @@ final class SiteSnapshotController {
 				),
 			),
 			'theme'            => array(
-				'name'              => (string) $theme->get( 'Name' ),
-				'version'           => (string) $theme->get( 'Version' ),
-				'stylesheet'        => (string) $theme->get_stylesheet(),
-				'template'          => (string) $theme->get_template(),
-				'text_domain'       => (string) $theme->get( 'TextDomain' ),
-				'is_seo_geo_theme'  => self::is_seo_geo_theme( $theme->get_stylesheet(), $theme->get_template(), $theme->get( 'TextDomain' ) ),
+				'name'             => (string) $theme->get( 'Name' ),
+				'version'          => (string) $theme->get( 'Version' ),
+				'stylesheet'       => (string) $theme->get_stylesheet(),
+				'template'         => (string) $theme->get_template(),
+				'text_domain'      => (string) $theme->get( 'TextDomain' ),
+				'is_seo_geo_theme' => self::is_seo_geo_theme( $theme->get_stylesheet(), $theme->get_template(), $theme->get( 'TextDomain' ) ),
 			),
 			'content'          => array(
 				'pages'       => self::post_counts( 'page' ),
@@ -137,11 +142,11 @@ final class SiteSnapshotController {
 	private static function detect_seo_providers( array $active_plugins ): array {
 		$providers = array();
 		$map       = array(
-			'wordpress-seo/wp-seo.php'                    => 'yoast',
-			'seo-by-rank-math/rank-math.php'              => 'rank-math',
-			'rank-math/rank-math.php'                     => 'rank-math',
-			'all-in-one-seo-pack/all_in_one_seo_pack.php' => 'aioseo',
-			'all-in-one-seo-pack-pro/all_in_one_seo_pack.php' => 'aioseo-pro',
+			'wordpress-seo/wp-seo.php'                         => 'yoast',
+			'seo-by-rank-math/rank-math.php'                   => 'rank-math',
+			'rank-math/rank-math.php'                          => 'rank-math',
+			'all-in-one-seo-pack/all_in_one_seo_pack.php'      => 'aioseo',
+			'all-in-one-seo-pack-pro/all_in_one_seo_pack.php'  => 'aioseo-pro',
 		);
 
 		foreach ( $map as $plugin_file => $provider ) {
