@@ -8,3 +8,30 @@ parameters:
   tmpDir: .phpstan-manager-cache
   reportUnmatchedIgnoredErrors: true
   treatPhpDocTypesAsCertain: false
+
+  # WordPress 7.1 runtime accepts string tag selectors in WP_HTML_Tag_Processor,
+  # while the currently pinned wordpress-stubs package narrows next_tag() to an
+  # array query. Keep the ignores path- and count-bounded until the stub catches up.
+  ignoreErrors:
+    -
+      message: '#Parameter \#1 \$query of method WP_HTML_Tag_Processor::next_tag\(\) expects .*#'
+      path: packages/seo-geo-manager/src/Intelligence/SiteIntelligenceScanner.php
+      count: 1
+    -
+      message: '#Parameter \#1 \$query of method WP_HTML_Tag_Processor::next_tag\(\) expects .*#'
+      path: packages/seo-geo-manager/src/Intelligence/ThemeContractScanner.php
+      count: 2
+
+    # The Theme integration calls are explicitly guarded with function_exists().
+    # PHPStan cannot infer those dynamically-provided Theme API callables.
+    -
+      message: '#Parameter \#1 \$callback of function call_user_func expects callable\(\): mixed, .* given\.#'
+      path: packages/seo-geo-manager/src/Intelligence/ThemeContractScanner.php
+      count: 2
+
+    # WordPress stubs type WP_Post_Type::$cap as a non-null stdClass; the runtime
+    # guard remains intentionally defensive for third-party/custom post types.
+    -
+      message: '#Property WP_Post_Type::\$cap \(stdClass\) in isset\(\) is not nullable\.#'
+      path: packages/seo-geo-manager/src/Changes/ChangeSetEngine.php
+      count: 1
