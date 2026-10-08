@@ -132,6 +132,9 @@ seo_geo_manager_accept( ! is_wp_error( $collision_id ), 'Could not create slug c
 $snapshot = seo_geo_manager_request( 'GET', '/seo-geo-manager/v1/site/snapshot' );
 seo_geo_manager_accept( 200 === $snapshot['status'] && is_array( $snapshot['data'] ), 'Site snapshot endpoint failed.' );
 seo_geo_manager_accept( str_contains( (string) ( $snapshot['data']['environment']['home_url'] ?? '' ), '/nuevaweb/' ), 'Snapshot did not use the current clone home URL.' );
+$environment_fingerprint = (string) ( $snapshot['data']['environment']['fingerprint'] ?? '' );
+seo_geo_manager_accept( '' !== $environment_fingerprint, 'Environment fingerprint is missing from site snapshot.' );
+seo_geo_manager_accept( true === ( $snapshot['data']['environment']['write_approval_required'] ?? false ), 'Production environment approval policy is not active.' );
 
 $intelligence = seo_geo_manager_request( 'GET', '/seo-geo-manager/v1/site/intelligence' );
 seo_geo_manager_accept( 200 === $intelligence['status'] && is_array( $intelligence['data'] ), 'Site intelligence endpoint failed.' );
@@ -162,10 +165,18 @@ seo_geo_manager_accept( 200 === $preview['status'] && is_array( $preview['data']
 seo_geo_manager_accept( true === ( $preview['data']['has_changes'] ?? false ), 'Preview did not report a field change.' );
 seo_geo_manager_accept( 'Draft A' === ( $preview['data']['diff']['title']['from'] ?? '' ), 'Preview title source value mismatch.' );
 seo_geo_manager_accept( 'Draft A revised' === ( $preview['data']['diff']['title']['to'] ?? '' ), 'Preview title target value mismatch.' );
+seo_geo_manager_accept( $environment_fingerprint === ( $preview['data']['environment']['fingerprint'] ?? '' ), 'Preview environment fingerprint mismatch.' );
 
-$apply_payload                    = $base_payload;
-$apply_payload['idempotency_key'] = 'acceptance-apply-1';
-$apply                            = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/apply', $apply_payload );
+$environment_blocked                    = $base_payload;
+$environment_blocked['idempotency_key'] = 'acceptance-environment-blocked';
+$environment_rejection = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/apply', $environment_blocked );
+seo_geo_manager_accept( 409 === $environment_rejection['status'], 'Production write without environment approval was not rejected.' );
+seo_geo_manager_accept( 'seo_geo_manager_environment_approval_required' === seo_geo_manager_error_code( $environment_rejection['data'] ), 'Unexpected production environment guard code.' );
+
+$apply_payload                            = $base_payload;
+$apply_payload['idempotency_key']         = 'acceptance-apply-1';
+$apply_payload['environment_fingerprint'] = $environment_fingerprint;
+$apply                                    = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/apply', $apply_payload );
 seo_geo_manager_accept( 200 === $apply['status'] && is_array( $apply['data'] ), 'Change-set apply failed.' );
 seo_geo_manager_accept( 'applied' === ( $apply['data']['status'] ?? '' ), 'Applied operation status mismatch.' );
 $operation_id = isset( $apply['data']['operation_id'] ) && is_string( $apply['data']['operation_id'] ) ? $apply['data']['operation_id'] : '';
@@ -185,8 +196,13 @@ seo_geo_manager_accept( 'seo_geo_manager_idempotency_conflict' === seo_geo_manag
 
 $operation_read = seo_geo_manager_request( 'GET', '/seo-geo-manager/v1/changes/' . $operation_id );
 seo_geo_manager_accept( 200 === $operation_read['status'], 'Operation read endpoint failed.' );
+seo_geo_manager_accept( $environment_fingerprint === ( $operation_read['data']['environment']['fingerprint'] ?? '' ), 'Operation was not bound to the inspected environment.' );
 
-$rollback = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/' . $operation_id . '/rollback' );
+$rollback = seo_geo_manager_request(
+	'POST',
+	'/seo-geo-manager/v1/changes/' . $operation_id . '/rollback',
+	array( 'environment_fingerprint' => $environment_fingerprint )
+);
 seo_geo_manager_accept( 200 === $rollback['status'] && is_array( $rollback['data'] ), 'Manager rollback failed.' );
 seo_geo_manager_accept( 'rolled-back' === ( $rollback['data']['status'] ?? '' ), 'Rollback status mismatch.' );
 seo_geo_manager_accept( 'Draft A' === get_post_field( 'post_title', (int) $draft_id ), 'Rollback did not restore the previous title.' );
@@ -200,13 +216,14 @@ wp_update_post(
 	)
 );
 $stale_payload = array(
-	'schema_version'  => 1,
-	'idempotency_key' => 'acceptance-stale-1',
-	'target'          => array(
+	'schema_version'          => 1,
+	'idempotency_key'         => 'acceptance-stale-1',
+	'environment_fingerprint' => $environment_fingerprint,
+	'target'                  => array(
 		'id'                   => (int) $draft_id,
 		'expected_fingerprint' => $stale_fingerprint,
 	),
-	'changes'         => array( 'title' => 'Automation should not win' ),
+	'changes'                 => array( 'title' => 'Automation should not win' ),
 );
 $stale = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/apply', $stale_payload );
 seo_geo_manager_accept( 409 === $stale['status'], 'Stale change set was not rejected.' );
@@ -226,13 +243,14 @@ seo_geo_manager_accept( 409 === $slug_collision['status'], 'Slug collision was n
 seo_geo_manager_accept( 'seo_geo_manager_slug_collision' === seo_geo_manager_error_code( $slug_collision['data'] ), 'Unexpected slug-collision error code.' );
 
 $second_payload = array(
-	'schema_version'  => 1,
-	'idempotency_key' => 'acceptance-apply-2',
-	'target'          => array(
+	'schema_version'          => 1,
+	'idempotency_key'         => 'acceptance-apply-2',
+	'environment_fingerprint' => $environment_fingerprint,
+	'target'                  => array(
 		'id'                   => (int) $draft_id,
 		'expected_fingerprint' => (string) $current['fingerprint'],
 	),
-	'changes'         => array( 'title' => 'Manager second edit' ),
+	'changes'                 => array( 'title' => 'Manager second edit' ),
 );
 $second_apply = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/apply', $second_payload );
 seo_geo_manager_accept( 200 === $second_apply['status'] && is_array( $second_apply['data'] ), 'Second Manager apply failed.' );
@@ -243,7 +261,11 @@ wp_update_post(
 		'post_title' => 'Human after Manager',
 	)
 );
-$blocked_rollback = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/' . $second_operation . '/rollback' );
+$blocked_rollback = seo_geo_manager_request(
+	'POST',
+	'/seo-geo-manager/v1/changes/' . $second_operation . '/rollback',
+	array( 'environment_fingerprint' => $environment_fingerprint )
+);
 seo_geo_manager_accept( 409 === $blocked_rollback['status'], 'Rollback overwrote a newer human edit.' );
 seo_geo_manager_accept( 'seo_geo_manager_rollback_stale' === seo_geo_manager_error_code( $blocked_rollback['data'] ), 'Unexpected stale rollback error code.' );
 
@@ -262,36 +284,38 @@ $live_post = get_post( (int) $live_id );
 seo_geo_manager_accept( $live_post instanceof WP_Post, 'Could not load published guard fixture.' );
 $live_fingerprint = ContentFingerprint::for_post( $live_post );
 $live_payload = array(
-	'schema_version'  => 1,
-	'idempotency_key' => 'acceptance-live-blocked',
-	'target'          => array(
+	'schema_version'          => 1,
+	'idempotency_key'         => 'acceptance-live-blocked',
+	'environment_fingerprint' => $environment_fingerprint,
+	'target'                  => array(
 		'id'                   => (int) $live_id,
 		'expected_fingerprint' => $live_fingerprint,
 	),
-	'changes'         => array( 'title' => 'Published changed' ),
+	'changes'                 => array( 'title' => 'Published changed' ),
 );
 $live_blocked = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/apply', $live_payload );
 seo_geo_manager_accept( 409 === $live_blocked['status'], 'Published target changed without explicit approval.' );
 seo_geo_manager_accept( 'seo_geo_manager_published_target_blocked' === seo_geo_manager_error_code( $live_blocked['data'] ), 'Unexpected published-target guard code.' );
 
-$live_payload['idempotency_key']       = 'acceptance-live-approved';
+$live_payload['idempotency_key']        = 'acceptance-live-approved';
 $live_payload['allow_published_target'] = true;
 $live_apply = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/apply', $live_payload );
 seo_geo_manager_accept( 200 === $live_apply['status'], 'Explicitly approved published-target update failed for administrator.' );
 seo_geo_manager_accept( 'Published changed' === get_post_field( 'post_title', (int) $live_id ), 'Approved published-target title did not persist.' );
 
 $result = array(
-	'ok'                         => true,
-	'plugin_version'             => defined( 'SEO_GEO_MANAGER_VERSION' ) ? SEO_GEO_MANAGER_VERSION : '',
-	'clone_home_url'             => home_url( '/' ),
-	'leakage_candidates'         => count( $leakage ),
-	'theme_preset'               => $theme_contract['preset'] ?? null,
-	'preview_apply_rollback'     => true,
-	'idempotent_replay'          => true,
-	'stale_write_protection'     => true,
-	'slug_collision_protection'  => true,
-	'stale_rollback_protection'  => true,
-	'published_target_guard'     => true,
+	'ok'                          => true,
+	'plugin_version'              => defined( 'SEO_GEO_MANAGER_VERSION' ) ? SEO_GEO_MANAGER_VERSION : '',
+	'clone_home_url'              => home_url( '/' ),
+	'environment_approval'        => true,
+	'leakage_candidates'          => count( $leakage ),
+	'theme_preset'                => $theme_contract['preset'] ?? null,
+	'preview_apply_rollback'      => true,
+	'idempotent_replay'           => true,
+	'stale_write_protection'      => true,
+	'slug_collision_protection'   => true,
+	'stale_rollback_protection'   => true,
+	'published_target_guard'      => true,
 );
 
 echo wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) . PHP_EOL;
