@@ -11,6 +11,7 @@ namespace SeoGeo\Manager;
 
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\HealthController;
+use SeoGeo\Manager\Rest\SiteSnapshotController;
 
 final class Plugin {
 	private static bool $booted = false;
@@ -27,6 +28,7 @@ final class Plugin {
 			static function (): void {
 				HealthController::register_routes();
 				ContentController::register_routes();
+				SiteSnapshotController::register_routes();
 			}
 		);
 	}
