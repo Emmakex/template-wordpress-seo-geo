@@ -45,14 +45,14 @@ final class Dashboard {
 
 		wp_enqueue_style(
 			'seo-geo-manager-dashboard',
-			SEO_GEO_MANAGER_URL . 'assets/admin/dashboard.css',
+			self::asset_url( 'assets/admin/dashboard.css' ),
 			array(),
 			SEO_GEO_MANAGER_VERSION
 		);
 
 		wp_enqueue_script(
 			'seo-geo-manager-dashboard',
-			SEO_GEO_MANAGER_URL . 'assets/admin/dashboard.js',
+			self::asset_url( 'assets/admin/dashboard.js' ),
 			array( 'wp-api-fetch' ),
 			SEO_GEO_MANAGER_VERSION,
 			true
@@ -72,6 +72,15 @@ final class Dashboard {
 			) . ';',
 			'before'
 		);
+	}
+
+	/**
+	 * Build a plugin-relative asset URL without coupling the class to a global URL constant.
+	 */
+	private static function asset_url( string $relative_path ): string {
+		$plugin_file = dirname( __DIR__, 2 ) . '/seo-geo-manager.php';
+
+		return plugins_url( ltrim( $relative_path, '/' ), $plugin_file );
 	}
 
 	/**
