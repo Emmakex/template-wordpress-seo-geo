@@ -94,26 +94,34 @@ final class ActionableDiagnostics {
 			$confidence = isset( $candidate['confidence'] ) && is_string( $candidate['confidence'] ) ? $candidate['confidence'] : 'medium';
 			$reason     = isset( $candidate['reason'] ) && is_string( $candidate['reason'] ) ? $candidate['reason'] : 'environment-link';
 			$absolute   = isset( $candidate['absolute_url'] ) && is_string( $candidate['absolute_url'] ) ? $candidate['absolute_url'] : '';
-			$key        = 'high' === $confidence && 0 < $target_id
+
+			if ( 'medium' === $confidence && 'external_host_matches_local_resource_path' === $reason ) {
+				$external_path = (string) wp_parse_url( $absolute, PHP_URL_PATH );
+				if ( '' === trim( $external_path, '/' ) ) {
+					continue;
+				}
+			}
+
+			$key = 'high' === $confidence && 0 < $target_id
 				? 'leak:' . $target_id . ':' . $reason
 				: 'leak:' . hash( 'sha256', strtolower( untrailingslashit( $absolute ) ) . ':' . $reason );
 
 			if ( ! isset( $groups[ $key ] ) ) {
 				$target_url = 0 < $target_id ? get_permalink( $target_id ) : '';
 				$groups[ $key ] = array(
-					'id'               => substr( hash( 'sha256', $key ), 0, 16 ),
-					'category'         => 'navigation',
-					'code'             => 'environment-link-leakage',
-					'severity'         => 'high' === $confidence ? 'blocker' : 'warning',
-					'classification'   => 'high' === $confidence && 0 < $target_id ? 'auto-fixable' : 'review',
-					'title'            => 'Internal destination escapes the current WordPress environment.',
-					'reason'           => $reason,
-					'confidence'       => $confidence,
+					'id'                => substr( hash( 'sha256', $key ), 0, 16 ),
+					'category'          => 'navigation',
+					'code'              => 'environment-link-leakage',
+					'severity'          => 'high' === $confidence ? 'blocker' : 'warning',
+					'classification'    => 'high' === $confidence && 0 < $target_id ? 'auto-fixable' : 'review',
+					'title'             => 'Internal destination escapes the current WordPress environment.',
+					'reason'            => $reason,
+					'confidence'        => $confidence,
 					'target_resource_id'=> $target_id,
-					'current_url'      => $absolute,
-					'suggested_url'    => is_string( $target_url ) ? $target_url : '',
-					'occurrences'      => 0,
-					'sources'          => array(),
+					'current_url'       => $absolute,
+					'suggested_url'     => is_string( $target_url ) ? $target_url : '',
+					'occurrences'       => 0,
+					'sources'           => array(),
 				);
 			}
 
@@ -125,10 +133,10 @@ final class ActionableDiagnostics {
 			if ( ! is_array( $candidate ) ) {
 				continue;
 			}
-			$path     = isset( $candidate['path'] ) && is_string( $candidate['path'] ) ? $candidate['path'] : '';
-			$absolute = isset( $candidate['absolute_url'] ) && is_string( $candidate['absolute_url'] ) ? $candidate['absolute_url'] : '';
-			$key      = 'unresolved:' . hash( 'sha256', strtolower( untrailingslashit( '' !== $path ? $path : $absolute ) ) );
-			$broken_permalink = self::looks_like_placeholder_permalink( $path . ' ' . $absolute );
+			$path               = isset( $candidate['path'] ) && is_string( $candidate['path'] ) ? $candidate['path'] : '';
+			$absolute           = isset( $candidate['absolute_url'] ) && is_string( $candidate['absolute_url'] ) ? $candidate['absolute_url'] : '';
+			$key                = 'unresolved:' . hash( 'sha256', strtolower( untrailingslashit( '' !== $path ? $path : $absolute ) ) );
+			$broken_permalink   = self::looks_like_placeholder_permalink( $path . ' ' . $absolute );
 
 			if ( ! isset( $groups[ $key ] ) ) {
 				$groups[ $key ] = array(
@@ -173,14 +181,14 @@ final class ActionableDiagnostics {
 				continue;
 			}
 
-			$required = isset( $model['required_slots'] ) && is_array( $model['required_slots'] ) ? $model['required_slots'] : array();
-			$present  = isset( $model['present_required_slots'] ) && is_array( $model['present_required_slots'] ) ? $model['present_required_slots'] : array();
-			$missing  = isset( $model['missing_required_slots'] ) && is_array( $model['missing_required_slots'] ) ? $model['missing_required_slots'] : array();
-			$missing_any = isset( $model['missing_required_any'] ) && is_array( $model['missing_required_any'] ) ? $model['missing_required_any'] : array();
+			$required         = isset( $model['required_slots'] ) && is_array( $model['required_slots'] ) ? $model['required_slots'] : array();
+			$present          = isset( $model['present_required_slots'] ) && is_array( $model['present_required_slots'] ) ? $model['present_required_slots'] : array();
+			$missing          = isset( $model['missing_required_slots'] ) && is_array( $model['missing_required_slots'] ) ? $model['missing_required_slots'] : array();
+			$missing_any      = isset( $model['missing_required_any'] ) && is_array( $model['missing_required_any'] ) ? $model['missing_required_any'] : array();
 			$missing_verified = isset( $model['missing_verified_groups'] ) && is_array( $model['missing_verified_groups'] ) ? $model['missing_verified_groups'] : array();
-			$resource = isset( $page['resource'] ) && is_array( $page['resource'] ) ? $page['resource'] : array();
-			$page_key = isset( $page['key'] ) && is_string( $page['key'] ) ? $page['key'] : 'page';
-			$title    = isset( $resource['title'] ) && is_string( $resource['title'] ) ? $resource['title'] : $page_key;
+			$resource         = isset( $page['resource'] ) && is_array( $page['resource'] ) ? $page['resource'] : array();
+			$page_key         = isset( $page['key'] ) && is_string( $page['key'] ) ? $page['key'] : 'page';
+			$title            = isset( $resource['title'] ) && is_string( $resource['title'] ) ? $resource['title'] : $page_key;
 
 			if ( array() !== $required && array() === $present && array() !== $missing ) {
 				$items[] = array(
@@ -189,7 +197,7 @@ final class ActionableDiagnostics {
 					'code'           => 'theme-model-not-hydrated',
 					'severity'       => 'warning',
 					'classification' => 'hydrate',
-					'title'          => $title . ' is rendered by the Theme but is not hydrated into Manager content slots.',
+					'title'          => $title . ' has a resolved Theme contract but no Manager slot markers are hydrated yet.',
 					'page_key'       => $page_key,
 					'resource_id'    => isset( $resource['id'] ) ? (int) $resource['id'] : 0,
 					'model_id'       => $model['model_id'],
