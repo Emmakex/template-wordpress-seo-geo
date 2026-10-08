@@ -40,12 +40,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Validate acceptance scripts
+      - name: Validate acceptance scripts and dashboard JavaScript
         run: |
           bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
           php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
+          node --check packages/seo-geo-manager/assets/admin/dashboard.js
 
       - name: Pull pinned WordPress fixture images
         run: |
