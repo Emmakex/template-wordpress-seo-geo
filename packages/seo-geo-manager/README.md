@@ -88,10 +88,12 @@ Authenticated Build / Finish intelligence. It currently includes:
 - semantic model IDs and required structured-slot completeness;
 - required-any and required verified-group presence signals;
 - page-level media signals and bounded library alt hygiene;
-- read-only SEO output-authority candidates;
+- resolved read-only SEO output authority with adapter identity/capabilities;
 - aggregated Build / Finish readiness by structure, content, navigation, SEO authority, media, frontend verification and operations.
 
 A high-confidence environment leakage candidate maps to a real local WordPress resource but escapes the installation's current `home_url()` path. This is the EMMAKE `/nuevaweb/` production-link acceptance case.
+
+Manager 0.3.1 resolves SEO public-output ownership without writing provider metadata. It collapses free/pro variants into one provider family and recognizes Yoast, Rank Math, All in One SEO and The SEO Framework. Exactly one external family wins over the Theme fallback; multiple families are a blocker; with no external provider, the active SEO/GEO Theme becomes the resolved native authority. Title/meta, canonical, robots, Open Graph, Schema, hreflang and sitemap signals expose the same resolved owner. `safe_to_write_seo_metadata` remains `false` until that authority's write adapter is implemented and runtime-verified.
 
 ### `POST /changes/preview`
 
@@ -130,7 +132,7 @@ A currently published target is blocked unless the caller explicitly sends `allo
 
 ### `POST /theme/structured/preview`
 
-Manager 0.3.0 adds the first Theme-aware write adapter. It updates **content slots only** while leaving Theme-owned layout and section structure untouched.
+Manager 0.3.0 added the first Theme-aware write adapter. It updates **content slots only** while leaving Theme-owned layout and section structure untouched.
 
 The request must provide:
 
@@ -186,10 +188,11 @@ Structured Theme writes currently roll back by restoring the exact previous `pos
 6. Optimistic concurrency.
 7. Bounded rollback.
 8. One accepted SEO authority per public output.
-9. No fabricated proof/facts.
-10. Content is not layout on Theme-owned strategic surfaces.
-11. Theme structured writes accept only contract-defined slots and supported value types.
-12. Normal blog posts remain normal WordPress posts.
+9. SEO authority resolution never implies write permission; write adapters must be verified separately.
+10. No fabricated proof/facts.
+11. Content is not layout on Theme-owned strategic surfaces.
+12. Theme structured writes accept only contract-defined slots and supported value types.
+13. Normal blog posts remain normal WordPress posts.
 
 ## Authentication
 
@@ -197,7 +200,7 @@ For MVP automation use normal WordPress REST authentication with an authorized W
 
 ## Next implementation slices
 
-- SEO Output Authority Resolver adapters;
+- provider-specific SEO metadata write adapters, starting with the accepted field authority;
 - creation manifests for new draft pages/posts;
 - operation history/admin surface;
 - rendered verification after accepted writes;
