@@ -9,7 +9,11 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
+use SeoGeo\Manager\Intelligence\BuildFinishReadiness;
+use SeoGeo\Manager\Intelligence\MediaIntelligenceScanner;
+use SeoGeo\Manager\Intelligence\SeoAuthorityScanner;
 use SeoGeo\Manager\Intelligence\SiteIntelligenceScanner;
+use SeoGeo\Manager\Intelligence\ThemeContractScanner;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -40,7 +44,16 @@ final class SiteIntelligenceController {
 
 	public static function show( WP_REST_Request $request ): WP_REST_Response {
 		$include_rendered = rest_sanitize_boolean( $request->get_param( 'include_rendered' ) );
+		$site             = SiteIntelligenceScanner::scan( $include_rendered );
+		$theme            = ThemeContractScanner::scan();
+		$seo              = SeoAuthorityScanner::scan();
+		$media            = MediaIntelligenceScanner::scan();
 
-		return new WP_REST_Response( SiteIntelligenceScanner::scan( $include_rendered ), 200 );
+		$site['theme_contract']         = $theme;
+		$site['seo_authority']          = $seo;
+		$site['media_intelligence']     = $media;
+		$site['build_finish_readiness'] = BuildFinishReadiness::aggregate( $site, $theme, $seo, $media );
+
+		return new WP_REST_Response( $site, 200 );
 	}
 }
