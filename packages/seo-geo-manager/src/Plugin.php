@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\Manager;
 
 use SeoGeo\Manager\Admin\Dashboard;
+use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\HealthController;
@@ -29,6 +30,7 @@ final class Plugin {
 
 		if ( is_admin() ) {
 			Dashboard::register();
+			JsonExportActions::register();
 		}
 
 		add_action(
