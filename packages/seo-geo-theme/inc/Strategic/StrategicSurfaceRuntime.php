@@ -124,6 +124,7 @@ final class StrategicSurfaceRuntime {
 			$dependencies,
 			$version
 		);
+		wp_add_inline_style( 'seo-geo-theme-preset-corporate-v5-runtime', $this->navigation_style() );
 
 		if ( ! $is_bundled && is_readable( $closure_path ) ) {
 			$closure_version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $closure_path ) : '0.1.1';
@@ -157,6 +158,22 @@ final class StrategicSurfaceRuntime {
 				$field_version
 			);
 		}
+	}
+
+	/**
+	 * Return the tiny no-request mobile navigation presentation closure.
+	 */
+	private function navigation_style(): string {
+		return <<<'CSS'
+@media (max-width:820px){
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header summary{position:relative;z-index:3;min-width:96px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.55rem .8rem;text-align:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] summary{font-size:0}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] summary::after{content:"×";font-size:1.55rem;font-weight:500;line-height:1;pointer-events:none}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__list{top:calc(100% + .45rem);gap:.1rem;padding:.55rem}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__item a{min-height:44px;display:flex;align-items:center;padding:.6rem .75rem}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__item:last-child a{min-height:52px;justify-content:center;padding:.65rem .9rem;text-align:center}
+}
+CSS;
 	}
 
 	/**
