@@ -5,8 +5,6 @@
  * Executed with WP-CLI eval-file inside an isolated WordPress fixture.
  */
 
-declare(strict_types=1);
-
 use SeoGeo\Manager\Support\ContentFingerprint;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -73,7 +71,7 @@ function seo_geo_manager_read_resource( int $post_id ): array {
 wp_set_current_user( 0 );
 $health = seo_geo_manager_request( 'GET', '/seo-geo-manager/v1/health' );
 seo_geo_manager_accept( 200 === $health['status'], 'Public Manager health endpoint failed.' );
-seo_geo_manager_accept( is_array( $health['data'] ) && 'SEO/GEO Manager' === ( $health['data']['service'] ?? '' ), 'Health endpoint service identity mismatch.' );
+seo_geo_manager_accept( is_array( $health['data'] ) && 'seo-geo-manager' === ( $health['data']['service'] ?? '' ), 'Health endpoint service identity mismatch.' );
 
 wp_set_current_user( 1 );
 seo_geo_manager_accept( current_user_can( 'manage_options' ), 'Acceptance administrator could not be loaded.' );
