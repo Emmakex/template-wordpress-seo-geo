@@ -36,12 +36,12 @@ final class SeoAuthorityScanner {
 
 		if ( 1 < count( $providers ) ) {
 			return array(
-				'state'                     => 'multiple-provider-conflict-candidate',
-				'providers'                 => $providers,
-				'theme_baseline_available'  => $is_theme,
-				'safe_to_write_seo_metadata'=> false,
-				'outputs'                   => self::output_map( 'unresolved', 'blocked-multiple-providers' ),
-				'next_action'               => 'resolve-one-authority-before-seo-mutation',
+				'state'                      => 'multiple-provider-conflict-candidate',
+				'providers'                  => $providers,
+				'theme_baseline_available'   => $is_theme,
+				'safe_to_write_seo_metadata' => false,
+				'outputs'                    => self::output_map( 'unresolved', 'blocked-multiple-providers' ),
+				'next_action'                => 'resolve-one-authority-before-seo-mutation',
 			);
 		}
 
@@ -49,33 +49,33 @@ final class SeoAuthorityScanner {
 			$provider = $providers[0];
 
 			return array(
-				'state'                     => 'external-provider-candidate',
-				'providers'                 => $providers,
-				'theme_baseline_available'  => $is_theme,
-				'safe_to_write_seo_metadata'=> false,
-				'outputs'                   => self::output_map( $provider, 'adapter-confirmation-required' ),
-				'next_action'               => 'confirm-provider-adapter-before-seo-mutation',
+				'state'                      => 'external-provider-candidate',
+				'providers'                  => $providers,
+				'theme_baseline_available'   => $is_theme,
+				'safe_to_write_seo_metadata' => false,
+				'outputs'                    => self::output_map( $provider, 'adapter-confirmation-required' ),
+				'next_action'                => 'confirm-provider-adapter-before-seo-mutation',
 			);
 		}
 
 		if ( $is_theme ) {
 			return array(
-				'state'                     => 'theme-native-candidate',
-				'providers'                 => array(),
-				'theme_baseline_available'  => true,
-				'safe_to_write_seo_metadata'=> false,
-				'outputs'                   => self::output_map( 'seo-geo-theme', 'manager-resolver-not-yet-bound' ),
-				'next_action'               => 'bind-manager-output-authority-resolver',
+				'state'                      => 'theme-native-candidate',
+				'providers'                  => array(),
+				'theme_baseline_available'   => true,
+				'safe_to_write_seo_metadata' => false,
+				'outputs'                    => self::output_map( 'seo-geo-theme', 'manager-resolver-not-yet-bound' ),
+				'next_action'                => 'bind-manager-output-authority-resolver',
 			);
 		}
 
 		return array(
-			'state'                     => 'wordpress-native-or-unresolved',
-			'providers'                 => array(),
-			'theme_baseline_available'  => false,
-			'safe_to_write_seo_metadata'=> false,
-			'outputs'                   => self::output_map( 'unresolved', 'authority-not-established' ),
-			'next_action'               => 'establish-output-authority-before-seo-mutation',
+			'state'                      => 'wordpress-native-or-unresolved',
+			'providers'                  => array(),
+			'theme_baseline_available'   => false,
+			'safe_to_write_seo_metadata' => false,
+			'outputs'                    => self::output_map( 'unresolved', 'authority-not-established' ),
+			'next_action'                => 'establish-output-authority-before-seo-mutation',
 		);
 	}
 
@@ -84,7 +84,7 @@ final class SeoAuthorityScanner {
 	 * @return list<string>
 	 */
 	private static function providers( array $active_plugins ): array {
-		$map = array(
+		$map       = array(
 			'wordpress-seo/wp-seo.php'                         => 'yoast',
 			'wordpress-seo-premium/wp-seo-premium.php'         => 'yoast-premium',
 			'seo-by-rank-math/rank-math.php'                   => 'rank-math',
