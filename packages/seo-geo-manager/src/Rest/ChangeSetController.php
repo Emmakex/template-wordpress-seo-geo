@@ -11,6 +11,7 @@ namespace SeoGeo\Manager\Rest;
 
 use SeoGeo\Manager\Changes\ChangeSetEngine;
 use SeoGeo\Manager\Changes\OperationStore;
+use SeoGeo\Manager\Support\EnvironmentPolicy;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -80,8 +81,13 @@ final class ChangeSetController {
 	public static function preview( WP_REST_Request $request ) {
 		$payload = $request->get_json_params();
 		$result  = ChangeSetEngine::preview( is_array( $payload ) ? $payload : array() );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
-		return self::respond( $result, 200 );
+		$result['environment'] = EnvironmentPolicy::snapshot();
+
+		return new WP_REST_Response( $result, 200 );
 	}
 
 	/**
@@ -89,9 +95,29 @@ final class ChangeSetController {
 	 */
 	public static function apply( WP_REST_Request $request ) {
 		$payload = $request->get_json_params();
-		$result  = ChangeSetEngine::apply( is_array( $payload ) ? $payload : array() );
+		$payload = is_array( $payload ) ? $payload : array();
+		$guard   = EnvironmentPolicy::validate_payload( $payload );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
 
-		return self::respond( $result, 200 );
+		$result = ChangeSetEngine::apply( $payload );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$environment           = EnvironmentPolicy::snapshot();
+		$result['environment'] = $environment;
+		$operation_id          = isset( $result['operation_id'] ) && is_string( $result['operation_id'] ) ? $result['operation_id'] : '';
+
+		if ( '' !== $operation_id ) {
+			$stored = OperationStore::get( $operation_id );
+			if ( is_array( $stored ) && ! isset( $stored['environment'] ) ) {
+				OperationStore::save( $operation_id, EnvironmentPolicy::bind_operation( $stored ) );
+			}
+		}
+
+		return new WP_REST_Response( $result, 200 );
 	}
 
 	/**
@@ -124,7 +150,23 @@ final class ChangeSetController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function rollback( WP_REST_Request $request ) {
-		$result = ChangeSetEngine::rollback( (string) $request->get_param( 'operation_id' ) );
+		$payload = $request->get_json_params();
+		$payload = is_array( $payload ) ? $payload : array();
+		$guard   = EnvironmentPolicy::validate_payload( $payload );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
+
+		$operation_id = (string) $request->get_param( 'operation_id' );
+		$operation    = OperationStore::get( $operation_id );
+		if ( is_array( $operation ) ) {
+			$operation_guard = EnvironmentPolicy::validate_operation_environment( $operation );
+			if ( is_wp_error( $operation_guard ) ) {
+				return $operation_guard;
+			}
+		}
+
+		$result = ChangeSetEngine::rollback( $operation_id );
 
 		return self::respond( $result, 200 );
 	}
