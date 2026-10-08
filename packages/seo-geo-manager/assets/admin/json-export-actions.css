@@ -1,0 +1,13 @@
+.seo-geo-manager-admin__json-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 12px 0;
+}
+
+.seo-geo-manager-admin__json-feedback {
+	min-height: 20px;
+	color: #50575e;
+	font-size: 13px;
+}
