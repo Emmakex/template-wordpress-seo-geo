@@ -162,15 +162,11 @@ bash scripts/build-theme-package.sh "$SELF_CONTAINED_THEME" \
 docker cp "$SELF_CONTAINED_THEME/." "$WP_CONTAINER":/var/www/html/wp-content/themes/seo-geo-theme/ \
   || fail_acceptance "theme-copy" "Could not copy SEO/GEO Theme" "theme copied" "docker cp failed"
 
-# WP-CLI eval-file executes the fixture through eval(); strict_types is invalid there
-# because it is no longer the first statement in the generated code. Preserve the
-# source fixture for normal linting, but remove only that declaration for runtime.
-sed '/^declare(strict_types=1);$/d' scripts/ci/seo-geo-manager-wordpress-acceptance.php >"$ACCEPTANCE_FIXTURE" \
-  || fail_acceptance "fixture-prepare" "Could not prepare Manager acceptance fixture" "strict-types-free eval fixture" "sed failed"
+cp scripts/ci/seo-geo-manager-wordpress-acceptance.php "$ACCEPTANCE_FIXTURE" \
+  || fail_acceptance "fixture-prepare" "Could not prepare Manager acceptance fixture" "fixture copied" "cp failed"
 
 docker cp "$ACCEPTANCE_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-acceptance.php \
   || fail_acceptance "fixture-copy" "Could not copy Manager acceptance fixture" "fixture copied" "docker cp failed"
-
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-manager \
   /var/www/html/wp-content/themes/seo-geo-theme \
@@ -186,6 +182,11 @@ wp_cli core install \
   --admin_email=admin@example.test \
   --skip-email >/dev/null \
   || fail_acceptance "core-install" "WP-CLI could not install WordPress" "core install succeeds" "wp core install failed"
+
+# The leakage detector reasons about logical content paths. Use the same pretty
+# permalink contract as a real SEO/GEO site instead of WordPress' default ?page_id=.
+wp_cli option update permalink_structure '/%postname%/' >/dev/null \
+  || fail_acceptance "permalink-structure" "Could not enable pretty permalinks" "/%postname%/" "option update failed"
 
 wp_cli plugin activate seo-geo-manager >/dev/null \
   || fail_acceptance "manager-activate" "SEO/GEO Manager could not be activated" "plugin active" "activation failed"
