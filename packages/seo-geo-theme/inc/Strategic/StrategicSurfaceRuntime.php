@@ -139,7 +139,7 @@ final class StrategicSurfaceRuntime {
 			$field_dependencies = $is_bundled
 				? array( 'seo-geo-theme-preset-corporate-v5-runtime' )
 				: array( 'seo-geo-theme-preset-corporate-v5-a3-1' );
-			$field_version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $field_css_path ) : '0.1.1';
+			$field_version      = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $field_css_path ) : '0.1.1';
 			wp_enqueue_style(
 				'seo-geo-theme-preset-corporate-v5-mf08-3',
 				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-mf08-3.css',
