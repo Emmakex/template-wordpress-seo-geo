@@ -2,8 +2,8 @@
 /**
  * Plugin Name: SEO/GEO Manager
  * Plugin URI: https://github.com/Emmakex/template-wordpress-seo-geo
- * Description: Controlled WordPress content, SEO/GEO optimization and publishing endpoint for agency automation.
- * Version: 0.1.0
+ * Description: WordPress control plane for Build / Finish, SEO/GEO optimization, publishing and growth automation.
+ * Version: 0.1.1
  * Requires at least: 6.7
  * Requires PHP: 8.2
  * Author: Eduardo Yauri
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEO_GEO_MANAGER_VERSION', '0.1.0' );
+define( 'SEO_GEO_MANAGER_VERSION', '0.1.1' );
 define( 'SEO_GEO_MANAGER_DIR', plugin_dir_path( __FILE__ ) );
 
 spl_autoload_register(
