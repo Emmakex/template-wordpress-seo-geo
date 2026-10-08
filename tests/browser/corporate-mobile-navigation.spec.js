@@ -1,9 +1,9 @@
 const { test, expect } = require('@playwright/test');
 
 const mobileProjects = new Set(['mobile-320', 'mobile-390']);
-const corporatePath = '/corporate-v5-fixture/?fixture_lang=en&fixture_preset=corporate';
+const corporatePath = '/corporate-v5-fixture/?fixture_lang=en&fixture_preset=corporate&fixture_media=atlas';
 
-test('Corporate mobile menu closes by toggle, outside tap, link and Escape', async ({ page }, testInfo) => {
+test('Corporate mobile menu and field media stay usable without overlap', async ({ page }, testInfo) => {
   test.skip(!mobileProjects.has(testInfo.project.name), 'Mobile navigation only renders below the Corporate breakpoint.');
 
   const response = await page.goto(corporatePath, { waitUntil: 'networkidle' });
@@ -14,6 +14,7 @@ test('Corporate mobile menu closes by toggle, outside tap, link and Escape', asy
   const summary = details.locator('summary');
   const contact = details.locator('.seo-geo-preset-navigation__item').last().locator('a');
 
+  await expect(page.locator('.seo-geo-corporate-v5-home--media-atlas')).toHaveCount(1);
   await expect(details).toBeVisible();
   await expect(summary).toBeVisible();
   await expect(page.locator('script[src*="preset-navigation.js"]')).toHaveCount(0);
@@ -65,4 +66,31 @@ test('Corporate mobile menu closes by toggle, outside tap, link and Escape', asy
   expect(contactStyles.justifyContent).toBe('center');
   expect(contactStyles.textAlign).toBe('center');
   expect(contactStyles.minHeight).toBeGreaterThanOrEqual(52);
+
+  for (const selector of ['.seo-geo-corporate-card--2', '.seo-geo-corporate-card--3']) {
+    const clearance = await page.locator(selector).evaluate((card) => {
+      const heading = card.querySelector('h3');
+      if (!heading) {
+        return null;
+      }
+
+      const cardRect = card.getBoundingClientRect();
+      const headingRect = heading.getBoundingClientRect();
+      const mediaStyles = getComputedStyle(card, '::before');
+      const mediaTop = Number.parseFloat(mediaStyles.top) || 0;
+      const mediaWidth = Number.parseFloat(mediaStyles.width) || 0;
+      const computedHeight = Number.parseFloat(mediaStyles.height);
+      const mediaHeight = Number.isFinite(computedHeight) ? computedHeight : mediaWidth * (2 / 3);
+
+      return {
+        mediaBottom: cardRect.top + mediaTop + mediaHeight,
+        headingTop: headingRect.top,
+        mediaWidth,
+      };
+    });
+
+    expect(clearance).not.toBeNull();
+    expect(clearance.mediaWidth).toBeGreaterThan(0);
+    expect(clearance.headingTop).toBeGreaterThanOrEqual(clearance.mediaBottom + 4);
+  }
 });
