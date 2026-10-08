@@ -2,33 +2,32 @@
 
 SEO/GEO Manager is the independent WordPress control plane for **finishing, optimizing and growing** a site throughout its lifecycle.
 
-It is deliberately separate from both the Theme and Migration Bridge:
+It remains separate from the other two products:
 
 - **SEO/GEO Theme** owns rendering, design, semantic HTML, accessibility and frontend performance.
 - **SEO/GEO Migration Bridge** owns scan/clone/rescue/reset-first migration workflows.
-- **SEO/GEO Manager** owns site intelligence, Build / Finish operations, SEO/GEO optimization, content operations, publishing, revisions, rollback and growth.
+- **SEO/GEO Manager** owns site intelligence, Build / Finish operations, SEO/GEO optimization, controlled content mutations, publishing, revisions, rollback and growth.
 
-The architecture follows:
+Architecture documents:
 
 - `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`
 - `docs/CONTENT_PUBLISHING.md`
 - `docs/SEO_GEO_MANAGER_MVP.md`
 - `docs/SEO_GEO_MANAGER_PRODUCT_MODES.md`
+- `docs/SEO_GEO_MANAGER_CHANGESETS.md`
 
 ## Product modes
 
 ### Build / Finish
 
-For a new site or recently migrated site. Manager inventories the real WordPress state, detects missing/incomplete strategic content, clone-domain leakage, broken internal navigation, metadata gaps, missing internal links and launch-readiness blockers. It then prepares bounded changes that can be previewed, applied, verified and rolled back.
-
-Typical flow:
+For a new or recently migrated site. Manager inventories real WordPress state, detects incomplete strategic content, clone-domain leakage, navigation/SEO/media gaps and launch-readiness blockers, then prepares bounded changes that can be previewed, applied, verified and rolled back.
 
 ```text
 new site:      SEO/GEO Theme -> Manager Build / Finish -> launch -> Optimize / Grow
 migrated site: Migration Bridge -> SEO/GEO Theme -> Manager Build / Finish -> launch -> Optimize / Grow
 ```
 
-EMMAKE `/nuevaweb/` is the first reference target for this mode.
+EMMAKE `/nuevaweb/` is the first reference target.
 
 ### Optimize
 
@@ -36,30 +35,7 @@ For an existing site. Manager analyzes intent, entities, headings, content compl
 
 ### Grow
 
-For continuous operation after launch. Manager creates/refreshes landings and blog content, maintains clusters/internal links, schedules/publishes under policy and later consumes Search Console, Bing, analytics and other accepted signals to prioritize the next iteration.
-
-## MVP direction
-
-The first MVP is designed so an agency workflow, ChatGPT session, CI job or future hosted controller can safely work with a WordPress site without hardcoding its production domain or directly editing the database.
-
-Initial foundations:
-
-1. bounded public health endpoint;
-2. authenticated content inventory and resource read endpoint;
-3. stable resource fingerprint for optimistic concurrency;
-4. WordPress-generated permalinks so clones/staging installations never inherit hardcoded production navigation;
-5. WordPress Application Password compatible authentication through normal REST authentication;
-6. capability checks on every non-public operation;
-7. bounded site snapshot for Build / Finish and launch-readiness analysis;
-8. resource inventory and internal-link graph;
-9. clone/current-environment leakage detection;
-10. orphan-page and unresolved internal-path review signals;
-11. active SEO/GEO Theme preset/contract detection;
-12. expected strategic-page resolution;
-13. required structured-slot completeness signals;
-14. bounded page/media alt hygiene signals;
-15. read-only SEO output-authority candidates;
-16. aggregated Build / Finish readiness by category.
+For continuous operation after launch. Manager creates/refreshes landings and blog content, maintains clusters/internal links, schedules/publishes under policy and later consumes Search Console, Bing, analytics and other accepted signals.
 
 ## API v1
 
@@ -69,96 +45,112 @@ Base namespace:
 
 ### `GET /health`
 
-Public, bounded service check. It exposes only service name and plugin version.
+Public bounded service/version check.
 
 ### `GET /content`
 
-Authenticated. Requires `edit_posts`.
+Authenticated content inventory. Requires `edit_posts`.
 
-Supported query arguments:
+Supported query arguments: `type`, `status`, `search`, `per_page`, `page`.
 
-- `type` (default `page`)
-- `status` (default `any`)
-- `search`
-- `per_page` (1-100)
-- `page`
-
-Returns normalized WordPress resources, current-environment permalinks and a deterministic fingerprint.
+Returns normalized WordPress resources, current-environment permalinks and deterministic fingerprints.
 
 ### `GET /content/{id}`
 
-Authenticated. Requires permission to edit the requested resource.
+Authenticated resource read. Requires permission to edit the target.
 
-Returns the normalized resource plus raw editable body/excerpt and identity fields required by the future preview/diff/update pipeline.
+Returns raw editable body/excerpt plus identity and fingerprint data used by controlled change sets.
 
 ### `GET /site/snapshot`
 
-Authenticated. Requires `edit_posts`.
-
-Returns a bounded snapshot including:
-
-- current `home_url` and `site_url`;
-- WordPress/language/permalink environment;
-- Manager/Bridge/Core presence when detectable;
-- active Theme identity and SEO/GEO Theme detection;
-- page/post/attachment counts;
-- front-page/blog-page identity;
-- menu and taxonomy counts;
-- known SEO-provider detection state;
-- robots and native WordPress sitemap discovery URLs.
+Authenticated bounded environment snapshot: current URLs, WordPress version/language/permalinks, Manager/Bridge/Core presence, Theme identity, content counts, front/blog page identity, menu/taxonomy counts, SEO-provider detection and discovery URLs.
 
 ### `GET /site/intelligence`
 
-Authenticated. Requires `edit_posts`.
+Authenticated Build / Finish intelligence. It currently includes:
 
-Build / Finish intelligence report including:
-
-- bounded page/post resource inventory;
-- current-environment permalink, path and logical-path mapping;
-- per-resource fingerprint and body word-count signal;
-- stored-content internal-link graph;
-- WordPress menu link evidence;
-- environment/clone leakage candidates;
-- unresolved same-environment path candidates;
-- published orphan-page candidates;
+- bounded page/post inventory;
+- current permalink/path/logical-path mapping;
+- stored-content and WordPress-menu internal-link evidence;
+- clone/current-environment leakage candidates;
+- unresolved internal paths and published orphan-page candidates;
+- optional rendered scan of up to 20 pages (`include_rendered=1`);
 - active SEO/GEO Theme preset contract when available;
 - expected strategic-page mapping with resolution method/confidence;
-- semantic model ID and required-slot completeness;
-- required-any slot groups and required verified-group presence signals;
-- page-level featured/content-image signals;
-- bounded media-library missing-alt sample;
-- read-only SEO authority candidate map for title/meta, canonical, robots, OG, Schema, hreflang and sitemap;
-- aggregated Build / Finish readiness grouped into structure, content, navigation, SEO authority, media, frontend verification and operations.
+- semantic model IDs and required structured-slot completeness;
+- required-any and required verified-group presence signals;
+- page-level media signals and bounded library alt hygiene;
+- read-only SEO output-authority candidates;
+- aggregated Build / Finish readiness by structure, content, navigation, SEO authority, media, frontend verification and operations.
 
-Optional query argument:
+A high-confidence environment leakage candidate maps to a real local WordPress resource but escapes the installation's current `home_url()` path. This is the EMMAKE `/nuevaweb/` production-link acceptance case.
 
-- `include_rendered=1` — fetch and scan up to 20 rendered published pages so Theme-generated links can be checked too. This is intended for final Build / Finish verification rather than every routine request.
+### `POST /changes/preview`
 
-A high-confidence leakage candidate is a link that maps to a real local WordPress resource but escapes the current WordPress `home_url()` path. This catches the EMMAKE clone case where a link on `/nuevaweb/` points to the equivalent production path instead of the clone path.
+M2 read-only change-set validation and field-level diff.
 
-External-host path matches are reported at medium confidence and require review rather than being treated as proof of an error.
+Requires:
 
-Theme-contract completeness is also evidence-based: missing required semantic slot markers are blockers for a Theme-owned structured model, while provenance-required proof remains a separate review signal rather than being invented or automatically accepted.
+- schema v1;
+- target WordPress ID;
+- the target fingerprint obtained during inspection;
+- one or more supported changes.
 
-SEO authority remains read-only in M1. Even when a likely Yoast, Rank Math, AIOSEO or Theme-native owner is detected, Manager will not write public SEO metadata until the M2/M3 Output Authority Resolver binds an accepted adapter.
+Preview checks stale state, permissions, slug collisions, destructive empty-content intent and published-target policy without writing WordPress state.
 
-## Next endpoints
+### `POST /changes/apply`
 
-The next implementation slices add:
+M2 controlled mutation endpoint.
 
-- `/changes/preview`;
-- `/changes/apply`;
-- `/changes/{operation_id}`;
-- `/changes/{operation_id}/rollback`;
-- `/optimize/analyze`;
-- `/publish/draft`.
+Apply adds:
 
-Writes remain draft-first and idempotent. No endpoint may silently publish, overwrite a newer human revision or create duplicate URL intent.
+- mandatory idempotency key;
+- optimistic-concurrency enforcement;
+- draft-first published-target guard;
+- pre-change revision attempt;
+- bounded previous-value capture;
+- exact post-apply verification;
+- persisted operation/rollback record.
+
+Initial fields are `title`, `slug`, `excerpt`, `content` and `status`. Baseline status writes are limited to `draft` and `pending`.
+
+A currently published target is blocked unless the caller explicitly sends `allow_published_target=true` and has the post type publish capability. This is an explicit staging/approval escape hatch, not automatic production publication.
+
+### `GET /changes/{operation_id}`
+
+Reads one Manager operation when the current user can still edit the target.
+
+### `POST /changes/{operation_id}/rollback`
+
+Restores only fields changed by that Manager operation. Rollback is blocked if the current fingerprint differs from the recorded post-apply fingerprint, protecting newer human/plugin changes.
+
+## Safety invariants
+
+1. Inspect before mutate.
+2. No hardcoded production domain for internal resource identity.
+3. Draft-first baseline.
+4. Idempotent writes.
+5. Optimistic concurrency.
+6. Bounded rollback.
+7. One accepted SEO authority per public output.
+8. No fabricated proof/facts.
+9. Content is not layout on Theme-owned strategic surfaces.
+10. Normal blog posts remain normal WordPress posts.
 
 ## Authentication
 
-For MVP automation use WordPress REST authentication with an authorized WordPress user, preferably Application Passwords over HTTPS. Authorization is capability-based inside WordPress. Secrets are never stored in content manifests or committed to GitHub.
+For MVP automation use normal WordPress REST authentication with an authorized WordPress user, preferably Application Passwords over HTTPS. Authorization remains capability-based. Secrets are never stored in content manifests or committed to GitHub.
 
-## Internal URL rule
+## Next implementation slices
 
-Manager never stores production hostnames merely to link internal WordPress resources. Internal resource URLs are resolved from WordPress IDs/paths and the current site environment (`home_url()`, `get_permalink()`). This is mandatory for production/staging/cloned-site portability.
+- dedicated M2 acceptance tests;
+- explicit staging/production approval policy;
+- Theme structured-model write adapter;
+- SEO Output Authority Resolver adapters;
+- creation manifests for new draft pages/posts;
+- operation history/admin surface;
+- rendered verification after accepted writes;
+- M3 SEO/GEO Optimizer;
+- M4 Landing Engine;
+- M5 Blog Engine;
+- M6 Search Console/Bing/analytics growth loop.
