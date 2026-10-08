@@ -142,11 +142,11 @@ final class SiteSnapshotController {
 	private static function detect_seo_providers( array $active_plugins ): array {
 		$providers = array();
 		$map       = array(
-			'wordpress-seo/wp-seo.php'                         => 'yoast',
-			'seo-by-rank-math/rank-math.php'                   => 'rank-math',
-			'rank-math/rank-math.php'                          => 'rank-math',
-			'all-in-one-seo-pack/all_in_one_seo_pack.php'      => 'aioseo',
-			'all-in-one-seo-pack-pro/all_in_one_seo_pack.php'  => 'aioseo-pro',
+			'wordpress-seo/wp-seo.php'                        => 'yoast',
+			'seo-by-rank-math/rank-math.php'                  => 'rank-math',
+			'rank-math/rank-math.php'                         => 'rank-math',
+			'all-in-one-seo-pack/all_in_one_seo_pack.php'     => 'aioseo',
+			'all-in-one-seo-pack-pro/all_in_one_seo_pack.php' => 'aioseo-pro',
 		);
 
 		foreach ( $map as $plugin_file => $provider ) {
