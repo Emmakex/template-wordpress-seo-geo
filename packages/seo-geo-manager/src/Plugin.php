@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager;
 
+use SeoGeo\Manager\Admin\Dashboard;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\HealthController;
@@ -25,6 +26,10 @@ final class Plugin {
 		}
 
 		self::$booted = true;
+
+		if ( is_admin() ) {
+			Dashboard::register();
+		}
 
 		add_action(
 			'rest_api_init',
