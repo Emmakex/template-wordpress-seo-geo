@@ -472,12 +472,8 @@ final class ThemeStructuredContentAdapter {
 				return new WP_Error( 'seo_geo_manager_structured_slot_type_unsupported', 'Unsupported structured slot type.', array( 'status' => 400 ) );
 			}
 
-			$updated = preg_replace_callback(
-				$pattern,
-				static fn ( array $ignored ): string => $replacement,
-				$content,
-				1
-			);
+			$replacement_pattern = str_replace( array( '\\', '$' ), array( '\\\\', '\\$' ), $replacement );
+			$updated             = preg_replace( $pattern, $replacement_pattern, $content, 1 );
 			if ( ! is_string( $updated ) ) {
 				return new WP_Error( 'seo_geo_manager_structured_replace_failed', 'Could not safely replace the Theme slot.', array( 'status' => 500 ) );
 			}
