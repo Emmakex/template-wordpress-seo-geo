@@ -43,7 +43,7 @@ final class SiteIntelligenceController {
 	}
 
 	public static function show( WP_REST_Request $request ): WP_REST_Response {
-		$include_rendered = rest_sanitize_boolean( $request->get_param( 'include_rendered' ) );
+		$include_rendered = true === filter_var( $request->get_param( 'include_rendered' ), FILTER_VALIDATE_BOOLEAN );
 		$site             = SiteIntelligenceScanner::scan( $include_rendered );
 		$theme            = ThemeContractScanner::scan();
 		$seo              = SeoAuthorityScanner::scan();
