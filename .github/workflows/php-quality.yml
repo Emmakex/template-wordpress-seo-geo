@@ -6,6 +6,7 @@ on:
       - 'composer.json'
       - 'composer.lock'
       - 'phpcs.xml.dist'
+      - 'phpcs-manager.xml.dist'
       - 'phpstan.neon'
       - 'packages/**/*.php'
       - 'scripts/ci/php-quality.sh'
@@ -17,6 +18,7 @@ on:
       - 'composer.json'
       - 'composer.lock'
       - 'phpcs.xml.dist'
+      - 'phpcs-manager.xml.dist'
       - 'phpstan.neon'
       - 'packages/**/*.php'
       - 'scripts/ci/php-quality.sh'
@@ -61,8 +63,11 @@ jobs:
           if-no-files-found: error
           retention-days: 2
 
-      - name: WordPress Coding Standards
+      - name: Existing products WordPress Coding Standards
         run: bash scripts/ci/php-quality.sh phpcs
+
+      - name: SEO GEO Manager WordPress Coding Standards
+        run: vendor/bin/phpcs --standard=phpcs-manager.xml.dist --report=full -q
 
       - name: PHPStan level 6
         run: bash scripts/ci/php-quality.sh phpstan
