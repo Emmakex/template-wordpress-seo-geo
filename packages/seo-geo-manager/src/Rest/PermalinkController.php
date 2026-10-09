@@ -16,6 +16,7 @@ use SeoGeo\Manager\Support\EnvironmentPolicy;
 use SeoGeo\Manager\Support\LegacyPermalinkAuthority;
 use SeoGeo\Manager\Support\PermalinkInspector;
 use SeoGeo\Manager\Support\PermalinkRedirectPlanner;
+use SeoGeo\Manager\Support\PermalinkRedirectRuntime;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -59,6 +60,26 @@ final class PermalinkController {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( self::class, 'authoritative_plan' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/permalinks/redirect-runtime',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( self::class, 'redirect_runtime' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/permalinks/redirect-runtime/preview',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'redirect_runtime_preview' ),
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
@@ -116,6 +137,32 @@ final class PermalinkController {
 		$expected_authority_fingerprint = isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? $payload['authority_fingerprint'] : '';
 
 		return new WP_REST_Response( AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint ), 200 );
+	}
+
+	public static function redirect_runtime(): WP_REST_Response {
+		return new WP_REST_Response( PermalinkRedirectRuntime::snapshot(), 200 );
+	}
+
+	public static function redirect_runtime_preview( WP_REST_Request $request ): WP_REST_Response {
+		$payload = $request->get_json_params();
+		$payload = is_array( $payload ) ? $payload : array();
+		$base    = isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? $payload['legacy_base_url'] : '';
+		$expected_authority_fingerprint = isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? $payload['authority_fingerprint'] : '';
+		$plan = AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint );
+		$runtime = PermalinkRedirectRuntime::preview(
+			isset( $plan['redirects'] ) && is_array( $plan['redirects'] ) ? $plan['redirects'] : array(),
+			isset( $plan['plan_fingerprint'] ) && is_string( $plan['plan_fingerprint'] ) ? $plan['plan_fingerprint'] : ''
+		);
+		$runtime['authoritative_plan_safe'] = true === ( $plan['safe_structure_candidate'] ?? false );
+		$runtime['authoritative_plan_fingerprint'] = isset( $plan['plan_fingerprint'] ) && is_string( $plan['plan_fingerprint'] ) ? $plan['plan_fingerprint'] : '';
+		$runtime['authority_fingerprint'] = isset( $plan['authority_fingerprint'] ) && is_string( $plan['authority_fingerprint'] ) ? $plan['authority_fingerprint'] : '';
+		$runtime['requires_redirect_runtime'] = true === ( $plan['requires_redirect_runtime'] ?? false );
+		$runtime['apply_blocked'] = true;
+		$runtime['next_action'] = true === ( $plan['requires_redirect_runtime'] ?? false )
+			? 'integrate-redirect-runtime-with-authoritative-apply'
+			: 'no-redirect-runtime-needed';
+
+		return new WP_REST_Response( $runtime, 200 );
 	}
 
 	/**
