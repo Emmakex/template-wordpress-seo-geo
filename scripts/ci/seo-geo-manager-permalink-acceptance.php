@@ -34,6 +34,7 @@ function seo_geo_manager_set_permalink_fixture( string $structure ): void {
 	);
 	seo_geo_manager_permalink_accept( false !== $updated, 'Could not persist permalink fixture.' );
 	wp_cache_delete( 'permalink_structure', 'options' );
+	wp_cache_delete( 'alloptions', 'options' );
 }
 
 wp_set_current_user( 1 );
