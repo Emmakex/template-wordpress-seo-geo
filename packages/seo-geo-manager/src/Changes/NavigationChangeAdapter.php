@@ -16,6 +16,8 @@ final class NavigationChangeAdapter {
 	private const ADAPTER        = 'navigation-menu';
 
 	/**
+	 * Preview a bounded navigation-menu URL correction.
+	 *
 	 * @param array<string, mixed> $payload Request payload.
 	 * @return array<string, mixed>|WP_Error
 	 */
@@ -46,6 +48,8 @@ final class NavigationChangeAdapter {
 	}
 
 	/**
+	 * Apply a bounded navigation-menu URL correction.
+	 *
 	 * @param array<string, mixed> $payload Request payload.
 	 * @return array<string, mixed>|WP_Error
 	 */
@@ -64,24 +68,9 @@ final class NavigationChangeAdapter {
 		if ( is_wp_error( $lookup ) ) {
 			return $lookup;
 		}
+
 		if ( true === $lookup['existing'] ) {
-			$operation = OperationStore::get( $lookup['operation_id'] );
-			if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
-				return new WP_Error(
-					'seo_geo_manager_navigation_idempotency_unavailable',
-					'The navigation idempotency key points to an incompatible operation.',
-					array( 'status' => 409 )
-				);
-			}
-			if ( 'failed' === ( $operation['status'] ?? '' ) ) {
-				return new WP_Error(
-					'seo_geo_manager_navigation_previous_attempt_failed',
-					'This idempotency key belongs to a failed navigation attempt. Prepare a fresh preview before retrying.',
-					array( 'status' => 409 )
-				);
-			}
-			$operation['idempotent_replay'] = true;
-			return $operation;
+			return self::replay_operation( $lookup['operation_id'] );
 		}
 
 		if ( true !== ( $payload['allow_public_navigation'] ?? false ) ) {
@@ -103,12 +92,7 @@ final class NavigationChangeAdapter {
 			return $reservation;
 		}
 		if ( true === $reservation['existing'] ) {
-			$operation = OperationStore::get( $reservation['operation_id'] );
-			if ( is_array( $operation ) ) {
-				$operation['idempotent_replay'] = true;
-				return $operation;
-			}
-			return new WP_Error( 'seo_geo_manager_navigation_operation_missing', 'Reserved navigation operation could not be read.', array( 'status' => 409 ) );
+			return self::replay_operation( $reservation['operation_id'] );
 		}
 
 		$updated = array();
@@ -116,16 +100,7 @@ final class NavigationChangeAdapter {
 			$result = wp_update_nav_menu_item( $prepared['menu_id'], $item['id'], $item['after_args'] );
 			if ( is_wp_error( $result ) ) {
 				self::restore_items( $prepared['menu_id'], array_reverse( $updated ) );
-				$failed = array(
-					'operation_id'       => $operation_id,
-					'adapter'            => self::ADAPTER,
-					'status'             => 'failed',
-					'menu_id'            => $prepared['menu_id'],
-					'target_id'          => $prepared['menu_id'],
-					'before_fingerprint' => $prepared['before_fingerprint'],
-					'created_at_gmt'     => gmdate( 'c' ),
-				);
-				OperationStore::save( $operation_id, $failed );
+				self::save_failed_operation( $operation_id, $prepared );
 				return $result;
 			}
 			$updated[] = $item;
@@ -134,16 +109,7 @@ final class NavigationChangeAdapter {
 		$after_fingerprint = self::menu_fingerprint( $prepared['menu_id'] );
 		if ( '' === $after_fingerprint || hash_equals( $prepared['before_fingerprint'], $after_fingerprint ) ) {
 			self::restore_items( $prepared['menu_id'], array_reverse( $updated ) );
-			$failed = array(
-				'operation_id'       => $operation_id,
-				'adapter'            => self::ADAPTER,
-				'status'             => 'failed',
-				'menu_id'            => $prepared['menu_id'],
-				'target_id'          => $prepared['menu_id'],
-				'before_fingerprint' => $prepared['before_fingerprint'],
-				'created_at_gmt'     => gmdate( 'c' ),
-			);
-			OperationStore::save( $operation_id, $failed );
+			self::save_failed_operation( $operation_id, $prepared );
 			return new WP_Error(
 				'seo_geo_manager_navigation_verify_failed',
 				'Navigation apply did not produce the expected fingerprint change and was compensated.',
@@ -178,7 +144,11 @@ final class NavigationChangeAdapter {
 		return $operation;
 	}
 
-	/** @return array<string, mixed>|WP_Error */
+	/**
+	 * Roll back one navigation-menu operation when the menu is unchanged since Apply.
+	 *
+	 * @return array<string, mixed>|WP_Error
+	 */
 	public static function rollback( string $operation_id ) {
 		$operation = OperationStore::get( $operation_id );
 		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
@@ -224,15 +194,17 @@ final class NavigationChangeAdapter {
 			);
 		}
 
-		$operation['status']              = 'rolled-back';
-		$operation['rolled_back_at_gmt']  = gmdate( 'c' );
-		$operation['rollback_fingerprint']= $rolled_back_fingerprint;
+		$operation['status']               = 'rolled-back';
+		$operation['rolled_back_at_gmt']   = gmdate( 'c' );
+		$operation['rollback_fingerprint'] = $rolled_back_fingerprint;
 		OperationStore::save( $operation_id, $operation );
 
 		return $operation;
 	}
 
 	/**
+	 * Prepare and validate a menu mutation.
+	 *
 	 * @param array<string, mixed> $payload Request payload.
 	 * @return array<string, mixed>|WP_Error
 	 */
@@ -256,6 +228,7 @@ final class NavigationChangeAdapter {
 		if ( ! current_user_can( 'edit_theme_options' ) ) {
 			return new WP_Error( 'seo_geo_manager_forbidden', 'You cannot modify WordPress navigation menus.', array( 'status' => 403 ) );
 		}
+
 		$menu = wp_get_nav_menu_object( $menu_id );
 		if ( ! is_object( $menu ) || ! isset( $menu->term_id ) ) {
 			return new WP_Error( 'seo_geo_manager_navigation_menu_missing', 'Navigation menu not found.', array( 'status' => 404 ) );
@@ -309,15 +282,14 @@ final class NavigationChangeAdapter {
 					array( 'status' => 409, 'item_id' => (int) $item->ID )
 				);
 			}
-			$before_args = self::menu_item_args( $item, (string) $item->url );
-			$after_args  = self::menu_item_args( $item, $suggested );
-			$items[]     = array(
+
+			$items[] = array(
 				'id'          => (int) $item->ID,
 				'title'       => (string) ( $item->title ?? '' ),
 				'before_url'  => (string) $item->url,
 				'after_url'   => $suggested,
-				'before_args' => $before_args,
-				'after_args'  => $after_args,
+				'before_args' => self::menu_item_args( $item, (string) $item->url ),
+				'after_args'  => self::menu_item_args( $item, $suggested ),
 			);
 		}
 
@@ -343,7 +315,57 @@ final class NavigationChangeAdapter {
 		);
 	}
 
-	/** @param array<int, array<string, mixed>> $items */
+	/**
+	 * Read an idempotent navigation operation.
+	 *
+	 * @return array<string, mixed>|WP_Error
+	 */
+	private static function replay_operation( string $operation_id ) {
+		$operation = OperationStore::get( $operation_id );
+		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
+			return new WP_Error(
+				'seo_geo_manager_navigation_idempotency_unavailable',
+				'The navigation idempotency key points to an incompatible operation.',
+				array( 'status' => 409 )
+			);
+		}
+		if ( 'failed' === ( $operation['status'] ?? '' ) ) {
+			return new WP_Error(
+				'seo_geo_manager_navigation_previous_attempt_failed',
+				'This idempotency key belongs to a failed navigation attempt. Prepare a fresh preview before retrying.',
+				array( 'status' => 409 )
+			);
+		}
+		$operation['idempotent_replay'] = true;
+		return $operation;
+	}
+
+	/**
+	 * Persist a failed operation record after compensation.
+	 *
+	 * @param array<string, mixed> $prepared Prepared mutation.
+	 */
+	private static function save_failed_operation( string $operation_id, array $prepared ): void {
+		OperationStore::save(
+			$operation_id,
+			array(
+				'operation_id'       => $operation_id,
+				'adapter'            => self::ADAPTER,
+				'status'             => 'failed',
+				'menu_id'            => $prepared['menu_id'],
+				'target_id'          => $prepared['menu_id'],
+				'before_fingerprint' => $prepared['before_fingerprint'],
+				'created_at_gmt'     => gmdate( 'c' ),
+			)
+		);
+	}
+
+	/**
+	 * Return bounded menu-item details for Preview.
+	 *
+	 * @param array<int, array<string, mixed>> $items Prepared items.
+	 * @return array<int, array<string, mixed>>
+	 */
 	private static function preview_items( array $items ): array {
 		$result = array();
 		foreach ( $items as $item ) {
@@ -357,7 +379,12 @@ final class NavigationChangeAdapter {
 		return $result;
 	}
 
-	/** @param mixed $value @return list<string> */
+	/**
+	 * Normalize a list of URL variants.
+	 *
+	 * @param mixed $value Raw URL list.
+	 * @return list<string>
+	 */
 	private static function url_list( $value ): array {
 		$values = is_array( $value ) ? $value : array();
 		$result = array();
@@ -373,6 +400,9 @@ final class NavigationChangeAdapter {
 		return array_values( array_unique( $result ) );
 	}
 
+	/**
+	 * Confirm the destination remains inside the current WordPress home path.
+	 */
 	private static function destination_allowed( string $url ): bool {
 		$target = wp_parse_url( $url );
 		$home   = wp_parse_url( home_url( '/' ) );
@@ -389,11 +419,15 @@ final class NavigationChangeAdapter {
 		return '/' === $home_path || $target_path === $home_path || str_starts_with( $target_path, trailingslashit( $home_path ) );
 	}
 
+	/**
+	 * Canonicalize one URL for deterministic comparison.
+	 */
 	private static function canonical_url( string $url ): string {
 		$url = html_entity_decode( trim( $url ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) );
 		if ( '' === $url ) {
 			return '';
 		}
+
 		$parts = wp_parse_url( $url );
 		if ( ! is_array( $parts ) || '' === (string) ( $parts['host'] ?? '' ) ) {
 			if ( str_starts_with( $url, '/' ) ) {
@@ -413,6 +447,7 @@ final class NavigationChangeAdapter {
 		if ( ! is_array( $parts ) || '' === (string) ( $parts['host'] ?? '' ) ) {
 			return '';
 		}
+
 		$scheme = strtolower( (string) ( $parts['scheme'] ?? 'https' ) );
 		$host   = strtolower( (string) $parts['host'] );
 		$port   = isset( $parts['port'] ) ? ':' . (int) $parts['port'] : '';
@@ -421,6 +456,9 @@ final class NavigationChangeAdapter {
 		return $scheme . '://' . $host . $port . $path . $query;
 	}
 
+	/**
+	 * Normalize a URL path for comparison.
+	 */
 	private static function normalize_path( string $path ): string {
 		$path = '/' . ltrim( $path, '/' );
 		if ( '/' !== $path ) {
@@ -429,6 +467,9 @@ final class NavigationChangeAdapter {
 		return '' === $path ? '/' : $path;
 	}
 
+	/**
+	 * Fingerprint the complete menu state used by this adapter.
+	 */
 	private static function menu_fingerprint( int $menu_id ): string {
 		$items = wp_get_nav_menu_items( $menu_id, array( 'post_status' => 'any' ) );
 		if ( ! is_array( $items ) ) {
@@ -438,7 +479,7 @@ final class NavigationChangeAdapter {
 		foreach ( $items as $item ) {
 			if ( ! is_object( $item ) || ! isset( $item->ID ) ) {
 				continue;
-			}
+		}
 			$state[] = array(
 				'id'          => (int) $item->ID,
 				'order'       => (int) ( $item->menu_order ?? 0 ),
@@ -459,7 +500,11 @@ final class NavigationChangeAdapter {
 		return hash( 'sha256', (string) wp_json_encode( $state ) );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Capture complete menu-item arguments while replacing only the URL.
+	 *
+	 * @return array<string, mixed>
+	 */
 	private static function menu_item_args( object $item, string $url ): array {
 		return array(
 			'menu-item-db-id'       => (int) $item->ID,
@@ -479,7 +524,11 @@ final class NavigationChangeAdapter {
 		);
 	}
 
-	/** @param array<int, array<string, mixed>> $items */
+	/**
+	 * Restore previously updated items after a failed group.
+	 *
+	 * @param array<int, array<string, mixed>> $items Prepared items.
+	 */
 	private static function restore_items( int $menu_id, array $items ): void {
 		foreach ( $items as $item ) {
 			if ( is_array( $item ) && isset( $item['id'], $item['before_args'] ) ) {
@@ -488,7 +537,11 @@ final class NavigationChangeAdapter {
 		}
 	}
 
-	/** @param array<int, array<string, mixed>> $items */
+	/**
+	 * Reapply items after a rollback verification failure.
+	 *
+	 * @param array<int, array<string, mixed>> $items Prepared items.
+	 */
 	private static function reapply_items( int $menu_id, array $items ): void {
 		foreach ( $items as $item ) {
 			if ( is_array( $item ) && isset( $item['id'], $item['after_args'] ) ) {
@@ -497,7 +550,11 @@ final class NavigationChangeAdapter {
 		}
 	}
 
-	/** @param array<string, mixed> $payload */
+	/**
+	 * Hash the bounded apply contract for idempotency.
+	 *
+	 * @param array<string, mixed> $payload Request payload.
+	 */
 	private static function payload_hash( array $payload ): string {
 		$urls = self::url_list( $payload['current_urls'] ?? array() );
 		sort( $urls );
