@@ -18,6 +18,7 @@ RUNTIME_LOG="${TMP_DIR}/permalink-runtime.log"
 REDIRECT_RUNTIME_LOG="${TMP_DIR}/redirect-runtime.log"
 ATOMIC_RUNTIME_LOG="${TMP_DIR}/atomic-runtime.log"
 HISTORY_RUNTIME_LOG="${TMP_DIR}/history-runtime.log"
+RENDERED_RUNTIME_LOG="${TMP_DIR}/rendered-runtime.log"
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
@@ -87,12 +88,14 @@ docker cp scripts/ci/seo-geo-manager-permalink-acceptance.php "$WP_CONTAINER":/v
 docker cp scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-redirect-runtime-acceptance.php
 docker cp scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-atomic-redirect-acceptance.php
 docker cp scripts/ci/seo-geo-manager-operation-history-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-operation-history-acceptance.php
+docker cp scripts/ci/seo-geo-manager-rendered-verification-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-rendered-verification-acceptance.php
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-manager \
   /var/www/html/seo-geo-manager-permalink-acceptance.php \
   /var/www/html/seo-geo-manager-redirect-runtime-acceptance.php \
   /var/www/html/seo-geo-manager-atomic-redirect-acceptance.php \
-  /var/www/html/seo-geo-manager-operation-history-acceptance.php
+  /var/www/html/seo-geo-manager-operation-history-acceptance.php \
+  /var/www/html/seo-geo-manager-rendered-verification-acceptance.php
 
 wp_cli core install \
   --url="http://seo-geo-permalink.test" \
@@ -147,6 +150,17 @@ grep -q '"rollback_status_refresh":true' "$HISTORY_RUNTIME_LOG"
 grep -q '"editor_scope_filter":true' "$HISTORY_RUNTIME_LOG"
 grep -q '"sitewide_admin_only":true' "$HISTORY_RUNTIME_LOG"
 
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-rendered-verification-acceptance.php >"$RENDERED_RUNTIME_LOG" 2>&1; then
+  cat "$RENDERED_RUNTIME_LOG"
+  exit 1
+fi
+cat "$RENDERED_RUNTIME_LOG"
+grep -q '"ok":true' "$RENDERED_RUNTIME_LOG"
+grep -q '"bounded_same_origin":true' "$RENDERED_RUNTIME_LOG"
+grep -q '"body_not_persisted":true' "$RENDERED_RUNTIME_LOG"
+grep -q '"no_auto_rollback_on_http":true' "$RENDERED_RUNTIME_LOG"
+grep -q '"manual_rollback_after_fail":true' "$RENDERED_RUNTIME_LOG"
+
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
   docker exec "$WP_CONTAINER" sh -lc "test ! -s '$DEBUG_LOG'" || {
@@ -155,4 +169,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
   }
 fi
 
-printf '[manager] Permalink authority, atomic 301 and operation-history acceptance OK.\n'
+printf '[manager] Permalink authority, atomic 301, operation-history and rendered post-write acceptance OK.\n'
