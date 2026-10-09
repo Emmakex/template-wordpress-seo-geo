@@ -188,7 +188,6 @@ $authority = seo_geo_manager_permalink_post_request(
 	'/seo-geo-manager/v1/permalinks/legacy-authority-preview',
 	array( 'legacy_base_url' => 'https://example.com/' )
 );
-remove_filter( 'pre_http_request', $legacy_http_filter, 10 );
 seo_geo_manager_permalink_accept( 200 === $authority['status'] && is_array( $authority['data'] ), 'Legacy authority preview endpoint failed.' );
 seo_geo_manager_permalink_accept( true === ( $authority['data']['complete_scan'] ?? false ), 'Legacy authority scan was not complete.' );
 seo_geo_manager_permalink_accept( 2 === (int) ( $authority['data']['matched_posts'] ?? 0 ), 'Legacy authority did not match both local posts.' );
@@ -199,6 +198,39 @@ seo_geo_manager_permalink_accept( true === ( $authority['data']['apply_blocked']
 seo_geo_manager_permalink_accept( false === ( $authority['data']['write_performed'] ?? true ), 'Legacy authority preview unexpectedly reported a write.' );
 seo_geo_manager_permalink_accept( '' !== (string) ( $authority['data']['authority_fingerprint'] ?? '' ), 'Legacy authority fingerprint missing.' );
 seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Legacy authority preview mutated permalink_structure.' );
+
+$authoritative_plan = seo_geo_manager_permalink_post_request(
+	'/seo-geo-manager/v1/permalinks/authoritative-plan',
+	array(
+		'legacy_base_url'      => 'https://example.com/',
+		'authority_fingerprint'=> (string) ( $authority['data']['authority_fingerprint'] ?? '' ),
+	)
+);
+seo_geo_manager_permalink_accept( 200 === $authoritative_plan['status'] && is_array( $authoritative_plan['data'] ), 'Authoritative permalink-plan endpoint failed.' );
+seo_geo_manager_permalink_accept( '/blog/%postname%/' === ( $authoritative_plan['data']['authoritative_structure'] ?? '' ), 'Authoritative plan did not retain the verified historical structure.' );
+seo_geo_manager_permalink_accept( true === ( $authoritative_plan['data']['complete_scan'] ?? false ), 'Authoritative plan did not complete its collision scan.' );
+seo_geo_manager_permalink_accept( true === ( $authoritative_plan['data']['safe_structure_candidate'] ?? false ), 'Authoritative historical structure was not classified as safe.' );
+seo_geo_manager_permalink_accept( 2 === (int) ( $authoritative_plan['data']['path_preservation_count'] ?? 0 ), 'Clone-path normalization did not preserve both historical SEO paths.' );
+seo_geo_manager_permalink_accept( 0 === (int) ( $authoritative_plan['data']['planned_redirects'] ?? -1 ), 'Exact historical logical paths unexpectedly required redirects.' );
+seo_geo_manager_permalink_accept( 'exact-path-preservation' === ( $authoritative_plan['data']['seo_preservation_mode'] ?? '' ), 'Authoritative plan did not select exact path preservation.' );
+seo_geo_manager_permalink_accept( false === ( $authoritative_plan['data']['requires_redirect_runtime'] ?? true ), 'Exact path preservation incorrectly required redirect runtime.' );
+seo_geo_manager_permalink_accept( true === ( $authoritative_plan['data']['apply_blocked'] ?? false ), 'Authoritative plan must remain read-only before the apply/rollback phase.' );
+seo_geo_manager_permalink_accept( false === ( $authoritative_plan['data']['write_performed'] ?? true ), 'Authoritative plan unexpectedly reported a write.' );
+seo_geo_manager_permalink_accept( '' !== (string) ( $authoritative_plan['data']['plan_fingerprint'] ?? '' ), 'Authoritative plan fingerprint missing.' );
+seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Authoritative planning mutated permalink_structure.' );
+
+$stale_authoritative_plan = seo_geo_manager_permalink_post_request(
+	'/seo-geo-manager/v1/permalinks/authoritative-plan',
+	array(
+		'legacy_base_url'      => 'https://example.com/',
+		'authority_fingerprint'=> str_repeat( '0', 64 ),
+	)
+);
+seo_geo_manager_permalink_accept( 200 === $stale_authoritative_plan['status'] && is_array( $stale_authoritative_plan['data'] ), 'Stale-authority guard endpoint failed.' );
+seo_geo_manager_permalink_accept( true === ( $stale_authoritative_plan['data']['stale_authority'] ?? false ), 'Stale authority fingerprint was not rejected.' );
+seo_geo_manager_permalink_accept( false === ( $stale_authoritative_plan['data']['safe_structure_candidate'] ?? true ), 'Stale authority fingerprint remained eligible for apply.' );
+seo_geo_manager_permalink_accept( 'refresh-legacy-authority-preview' === ( $stale_authoritative_plan['data']['next_action'] ?? '' ), 'Stale authority guard exposed the wrong next action.' );
+remove_filter( 'pre_http_request', $legacy_http_filter, 10 );
 
 wp_delete_post( (int) $second_post_id, true );
 
@@ -238,13 +270,15 @@ wp_cache_delete( 'alloptions', 'options' );
 
 echo wp_json_encode(
 	array(
-		'ok'                         => true,
-		'preview_only'               => true,
-		'proposed_structure'         => $preview['data']['proposed_structure'] ?? '',
-		'planned_redirects'          => $plan['data']['planned_redirects'] ?? 0,
-		'collision_guard'            => true,
-		'ambiguous_old_source_guard' => true,
-		'legacy_authority_guard'     => true,
+		'ok'                           => true,
+		'preview_only'                 => true,
+		'proposed_structure'           => $preview['data']['proposed_structure'] ?? '',
+		'planned_redirects'            => $plan['data']['planned_redirects'] ?? 0,
+		'collision_guard'              => true,
+		'ambiguous_old_source_guard'   => true,
+		'legacy_authority_guard'       => true,
+		'authoritative_plan_guard'     => true,
+		'clone_path_normalization_guard'=> true,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
