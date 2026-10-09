@@ -35,9 +35,11 @@ The JSON candidate is the hash authority. `EMMAKE Field Pilot Pack CI` rebuilds 
 
 Corporate v5 moved the strategic master surface out of Gutenberg layout authority and into a Theme-owned semantic server renderer.
 
+Corporate v4.3 passed repository-side technical gates but failed the human visual/architectural acceptance gate. That result remains historical evidence and is the reason Corporate v5 moved strategic rendering into the Theme-owned frontend boundary.
+
 - **A1** proved the renderer/model boundary.
 - **A2** established Theme-owned strategic header/footer/chrome.
-- **A3** refined the real-site palette and visual separation.
+- **Corporate v5 A3** refined the real-site palette and visual separation.
 - **A3.1** closed the bounded hero/media/method/Insights presentation baseline and preserved the eight-request / zero-project-JS performance contract.
 - **MF-08** adds the optional real-media field layer plus the mobile corrections found in real iPhone QA without changing content, URLs, SEO/GEO ownership, Reset, hydration or Migration Bridge state.
 
@@ -82,7 +84,7 @@ The Corporate strategic master does not rely on Gutenberg `contentSize` / `wideS
 
 SEO/GEO Manager is a separate plugin product.
 
-It is not required for Theme stable runtime. The renderer boundary is compatible with Manager because Manager writes structured content/model state while Theme remains the public renderer. Manager may create/update strategic models and normal WordPress posts, while Theme owns strategic presentation and exactly one accepted SEO/GEO output authority remains active per signal.
+It is not a mandatory dependency or blocker for Theme `0.1.1` stable runtime. The renderer boundary is compatible with Manager because Manager writes structured content/model state while Theme remains the public renderer. Manager may create/update strategic models and normal WordPress posts, while Theme owns strategic presentation and exactly one accepted SEO/GEO output authority remains active per signal.
 
 ## Selected real-site pilot
 
@@ -113,7 +115,13 @@ Until production acceptance exists, `release/stable-release-decision.json` remai
 
 ## Product boundary
 
-Migration Bridge `0.8.60` remains frozen for this field candidate. The standalone Core wrapper remains `deprecated-retained-nondistributed` and is not included in the self-contained Theme release ZIP.
+SEO/GEO Manager is a separate plugin product.
+
+It is not a mandatory dependency or blocker for Theme `0.1.1` stable runtime.
+
+Migration Bridge is the accepted migration/reset implementation for this Theme pilot. Migration Bridge `0.8.60` remains frozen for this field candidate.
+
+The standalone Core wrapper remains `deprecated-retained-nondistributed` and is not included in the self-contained Theme release ZIP.
 
 No production evidence is fabricated or inferred from repository CI.
 
