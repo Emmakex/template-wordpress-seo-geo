@@ -4,7 +4,6 @@
  *
  * @package SeoGeoTheme
  */
-
 declare(strict_types=1);
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return list<string>
  */
 function seo_geo_theme_preset_ids(): array {
-	return array( 'corporate', 'local-business', 'publisher', 'ecommerce', 'saas-digital-product' );
+	return array( 'corporate', 'local-business', 'publisher', 'ecommerce', 'saas-digital-product', 'research' );
 }
 
 /**
