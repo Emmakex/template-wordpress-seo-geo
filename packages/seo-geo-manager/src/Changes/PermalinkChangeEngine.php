@@ -125,25 +125,25 @@ final class PermalinkChangeEngine {
 
 		$operation = EnvironmentPolicy::bind_operation(
 			array(
-				'operation_id'          => $operation_id,
-				'operation_type'        => self::OPERATION_TYPE,
-				'status'                => 'applied',
-				'idempotency_key'       => $normalized['idempotency_key'],
-				'payload_hash'          => $payload_hash,
-				'authority_fingerprint' => $normalized['authority_fingerprint'],
-				'plan_fingerprint'      => $normalized['plan_fingerprint'],
-				'legacy_base_url'       => $normalized['legacy_base_url'],
-				'before_structure'      => $before_structure,
-				'after_structure'       => $after_structure,
-				'before_fingerprint'    => $before_fingerprint,
-				'after_fingerprint'     => $after_fingerprint,
-				'seo_preservation_mode' => (string) ( $verification_plan['seo_preservation_mode'] ?? '' ),
+				'operation_id'           => $operation_id,
+				'operation_type'         => self::OPERATION_TYPE,
+				'status'                 => 'applied',
+				'idempotency_key'        => $normalized['idempotency_key'],
+				'payload_hash'           => $payload_hash,
+				'authority_fingerprint'  => $normalized['authority_fingerprint'],
+				'plan_fingerprint'       => $normalized['plan_fingerprint'],
+				'legacy_base_url'        => $normalized['legacy_base_url'],
+				'before_structure'       => $before_structure,
+				'after_structure'        => $after_structure,
+				'before_fingerprint'     => $before_fingerprint,
+				'after_fingerprint'      => $after_fingerprint,
+				'seo_preservation_mode'  => (string) ( $verification_plan['seo_preservation_mode'] ?? '' ),
 				'path_preservation_count'=> (int) ( $verification_plan['path_preservation_count'] ?? 0 ),
-				'planned_redirects'     => (int) ( $verification_plan['planned_redirects'] ?? 0 ),
+				'planned_redirects'      => (int) ( $verification_plan['planned_redirects'] ?? 0 ),
 				'rewrite_flush_performed'=> true,
-				'verification'          => array(),
-				'created_at_gmt'        => gmdate( 'c' ),
-				'idempotent_replay'     => false,
+				'verification'           => array(),
+				'created_at_gmt'         => gmdate( 'c' ),
+				'idempotent_replay'      => false,
 			)
 		);
 
@@ -229,11 +229,11 @@ final class PermalinkChangeEngine {
 	 */
 	private static function normalize_apply_payload( array $payload ) {
 		$normalized = array(
-			'legacy_base_url'       => isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? trim( $payload['legacy_base_url'] ) : '',
-			'authority_fingerprint' => isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? trim( $payload['authority_fingerprint'] ) : '',
-			'plan_fingerprint'      => isset( $payload['plan_fingerprint'] ) && is_string( $payload['plan_fingerprint'] ) ? trim( $payload['plan_fingerprint'] ) : '',
-			'current_fingerprint'   => isset( $payload['current_fingerprint'] ) && is_string( $payload['current_fingerprint'] ) ? trim( $payload['current_fingerprint'] ) : '',
-			'idempotency_key'       => isset( $payload['idempotency_key'] ) && is_string( $payload['idempotency_key'] ) ? trim( $payload['idempotency_key'] ) : '',
+			'legacy_base_url'         => isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? trim( $payload['legacy_base_url'] ) : '',
+			'authority_fingerprint'   => isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? trim( $payload['authority_fingerprint'] ) : '',
+			'plan_fingerprint'        => isset( $payload['plan_fingerprint'] ) && is_string( $payload['plan_fingerprint'] ) ? trim( $payload['plan_fingerprint'] ) : '',
+			'current_fingerprint'     => isset( $payload['current_fingerprint'] ) && is_string( $payload['current_fingerprint'] ) ? trim( $payload['current_fingerprint'] ) : '',
+			'idempotency_key'         => isset( $payload['idempotency_key'] ) && is_string( $payload['idempotency_key'] ) ? trim( $payload['idempotency_key'] ) : '',
 			'confirm_permalink_change'=> true === ( $payload['confirm_permalink_change'] ?? false ),
 		);
 
@@ -312,7 +312,7 @@ final class PermalinkChangeEngine {
 	 */
 	private static function verification_errors( array $plan, string $expected_structure ): array {
 		$errors = array();
-		if ( $expected_structure !== (string) get_option( 'permalink_structure', '' ) ) {
+		if ( (string) get_option( 'permalink_structure', '' ) !== $expected_structure ) {
 			$errors[] = 'permalink_structure-mismatch';
 		}
 		if ( true !== ( $plan['safe_structure_candidate'] ?? false ) ) {
@@ -346,7 +346,7 @@ final class PermalinkChangeEngine {
 		wp_cache_delete( 'permalink_structure', 'options' );
 		wp_cache_delete( 'alloptions', 'options' );
 
-		if ( $structure !== (string) get_option( 'permalink_structure', '' ) ) {
+		if ( (string) get_option( 'permalink_structure', '' ) !== $structure ) {
 			return new WP_Error(
 				'seo_geo_manager_permalink_write_failed',
 				'WordPress did not persist the requested permalink structure.',
