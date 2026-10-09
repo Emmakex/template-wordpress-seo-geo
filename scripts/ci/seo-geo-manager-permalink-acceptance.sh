@@ -105,6 +105,7 @@ fi
 cat "$RUNTIME_LOG"
 grep -q '"ok":true' "$RUNTIME_LOG"
 grep -q '"collision_guard":true' "$RUNTIME_LOG"
+grep -q '"ambiguous_old_source_guard":true' "$RUNTIME_LOG"
 
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
