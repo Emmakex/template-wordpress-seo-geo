@@ -11,6 +11,7 @@ namespace SeoGeo\Manager\Rest;
 
 use SeoGeo\Manager\Changes\ChangeSetEngine;
 use SeoGeo\Manager\Changes\OperationStore;
+use SeoGeo\Manager\Changes\RenderedChangeSetAdapter;
 use SeoGeo\Manager\Support\EnvironmentPolicy;
 use WP_Error;
 use WP_REST_Request;
@@ -80,7 +81,10 @@ final class ChangeSetController {
 	 */
 	public static function preview( WP_REST_Request $request ) {
 		$payload = $request->get_json_params();
-		$result  = ChangeSetEngine::preview( is_array( $payload ) ? $payload : array() );
+		$payload = is_array( $payload ) ? $payload : array();
+		$result  = true === ( $payload['verify_rendered'] ?? false )
+			? RenderedChangeSetAdapter::preview( $payload )
+			: ChangeSetEngine::preview( $payload );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -101,7 +105,9 @@ final class ChangeSetController {
 			return $guard;
 		}
 
-		$result = ChangeSetEngine::apply( $payload );
+		$result = true === ( $payload['verify_rendered'] ?? false )
+			? RenderedChangeSetAdapter::apply( $payload )
+			: ChangeSetEngine::apply( $payload );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
