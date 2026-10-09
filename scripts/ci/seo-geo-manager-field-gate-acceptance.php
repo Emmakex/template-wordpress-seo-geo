@@ -17,8 +17,12 @@ function seo_geo_manager_field_gate_accept( bool $condition, string $message ): 
 	}
 }
 
-function seo_geo_manager_field_gate_request( string $route ): array {
-	$request  = new WP_REST_Request( 'GET', $route );
+/**
+ * @param array<string, mixed> $query Query parameters.
+ */
+function seo_geo_manager_field_gate_request( string $route, array $query = array() ): array {
+	$request = new WP_REST_Request( 'GET', $route );
+	$request->set_query_params( $query );
 	$response = rest_do_request( $request );
 
 	return array(
@@ -111,15 +115,23 @@ $before_history   = seo_geo_manager_field_gate_request( '/seo-geo-manager/v1/ope
 seo_geo_manager_field_gate_accept( 200 === $before_history['status'] && is_array( $before_history['data'] ), 'Could not read operation history before field gate.' );
 $before_count = isset( $before_history['data']['items'] ) && is_array( $before_history['data']['items'] ) ? count( $before_history['data']['items'] ) : 0;
 
-$without_legacy = seo_geo_manager_field_gate_request( '/seo-geo-manager/v1/field-gate/preflight?include_rendered=0' );
+$without_legacy = seo_geo_manager_field_gate_request(
+	'/seo-geo-manager/v1/field-gate/preflight',
+	array( 'include_rendered' => 0 )
+);
 seo_geo_manager_field_gate_accept( 200 === $without_legacy['status'] && is_array( $without_legacy['data'] ), 'Field gate without historical source failed.' );
 seo_geo_manager_field_gate_accept( true === ( $without_legacy['data']['read_only'] ?? false ), 'Field gate did not declare read-only mode.' );
 seo_geo_manager_field_gate_accept( false === ( $without_legacy['data']['write_performed'] ?? true ), 'Field gate reported a write.' );
 seo_geo_manager_field_gate_accept( 'not-requested' === ( $without_legacy['data']['field_gate']['historical_authority']['status'] ?? '' ), 'Missing legacy source was not represented explicitly.' );
 seo_geo_manager_field_gate_accept( null === ( $without_legacy['data']['permalinks']['legacy_authority'] ?? null ), 'Field gate unexpectedly inspected historical authority.' );
 
-$route = '/seo-geo-manager/v1/field-gate/preflight?include_rendered=0&legacy_base_url=' . rawurlencode( $legacy_base );
-$with_legacy = seo_geo_manager_field_gate_request( $route );
+$with_legacy = seo_geo_manager_field_gate_request(
+	'/seo-geo-manager/v1/field-gate/preflight',
+	array(
+		'include_rendered' => 0,
+		'legacy_base_url'  => $legacy_base,
+	)
+);
 seo_geo_manager_field_gate_accept( 200 === $with_legacy['status'] && is_array( $with_legacy['data'] ), 'Field gate with historical source failed.' );
 $data = $with_legacy['data'];
 
@@ -161,15 +173,15 @@ wp_set_current_user( 1 );
 wp_delete_user( (int) $editor_id );
 
 $result = array(
-	'ok'                         => true,
-	'read_only'                  => true,
-	'no_operation_created'       => true,
-	'permalink_unchanged'        => true,
-	'historical_authority'       => true,
-	'direct_plan_ready'          => true,
-	'administrator_only'         => true,
-	'build_finish_status'        => $data['field_gate']['build_finish']['status'] ?? '',
-	'guarded_write_eligible'     => true === ( $data['field_gate']['guarded_write_eligible'] ?? false ),
+	'ok'                     => true,
+	'read_only'              => true,
+	'no_operation_created'   => true,
+	'permalink_unchanged'    => true,
+	'historical_authority'   => true,
+	'direct_plan_ready'      => true,
+	'administrator_only'     => true,
+	'build_finish_status'    => $data['field_gate']['build_finish']['status'] ?? '',
+	'guarded_write_eligible' => true === ( $data['field_gate']['guarded_write_eligible'] ?? false ),
 );
 
 echo wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) . PHP_EOL;
