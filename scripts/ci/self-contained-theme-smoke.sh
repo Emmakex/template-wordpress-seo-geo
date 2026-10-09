@@ -8,33 +8,30 @@ BASE_SCRIPT="scripts/ci/self-contained-theme-smoke-base.sh"
 TMP_SCRIPT="$(mktemp)"
 trap 'rm -f "$TMP_SCRIPT"' EXIT
 
-OLD_PRESETS='["corporate","local-business","publisher","ecommerce","saas-digital-product"]'
-NEW_PRESETS='["corporate","local-business","publisher","ecommerce","saas-digital-product","research"]'
+python3 - "$BASE_SCRIPT" "$TMP_SCRIPT" <<'PY'
+from pathlib import Path
+import sys
 
-if ! grep -Fq "$OLD_PRESETS" "$BASE_SCRIPT"; then
-  echo "[self-contained] Preset compatibility guard is stale: legacy preset assertion not found." >&2
-  exit 1
-fi
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+old_presets = '["corporate","local-business","publisher","ecommerce","saas-digital-product"]'
+new_presets = '["corporate","local-business","publisher","ecommerce","saas-digital-product","research"]'
+replacements = {
+    old_presets: new_presets,
+    'read-only five-preset native setup plan': 'read-only six-preset native setup plan',
+    'five presets available': 'six presets available',
+}
 
-if ! grep -Fq 'read-only five-preset native setup plan' "$BASE_SCRIPT"; then
-  echo "[self-contained] Preset compatibility guard is stale: legacy diagnostic not found." >&2
-  exit 1
-fi
+for old in replacements:
+    if old not in source:
+        raise SystemExit(f"[self-contained] Preset compatibility guard is stale: {old!r} not found.")
 
-if ! grep -Fq 'five presets available' "$BASE_SCRIPT"; then
-  echo "[self-contained] Preset compatibility guard is stale: legacy success message not found." >&2
-  exit 1
-fi
+for old, new in replacements.items():
+    source = source.replace(old, new)
 
-sed \
-  -e "s|$OLD_PRESETS|$NEW_PRESETS|g" \
-  -e 's/read-only five-preset native setup plan/read-only six-preset native setup plan/g' \
-  -e 's/five presets available/six presets available/g' \
-  "$BASE_SCRIPT" > "$TMP_SCRIPT"
+if new_presets not in source:
+    raise SystemExit("[self-contained] Research preset assertion was not applied.")
 
-if ! grep -Fq "$NEW_PRESETS" "$TMP_SCRIPT"; then
-  echo "[self-contained] Research preset assertion was not applied." >&2
-  exit 1
-fi
+Path(sys.argv[2]).write_text(source, encoding="utf-8")
+PY
 
 exec bash "$TMP_SCRIPT" "$@"
