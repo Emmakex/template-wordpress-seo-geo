@@ -12,6 +12,7 @@ on:
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
       - 'scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php'
       - 'scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-operation-history-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   push:
@@ -27,6 +28,7 @@ on:
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
       - 'scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php'
       - 'scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-operation-history-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   workflow_dispatch:
@@ -40,7 +42,7 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: M1/M2 + Theme + SEO authority + atomic permalink runtime acceptance
+    name: M1/M2 + Theme + SEO authority + atomic runtime + history acceptance
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -58,10 +60,12 @@ jobs:
           php -l scripts/ci/seo-geo-manager-permalink-acceptance.php
           php -l scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php
           php -l scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php
+          php -l scripts/ci/seo-geo-manager-operation-history-acceptance.php
           node --check packages/seo-geo-manager/assets/admin/dashboard.js
           node --check packages/seo-geo-manager/assets/admin/json-export-actions.js
           node --check packages/seo-geo-manager/assets/admin/correction-actions.js
           node --check packages/seo-geo-manager/assets/admin/permalink-actions.js
+          node --check packages/seo-geo-manager/assets/admin/operation-history.js
 
       - name: Pull pinned WordPress fixture images
         run: |
@@ -72,5 +76,5 @@ jobs:
       - name: Manager WordPress acceptance
         run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
 
-      - name: Permalink authority and atomic redirect runtime acceptance
+      - name: Permalink authority, atomic redirect and operation history acceptance
         run: bash scripts/ci/seo-geo-manager-permalink-acceptance.sh
