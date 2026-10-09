@@ -55,6 +55,20 @@ $broken   = '/' . $token . 'category' . $token . '/' . $token . 'postname' . $to
 seo_geo_manager_set_permalink_fixture( $broken );
 seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Corrupted permalink fixture was not stored byte-for-byte.' );
 
+// Core install creates a published "Hello world" post. Remove pre-existing posts so
+// the baseline proves one unique old source before the ambiguity fixture is added.
+$existing_post_ids = get_posts(
+	array(
+		'post_type'   => 'post',
+		'post_status' => 'any',
+		'fields'      => 'ids',
+		'numberposts' => -1,
+	)
+);
+foreach ( (array) $existing_post_ids as $existing_post_id ) {
+	wp_delete_post( (int) $existing_post_id, true );
+}
+
 $category = wp_insert_term( 'Permalink Plan Category', 'category', array( 'slug' => 'permalink-plan-category' ) );
 seo_geo_manager_permalink_accept( ! is_wp_error( $category ), 'Could not create permalink-plan category.' );
 $category_id = (int) ( $category['term_id'] ?? 0 );
