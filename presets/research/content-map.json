@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "preset": "research",
+  "rules": {
+    "reuse_when_possible": true,
+    "preserve_existing_urls": true,
+    "do_not_rename_existing_slugs": true,
+    "theme_owns_layout": true,
+    "gutenberg_layout_authority": false,
+    "structured_content_first": true,
+    "evidence_required_for_research_claims": true,
+    "primary_language": "en_US",
+    "secondary_language": "es_ES"
+  },
+  "internal_links": {
+    "priority_order": [
+      "research",
+      "publications",
+      "projects",
+      "software",
+      "datasets",
+      "about",
+      "cv",
+      "contact",
+      "insights"
+    ]
+  },
+  "pages": {
+    "home": {
+      "role": "front-page",
+      "expected_title": "Home",
+      "expected_slug": "home",
+      "reuse_policy": "reuse-existing-front-page",
+      "primary_intent": "researcher-discovery",
+      "required_sections": [
+        "researcher-identity",
+        "research-positioning",
+        "active-research-lines",
+        "selected-outputs",
+        "verified-identifiers",
+        "latest-insights",
+        "primary-contact"
+      ],
+      "internal_targets": ["research", "publications", "projects", "about", "cv", "contact"]
+    },
+    "about": {
+      "role": "profile",
+      "expected_title": "About",
+      "expected_slug": "about",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "researcher-trust-and-background",
+      "required_sections": [
+        "profile-summary",
+        "research-positioning",
+        "professional-background",
+        "education-background",
+        "methods-and-approach",
+        "verified-identifiers",
+        "cv-access"
+      ],
+      "internal_targets": ["research", "publications", "projects", "cv", "contact"]
+    },
+    "research": {
+      "role": "research-hub",
+      "expected_title": "Research",
+      "expected_slug": "research",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "research-agenda-discovery",
+      "required_sections": [
+        "research-agenda",
+        "active-research-lines",
+        "research-questions",
+        "methods",
+        "related-outputs"
+      ],
+      "internal_targets": ["publications", "projects", "software", "datasets", "about"]
+    },
+    "publications": {
+      "role": "output-index",
+      "expected_title": "Publications",
+      "expected_slug": "publications",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "scholarly-output-discovery",
+      "required_sections": [
+        "publication-index-intro",
+        "output-status-legend",
+        "publication-list",
+        "citation-guidance"
+      ],
+      "internal_targets": ["research", "projects", "software", "datasets"]
+    },
+    "projects": {
+      "role": "project-index",
+      "expected_title": "Projects",
+      "expected_slug": "projects",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "research-project-discovery",
+      "required_sections": ["project-index-intro", "project-list", "project-output-links"],
+      "internal_targets": ["research", "publications", "software", "datasets"]
+    },
+    "software": {
+      "role": "software-index",
+      "expected_title": "Research Software",
+      "expected_slug": "software",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "research-software-discovery",
+      "required_sections": ["software-index-intro", "software-list", "citation-and-repository-guidance"],
+      "internal_targets": ["research", "projects", "publications", "datasets"]
+    },
+    "datasets": {
+      "role": "dataset-index",
+      "expected_title": "Datasets",
+      "expected_slug": "datasets",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "research-dataset-discovery",
+      "required_sections": ["dataset-index-intro", "dataset-list", "access-and-methodology-guidance"],
+      "internal_targets": ["research", "projects", "publications", "software"]
+    },
+    "cv": {
+      "role": "academic-cv",
+      "expected_title": "Academic CV",
+      "expected_slug": "cv",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "academic-profile-verification",
+      "required_sections": [
+        "cv-summary",
+        "education",
+        "research-experience",
+        "professional-experience",
+        "research-outputs",
+        "academic-identifiers",
+        "cv-download"
+      ],
+      "internal_targets": ["about", "research", "publications", "contact"]
+    },
+    "insights": {
+      "role": "editorial-index",
+      "expected_title": "Insights",
+      "expected_slug": "insights",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "research-knowledge-discovery",
+      "required_sections": ["insights-intro", "insights-list", "research-context-links"],
+      "internal_targets": ["research", "publications", "projects"]
+    },
+    "contact": {
+      "role": "contact",
+      "expected_title": "Contact",
+      "expected_slug": "contact",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "research-contact",
+      "required_sections": ["contact-intro", "contact-channel", "academic-profile-links"],
+      "internal_targets": ["about", "research", "cv"]
+    },
+    "privacy-policy": {
+      "role": "legal",
+      "expected_title": "Privacy Policy",
+      "expected_slug": "privacy-policy",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "legal-compliance",
+      "required_sections": ["authoritative-legal-content"],
+      "internal_targets": ["contact"]
+    },
+    "legal-notice": {
+      "role": "legal",
+      "expected_title": "Legal Notice",
+      "expected_slug": "legal-notice",
+      "reuse_policy": "reuse-by-slug",
+      "primary_intent": "legal-compliance",
+      "required_sections": ["authoritative-legal-content"],
+      "internal_targets": ["contact"]
+    }
+  }
+}
