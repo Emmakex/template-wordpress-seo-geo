@@ -1,6 +1,6 @@
 <?php
 /**
- * Runtime acceptance for read-only permalink repair, redirect planning and legacy authority recovery.
+ * Runtime acceptance for permalink inspection, authoritative planning and reversible apply.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -202,8 +202,8 @@ seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_st
 $authoritative_plan = seo_geo_manager_permalink_post_request(
 	'/seo-geo-manager/v1/permalinks/authoritative-plan',
 	array(
-		'legacy_base_url'      => 'https://example.com/',
-		'authority_fingerprint'=> (string) ( $authority['data']['authority_fingerprint'] ?? '' ),
+		'legacy_base_url'       => 'https://example.com/',
+		'authority_fingerprint' => (string) ( $authority['data']['authority_fingerprint'] ?? '' ),
 	)
 );
 seo_geo_manager_permalink_accept( 200 === $authoritative_plan['status'] && is_array( $authoritative_plan['data'] ), 'Authoritative permalink-plan endpoint failed.' );
@@ -222,14 +222,49 @@ seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_st
 $stale_authoritative_plan = seo_geo_manager_permalink_post_request(
 	'/seo-geo-manager/v1/permalinks/authoritative-plan',
 	array(
-		'legacy_base_url'      => 'https://example.com/',
-		'authority_fingerprint'=> str_repeat( '0', 64 ),
+		'legacy_base_url'       => 'https://example.com/',
+		'authority_fingerprint' => str_repeat( '0', 64 ),
 	)
 );
 seo_geo_manager_permalink_accept( 200 === $stale_authoritative_plan['status'] && is_array( $stale_authoritative_plan['data'] ), 'Stale-authority guard endpoint failed.' );
 seo_geo_manager_permalink_accept( true === ( $stale_authoritative_plan['data']['stale_authority'] ?? false ), 'Stale authority fingerprint was not rejected.' );
 seo_geo_manager_permalink_accept( false === ( $stale_authoritative_plan['data']['safe_structure_candidate'] ?? true ), 'Stale authority fingerprint remained eligible for apply.' );
 seo_geo_manager_permalink_accept( 'refresh-legacy-authority-preview' === ( $stale_authoritative_plan['data']['next_action'] ?? '' ), 'Stale authority guard exposed the wrong next action.' );
+
+$environment_fingerprint = (string) ( $authoritative_plan['data']['environment']['fingerprint'] ?? '' );
+$apply_payload = array(
+	'legacy_base_url'          => 'https://example.com/',
+	'authority_fingerprint'    => (string) ( $authority['data']['authority_fingerprint'] ?? '' ),
+	'plan_fingerprint'         => (string) ( $authoritative_plan['data']['plan_fingerprint'] ?? '' ),
+	'current_fingerprint'      => (string) ( $authoritative_plan['data']['current_fingerprint'] ?? '' ),
+	'idempotency_key'          => 'permalink-runtime-acceptance-1',
+	'confirm_permalink_change' => true,
+	'environment_fingerprint'  => $environment_fingerprint,
+);
+$applied = seo_geo_manager_permalink_post_request( '/seo-geo-manager/v1/permalinks/apply', $apply_payload );
+seo_geo_manager_permalink_accept( 200 === $applied['status'] && is_array( $applied['data'] ), 'Authoritative permalink Apply endpoint failed.' );
+seo_geo_manager_permalink_accept( 'applied' === ( $applied['data']['status'] ?? '' ), 'Permalink operation was not persisted as applied.' );
+seo_geo_manager_permalink_accept( 'permalink-structure' === ( $applied['data']['operation_type'] ?? '' ), 'Permalink operation type missing.' );
+seo_geo_manager_permalink_accept( '/blog/%postname%/' === (string) get_option( 'permalink_structure', '' ), 'Permalink Apply did not persist the authoritative structure.' );
+seo_geo_manager_permalink_accept( 2 === (int) ( $applied['data']['path_preservation_count'] ?? 0 ), 'Permalink Apply verification lost historical path preservation.' );
+seo_geo_manager_permalink_accept( 0 === (int) ( $applied['data']['planned_redirects'] ?? -1 ), 'Permalink Apply unexpectedly required redirects.' );
+seo_geo_manager_permalink_accept( true === ( $applied['data']['rewrite_flush_performed'] ?? false ), 'Permalink Apply did not report a rewrite flush.' );
+seo_geo_manager_permalink_accept( false === ( $applied['data']['idempotent_replay'] ?? true ), 'First permalink Apply was incorrectly marked as an idempotent replay.' );
+$operation_id = (string) ( $applied['data']['operation_id'] ?? '' );
+seo_geo_manager_permalink_accept( '' !== $operation_id, 'Permalink Apply operation ID missing.' );
+
+$replayed = seo_geo_manager_permalink_post_request( '/seo-geo-manager/v1/permalinks/apply', $apply_payload );
+seo_geo_manager_permalink_accept( 200 === $replayed['status'] && is_array( $replayed['data'] ), 'Permalink idempotent replay failed.' );
+seo_geo_manager_permalink_accept( $operation_id === ( $replayed['data']['operation_id'] ?? '' ), 'Permalink idempotent replay returned another operation.' );
+seo_geo_manager_permalink_accept( true === ( $replayed['data']['idempotent_replay'] ?? false ), 'Permalink repeated Apply did not resolve idempotently.' );
+
+$rolled_back = seo_geo_manager_permalink_post_request(
+	'/seo-geo-manager/v1/permalinks/operations/' . $operation_id . '/rollback',
+	array( 'environment_fingerprint' => $environment_fingerprint )
+);
+seo_geo_manager_permalink_accept( 200 === $rolled_back['status'] && is_array( $rolled_back['data'] ), 'Permalink rollback endpoint failed.' );
+seo_geo_manager_permalink_accept( 'rolled-back' === ( $rolled_back['data']['status'] ?? '' ), 'Permalink rollback did not mark the operation as rolled back.' );
+seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Permalink rollback did not restore the exact previous structure.' );
 remove_filter( 'pre_http_request', $legacy_http_filter, 10 );
 
 wp_delete_post( (int) $second_post_id, true );
@@ -270,15 +305,18 @@ wp_cache_delete( 'alloptions', 'options' );
 
 echo wp_json_encode(
 	array(
-		'ok'                           => true,
-		'preview_only'                 => true,
-		'proposed_structure'           => $preview['data']['proposed_structure'] ?? '',
-		'planned_redirects'            => $plan['data']['planned_redirects'] ?? 0,
-		'collision_guard'              => true,
-		'ambiguous_old_source_guard'   => true,
-		'legacy_authority_guard'       => true,
-		'authoritative_plan_guard'     => true,
+		'ok'                            => true,
+		'preview_only'                  => false,
+		'proposed_structure'            => $preview['data']['proposed_structure'] ?? '',
+		'planned_redirects'             => $plan['data']['planned_redirects'] ?? 0,
+		'collision_guard'               => true,
+		'ambiguous_old_source_guard'    => true,
+		'legacy_authority_guard'        => true,
+		'authoritative_plan_guard'      => true,
 		'clone_path_normalization_guard'=> true,
+		'permalink_apply_guard'         => true,
+		'permalink_rollback_guard'      => true,
+		'idempotency_guard'             => true,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
