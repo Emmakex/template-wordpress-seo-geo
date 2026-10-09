@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\Manager\Changes;
 
 use WP_Error;
+use WP_Term;
 
 final class NavigationChangeAdapter {
 	private const SCHEMA_VERSION = 1;
@@ -230,7 +231,7 @@ final class NavigationChangeAdapter {
 		}
 
 		$menu = wp_get_nav_menu_object( $menu_id );
-		if ( ! is_object( $menu ) || ! isset( $menu->term_id ) ) {
+		if ( ! $menu instanceof WP_Term ) {
 			return new WP_Error( 'seo_geo_manager_navigation_menu_missing', 'Navigation menu not found.', array( 'status' => 404 ) );
 		}
 		if ( ! self::destination_allowed( $suggested ) ) {
@@ -306,7 +307,7 @@ final class NavigationChangeAdapter {
 
 		return array(
 			'menu_id'              => $menu_id,
-			'menu_name'            => isset( $menu->name ) ? (string) $menu->name : 'Menu #' . $menu_id,
+			'menu_name'            => (string) $menu->name,
 			'before_fingerprint'   => $current_fingerprint,
 			'expected_occurrences' => $occurrences,
 			'current_urls'         => $urls,
