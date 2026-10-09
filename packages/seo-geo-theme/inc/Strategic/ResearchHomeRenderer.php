@@ -249,7 +249,7 @@ final class ResearchHomeRenderer {
 				continue;
 			}
 			$url = get_permalink( $article );
-			if ( ! is_string( $url ) || '' === $url ) {
+			if ( '' === $url ) {
 				continue;
 			}
 
