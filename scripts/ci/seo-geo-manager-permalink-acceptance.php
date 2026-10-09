@@ -3,8 +3,6 @@
  * Runtime acceptance for read-only permalink repair and redirect planning.
  */
 
-declare(strict_types=1);
-
 if ( ! defined( 'ABSPATH' ) ) {
 	throw new RuntimeException( 'WordPress is not loaded.' );
 }
