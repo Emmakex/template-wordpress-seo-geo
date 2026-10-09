@@ -136,8 +136,15 @@ final class PermalinkController {
 		$payload = is_array( $payload ) ? $payload : array();
 		$base    = isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? $payload['legacy_base_url'] : '';
 		$expected_authority_fingerprint = isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? $payload['authority_fingerprint'] : '';
+		$plan = AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint );
+		$atomic_candidate = true === ( $plan['safe_structure_candidate'] ?? false ) && true === ( $plan['requires_redirect_runtime'] ?? false );
+		$plan['atomic_apply_candidate'] = $atomic_candidate;
+		if ( $atomic_candidate ) {
+			$plan['block_reason'] = 'El Apply directo no puede usarse porque cambian rutas históricas. Valida primero el runtime 301 atómico; si supera sus guardas, usa redirect-apply.';
+			$plan['next_action'] = 'preview-atomic-redirect-runtime';
+		}
 
-		return new WP_REST_Response( AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint ), 200 );
+		return new WP_REST_Response( $plan, 200 );
 	}
 
 	public static function redirect_runtime(): WP_REST_Response {
