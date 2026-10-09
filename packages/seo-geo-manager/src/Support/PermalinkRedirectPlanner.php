@@ -48,6 +48,8 @@ final class PermalinkRedirectPlanner {
 		$redirects         = array();
 		$collisions        = array();
 		$targets           = array();
+		$sources           = array();
+		$ambiguous_sources = array();
 		$skipped_unchanged = 0;
 		$home_host         = self::host_key( home_url( '/' ) );
 
@@ -82,6 +84,21 @@ final class PermalinkRedirectPlanner {
 				continue;
 			}
 
+			if ( isset( $sources[ $old_key ] ) && $post_id !== $sources[ $old_key ] ) {
+				$first_post_id = (int) $sources[ $old_key ];
+				$ambiguous_sources[ $old_key ] = true;
+				$collisions[] = array(
+					'type'          => 'duplicate-old-source',
+					'post_id'       => $post_id,
+					'other_post_id' => $first_post_id,
+					'old_url'       => $old_url,
+					'new_url'       => $new_url,
+					'reason'        => 'Multiple published posts currently generate the same legacy URL, so an exact per-post 301 cannot be selected from that source path.',
+				);
+			} else {
+				$sources[ $old_key ] = $post_id;
+			}
+
 			if ( isset( $targets[ $new_key ] ) && $post_id !== $targets[ $new_key ] ) {
 				$collisions[] = array(
 					'type'          => 'duplicate-new-target',
@@ -113,42 +130,59 @@ final class PermalinkRedirectPlanner {
 			);
 		}
 
-		$complete_scan = $complete_post_scan && true === $existing['complete'];
-		$safe_to_apply = $complete_scan && array() === $collisions && count( $redirects ) > 0;
-		$plan_payload  = array(
+		$complete_scan      = $complete_post_scan && true === $existing['complete'];
+		$ambiguous_count    = count( $ambiguous_sources );
+		$safe_to_apply      = $complete_scan && array() === $collisions && count( $redirects ) > 0;
+		$needs_legacy_urls  = 0 < $ambiguous_count;
+		$plan_payload       = array(
 			'structure_fingerprint' => (string) ( $inspection['current_fingerprint'] ?? '' ),
 			'proposed_structure'     => $proposed,
 			'redirects'              => $redirects,
+			'collisions'             => $collisions,
 		);
 		$plan_fingerprint = hash( 'sha256', (string) wp_json_encode( $plan_payload ) );
 
+		$block_reason = '';
+		if ( $needs_legacy_urls ) {
+			$block_reason = 'La estructura corrupta colapsa varias entradas en la misma URL antigua. No existe un 301 exacto por entrada desde ese origen; se necesita recuperar URLs históricas autoritativas o definir una política específica de reparación del clon antes de Apply.';
+		} elseif ( ! $complete_scan ) {
+			$block_reason = 'El escaneo de entradas o recursos públicos quedó truncado; no se permite cambiar la estructura sin una comprobación completa de colisiones.';
+		} elseif ( array() !== $collisions ) {
+			$block_reason = 'El plan contiene colisiones que deben resolverse antes de cambiar la estructura de enlaces permanentes.';
+		}
+
 		return array(
-			'mode'                    => 'redirect-plan-preview',
-			'write_performed'         => false,
-			'current_structure'       => $current,
-			'proposed_structure'      => $proposed,
-			'structure_fingerprint'   => (string) ( $inspection['current_fingerprint'] ?? '' ),
-			'plan_fingerprint'        => $plan_fingerprint,
-			'published_posts_scanned' => count( $post_ids ),
-			'planned_redirects'       => count( $redirects ),
-			'skipped_unchanged'       => $skipped_unchanged,
-			'collision_count'         => count( $collisions ),
-			'collisions'              => $collisions,
-			'redirects'               => $redirects,
-			'complete_scan'           => $complete_scan,
-			'posts_scan_truncated'    => ! $complete_post_scan,
-			'resource_scan_truncated' => true !== $existing['complete'],
-			'safe_to_apply'           => $safe_to_apply,
-			'apply_blocked'           => true,
-			'next_action'             => $safe_to_apply ? 'build-permalink-redirect-runtime-and-approval' : 'resolve-permalink-plan-blockers',
-			'environment'             => EnvironmentPolicy::snapshot(),
-			'policy'                  => array(
+			'mode'                              => 'redirect-plan-preview',
+			'write_performed'                   => false,
+			'current_structure'                 => $current,
+			'proposed_structure'                => $proposed,
+			'structure_fingerprint'             => (string) ( $inspection['current_fingerprint'] ?? '' ),
+			'plan_fingerprint'                  => $plan_fingerprint,
+			'published_posts_scanned'           => count( $post_ids ),
+			'planned_redirects'                 => count( $redirects ),
+			'skipped_unchanged'                 => $skipped_unchanged,
+			'collision_count'                   => count( $collisions ),
+			'ambiguous_old_source_count'        => $ambiguous_count,
+			'requires_authoritative_legacy_urls'=> $needs_legacy_urls,
+			'collisions'                        => $collisions,
+			'redirects'                         => $redirects,
+			'complete_scan'                     => $complete_scan,
+			'posts_scan_truncated'              => ! $complete_post_scan,
+			'resource_scan_truncated'           => true !== $existing['complete'],
+			'safe_to_apply'                     => $safe_to_apply,
+			'apply_blocked'                     => true,
+			'block_reason'                      => $block_reason,
+			'redirect_strategy'                 => $safe_to_apply ? 'exact-301' : 'blocked',
+			'next_action'                       => $safe_to_apply ? 'build-permalink-redirect-runtime-and-approval' : ( $needs_legacy_urls ? 'recover-authoritative-legacy-urls' : 'resolve-permalink-plan-blockers' ),
+			'environment'                       => EnvironmentPolicy::snapshot(),
+			'policy'                            => array(
 				'preview_only'                   => true,
 				'exact_301_redirects_required'    => true,
-				'no_permalink_option_write'        => true,
-				'no_redirect_registration'         => true,
-				'no_rewrite_flush'                 => true,
-				'complete_collision_scan_required' => true,
+				'unique_old_source_required'      => true,
+				'no_permalink_option_write'       => true,
+				'no_redirect_registration'        => true,
+				'no_rewrite_flush'                => true,
+				'complete_collision_scan_required'=> true,
 			),
 		);
 	}
@@ -159,22 +193,25 @@ final class PermalinkRedirectPlanner {
 	 */
 	private static function blocked_plan( array $inspection, string $message ): array {
 		return array(
-			'mode'                  => 'redirect-plan-preview',
-			'write_performed'       => false,
-			'current_structure'     => (string) ( $inspection['current_structure'] ?? '' ),
-			'proposed_structure'    => (string) ( $inspection['proposed_structure'] ?? '' ),
-			'structure_fingerprint' => (string) ( $inspection['current_fingerprint'] ?? '' ),
-			'plan_fingerprint'      => '',
-			'planned_redirects'     => 0,
-			'collision_count'       => 0,
-			'collisions'            => array(),
-			'redirects'             => array(),
-			'complete_scan'         => false,
-			'safe_to_apply'         => false,
-			'apply_blocked'         => true,
-			'block_reason'          => $message,
-			'next_action'           => 'manual-permalink-review',
-			'environment'           => EnvironmentPolicy::snapshot(),
+			'mode'                              => 'redirect-plan-preview',
+			'write_performed'                   => false,
+			'current_structure'                 => (string) ( $inspection['current_structure'] ?? '' ),
+			'proposed_structure'                => (string) ( $inspection['proposed_structure'] ?? '' ),
+			'structure_fingerprint'             => (string) ( $inspection['current_fingerprint'] ?? '' ),
+			'plan_fingerprint'                  => '',
+			'planned_redirects'                 => 0,
+			'collision_count'                   => 0,
+			'ambiguous_old_source_count'        => 0,
+			'requires_authoritative_legacy_urls'=> false,
+			'collisions'                        => array(),
+			'redirects'                         => array(),
+			'complete_scan'                     => false,
+			'safe_to_apply'                     => false,
+			'apply_blocked'                     => true,
+			'block_reason'                      => $message,
+			'redirect_strategy'                 => 'blocked',
+			'next_action'                       => 'manual-permalink-review',
+			'environment'                       => EnvironmentPolicy::snapshot(),
 		);
 	}
 
