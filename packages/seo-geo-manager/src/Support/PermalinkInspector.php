@@ -23,7 +23,7 @@ final class PermalinkInspector {
 		$proposed = preg_replace_callback(
 			self::PLACEHOLDER_PATTERN,
 			static function ( array $matches ) use ( &$tokens ): string {
-				$token = strtolower( (string) ( $matches[2] ?? '' ) );
+				$token = strtolower( (string) $matches[2] );
 				if ( '' !== $token ) {
 					$tokens[] = $token;
 				}
@@ -45,26 +45,26 @@ final class PermalinkInspector {
 		$published      = isset( $post_counts->publish ) ? (int) $post_counts->publish : 0;
 
 		return array(
-			'mode'                    => 'preview',
-			'write_performed'         => false,
-			'current_structure'       => $current,
-			'proposed_structure'      => $proposed,
-			'current_fingerprint'     => self::fingerprint( $current ),
-			'restored_tokens'         => array_values( array_unique( $tokens ) ),
-			'malformed_fragments'     => $malformed_fragments,
-			'changed'                 => $changed,
-			'safe_candidate'          => $safe_candidate,
-			'published_posts'         => $published,
-			'redirect_plan_required'  => 0 < $published,
-			'rewrite_flush_required'  => true,
-			'apply_blocked'           => true,
-			'next_action'             => $safe_candidate ? 'build-permalink-redirect-plan' : 'manual-permalink-review',
-			'environment'             => EnvironmentPolicy::snapshot(),
-			'policy'                  => array(
-				'preview_only'             => true,
-				'no_option_write'          => true,
-				'no_rewrite_flush'         => true,
-				'redirect_plan_before_apply'=> true,
+			'mode'                   => 'preview',
+			'write_performed'        => false,
+			'current_structure'      => $current,
+			'proposed_structure'     => $proposed,
+			'current_fingerprint'    => self::fingerprint( $current ),
+			'restored_tokens'        => array_values( array_unique( $tokens ) ),
+			'malformed_fragments'    => $malformed_fragments,
+			'changed'                => $changed,
+			'safe_candidate'         => $safe_candidate,
+			'published_posts'        => $published,
+			'redirect_plan_required' => 0 < $published,
+			'rewrite_flush_required' => true,
+			'apply_blocked'          => true,
+			'next_action'            => $safe_candidate ? 'build-permalink-redirect-plan' : 'manual-permalink-review',
+			'environment'            => EnvironmentPolicy::snapshot(),
+			'policy'                 => array(
+				'preview_only'               => true,
+				'no_option_write'            => true,
+				'no_rewrite_flush'           => true,
+				'redirect_plan_before_apply' => true,
 			),
 		);
 	}
