@@ -22,6 +22,11 @@ final class PermalinkRedirectRuntime {
 	/**
 	 * Return the active redirect-runtime state without exposing mutable internals.
 	 *
+	 * A runtime may be persisted but not yet effective while an atomic permalink
+	 * operation is still moving from the previous structure to the expected one.
+	 * This removes the transient window where a redirect could become live before
+	 * its target permalink structure is available.
+	 *
 	 * @return array<string, mixed>
 	 */
 	public static function snapshot(): array {
@@ -30,17 +35,24 @@ final class PermalinkRedirectRuntime {
 			return self::inactive_snapshot();
 		}
 
-		$redirects = isset( $state['redirects'] ) && is_array( $state['redirects'] ) ? $state['redirects'] : array();
+		$redirects          = isset( $state['redirects'] ) && is_array( $state['redirects'] ) ? $state['redirects'] : array();
+		$expected_structure = isset( $state['expected_structure'] ) && is_string( $state['expected_structure'] ) ? $state['expected_structure'] : '';
+		$current_structure  = (string) get_option( 'permalink_structure', '' );
+		$effective          = '' === $expected_structure || $expected_structure === $current_structure;
 
 		return array(
-			'active'                  => true,
-			'operation_id'            => isset( $state['operation_id'] ) && is_string( $state['operation_id'] ) ? $state['operation_id'] : '',
-			'plan_fingerprint'        => isset( $state['plan_fingerprint'] ) && is_string( $state['plan_fingerprint'] ) ? $state['plan_fingerprint'] : '',
-			'environment_fingerprint' => isset( $state['environment_fingerprint'] ) && is_string( $state['environment_fingerprint'] ) ? $state['environment_fingerprint'] : '',
-			'redirect_count'          => count( $redirects ),
-			'redirects'               => $redirects,
-			'fingerprint'             => isset( $state['fingerprint'] ) && is_string( $state['fingerprint'] ) ? $state['fingerprint'] : '',
-			'created_at_gmt'          => isset( $state['created_at_gmt'] ) && is_string( $state['created_at_gmt'] ) ? $state['created_at_gmt'] : '',
+			'active'                         => true,
+			'effective'                      => $effective,
+			'operation_id'                   => isset( $state['operation_id'] ) && is_string( $state['operation_id'] ) ? $state['operation_id'] : '',
+			'plan_fingerprint'               => isset( $state['plan_fingerprint'] ) && is_string( $state['plan_fingerprint'] ) ? $state['plan_fingerprint'] : '',
+			'environment_fingerprint'        => isset( $state['environment_fingerprint'] ) && is_string( $state['environment_fingerprint'] ) ? $state['environment_fingerprint'] : '',
+			'expected_structure'             => $expected_structure,
+			'expected_structure_fingerprint' => self::structure_fingerprint( $expected_structure ),
+			'current_structure_fingerprint'  => self::structure_fingerprint( $current_structure ),
+			'redirect_count'                 => count( $redirects ),
+			'redirects'                      => $redirects,
+			'fingerprint'                    => isset( $state['fingerprint'] ) && is_string( $state['fingerprint'] ) ? $state['fingerprint'] : '',
+			'created_at_gmt'                 => isset( $state['created_at_gmt'] ) && is_string( $state['created_at_gmt'] ) ? $state['created_at_gmt'] : '',
 		);
 	}
 
@@ -50,7 +62,7 @@ final class PermalinkRedirectRuntime {
 	 * @param array<int, mixed> $redirects Planned redirects.
 	 * @return array<string, mixed>
 	 */
-	public static function preview( array $redirects, string $plan_fingerprint ): array {
+	public static function preview( array $redirects, string $plan_fingerprint, string $expected_structure = '' ): array {
 		$normalized = self::normalize_redirects( $redirects );
 		if ( is_wp_error( $normalized ) ) {
 			return array(
@@ -69,27 +81,30 @@ final class PermalinkRedirectRuntime {
 		$conflict = true === ( $active['active'] ?? false );
 
 		return array(
-			'mode'             => 'permalink-redirect-runtime-preview',
-			'write_performed'  => false,
-			'safe_to_activate' => ! $conflict && array() !== $normalized && '' !== $plan_fingerprint,
-			'redirect_count'   => count( $normalized ),
-			'redirects'        => $normalized,
-			'fingerprint'      => self::map_fingerprint( $normalized, $plan_fingerprint ),
-			'block_reason'     => $conflict ? 'Ya existe un runtime 301 activo; debe resolverse o revertirse antes de instalar otro mapa.' : '',
-			'active_runtime'   => $active,
+			'mode'                         => 'permalink-redirect-runtime-preview',
+			'write_performed'              => false,
+			'safe_to_activate'             => ! $conflict && array() !== $normalized && '' !== $plan_fingerprint,
+			'redirect_count'               => count( $normalized ),
+			'redirects'                    => $normalized,
+			'expected_structure'           => $expected_structure,
+			'expected_structure_fingerprint' => self::structure_fingerprint( $expected_structure ),
+			'fingerprint'                  => self::map_fingerprint( $normalized, $plan_fingerprint, $expected_structure ),
+			'block_reason'                 => $conflict ? 'Ya existe un runtime 301 activo; debe resolverse o revertirse antes de instalar otro mapa.' : '',
+			'active_runtime'               => $active,
 		);
 	}
 
 	/**
 	 * Activate a Manager-derived redirect map.
 	 *
-	 * No arbitrary public REST payload is accepted by this method. Callers must
-	 * pass redirects obtained from an already verified authoritative plan.
+	 * When expected_structure is supplied, the runtime is persisted first but
+	 * resolve() remains inert until WordPress reports that exact structure. This
+	 * is the arming primitive used by the atomic permalink + 301 change engine.
 	 *
 	 * @param array<int, mixed> $redirects Planned redirects.
 	 * @return array<string, mixed>|WP_Error
 	 */
-	public static function activate( array $redirects, string $operation_id, string $plan_fingerprint ) {
+	public static function activate( array $redirects, string $operation_id, string $plan_fingerprint, string $expected_structure = '' ) {
 		if ( '' === $operation_id || '' === $plan_fingerprint ) {
 			return new WP_Error(
 				'seo_geo_manager_redirect_runtime_identity_invalid',
@@ -114,7 +129,8 @@ final class PermalinkRedirectRuntime {
 		if ( true === ( $current['active'] ?? false ) ) {
 			$current_operation = (string) ( $current['operation_id'] ?? '' );
 			$current_plan      = (string) ( $current['plan_fingerprint'] ?? '' );
-			if ( $operation_id === $current_operation && $plan_fingerprint === $current_plan ) {
+			$current_structure = (string) ( $current['expected_structure'] ?? '' );
+			if ( $operation_id === $current_operation && $plan_fingerprint === $current_plan && $expected_structure === $current_structure ) {
 				return $current;
 			}
 
@@ -129,12 +145,13 @@ final class PermalinkRedirectRuntime {
 		}
 
 		$environment = EnvironmentPolicy::snapshot();
-		$fingerprint = self::map_fingerprint( $normalized, $plan_fingerprint );
+		$fingerprint = self::map_fingerprint( $normalized, $plan_fingerprint, $expected_structure );
 		$state       = array(
 			'active'                  => true,
 			'operation_id'            => $operation_id,
 			'plan_fingerprint'        => $plan_fingerprint,
 			'environment_fingerprint' => (string) ( $environment['fingerprint'] ?? '' ),
+			'expected_structure'      => $expected_structure,
 			'redirects'               => $normalized,
 			'fingerprint'             => $fingerprint,
 			'created_at_gmt'          => gmdate( 'c' ),
@@ -195,14 +212,11 @@ final class PermalinkRedirectRuntime {
 	/**
 	 * Resolve one request URI against the active runtime without sending headers.
 	 *
-	 * This pure resolver is used by runtime acceptance and keeps the redirect
-	 * decision independently testable from PHP process termination.
-	 *
 	 * @return array<string, mixed>|null
 	 */
 	public static function resolve( string $request_uri ): ?array {
 		$state = self::snapshot();
-		if ( true !== ( $state['active'] ?? false ) ) {
+		if ( true !== ( $state['active'] ?? false ) || true !== ( $state['effective'] ?? false ) ) {
 			return null;
 		}
 
@@ -362,32 +376,43 @@ final class PermalinkRedirectRuntime {
 	/**
 	 * @param array<int, array{post_id:int,source_path:string,target_path:string,status:int}> $redirects Redirect map.
 	 */
-	private static function map_fingerprint( array $redirects, string $plan_fingerprint ): string {
+	private static function map_fingerprint( array $redirects, string $plan_fingerprint, string $expected_structure ): string {
 		return hash(
 			'sha256',
 			(string) wp_json_encode(
 				array(
-					'plan_fingerprint' => $plan_fingerprint,
-					'home_url'         => home_url( '/' ),
-					'redirects'        => $redirects,
+					'plan_fingerprint'   => $plan_fingerprint,
+					'home_url'           => home_url( '/' ),
+					'expected_structure' => $expected_structure,
+					'redirects'          => $redirects,
 				)
 			)
 		);
+	}
+
+	private static function structure_fingerprint( string $structure ): string {
+		return hash( 'sha256', $structure );
 	}
 
 	/**
 	 * @return array<string, mixed>
 	 */
 	private static function inactive_snapshot(): array {
+		$current_structure = (string) get_option( 'permalink_structure', '' );
+
 		return array(
-			'active'                  => false,
-			'operation_id'            => '',
-			'plan_fingerprint'        => '',
-			'environment_fingerprint' => '',
-			'redirect_count'          => 0,
-			'redirects'               => array(),
-			'fingerprint'             => '',
-			'created_at_gmt'          => '',
+			'active'                         => false,
+			'effective'                      => false,
+			'operation_id'                   => '',
+			'plan_fingerprint'               => '',
+			'environment_fingerprint'        => '',
+			'expected_structure'             => '',
+			'expected_structure_fingerprint' => self::structure_fingerprint( '' ),
+			'current_structure_fingerprint'  => self::structure_fingerprint( $current_structure ),
+			'redirect_count'                 => 0,
+			'redirects'                      => array(),
+			'fingerprint'                    => '',
+			'created_at_gmt'                 => '',
 		);
 	}
 }
