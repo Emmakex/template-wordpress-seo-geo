@@ -16,36 +16,71 @@
 	function ensureWorkspace() { if ( workspace && workspace.isConnected ) return workspace; workspace = document.createElement( 'section' ); workspace.className = 'seo-geo-manager-admin__panel seo-geo-manager-correction'; workspace.hidden = true; workspace.setAttribute( 'aria-live', 'polite' ); ( actionablesBox.closest( '.seo-geo-manager-admin__panel' ) || actionablesBox ).after( workspace ); return workspace; }
 	function sourceId( source ) { return Number( source && ( source.id || source.post_id || source.resource_id ) || 0 ); }
 	function sourceKind( source ) { return source && typeof source.kind === 'string' ? source.kind : ''; }
+	function sourceOccurrences( source ) { return Math.max( 1, Number( source && source.occurrences || 1 ) ); }
+	function sourceUrls( source, item ) {
+		const own = source && Array.isArray( source.urls ) ? source.urls.filter( ( value ) => typeof value === 'string' && value ) : [];
+		const grouped = item && Array.isArray( item.current_urls ) ? item.current_urls.filter( ( value ) => typeof value === 'string' && value ) : [];
+		const urls = own.length ? own : ( grouped.length ? grouped : ( item && item.current_url ? [ item.current_url ] : [] ) );
+		return [ ...new Set( urls ) ].sort( ( left, right ) => right.length - left.length );
+	}
 	function exactCount( value, needle ) { if ( typeof value !== 'string' || ! needle ) return 0; return value.split( needle ).length - 1; }
-	function replaceBounded( value, before, after ) { return typeof value === 'string' && value.includes( before ) ? value.split( before ).join( after ) : null; }
-	function deriveChanges( resource, item ) {
-		const changes = {}; let matches = 0;
-		[ 'content', 'excerpt' ].forEach( ( field ) => {
-			matches += exactCount( resource[ field ], item.current_url );
-			const next = replaceBounded( resource[ field ], item.current_url, item.suggested_url );
-			if ( null !== next && next !== resource[ field ] ) changes[ field ] = next;
+	function replaceAllExact( value, before, after ) { return typeof value === 'string' && value.includes( before ) ? value.split( before ).join( after ) : value; }
+	function deriveChanges( resource, item, source ) {
+		const urls = sourceUrls( source, item );
+		const working = { content: String( resource.content || '' ), excerpt: String( resource.excerpt || '' ) };
+		let matches = 0;
+		const variantCounts = {};
+		urls.forEach( ( url ) => {
+			let variantMatches = 0;
+			[ 'content', 'excerpt' ].forEach( ( field ) => {
+				const count = exactCount( working[ field ], url );
+				variantMatches += count;
+				if ( count > 0 ) working[ field ] = replaceAllExact( working[ field ], url, item.suggested_url );
+			} );
+			variantCounts[ url ] = variantMatches;
+			matches += variantMatches;
 		} );
-		return { changes, matches };
+		const changes = {};
+		if ( working.content !== String( resource.content || '' ) ) changes.content = working.content;
+		if ( working.excerpt !== String( resource.excerpt || '' ) ) changes.excerpt = working.excerpt;
+		return { changes, matches, expected: sourceOccurrences( source ), urls, variantCounts };
 	}
 	function idempotencyKey( item, id, fingerprint ) { const seed = `${ item.id || item.code }-${ id }-${ fingerprint.slice( 0, 20 ) }`; return `manager-nav-${ seed }`.replace( /[^a-zA-Z0-9._-]/g, '-' ).slice( 0, 128 ); }
 	function isPublished( entry ) { return 'publish' === entry.resource.status; }
-	function stillPresent( data, item ) { const actionable = data && data.actionable_diagnostics && Array.isArray( data.actionable_diagnostics.items ) ? data.actionable_diagnostics.items : []; return actionable.some( ( candidate ) => candidate && candidate.code === item.code && candidate.current_url === item.current_url && candidate.suggested_url === item.suggested_url ); }
+	function stillPresent( data, item ) {
+		const actionable = data && data.actionable_diagnostics && Array.isArray( data.actionable_diagnostics.items ) ? data.actionable_diagnostics.items : [];
+		if ( item && item.id ) return actionable.some( ( candidate ) => candidate && String( candidate.id || '' ) === String( item.id ) );
+		return actionable.some( ( candidate ) => candidate && candidate.code === item.code && candidate.suggested_url === item.suggested_url );
+	}
+
+	function mergeContentSource( existing, source ) {
+		if ( ! existing ) return Object.assign( {}, source );
+		const urls = [ ...new Set( sourceUrls( existing, null ).concat( sourceUrls( source, null ) ) ) ];
+		existing.urls = urls;
+		existing.occurrences = sourceOccurrences( existing ) + sourceOccurrences( source );
+		return existing;
+	}
 
 	function accountSources( item ) {
 		const sources = Array.isArray( item.sources ) ? item.sources : [];
-		const contentIds = new Set(); const blocked = []; const coveredRendered = [];
-		sources.forEach( ( source ) => { if ( 'content' === sourceKind( source ) && sourceId( source ) > 0 ) contentIds.add( sourceId( source ) ); } );
+		const contentSources = new Map(); const blocked = []; const coveredRendered = [];
+		sources.forEach( ( source ) => {
+			if ( 'content' !== sourceKind( source ) ) return;
+			const id = sourceId( source );
+			if ( id <= 0 ) { blocked.push( 'Origen content sin ID editable.' ); return; }
+			contentSources.set( id, mergeContentSource( contentSources.get( id ), source ) );
+		} );
 		sources.forEach( ( source ) => {
 			const kind = sourceKind( source ); const id = sourceId( source );
-			if ( 'content' === kind ) { if ( id <= 0 ) blocked.push( 'Origen content sin ID editable.' ); return; }
+			if ( 'content' === kind ) return;
 			if ( 'rendered' === kind ) {
-				if ( id > 0 && contentIds.has( id ) ) { coveredRendered.push( id ); return; }
+				if ( id > 0 && contentSources.has( id ) ) { coveredRendered.push( id ); return; }
 				blocked.push( `Origen rendered #${ id || '—' } no está respaldado por un origen content editable; requiere adaptador Theme/render.` ); return;
 			}
 			if ( 'menu' === kind ) { blocked.push( `Origen menú #${ id || '—' } requiere el adaptador de navegación antes de Apply.` ); return; }
 			blocked.push( `Origen ${ kind || 'desconocido' } #${ id || '—' } no tiene adaptador de escritura seguro.` );
 		} );
-		return { contentIds: [ ...contentIds ], blocked, coveredRendered: [ ...new Set( coveredRendered ) ], sourceCount: sources.length };
+		return { contentSources, blocked, coveredRendered: [ ...new Set( coveredRendered ) ], sourceCount: sources.length };
 	}
 
 	async function refreshIntelligence() {
@@ -57,21 +92,25 @@
 	async function resolvePreviews( item, status ) {
 		const accounting = accountSources( item );
 		const resolved = [], blocked = accounting.blocked.slice();
-		if ( ! accounting.contentIds.length ) return { resolved, blocked: blocked.concat( [ 'El diagnóstico no expone orígenes content editables.' ] ), accounting };
+		if ( ! accounting.contentSources.size ) return { resolved, blocked: blocked.concat( [ 'El diagnóstico no expone orígenes content editables.' ] ), accounting };
 		const snapshot = await window.wp.apiFetch( { path: '/seo-geo-manager/v1/site/snapshot' } );
-		for ( const id of accounting.contentIds ) {
+		for ( const [ id, source ] of accounting.contentSources.entries() ) {
 			try {
-				status.textContent = `Resolviendo recurso content #${ id }…`;
+				status.textContent = `Resolviendo recurso content #${ id } y sus variantes exactas…`;
 				const resource = await window.wp.apiFetch( { path: `/seo-geo-manager/v1/content/${ id }` } );
-				const derived = deriveChanges( resource, item );
-				if ( ! Object.keys( derived.changes ).length || derived.matches < 1 ) { blocked.push( `#${ id }: el enlace no está en content/excerpt; el origen no puede considerarse resuelto.` ); continue; }
+				const derived = deriveChanges( resource, item, source );
+				if ( derived.matches !== derived.expected ) {
+					blocked.push( `#${ id }: se esperaban ${ derived.expected } enlace(s) según el escáner y se encontraron ${ derived.matches } coincidencia(s) exactas en content/excerpt. No se escribe hasta reconciliar.` );
+					continue;
+				}
+				if ( ! Object.keys( derived.changes ).length || derived.matches < 1 ) { blocked.push( `#${ id }: no se pudo preparar un cambio exacto para las variantes observadas.` ); continue; }
 				const payload = { schema_version: 1, target: { id, expected_fingerprint: resource.fingerprint }, changes: derived.changes, allow_published_target: false };
 				const preview = await window.wp.apiFetch( { path: '/seo-geo-manager/v1/changes/preview', method: 'POST', data: payload } );
 				if ( ! preview.has_changes ) { blocked.push( `#${ id }: Preview no contiene cambios efectivos.` ); continue; }
-				resolved.push( { resource, payload, preview, environment: snapshot.environment, matches: derived.matches } );
+				resolved.push( { resource, payload, preview, environment: snapshot.environment, matches: derived.matches, variants: derived.urls } );
 			} catch ( error ) { blocked.push( `#${ id }: ${ error && error.message ? error.message : 'preview fallido' }` ); }
 		}
-		if ( resolved.length !== accounting.contentIds.length ) blocked.push( 'No todos los orígenes content quedaron preparados.' );
+		if ( resolved.length !== accounting.contentSources.size ) blocked.push( 'No todos los orígenes content quedaron preparados con sus variantes exactas.' );
 		return { resolved, blocked: [ ...new Set( blocked ) ], accounting };
 	}
 
@@ -106,6 +145,8 @@
 	function renderPreparation( item ) {
 		const panel = ensureWorkspace(); panel.hidden = false; panel.replaceChildren();
 		panel.appendChild( makeText( 'p', 'Correction workflow', 'seo-geo-manager-admin__eyebrow' ) ); panel.appendChild( makeText( 'h2', 'Corrección segura' ) ); panel.appendChild( makeText( 'p', `${ item.current_url } → ${ item.suggested_url }`, 'description' ) );
+		const variants = Array.isArray( item.current_urls ) ? item.current_urls : [];
+		if ( variants.length > 1 ) panel.appendChild( makeText( 'p', `${ variants.length } variantes equivalentes detectadas para el mismo destino.`, 'description' ) );
 		const status = makeText( 'p', 'Preparando Preview REST y contabilizando orígenes…', 'seo-geo-manager-correction__safety' ); panel.appendChild( status );
 		const results = document.createElement( 'div' ); panel.appendChild( results );
 		const approval = document.createElement( 'label' ); approval.className = 'seo-geo-manager-correction__published-approval'; approval.hidden = true;
@@ -116,12 +157,12 @@
 
 		resolvePreviews( item, status ).then( ( result ) => {
 			results.replaceChildren();
-			results.appendChild( makeText( 'p', `Orígenes: ${ result.accounting.sourceCount } · content editables: ${ result.accounting.contentIds.length } · rendered cubiertos: ${ result.accounting.coveredRendered.length }`, 'description' ) );
-			result.resolved.forEach( ( entry ) => results.appendChild( makeText( 'p', `✓ #${ entry.resource.id } · Preview válido · ${ Object.keys( entry.payload.changes ).join( ', ' ) } · ${ entry.matches } coincidencia(s)${ isPublished( entry ) ? ' · publicado' : '' }` ) ) );
+			results.appendChild( makeText( 'p', `Orígenes: ${ result.accounting.sourceCount } · content editables: ${ result.accounting.contentSources.size } · rendered cubiertos: ${ result.accounting.coveredRendered.length }`, 'description' ) );
+			result.resolved.forEach( ( entry ) => results.appendChild( makeText( 'p', `✓ #${ entry.resource.id } · Preview válido · ${ Object.keys( entry.payload.changes ).join( ', ' ) } · ${ entry.matches } coincidencia(s) · ${ entry.variants.length } variante(s)${ isPublished( entry ) ? ' · publicado' : '' }` ) ) );
 			result.blocked.forEach( ( reason ) => results.appendChild( makeText( 'p', `⚠ ${ reason }` ) ) );
 			const fullySafe = result.resolved.length > 0 && result.blocked.length === 0; const hasPublished = result.resolved.some( isPublished );
 			approval.hidden = ! ( fullySafe && hasPublished );
-			function syncApply() { apply.disabled = ! fullySafe || ( hasPublished && ! approvalInput.checked ); status.textContent = ! fullySafe ? 'Apply bloqueado: todos los orígenes deben quedar contabilizados y resueltos.' : hasPublished && ! approvalInput.checked ? 'Preview completo. Hay recursos publicados: falta autorización explícita.' : 'Preview completo, orígenes contabilizados y autorizado. Apply requiere confirmación final.'; }
+			function syncApply() { apply.disabled = ! fullySafe || ( hasPublished && ! approvalInput.checked ); status.textContent = ! fullySafe ? 'Apply bloqueado: todos los orígenes y variantes deben quedar contabilizados y resueltos.' : hasPublished && ! approvalInput.checked ? 'Preview completo. Hay recursos publicados: falta autorización explícita.' : 'Preview completo, variantes reconciliadas y autorizado. Apply requiere confirmación final.'; }
 			approvalInput.addEventListener( 'change', syncApply ); syncApply(); if ( ! fullySafe ) return;
 			apply.addEventListener( 'click', async () => {
 				const publishedApproved = ! hasPublished || approvalInput.checked; if ( ! publishedApproved ) { syncApply(); return; }
