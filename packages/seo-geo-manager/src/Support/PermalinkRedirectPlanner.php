@@ -44,12 +44,12 @@ final class PermalinkRedirectPlanner {
 			$post_ids = array_slice( $post_ids, 0, self::MAX_POSTS );
 		}
 
-		$existing = self::existing_public_resource_index();
-		$redirects = array();
-		$collisions = array();
-		$targets = array();
+		$existing          = self::existing_public_resource_index();
+		$redirects         = array();
+		$collisions        = array();
+		$targets           = array();
 		$skipped_unchanged = 0;
-		$home_host = self::host_key( home_url( '/' ) );
+		$home_host         = self::host_key( home_url( '/' ) );
 
 		foreach ( $post_ids as $post_id ) {
 			$old_url = self::permalink_for_structure( $post_id, $current );
@@ -67,7 +67,7 @@ final class PermalinkRedirectPlanner {
 				continue;
 			}
 
-			if ( $home_host !== self::host_key( $old_url ) || $home_host !== self::host_key( $new_url ) ) {
+			if ( self::host_key( $old_url ) !== $home_host || self::host_key( $new_url ) !== $home_host ) {
 				$collisions[] = array(
 					'type'    => 'host-change-detected',
 					'post_id' => $post_id,
@@ -82,7 +82,7 @@ final class PermalinkRedirectPlanner {
 				continue;
 			}
 
-			if ( isset( $targets[ $new_key ] ) && $targets[ $new_key ] !== $post_id ) {
+			if ( isset( $targets[ $new_key ] ) && $post_id !== $targets[ $new_key ] ) {
 				$collisions[] = array(
 					'type'          => 'duplicate-new-target',
 					'post_id'       => $post_id,
@@ -115,38 +115,34 @@ final class PermalinkRedirectPlanner {
 
 		$complete_scan = $complete_post_scan && true === $existing['complete'];
 		$safe_to_apply = $complete_scan && array() === $collisions && count( $redirects ) > 0;
-		$plan_fingerprint = hash(
-			'sha256',
-			(string) wp_json_encode(
-				array(
-					'structure_fingerprint' => (string) ( $inspection['current_fingerprint'] ?? '' ),
-					'proposed_structure'     => $proposed,
-					'redirects'              => $redirects,
-			)
-			)
+		$plan_payload  = array(
+			'structure_fingerprint' => (string) ( $inspection['current_fingerprint'] ?? '' ),
+			'proposed_structure'     => $proposed,
+			'redirects'              => $redirects,
 		);
+		$plan_fingerprint = hash( 'sha256', (string) wp_json_encode( $plan_payload ) );
 
 		return array(
-			'mode'                       => 'redirect-plan-preview',
-			'write_performed'            => false,
-			'current_structure'          => $current,
-			'proposed_structure'         => $proposed,
-			'structure_fingerprint'      => (string) ( $inspection['current_fingerprint'] ?? '' ),
-			'plan_fingerprint'           => $plan_fingerprint,
-			'published_posts_scanned'    => count( $post_ids ),
-			'planned_redirects'          => count( $redirects ),
-			'skipped_unchanged'          => $skipped_unchanged,
-			'collision_count'            => count( $collisions ),
-			'collisions'                 => $collisions,
-			'redirects'                  => $redirects,
-			'complete_scan'              => $complete_scan,
-			'posts_scan_truncated'       => ! $complete_post_scan,
-			'resource_scan_truncated'    => true !== $existing['complete'],
-			'safe_to_apply'              => $safe_to_apply,
-			'apply_blocked'              => true,
-			'next_action'                => $safe_to_apply ? 'build-permalink-redirect-runtime-and-approval' : 'resolve-permalink-plan-blockers',
-			'environment'                => EnvironmentPolicy::snapshot(),
-			'policy'                     => array(
+			'mode'                    => 'redirect-plan-preview',
+			'write_performed'         => false,
+			'current_structure'       => $current,
+			'proposed_structure'      => $proposed,
+			'structure_fingerprint'   => (string) ( $inspection['current_fingerprint'] ?? '' ),
+			'plan_fingerprint'        => $plan_fingerprint,
+			'published_posts_scanned' => count( $post_ids ),
+			'planned_redirects'       => count( $redirects ),
+			'skipped_unchanged'       => $skipped_unchanged,
+			'collision_count'         => count( $collisions ),
+			'collisions'              => $collisions,
+			'redirects'               => $redirects,
+			'complete_scan'           => $complete_scan,
+			'posts_scan_truncated'    => ! $complete_post_scan,
+			'resource_scan_truncated' => true !== $existing['complete'],
+			'safe_to_apply'           => $safe_to_apply,
+			'apply_blocked'           => true,
+			'next_action'             => $safe_to_apply ? 'build-permalink-redirect-runtime-and-approval' : 'resolve-permalink-plan-blockers',
+			'environment'             => EnvironmentPolicy::snapshot(),
+			'policy'                  => array(
 				'preview_only'                   => true,
 				'exact_301_redirects_required'    => true,
 				'no_permalink_option_write'        => true,
