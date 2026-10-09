@@ -38,9 +38,13 @@ The technical Reset & Rebuild sequence already reached browser-readiness on the 
 - native SEO/GEO handoff reported SEO-ready;
 - machine preflight reported `ready_for_browser_qa=true`.
 
-Do **not** rerun Reset, regenerate Home, rehydrate content or replace Migration Bridge merely because the Theme renderer/presentation changes. The semantic draft and SEO/GEO state are already proven.
+Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge merely because the Theme renderer/presentation changes. The semantic draft and SEO/GEO state are already proven.
+
+Corporate v4.3 remains historical evidence: technically valid but **visual/architectural NO-GO**.
 
 ## Corporate field evolution
+
+Corporate v5 — Theme-owned frontend.
 
 Corporate v5 moved strategic master rendering out of Gutenberg layout authority and into a Theme-owned semantic server renderer.
 
