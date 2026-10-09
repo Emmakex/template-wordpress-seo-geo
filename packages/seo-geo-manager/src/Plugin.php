@@ -15,6 +15,7 @@ use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\HealthController;
+use SeoGeo\Manager\Rest\NavigationChangeController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
 use SeoGeo\Manager\Rest\ThemeStructuredContentController;
@@ -43,6 +44,7 @@ final class Plugin {
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
 				ChangeSetController::register_routes();
+				NavigationChangeController::register_routes();
 				ThemeStructuredContentController::register_routes();
 			}
 		);
