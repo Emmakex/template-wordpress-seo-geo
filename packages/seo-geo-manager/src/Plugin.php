@@ -12,10 +12,12 @@ namespace SeoGeo\Manager;
 use SeoGeo\Manager\Admin\CorrectionActions;
 use SeoGeo\Manager\Admin\Dashboard;
 use SeoGeo\Manager\Admin\JsonExportActions;
+use SeoGeo\Manager\Admin\PermalinkActions;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\HealthController;
 use SeoGeo\Manager\Rest\NavigationChangeController;
+use SeoGeo\Manager\Rest\PermalinkController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
 use SeoGeo\Manager\Rest\ThemeStructuredContentController;
@@ -34,6 +36,7 @@ final class Plugin {
 			Dashboard::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
+			PermalinkActions::register();
 		}
 
 		add_action(
@@ -45,6 +48,7 @@ final class Plugin {
 				SiteIntelligenceController::register_routes();
 				ChangeSetController::register_routes();
 				NavigationChangeController::register_routes();
+				PermalinkController::register_routes();
 				ThemeStructuredContentController::register_routes();
 			}
 		);
