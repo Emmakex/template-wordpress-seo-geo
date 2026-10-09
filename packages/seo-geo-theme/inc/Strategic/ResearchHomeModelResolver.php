@@ -4,6 +4,7 @@
  *
  * @package SeoGeoTheme
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Theme\Strategic;
@@ -18,7 +19,11 @@ final class ResearchHomeModelResolver {
 	private const MODEL_ID = 'research-home-v1';
 	private const META_KEY = '_seo_geo_theme_page_model';
 
-	/** @var list<string> */
+	/**
+	 * CTA slots that must resolve to an explicit label and URL.
+	 *
+	 * @var list<string>
+	 */
 	private const LINK_SLOTS = array( 'hero-primary-cta', 'final-cta-button' );
 
 	/**
@@ -62,7 +67,11 @@ final class ResearchHomeModelResolver {
 		return $model;
 	}
 
-	/** Whether this page carries a complete Research Home model. */
+	/**
+	 * Determine whether this page carries a complete Research Home model.
+	 *
+	 * @param WP_Post $post Source WordPress page.
+	 */
 	public function supports( WP_Post $post ): bool {
 		return null !== $this->resolve( $post );
 	}
@@ -176,7 +185,10 @@ final class ResearchHomeModelResolver {
 			return null;
 		}
 
-		return array( 'label' => $label, 'url' => $url );
+		return array(
+			'label' => $label,
+			'url'   => $url,
+		);
 	}
 
 	/**
@@ -280,7 +292,11 @@ final class ResearchHomeModelResolver {
 				continue;
 			}
 
-			$items[] = array( 'label' => $label, 'value' => $id, 'url' => $url );
+			$items[] = array(
+				'label' => $label,
+				'value' => $id,
+				'url'   => $url,
+			);
 		}
 
 		return $items;
