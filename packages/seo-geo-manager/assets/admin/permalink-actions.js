@@ -50,8 +50,12 @@
 		const labels = {
 			'duplicate-old-source': 'URL antigua ambigua',
 			'duplicate-new-target': 'destino nuevo duplicado',
+			'duplicate-historical-source': 'ruta histórica duplicada',
+			'duplicate-authoritative-target': 'destino histórico duplicado',
 			'target-collides-with-existing-public-resource': 'destino ocupado por otro recurso público',
 			'invalid-generated-url': 'URL generada no válida',
+			'invalid-logical-path': 'ruta lógica no válida',
+			'local-post-changed-since-authority-scan': 'entrada local cambió durante la comprobación',
 			'host-change-detected': 'cambio de host no permitido'
 		};
 		return labels[ type ] || type || 'colisión';
@@ -63,7 +67,7 @@
 		body.appendChild( text( 'h3', 'Muestra del mapa 301 propuesto' ) );
 		const list = document.createElement( 'ol' );
 		redirects.slice( 0, 20 ).forEach( ( redirect ) => {
-			list.appendChild( text( 'li', `#${ redirect.post_id || '—' } · ${ redirect.old_path || redirect.old_url || '—' } → ${ redirect.new_path || redirect.new_url || '—' }` ) );
+			list.appendChild( text( 'li', `#${ redirect.post_id || '—' } · ${ redirect.old_path || redirect.old_url || redirect.source_path || '—' } → ${ redirect.new_path || redirect.new_url || redirect.target_path || '—' }` ) );
 		} );
 		body.appendChild( list );
 		if ( redirects.length > 20 ) body.appendChild( text( 'p', `Se muestran 20 de ${ redirects.length } cambios de URL calculados.`, 'description' ) );
@@ -75,7 +79,7 @@
 		body.appendChild( text( 'h3', 'Colisiones o bloqueos detectados' ) );
 		const list = document.createElement( 'ul' );
 		collisions.slice( 0, 20 ).forEach( ( collision ) => {
-			const target = collision.old_url || collision.new_url || 'sin URL';
+			const target = collision.old_url || collision.new_url || collision.source_path || collision.target_path || 'sin URL';
 			const counterpart = collision.other_post_id ? ` · también post #${ collision.other_post_id }` : '';
 			list.appendChild( text( 'li', `${ collisionLabel( collision.type ) } · post #${ collision.post_id || '—' }${ counterpart } · ${ target }` ) );
 		} );
@@ -95,6 +99,55 @@
 		if ( rows.length > 12 ) container.appendChild( text( 'p', `Se muestran 12 de ${ rows.length } correspondencias históricas.`, 'description' ) );
 	}
 
+	function renderAuthoritativeSample( plan, container ) {
+		const rows = Array.isArray( plan.rows ) ? plan.rows : [];
+		if ( ! rows.length ) return;
+		container.appendChild( text( 'h4', 'Comprobación de rutas SEO después del cambio' ) );
+		const list = document.createElement( 'ol' );
+		rows.slice( 0, 12 ).forEach( ( row ) => {
+			const state = row.path_preserved ? 'preservada' : 'requiere 301';
+			list.appendChild( text( 'li', `#${ row.post_id || '—' } · ${ row.historical_path || '—' } → ${ row.target_logical_path || '—' } · ${ state }` ) );
+		} );
+		container.appendChild( list );
+		if ( rows.length > 12 ) container.appendChild( text( 'p', `Se muestran 12 de ${ rows.length } rutas comparadas.`, 'description' ) );
+	}
+
+	async function renderAuthoritativePlan( authority, legacyBaseUrl, result, status, apply ) {
+		status.textContent = 'Revalidando la autoridad histórica y comparando las rutas SEO sin contar el prefijo temporal del clon…';
+		const plan = await window.wp.apiFetch( {
+			path: '/seo-geo-manager/v1/permalinks/authoritative-plan',
+			method: 'POST',
+			data: {
+				legacy_base_url: legacyBaseUrl,
+				authority_fingerprint: authority.authority_fingerprint || ''
+			}
+		} );
+
+		result.appendChild( text( 'h4', 'Plan SEO basado en autoridad histórica' ) );
+		result.appendChild( renderFact( 'Estructura histórica autoritativa', plan.authoritative_structure || '—' ) );
+		result.appendChild( renderFact( 'Entradas reconciliadas', plan.matched_posts ?? 0 ) );
+		result.appendChild( renderFact( 'Rutas SEO preservadas exactamente', plan.path_preservation_count ?? 0 ) );
+		result.appendChild( renderFact( 'Redirecciones 301 realmente necesarias', plan.planned_redirects ?? 0 ) );
+		result.appendChild( renderFact( 'Modo de preservación SEO', plan.seo_preservation_mode || 'bloqueado' ) );
+		result.appendChild( renderFact( 'Colisiones', plan.collision_count ?? 0 ) );
+		result.appendChild( renderFact( 'Escaneo completo', plan.complete_scan ? 'sí' : 'no' ) );
+		result.appendChild( renderFact( 'Candidato seguro para cambio de estructura', plan.safe_structure_candidate ? 'sí' : 'no' ) );
+		result.appendChild( renderFact( 'Fingerprint del plan', plan.plan_fingerprint || '—' ) );
+		renderCollisions( plan, result );
+		renderAuthoritativeSample( plan, result );
+		renderRedirectSample( plan, result );
+
+		if ( plan.safe_structure_candidate && ! plan.requires_redirect_runtime ) {
+			status.textContent = `Plan autoritativo cerrado: ${ plan.path_preservation_count } ruta(s) histórica(s) se conservan exactamente al ignorar el prefijo temporal del clon. No hace falta crear 301 para esas entradas. Apply sigue bloqueado hasta implementar cambio de estructura, flush controlado, verificación y rollback.`;
+		} else if ( plan.safe_structure_candidate ) {
+			status.textContent = `Plan autoritativo cerrado, pero ${ plan.planned_redirects } ruta(s) necesitan 301. Apply sigue bloqueado hasta implementar el runtime de redirecciones y rollback.`;
+		} else {
+			status.textContent = plan.block_reason || 'El plan autoritativo todavía contiene bloqueos y no permite avanzar a Apply.';
+		}
+		apply.disabled = true;
+		apply.title = 'Apply permanece bloqueado hasta implementar y validar cambio de estructura, verificación y rollback.';
+	}
+
 	function renderLegacyAuthorityControls( plan, status, body, apply ) {
 		if ( ! plan.requires_authoritative_legacy_urls ) return;
 		const section = document.createElement( 'div' );
@@ -111,7 +164,7 @@
 		input.value = `${ window.location.origin }/`;
 		label.appendChild( input );
 		section.appendChild( label );
-		section.appendChild( text( 'p', 'Se propone la raíz del mismo host como punto de partida; revísala antes de comprobar. La 0.3.17 no admite todavía fuentes históricas en otro host.', 'description' ) );
+		section.appendChild( text( 'p', 'Se propone la raíz del mismo host como punto de partida; revísala antes de comprobar. La 0.3.18 mantiene esta recuperación histórica limitada al mismo host.', 'description' ) );
 
 		const button = text( 'button', 'Comprobar URLs históricas' );
 		button.type = 'button';
@@ -147,7 +200,7 @@
 				result.appendChild( renderFact( 'Fingerprint de autoridad', authority.authority_fingerprint || '—' ) );
 				renderLegacySample( authority, result );
 				if ( authority.seo_authority_verified ) {
-					status.textContent = `Autoridad histórica recuperada: ${ authority.matched_posts } entrada(s) y estructura ${ authority.inferred_structure }. Apply sigue bloqueado hasta integrar esta autoridad en el plan de reparación y probar rollback.`;
+					await renderAuthoritativePlan( authority, legacyBaseUrl, result, status, apply );
 				} else {
 					status.textContent = authority.block_reason || 'La fuente histórica no permite todavía demostrar una correspondencia completa y unívoca.';
 				}
