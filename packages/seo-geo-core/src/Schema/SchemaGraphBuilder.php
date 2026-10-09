@@ -17,73 +17,17 @@ use SeoGeo\Core\Seo\IndexabilityResolver;
  * Builds the native single-owner JSON-LD graph.
  */
 final class SchemaGraphBuilder {
-	/**
-	 * Indexability resolver.
-	 *
-	 * @var IndexabilityResolver
-	 */
 	private IndexabilityResolver $indexability;
-
-	/**
-	 * Canonical resolver.
-	 *
-	 * @var CanonicalResolver
-	 */
 	private CanonicalResolver $canonical;
-
-	/**
-	 * Language facade.
-	 *
-	 * @var LanguageManager
-	 */
 	private LanguageManager $language;
-
-	/**
-	 * Stable node-ID generator.
-	 *
-	 * @var SchemaNodeIds
-	 */
 	private SchemaNodeIds $ids;
-
-	/**
-	 * Native BreadcrumbList resolver.
-	 *
-	 * @var SchemaBreadcrumbResolver
-	 */
 	private SchemaBreadcrumbResolver $breadcrumb;
-
-	/**
-	 * Native identity resolver.
-	 *
-	 * @var SchemaIdentityResolver
-	 */
 	private SchemaIdentityResolver $identity;
-
-	/**
-	 * Native LocalBusiness resolver.
-	 *
-	 * @var SchemaLocalBusinessResolver
-	 */
 	private SchemaLocalBusinessResolver $local_business;
-
-	/**
-	 * Native BlogPosting resolver.
-	 *
-	 * @var SchemaArticleResolver
-	 */
 	private SchemaArticleResolver $article;
 
 	/**
 	 * Create the graph builder.
-	 *
-	 * @param IndexabilityResolver        $indexability Native indexability authority.
-	 * @param CanonicalResolver           $canonical    Canonical URL authority.
-	 * @param LanguageManager             $language     Active language facade.
-	 * @param SchemaNodeIds               $ids          Stable node-ID generator.
-	 * @param SchemaBreadcrumbResolver    $breadcrumb      Native BreadcrumbList authority.
-	 * @param SchemaIdentityResolver      $identity        Native identity authority.
-	 * @param SchemaLocalBusinessResolver $local_business  Native LocalBusiness authority.
-	 * @param SchemaArticleResolver       $article         Native BlogPosting data authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
@@ -118,7 +62,6 @@ final class SchemaGraphBuilder {
 		}
 
 		$canonical_url = $this->canonical->resolve( $state );
-
 		if ( null === $canonical_url ) {
 			return array();
 		}
@@ -158,7 +101,9 @@ final class SchemaGraphBuilder {
 		if ( null !== $breadcrumb ) {
 			$graph[] = $breadcrumb;
 		}
+
 		$organization   = $this->identity->organization();
+		$site_person    = $this->identity->site_person();
 		$local_business = $this->local_business->resolve();
 
 		if ( is_front_page() && null !== $local_business ) {
@@ -173,6 +118,14 @@ final class SchemaGraphBuilder {
 
 			$graph[0] = $website;
 			$graph[]  = $this->organization_node( $organization );
+		} elseif ( is_front_page() && null !== $site_person ) {
+			$website['publisher']   = array( '@id' => $site_person['id'] );
+			$web_page['@type']      = 'ProfilePage';
+			$web_page['mainEntity'] = array( '@id' => $site_person['id'] );
+
+			$graph[0] = $website;
+			$graph[1] = $web_page;
+			$graph[]  = $this->person_node( $site_person, $web_page_id );
 		}
 
 		$author = $this->identity->current_author();
@@ -210,6 +163,8 @@ final class SchemaGraphBuilder {
 				$article_node['publisher'] = array( '@id' => $local_business['@id'] );
 			} elseif ( null !== $organization ) {
 				$article_node['publisher'] = array( '@id' => $organization['id'] );
+			} elseif ( null !== $site_person ) {
+				$article_node['publisher'] = array( '@id' => $site_person['id'] );
 			}
 
 			$graph[] = $article_node;
@@ -223,6 +178,8 @@ final class SchemaGraphBuilder {
 				$graph[] = $local_business;
 			} elseif ( null !== $organization ) {
 				$graph[] = $this->organization_node( $organization );
+			} elseif ( null !== $site_person ) {
+				$graph[] = $this->person_node( $site_person, $this->ids->web_page( $site_person['url'] ) );
 			}
 		}
 
@@ -250,8 +207,8 @@ final class SchemaGraphBuilder {
 	/**
 	 * Build one stable Person graph node.
 	 *
-	 * @param array{id:string,name:string,url:string,description:string} $author  Resolved author identity.
-	 * @param string                                                     $page_id Stable profile WebPage ID.
+	 * @param array<string,mixed> $author  Resolved Person identity.
+	 * @param string              $page_id Stable profile WebPage ID.
 	 * @return array<string, mixed>
 	 */
 	private function person_node( array $author, string $page_id ): array {
@@ -263,13 +220,25 @@ final class SchemaGraphBuilder {
 			'mainEntityOfPage' => array( '@id' => $page_id ),
 		);
 
+		$description = isset( $author['description'] ) && is_string( $author['description'] )
+			? $this->text( $author['description'] )
+			: '';
+		if ( '' !== $description ) {
+			$person['description'] = $description;
+		}
+
+		$same_as = isset( $author['same_as'] ) && is_array( $author['same_as'] )
+			? array_values( array_filter( $author['same_as'], 'is_string' ) )
+			: array();
+		if ( array() !== $same_as ) {
+			$person['sameAs'] = $same_as;
+		}
+
 		return $person;
 	}
 
 	/**
 	 * Normalize visible WordPress text for graph use.
-	 *
-	 * @param string $value Raw visible text.
 	 */
 	private function text( string $value ): string {
 		return trim( wp_strip_all_tags( $value, true ) );
@@ -277,8 +246,6 @@ final class SchemaGraphBuilder {
 
 	/**
 	 * Convert a WordPress locale into a conservative BCP 47 language tag.
-	 *
-	 * @param string $locale WordPress locale.
 	 */
 	private function bcp47( string $locale ): string {
 		$parts = preg_split( '/[_-]/', trim( $locale ) );
@@ -288,7 +255,6 @@ final class SchemaGraphBuilder {
 		}
 
 		$tag = array();
-
 		foreach ( $parts as $index => $part ) {
 			if ( '' === $part ) {
 				continue;
