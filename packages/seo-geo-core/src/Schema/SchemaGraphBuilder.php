@@ -17,17 +17,41 @@ use SeoGeo\Core\Seo\IndexabilityResolver;
  * Builds the native single-owner JSON-LD graph.
  */
 final class SchemaGraphBuilder {
+	/** @var IndexabilityResolver Indexability authority. */
 	private IndexabilityResolver $indexability;
+
+	/** @var CanonicalResolver Canonical URL authority. */
 	private CanonicalResolver $canonical;
+
+	/** @var LanguageManager Language authority. */
 	private LanguageManager $language;
+
+	/** @var SchemaNodeIds Stable node-ID authority. */
 	private SchemaNodeIds $ids;
+
+	/** @var SchemaBreadcrumbResolver Breadcrumb authority. */
 	private SchemaBreadcrumbResolver $breadcrumb;
+
+	/** @var SchemaIdentityResolver Identity authority. */
 	private SchemaIdentityResolver $identity;
+
+	/** @var SchemaLocalBusinessResolver LocalBusiness authority. */
 	private SchemaLocalBusinessResolver $local_business;
+
+	/** @var SchemaArticleResolver Article authority. */
 	private SchemaArticleResolver $article;
 
 	/**
 	 * Create the graph builder.
+	 *
+	 * @param IndexabilityResolver          $indexability   Indexability authority.
+	 * @param CanonicalResolver             $canonical      Canonical URL authority.
+	 * @param LanguageManager               $language       Language authority.
+	 * @param SchemaNodeIds                 $ids            Stable node-ID authority.
+	 * @param SchemaBreadcrumbResolver      $breadcrumb     Breadcrumb authority.
+	 * @param SchemaIdentityResolver        $identity       Identity authority.
+	 * @param SchemaLocalBusinessResolver   $local_business LocalBusiness authority.
+	 * @param SchemaArticleResolver         $article        Article authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
@@ -239,6 +263,8 @@ final class SchemaGraphBuilder {
 
 	/**
 	 * Normalize visible WordPress text for graph use.
+	 *
+	 * @param string $value Raw visible text.
 	 */
 	private function text( string $value ): string {
 		return trim( wp_strip_all_tags( $value, true ) );
@@ -246,6 +272,8 @@ final class SchemaGraphBuilder {
 
 	/**
 	 * Convert a WordPress locale into a conservative BCP 47 language tag.
+	 *
+	 * @param string $locale WordPress locale.
 	 */
 	private function bcp47( string $locale ): string {
 		$parts = preg_split( '/[_-]/', trim( $locale ) );

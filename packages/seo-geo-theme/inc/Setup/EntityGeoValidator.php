@@ -22,9 +22,26 @@ use SeoGeo\Core\Schema\SchemaVisibleContentResolver;
  * Validates explicit site identity and GEO choices without inventing facts.
  */
 final class EntityGeoValidator {
+	/**
+	 * Crawler-policy authority.
+	 *
+	 * @var CrawlerPolicyResolver
+	 */
 	private CrawlerPolicyResolver $crawler_policy;
+
+	/**
+	 * LocalBusiness authority.
+	 *
+	 * @var SchemaLocalBusinessResolver
+	 */
 	private SchemaLocalBusinessResolver $local_business;
 
+	/**
+	 * Construct the validator.
+	 *
+	 * @param CrawlerPolicyResolver|null        $crawler_policy Optional crawler authority.
+	 * @param SchemaLocalBusinessResolver|null $local_business Optional LocalBusiness authority.
+	 */
 	public function __construct(
 		?CrawlerPolicyResolver $crawler_policy = null,
 		?SchemaLocalBusinessResolver $local_business = null
@@ -64,7 +81,7 @@ final class EntityGeoValidator {
 			$errors[] = 'site-title-required-for-entity';
 		}
 
-		$preset = isset( $input['preset'] ) && is_string( $input['preset'] )
+		$preset          = isset( $input['preset'] ) && is_string( $input['preset'] )
 			? sanitize_key( $input['preset'] )
 			: '';
 		$preset_document = '' !== $preset ? \seo_geo_theme_preset_document( $preset, 'preset.json' ) : null;
@@ -97,7 +114,7 @@ final class EntityGeoValidator {
 			$errors[] = 'person-fields-require-person-identity';
 		}
 
-		$crawler_policy = $this->validate_crawler_policy( $input['crawler_policy'] ?? array(), $errors );
+		$crawler_policy   = $this->validate_crawler_policy( $input['crawler_policy'] ?? array(), $errors );
 		$llms_enabled     = $this->boolean_value( $input, 'llms_txt_enabled', $errors );
 		$markdown_enabled = $this->boolean_value( $input, 'markdown_alternates_enabled', $errors );
 
@@ -418,6 +435,11 @@ final class EntityGeoValidator {
 		return $input[ $key ];
 	}
 
+	/**
+	 * Normalize one optional public text value.
+	 *
+	 * @param mixed $value Candidate text.
+	 */
 	private function text_value( mixed $value ): ?string {
 		if ( ! is_string( $value ) ) {
 			return null;
@@ -427,6 +449,12 @@ final class EntityGeoValidator {
 		return '' !== $value ? $value : null;
 	}
 
+	/**
+	 * Report whether one coordinate field contains a scalar candidate value.
+	 *
+	 * @param array<string,mixed> $value Candidate LocalBusiness map.
+	 * @param string              $key   Coordinate key.
+	 */
 	private function has_coordinate_input( array $value, string $key ): bool {
 		if ( ! array_key_exists( $key, $value ) ) {
 			return false;

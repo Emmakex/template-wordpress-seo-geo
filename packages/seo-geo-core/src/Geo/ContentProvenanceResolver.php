@@ -18,10 +18,34 @@ use WP_Post;
  * Resolves authoritative author, date, publisher and source metadata for public posts.
  */
 final class ContentProvenanceResolver {
+	/**
+	 * Indexability authority.
+	 *
+	 * @var IndexabilityResolver
+	 */
 	private IndexabilityResolver $indexability;
+
+	/**
+	 * Canonical URL authority.
+	 *
+	 * @var CanonicalResolver
+	 */
 	private CanonicalResolver $canonical;
+
+	/**
+	 * Schema identity authority.
+	 *
+	 * @var SchemaIdentityResolver
+	 */
 	private SchemaIdentityResolver $identity;
 
+	/**
+	 * Construct the provenance resolver.
+	 *
+	 * @param IndexabilityResolver   $indexability Indexability authority.
+	 * @param CanonicalResolver      $canonical    Canonical URL authority.
+	 * @param SchemaIdentityResolver $identity     Schema identity authority.
+	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
 		CanonicalResolver $canonical,
