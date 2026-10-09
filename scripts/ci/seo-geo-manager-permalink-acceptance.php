@@ -1,6 +1,6 @@
 <?php
 /**
- * Runtime acceptance for read-only permalink repair and redirect planning.
+ * Runtime acceptance for read-only permalink repair, redirect planning and legacy authority recovery.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,6 +15,18 @@ function seo_geo_manager_permalink_accept( bool $condition, string $message ): v
 
 function seo_geo_manager_permalink_request( string $route ): array {
 	$request  = new WP_REST_Request( 'GET', $route );
+	$response = rest_do_request( $request );
+
+	return array(
+		'status' => $response->get_status(),
+		'data'   => $response->get_data(),
+	);
+}
+
+function seo_geo_manager_permalink_post_request( string $route, array $payload ): array {
+	$request = new WP_REST_Request( 'POST', $route );
+	$request->set_header( 'content-type', 'application/json' );
+	$request->set_body( (string) wp_json_encode( $payload ) );
 	$response = rest_do_request( $request );
 
 	return array(
@@ -48,6 +60,12 @@ function seo_geo_manager_has_permalink_collision( array $plan, string $type ): b
 
 wp_set_current_user( 1 );
 seo_geo_manager_permalink_accept( current_user_can( 'manage_options' ), 'Acceptance administrator could not be loaded.' );
+
+$original_home = (string) get_option( 'home', '' );
+update_option( 'home', 'https://example.com/nuevaweb/' );
+wp_cache_delete( 'home', 'options' );
+wp_cache_delete( 'alloptions', 'options' );
+seo_geo_manager_permalink_accept( 'https://example.com/nuevaweb/' === trailingslashit( home_url( '/' ) ), 'Could not simulate a clone home path.' );
 
 $original = (string) get_option( 'permalink_structure', '' );
 $token    = '{d276abfeceab40cca0e158fc6217176554b8e54a1f85b6eb004941797db52171}';
@@ -89,7 +107,9 @@ $preview = seo_geo_manager_permalink_request( '/seo-geo-manager/v1/permalinks/pr
 seo_geo_manager_permalink_accept( 200 === $preview['status'] && is_array( $preview['data'] ), 'Permalink preview endpoint failed.' );
 seo_geo_manager_permalink_accept( $broken === ( $preview['data']['current_structure'] ?? '' ), 'Permalink preview did not expose the exact current structure.' );
 seo_geo_manager_permalink_accept( '/%category%/%postname%/' === ( $preview['data']['proposed_structure'] ?? '' ), 'Permalink preview did not restore known placeholder tokens.' );
-seo_geo_manager_permalink_accept( true === ( $preview['data']['safe_candidate'] ?? false ), 'Deterministic permalink repair candidate was not classified as safe.' );
+seo_geo_manager_permalink_accept( 'syntactic-placeholder-recovery' === ( $preview['data']['candidate_kind'] ?? '' ), 'Permalink preview did not label the proposal as syntactic recovery.' );
+seo_geo_manager_permalink_accept( false === ( $preview['data']['seo_authority_verified'] ?? true ), 'Syntactic recovery was incorrectly treated as historical SEO authority.' );
+seo_geo_manager_permalink_accept( true === ( $preview['data']['safe_candidate'] ?? false ), 'Deterministic permalink repair candidate was not classified as syntactically safe.' );
 seo_geo_manager_permalink_accept( true === ( $preview['data']['apply_blocked'] ?? false ), 'Permalink preview must never enable Apply in this microphase.' );
 seo_geo_manager_permalink_accept( false === ( $preview['data']['write_performed'] ?? true ), 'Permalink preview unexpectedly reported a write.' );
 seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Permalink preview mutated the WordPress option.' );
@@ -138,6 +158,48 @@ seo_geo_manager_permalink_accept( true === ( $ambiguous_plan['data']['requires_a
 seo_geo_manager_permalink_accept( seo_geo_manager_has_permalink_collision( $ambiguous_plan['data'], 'duplicate-old-source' ), 'Redirect plan did not expose duplicate-old-source.' );
 seo_geo_manager_permalink_accept( 'recover-authoritative-legacy-urls' === ( $ambiguous_plan['data']['next_action'] ?? '' ), 'Ambiguous-source plan exposed the wrong next action.' );
 seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Ambiguous-source scan mutated permalink_structure.' );
+
+$legacy_rows = array(
+	array(
+		'id'   => 901,
+		'slug' => 'permalink-plan-post',
+		'link' => 'https://example.com/blog/permalink-plan-post/',
+	),
+	array(
+		'id'   => 902,
+		'slug' => 'second-permalink-plan-post',
+		'link' => 'https://example.com/blog/second-permalink-plan-post/',
+	),
+);
+$legacy_http_filter = static function ( $preempt, $args, $url ) use ( $legacy_rows ) {
+	if ( ! is_string( $url ) || 0 !== strpos( $url, 'https://example.com/wp-json/wp/v2/posts' ) ) {
+		return $preempt;
+	}
+	return array(
+		'headers'  => array( 'x-wp-totalpages' => '1', 'content-type' => 'application/json' ),
+		'body'     => (string) wp_json_encode( $legacy_rows ),
+		'response' => array( 'code' => 200, 'message' => 'OK' ),
+		'cookies'  => array(),
+		'filename' => null,
+	);
+};
+add_filter( 'pre_http_request', $legacy_http_filter, 10, 3 );
+$authority = seo_geo_manager_permalink_post_request(
+	'/seo-geo-manager/v1/permalinks/legacy-authority-preview',
+	array( 'legacy_base_url' => 'https://example.com/' )
+);
+remove_filter( 'pre_http_request', $legacy_http_filter, 10 );
+seo_geo_manager_permalink_accept( 200 === $authority['status'] && is_array( $authority['data'] ), 'Legacy authority preview endpoint failed.' );
+seo_geo_manager_permalink_accept( true === ( $authority['data']['complete_scan'] ?? false ), 'Legacy authority scan was not complete.' );
+seo_geo_manager_permalink_accept( 2 === (int) ( $authority['data']['matched_posts'] ?? 0 ), 'Legacy authority did not match both local posts.' );
+seo_geo_manager_permalink_accept( true === ( $authority['data']['mapping_authoritative'] ?? false ), 'Legacy slug mapping was not classified as authoritative.' );
+seo_geo_manager_permalink_accept( '/blog/%postname%/' === ( $authority['data']['inferred_structure'] ?? '' ), 'Legacy authority did not infer the historical /blog/%postname%/ structure.' );
+seo_geo_manager_permalink_accept( true === ( $authority['data']['seo_authority_verified'] ?? false ), 'Historical structure was not verified after complete exact slug mapping.' );
+seo_geo_manager_permalink_accept( true === ( $authority['data']['apply_blocked'] ?? false ), 'Legacy authority preview must remain read-only.' );
+seo_geo_manager_permalink_accept( false === ( $authority['data']['write_performed'] ?? true ), 'Legacy authority preview unexpectedly reported a write.' );
+seo_geo_manager_permalink_accept( '' !== (string) ( $authority['data']['authority_fingerprint'] ?? '' ), 'Legacy authority fingerprint missing.' );
+seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Legacy authority preview mutated permalink_structure.' );
+
 wp_delete_post( (int) $second_post_id, true );
 
 $parent_page = wp_insert_post(
@@ -170,6 +232,9 @@ seo_geo_manager_permalink_accept( seo_geo_manager_has_permalink_collision( $coll
 seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Collision scan mutated permalink_structure.' );
 
 seo_geo_manager_set_permalink_fixture( $original );
+update_option( 'home', $original_home );
+wp_cache_delete( 'home', 'options' );
+wp_cache_delete( 'alloptions', 'options' );
 
 echo wp_json_encode(
 	array(
@@ -179,6 +244,7 @@ echo wp_json_encode(
 		'planned_redirects'          => $plan['data']['planned_redirects'] ?? 0,
 		'collision_guard'            => true,
 		'ambiguous_old_source_guard' => true,
+		'legacy_authority_guard'     => true,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
