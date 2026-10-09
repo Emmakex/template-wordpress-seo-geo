@@ -152,7 +152,8 @@
 			const preview = await window.wp.apiFetch( { path: '/seo-geo-manager/v1/permalinks/preview' } );
 			body.replaceChildren();
 			body.appendChild( renderFact( 'Estructura actual', preview.current_structure || '(vacía)' ) );
-			body.appendChild( renderFact( 'Propuesta normalizada', preview.proposed_structure || '(sin propuesta)' ) );
+			body.appendChild( renderFact( 'Recuperación sintáctica', preview.proposed_structure || '(sin propuesta)' ) );
+			body.appendChild( renderFact( 'Autoridad SEO histórica verificada', preview.seo_authority_verified ? 'sí' : 'no' ) );
 			body.appendChild( renderFact( 'Tokens restaurados', Array.isArray( preview.restored_tokens ) && preview.restored_tokens.length ? preview.restored_tokens.join( ', ' ) : 'ninguno' ) );
 			body.appendChild( renderFact( 'Entradas publicadas potencialmente afectadas', preview.published_posts ?? 0 ) );
 			body.appendChild( renderFact( 'Fingerprint', preview.current_fingerprint || '—' ) );
@@ -162,11 +163,11 @@
 			if ( preview.safe_candidate ) {
 				planButton.disabled = false;
 				status.textContent = preview.redirect_plan_required
-					? 'Candidato determinista detectado. Genera ahora el mapa completo y comprobaremos si cada URL antigua identifica una única entrada.'
-					: 'Candidato determinista detectado. No hay entradas publicadas que requieran redirección.';
+					? 'La sintaxis de los tokens se puede recuperar de forma determinista, pero todavía no es autoridad SEO. Genera el mapa completo para comprobar orígenes, destinos y necesidad de URLs históricas.'
+					: 'La sintaxis de los tokens se puede recuperar de forma determinista. No hay entradas publicadas que requieran redirección.';
 				planButton.addEventListener( 'click', () => renderRedirectPlan( status, body, planButton, apply ), { once: true } );
 			} else {
-				status.textContent = 'No existe todavía una reparación determinista completa. Se mantiene en revisión manual y no se escribe nada.';
+				status.textContent = 'No existe todavía una reparación sintáctica determinista completa. Se mantiene en revisión manual y no se escribe nada.';
 			}
 		} catch ( error ) {
 			status.textContent = error && error.message ? error.message : 'No se pudo preparar la revisión de permalinks.';
