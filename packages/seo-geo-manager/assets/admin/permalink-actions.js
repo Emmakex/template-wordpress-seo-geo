@@ -83,6 +83,83 @@
 		if ( collisions.length > 20 ) body.appendChild( text( 'p', `Se muestran 20 de ${ collisions.length } bloqueos detectados.`, 'description' ) );
 	}
 
+	function renderLegacySample( authority, container ) {
+		const rows = Array.isArray( authority.rows ) ? authority.rows : [];
+		if ( ! rows.length ) return;
+		container.appendChild( text( 'h4', 'Muestra de URLs históricas recuperadas' ) );
+		const list = document.createElement( 'ol' );
+		rows.slice( 0, 12 ).forEach( ( row ) => {
+			list.appendChild( text( 'li', `#${ row.post_id || '—' } · ${ row.slug || '—' } → ${ row.legacy_path || row.legacy_url || '—' }` ) );
+		} );
+		container.appendChild( list );
+		if ( rows.length > 12 ) container.appendChild( text( 'p', `Se muestran 12 de ${ rows.length } correspondencias históricas.`, 'description' ) );
+	}
+
+	function renderLegacyAuthorityControls( plan, status, body, apply ) {
+		if ( ! plan.requires_authoritative_legacy_urls ) return;
+		const section = document.createElement( 'div' );
+		section.className = 'seo-geo-manager-correction__legacy-authority';
+		section.appendChild( text( 'h3', 'Recuperar autoridad SEO histórica' ) );
+		section.appendChild( text( 'p', 'La estructura corrupta hace que varias entradas compartan la misma URL generada. Indica la URL base del WordPress histórico para recuperar sus enlaces públicos por slug. Esta comprobación es de solo lectura.', 'description' ) );
+
+		const label = document.createElement( 'label' );
+		label.appendChild( text( 'strong', 'URL base histórica: ' ) );
+		const input = document.createElement( 'input' );
+		input.type = 'url';
+		input.className = 'regular-text';
+		input.placeholder = 'https://dominio.tld/';
+		input.value = `${ window.location.origin }/`;
+		label.appendChild( input );
+		section.appendChild( label );
+		section.appendChild( text( 'p', 'Se propone la raíz del mismo host como punto de partida; revísala antes de comprobar. La 0.3.17 no admite todavía fuentes históricas en otro host.', 'description' ) );
+
+		const button = text( 'button', 'Comprobar URLs históricas' );
+		button.type = 'button';
+		button.className = 'button button-secondary';
+		section.appendChild( button );
+		const result = document.createElement( 'div' );
+		section.appendChild( result );
+		body.appendChild( section );
+
+		button.addEventListener( 'click', async () => {
+			const legacyBaseUrl = input.value.trim();
+			if ( ! legacyBaseUrl ) {
+				status.textContent = 'Indica una URL base histórica antes de comprobar.';
+				return;
+			}
+			button.disabled = true;
+			result.replaceChildren();
+			status.textContent = 'Consultando el WordPress histórico en modo lectura y reconciliando entradas por slug…';
+			try {
+				const authority = await window.wp.apiFetch( {
+					path: '/seo-geo-manager/v1/permalinks/legacy-authority-preview',
+					method: 'POST',
+					data: { legacy_base_url: legacyBaseUrl }
+				} );
+				result.appendChild( renderFact( 'Fuente histórica', authority.legacy_base_url || legacyBaseUrl ) );
+				result.appendChild( renderFact( 'Entradas actuales escaneadas', authority.current_posts_scanned ?? 0 ) );
+				result.appendChild( renderFact( 'Entradas históricas escaneadas', authority.legacy_posts_scanned ?? 0 ) );
+				result.appendChild( renderFact( 'Correspondencias exactas por slug', authority.matched_posts ?? 0 ) );
+				result.appendChild( renderFact( 'Entradas actuales sin URL histórica', authority.missing_count ?? 0 ) );
+				result.appendChild( renderFact( 'Escaneo completo', authority.complete_scan ? 'sí' : 'no' ) );
+				result.appendChild( renderFact( 'Estructura histórica inferida', authority.inferred_structure || 'no concluyente' ) );
+				result.appendChild( renderFact( 'Autoridad SEO histórica verificada', authority.seo_authority_verified ? 'sí' : 'no' ) );
+				result.appendChild( renderFact( 'Fingerprint de autoridad', authority.authority_fingerprint || '—' ) );
+				renderLegacySample( authority, result );
+				if ( authority.seo_authority_verified ) {
+					status.textContent = `Autoridad histórica recuperada: ${ authority.matched_posts } entrada(s) y estructura ${ authority.inferred_structure }. Apply sigue bloqueado hasta integrar esta autoridad en el plan de reparación y probar rollback.`;
+				} else {
+					status.textContent = authority.block_reason || 'La fuente histórica no permite todavía demostrar una correspondencia completa y unívoca.';
+				}
+				apply.disabled = true;
+			} catch ( error ) {
+				status.textContent = error && error.message ? error.message : 'No se pudo comprobar la fuente histórica.';
+			} finally {
+				button.disabled = false;
+			}
+		} );
+	}
+
 	async function renderRedirectPlan( status, body, planButton, apply ) {
 		planButton.disabled = true;
 		status.textContent = 'Generando mapa completo de URLs antiguas → nuevas y comprobando colisiones…';
@@ -100,6 +177,7 @@
 			body.appendChild( renderFact( 'Fingerprint del plan', plan.plan_fingerprint || '—' ) );
 			renderCollisions( plan, body );
 			renderRedirectSample( plan, body );
+			renderLegacyAuthorityControls( plan, status, body, apply );
 
 			if ( plan.safe_to_apply ) {
 				status.textContent = 'Plan completo, con origen único por entrada y sin colisiones. Apply continúa bloqueado hasta implementar el runtime 301, la aprobación explícita y el rollback de estructura.';
