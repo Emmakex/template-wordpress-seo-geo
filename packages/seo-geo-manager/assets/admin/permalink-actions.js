@@ -41,9 +41,62 @@
 
 	function renderFact( label, value ) {
 		const row = document.createElement( 'p' );
-		row.appendChild( text( 'strong', `${ label}: ` ) );
+		row.appendChild( text( 'strong', `${ label }: ` ) );
 		row.appendChild( document.createTextNode( String( value ?? '—' ) ) );
 		return row;
+	}
+
+	function renderRedirectSample( plan, body ) {
+		const redirects = Array.isArray( plan.redirects ) ? plan.redirects : [];
+		if ( ! redirects.length ) return;
+		body.appendChild( text( 'h3', 'Muestra del mapa 301' ) );
+		const list = document.createElement( 'ol' );
+		redirects.slice( 0, 20 ).forEach( ( redirect ) => {
+			list.appendChild( text( 'li', `#${ redirect.post_id || '—' } · ${ redirect.old_path || redirect.old_url || '—' } → ${ redirect.new_path || redirect.new_url || '—' }` ) );
+		} );
+		body.appendChild( list );
+		if ( redirects.length > 20 ) body.appendChild( text( 'p', `Se muestran 20 de ${ redirects.length } redirecciones planificadas.`, 'description' ) );
+	}
+
+	function renderCollisions( plan, body ) {
+		const collisions = Array.isArray( plan.collisions ) ? plan.collisions : [];
+		if ( ! collisions.length ) return;
+		body.appendChild( text( 'h3', 'Colisiones o bloqueos detectados' ) );
+		const list = document.createElement( 'ul' );
+		collisions.slice( 0, 20 ).forEach( ( collision ) => {
+			const target = collision.new_url || collision.old_url || 'sin URL';
+			list.appendChild( text( 'li', `${ collision.type || 'colisión' } · post #${ collision.post_id || '—' } · ${ target }` ) );
+		} );
+		body.appendChild( list );
+	}
+
+	async function renderRedirectPlan( status, body, planButton, apply ) {
+		planButton.disabled = true;
+		status.textContent = 'Generando mapa completo de URLs antiguas → nuevas y comprobando colisiones…';
+		try {
+			const plan = await window.wp.apiFetch( { path: '/seo-geo-manager/v1/permalinks/redirect-plan' } );
+			body.appendChild( text( 'hr', '' ) );
+			body.appendChild( text( 'h3', 'Plan SEO de redirecciones' ) );
+			body.appendChild( renderFact( 'Entradas publicadas escaneadas', plan.published_posts_scanned ?? 0 ) );
+			body.appendChild( renderFact( 'Redirecciones 301 planificadas', plan.planned_redirects ?? 0 ) );
+			body.appendChild( renderFact( 'URLs sin cambio', plan.skipped_unchanged ?? 0 ) );
+			body.appendChild( renderFact( 'Colisiones', plan.collision_count ?? 0 ) );
+			body.appendChild( renderFact( 'Escaneo completo', plan.complete_scan ? 'sí' : 'no' ) );
+			body.appendChild( renderFact( 'Fingerprint del plan', plan.plan_fingerprint || '—' ) );
+			renderCollisions( plan, body );
+			renderRedirectSample( plan, body );
+
+			if ( plan.safe_to_apply ) {
+				status.textContent = 'Plan completo y sin colisiones. Apply continúa bloqueado hasta implementar el runtime 301, la aprobación explícita y el rollback de estructura.';
+			} else {
+				status.textContent = plan.block_reason || 'El plan no es todavía seguro: hay colisiones, URLs no reconciliadas o el escaneo quedó incompleto.';
+			}
+			apply.disabled = true;
+			apply.title = 'Apply permanece bloqueado hasta implementar y validar el runtime 301 y el rollback de la estructura.';
+		} catch ( error ) {
+			planButton.disabled = false;
+			status.textContent = error && error.message ? error.message : 'No se pudo generar el plan SEO de redirecciones.';
+		}
 	}
 
 	async function renderPreview() {
@@ -63,6 +116,11 @@
 		close.className = 'button';
 		close.addEventListener( 'click', () => { panel.hidden = true; } );
 		actions.appendChild( close );
+		const planButton = text( 'button', 'Generar plan SEO de redirecciones' );
+		planButton.type = 'button';
+		planButton.className = 'button button-secondary';
+		planButton.disabled = true;
+		actions.appendChild( planButton );
 		const apply = text( 'button', 'Aplicar reparación' );
 		apply.type = 'button';
 		apply.className = 'button button-primary';
@@ -83,9 +141,11 @@
 				body.appendChild( renderFact( 'Fragmentos todavía no reconocidos', preview.malformed_fragments.join( ', ' ) ) );
 			}
 			if ( preview.safe_candidate ) {
+				planButton.disabled = false;
 				status.textContent = preview.redirect_plan_required
-					? 'Candidato determinista detectado. Apply sigue bloqueado hasta construir el mapa de redirecciones antiguas → nuevas y verificar colisiones.'
-					: 'Candidato determinista detectado. Apply sigue bloqueado hasta la siguiente microfase de aprobación.';
+					? 'Candidato determinista detectado. Genera ahora el mapa 301 completo y la comprobación de colisiones.'
+					: 'Candidato determinista detectado. No hay entradas publicadas que requieran redirección.';
+				planButton.addEventListener( 'click', () => renderRedirectPlan( status, body, planButton, apply ), { once: true } );
 			} else {
 				status.textContent = 'No existe todavía una reparación determinista completa. Se mantiene en revisión manual y no se escribe nada.';
 			}
