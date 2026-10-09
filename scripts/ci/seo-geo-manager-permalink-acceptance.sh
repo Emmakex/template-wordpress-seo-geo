@@ -16,6 +16,7 @@ DB_ROOT_PASSWORD="permalink-acceptance-root"
 TMP_DIR="$(mktemp -d)"
 RUNTIME_LOG="${TMP_DIR}/permalink-runtime.log"
 REDIRECT_RUNTIME_LOG="${TMP_DIR}/redirect-runtime.log"
+ATOMIC_RUNTIME_LOG="${TMP_DIR}/atomic-runtime.log"
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
@@ -83,10 +84,12 @@ docker exec "$WP_CONTAINER" mkdir -p /var/www/html/wp-content/plugins/seo-geo-ma
 docker cp packages/seo-geo-manager/. "$WP_CONTAINER":/var/www/html/wp-content/plugins/seo-geo-manager/
 docker cp scripts/ci/seo-geo-manager-permalink-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-permalink-acceptance.php
 docker cp scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-redirect-runtime-acceptance.php
+docker cp scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-atomic-redirect-acceptance.php
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-manager \
   /var/www/html/seo-geo-manager-permalink-acceptance.php \
-  /var/www/html/seo-geo-manager-redirect-runtime-acceptance.php
+  /var/www/html/seo-geo-manager-redirect-runtime-acceptance.php \
+  /var/www/html/seo-geo-manager-atomic-redirect-acceptance.php
 
 wp_cli core install \
   --url="http://seo-geo-permalink.test" \
@@ -96,8 +99,6 @@ wp_cli core install \
   --admin_email=admin@example.test \
   --skip-email >/dev/null
 
-# Fresh WordPress can omit the permalink_structure row until pretty permalinks are configured.
-# Seed it first so the fixture can simulate a later database-level corruption byte-for-byte.
 wp_cli option update permalink_structure '/%postname%/' >/dev/null
 wp_cli plugin activate seo-geo-manager >/dev/null
 
@@ -118,7 +119,19 @@ fi
 cat "$REDIRECT_RUNTIME_LOG"
 grep -q '"ok":true' "$REDIRECT_RUNTIME_LOG"
 grep -q '"one_hop_guard":true' "$REDIRECT_RUNTIME_LOG"
+grep -q '"armed_structure_guard":true' "$REDIRECT_RUNTIME_LOG"
 grep -q '"reversible_runtime":true' "$REDIRECT_RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-atomic-redirect-acceptance.php >"$ATOMIC_RUNTIME_LOG" 2>&1; then
+  cat "$ATOMIC_RUNTIME_LOG"
+  exit 1
+fi
+cat "$ATOMIC_RUNTIME_LOG"
+grep -q '"ok":true' "$ATOMIC_RUNTIME_LOG"
+grep -q '"authoritative_301":true' "$ATOMIC_RUNTIME_LOG"
+grep -q '"atomic_apply":true' "$ATOMIC_RUNTIME_LOG"
+grep -q '"atomic_rollback":true' "$ATOMIC_RUNTIME_LOG"
+grep -q '"runtime_removed":true' "$ATOMIC_RUNTIME_LOG"
 
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
@@ -128,4 +141,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
   }
 fi
 
-printf '[manager] Permalink authority, apply/rollback and guarded 301 runtime acceptance OK.\n'
+printf '[manager] Permalink authority, guarded 301 runtime and atomic Apply/rollback acceptance OK.\n'
