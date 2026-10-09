@@ -143,13 +143,81 @@ $rollback = seo_geo_manager_structured_request(
 seo_geo_manager_structured_accept( 200 === $rollback['status'], 'Structured operation rollback failed.' );
 seo_geo_manager_structured_accept( $contact_content === (string) get_post_field( 'post_content', (int) $contact_id ), 'Structured rollback did not restore exact prior content.' );
 
+/* Published structured write with explicit public-route verification. */
+wp_update_post(
+	array(
+		'ID'          => (int) $contact_id,
+		'post_status' => 'publish',
+	)
+);
+$published_contact = get_post( (int) $contact_id );
+seo_geo_manager_structured_accept( $published_contact instanceof WP_Post && 'publish' === $published_contact->post_status, 'Could not publish structured rendered fixture.' );
+$rendered_url = get_permalink( $published_contact );
+seo_geo_manager_structured_accept( is_string( $rendered_url ) && '' !== $rendered_url, 'Structured rendered permalink missing.' );
+
+$rendered_payload = array(
+	'schema_version'          => 1,
+	'model_id'                => 'corporate-contact-v1',
+	'idempotency_key'         => 'structured-rendered-apply-1',
+	'verify_rendered'         => true,
+	'allow_published_target'  => true,
+	'environment_fingerprint' => $environment_fingerprint,
+	'target'                  => array(
+		'id'                   => (int) $contact_id,
+		'expected_fingerprint' => ContentFingerprint::for_post( $published_contact ),
+	),
+	'slots'                   => array(
+		'contact-heading' => 'Rendered contact heading',
+	),
+);
+
+$rendered_preview = seo_geo_manager_structured_request( 'POST', '/seo-geo-manager/v1/theme/structured/preview', $rendered_payload );
+seo_geo_manager_structured_accept( 200 === $rendered_preview['status'], 'Structured rendered preview failed.' );
+seo_geo_manager_structured_accept( true === ( $rendered_preview['data']['policy']['rendered_verification']['applicable'] ?? false ), 'Structured rendered preview did not expose public verification capability.' );
+
+$rendered_filter = static function ( $preempt, array $args, string $url ) use ( $rendered_url ) {
+	if ( $url !== $rendered_url ) {
+		return $preempt;
+	}
+
+	return array(
+		'headers'  => array( 'content-type' => 'text/html; charset=UTF-8' ),
+		'body'     => '<!doctype html><html><head><title>Contact</title></head><body><main>Rendered contact heading</main></body></html>',
+		'response' => array( 'code' => 200, 'message' => 'OK' ),
+		'cookies'  => array(),
+		'filename' => null,
+	);
+};
+add_filter( 'pre_http_request', $rendered_filter, 10, 3 );
+$rendered_apply = seo_geo_manager_structured_request( 'POST', '/seo-geo-manager/v1/theme/structured/apply', $rendered_payload );
+remove_filter( 'pre_http_request', $rendered_filter, 10 );
+seo_geo_manager_structured_accept( 200 === $rendered_apply['status'] && is_array( $rendered_apply['data'] ), 'Structured rendered Apply failed.' );
+seo_geo_manager_structured_accept( 'passed' === ( $rendered_apply['data']['rendered_verification']['status'] ?? '' ), 'Structured public-route verification did not pass.' );
+$rendered_operation_id = (string) ( $rendered_apply['data']['operation_id'] ?? '' );
+seo_geo_manager_structured_accept( '' !== $rendered_operation_id, 'Structured rendered operation ID missing.' );
+
+$rendered_operation = seo_geo_manager_structured_request( 'GET', '/seo-geo-manager/v1/changes/' . $rendered_operation_id );
+seo_geo_manager_structured_accept( 200 === $rendered_operation['status'], 'Structured rendered operation could not be inspected.' );
+seo_geo_manager_structured_accept( 'corporate-contact-v1' === ( $rendered_operation['data']['structured_model']['model_id'] ?? '' ), 'Structured rendered operation lost model metadata.' );
+seo_geo_manager_structured_accept( 'passed' === ( $rendered_operation['data']['rendered_verification']['status'] ?? '' ), 'Structured rendered evidence was not persisted.' );
+seo_geo_manager_structured_accept( ! isset( $rendered_operation['data']['rendered_verification']['body'] ), 'Structured rendered evidence leaked response body.' );
+
+$rendered_rollback = seo_geo_manager_structured_request(
+	'POST',
+	'/seo-geo-manager/v1/changes/' . $rendered_operation_id . '/rollback',
+	array( 'environment_fingerprint' => $environment_fingerprint )
+);
+seo_geo_manager_structured_accept( 200 === $rendered_rollback['status'] && 'rolled-back' === ( $rendered_rollback['data']['status'] ?? '' ), 'Structured rendered rollback failed.' );
+seo_geo_manager_structured_accept( $contact_content === (string) get_post_field( 'post_content', (int) $contact_id ), 'Structured rendered rollback did not restore prior content.' );
+
 $result = array(
-	'ok'                        => true,
-	'plugin_version'            => defined( 'SEO_GEO_MANAGER_VERSION' ) ? SEO_GEO_MANAGER_VERSION : '',
-	'model_id'                  => 'corporate-contact-v1',
-	'layout_preservation'       => true,
-	'environment_approval'      => true,
-	'structured_rollback'       => true,
+	'ok'                               => true,
+	'plugin_version'                   => defined( 'SEO_GEO_MANAGER_VERSION' ) ? SEO_GEO_MANAGER_VERSION : '',
+	'model_id'                         => 'corporate-contact-v1',
+	'layout_preservation'              => true,
+	'environment_approval'             => true,
+	'structured_rollback'              => true,
+	'rendered_structured_verification' => true,
 );
 
 echo wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) . PHP_EOL;
