@@ -11,6 +11,7 @@ namespace SeoGeo\Manager\Rest;
 
 use SeoGeo\Manager\Changes\OperationStore;
 use SeoGeo\Manager\Changes\PermalinkChangeEngine;
+use SeoGeo\Manager\Changes\PermalinkRedirectChangeEngine;
 use SeoGeo\Manager\Support\AuthoritativePermalinkPlanner;
 use SeoGeo\Manager\Support\EnvironmentPolicy;
 use SeoGeo\Manager\Support\LegacyPermalinkAuthority;
@@ -33,7 +34,6 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
-
 		register_rest_route(
 			self::NAMESPACE,
 			'/permalinks/redirect-plan',
@@ -43,7 +43,6 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
-
 		register_rest_route(
 			self::NAMESPACE,
 			'/permalinks/legacy-authority-preview',
@@ -53,7 +52,6 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
-
 		register_rest_route(
 			self::NAMESPACE,
 			'/permalinks/authoritative-plan',
@@ -63,7 +61,6 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
-
 		register_rest_route(
 			self::NAMESPACE,
 			'/permalinks/redirect-runtime',
@@ -73,7 +70,6 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
-
 		register_rest_route(
 			self::NAMESPACE,
 			'/permalinks/redirect-runtime/preview',
@@ -83,7 +79,6 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
-
 		register_rest_route(
 			self::NAMESPACE,
 			'/permalinks/apply',
@@ -93,7 +88,15 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
-
+		register_rest_route(
+			self::NAMESPACE,
+			'/permalinks/redirect-apply',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'redirect_apply' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+			)
+		);
 		register_rest_route(
 			self::NAMESPACE,
 			'/permalinks/operations/(?P<operation_id>[a-f0-9\-]{36})/rollback',
@@ -102,9 +105,7 @@ final class PermalinkController {
 				'callback'            => array( self::class, 'rollback' ),
 				'permission_callback' => array( self::class, 'can_manage' ),
 				'args'                => array(
-					'operation_id' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
+					'operation_id' => array( 'sanitize_callback' => 'sanitize_text_field' ),
 				),
 			)
 		);
@@ -151,16 +152,16 @@ final class PermalinkController {
 		$plan = AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint );
 		$runtime = PermalinkRedirectRuntime::preview(
 			isset( $plan['redirects'] ) && is_array( $plan['redirects'] ) ? $plan['redirects'] : array(),
-			isset( $plan['plan_fingerprint'] ) && is_string( $plan['plan_fingerprint'] ) ? $plan['plan_fingerprint'] : ''
+			isset( $plan['plan_fingerprint'] ) && is_string( $plan['plan_fingerprint'] ) ? $plan['plan_fingerprint'] : '',
+			isset( $plan['authoritative_structure'] ) && is_string( $plan['authoritative_structure'] ) ? $plan['authoritative_structure'] : ''
 		);
-		$runtime['authoritative_plan_safe'] = true === ( $plan['safe_structure_candidate'] ?? false );
+		$runtime['authoritative_plan_safe']        = true === ( $plan['safe_structure_candidate'] ?? false );
 		$runtime['authoritative_plan_fingerprint'] = isset( $plan['plan_fingerprint'] ) && is_string( $plan['plan_fingerprint'] ) ? $plan['plan_fingerprint'] : '';
-		$runtime['authority_fingerprint'] = isset( $plan['authority_fingerprint'] ) && is_string( $plan['authority_fingerprint'] ) ? $plan['authority_fingerprint'] : '';
-		$runtime['requires_redirect_runtime'] = true === ( $plan['requires_redirect_runtime'] ?? false );
-		$runtime['apply_blocked'] = true;
-		$runtime['next_action'] = true === ( $plan['requires_redirect_runtime'] ?? false )
-			? 'integrate-redirect-runtime-with-authoritative-apply'
-			: 'no-redirect-runtime-needed';
+		$runtime['authority_fingerprint']          = isset( $plan['authority_fingerprint'] ) && is_string( $plan['authority_fingerprint'] ) ? $plan['authority_fingerprint'] : '';
+		$runtime['requires_redirect_runtime']      = true === ( $plan['requires_redirect_runtime'] ?? false );
+		$runtime['atomic_apply_available']         = true === ( $plan['safe_structure_candidate'] ?? false ) && true === ( $plan['requires_redirect_runtime'] ?? false ) && true === ( $runtime['safe_to_activate'] ?? false );
+		$runtime['apply_blocked']                  = ! $runtime['atomic_apply_available'];
+		$runtime['next_action']                    = $runtime['atomic_apply_available'] ? 'atomic-permalink-redirect-apply' : 'resolve-redirect-runtime-blockers';
 
 		return new WP_REST_Response( $runtime, 200 );
 	}
@@ -169,27 +170,35 @@ final class PermalinkController {
 	 * @return WP_REST_Response|\WP_Error
 	 */
 	public static function apply( WP_REST_Request $request ) {
-		$payload = $request->get_json_params();
-		$payload = is_array( $payload ) ? $payload : array();
+		$payload = self::payload( $request );
 		$guard   = EnvironmentPolicy::validate_payload( $payload );
 		if ( is_wp_error( $guard ) ) {
 			return $guard;
 		}
-
 		$result = PermalinkChangeEngine::apply( $payload );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
 
-		return new WP_REST_Response( $result, 200 );
+		return is_wp_error( $result ) ? $result : new WP_REST_Response( $result, 200 );
+	}
+
+	/**
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public static function redirect_apply( WP_REST_Request $request ) {
+		$payload = self::payload( $request );
+		$guard   = EnvironmentPolicy::validate_payload( $payload );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
+		$result = PermalinkRedirectChangeEngine::apply( $payload );
+
+		return is_wp_error( $result ) ? $result : new WP_REST_Response( $result, 200 );
 	}
 
 	/**
 	 * @return WP_REST_Response|\WP_Error
 	 */
 	public static function rollback( WP_REST_Request $request ) {
-		$payload = $request->get_json_params();
-		$payload = is_array( $payload ) ? $payload : array();
+		$payload = self::payload( $request );
 		$guard   = EnvironmentPolicy::validate_payload( $payload );
 		if ( is_wp_error( $guard ) ) {
 			return $guard;
@@ -204,11 +213,19 @@ final class PermalinkController {
 			}
 		}
 
-		$result = PermalinkChangeEngine::rollback( $operation_id );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
+		$result = is_array( $operation ) && 'permalink-structure-with-redirects' === ( $operation['operation_type'] ?? '' )
+			? PermalinkRedirectChangeEngine::rollback( $operation_id )
+			: PermalinkChangeEngine::rollback( $operation_id );
 
-		return new WP_REST_Response( $result, 200 );
+		return is_wp_error( $result ) ? $result : new WP_REST_Response( $result, 200 );
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private static function payload( WP_REST_Request $request ): array {
+		$payload = $request->get_json_params();
+
+		return is_array( $payload ) ? $payload : array();
 	}
 }
