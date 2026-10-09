@@ -106,6 +106,7 @@ cat "$RUNTIME_LOG"
 grep -q '"ok":true' "$RUNTIME_LOG"
 grep -q '"collision_guard":true' "$RUNTIME_LOG"
 grep -q '"ambiguous_old_source_guard":true' "$RUNTIME_LOG"
+grep -q '"legacy_authority_guard":true' "$RUNTIME_LOG"
 
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
@@ -115,4 +116,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
   }
 fi
 
-printf '[manager] Permalink redirect-plan acceptance OK.\n'
+printf '[manager] Permalink redirect-plan and legacy-authority acceptance OK.\n'
