@@ -28,6 +28,7 @@
 			'rolled-back': 'Revertida',
 			failed: 'Fallida',
 			'verification-failed': 'Verificación fallida',
+			'rendered-verification-failed': 'Frontend no verificado',
 			'verification-failed-rolled-back': 'Fallo verificado · restaurada'
 		};
 		return labels[ status ] || status || 'Desconocido';
@@ -58,6 +59,7 @@
 		if ( Array.isArray( item.changed_fields ) && item.changed_fields.length ) parts.push( item.changed_fields.join( ', ' ) );
 		if ( item.structured_model ) parts.push( `modelo ${ item.structured_model }` );
 		if ( Number( item.planned_redirects || 0 ) > 0 ) parts.push( `${ item.planned_redirects } × 301` );
+		if ( item.rendered_verification_status ) parts.push( `frontend ${ item.rendered_verification_status }` );
 		return parts.length ? parts.join( ' · ' ) : '—';
 	}
 
@@ -71,7 +73,7 @@
 		const copy = document.createElement( 'div' );
 		copy.appendChild( text( 'p', 'Operation evidence', 'seo-geo-manager-admin__eyebrow' ) );
 		copy.appendChild( text( 'h2', 'Historial de operaciones' ) );
-		copy.appendChild( text( 'p', 'Registro acotado para verificar qué aplicó el Manager y si su rollback sigue protegido. No muestra contenido anterior, payloads ni fingerprints sensibles.', 'description' ) );
+		copy.appendChild( text( 'p', 'Registro acotado para verificar qué aplicó el Manager, si el frontend fue comprobado y si su rollback sigue protegido. No muestra contenido anterior, payloads ni fingerprints sensibles.', 'description' ) );
 		heading.appendChild( copy );
 
 		const refresh = text( 'button', 'Actualizar historial' );
