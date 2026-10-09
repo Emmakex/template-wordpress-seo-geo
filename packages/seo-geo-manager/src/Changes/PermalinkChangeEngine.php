@@ -92,7 +92,7 @@ final class PermalinkChangeEngine {
 		$verification = self::verification_errors( $verification_plan, $after_structure );
 
 		if ( array() !== $verification ) {
-			self::set_structure( $before_structure );
+			self::restore_structure( $before_structure );
 			$failed = EnvironmentPolicy::bind_operation(
 				array(
 					'operation_id'          => $operation_id,
@@ -125,30 +125,30 @@ final class PermalinkChangeEngine {
 
 		$operation = EnvironmentPolicy::bind_operation(
 			array(
-				'operation_id'           => $operation_id,
-				'operation_type'         => self::OPERATION_TYPE,
-				'status'                 => 'applied',
-				'idempotency_key'        => $normalized['idempotency_key'],
-				'payload_hash'           => $payload_hash,
-				'authority_fingerprint'  => $normalized['authority_fingerprint'],
-				'plan_fingerprint'       => $normalized['plan_fingerprint'],
-				'legacy_base_url'        => $normalized['legacy_base_url'],
-				'before_structure'       => $before_structure,
-				'after_structure'        => $after_structure,
-				'before_fingerprint'     => $before_fingerprint,
-				'after_fingerprint'      => $after_fingerprint,
-				'seo_preservation_mode'  => (string) ( $verification_plan['seo_preservation_mode'] ?? '' ),
-				'path_preservation_count'=> (int) ( $verification_plan['path_preservation_count'] ?? 0 ),
-				'planned_redirects'      => (int) ( $verification_plan['planned_redirects'] ?? 0 ),
-				'rewrite_flush_performed'=> true,
-				'verification'           => array(),
-				'created_at_gmt'         => gmdate( 'c' ),
-				'idempotent_replay'      => false,
+				'operation_id'            => $operation_id,
+				'operation_type'          => self::OPERATION_TYPE,
+				'status'                  => 'applied',
+				'idempotency_key'         => $normalized['idempotency_key'],
+				'payload_hash'            => $payload_hash,
+				'authority_fingerprint'   => $normalized['authority_fingerprint'],
+				'plan_fingerprint'        => $normalized['plan_fingerprint'],
+				'legacy_base_url'         => $normalized['legacy_base_url'],
+				'before_structure'        => $before_structure,
+				'after_structure'         => $after_structure,
+				'before_fingerprint'      => $before_fingerprint,
+				'after_fingerprint'       => $after_fingerprint,
+				'seo_preservation_mode'   => (string) ( $verification_plan['seo_preservation_mode'] ?? '' ),
+				'path_preservation_count' => (int) ( $verification_plan['path_preservation_count'] ?? 0 ),
+				'planned_redirects'       => (int) ( $verification_plan['planned_redirects'] ?? 0 ),
+				'rewrite_flush_performed' => true,
+				'verification'            => array(),
+				'created_at_gmt'          => gmdate( 'c' ),
+				'idempotent_replay'       => false,
 			)
 		);
 
 		if ( ! OperationStore::save( $operation_id, $operation ) ) {
-			self::set_structure( $before_structure );
+			self::restore_structure( $before_structure );
 			return new WP_Error(
 				'seo_geo_manager_permalink_operation_log_failed',
 				'The permalink structure changed, but the operation log could not be persisted; the previous structure was restored.',
@@ -201,7 +201,7 @@ final class PermalinkChangeEngine {
 
 		$before_structure   = (string) ( $operation['before_structure'] ?? '' );
 		$before_fingerprint = (string) ( $operation['before_fingerprint'] ?? '' );
-		$write              = self::set_structure( $before_structure );
+		$write              = self::restore_structure( $before_structure );
 		if ( is_wp_error( $write ) ) {
 			return $write;
 		}
@@ -229,12 +229,12 @@ final class PermalinkChangeEngine {
 	 */
 	private static function normalize_apply_payload( array $payload ) {
 		$normalized = array(
-			'legacy_base_url'         => isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? trim( $payload['legacy_base_url'] ) : '',
-			'authority_fingerprint'   => isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? trim( $payload['authority_fingerprint'] ) : '',
-			'plan_fingerprint'        => isset( $payload['plan_fingerprint'] ) && is_string( $payload['plan_fingerprint'] ) ? trim( $payload['plan_fingerprint'] ) : '',
-			'current_fingerprint'     => isset( $payload['current_fingerprint'] ) && is_string( $payload['current_fingerprint'] ) ? trim( $payload['current_fingerprint'] ) : '',
-			'idempotency_key'         => isset( $payload['idempotency_key'] ) && is_string( $payload['idempotency_key'] ) ? trim( $payload['idempotency_key'] ) : '',
-			'confirm_permalink_change'=> true === ( $payload['confirm_permalink_change'] ?? false ),
+			'legacy_base_url'          => isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? trim( $payload['legacy_base_url'] ) : '',
+			'authority_fingerprint'    => isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? trim( $payload['authority_fingerprint'] ) : '',
+			'plan_fingerprint'         => isset( $payload['plan_fingerprint'] ) && is_string( $payload['plan_fingerprint'] ) ? trim( $payload['plan_fingerprint'] ) : '',
+			'current_fingerprint'      => isset( $payload['current_fingerprint'] ) && is_string( $payload['current_fingerprint'] ) ? trim( $payload['current_fingerprint'] ) : '',
+			'idempotency_key'          => isset( $payload['idempotency_key'] ) && is_string( $payload['idempotency_key'] ) ? trim( $payload['idempotency_key'] ) : '',
+			'confirm_permalink_change' => true === ( $payload['confirm_permalink_change'] ?? false ),
 		);
 
 		foreach ( array( 'legacy_base_url', 'authority_fingerprint', 'plan_fingerprint', 'current_fingerprint', 'idempotency_key' ) as $required ) {
@@ -329,6 +329,8 @@ final class PermalinkChangeEngine {
 	}
 
 	/**
+	 * Persist a verified new structure through WordPress normal sanitization.
+	 *
 	 * @return true|WP_Error
 	 */
 	private static function set_structure( string $structure ) {
@@ -355,6 +357,30 @@ final class PermalinkChangeEngine {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Restore the exact Manager-captured previous value.
+	 *
+	 * The previous value may itself be malformed. WordPress can sanitize such a
+	 * value when it is written back normally, so rollback temporarily overrides
+	 * only the permalink_structure sanitizer with the already-recorded value.
+	 * No caller-controlled rollback value is accepted here.
+	 *
+	 * @return true|WP_Error
+	 */
+	private static function restore_structure( string $structure ) {
+		$preserve = static function () use ( $structure ): string {
+			return $structure;
+		};
+		add_filter( 'sanitize_option_permalink_structure', $preserve, PHP_INT_MAX, 0 );
+		try {
+			$result = self::set_structure( $structure );
+		} finally {
+			remove_filter( 'sanitize_option_permalink_structure', $preserve, PHP_INT_MAX );
+		}
+
+		return $result;
 	}
 
 	/**
