@@ -37,7 +37,10 @@ final class PermalinkRedirectChangeEngine {
 			return self::idempotent_operation( $lookup['operation_id'] );
 		}
 
-		$plan  = AuthoritativePermalinkPlanner::preview( $normalized['legacy_base_url'], $normalized['authority_fingerprint'] );
+		$plan = AuthoritativePermalinkPlanner::preview(
+			$normalized['legacy_base_url'],
+			$normalized['authority_fingerprint']
+		);
 		$guard = self::guard_plan( $plan, $normalized );
 		if ( is_wp_error( $guard ) ) {
 			return $guard;
@@ -46,7 +49,11 @@ final class PermalinkRedirectChangeEngine {
 		$before_structure = (string) ( $plan['current_structure'] ?? '' );
 		$after_structure  = (string) ( $plan['authoritative_structure'] ?? '' );
 		$redirects        = isset( $plan['redirects'] ) && is_array( $plan['redirects'] ) ? $plan['redirects'] : array();
-		$runtime_preview  = PermalinkRedirectRuntime::preview( $redirects, $normalized['plan_fingerprint'], $after_structure );
+		$runtime_preview  = PermalinkRedirectRuntime::preview(
+			$redirects,
+			$normalized['plan_fingerprint'],
+			$after_structure
+		);
 		if ( true !== ( $runtime_preview['safe_to_activate'] ?? false ) ) {
 			return new WP_Error(
 				'seo_geo_manager_permalink_redirect_runtime_blocked',
@@ -56,7 +63,11 @@ final class PermalinkRedirectChangeEngine {
 		}
 
 		$operation_id = wp_generate_uuid4();
-		$reservation  = OperationStore::reserve( $normalized['idempotency_key'], $payload_hash, $operation_id );
+		$reservation  = OperationStore::reserve(
+			$normalized['idempotency_key'],
+			$payload_hash,
+			$operation_id
+		);
 		if ( is_wp_error( $reservation ) ) {
 			return $reservation;
 		}
@@ -65,9 +76,22 @@ final class PermalinkRedirectChangeEngine {
 		}
 
 		$before_fingerprint = PermalinkStructureRuntime::fingerprint( $before_structure );
-		$runtime            = PermalinkRedirectRuntime::activate( $redirects, $operation_id, $normalized['plan_fingerprint'], $after_structure );
+		$runtime            = PermalinkRedirectRuntime::activate(
+			$redirects,
+			$operation_id,
+			$normalized['plan_fingerprint'],
+			$after_structure
+		);
 		if ( is_wp_error( $runtime ) ) {
-			self::save_failure( $operation_id, $normalized, $payload_hash, $before_structure, $after_structure, $before_fingerprint, $runtime->get_error_message() );
+			self::save_failure(
+				$operation_id,
+				$normalized,
+				$payload_hash,
+				$before_structure,
+				$after_structure,
+				$before_fingerprint,
+				$runtime->get_error_message()
+			);
 			return $runtime;
 		}
 
@@ -84,43 +108,66 @@ final class PermalinkRedirectChangeEngine {
 		$write = PermalinkStructureRuntime::set( $after_structure );
 		if ( is_wp_error( $write ) ) {
 			PermalinkRedirectRuntime::deactivate( $operation_id, $runtime_fingerprint );
-			self::save_failure( $operation_id, $normalized, $payload_hash, $before_structure, $after_structure, $before_fingerprint, $write->get_error_message() );
+			self::save_failure(
+				$operation_id,
+				$normalized,
+				$payload_hash,
+				$before_structure,
+				$after_structure,
+				$before_fingerprint,
+				$write->get_error_message()
+			);
 			return $write;
 		}
 
-		$verification_plan = AuthoritativePermalinkPlanner::preview( $normalized['legacy_base_url'], $normalized['authority_fingerprint'] );
-		$verification      = self::verification_errors( $plan, $verification_plan, $after_structure, $operation_id, $normalized['plan_fingerprint'], $runtime_fingerprint );
+		$verification_plan = AuthoritativePermalinkPlanner::preview(
+			$normalized['legacy_base_url'],
+			$normalized['authority_fingerprint']
+		);
+		$verification = self::verification_errors(
+			$plan,
+			$verification_plan,
+			$after_structure,
+			$operation_id,
+			$normalized['plan_fingerprint'],
+			$runtime_fingerprint
+		);
 		if ( array() !== $verification ) {
 			PermalinkStructureRuntime::restore( $before_structure );
 			PermalinkRedirectRuntime::deactivate( $operation_id, $runtime_fingerprint );
-			$failed = EnvironmentPolicy::bind_operation(
-				array(
-					'operation_id'                 => $operation_id,
-					'operation_type'               => self::OPERATION_TYPE,
-					'status'                       => 'verification-failed-rolled-back',
-					'idempotency_key'              => $normalized['idempotency_key'],
-					'payload_hash'                 => $payload_hash,
-					'authority_fingerprint'        => $normalized['authority_fingerprint'],
-					'plan_fingerprint'             => $normalized['plan_fingerprint'],
-					'before_structure'             => $before_structure,
-					'after_structure'              => $after_structure,
-					'before_fingerprint'           => $before_fingerprint,
-					'redirect_runtime_fingerprint' => $runtime_fingerprint,
-					'verification'                 => $verification,
-					'created_at_gmt'               => gmdate( 'c' ),
+			OperationStore::save(
+				$operation_id,
+				EnvironmentPolicy::bind_operation(
+					array(
+						'operation_id'                 => $operation_id,
+						'operation_type'               => self::OPERATION_TYPE,
+						'status'                       => 'verification-failed-rolled-back',
+						'idempotency_key'              => $normalized['idempotency_key'],
+						'payload_hash'                 => $payload_hash,
+						'authority_fingerprint'        => $normalized['authority_fingerprint'],
+						'plan_fingerprint'             => $normalized['plan_fingerprint'],
+						'before_structure'             => $before_structure,
+						'after_structure'              => $after_structure,
+						'before_fingerprint'           => $before_fingerprint,
+						'redirect_runtime_fingerprint' => $runtime_fingerprint,
+						'verification'                 => $verification,
+						'created_at_gmt'               => gmdate( 'c' ),
+					)
 				)
 			);
-			OperationStore::save( $operation_id, $failed );
 
 			return new WP_Error(
 				'seo_geo_manager_permalink_redirect_verification_failed',
 				'The permalink + 301 operation failed verification and was rolled back.',
-				array( 'status' => 409, 'operation_id' => $operation_id, 'verification' => $verification )
+				array(
+					'status'       => 409,
+					'operation_id' => $operation_id,
+					'verification' => $verification,
+				)
 			);
 		}
 
-		$after_fingerprint = PermalinkStructureRuntime::fingerprint( (string) get_option( 'permalink_structure', '' ) );
-		$operation         = EnvironmentPolicy::bind_operation(
+		$operation = EnvironmentPolicy::bind_operation(
 			array(
 				'operation_id'                 => $operation_id,
 				'operation_type'               => self::OPERATION_TYPE,
@@ -133,7 +180,7 @@ final class PermalinkRedirectChangeEngine {
 				'before_structure'             => $before_structure,
 				'after_structure'              => $after_structure,
 				'before_fingerprint'           => $before_fingerprint,
-				'after_fingerprint'            => $after_fingerprint,
+				'after_fingerprint'            => PermalinkStructureRuntime::fingerprint( (string) get_option( 'permalink_structure', '' ) ),
 				'seo_preservation_mode'        => 'authoritative-301',
 				'planned_redirects'            => count( $redirects ),
 				'redirect_runtime_fingerprint' => $runtime_fingerprint,
@@ -142,7 +189,6 @@ final class PermalinkRedirectChangeEngine {
 				'idempotent_replay'            => false,
 			)
 		);
-
 		if ( ! OperationStore::save( $operation_id, $operation ) ) {
 			PermalinkStructureRuntime::restore( $before_structure );
 			PermalinkRedirectRuntime::deactivate( $operation_id, $runtime_fingerprint );
@@ -162,26 +208,53 @@ final class PermalinkRedirectChangeEngine {
 	public static function rollback( string $operation_id ) {
 		$operation = OperationStore::get( $operation_id );
 		if ( ! is_array( $operation ) || self::OPERATION_TYPE !== ( $operation['operation_type'] ?? '' ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_operation_not_found', 'Atomic permalink + 301 operation not found.', array( 'status' => 404 ) );
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_operation_not_found',
+				'Atomic permalink + 301 operation not found.',
+				array( 'status' => 404 )
+			);
 		}
 		if ( 'rolled-back' === ( $operation['status'] ?? '' ) ) {
 			return $operation;
 		}
 		if ( 'applied' !== ( $operation['status'] ?? '' ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_rollback_unavailable', 'This operation is not rollback-ready.', array( 'status' => 409 ) );
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_rollback_unavailable',
+				'This operation is not rollback-ready.',
+				array( 'status' => 409 )
+			);
 		}
 
 		$after_structure = (string) ( $operation['after_structure'] ?? '' );
 		$after_expected  = (string) ( $operation['after_fingerprint'] ?? '' );
 		$current         = (string) get_option( 'permalink_structure', '' );
-		if ( '' === $after_expected || $after_structure !== $current || ! hash_equals( $after_expected, PermalinkStructureRuntime::fingerprint( $current ) ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_rollback_stale', 'The permalink state changed after Apply; rollback is blocked.', array( 'status' => 409 ) );
+		if (
+			'' === $after_expected ||
+			0 !== strcmp( $after_structure, $current ) ||
+			! hash_equals( $after_expected, PermalinkStructureRuntime::fingerprint( $current ) )
+		) {
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_rollback_stale',
+				'The permalink state changed after Apply; rollback is blocked.',
+				array( 'status' => 409 )
+			);
 		}
 
 		$runtime_fingerprint = (string) ( $operation['redirect_runtime_fingerprint'] ?? '' );
 		$runtime             = PermalinkRedirectRuntime::snapshot();
-		if ( true !== ( $runtime['active'] ?? false ) || true !== ( $runtime['effective'] ?? false ) || $operation_id !== (string) ( $runtime['operation_id'] ?? '' ) || '' === $runtime_fingerprint || ! hash_equals( $runtime_fingerprint, (string) ( $runtime['fingerprint'] ?? '' ) ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_runtime_rollback_stale', 'The 301 runtime changed after Apply; rollback is blocked.', array( 'status' => 409 ) );
+		$runtime_operation   = (string) ( $runtime['operation_id'] ?? '' );
+		if (
+			true !== ( $runtime['active'] ?? false ) ||
+			true !== ( $runtime['effective'] ?? false ) ||
+			0 !== strcmp( $operation_id, $runtime_operation ) ||
+			'' === $runtime_fingerprint ||
+			! hash_equals( $runtime_fingerprint, (string) ( $runtime['fingerprint'] ?? '' ) )
+		) {
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_runtime_rollback_stale',
+				'The 301 runtime changed after Apply; rollback is blocked.',
+				array( 'status' => 409 )
+			);
 		}
 
 		$before_structure = (string) ( $operation['before_structure'] ?? '' );
@@ -192,12 +265,23 @@ final class PermalinkRedirectChangeEngine {
 		$cleanup = PermalinkRedirectRuntime::deactivate( $operation_id, $runtime_fingerprint );
 		if ( is_wp_error( $cleanup ) ) {
 			PermalinkStructureRuntime::set( $after_structure );
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_rollback_cleanup_failed', 'Runtime cleanup failed; the Manager attempted to restore the applied state.', array( 'status' => 500 ) );
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_rollback_cleanup_failed',
+				'Runtime cleanup failed; the Manager attempted to restore the applied state.',
+				array( 'status' => 500 )
+			);
 		}
 
 		$restored = PermalinkStructureRuntime::fingerprint( (string) get_option( 'permalink_structure', '' ) );
-		if ( ! hash_equals( (string) ( $operation['before_fingerprint'] ?? '' ), $restored ) || true === ( PermalinkRedirectRuntime::snapshot()['active'] ?? false ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_rollback_verification_failed', 'Atomic rollback could not be verified.', array( 'status' => 500 ) );
+		if (
+			! hash_equals( (string) ( $operation['before_fingerprint'] ?? '' ), $restored ) ||
+			true === ( PermalinkRedirectRuntime::snapshot()['active'] ?? false )
+		) {
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_rollback_verification_failed',
+				'Atomic rollback could not be verified.',
+				array( 'status' => 500 )
+			);
 		}
 
 		$operation['status']                   = 'rolled-back';
@@ -225,14 +309,26 @@ final class PermalinkRedirectChangeEngine {
 		);
 		foreach ( array( 'legacy_base_url', 'authority_fingerprint', 'plan_fingerprint', 'current_fingerprint', 'idempotency_key' ) as $required ) {
 			if ( '' === $normalized[ $required ] ) {
-				return new WP_Error( 'seo_geo_manager_permalink_redirect_payload_invalid', 'Atomic Apply is missing required inspected-state fields.', array( 'status' => 400 ) );
+				return new WP_Error(
+					'seo_geo_manager_permalink_redirect_payload_invalid',
+					'Atomic Apply is missing required inspected-state fields.',
+					array( 'status' => 400 )
+				);
 			}
 		}
 		if ( 128 < strlen( (string) $normalized['idempotency_key'] ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_idempotency_invalid', 'Idempotency keys are limited to 128 characters.', array( 'status' => 400 ) );
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_idempotency_invalid',
+				'Idempotency keys are limited to 128 characters.',
+				array( 'status' => 400 )
+			);
 		}
 		if ( true !== $normalized['confirm_permalink_change'] || true !== $normalized['confirm_redirect_runtime'] ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_confirmation_required', 'Atomic Apply requires explicit permalink and 301-runtime approval.', array( 'status' => 409 ) );
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_confirmation_required',
+				'Atomic Apply requires explicit permalink and 301-runtime approval.',
+				array( 'status' => 409 )
+			);
 		}
 
 		return $normalized;
@@ -244,16 +340,41 @@ final class PermalinkRedirectChangeEngine {
 	 * @return true|WP_Error
 	 */
 	private static function guard_plan( array $plan, array $normalized ) {
-		if ( true !== ( $plan['safe_structure_candidate'] ?? false ) || true !== ( $plan['requires_redirect_runtime'] ?? false ) || 1 > (int) ( $plan['planned_redirects'] ?? 0 ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_plan_blocked', 'This plan is not an authoritative redirect-required candidate.', array( 'status' => 409 ) );
+		if (
+			true !== ( $plan['safe_structure_candidate'] ?? false ) ||
+			true !== ( $plan['requires_redirect_runtime'] ?? false ) ||
+			1 > (int) ( $plan['planned_redirects'] ?? 0 )
+		) {
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_plan_blocked',
+				'This plan is not an authoritative redirect-required candidate.',
+				array( 'status' => 409 )
+			);
 		}
-		$plan_fingerprint = (string) ( $plan['plan_fingerprint'] ?? '' );
+
+		$plan_fingerprint    = (string) ( $plan['plan_fingerprint'] ?? '' );
 		$current_fingerprint = (string) ( $plan['current_fingerprint'] ?? '' );
-		if ( '' === $plan_fingerprint || ! hash_equals( $plan_fingerprint, (string) $normalized['plan_fingerprint'] ) || '' === $current_fingerprint || ! hash_equals( $current_fingerprint, (string) $normalized['current_fingerprint'] ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_plan_stale', 'The inspected permalink plan or current state changed.', array( 'status' => 409 ) );
+		if (
+			'' === $plan_fingerprint ||
+			! hash_equals( $plan_fingerprint, (string) $normalized['plan_fingerprint'] ) ||
+			'' === $current_fingerprint ||
+			! hash_equals( $current_fingerprint, (string) $normalized['current_fingerprint'] )
+		) {
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_plan_stale',
+				'The inspected permalink plan or current state changed.',
+				array( 'status' => 409 )
+			);
 		}
-		if ( (string) ( $plan['current_structure'] ?? '' ) === (string) ( $plan['authoritative_structure'] ?? '' ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_structure_unchanged', 'The authoritative structure is already active.', array( 'status' => 400 ) );
+
+		$current_structure = (string) ( $plan['current_structure'] ?? '' );
+		$target_structure  = (string) ( $plan['authoritative_structure'] ?? '' );
+		if ( 0 === strcmp( $current_structure, $target_structure ) ) {
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_structure_unchanged',
+				'The authoritative structure is already active.',
+				array( 'status' => 400 )
+			);
 		}
 
 		return true;
@@ -265,19 +386,36 @@ final class PermalinkRedirectChangeEngine {
 	 * @return array<int, string>
 	 */
 	private static function verification_errors( array $original, array $verified, string $structure, string $operation_id, string $plan_fingerprint, string $runtime_fingerprint ): array {
-		$errors = array();
-		if ( $structure !== (string) get_option( 'permalink_structure', '' ) || true !== ( $verified['safe_structure_candidate'] ?? false ) || 'authoritative-301' !== (string) ( $verified['seo_preservation_mode'] ?? '' ) ) {
+		$errors            = array();
+		$current_structure = (string) get_option( 'permalink_structure', '' );
+		if (
+			0 !== strcmp( $structure, $current_structure ) ||
+			true !== ( $verified['safe_structure_candidate'] ?? false ) ||
+			'authoritative-301' !== (string) ( $verified['seo_preservation_mode'] ?? '' )
+		) {
 			$errors[] = 'authoritative-structure-verification-failed';
 		}
+
 		$before_redirects = isset( $original['redirects'] ) && is_array( $original['redirects'] ) ? $original['redirects'] : array();
 		$after_redirects  = isset( $verified['redirects'] ) && is_array( $verified['redirects'] ) ? $verified['redirects'] : array();
-		if ( wp_json_encode( $before_redirects ) !== wp_json_encode( $after_redirects ) ) {
+		if ( 0 !== strcmp( (string) wp_json_encode( $before_redirects ), (string) wp_json_encode( $after_redirects ) ) ) {
 			$errors[] = 'authoritative-redirect-map-changed';
 		}
-		$runtime = PermalinkRedirectRuntime::snapshot();
-		if ( true !== ( $runtime['active'] ?? false ) || true !== ( $runtime['effective'] ?? false ) || $operation_id !== (string) ( $runtime['operation_id'] ?? '' ) || $plan_fingerprint !== (string) ( $runtime['plan_fingerprint'] ?? '' ) || '' === $runtime_fingerprint || ! hash_equals( $runtime_fingerprint, (string) ( $runtime['fingerprint'] ?? '' ) ) ) {
+
+		$runtime           = PermalinkRedirectRuntime::snapshot();
+		$runtime_operation = (string) ( $runtime['operation_id'] ?? '' );
+		$runtime_plan      = (string) ( $runtime['plan_fingerprint'] ?? '' );
+		if (
+			true !== ( $runtime['active'] ?? false ) ||
+			true !== ( $runtime['effective'] ?? false ) ||
+			0 !== strcmp( $operation_id, $runtime_operation ) ||
+			0 !== strcmp( $plan_fingerprint, $runtime_plan ) ||
+			'' === $runtime_fingerprint ||
+			! hash_equals( $runtime_fingerprint, (string) ( $runtime['fingerprint'] ?? '' ) )
+		) {
 			$errors[] = 'redirect-runtime-verification-failed';
 		}
+
 		foreach ( $before_redirects as $redirect ) {
 			if ( ! is_array( $redirect ) ) {
 				$errors[] = 'redirect-runtime-invalid-row';
@@ -286,7 +424,9 @@ final class PermalinkRedirectChangeEngine {
 			$source_url  = home_url( (string) ( $redirect['source_path'] ?? '' ) );
 			$request_uri = wp_parse_url( $source_url, PHP_URL_PATH );
 			$resolved    = is_string( $request_uri ) ? PermalinkRedirectRuntime::resolve( $request_uri ) : null;
-			if ( ! is_array( $resolved ) || 301 !== (int) ( $resolved['status'] ?? 0 ) || (string) ( $redirect['target_path'] ?? '' ) !== (string) ( $resolved['target_path'] ?? '' ) ) {
+			$target_path = (string) ( $redirect['target_path'] ?? '' );
+			$resolved_target = is_array( $resolved ) ? (string) ( $resolved['target_path'] ?? '' ) : '';
+			if ( ! is_array( $resolved ) || 301 !== (int) ( $resolved['status'] ?? 0 ) || 0 !== strcmp( $target_path, $resolved_target ) ) {
 				$errors[] = 'redirect-resolution-mismatch';
 				break;
 			}
@@ -301,7 +441,11 @@ final class PermalinkRedirectChangeEngine {
 	private static function idempotent_operation( string $operation_id ) {
 		$operation = OperationStore::get( $operation_id );
 		if ( ! is_array( $operation ) || self::OPERATION_TYPE !== ( $operation['operation_type'] ?? '' ) ) {
-			return new WP_Error( 'seo_geo_manager_permalink_redirect_idempotent_result_missing', 'The reserved operation record is unavailable.', array( 'status' => 409 ) );
+			return new WP_Error(
+				'seo_geo_manager_permalink_redirect_idempotent_result_missing',
+				'The reserved operation record is unavailable.',
+				array( 'status' => 409 )
+			);
 		}
 		$operation['idempotent_replay'] = true;
 
