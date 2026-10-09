@@ -4,14 +4,18 @@ on:
   pull_request:
     paths:
       - 'packages/**'
+      - 'presets/research/**'
       - 'scripts/ci/validate-phase1.sh'
+      - 'scripts/ci/validate-research-person-identity.php'
       - '.github/workflows/phase-1.yml'
   push:
     branches:
       - main
     paths:
       - 'packages/**'
+      - 'presets/research/**'
       - 'scripts/ci/validate-phase1.sh'
+      - 'scripts/ci/validate-research-person-identity.php'
       - '.github/workflows/phase-1.yml'
 
 permissions:
@@ -39,3 +43,6 @@ jobs:
 
       - name: Validate Phase 1 package contract
         run: bash scripts/ci/validate-phase1.sh
+
+      - name: Validate Research Person identity contract
+        run: php scripts/ci/validate-research-person-identity.php

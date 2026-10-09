@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "id": "research",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "site_type": "research",
-  "setup_ready": false,
+  "setup_ready": true,
   "intended_for": [
     "researcher",
     "doctoral-candidate",
