@@ -1,0 +1,83 @@
+.seo-geo-manager-correction {
+	border-left: 4px solid #2271b1;
+}
+
+.seo-geo-manager-correction__prepare {
+	margin-top: 8px !important;
+}
+
+.seo-geo-manager-correction__flow {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 8px;
+	margin: 18px 0;
+	padding: 0;
+	list-style: none;
+}
+
+.seo-geo-manager-correction__flow li {
+	padding: 10px;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	background: #f6f7f7;
+	text-align: center;
+	font-weight: 600;
+}
+
+.seo-geo-manager-correction__flow li.is-ready {
+	border-color: #72aee6;
+	background: #f0f6fc;
+	color: #135e96;
+}
+
+.seo-geo-manager-correction__diff {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	margin: 16px 0;
+}
+
+.seo-geo-manager-correction__diff > div {
+	padding: 14px;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	background: #fff;
+}
+
+.seo-geo-manager-correction__diff span,
+.seo-geo-manager-correction__diff code {
+	display: block;
+}
+
+.seo-geo-manager-correction__diff span {
+	margin-bottom: 8px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #50575e;
+}
+
+.seo-geo-manager-correction__diff code {
+	padding: 8px;
+	white-space: normal;
+	word-break: break-word;
+}
+
+.seo-geo-manager-correction__safety {
+	margin-top: 18px;
+	padding: 12px 14px;
+	border-left: 4px solid #dba617;
+	background: #fff8e5;
+}
+
+.seo-geo-manager-correction__actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+@media (max-width: 700px) {
+	.seo-geo-manager-correction__flow,
+	.seo-geo-manager-correction__diff {
+		grid-template-columns: 1fr;
+	}
+}
