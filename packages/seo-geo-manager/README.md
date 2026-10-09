@@ -164,6 +164,10 @@ For automation use normal WordPress REST authentication with an authorized WordP
 - Redirect-required authoritative permalink plans now have a separately guarded atomic Apply/rollback path.
 - EMMAKE `/nuevaweb/` remains the first field target before broader promotion.
 
+### Field gate
+
+0.3.21 is code/CI-ready when the repository matrix is green, but it is not considered broadly promoted until the real EMMAKE clone completes an inspection-first field cycle. The field sequence is: install candidate -> Site Intelligence -> historical authority preview -> authoritative plan -> no write unless the plan is demonstrably safe -> one reversible Apply/verify operation -> retain rollback evidence.
+
 ## Next implementation slices
 
 - field-install and inspect Manager 0.3.21 on EMMAKE `/nuevaweb/` before any real write;
