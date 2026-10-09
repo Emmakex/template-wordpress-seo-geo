@@ -120,8 +120,9 @@ final class OperationStore {
 	 * Return recent privacy-bounded operation summaries.
 	 *
 	 * The index intentionally excludes content bodies, previous values, requested
-	 * values, payload hashes and environment fingerprints. Full operation records
-	 * remain private and are read only by the mutation/rollback engines.
+	 * values, payload hashes, rendered response bodies/digests and environment
+	 * fingerprints. Full operation records remain private and are read only by the
+	 * mutation/rollback engines.
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
@@ -188,29 +189,32 @@ final class OperationStore {
 			)
 		);
 
-		$environment      = isset( $operation['environment'] ) && is_array( $operation['environment'] ) ? $operation['environment'] : array();
-		$structured_model = isset( $operation['structured_model'] ) && is_array( $operation['structured_model'] ) ? $operation['structured_model'] : array();
-		$status           = isset( $operation['status'] ) && is_string( $operation['status'] ) ? sanitize_key( $operation['status'] ) : 'unknown';
-		$rollback_state   = 'unavailable';
-		if ( 'applied' === $status ) {
+		$environment           = isset( $operation['environment'] ) && is_array( $operation['environment'] ) ? $operation['environment'] : array();
+		$structured_model      = isset( $operation['structured_model'] ) && is_array( $operation['structured_model'] ) ? $operation['structured_model'] : array();
+		$rendered_verification = isset( $operation['rendered_verification'] ) && is_array( $operation['rendered_verification'] ) ? $operation['rendered_verification'] : array();
+		$status                = isset( $operation['status'] ) && is_string( $operation['status'] ) ? sanitize_key( $operation['status'] ) : 'unknown';
+		$rendered_status       = isset( $rendered_verification['status'] ) && is_string( $rendered_verification['status'] ) ? sanitize_key( $rendered_verification['status'] ) : '';
+		$rollback_state        = 'unavailable';
+		if ( in_array( $status, array( 'applied', 'verification-failed', 'rendered-verification-failed' ), true ) ) {
 			$rollback_state = 'guarded';
 		} elseif ( 'rolled-back' === $status ) {
 			$rollback_state = 'completed';
 		}
 
 		return array(
-			'operation_id'       => $operation_id,
-			'operation_type'     => $type,
-			'status'             => $status,
-			'target_id'          => isset( $operation['target_id'] ) ? absint( $operation['target_id'] ) : 0,
-			'target_type'        => isset( $operation['target_type'] ) && is_string( $operation['target_type'] ) ? sanitize_key( $operation['target_type'] ) : '',
-			'changed_fields'     => $changed_fields,
-			'structured_model'   => isset( $structured_model['model_id'] ) && is_string( $structured_model['model_id'] ) ? sanitize_text_field( $structured_model['model_id'] ) : '',
-			'planned_redirects'  => isset( $operation['planned_redirects'] ) ? max( 0, (int) $operation['planned_redirects'] ) : 0,
-			'environment_type'   => isset( $environment['type'] ) && is_string( $environment['type'] ) ? sanitize_key( $environment['type'] ) : '',
-			'created_at_gmt'     => isset( $operation['created_at_gmt'] ) && is_string( $operation['created_at_gmt'] ) ? sanitize_text_field( $operation['created_at_gmt'] ) : '',
-			'rolled_back_at_gmt' => isset( $operation['rolled_back_at_gmt'] ) && is_string( $operation['rolled_back_at_gmt'] ) ? sanitize_text_field( $operation['rolled_back_at_gmt'] ) : '',
-			'rollback_state'     => $rollback_state,
+			'operation_id'                => $operation_id,
+			'operation_type'              => $type,
+			'status'                      => $status,
+			'target_id'                   => isset( $operation['target_id'] ) ? absint( $operation['target_id'] ) : 0,
+			'target_type'                 => isset( $operation['target_type'] ) && is_string( $operation['target_type'] ) ? sanitize_key( $operation['target_type'] ) : '',
+			'changed_fields'              => $changed_fields,
+			'structured_model'            => isset( $structured_model['model_id'] ) && is_string( $structured_model['model_id'] ) ? sanitize_text_field( $structured_model['model_id'] ) : '',
+			'planned_redirects'           => isset( $operation['planned_redirects'] ) ? max( 0, (int) $operation['planned_redirects'] ) : 0,
+			'rendered_verification_status' => $rendered_status,
+			'environment_type'            => isset( $environment['type'] ) && is_string( $environment['type'] ) ? sanitize_key( $environment['type'] ) : '',
+			'created_at_gmt'              => isset( $operation['created_at_gmt'] ) && is_string( $operation['created_at_gmt'] ) ? sanitize_text_field( $operation['created_at_gmt'] ) : '',
+			'rolled_back_at_gmt'          => isset( $operation['rolled_back_at_gmt'] ) && is_string( $operation['rolled_back_at_gmt'] ) ? sanitize_text_field( $operation['rolled_back_at_gmt'] ) : '',
+			'rollback_state'              => $rollback_state,
 		);
 	}
 
