@@ -158,7 +158,9 @@ final class SchemaGraphBuilder {
 		if ( null !== $breadcrumb ) {
 			$graph[] = $breadcrumb;
 		}
+
 		$organization   = $this->identity->organization();
+		$site_person    = $this->identity->site_person();
 		$local_business = $this->local_business->resolve();
 
 		if ( is_front_page() && null !== $local_business ) {
@@ -173,6 +175,14 @@ final class SchemaGraphBuilder {
 
 			$graph[0] = $website;
 			$graph[]  = $this->organization_node( $organization );
+		} elseif ( is_front_page() && null !== $site_person ) {
+			$website['publisher']   = array( '@id' => $site_person['id'] );
+			$web_page['@type']      = 'ProfilePage';
+			$web_page['mainEntity'] = array( '@id' => $site_person['id'] );
+
+			$graph[0] = $website;
+			$graph[1] = $web_page;
+			$graph[]  = $this->person_node( $site_person, $web_page_id );
 		}
 
 		$author = $this->identity->current_author();
@@ -210,6 +220,8 @@ final class SchemaGraphBuilder {
 				$article_node['publisher'] = array( '@id' => $local_business['@id'] );
 			} elseif ( null !== $organization ) {
 				$article_node['publisher'] = array( '@id' => $organization['id'] );
+			} elseif ( null !== $site_person ) {
+				$article_node['publisher'] = array( '@id' => $site_person['id'] );
 			}
 
 			$graph[] = $article_node;
@@ -223,6 +235,8 @@ final class SchemaGraphBuilder {
 				$graph[] = $local_business;
 			} elseif ( null !== $organization ) {
 				$graph[] = $this->organization_node( $organization );
+			} elseif ( null !== $site_person ) {
+				$graph[] = $this->person_node( $site_person, $this->ids->web_page( $site_person['url'] ) );
 			}
 		}
 
@@ -250,8 +264,8 @@ final class SchemaGraphBuilder {
 	/**
 	 * Build one stable Person graph node.
 	 *
-	 * @param array{id:string,name:string,url:string,description:string} $author  Resolved author identity.
-	 * @param string                                                     $page_id Stable profile WebPage ID.
+	 * @param array<string,mixed> $author  Resolved Person identity.
+	 * @param string              $page_id Stable profile WebPage ID.
 	 * @return array<string, mixed>
 	 */
 	private function person_node( array $author, string $page_id ): array {
@@ -262,6 +276,20 @@ final class SchemaGraphBuilder {
 			'url'              => $author['url'],
 			'mainEntityOfPage' => array( '@id' => $page_id ),
 		);
+
+		$description = isset( $author['description'] ) && is_string( $author['description'] )
+			? $this->text( $author['description'] )
+			: '';
+		if ( '' !== $description ) {
+			$person['description'] = $description;
+		}
+
+		$same_as = isset( $author['same_as'] ) && is_array( $author['same_as'] )
+			? array_values( array_filter( $author['same_as'], 'is_string' ) )
+			: array();
+		if ( array() !== $same_as ) {
+			$person['sameAs'] = $same_as;
+		}
 
 		return $person;
 	}

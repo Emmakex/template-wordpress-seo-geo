@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "preset": "research",
+  "rules": {
+    "reuse_when_possible": true,
+    "preserve_existing_urls": true,
+    "do_not_rename_existing_slugs": true,
+    "theme_owns_layout": true,
+    "gutenberg_layout_authority": false,
+    "structured_content_first": true,
+    "evidence_required_for_research_claims": true,
+    "primary_language": "en_US",
+    "secondary_language": "es_ES"
+  },
+  "internal_links": {
+    "priority_order": [
+      "research",
+      "publications",
+      "projects",
+      "software",
+      "datasets",
+      "about",
+      "cv",
+      "contact",
+      "insights"
+    ]
+  },
+  "locales": {
+    "en_US": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Home",
+          "slug": "home",
+          "role": "front-page",
+          "resource_type": "page",
+          "primary_intent": "researcher-discovery",
+          "patterns": []
+        },
+        {
+          "key": "research",
+          "title": "Research",
+          "slug": "research",
+          "role": "research-hub",
+          "resource_type": "page",
+          "primary_intent": "research-agenda-discovery",
+          "patterns": []
+        },
+        {
+          "key": "publications",
+          "title": "Publications",
+          "slug": "publications",
+          "role": "output-index",
+          "resource_type": "page",
+          "primary_intent": "scholarly-output-discovery",
+          "patterns": []
+        },
+        {
+          "key": "projects",
+          "title": "Projects",
+          "slug": "projects",
+          "role": "project-index",
+          "resource_type": "page",
+          "primary_intent": "research-project-discovery",
+          "patterns": []
+        },
+        {
+          "key": "software",
+          "title": "Research Software",
+          "slug": "software",
+          "role": "software-index",
+          "resource_type": "page",
+          "primary_intent": "research-software-discovery",
+          "patterns": []
+        },
+        {
+          "key": "datasets",
+          "title": "Datasets",
+          "slug": "datasets",
+          "role": "dataset-index",
+          "resource_type": "page",
+          "primary_intent": "research-dataset-discovery",
+          "patterns": []
+        },
+        {
+          "key": "about",
+          "title": "About",
+          "slug": "about",
+          "role": "profile",
+          "resource_type": "page",
+          "primary_intent": "researcher-trust-and-background",
+          "patterns": []
+        },
+        {
+          "key": "cv",
+          "title": "Academic CV",
+          "slug": "cv",
+          "role": "academic-cv",
+          "resource_type": "page",
+          "primary_intent": "academic-profile-verification",
+          "patterns": []
+        },
+        {
+          "key": "insights",
+          "title": "Insights",
+          "slug": "insights",
+          "role": "posts-page",
+          "resource_type": "archive",
+          "primary_intent": "research-knowledge-discovery",
+          "patterns": []
+        },
+        {
+          "key": "contact",
+          "title": "Contact",
+          "slug": "contact",
+          "role": "contact",
+          "resource_type": "page",
+          "primary_intent": "research-contact",
+          "patterns": []
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Privacy Policy",
+          "slug": "privacy-policy",
+          "role": "legal",
+          "resource_type": "page",
+          "primary_intent": "legal-compliance",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Legal Notice",
+          "slug": "legal-notice",
+          "role": "legal",
+          "resource_type": "page",
+          "primary_intent": "legal-compliance",
+          "patterns": []
+        }
+      ]
+    },
+    "es_ES": {
+      "pages": [
+        {
+          "key": "home",
+          "title": "Inicio",
+          "slug": "inicio",
+          "role": "front-page",
+          "resource_type": "page",
+          "primary_intent": "researcher-discovery",
+          "patterns": []
+        },
+        {
+          "key": "research",
+          "title": "Investigación",
+          "slug": "investigacion",
+          "role": "research-hub",
+          "resource_type": "page",
+          "primary_intent": "research-agenda-discovery",
+          "patterns": []
+        },
+        {
+          "key": "publications",
+          "title": "Publicaciones",
+          "slug": "publicaciones",
+          "role": "output-index",
+          "resource_type": "page",
+          "primary_intent": "scholarly-output-discovery",
+          "patterns": []
+        },
+        {
+          "key": "projects",
+          "title": "Proyectos",
+          "slug": "proyectos",
+          "role": "project-index",
+          "resource_type": "page",
+          "primary_intent": "research-project-discovery",
+          "patterns": []
+        },
+        {
+          "key": "software",
+          "title": "Software de investigación",
+          "slug": "software",
+          "role": "software-index",
+          "resource_type": "page",
+          "primary_intent": "research-software-discovery",
+          "patterns": []
+        },
+        {
+          "key": "datasets",
+          "title": "Conjuntos de datos",
+          "slug": "datos",
+          "role": "dataset-index",
+          "resource_type": "page",
+          "primary_intent": "research-dataset-discovery",
+          "patterns": []
+        },
+        {
+          "key": "about",
+          "title": "Perfil",
+          "slug": "perfil",
+          "role": "profile",
+          "resource_type": "page",
+          "primary_intent": "researcher-trust-and-background",
+          "patterns": []
+        },
+        {
+          "key": "cv",
+          "title": "CV académico",
+          "slug": "cv",
+          "role": "academic-cv",
+          "resource_type": "page",
+          "primary_intent": "academic-profile-verification",
+          "patterns": []
+        },
+        {
+          "key": "insights",
+          "title": "Insights",
+          "slug": "insights",
+          "role": "posts-page",
+          "resource_type": "archive",
+          "primary_intent": "research-knowledge-discovery",
+          "patterns": []
+        },
+        {
+          "key": "contact",
+          "title": "Contacto",
+          "slug": "contacto",
+          "role": "contact",
+          "resource_type": "page",
+          "primary_intent": "research-contact",
+          "patterns": []
+        },
+        {
+          "key": "privacy-policy",
+          "title": "Política de privacidad",
+          "slug": "politica-de-privacidad",
+          "role": "legal",
+          "resource_type": "page",
+          "primary_intent": "legal-compliance",
+          "patterns": []
+        },
+        {
+          "key": "legal-notice",
+          "title": "Aviso legal",
+          "slug": "aviso-legal",
+          "role": "legal",
+          "resource_type": "page",
+          "primary_intent": "legal-compliance",
+          "patterns": []
+        }
+      ]
+    }
+  }
+}
