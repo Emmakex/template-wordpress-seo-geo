@@ -11,6 +11,7 @@ const SEO_GEO_PRESET_IDS = array(
 	'publisher',
 	'ecommerce',
 	'saas-digital-product',
+	'research',
 );
 
 const SEO_GEO_PRESET_EXPECTED_RUNTIME = array(
@@ -136,6 +137,44 @@ foreach ( SEO_GEO_PRESET_IDS as $preset_id ) {
 	}
 }
 
+$research_content = seo_geo_preset_json( 'presets/research/content-map.json' );
+foreach ( array( 'en_US', 'es_ES' ) as $research_locale ) {
+	$research_pages = $research_content['locales'][ $research_locale ]['pages'] ?? null;
+	if ( ! is_array( $research_pages ) || array() === $research_pages ) {
+		fail_seo_geo_preset_contract(
+			'research-content-map',
+			'Research preset must provide localized page definitions compatible with the preset navigation runtime.',
+			'presets/research/content-map.json#locales.' . $research_locale . '.pages',
+			'non-empty localized pages array',
+			$research_pages
+		);
+	}
+}
+
+$research_models = seo_geo_preset_json( 'presets/research/page-models.json' );
+if ( 'research-home-v1' !== ( $research_models['models']['home']['model_id'] ?? null ) ) {
+	fail_seo_geo_preset_contract(
+		'research-home-model',
+		'Research preset must keep a versioned Theme-owned Home content model.',
+		'presets/research/page-models.json#models.home.model_id',
+		'research-home-v1',
+		$research_models['models']['home']['model_id'] ?? null
+	);
+}
+
+foreach (
+	array(
+		'packages/seo-geo-theme/inc/Strategic/ResearchHomeModelResolver.php',
+		'packages/seo-geo-theme/inc/Strategic/ResearchHomeRenderer.php',
+		'packages/seo-geo-theme/strategic-templates/research-home.php',
+		'packages/seo-geo-theme/assets/css/presets/research.css',
+	) as $research_runtime_file
+) {
+	if ( ! is_file( $research_runtime_file ) ) {
+		fail_seo_geo_preset_contract( 'research-runtime-file', 'Research strategic runtime file is missing.', $research_runtime_file, 'file exists', 'missing' );
+	}
+}
+
 $budgets = seo_geo_preset_json( 'tests/performance/budgets.json' );
 $global  = $budgets['global'] ?? null;
 if (
@@ -226,5 +265,6 @@ if ( ! str_contains( $header, 'seo-geo/preset-navigation' ) ) {
 }
 
 printf(
-	"SEO/GEO-first preset contract OK: 5 presets preserve semantic server HTML, shared SEO/Schema authority, crawlable navigation, modern functional design direction, optional safe GEO alternates and strict performance budgets.\n"
+	"SEO/GEO-first preset contract OK: %d presets preserve semantic server HTML, shared SEO/Schema authority, crawlable navigation, modern functional design direction, optional safe GEO alternates and strict performance budgets.\n",
+	count( SEO_GEO_PRESET_IDS )
 );
