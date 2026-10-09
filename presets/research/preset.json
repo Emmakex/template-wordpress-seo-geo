@@ -3,6 +3,7 @@
   "id": "research",
   "version": "0.1.0",
   "site_type": "research",
+  "setup_ready": false,
   "intended_for": [
     "researcher",
     "doctoral-candidate",
