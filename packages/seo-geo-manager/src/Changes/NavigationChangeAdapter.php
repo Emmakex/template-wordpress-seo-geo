@@ -37,10 +37,10 @@ final class NavigationChangeAdapter {
 			'suggested_url'  => $prepared['suggested_url'],
 			'has_changes'    => true,
 			'policy'         => array(
-				'custom_links_only'          => true,
-				'exact_occurrence_accounting'=> true,
-				'public_navigation_blocked'  => true !== ( $payload['allow_public_navigation'] ?? false ),
-				'allow_public_navigation'    => true === ( $payload['allow_public_navigation'] ?? false ),
+				'custom_links_only'           => true,
+				'exact_occurrence_accounting' => true,
+				'public_navigation_blocked'   => true !== ( $payload['allow_public_navigation'] ?? false ),
+				'allow_public_navigation'     => true === ( $payload['allow_public_navigation'] ?? false ),
 			),
 		);
 	}
@@ -117,13 +117,13 @@ final class NavigationChangeAdapter {
 			if ( is_wp_error( $result ) ) {
 				self::restore_items( $prepared['menu_id'], array_reverse( $updated ) );
 				$failed = array(
-					'operation_id'      => $operation_id,
-					'adapter'           => self::ADAPTER,
-					'status'            => 'failed',
-					'menu_id'           => $prepared['menu_id'],
-					'target_id'         => $prepared['menu_id'],
-					'before_fingerprint'=> $prepared['before_fingerprint'],
-					'created_at_gmt'    => gmdate( 'c' ),
+					'operation_id'       => $operation_id,
+					'adapter'            => self::ADAPTER,
+					'status'             => 'failed',
+					'menu_id'            => $prepared['menu_id'],
+					'target_id'          => $prepared['menu_id'],
+					'before_fingerprint' => $prepared['before_fingerprint'],
+					'created_at_gmt'     => gmdate( 'c' ),
 				);
 				OperationStore::save( $operation_id, $failed );
 				return $result;
@@ -135,13 +135,13 @@ final class NavigationChangeAdapter {
 		if ( '' === $after_fingerprint || hash_equals( $prepared['before_fingerprint'], $after_fingerprint ) ) {
 			self::restore_items( $prepared['menu_id'], array_reverse( $updated ) );
 			$failed = array(
-				'operation_id'      => $operation_id,
-				'adapter'           => self::ADAPTER,
-				'status'            => 'failed',
-				'menu_id'           => $prepared['menu_id'],
-				'target_id'         => $prepared['menu_id'],
-				'before_fingerprint'=> $prepared['before_fingerprint'],
-				'created_at_gmt'    => gmdate( 'c' ),
+				'operation_id'       => $operation_id,
+				'adapter'            => self::ADAPTER,
+				'status'             => 'failed',
+				'menu_id'            => $prepared['menu_id'],
+				'target_id'          => $prepared['menu_id'],
+				'before_fingerprint' => $prepared['before_fingerprint'],
+				'created_at_gmt'     => gmdate( 'c' ),
 			);
 			OperationStore::save( $operation_id, $failed );
 			return new WP_Error(
@@ -178,9 +178,7 @@ final class NavigationChangeAdapter {
 		return $operation;
 	}
 
-	/**
-	 * @return array<string, mixed>|WP_Error
-	 */
+	/** @return array<string, mixed>|WP_Error */
 	public static function rollback( string $operation_id ) {
 		$operation = OperationStore::get( $operation_id );
 		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
@@ -226,8 +224,8 @@ final class NavigationChangeAdapter {
 			);
 		}
 
-		$operation['status']             = 'rolled-back';
-		$operation['rolled_back_at_gmt'] = gmdate( 'c' );
+		$operation['status']              = 'rolled-back';
+		$operation['rolled_back_at_gmt']  = gmdate( 'c' );
 		$operation['rollback_fingerprint']= $rolled_back_fingerprint;
 		OperationStore::save( $operation_id, $operation );
 
@@ -246,10 +244,12 @@ final class NavigationChangeAdapter {
 		$urls           = self::url_list( $payload['current_urls'] ?? array() );
 		$suggested      = isset( $payload['suggested_url'] ) && is_string( $payload['suggested_url'] ) ? esc_url_raw( $payload['suggested_url'] ) : '';
 
-		if ( self::SCHEMA_VERSION !== $schema_version || 1 > $menu_id || '' === $expected || 1 > $occurrences || array() === $urls || '' === $suggested ) {
+		if ( self::SCHEMA_VERSION !== $schema_version || 1 > $menu_id || 1 > $occurrences || array() === $urls || '' === $suggested || ( $for_apply && '' === $expected ) ) {
 			return new WP_Error(
 				'seo_geo_manager_navigation_request_invalid',
-				'Navigation requests require menu_id, expected_fingerprint, current_urls, expected_occurrences and suggested_url.',
+				$for_apply
+					? 'Navigation apply requires menu_id, expected_fingerprint, current_urls, expected_occurrences and suggested_url.'
+					: 'Navigation preview requires menu_id, current_urls, expected_occurrences and suggested_url.',
 				array( 'status' => 400 )
 			);
 		}
@@ -269,7 +269,10 @@ final class NavigationChangeAdapter {
 		}
 
 		$current_fingerprint = self::menu_fingerprint( $menu_id );
-		if ( '' === $current_fingerprint || ! hash_equals( $expected, $current_fingerprint ) ) {
+		if ( '' === $current_fingerprint ) {
+			return new WP_Error( 'seo_geo_manager_navigation_fingerprint_unavailable', 'Navigation fingerprint could not be calculated.', array( 'status' => 409 ) );
+		}
+		if ( '' !== $expected && ! hash_equals( $expected, $current_fingerprint ) ) {
 			return new WP_Error(
 				'seo_geo_manager_navigation_fingerprint_mismatch',
 				'Navigation changed after inspection; prepare a fresh preview.',
@@ -330,13 +333,13 @@ final class NavigationChangeAdapter {
 		}
 
 		return array(
-			'menu_id'             => $menu_id,
-			'menu_name'           => isset( $menu->name ) ? (string) $menu->name : 'Menu #' . $menu_id,
-			'before_fingerprint'  => $current_fingerprint,
-			'expected_occurrences'=> $occurrences,
-			'current_urls'        => $urls,
-			'suggested_url'       => $suggested,
-			'items'               => $items,
+			'menu_id'              => $menu_id,
+			'menu_name'            => isset( $menu->name ) ? (string) $menu->name : 'Menu #' . $menu_id,
+			'before_fingerprint'   => $current_fingerprint,
+			'expected_occurrences' => $occurrences,
+			'current_urls'         => $urls,
+			'suggested_url'        => $suggested,
+			'items'                => $items,
 		);
 	}
 
