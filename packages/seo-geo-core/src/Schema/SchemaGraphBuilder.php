@@ -17,41 +17,73 @@ use SeoGeo\Core\Seo\IndexabilityResolver;
  * Builds the native single-owner JSON-LD graph.
  */
 final class SchemaGraphBuilder {
-	/** @var IndexabilityResolver Indexability authority. */
+	/**
+	 * Indexability resolver.
+	 *
+	 * @var IndexabilityResolver
+	 */
 	private IndexabilityResolver $indexability;
 
-	/** @var CanonicalResolver Canonical URL authority. */
+	/**
+	 * Canonical resolver.
+	 *
+	 * @var CanonicalResolver
+	 */
 	private CanonicalResolver $canonical;
 
-	/** @var LanguageManager Language authority. */
+	/**
+	 * Language facade.
+	 *
+	 * @var LanguageManager
+	 */
 	private LanguageManager $language;
 
-	/** @var SchemaNodeIds Stable node-ID authority. */
+	/**
+	 * Stable node-ID generator.
+	 *
+	 * @var SchemaNodeIds
+	 */
 	private SchemaNodeIds $ids;
 
-	/** @var SchemaBreadcrumbResolver Breadcrumb authority. */
+	/**
+	 * Native BreadcrumbList resolver.
+	 *
+	 * @var SchemaBreadcrumbResolver
+	 */
 	private SchemaBreadcrumbResolver $breadcrumb;
 
-	/** @var SchemaIdentityResolver Identity authority. */
+	/**
+	 * Native identity resolver.
+	 *
+	 * @var SchemaIdentityResolver
+	 */
 	private SchemaIdentityResolver $identity;
 
-	/** @var SchemaLocalBusinessResolver LocalBusiness authority. */
+	/**
+	 * Native LocalBusiness resolver.
+	 *
+	 * @var SchemaLocalBusinessResolver
+	 */
 	private SchemaLocalBusinessResolver $local_business;
 
-	/** @var SchemaArticleResolver Article authority. */
+	/**
+	 * Native BlogPosting resolver.
+	 *
+	 * @var SchemaArticleResolver
+	 */
 	private SchemaArticleResolver $article;
 
 	/**
 	 * Create the graph builder.
 	 *
-	 * @param IndexabilityResolver          $indexability   Indexability authority.
-	 * @param CanonicalResolver             $canonical      Canonical URL authority.
-	 * @param LanguageManager               $language       Language authority.
-	 * @param SchemaNodeIds                 $ids            Stable node-ID authority.
-	 * @param SchemaBreadcrumbResolver      $breadcrumb     Breadcrumb authority.
-	 * @param SchemaIdentityResolver        $identity       Identity authority.
-	 * @param SchemaLocalBusinessResolver   $local_business LocalBusiness authority.
-	 * @param SchemaArticleResolver         $article        Article authority.
+	 * @param IndexabilityResolver        $indexability Native indexability authority.
+	 * @param CanonicalResolver           $canonical    Canonical URL authority.
+	 * @param LanguageManager             $language     Active language facade.
+	 * @param SchemaNodeIds               $ids          Stable node-ID generator.
+	 * @param SchemaBreadcrumbResolver    $breadcrumb      Native BreadcrumbList authority.
+	 * @param SchemaIdentityResolver      $identity        Native identity authority.
+	 * @param SchemaLocalBusinessResolver $local_business  Native LocalBusiness authority.
+	 * @param SchemaArticleResolver       $article         Native BlogPosting data authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
@@ -86,6 +118,7 @@ final class SchemaGraphBuilder {
 		}
 
 		$canonical_url = $this->canonical->resolve( $state );
+
 		if ( null === $canonical_url ) {
 			return array();
 		}
@@ -283,6 +316,7 @@ final class SchemaGraphBuilder {
 		}
 
 		$tag = array();
+
 		foreach ( $parts as $index => $part ) {
 			if ( '' === $part ) {
 				continue;

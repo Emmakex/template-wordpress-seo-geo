@@ -39,7 +39,7 @@ final class EntityGeoValidator {
 	/**
 	 * Construct the validator.
 	 *
-	 * @param CrawlerPolicyResolver|null        $crawler_policy Optional crawler authority.
+	 * @param CrawlerPolicyResolver|null       $crawler_policy Optional crawler authority.
 	 * @param SchemaLocalBusinessResolver|null $local_business Optional LocalBusiness authority.
 	 */
 	public function __construct(
@@ -215,6 +215,8 @@ final class EntityGeoValidator {
 	 * @return array{name:string,description:string,same_as:list<string>}|null
 	 */
 	private function validate_person( mixed $value, array &$errors ): ?array {
+		$error_count = count( $errors );
+
 		if ( ! is_array( $value ) ) {
 			$errors[] = 'person-configuration-required';
 			return null;
@@ -244,7 +246,7 @@ final class EntityGeoValidator {
 
 		$same_as = $this->validate_person_urls( $value['same_as'] ?? array(), $errors );
 
-		if ( array() !== $errors ) {
+		if ( count( $errors ) > $error_count ) {
 			return null;
 		}
 

@@ -22,18 +22,21 @@ use SeoGeo\Theme\Setup\SetupPlanner;
  * Renders one WordPress-native preview/apply setup wizard.
  */
 final class AdminSetupWizard {
-	public const PAGE_SLUG    = 'seo-geo-setup';
+	/** Setup screen slug. */
+	public const PAGE_SLUG = 'seo-geo-setup';
+
+	/** Nonce action for preview/apply submissions. */
 	public const NONCE_ACTION = 'seo_geo_setup_preview';
 
 	/**
-	 * Setup plan authority.
+	 * Read-only setup planner.
 	 *
 	 * @var SetupPlanner
 	 */
 	private SetupPlanner $planner;
 
 	/**
-	 * Preview validator.
+	 * Complete setup preview validator.
 	 *
 	 * @var SetupWizardPreview
 	 */
@@ -47,7 +50,7 @@ final class AdminSetupWizard {
 	private SetupExecutor $executor;
 
 	/**
-	 * Localized copy.
+	 * Localized wizard copy.
 	 *
 	 * @var SetupWizardCopy
 	 */
@@ -63,11 +66,11 @@ final class AdminSetupWizard {
 	/**
 	 * Construct the wizard.
 	 *
-	 * @param SetupPlanner|null          $planner        Optional setup planner.
-	 * @param SetupWizardPreview|null    $preview        Optional preview validator.
-	 * @param SetupWizardCopy|null       $copy           Optional localized copy.
-	 * @param CrawlerPolicyResolver|null $crawler_policy Optional crawler authority.
-	 * @param SetupExecutor|null         $executor       Optional atomic executor.
+	 * @param SetupPlanner|null          $planner        Optional read-only setup planner.
+	 * @param SetupWizardPreview|null    $preview        Optional setup validator.
+	 * @param SetupWizardCopy|null       $copy           Optional localized copy resolver.
+	 * @param CrawlerPolicyResolver|null $crawler_policy Optional crawler-policy authority.
+	 * @param SetupExecutor|null         $executor       Optional atomic setup executor.
 	 */
 	public function __construct(
 		?SetupPlanner $planner = null,
@@ -132,7 +135,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render the setup wizard and optional validation preview.
+	 * Render the setup wizard and optional validation result.
 	 */
 	public function render_page(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -155,7 +158,6 @@ final class AdminSetupWizard {
 				$result = $this->preview->validate( $candidate, $submission['preview_confirmed'] );
 			}
 		}
-
 		?>
 		<div class="wrap seo-geo-setup-wizard">
 			<h1><?php echo esc_html( $this->copy->text( 'page_title' ) ); ?></h1>
@@ -173,7 +175,6 @@ final class AdminSetupWizard {
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'themes.php?page=' . self::PAGE_SLUG ) ); ?>">
 				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
-
 				<?php $this->render_preset_languages( $candidate, $plan ); ?>
 				<?php $this->render_identity( $candidate ); ?>
 				<?php $this->render_geo( $candidate ); ?>
@@ -181,21 +182,11 @@ final class AdminSetupWizard {
 				<fieldset>
 					<legend><?php echo esc_html( $this->copy->text( 'step_review' ) ); ?></legend>
 					<p class="seo-geo-setup-wizard__checkbox">
-						<input
-							type="checkbox"
-							id="seo-geo-preview-confirm"
-							name="seo_geo_preview_confirm"
-							value="1"
-						>
+						<input type="checkbox" id="seo-geo-preview-confirm" name="seo_geo_preview_confirm" value="1">
 						<label for="seo-geo-preview-confirm"><?php echo esc_html( $this->copy->text( 'preview_confirm' ) ); ?></label>
 					</p>
 					<p class="seo-geo-setup-wizard__checkbox">
-						<input
-							type="checkbox"
-							id="seo-geo-apply-confirm"
-							name="seo_geo_apply_confirm"
-							value="1"
-						>
+						<input type="checkbox" id="seo-geo-apply-confirm" name="seo_geo_apply_confirm" value="1">
 						<label for="seo-geo-apply-confirm"><?php echo esc_html( $this->copy->text( 'apply_confirm' ) ); ?></label>
 					</p>
 					<p class="submit">
@@ -214,7 +205,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render preset/language fields.
+	 * Render preset and language fields.
 	 *
 	 * @param array<string,mixed> $candidate Current candidate.
 	 * @param array<string,mixed> $plan      Read-only setup plan.
@@ -236,21 +227,13 @@ final class AdminSetupWizard {
 							}
 							$preset_id = $preset['id'];
 							?>
-							<option value="<?php echo esc_attr( $preset_id ); ?>" <?php selected( $candidate['preset'] ?? '', $preset_id ); ?>>
-								<?php echo esc_html( $preset_id ); ?>
-							</option>
+							<option value="<?php echo esc_attr( $preset_id ); ?>" <?php selected( $candidate['preset'] ?? '', $preset_id ); ?>><?php echo esc_html( $preset_id ); ?></option>
 						<?php endforeach; ?>
 					</select>
 				</div>
 				<div>
 					<label for="seo-geo-default-language"><?php echo esc_html( $this->copy->text( 'default_language' ) ); ?></label>
-					<input
-						type="text"
-						id="seo-geo-default-language"
-						name="seo_geo_default_language"
-						value="<?php echo esc_attr( $this->string_value( $candidate['default_language'] ?? null ) ); ?>"
-						required
-					>
+					<input type="text" id="seo-geo-default-language" name="seo_geo_default_language" value="<?php echo esc_attr( $this->string_value( $candidate['default_language'] ?? null ) ); ?>" required>
 				</div>
 				<div>
 					<label for="seo-geo-languages"><?php echo esc_html( $this->copy->text( 'languages' ) ); ?></label>
@@ -260,22 +243,13 @@ final class AdminSetupWizard {
 				<div>
 					<label for="seo-geo-routing"><?php echo esc_html( $this->copy->text( 'routing' ) ); ?></label>
 					<select id="seo-geo-routing" name="seo_geo_routing">
-						<option value="disabled" <?php selected( $candidate['routing'] ?? '', NativeLanguageConfiguration::ROUTING_DISABLED ); ?>>
-							<?php echo esc_html( $this->copy->text( 'routing_disabled' ) ); ?>
-						</option>
-						<option value="prefix" <?php selected( $candidate['routing'] ?? '', NativeLanguageConfiguration::ROUTING_PREFIX ); ?>>
-							<?php echo esc_html( $this->copy->text( 'routing_prefix' ) ); ?>
-						</option>
+						<option value="disabled" <?php selected( $candidate['routing'] ?? '', NativeLanguageConfiguration::ROUTING_DISABLED ); ?>><?php echo esc_html( $this->copy->text( 'routing_disabled' ) ); ?></option>
+						<option value="prefix" <?php selected( $candidate['routing'] ?? '', NativeLanguageConfiguration::ROUTING_PREFIX ); ?>><?php echo esc_html( $this->copy->text( 'routing_prefix' ) ); ?></option>
 					</select>
 				</div>
 				<div>
 					<label for="seo-geo-x-default"><?php echo esc_html( $this->copy->text( 'x_default' ) ); ?></label>
-					<input
-						type="text"
-						id="seo-geo-x-default"
-						name="seo_geo_x_default"
-						value="<?php echo esc_attr( $this->string_value( $candidate['x_default'] ?? null ) ); ?>"
-					>
+					<input type="text" id="seo-geo-x-default" name="seo_geo_x_default" value="<?php echo esc_attr( $this->string_value( $candidate['x_default'] ?? null ) ); ?>">
 				</div>
 			</div>
 		</fieldset>
@@ -283,12 +257,13 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render identity fields.
+	 * Render site identity fields.
 	 *
 	 * @param array<string,mixed> $candidate Current candidate.
 	 */
 	private function render_identity( array $candidate ): void {
-		$local = is_array( $candidate['local_business'] ?? null ) ? $candidate['local_business'] : array();
+		$local  = is_array( $candidate['local_business'] ?? null ) ? $candidate['local_business'] : array();
+		$person = is_array( $candidate['person'] ?? null ) ? $candidate['person'] : array();
 		?>
 		<fieldset>
 			<legend><?php echo esc_html( $this->copy->text( 'step_identity' ) ); ?></legend>
@@ -296,18 +271,30 @@ final class AdminSetupWizard {
 				<div>
 					<label for="seo-geo-entity-type"><?php echo esc_html( $this->copy->text( 'entity_type' ) ); ?></label>
 					<select id="seo-geo-entity-type" name="seo_geo_entity_type" required>
-						<option value="organization" <?php selected( $candidate['site_entity_type'] ?? '', SchemaIdentityResolver::SITE_ENTITY_ORGANIZATION ); ?>>
-							<?php echo esc_html( $this->copy->text( 'entity_organization' ) ); ?>
-						</option>
-						<option value="local_business" <?php selected( $candidate['site_entity_type'] ?? '', SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS ); ?>>
-							<?php echo esc_html( $this->copy->text( 'entity_local_business' ) ); ?>
-						</option>
+						<option value="organization" <?php selected( $candidate['site_entity_type'] ?? '', SchemaIdentityResolver::SITE_ENTITY_ORGANIZATION ); ?>><?php echo esc_html( $this->copy->text( 'entity_organization' ) ); ?></option>
+						<option value="local_business" <?php selected( $candidate['site_entity_type'] ?? '', SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS ); ?>><?php echo esc_html( $this->copy->text( 'entity_local_business' ) ); ?></option>
+						<option value="person" <?php selected( $candidate['site_entity_type'] ?? '', SchemaIdentityResolver::SITE_ENTITY_PERSON ); ?>><?php echo esc_html( $this->copy->text( 'entity_person' ) ); ?></option>
 					</select>
 				</div>
 				<div class="seo-geo-setup-wizard__checkbox">
 					<input type="checkbox" id="seo-geo-confirm-identity" name="seo_geo_confirm_identity" value="1" <?php checked( true === ( $candidate['confirm_identity'] ?? false ) ); ?>>
 					<label for="seo-geo-confirm-identity"><?php echo esc_html( $this->copy->text( 'confirm_identity' ) ); ?></label>
 				</div>
+
+				<div>
+					<label for="seo-geo-person-name"><?php echo esc_html( $this->copy->text( 'person_name' ) ); ?></label>
+					<input type="text" id="seo-geo-person-name" name="seo_geo_person_name" maxlength="160" value="<?php echo esc_attr( $this->string_value( $person['name'] ?? null ) ); ?>">
+				</div>
+				<div>
+					<label for="seo-geo-person-description"><?php echo esc_html( $this->copy->text( 'person_description' ) ); ?></label>
+					<textarea id="seo-geo-person-description" name="seo_geo_person_description" rows="4" maxlength="1000"><?php echo esc_textarea( $this->string_value( $person['description'] ?? null ) ); ?></textarea>
+				</div>
+				<div>
+					<label for="seo-geo-person-same-as"><?php echo esc_html( $this->copy->text( 'person_same_as' ) ); ?></label>
+					<textarea id="seo-geo-person-same-as" name="seo_geo_person_same_as" rows="5"><?php echo esc_textarea( $this->person_url_lines( $person['same_as'] ?? null ) ); ?></textarea>
+					<p class="description"><?php echo esc_html( $this->copy->text( 'person_same_as_help' ) ); ?></p>
+				</div>
+
 				<?php
 				$fields = array(
 					'type'             => 'local_business_type',
@@ -324,15 +311,8 @@ final class AdminSetupWizard {
 				foreach ( $fields as $field => $label_key ) :
 					?>
 					<div>
-						<label for="<?php echo esc_attr( 'seo-geo-' . str_replace( '_', '-', $field ) ); ?>">
-							<?php echo esc_html( $this->copy->text( $label_key ) ); ?>
-						</label>
-						<input
-							type="text"
-							id="<?php echo esc_attr( 'seo-geo-' . str_replace( '_', '-', $field ) ); ?>"
-							name="<?php echo esc_attr( 'seo_geo_lb_' . $field ); ?>"
-							value="<?php echo esc_attr( $this->string_value( $local[ $field ] ?? null ) ); ?>"
-						>
+						<label for="<?php echo esc_attr( 'seo-geo-' . str_replace( '_', '-', $field ) ); ?>"><?php echo esc_html( $this->copy->text( $label_key ) ); ?></label>
+						<input type="text" id="<?php echo esc_attr( 'seo-geo-' . str_replace( '_', '-', $field ) ); ?>" name="<?php echo esc_attr( 'seo_geo_lb_' . $field ); ?>" value="<?php echo esc_attr( $this->string_value( $local[ $field ] ?? null ) ); ?>">
 					</div>
 				<?php endforeach; ?>
 			</div>
@@ -341,7 +321,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render GEO/discovery fields.
+	 * Render GEO and discovery fields.
 	 *
 	 * @param array<string,mixed> $candidate Current candidate.
 	 */
@@ -357,9 +337,7 @@ final class AdminSetupWizard {
 						<label for="<?php echo esc_attr( 'seo-geo-crawler-' . $crawler ); ?>"><code><?php echo esc_html( $user_agent ); ?></code></label>
 						<select id="<?php echo esc_attr( 'seo-geo-crawler-' . $crawler ); ?>" name="<?php echo esc_attr( 'seo_geo_crawler_' . $crawler ); ?>">
 							<?php foreach ( array( 'inherit', 'allow', 'disallow' ) as $state ) : ?>
-								<option value="<?php echo esc_attr( $state ); ?>" <?php selected( $crawler_policy[ $crawler ] ?? 'inherit', $state ); ?>>
-									<?php echo esc_html( $this->copy->text( $state ) ); ?>
-								</option>
+								<option value="<?php echo esc_attr( $state ); ?>" <?php selected( $crawler_policy[ $crawler ] ?? 'inherit', $state ); ?>><?php echo esc_html( $this->copy->text( $state ) ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</div>
@@ -378,9 +356,9 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render preview result.
+	 * Render a preview or execution result.
 	 *
-	 * @param array<string,mixed> $result Validation result.
+	 * @param array<string,mixed> $result Validation or execution result.
 	 */
 	private function render_result( array $result ): void {
 		$valid      = true === ( $result['valid'] ?? false );
@@ -393,25 +371,13 @@ final class AdminSetupWizard {
 
 		$title_key = $valid ? 'result_ready' : 'result_invalid';
 		if ( $execution ) {
-			$title_key = $applied
-				? ( $idempotent ? 'result_unchanged' : 'result_applied' )
-				: 'result_apply_failed';
+			$title_key = $applied ? ( $idempotent ? 'result_unchanged' : 'result_applied' ) : 'result_apply_failed';
 		}
 		?>
-		<section
-			id="seo-geo-setup-results"
-			class="seo-geo-setup-wizard__results"
-			tabindex="-1"
-			aria-live="polite"
-			aria-labelledby="seo-geo-setup-result-title"
-		>
-			<h2 id="seo-geo-setup-result-title">
-				<?php echo esc_html( $this->copy->text( $title_key ) ); ?>
-			</h2>
-
+		<section id="seo-geo-setup-results" class="seo-geo-setup-wizard__results" tabindex="-1" aria-live="polite" aria-labelledby="seo-geo-setup-result-title">
+			<h2 id="seo-geo-setup-result-title"><?php echo esc_html( $this->copy->text( $title_key ) ); ?></h2>
 			<?php $this->render_issues( 'errors', $errors, 'error' ); ?>
 			<?php $this->render_issues( 'warnings', $warnings, 'warning' ); ?>
-
 			<?php if ( $valid ) : ?>
 				<?php
 				$preset_language = is_array( $normalized['preset_language'] ?? null ) ? $normalized['preset_language'] : array();
@@ -441,7 +407,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render validation errors/warnings.
+	 * Render validation issues.
 	 *
 	 * @param string           $label_key Copy label key.
 	 * @param array<int,mixed> $issues    Issue codes.
@@ -477,6 +443,7 @@ final class AdminSetupWizard {
 		$local     = get_option( SchemaLocalBusinessResolver::OPTION_NAME, array() );
 		$llms      = get_option( LlmsTxtResolver::OPTION_NAME, array() );
 		$markdown  = get_option( MarkdownAlternateResolver::OPTION_NAME, array() );
+		$person    = is_array( $identity ) && is_array( $identity['person'] ?? null ) ? $identity['person'] : array();
 
 		$crawlers = array();
 		foreach ( array_keys( $this->crawler_policy->supported_crawlers() ) as $crawler ) {
@@ -491,6 +458,7 @@ final class AdminSetupWizard {
 			'x_default'                   => is_string( $languages['x_default'] ?? null ) ? $languages['x_default'] : '',
 			'site_entity_type'            => is_array( $identity ) && is_string( $identity['site_entity_type'] ?? null ) ? $identity['site_entity_type'] : SchemaIdentityResolver::SITE_ENTITY_ORGANIZATION,
 			'confirm_identity'            => false,
+			'person'                      => $person,
 			'local_business'              => is_array( $local ) ? $local : array(),
 			'crawler_policy'              => $crawlers,
 			'llms_txt_enabled'            => is_array( $llms ) && true === ( $llms['enabled'] ?? false ),
@@ -504,16 +472,7 @@ final class AdminSetupWizard {
 	 * @return array{candidate:array<string,mixed>,preview_confirmed:bool,apply_confirmed:bool}
 	 */
 	private function submitted_candidate(): array {
-		if (
-			! isset( $_POST['_wpnonce'] )
-			|| ! is_string( $_POST['_wpnonce'] )
-			|| ! wp_verify_nonce(
-				sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ),
-				self::NONCE_ACTION
-			)
-		) {
-			wp_die( esc_html( $this->copy->text( 'forbidden' ) ), '', array( 'response' => 403 ) );
-		}
+		$this->require_valid_nonce();
 
 		$local = array();
 		foreach (
@@ -539,6 +498,29 @@ final class AdminSetupWizard {
 			}
 		}
 
+		$person_name = isset( $_POST['seo_geo_person_name'] ) && is_string( $_POST['seo_geo_person_name'] )
+			? sanitize_text_field( wp_unslash( $_POST['seo_geo_person_name'] ) )
+			: '';
+		$person_description = isset( $_POST['seo_geo_person_description'] ) && is_string( $_POST['seo_geo_person_description'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_person_description'] ) )
+			: '';
+		$person_urls = isset( $_POST['seo_geo_person_same_as'] ) && is_string( $_POST['seo_geo_person_same_as'] )
+			? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_person_same_as'] ) )
+			: '';
+
+		$person = array();
+		if ( '' !== $person_name ) {
+			$person['name'] = $person_name;
+		}
+		if ( '' !== $person_description ) {
+			$person['description'] = $person_description;
+		}
+
+		$parsed_person_urls = $this->parse_person_url_lines( $person_urls );
+		if ( array() !== $parsed_person_urls ) {
+			$person['same_as'] = $parsed_person_urls;
+		}
+
 		$crawlers = array();
 		foreach ( array_keys( $this->crawler_policy->supported_crawlers() ) as $crawler ) {
 			$key = 'seo_geo_crawler_' . $crawler;
@@ -547,19 +529,19 @@ final class AdminSetupWizard {
 			}
 		}
 
-		$language_lines   = isset( $_POST['seo_geo_languages'] ) && is_string( $_POST['seo_geo_languages'] )
+		$language_lines = isset( $_POST['seo_geo_languages'] ) && is_string( $_POST['seo_geo_languages'] )
 			? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_languages'] ) )
 			: '';
-		$preset           = isset( $_POST['seo_geo_preset'] ) && is_string( $_POST['seo_geo_preset'] )
+		$preset = isset( $_POST['seo_geo_preset'] ) && is_string( $_POST['seo_geo_preset'] )
 			? sanitize_key( wp_unslash( $_POST['seo_geo_preset'] ) )
 			: '';
 		$default_language = isset( $_POST['seo_geo_default_language'] ) && is_string( $_POST['seo_geo_default_language'] )
 			? sanitize_text_field( wp_unslash( $_POST['seo_geo_default_language'] ) )
 			: '';
-		$routing          = isset( $_POST['seo_geo_routing'] ) && is_string( $_POST['seo_geo_routing'] )
+		$routing = isset( $_POST['seo_geo_routing'] ) && is_string( $_POST['seo_geo_routing'] )
 			? sanitize_key( wp_unslash( $_POST['seo_geo_routing'] ) )
 			: '';
-		$x_default        = isset( $_POST['seo_geo_x_default'] ) && is_string( $_POST['seo_geo_x_default'] )
+		$x_default = isset( $_POST['seo_geo_x_default'] ) && is_string( $_POST['seo_geo_x_default'] )
 			? sanitize_text_field( wp_unslash( $_POST['seo_geo_x_default'] ) )
 			: '';
 		$site_entity_type = isset( $_POST['seo_geo_entity_type'] ) && is_string( $_POST['seo_geo_entity_type'] )
@@ -575,6 +557,7 @@ final class AdminSetupWizard {
 				'x_default'                   => '' !== $x_default ? $x_default : null,
 				'site_entity_type'            => $site_entity_type,
 				'confirm_identity'            => isset( $_POST['seo_geo_confirm_identity'] ),
+				'person'                      => $person,
 				'local_business'              => $local,
 				'crawler_policy'              => $crawlers,
 				'llms_txt_enabled'            => isset( $_POST['seo_geo_llms_txt_enabled'] ),
@@ -597,6 +580,19 @@ final class AdminSetupWizard {
 			return null;
 		}
 
+		$this->require_valid_nonce();
+
+		$action = isset( $_POST['seo_geo_setup_action'] ) && is_string( $_POST['seo_geo_setup_action'] )
+			? sanitize_key( wp_unslash( $_POST['seo_geo_setup_action'] ) )
+			: '';
+
+		return in_array( $action, array( 'preview', 'apply' ), true ) ? $action : null;
+	}
+
+	/**
+	 * Require the setup nonce before reading submission state.
+	 */
+	private function require_valid_nonce(): void {
 		if (
 			! isset( $_POST['_wpnonce'] )
 			|| ! is_string( $_POST['_wpnonce'] )
@@ -607,12 +603,6 @@ final class AdminSetupWizard {
 		) {
 			wp_die( esc_html( $this->copy->text( 'forbidden' ) ), '', array( 'response' => 403 ) );
 		}
-
-		$action = isset( $_POST['seo_geo_setup_action'] ) && is_string( $_POST['seo_geo_setup_action'] )
-			? sanitize_key( wp_unslash( $_POST['seo_geo_setup_action'] ) )
-			: '';
-
-		return in_array( $action, array( 'preview', 'apply' ), true ) ? $action : null;
 	}
 
 	/**
@@ -652,6 +642,27 @@ final class AdminSetupWizard {
 	}
 
 	/**
+	 * Parse public profile URL lines without asserting their ownership.
+	 *
+	 * @param string $value Candidate URL lines.
+	 * @return list<string>
+	 */
+	private function parse_person_url_lines( string $value ): array {
+		$split_lines = preg_split( '/\r\n|\r|\n/', $value );
+		$lines       = is_array( $split_lines ) ? $split_lines : array();
+		$urls        = array();
+
+		foreach ( $lines as $line ) {
+			$line = trim( $line );
+			if ( '' !== $line ) {
+				$urls[] = $line;
+			}
+		}
+
+		return array_values( array_unique( $urls ) );
+	}
+
+	/**
 	 * Convert a language map into editable lines.
 	 *
 	 * @param mixed $value Candidate language map.
@@ -669,6 +680,19 @@ final class AdminSetupWizard {
 		}
 
 		return implode( "\n", $lines );
+	}
+
+	/**
+	 * Convert explicit public profile URLs into editable lines.
+	 *
+	 * @param mixed $value Candidate URL list.
+	 */
+	private function person_url_lines( mixed $value ): string {
+		if ( ! is_array( $value ) ) {
+			return '';
+		}
+
+		return implode( "\n", array_values( array_filter( $value, 'is_string' ) ) );
 	}
 
 	/**
@@ -725,8 +749,8 @@ final class AdminSetupWizard {
 		$crawler  = is_array( $value['crawler_policy']['value'] ?? null ) ? $value['crawler_policy']['value'] : array();
 		$llms     = true === ( $value['llms_txt']['enabled'] ?? false ) ? 'llms.txt:on' : 'llms.txt:off';
 		$markdown = true === ( $value['markdown']['enabled'] ?? false ) ? 'markdown:on' : 'markdown:off';
+		$parts    = array( $llms, $markdown );
 
-		$parts = array( $llms, $markdown );
 		foreach ( $crawler as $key => $state ) {
 			if ( is_string( $key ) && is_string( $state ) ) {
 				$parts[] = $key . ':' . $state;
