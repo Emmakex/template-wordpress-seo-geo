@@ -4,6 +4,7 @@
  */
 
 use SeoGeo\Manager\Support\PermalinkRedirectRuntime;
+use SeoGeo\Manager\Support\PermalinkStructureRuntime;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	throw new RuntimeException( 'WordPress is not loaded.' );
@@ -62,14 +63,23 @@ $duplicate_preview = PermalinkRedirectRuntime::preview(
 );
 seo_geo_manager_redirect_runtime_accept( false === ( $duplicate_preview['safe_to_activate'] ?? true ), 'Duplicate redirect source was not blocked.' );
 
-$operation_id = wp_generate_uuid4();
-$active = PermalinkRedirectRuntime::activate( $redirects, $operation_id, $plan_fingerprint );
+$original_structure = (string) get_option( 'permalink_structure', '' );
+$armed_structure    = '/atomic-target/%postname%/';
+$operation_id       = wp_generate_uuid4();
+$active             = PermalinkRedirectRuntime::activate( $redirects, $operation_id, $plan_fingerprint, $armed_structure );
 seo_geo_manager_redirect_runtime_accept( ! is_wp_error( $active ), 'Redirect runtime activation failed.' );
 seo_geo_manager_redirect_runtime_accept( true === ( $active['active'] ?? false ), 'Redirect runtime did not become active.' );
+seo_geo_manager_redirect_runtime_accept( false === ( $active['effective'] ?? true ), 'Armed redirect runtime became effective before its structure was active.' );
 seo_geo_manager_redirect_runtime_accept( $operation_id === ( $active['operation_id'] ?? '' ), 'Redirect runtime operation binding mismatch.' );
 seo_geo_manager_redirect_runtime_accept( 2 === (int) ( $active['redirect_count'] ?? 0 ), 'Active redirect runtime count mismatch.' );
+seo_geo_manager_redirect_runtime_accept( null === PermalinkRedirectRuntime::resolve( '/legacy-one/' ), 'Armed runtime redirected before the expected permalink structure was active.' );
 $runtime_fingerprint = (string) ( $active['fingerprint'] ?? '' );
 seo_geo_manager_redirect_runtime_accept( '' !== $runtime_fingerprint, 'Active redirect runtime fingerprint missing.' );
+
+$structure_write = PermalinkStructureRuntime::set( $armed_structure );
+seo_geo_manager_redirect_runtime_accept( ! is_wp_error( $structure_write ), 'Could not activate the armed permalink structure.' );
+$effective = PermalinkRedirectRuntime::snapshot();
+seo_geo_manager_redirect_runtime_accept( true === ( $effective['effective'] ?? false ), 'Redirect runtime did not become effective with the expected structure.' );
 
 $resolved = PermalinkRedirectRuntime::resolve( '/legacy-one/?utm_source=manager-ci' );
 seo_geo_manager_redirect_runtime_accept( is_array( $resolved ), 'Known historical source did not resolve.' );
@@ -84,8 +94,9 @@ $rest_response = rest_do_request( $rest_request );
 $rest_data     = $rest_response->get_data();
 seo_geo_manager_redirect_runtime_accept( 200 === $rest_response->get_status() && is_array( $rest_data ), 'Redirect runtime REST status endpoint failed.' );
 seo_geo_manager_redirect_runtime_accept( $runtime_fingerprint === ( $rest_data['fingerprint'] ?? '' ), 'REST runtime snapshot fingerprint mismatch.' );
+seo_geo_manager_redirect_runtime_accept( true === ( $rest_data['effective'] ?? false ), 'REST runtime snapshot did not expose effective state.' );
 
-$conflict = PermalinkRedirectRuntime::activate( $redirects, wp_generate_uuid4(), $plan_fingerprint );
+$conflict = PermalinkRedirectRuntime::activate( $redirects, wp_generate_uuid4(), $plan_fingerprint, $armed_structure );
 seo_geo_manager_redirect_runtime_accept( is_wp_error( $conflict ), 'A second redirect runtime unexpectedly replaced the active runtime.' );
 seo_geo_manager_redirect_runtime_accept( 'seo_geo_manager_redirect_runtime_conflict' === $conflict->get_error_code(), 'Unexpected active-runtime conflict code.' );
 
@@ -93,6 +104,10 @@ $stale_deactivate = PermalinkRedirectRuntime::deactivate( $operation_id, str_rep
 seo_geo_manager_redirect_runtime_accept( is_wp_error( $stale_deactivate ), 'Stale runtime fingerprint unexpectedly allowed cleanup.' );
 seo_geo_manager_redirect_runtime_accept( 'seo_geo_manager_redirect_runtime_stale' === $stale_deactivate->get_error_code(), 'Unexpected stale runtime cleanup code.' );
 seo_geo_manager_redirect_runtime_accept( true === ( PermalinkRedirectRuntime::snapshot()['active'] ?? false ), 'Stale cleanup removed the runtime.' );
+
+$structure_restore = PermalinkStructureRuntime::restore( $original_structure );
+seo_geo_manager_redirect_runtime_accept( ! is_wp_error( $structure_restore ), 'Could not restore the original structure before runtime cleanup.' );
+seo_geo_manager_redirect_runtime_accept( false === ( PermalinkRedirectRuntime::snapshot()['effective'] ?? true ), 'Runtime remained effective after restoring the old structure.' );
 
 $inactive = PermalinkRedirectRuntime::deactivate( $operation_id, $runtime_fingerprint );
 seo_geo_manager_redirect_runtime_accept( ! is_wp_error( $inactive ), 'Owned redirect runtime cleanup failed.' );
@@ -106,6 +121,7 @@ echo wp_json_encode(
 		'one_hop_guard'            => true,
 		'duplicate_source_guard'   => true,
 		'activation_guard'         => true,
+		'armed_structure_guard'    => true,
 		'query_preservation'       => true,
 		'operation_binding_guard'  => true,
 		'stale_cleanup_guard'      => true,
