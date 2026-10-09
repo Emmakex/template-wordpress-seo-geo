@@ -23,13 +23,27 @@ function seo_geo_manager_permalink_request( string $route ): array {
 	);
 }
 
+function seo_geo_manager_set_permalink_fixture( string $structure ): void {
+	global $wpdb;
+	$updated = $wpdb->update(
+		$wpdb->options,
+		array( 'option_value' => $structure ),
+		array( 'option_name' => 'permalink_structure' ),
+		array( '%s' ),
+		array( '%s' )
+	);
+	seo_geo_manager_permalink_accept( false !== $updated, 'Could not persist permalink fixture.' );
+	wp_cache_delete( 'permalink_structure', 'options' );
+}
+
 wp_set_current_user( 1 );
 seo_geo_manager_permalink_accept( current_user_can( 'manage_options' ), 'Acceptance administrator could not be loaded.' );
 
 $original = (string) get_option( 'permalink_structure', '' );
 $token    = '{d276abfeceab40cca0e158fc6217176554b8e54a1f85b6eb004941797db52171}';
 $broken   = '/' . $token . 'category' . $token . '/' . $token . 'postname' . $token . '/';
-update_option( 'permalink_structure', $broken );
+seo_geo_manager_set_permalink_fixture( $broken );
+seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Corrupted permalink fixture was not stored byte-for-byte.' );
 
 $category = wp_insert_term( 'Permalink Plan Category', 'category', array( 'slug' => 'permalink-plan-category' ) );
 seo_geo_manager_permalink_accept( ! is_wp_error( $category ), 'Could not create permalink-plan category.' );
@@ -73,7 +87,7 @@ foreach ( (array) ( $plan['data']['redirects'] ?? array() ) as $redirect ) {
 	}
 }
 seo_geo_manager_permalink_accept( is_array( $fixture_redirect ), 'Redirect plan did not include the fixture post.' );
-seo_geo_manager_permalink_accept( false !== strpos( (string) $fixture_redirect['old_url'], $token . 'category' . $token ), 'Old URL did not preserve the malformed structure.' );
+seo_geo_manager_permalink_accept( false !== strpos( rawurldecode( (string) $fixture_redirect['old_url'] ), $token . 'category' . $token ), 'Old URL did not preserve the malformed structure.' );
 seo_geo_manager_permalink_accept( false !== strpos( (string) $fixture_redirect['new_url'], '/permalink-plan-category/permalink-plan-post/' ), 'New URL did not resolve the normalized category/postname structure.' );
 seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Redirect planning mutated permalink_structure.' );
 
@@ -105,7 +119,7 @@ seo_geo_manager_permalink_accept( false === ( $collision_plan['data']['safe_to_a
 seo_geo_manager_permalink_accept( 0 < (int) ( $collision_plan['data']['collision_count'] ?? 0 ), 'Redirect plan did not expose the expected collision.' );
 seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Collision scan mutated permalink_structure.' );
 
-update_option( 'permalink_structure', $original );
+seo_geo_manager_set_permalink_fixture( $original );
 
 echo wp_json_encode(
 	array(
