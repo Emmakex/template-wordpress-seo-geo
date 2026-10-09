@@ -14,6 +14,7 @@ on:
       - 'scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php'
       - 'scripts/ci/seo-geo-manager-operation-history-acceptance.php'
       - 'scripts/ci/seo-geo-manager-rendered-verification-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-field-gate-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   push:
@@ -31,6 +32,7 @@ on:
       - 'scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php'
       - 'scripts/ci/seo-geo-manager-operation-history-acceptance.php'
       - 'scripts/ci/seo-geo-manager-rendered-verification-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-field-gate-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   workflow_dispatch:
@@ -44,7 +46,7 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: M1/M2 + Theme + SEO authority + atomic runtime + history + rendered verification
+    name: M1/M2 + Theme + SEO authority + atomic runtime + history + rendered verification + field gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -64,11 +66,13 @@ jobs:
           php -l scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php
           php -l scripts/ci/seo-geo-manager-operation-history-acceptance.php
           php -l scripts/ci/seo-geo-manager-rendered-verification-acceptance.php
+          php -l scripts/ci/seo-geo-manager-field-gate-acceptance.php
           node --check packages/seo-geo-manager/assets/admin/dashboard.js
           node --check packages/seo-geo-manager/assets/admin/json-export-actions.js
           node --check packages/seo-geo-manager/assets/admin/correction-actions.js
           node --check packages/seo-geo-manager/assets/admin/permalink-actions.js
           node --check packages/seo-geo-manager/assets/admin/operation-history.js
+          node --check packages/seo-geo-manager/assets/admin/field-gate.js
 
       - name: Pull pinned WordPress fixture images
         run: |
@@ -79,5 +83,5 @@ jobs:
       - name: Manager WordPress acceptance
         run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
 
-      - name: Permalink authority, atomic redirect, history and rendered verification acceptance
+      - name: Permalink authority, atomic redirect, history, rendered verification and field gate acceptance
         run: bash scripts/ci/seo-geo-manager-permalink-acceptance.sh
