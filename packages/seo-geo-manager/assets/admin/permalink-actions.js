@@ -46,16 +46,27 @@
 		return row;
 	}
 
+	function collisionLabel( type ) {
+		const labels = {
+			'duplicate-old-source': 'URL antigua ambigua',
+			'duplicate-new-target': 'destino nuevo duplicado',
+			'target-collides-with-existing-public-resource': 'destino ocupado por otro recurso público',
+			'invalid-generated-url': 'URL generada no válida',
+			'host-change-detected': 'cambio de host no permitido'
+		};
+		return labels[ type ] || type || 'colisión';
+	}
+
 	function renderRedirectSample( plan, body ) {
 		const redirects = Array.isArray( plan.redirects ) ? plan.redirects : [];
 		if ( ! redirects.length ) return;
-		body.appendChild( text( 'h3', 'Muestra del mapa 301' ) );
+		body.appendChild( text( 'h3', 'Muestra del mapa 301 propuesto' ) );
 		const list = document.createElement( 'ol' );
 		redirects.slice( 0, 20 ).forEach( ( redirect ) => {
 			list.appendChild( text( 'li', `#${ redirect.post_id || '—' } · ${ redirect.old_path || redirect.old_url || '—' } → ${ redirect.new_path || redirect.new_url || '—' }` ) );
 		} );
 		body.appendChild( list );
-		if ( redirects.length > 20 ) body.appendChild( text( 'p', `Se muestran 20 de ${ redirects.length } redirecciones planificadas.`, 'description' ) );
+		if ( redirects.length > 20 ) body.appendChild( text( 'p', `Se muestran 20 de ${ redirects.length } cambios de URL calculados.`, 'description' ) );
 	}
 
 	function renderCollisions( plan, body ) {
@@ -64,10 +75,12 @@
 		body.appendChild( text( 'h3', 'Colisiones o bloqueos detectados' ) );
 		const list = document.createElement( 'ul' );
 		collisions.slice( 0, 20 ).forEach( ( collision ) => {
-			const target = collision.new_url || collision.old_url || 'sin URL';
-			list.appendChild( text( 'li', `${ collision.type || 'colisión' } · post #${ collision.post_id || '—' } · ${ target }` ) );
+			const target = collision.old_url || collision.new_url || 'sin URL';
+			const counterpart = collision.other_post_id ? ` · también post #${ collision.other_post_id }` : '';
+			list.appendChild( text( 'li', `${ collisionLabel( collision.type ) } · post #${ collision.post_id || '—' }${ counterpart } · ${ target }` ) );
 		} );
 		body.appendChild( list );
+		if ( collisions.length > 20 ) body.appendChild( text( 'p', `Se muestran 20 de ${ collisions.length } bloqueos detectados.`, 'description' ) );
 	}
 
 	async function renderRedirectPlan( status, body, planButton, apply ) {
@@ -78,21 +91,27 @@
 			body.appendChild( text( 'hr', '' ) );
 			body.appendChild( text( 'h3', 'Plan SEO de redirecciones' ) );
 			body.appendChild( renderFact( 'Entradas publicadas escaneadas', plan.published_posts_scanned ?? 0 ) );
-			body.appendChild( renderFact( 'Redirecciones 301 planificadas', plan.planned_redirects ?? 0 ) );
+			body.appendChild( renderFact( 'Cambios de URL calculados', plan.planned_redirects ?? 0 ) );
 			body.appendChild( renderFact( 'URLs sin cambio', plan.skipped_unchanged ?? 0 ) );
-			body.appendChild( renderFact( 'Colisiones', plan.collision_count ?? 0 ) );
+			body.appendChild( renderFact( 'Colisiones totales', plan.collision_count ?? 0 ) );
+			body.appendChild( renderFact( 'URLs antiguas ambiguas', plan.ambiguous_old_source_count ?? 0 ) );
+			body.appendChild( renderFact( 'Necesita URLs históricas autoritativas', plan.requires_authoritative_legacy_urls ? 'sí' : 'no' ) );
 			body.appendChild( renderFact( 'Escaneo completo', plan.complete_scan ? 'sí' : 'no' ) );
 			body.appendChild( renderFact( 'Fingerprint del plan', plan.plan_fingerprint || '—' ) );
 			renderCollisions( plan, body );
 			renderRedirectSample( plan, body );
 
 			if ( plan.safe_to_apply ) {
-				status.textContent = 'Plan completo y sin colisiones. Apply continúa bloqueado hasta implementar el runtime 301, la aprobación explícita y el rollback de estructura.';
+				status.textContent = 'Plan completo, con origen único por entrada y sin colisiones. Apply continúa bloqueado hasta implementar el runtime 301, la aprobación explícita y el rollback de estructura.';
+			} else if ( plan.requires_authoritative_legacy_urls ) {
+				status.textContent = plan.block_reason || 'La URL antigua es compartida por varias entradas; no se puede construir un 301 exacto por entrada desde la estructura corrupta.';
 			} else {
 				status.textContent = plan.block_reason || 'El plan no es todavía seguro: hay colisiones, URLs no reconciliadas o el escaneo quedó incompleto.';
 			}
 			apply.disabled = true;
-			apply.title = 'Apply permanece bloqueado hasta implementar y validar el runtime 301 y el rollback de la estructura.';
+			apply.title = plan.requires_authoritative_legacy_urls
+				? 'Apply bloqueado: primero hay que recuperar URLs históricas autoritativas o definir una política segura específica para este clon.'
+				: 'Apply permanece bloqueado hasta implementar y validar el runtime 301 y el rollback de la estructura.';
 		} catch ( error ) {
 			planButton.disabled = false;
 			status.textContent = error && error.message ? error.message : 'No se pudo generar el plan SEO de redirecciones.';
@@ -143,7 +162,7 @@
 			if ( preview.safe_candidate ) {
 				planButton.disabled = false;
 				status.textContent = preview.redirect_plan_required
-					? 'Candidato determinista detectado. Genera ahora el mapa 301 completo y la comprobación de colisiones.'
+					? 'Candidato determinista detectado. Genera ahora el mapa completo y comprobaremos si cada URL antigua identifica una única entrada.'
 					: 'Candidato determinista detectado. No hay entradas publicadas que requieran redirección.';
 				planButton.addEventListener( 'click', () => renderRedirectPlan( status, body, planButton, apply ), { once: true } );
 			} else {
