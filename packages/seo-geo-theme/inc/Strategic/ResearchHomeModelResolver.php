@@ -131,7 +131,7 @@ final class ResearchHomeModelResolver {
 			$value         = $normalized_slots[ $required_slot ] ?? null;
 
 			if ( in_array( $required_slot, self::LINK_SLOTS, true ) ) {
-				if ( ! is_array( $value ) || ! isset( $value['label'], $value['url'] ) ) {
+				if ( ! is_array( $value ) ) {
 					return null;
 				}
 				continue;
