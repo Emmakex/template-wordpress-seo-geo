@@ -86,17 +86,13 @@ final class AdminSetupWizard {
 		$this->executor       = $executor ?? new SetupExecutor( $this->preview, $this->planner );
 	}
 
-	/**
-	 * Register admin hooks.
-	 */
+	/** Register admin hooks. */
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	}
 
-	/**
-	 * Register the Appearance screen.
-	 */
+	/** Register the Appearance screen. */
 	public function register_page(): void {
 		add_theme_page(
 			$this->copy->text( 'page_title' ),
@@ -134,9 +130,7 @@ final class AdminSetupWizard {
 		);
 	}
 
-	/**
-	 * Render the setup wizard and optional validation result.
-	 */
+	/** Render the setup wizard and optional validation preview. */
 	public function render_page(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html( $this->copy->text( 'forbidden' ) ), '', array( 'response' => 403 ) );
@@ -162,9 +156,7 @@ final class AdminSetupWizard {
 		<div class="wrap seo-geo-setup-wizard">
 			<h1><?php echo esc_html( $this->copy->text( 'page_title' ) ); ?></h1>
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
-			<div class="notice notice-info inline">
-				<p><?php echo esc_html( $this->copy->text( 'read_only_notice' ) ); ?></p>
-			</div>
+			<div class="notice notice-info inline"><p><?php echo esc_html( $this->copy->text( 'read_only_notice' ) ); ?></p></div>
 
 			<ol class="seo-geo-setup-wizard__steps" aria-label="<?php echo esc_attr( $this->copy->text( 'page_title' ) ); ?>">
 				<li class="seo-geo-setup-wizard__step"><?php echo esc_html( $this->copy->text( 'step_preset' ) ); ?></li>
@@ -205,7 +197,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render preset and language fields.
+	 * Render preset/language fields.
 	 *
 	 * @param array<string,mixed> $candidate Current candidate.
 	 * @param array<string,mixed> $plan      Read-only setup plan.
@@ -257,7 +249,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render site identity fields.
+	 * Render identity fields.
 	 *
 	 * @param array<string,mixed> $candidate Current candidate.
 	 */
@@ -321,7 +313,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render GEO and discovery fields.
+	 * Render GEO/discovery fields.
 	 *
 	 * @param array<string,mixed> $candidate Current candidate.
 	 */
@@ -356,9 +348,9 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render a preview or execution result.
+	 * Render preview result.
 	 *
-	 * @param array<string,mixed> $result Validation or execution result.
+	 * @param array<string,mixed> $result Validation result.
 	 */
 	private function render_result( array $result ): void {
 		$valid      = true === ( $result['valid'] ?? false );
@@ -407,7 +399,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Render validation issues.
+	 * Render validation errors/warnings.
 	 *
 	 * @param string           $label_key Copy label key.
 	 * @param array<int,mixed> $issues    Issue codes.
@@ -472,53 +464,70 @@ final class AdminSetupWizard {
 	 * @return array{candidate:array<string,mixed>,preview_confirmed:bool,apply_confirmed:bool}
 	 */
 	private function submitted_candidate(): array {
-		$this->require_valid_nonce();
+		if (
+			! isset( $_POST['_wpnonce'] )
+			|| ! is_string( $_POST['_wpnonce'] )
+			|| ! wp_verify_nonce(
+				sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ),
+				self::NONCE_ACTION
+			)
+		) {
+			wp_die( esc_html( $this->copy->text( 'forbidden' ) ), '', array( 'response' => 403 ) );
+		}
+
+		$site_entity_type = isset( $_POST['seo_geo_entity_type'] ) && is_string( $_POST['seo_geo_entity_type'] )
+			? sanitize_key( wp_unslash( $_POST['seo_geo_entity_type'] ) )
+			: '';
 
 		$local = array();
-		foreach (
-			array(
-				'type',
-				'street_address',
-				'address_locality',
-				'address_region',
-				'postal_code',
-				'address_country',
-				'telephone',
-				'price_range',
-				'latitude',
-				'longitude',
-			) as $field
-		) {
-			$key = 'seo_geo_lb_' . $field;
-			if ( isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ) {
-				$value = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
-				if ( '' !== $value ) {
-					$local[ $field ] = $value;
+		if ( SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS === $site_entity_type ) {
+			foreach (
+				array(
+					'type',
+					'street_address',
+					'address_locality',
+					'address_region',
+					'postal_code',
+					'address_country',
+					'telephone',
+					'price_range',
+					'latitude',
+					'longitude',
+				) as $field
+			) {
+				$key = 'seo_geo_lb_' . $field;
+				if ( isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ) {
+					$value = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+					if ( '' !== $value ) {
+						$local[ $field ] = $value;
+					}
 				}
 			}
 		}
 
-		$person_name = isset( $_POST['seo_geo_person_name'] ) && is_string( $_POST['seo_geo_person_name'] )
-			? sanitize_text_field( wp_unslash( $_POST['seo_geo_person_name'] ) )
-			: '';
-		$person_description = isset( $_POST['seo_geo_person_description'] ) && is_string( $_POST['seo_geo_person_description'] )
-			? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_person_description'] ) )
-			: '';
-		$person_urls = isset( $_POST['seo_geo_person_same_as'] ) && is_string( $_POST['seo_geo_person_same_as'] )
-			? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_person_same_as'] ) )
-			: '';
-
 		$person = array();
-		if ( '' !== $person_name ) {
-			$person['name'] = $person_name;
-		}
-		if ( '' !== $person_description ) {
-			$person['description'] = $person_description;
-		}
+		if ( SchemaIdentityResolver::SITE_ENTITY_PERSON === $site_entity_type ) {
+			$person_name        = isset( $_POST['seo_geo_person_name'] ) && is_string( $_POST['seo_geo_person_name'] )
+				? sanitize_text_field( wp_unslash( $_POST['seo_geo_person_name'] ) )
+				: '';
+			$person_description = isset( $_POST['seo_geo_person_description'] ) && is_string( $_POST['seo_geo_person_description'] )
+				? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_person_description'] ) )
+				: '';
+			$person_urls        = isset( $_POST['seo_geo_person_same_as'] ) && is_string( $_POST['seo_geo_person_same_as'] )
+				? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_person_same_as'] ) )
+				: '';
 
-		$parsed_person_urls = $this->parse_person_url_lines( $person_urls );
-		if ( array() !== $parsed_person_urls ) {
-			$person['same_as'] = $parsed_person_urls;
+			if ( '' !== $person_name ) {
+				$person['name'] = $person_name;
+			}
+			if ( '' !== $person_description ) {
+				$person['description'] = $person_description;
+			}
+
+			$parsed_person_urls = $this->parse_person_url_lines( $person_urls );
+			if ( array() !== $parsed_person_urls ) {
+				$person['same_as'] = $parsed_person_urls;
+			}
 		}
 
 		$crawlers = array();
@@ -529,23 +538,20 @@ final class AdminSetupWizard {
 			}
 		}
 
-		$language_lines = isset( $_POST['seo_geo_languages'] ) && is_string( $_POST['seo_geo_languages'] )
+		$language_lines   = isset( $_POST['seo_geo_languages'] ) && is_string( $_POST['seo_geo_languages'] )
 			? sanitize_textarea_field( wp_unslash( $_POST['seo_geo_languages'] ) )
 			: '';
-		$preset = isset( $_POST['seo_geo_preset'] ) && is_string( $_POST['seo_geo_preset'] )
+		$preset           = isset( $_POST['seo_geo_preset'] ) && is_string( $_POST['seo_geo_preset'] )
 			? sanitize_key( wp_unslash( $_POST['seo_geo_preset'] ) )
 			: '';
 		$default_language = isset( $_POST['seo_geo_default_language'] ) && is_string( $_POST['seo_geo_default_language'] )
 			? sanitize_text_field( wp_unslash( $_POST['seo_geo_default_language'] ) )
 			: '';
-		$routing = isset( $_POST['seo_geo_routing'] ) && is_string( $_POST['seo_geo_routing'] )
+		$routing          = isset( $_POST['seo_geo_routing'] ) && is_string( $_POST['seo_geo_routing'] )
 			? sanitize_key( wp_unslash( $_POST['seo_geo_routing'] ) )
 			: '';
-		$x_default = isset( $_POST['seo_geo_x_default'] ) && is_string( $_POST['seo_geo_x_default'] )
+		$x_default        = isset( $_POST['seo_geo_x_default'] ) && is_string( $_POST['seo_geo_x_default'] )
 			? sanitize_text_field( wp_unslash( $_POST['seo_geo_x_default'] ) )
-			: '';
-		$site_entity_type = isset( $_POST['seo_geo_entity_type'] ) && is_string( $_POST['seo_geo_entity_type'] )
-			? sanitize_key( wp_unslash( $_POST['seo_geo_entity_type'] ) )
 			: '';
 
 		return array(
@@ -568,9 +574,7 @@ final class AdminSetupWizard {
 		);
 	}
 
-	/**
-	 * Resolve the explicit wizard POST action.
-	 */
+	/** Resolve the explicit wizard POST action. */
 	private function submission_action(): ?string {
 		$method = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] )
 			? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) )
@@ -580,19 +584,6 @@ final class AdminSetupWizard {
 			return null;
 		}
 
-		$this->require_valid_nonce();
-
-		$action = isset( $_POST['seo_geo_setup_action'] ) && is_string( $_POST['seo_geo_setup_action'] )
-			? sanitize_key( wp_unslash( $_POST['seo_geo_setup_action'] ) )
-			: '';
-
-		return in_array( $action, array( 'preview', 'apply' ), true ) ? $action : null;
-	}
-
-	/**
-	 * Require the setup nonce before reading submission state.
-	 */
-	private function require_valid_nonce(): void {
 		if (
 			! isset( $_POST['_wpnonce'] )
 			|| ! is_string( $_POST['_wpnonce'] )
@@ -603,6 +594,12 @@ final class AdminSetupWizard {
 		) {
 			wp_die( esc_html( $this->copy->text( 'forbidden' ) ), '', array( 'response' => 403 ) );
 		}
+
+		$action = isset( $_POST['seo_geo_setup_action'] ) && is_string( $_POST['seo_geo_setup_action'] )
+			? sanitize_key( wp_unslash( $_POST['seo_geo_setup_action'] ) )
+			: '';
+
+		return in_array( $action, array( 'preview', 'apply' ), true ) ? $action : null;
 	}
 
 	/**
@@ -642,7 +639,7 @@ final class AdminSetupWizard {
 	}
 
 	/**
-	 * Parse public profile URL lines without asserting their ownership.
+	 * Parse public profile URL lines without asserting ownership.
 	 *
 	 * @param string $value Candidate URL lines.
 	 * @return list<string>
