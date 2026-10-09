@@ -1,6 +1,6 @@
 <?php
 /**
- * Read-only permalink repair preview endpoints.
+ * Permalink inspection, planning, apply and rollback endpoints.
  *
  * @package SeoGeoManager
  */
@@ -9,7 +9,10 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
+use SeoGeo\Manager\Changes\OperationStore;
+use SeoGeo\Manager\Changes\PermalinkChangeEngine;
 use SeoGeo\Manager\Support\AuthoritativePermalinkPlanner;
+use SeoGeo\Manager\Support\EnvironmentPolicy;
 use SeoGeo\Manager\Support\LegacyPermalinkAuthority;
 use SeoGeo\Manager\Support\PermalinkInspector;
 use SeoGeo\Manager\Support\PermalinkRedirectPlanner;
@@ -59,6 +62,31 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/permalinks/apply',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'apply' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/permalinks/operations/(?P<operation_id>[a-f0-9\-]{36})/rollback',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'rollback' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+				'args'                => array(
+					'operation_id' => array(
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
 	}
 
 	public static function can_manage(): bool {
@@ -88,5 +116,52 @@ final class PermalinkController {
 		$expected_authority_fingerprint = isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? $payload['authority_fingerprint'] : '';
 
 		return new WP_REST_Response( AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint ), 200 );
+	}
+
+	/**
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public static function apply( WP_REST_Request $request ) {
+		$payload = $request->get_json_params();
+		$payload = is_array( $payload ) ? $payload : array();
+		$guard   = EnvironmentPolicy::validate_payload( $payload );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
+
+		$result = PermalinkChangeEngine::apply( $payload );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response( $result, 200 );
+	}
+
+	/**
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public static function rollback( WP_REST_Request $request ) {
+		$payload = $request->get_json_params();
+		$payload = is_array( $payload ) ? $payload : array();
+		$guard   = EnvironmentPolicy::validate_payload( $payload );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
+
+		$operation_id = (string) $request->get_param( 'operation_id' );
+		$operation    = OperationStore::get( $operation_id );
+		if ( is_array( $operation ) ) {
+			$operation_guard = EnvironmentPolicy::validate_operation_environment( $operation );
+			if ( is_wp_error( $operation_guard ) ) {
+				return $operation_guard;
+			}
+		}
+
+		$result = PermalinkChangeEngine::rollback( $operation_id );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response( $result, 200 );
 	}
 }
