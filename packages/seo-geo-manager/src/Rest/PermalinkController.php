@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
+use SeoGeo\Manager\Support\AuthoritativePermalinkPlanner;
 use SeoGeo\Manager\Support\LegacyPermalinkAuthority;
 use SeoGeo\Manager\Support\PermalinkInspector;
 use SeoGeo\Manager\Support\PermalinkRedirectPlanner;
@@ -48,6 +49,16 @@ final class PermalinkController {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/permalinks/authoritative-plan',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'authoritative_plan' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+			)
+		);
 	}
 
 	public static function can_manage(): bool {
@@ -68,5 +79,14 @@ final class PermalinkController {
 		$base    = isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? $payload['legacy_base_url'] : '';
 
 		return new WP_REST_Response( LegacyPermalinkAuthority::preview( $base ), 200 );
+	}
+
+	public static function authoritative_plan( WP_REST_Request $request ): WP_REST_Response {
+		$payload = $request->get_json_params();
+		$payload = is_array( $payload ) ? $payload : array();
+		$base    = isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? $payload['legacy_base_url'] : '';
+		$expected_authority_fingerprint = isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? $payload['authority_fingerprint'] : '';
+
+		return new WP_REST_Response( AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint ), 200 );
 	}
 }
