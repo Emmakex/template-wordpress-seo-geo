@@ -92,6 +92,10 @@ wp_cli core install \
   --admin_password=permalink-acceptance-admin \
   --admin_email=admin@example.test \
   --skip-email >/dev/null
+
+# Fresh WordPress can omit the permalink_structure row until pretty permalinks are configured.
+# Seed it first so the fixture can simulate a later database-level corruption byte-for-byte.
+wp_cli option update permalink_structure '/%postname%/' >/dev/null
 wp_cli plugin activate seo-geo-manager >/dev/null
 
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-permalink-acceptance.php >"$RUNTIME_LOG" 2>&1; then
