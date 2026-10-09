@@ -50,6 +50,7 @@ Current operator capabilities include:
 - safe permalink inspection and historical-authority recovery;
 - exact-path permalink Apply with verification and rollback;
 - atomic permalink + 301 Apply when historical SEO paths genuinely change;
+- bounded operation history with rollback state and permission-aware visibility;
 - raw diagnostic JSON for technical review.
 
 ## API v1
@@ -63,10 +64,13 @@ Base namespace: `/wp-json/seo-geo-manager/v1`.
 - `GET /content/{id}`
 - `GET /site/snapshot`
 - `GET /site/intelligence`
+- `GET /operations`
 
 `/site/snapshot` exposes the Manager environment contract. Production writes require the exact current `environment_fingerprint`, derived from environment type + current `home_url()` + current `site_url()`. The value is an acknowledgement token, not a secret.
 
 `/site/intelligence` includes bounded page/post inventory, permalink/logical-path mapping, internal-link evidence, clone/current-environment leakage, unresolved paths, orphan candidates, Theme contract/model completeness, media signals, SEO output authority and aggregated Build / Finish readiness.
+
+`/operations` exposes a bounded privacy-safe summary of recent Manager operations. It includes operation identity/type/status, target identity, changed field names, structured model, redirect count, environment type, timestamps and rollback state. It intentionally excludes content bodies, previous values, mutation payloads, payload hashes and environment fingerprints. Site-wide operation summaries require `manage_options`; editors only see content operations for resources they can edit.
 
 ### Controlled generic changes
 
@@ -127,6 +131,21 @@ Rollback validates both the currently active permalink structure and the exact r
 
 The runtime handles only frontend GET/HEAD requests, excludes admin/AJAX, preserves query strings and supports bounded one-hop 301 targets only.
 
+### Operation History — Manager 0.3.22
+
+Manager keeps the full private operation record for verification and rollback, but separately maintains a bounded summary index for operator visibility.
+
+- maximum 100 indexed operation summaries;
+- dashboard loads the latest 20 by default;
+- applied / rolled-back / failed states are visible;
+- rollback state is refreshed from the current private operation record;
+- changed field names are visible, but values are not;
+- no `before`, bodies, mutation payloads, payload hashes or environment fingerprints are exposed;
+- content visibility is filtered through `edit_post` capability;
+- site-wide operations such as permalink changes remain administrator-only.
+
+The history endpoint is evidence/audit UI, not a second mutation store. Rollback always executes against the original bounded operation record and its stale/environment guards.
+
 ## Safety invariants
 
 1. Inspect before mutate.
@@ -144,6 +163,7 @@ The runtime handles only frontend GET/HEAD requests, excludes admin/AJAX, preser
 13. Malformed permalink syntax is never treated as historical SEO authority.
 14. Redirect maps are derived from verified authority; no arbitrary public redirect-map write endpoint exists.
 15. A redirect-required permalink mutation is valid only when structure + runtime are verified as one reversible operation.
+16. Operation-history surfaces expose summaries only; mutation values and rollback payloads remain private.
 
 ## Authentication
 
@@ -151,22 +171,23 @@ For automation use normal WordPress REST authentication with an authorized WordP
 
 ## Current candidate
 
-- SEO/GEO Manager `0.3.21`.
+- SEO/GEO Manager `0.3.22`.
 - Build / Finish inspection and controlled structured writes are operational.
 - Exact historical permalink preservation is guarded and reversible.
-- Redirect-required authoritative permalink plans now have a separately guarded atomic Apply/rollback path.
+- Redirect-required authoritative permalink plans have a separately guarded atomic Apply/rollback path.
+- Privacy-safe bounded operation history is available in REST and the WordPress admin dashboard.
 - EMMAKE `/nuevaweb/` remains the first field target before broader promotion.
 
 ### Field gate
 
-0.3.21 is code/CI-ready when the repository matrix is green, but it is not broadly promoted until the real EMMAKE clone completes an inspection-first field cycle. The sequence is: install candidate -> Site Intelligence -> historical authority preview -> authoritative plan -> no write unless the plan is demonstrably safe -> one reversible Apply/verify operation -> retain rollback evidence.
+0.3.22 is code/CI-ready with the repository matrix green, but it is not broadly promoted until the real EMMAKE clone completes an inspection-first field cycle. The sequence is: install candidate -> Site Intelligence -> historical authority preview -> authoritative plan -> no write unless the plan is demonstrably safe -> one reversible Apply/verify operation -> retain operation-history/rollback evidence.
 
 ## Next implementation slices
 
-- field-install and inspect Manager 0.3.21 on EMMAKE `/nuevaweb/` before any real write;
+- field-install and inspect Manager 0.3.22 on EMMAKE `/nuevaweb/` before any real write;
 - first real permalink authority/preview cycle and one accepted reversible field operation when the plan proves safe;
 - first real structured Build / Finish content preview/apply/verify cycle on an EMMAKE strategic page;
-- operation-history/admin visibility and rendered post-write verification;
+- rendered post-write verification for mutation surfaces where it is still missing;
 - provider-specific SEO metadata write adapters, starting with the accepted field authority;
 - creation manifests for new draft pages/posts;
 - M3 SEO/GEO Optimizer;
