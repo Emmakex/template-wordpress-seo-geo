@@ -54,14 +54,14 @@ final class PermalinkRedirectRuntime {
 		$normalized = self::normalize_redirects( $redirects );
 		if ( is_wp_error( $normalized ) ) {
 			return array(
-				'mode'              => 'permalink-redirect-runtime-preview',
-				'write_performed'   => false,
-				'safe_to_activate'  => false,
-				'redirect_count'    => 0,
-				'redirects'         => array(),
-				'fingerprint'       => '',
-				'block_reason'      => $normalized->get_error_message(),
-				'active_runtime'    => self::snapshot(),
+				'mode'             => 'permalink-redirect-runtime-preview',
+				'write_performed'  => false,
+				'safe_to_activate' => false,
+				'redirect_count'   => 0,
+				'redirects'        => array(),
+				'fingerprint'      => '',
+				'block_reason'     => $normalized->get_error_message(),
+				'active_runtime'   => self::snapshot(),
 			);
 		}
 
@@ -212,7 +212,7 @@ final class PermalinkRedirectRuntime {
 		}
 
 		foreach ( (array) ( $state['redirects'] ?? array() ) as $redirect ) {
-			if ( ! is_array( $redirect ) || $logical_path !== (string) ( $redirect['source_path'] ?? '' ) ) {
+			if ( ! is_array( $redirect ) || (string) ( $redirect['source_path'] ?? '' ) !== $logical_path ) {
 				continue;
 			}
 
@@ -224,12 +224,12 @@ final class PermalinkRedirectRuntime {
 			}
 
 			return array(
-				'status'        => 301,
-				'source_path'   => $logical_path,
-				'target_path'   => $target_path,
-				'target_url'    => $target_url,
-				'operation_id'  => (string) ( $state['operation_id'] ?? '' ),
-				'fingerprint'   => (string) ( $state['fingerprint'] ?? '' ),
+				'status'       => 301,
+				'source_path'  => $logical_path,
+				'target_path'  => $target_path,
+				'target_url'   => $target_url,
+				'operation_id' => (string) ( $state['operation_id'] ?? '' ),
+				'fingerprint'  => (string) ( $state['fingerprint'] ?? '' ),
 			);
 		}
 
@@ -241,13 +241,17 @@ final class PermalinkRedirectRuntime {
 			return;
 		}
 
-		$method = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( $_SERVER['REQUEST_METHOD'] ) : 'GET';
+		$method = isset( $_SERVER['REQUEST_METHOD'] )
+			? strtoupper( sanitize_key( wp_unslash( (string) $_SERVER['REQUEST_METHOD'] ) ) )
+			: 'GET';
 		if ( ! in_array( $method, array( 'GET', 'HEAD' ), true ) ) {
 			return;
 		}
 
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
-		$resolved    = self::resolve( $request_uri );
+		$request_uri = isset( $_SERVER['REQUEST_URI'] )
+			? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) )
+			: '';
+		$resolved = self::resolve( $request_uri );
 		if ( ! is_array( $resolved ) ) {
 			return;
 		}
