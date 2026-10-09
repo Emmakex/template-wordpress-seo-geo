@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\Manager\Rest;
 
 use SeoGeo\Manager\Changes\OperationStore;
+use SeoGeo\Manager\Changes\RenderedThemeStructuredContentAdapter;
 use SeoGeo\Manager\Changes\ThemeStructuredContentAdapter;
 use SeoGeo\Manager\Support\EnvironmentPolicy;
 use WP_Error;
@@ -50,7 +51,10 @@ final class ThemeStructuredContentController {
 	 */
 	public static function preview( WP_REST_Request $request ) {
 		$payload = $request->get_json_params();
-		$result  = ThemeStructuredContentAdapter::preview( is_array( $payload ) ? $payload : array() );
+		$payload = is_array( $payload ) ? $payload : array();
+		$result  = true === ( $payload['verify_rendered'] ?? false )
+			? RenderedThemeStructuredContentAdapter::preview( $payload )
+			: ThemeStructuredContentAdapter::preview( $payload );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -71,7 +75,9 @@ final class ThemeStructuredContentController {
 			return $guard;
 		}
 
-		$result = ThemeStructuredContentAdapter::apply( $payload );
+		$result = true === ( $payload['verify_rendered'] ?? false )
+			? RenderedThemeStructuredContentAdapter::apply( $payload )
+			: ThemeStructuredContentAdapter::apply( $payload );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
