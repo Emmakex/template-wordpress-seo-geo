@@ -86,9 +86,11 @@ final class ResearchHomeRenderer {
 			}
 
 			$content = '<span>' . esc_html( $label ) . '</span><strong>' . esc_html( $value ) . '</strong>';
-			$verified .= '' !== $url
-				? '<a class="seo-geo-research-verified-chip" href="' . esc_url( $url ) . '" rel="me">' . $content . '</a>'
-				: '<span class="seo-geo-research-verified-chip">' . $content . '</span>';
+			if ( '' !== $url ) {
+				$verified .= '<a class="seo-geo-research-verified-chip" href="' . esc_url( $url ) . '" rel="me">' . $content . '</a>';
+			} else {
+				$verified .= '<span class="seo-geo-research-verified-chip">' . $content . '</span>';
+			}
 		}
 
 		$signal = '<div class="seo-geo-research-hero__signal" aria-hidden="true">'
