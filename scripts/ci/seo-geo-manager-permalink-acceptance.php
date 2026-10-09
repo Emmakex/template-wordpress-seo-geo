@@ -214,7 +214,8 @@ seo_geo_manager_permalink_accept( 2 === (int) ( $authoritative_plan['data']['pat
 seo_geo_manager_permalink_accept( 0 === (int) ( $authoritative_plan['data']['planned_redirects'] ?? -1 ), 'Exact historical logical paths unexpectedly required redirects.' );
 seo_geo_manager_permalink_accept( 'exact-path-preservation' === ( $authoritative_plan['data']['seo_preservation_mode'] ?? '' ), 'Authoritative plan did not select exact path preservation.' );
 seo_geo_manager_permalink_accept( false === ( $authoritative_plan['data']['requires_redirect_runtime'] ?? true ), 'Exact path preservation incorrectly required redirect runtime.' );
-seo_geo_manager_permalink_accept( true === ( $authoritative_plan['data']['apply_blocked'] ?? false ), 'Authoritative plan must remain read-only before the apply/rollback phase.' );
+seo_geo_manager_permalink_accept( true === ( $authoritative_plan['data']['apply_available'] ?? false ), 'Exact historical path preservation did not enable the guarded Apply flow.' );
+seo_geo_manager_permalink_accept( false === ( $authoritative_plan['data']['apply_blocked'] ?? true ), 'Exact historical path preservation incorrectly kept Apply blocked.' );
 seo_geo_manager_permalink_accept( false === ( $authoritative_plan['data']['write_performed'] ?? true ), 'Authoritative plan unexpectedly reported a write.' );
 seo_geo_manager_permalink_accept( '' !== (string) ( $authoritative_plan['data']['plan_fingerprint'] ?? '' ), 'Authoritative plan fingerprint missing.' );
 seo_geo_manager_permalink_accept( $broken === (string) get_option( 'permalink_structure', '' ), 'Authoritative planning mutated permalink_structure.' );
