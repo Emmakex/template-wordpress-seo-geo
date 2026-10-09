@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Keep the comprehensive self-contained harness in one immutable base file while
-# applying the current preset contract at execution time. Research became the
-# sixth setup-ready preset once explicit Person identity validation/persistence
-# was completed. These exact guards make the compatibility adjustment fail
-# loudly if the base harness changes underneath us.
+# Preserve the comprehensive self-contained harness while adapting only its
+# setup-ready preset cardinality contract. Research is the sixth setup-ready
+# preset now that explicit Person identity validation/persistence is complete.
 BASE_SCRIPT="scripts/ci/self-contained-theme-smoke-base.sh"
 TMP_SCRIPT="$(mktemp)"
 trap 'rm -f "$TMP_SCRIPT"' EXIT
 
-OLD_PRESETS='["corporate", "local-business", "publisher", "ecommerce", "saas-digital-product"]'
-NEW_PRESETS='["corporate", "local-business", "publisher", "ecommerce", "saas-digital-product", "research"]'
+OLD_PRESETS='["corporate","local-business","publisher","ecommerce","saas-digital-product"]'
+NEW_PRESETS='["corporate","local-business","publisher","ecommerce","saas-digital-product","research"]'
 
 if ! grep -Fq "$OLD_PRESETS" "$BASE_SCRIPT"; then
   echo "[self-contained] Preset compatibility guard is stale: legacy preset assertion not found." >&2
