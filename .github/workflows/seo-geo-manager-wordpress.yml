@@ -9,6 +9,7 @@ on:
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   workflow_dispatch:
 
@@ -46,9 +48,11 @@ jobs:
           php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
+          php -l scripts/ci/seo-geo-manager-permalink-acceptance.php
           node --check packages/seo-geo-manager/assets/admin/dashboard.js
           node --check packages/seo-geo-manager/assets/admin/json-export-actions.js
           node --check packages/seo-geo-manager/assets/admin/correction-actions.js
+          node --check packages/seo-geo-manager/assets/admin/permalink-actions.js
 
       - name: Pull pinned WordPress fixture images
         run: |
