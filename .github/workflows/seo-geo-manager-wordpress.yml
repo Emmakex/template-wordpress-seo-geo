@@ -11,6 +11,7 @@ on:
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
       - 'scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   push:
@@ -25,6 +26,7 @@ on:
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
       - 'scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   workflow_dispatch:
@@ -38,7 +40,7 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: M1/M2 + Theme + SEO authority + permalink runtime acceptance
+    name: M1/M2 + Theme + SEO authority + atomic permalink runtime acceptance
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -55,6 +57,7 @@ jobs:
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
           php -l scripts/ci/seo-geo-manager-permalink-acceptance.php
           php -l scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php
+          php -l scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php
           node --check packages/seo-geo-manager/assets/admin/dashboard.js
           node --check packages/seo-geo-manager/assets/admin/json-export-actions.js
           node --check packages/seo-geo-manager/assets/admin/correction-actions.js
@@ -69,5 +72,5 @@ jobs:
       - name: Manager WordPress acceptance
         run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
 
-      - name: Permalink authority and redirect runtime acceptance
+      - name: Permalink authority and atomic redirect runtime acceptance
         run: bash scripts/ci/seo-geo-manager-permalink-acceptance.sh
