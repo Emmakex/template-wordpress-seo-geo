@@ -10,6 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	throw new RuntimeException( 'WordPress is not loaded.' );
 }
 
+if ( ! function_exists( 'wp_delete_user' ) ) {
+	require_once ABSPATH . 'wp-admin/includes/user.php';
+}
+
 function seo_geo_manager_history_accept( bool $condition, string $message ): void {
 	if ( ! $condition ) {
 		throw new RuntimeException( $message );
@@ -98,7 +102,7 @@ $site_operation = EnvironmentPolicy::bind_operation(
 );
 seo_geo_manager_history_accept( OperationStore::save( $site_operation_id, $site_operation ), 'Could not persist site-wide history fixture.' );
 
-$admin_history = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations?per_page=50' );
+$admin_history = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations' );
 seo_geo_manager_history_accept( 200 === $admin_history['status'] && is_array( $admin_history['data'] ), 'Administrator operation history request failed.' );
 seo_geo_manager_history_accept( true === ( $admin_history['data']['privacy_safe'] ?? false ), 'Operation history did not declare privacy-safe mode.' );
 $admin_items = isset( $admin_history['data']['items'] ) && is_array( $admin_history['data']['items'] ) ? $admin_history['data']['items'] : array();
@@ -151,7 +155,7 @@ seo_geo_manager_history_accept( ! is_wp_error( $editor_id ) && 0 < (int) $editor
 wp_set_current_user( (int) $editor_id );
 seo_geo_manager_history_accept( current_user_can( 'edit_post', (int) $post_id ), 'History editor cannot edit fixture resource.' );
 
-$editor_history = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations?per_page=50' );
+$editor_history = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations' );
 seo_geo_manager_history_accept( 200 === $editor_history['status'] && is_array( $editor_history['data'] ), 'Editor operation history request failed.' );
 $editor_items = isset( $editor_history['data']['items'] ) && is_array( $editor_history['data']['items'] ) ? $editor_history['data']['items'] : array();
 $editor_ids   = array_values( array_filter( array_map( static fn ( $row ): string => is_array( $row ) && isset( $row['operation_id'] ) ? (string) $row['operation_id'] : '', $editor_items ) ) );
@@ -164,12 +168,12 @@ wp_delete_post( (int) $post_id, true );
 
 echo wp_json_encode(
 	array(
-		'ok'                     => true,
-		'bounded_history'        => true,
-		'privacy_safe'           => true,
+		'ok'                      => true,
+		'bounded_history'         => true,
+		'privacy_safe'            => true,
 		'rollback_status_refresh' => true,
-		'editor_scope_filter'    => true,
-		'sitewide_admin_only'    => true,
+		'editor_scope_filter'     => true,
+		'sitewide_admin_only'     => true,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
