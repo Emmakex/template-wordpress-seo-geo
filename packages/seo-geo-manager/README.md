@@ -91,7 +91,7 @@ Manager treats malformed permalink syntax and historical SEO authority as two di
 - `GET /permalinks/preview` — deterministic syntax inspection/recovery candidate; never declares historical SEO authority.
 - `GET /permalinks/redirect-plan` — bounded old/new mapping, ambiguity and collision analysis.
 - `POST /permalinks/legacy-authority-preview` — same-host historical WordPress URL recovery by exact slug reconciliation.
-- `POST /permalinks/authoritative-plan` — revalidates historical authority, compares logical paths while ignoring temporary clone prefixes and returns direct/atomic Apply eligibility.
+- `POST /permalinks/authoritative-plan` — revalidates historical authority, compares logical paths while ignoring temporary clone prefixes and returns direct/atomic Apply eligibility. `apply_available=true` means zero-redirect direct Apply; `atomic_apply_candidate=true` means the plan must pass the separate 301-runtime preview before any write.
 - `GET /permalinks/redirect-runtime` — read-only state of the bounded Manager 301 runtime.
 - `POST /permalinks/redirect-runtime/preview` — derives a runtime candidate only from a freshly verified authoritative plan; arbitrary caller-supplied maps are not accepted.
 - `POST /permalinks/apply` — exact-path-preservation Apply for authoritative plans requiring zero redirects.
