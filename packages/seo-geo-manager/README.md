@@ -50,7 +50,8 @@ Current operator capabilities include:
 - safe permalink inspection and historical-authority recovery;
 - exact-path permalink Apply with verification and rollback;
 - atomic permalink + 301 Apply when historical SEO paths genuinely change;
-- bounded operation history with rollback state and permission-aware visibility;
+- optional same-site rendered post-write verification for published content and Theme structured writes;
+- bounded operation history with rollback state, rendered-verification state and permission-aware visibility;
 - raw diagnostic JSON for technical review.
 
 ## API v1
@@ -70,7 +71,7 @@ Base namespace: `/wp-json/seo-geo-manager/v1`.
 
 `/site/intelligence` includes bounded page/post inventory, permalink/logical-path mapping, internal-link evidence, clone/current-environment leakage, unresolved paths, orphan candidates, Theme contract/model completeness, media signals, SEO output authority and aggregated Build / Finish readiness.
 
-`/operations` exposes a bounded privacy-safe summary of recent Manager operations. It includes operation identity/type/status, target identity, changed field names, structured model, redirect count, environment type, timestamps and rollback state. It intentionally excludes content bodies, previous values, mutation payloads, payload hashes and environment fingerprints. Site-wide operation summaries require `manage_options`; editors only see content operations for resources they can edit.
+`/operations` exposes a bounded privacy-safe summary of recent Manager operations. It includes operation identity/type/status, target identity, changed field names, structured model, redirect count, rendered-verification status, environment type, timestamps and rollback state. It intentionally excludes content bodies, rendered response bodies/digests, previous values, mutation payloads, payload hashes and environment fingerprints. Site-wide operation summaries require `manage_options`; editors only see content operations for resources they can edit.
 
 ### Controlled generic changes
 
@@ -79,14 +80,16 @@ Base namespace: `/wp-json/seo-geo-manager/v1`.
 - `GET /changes/{operation_id}`
 - `POST /changes/{operation_id}/rollback`
 
-M2 changes use current-resource fingerprints, idempotency, draft-first published-target guards, revisions/previous-value capture, post-write verification, environment binding and stale-safe rollback.
+M2 changes use current-resource fingerprints, idempotency, draft-first published-target guards, revisions/previous-value capture, exact stored-value verification, environment binding and stale-safe rollback.
+
+For an explicitly approved published target, `verify_rendered=true` adds the M2.7 public-route gate. The Manager then verifies the exact current same-site permalink after the WordPress write. Rendered verification uses a bounded no-redirect GET, requires a 2xx HTML document, stores only compact evidence plus a SHA-256 digest, and never persists the response body.
 
 ### Theme structured content
 
 - `POST /theme/structured/preview`
 - `POST /theme/structured/apply`
 
-Theme writes mutate contract-defined structured content slots only. Manager does not accept arbitrary strategic-page layout HTML. Writable text/link slots keep the same M2 fingerprint, idempotency, environment, verification and rollback contracts.
+Theme writes mutate contract-defined structured content slots only. Manager does not accept arbitrary strategic-page layout HTML. Writable text/link slots keep the same M2 fingerprint, idempotency, environment, verification and rollback contracts. Published structured targets can opt into the same rendered verification with `verify_rendered=true`.
 
 ### Permalink authority and repair
 
@@ -146,6 +149,29 @@ Manager keeps the full private operation record for verification and rollback, b
 
 The history endpoint is evidence/audit UI, not a second mutation store. Rollback always executes against the original bounded operation record and its stale/environment guards.
 
+### Rendered post-write verification — Manager 0.3.23
+
+M2.7 adds an explicit second verification layer for published content. Stored-value verification still proves that WordPress persisted the requested mutation; rendered verification separately proves that the exact public route can serve a bounded HTML document after that mutation.
+
+The contract is intentionally conservative:
+
+- opt-in only through `verify_rendered=true`;
+- published page/post and same current-site origin only;
+- no arbitrary caller-supplied verification URL;
+- exact `get_permalink()` route;
+- no redirects followed;
+- five-second timeout and 2 MiB response cap;
+- 2xx response required;
+- HTML/XHTML content type and an HTML document required;
+- response body never stored;
+- body SHA-256, byte count, HTTP status, content type and checked-at timestamp retained only in the private operation record;
+- safe operation-history summary exposes only `passed` / `failed` rendered status;
+- rendered idempotency uses its own deterministic namespace so a non-rendered Apply cannot silently satisfy a rendered Apply request.
+
+A rendered HTTP failure does **not** automatically undo a successfully persisted WordPress mutation. The operation is recorded as `rendered-verification-failed`, remains environment-bound, and retains guarded manual rollback. This avoids destroying a valid edit because of a transient loopback/CDN/server timeout while still preventing the Manager from calling the public verification successful.
+
+The same contract is available to Theme structured-content writes, preserving model/layout ownership while checking the resulting public route.
+
 ## Safety invariants
 
 1. Inspect before mutate.
@@ -164,6 +190,7 @@ The history endpoint is evidence/audit UI, not a second mutation store. Rollback
 14. Redirect maps are derived from verified authority; no arbitrary public redirect-map write endpoint exists.
 15. A redirect-required permalink mutation is valid only when structure + runtime are verified as one reversible operation.
 16. Operation-history surfaces expose summaries only; mutation values and rollback payloads remain private.
+17. Rendered post-write checks use only the exact same-site public permalink, store no HTML body and never auto-rollback solely because the HTTP verification failed.
 
 ## Authentication
 
@@ -171,23 +198,23 @@ For automation use normal WordPress REST authentication with an authorized WordP
 
 ## Current candidate
 
-- SEO/GEO Manager `0.3.22`.
+- SEO/GEO Manager `0.3.23`.
 - Build / Finish inspection and controlled structured writes are operational.
 - Exact historical permalink preservation is guarded and reversible.
 - Redirect-required authoritative permalink plans have a separately guarded atomic Apply/rollback path.
 - Privacy-safe bounded operation history is available in REST and the WordPress admin dashboard.
+- Published generic and Theme-structured writes can require bounded same-site rendered post-write verification.
 - EMMAKE `/nuevaweb/` remains the first field target before broader promotion.
 
 ### Field gate
 
-0.3.22 is code/CI-ready with the repository matrix green, but it is not broadly promoted until the real EMMAKE clone completes an inspection-first field cycle. The sequence is: install candidate -> Site Intelligence -> historical authority preview -> authoritative plan -> no write unless the plan is demonstrably safe -> one reversible Apply/verify operation -> retain operation-history/rollback evidence.
+0.3.23 is the current code candidate. It is not broadly promoted until the real EMMAKE clone completes an inspection-first field cycle. The sequence is: install candidate -> Site Intelligence -> historical authority preview -> authoritative plan -> no write unless the plan is demonstrably safe -> one reversible Apply with `verify_rendered=true` on an accepted published target -> retain operation-history/rendered/rollback evidence.
 
 ## Next implementation slices
 
-- field-install and inspect Manager 0.3.22 on EMMAKE `/nuevaweb/` before any real write;
+- field-install and inspect Manager 0.3.23 on EMMAKE `/nuevaweb/` before any real write;
 - first real permalink authority/preview cycle and one accepted reversible field operation when the plan proves safe;
-- first real structured Build / Finish content preview/apply/verify cycle on an EMMAKE strategic page;
-- rendered post-write verification for mutation surfaces where it is still missing;
+- first real structured Build / Finish content preview/apply/rendered-verify cycle on an EMMAKE strategic page;
 - provider-specific SEO metadata write adapters, starting with the accepted field authority;
 - creation manifests for new draft pages/posts;
 - M3 SEO/GEO Optimizer;
