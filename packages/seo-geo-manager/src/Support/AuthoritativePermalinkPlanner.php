@@ -68,10 +68,10 @@ final class AuthoritativePermalinkPlanner {
 
 			if ( '' === $historical_path || '' === $target_logical_path ) {
 				$collisions[] = array(
-					'type'        => 'invalid-logical-path',
-					'post_id'     => $post_id,
-					'legacy_url'  => $legacy_url,
-					'target_url'  => $target_url,
+					'type'       => 'invalid-logical-path',
+					'post_id'    => $post_id,
+					'legacy_url' => $legacy_url,
+					'target_url' => $target_url,
 				);
 				continue;
 			}
@@ -131,10 +131,12 @@ final class AuthoritativePermalinkPlanner {
 			);
 		}
 
-		$complete_scan = true === ( $authority['complete_scan'] ?? false ) && true === $existing['complete'];
+		$complete_scan             = true === ( $authority['complete_scan'] ?? false ) && true === $existing['complete'];
 		$safe_structure_candidate = $complete_scan && array() === $collisions && count( $rows ) === (int) ( $authority['matched_posts'] ?? 0 );
-		$preservation_mode = array() === $redirects ? 'exact-path-preservation' : 'authoritative-301';
-		$inspection = PermalinkInspector::preview();
+		$requires_redirect_runtime = 0 < count( $redirects );
+		$apply_available           = $safe_structure_candidate && ! $requires_redirect_runtime;
+		$preservation_mode         = array() === $redirects ? 'exact-path-preservation' : 'authoritative-301';
+		$inspection                = PermalinkInspector::preview();
 
 		$plan_payload = array(
 			'authority_fingerprint'   => $authority_fingerprint,
@@ -151,6 +153,8 @@ final class AuthoritativePermalinkPlanner {
 			$block_reason = 'El inventario de recursos públicos quedó truncado y no permite aprobar el cambio de estructura.';
 		} elseif ( array() !== $collisions ) {
 			$block_reason = 'El plan histórico contiene colisiones o cambios locales que deben resolverse antes de modificar los enlaces permanentes.';
+		} elseif ( $requires_redirect_runtime ) {
+			$block_reason = 'La estructura histórica verificada cambia una o más rutas públicas; Apply queda bloqueado hasta disponer de runtime 301 probado.';
 		}
 
 		return array(
@@ -172,19 +176,21 @@ final class AuthoritativePermalinkPlanner {
 			'complete_scan'                => $complete_scan,
 			'seo_preservation_mode'        => $preservation_mode,
 			'safe_structure_candidate'     => $safe_structure_candidate,
-			'requires_redirect_runtime'    => 0 < count( $redirects ),
-			'apply_blocked'                => true,
+			'requires_redirect_runtime'    => $requires_redirect_runtime,
+			'apply_available'              => $apply_available,
+			'apply_blocked'                => ! $apply_available,
 			'block_reason'                 => $block_reason,
-			'next_action'                  => $safe_structure_candidate ? ( 0 < count( $redirects ) ? 'implement-authoritative-redirect-runtime-and-rollback' : 'implement-structure-apply-and-rollback' ) : 'resolve-authoritative-plan-blockers',
+			'next_action'                  => $apply_available ? 'apply-authoritative-structure' : ( $safe_structure_candidate ? 'implement-authoritative-redirect-runtime-and-rollback' : 'resolve-authoritative-plan-blockers' ),
 			'environment'                  => EnvironmentPolicy::snapshot(),
 			'policy'                       => array(
 				'preview_only'                    => true,
 				'authority_revalidated'            => true,
 				'logical_paths_compared'           => true,
 				'clone_base_ignored_for_seo_path'  => true,
-				'no_permalink_option_write'        => true,
+				'apply_requires_explicit_confirm'  => true,
+				'apply_requires_current_plan'      => true,
+				'apply_requires_environment_guard' => true,
 				'no_redirect_registration'         => true,
-				'no_rewrite_flush'                 => true,
 				'complete_collision_scan_required' => true,
 			),
 		);
@@ -196,28 +202,29 @@ final class AuthoritativePermalinkPlanner {
 	 */
 	private static function blocked( array $authority, string $message, string $next_action, bool $stale_authority = false ): array {
 		return array(
-			'mode'                     => 'authoritative-permalink-plan-preview',
-			'write_performed'          => false,
-			'legacy_base_url'          => (string) ( $authority['legacy_base_url'] ?? '' ),
-			'authority_fingerprint'    => (string) ( $authority['authority_fingerprint'] ?? '' ),
-			'authoritative_structure'  => (string) ( $authority['inferred_structure'] ?? '' ),
-			'plan_fingerprint'         => '',
-			'matched_posts'            => 0,
-			'path_preservation_count'  => 0,
-			'planned_redirects'        => 0,
-			'redirects'                => array(),
-			'rows'                     => array(),
-			'collision_count'          => 0,
-			'collisions'               => array(),
-			'complete_scan'            => false,
-			'seo_preservation_mode'    => 'blocked',
-			'safe_structure_candidate' => false,
-			'requires_redirect_runtime'=> false,
-			'stale_authority'          => $stale_authority,
-			'apply_blocked'            => true,
-			'block_reason'             => $message,
-			'next_action'              => $next_action,
-			'environment'              => EnvironmentPolicy::snapshot(),
+			'mode'                      => 'authoritative-permalink-plan-preview',
+			'write_performed'           => false,
+			'legacy_base_url'           => (string) ( $authority['legacy_base_url'] ?? '' ),
+			'authority_fingerprint'     => (string) ( $authority['authority_fingerprint'] ?? '' ),
+			'authoritative_structure'   => (string) ( $authority['inferred_structure'] ?? '' ),
+			'plan_fingerprint'          => '',
+			'matched_posts'             => 0,
+			'path_preservation_count'   => 0,
+			'planned_redirects'         => 0,
+			'redirects'                 => array(),
+			'rows'                      => array(),
+			'collision_count'           => 0,
+			'collisions'                => array(),
+			'complete_scan'             => false,
+			'seo_preservation_mode'     => 'blocked',
+			'safe_structure_candidate'  => false,
+			'requires_redirect_runtime' => false,
+			'apply_available'           => false,
+			'stale_authority'           => $stale_authority,
+			'apply_blocked'             => true,
+			'block_reason'              => $message,
+			'next_action'               => $next_action,
+			'environment'               => EnvironmentPolicy::snapshot(),
 		);
 	}
 
