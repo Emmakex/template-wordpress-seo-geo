@@ -119,6 +119,7 @@ final class ActionableDiagnostics {
 					'confidence'         => $confidence,
 					'target_resource_id' => $target_id,
 					'current_url'        => $absolute,
+					'current_urls'       => '' !== $absolute ? array( $absolute ) : array(),
 					'suggested_url'      => is_string( $target_url ) ? $target_url : '',
 					'occurrences'        => 0,
 					'sources'            => array(),
@@ -126,7 +127,10 @@ final class ActionableDiagnostics {
 			}
 
 			++$groups[ $key ]['occurrences'];
-			self::append_source( $groups[ $key ]['sources'], $candidate['source'] ?? null );
+			if ( '' !== $absolute && ! in_array( $absolute, $groups[ $key ]['current_urls'], true ) ) {
+				$groups[ $key ]['current_urls'][] = $absolute;
+			}
+			self::append_source( $groups[ $key ]['sources'], $candidate['source'] ?? null, $absolute );
 		}
 
 		foreach ( $unresolved as $candidate ) {
@@ -147,6 +151,7 @@ final class ActionableDiagnostics {
 					'classification' => 'review',
 					'title'          => $broken_permalink ? 'Post permalinks contain an unresolved placeholder token.' : 'Internal path does not resolve to inventoried content.',
 					'current_url'    => $absolute,
+					'current_urls'   => '' !== $absolute ? array( $absolute ) : array(),
 					'path'           => $path,
 					'occurrences'    => 0,
 					'sources'        => array(),
@@ -155,7 +160,10 @@ final class ActionableDiagnostics {
 			}
 
 			++$groups[ $key ]['occurrences'];
-			self::append_source( $groups[ $key ]['sources'], $candidate['source'] ?? null );
+			if ( '' !== $absolute && ! in_array( $absolute, $groups[ $key ]['current_urls'], true ) ) {
+				$groups[ $key ]['current_urls'][] = $absolute;
+			}
+			self::append_source( $groups[ $key ]['sources'], $candidate['source'] ?? null, $absolute );
 		}
 
 		return array_values( $groups );
@@ -245,26 +253,42 @@ final class ActionableDiagnostics {
 	}
 
 	/**
-	 * Keep a bounded list of unique source descriptors.
+	 * Keep a bounded list of unique source descriptors and preserve the exact URL variants observed for each source.
 	 *
 	 * @param array<int, array<string, mixed>> $sources Source list.
 	 * @param mixed                            $source Candidate source.
 	 */
-	private static function append_source( array &$sources, $source ): void {
-		if ( ! is_array( $source ) || 8 <= count( $sources ) ) {
+	private static function append_source( array &$sources, $source, string $matched_url = '' ): void {
+		if ( ! is_array( $source ) ) {
 			return;
 		}
 		$id   = isset( $source['id'] ) ? (int) $source['id'] : 0;
 		$kind = isset( $source['kind'] ) && is_string( $source['kind'] ) ? $source['kind'] : '';
-		foreach ( $sources as $existing ) {
-			if ( (int) ( $existing['id'] ?? 0 ) === $id && (string) ( $existing['kind'] ?? '' ) === $kind ) {
-				return;
+		foreach ( $sources as &$existing ) {
+			if ( (int) ( $existing['id'] ?? 0 ) !== $id || (string) ( $existing['kind'] ?? '' ) !== $kind ) {
+				continue;
 			}
+			$existing['occurrences'] = max( 1, (int) ( $existing['occurrences'] ?? 1 ) ) + 1;
+			$urls                    = isset( $existing['urls'] ) && is_array( $existing['urls'] ) ? $existing['urls'] : array();
+			if ( '' !== $matched_url && ! in_array( $matched_url, $urls, true ) ) {
+				$urls[] = $matched_url;
+			}
+			$existing['urls'] = $urls;
+			unset( $existing );
+			return;
 		}
+		unset( $existing );
+
+		if ( 8 <= count( $sources ) ) {
+			return;
+		}
+
 		$sources[] = array(
-			'kind'      => $kind,
-			'id'        => $id,
-			'permalink' => isset( $source['permalink'] ) && is_string( $source['permalink'] ) ? $source['permalink'] : '',
+			'kind'        => $kind,
+			'id'          => $id,
+			'permalink'   => isset( $source['permalink'] ) && is_string( $source['permalink'] ) ? $source['permalink'] : '',
+			'occurrences' => 1,
+			'urls'        => '' !== $matched_url ? array( $matched_url ) : array(),
 		);
 	}
 
