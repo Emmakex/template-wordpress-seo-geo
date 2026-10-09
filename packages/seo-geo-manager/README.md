@@ -39,194 +39,139 @@ For continuous operation after launch. Manager creates/refreshes landings and bl
 
 ## WordPress admin dashboard
 
-Manager 0.3.2 adds the first authenticated WordPress admin surface under **SEO/GEO Manager**.
+The authenticated **SEO/GEO Manager** screen exposes Build / Finish intelligence and bounded correction workflows through the logged-in WordPress session and `wp-api-fetch`.
 
-The Build / Finish dashboard uses the logged-in WordPress session and `wp-api-fetch`, so operators no longer need to open protected REST endpoints manually or construct REST nonces just to inspect the site.
+Current operator capabilities include:
 
-The first dashboard slice provides:
-
-- one-click **Analizar sitio** execution;
-- optional rendered-frontend verification;
-- overall Build / Finish readiness;
-- blocker and warning counts;
-- resolved SEO authority summary;
-- readiness checks with bounded evidence;
-- Theme/preset structure and required-content summary;
-- navigation/environment leakage summary;
+- one-click site analysis and optional rendered-frontend verification;
+- Build / Finish readiness with blockers/warnings;
+- resolved SEO authority and Theme/preset contract inspection;
+- navigation/environment leakage correction workflows;
+- safe permalink inspection and historical-authority recovery;
+- exact-path permalink Apply with verification and rollback;
+- atomic permalink + 301 Apply when historical SEO paths genuinely change;
 - raw diagnostic JSON for technical review.
-
-The dashboard is intentionally read-only in this first slice. M2 mutation endpoints remain available through their existing safety contract; later admin iterations will expose proposal, preview, apply, verify, history and rollback without weakening those guards.
 
 ## API v1
 
-Base namespace:
+Base namespace: `/wp-json/seo-geo-manager/v1`.
 
-`/wp-json/seo-geo-manager/v1`
+### Read / intelligence
 
-### `GET /health`
+- `GET /health`
+- `GET /content`
+- `GET /content/{id}`
+- `GET /site/snapshot`
+- `GET /site/intelligence`
 
-Public bounded service/version check.
+`/site/snapshot` exposes the Manager environment contract. Production writes require the exact current `environment_fingerprint`, derived from environment type + current `home_url()` + current `site_url()`. The value is an acknowledgement token, not a secret.
 
-### `GET /content`
+`/site/intelligence` includes bounded page/post inventory, permalink/logical-path mapping, internal-link evidence, clone/current-environment leakage, unresolved paths, orphan candidates, Theme contract/model completeness, media signals, SEO output authority and aggregated Build / Finish readiness.
 
-Authenticated content inventory. Requires `edit_posts`.
+### Controlled generic changes
 
-Supported query arguments: `type`, `status`, `search`, `per_page`, `page`.
+- `POST /changes/preview`
+- `POST /changes/apply`
+- `GET /changes/{operation_id}`
+- `POST /changes/{operation_id}/rollback`
 
-Returns normalized WordPress resources, current-environment permalinks and deterministic fingerprints.
+M2 changes use current-resource fingerprints, idempotency, draft-first published-target guards, revisions/previous-value capture, post-write verification, environment binding and stale-safe rollback.
 
-### `GET /content/{id}`
+### Theme structured content
 
-Authenticated resource read. Requires permission to edit the target.
+- `POST /theme/structured/preview`
+- `POST /theme/structured/apply`
 
-Returns raw editable body/excerpt plus identity and fingerprint data used by controlled change sets.
+Theme writes mutate contract-defined structured content slots only. Manager does not accept arbitrary strategic-page layout HTML. Writable text/link slots keep the same M2 fingerprint, idempotency, environment, verification and rollback contracts.
 
-### `GET /site/snapshot`
+### Permalink authority and repair
 
-Authenticated bounded environment snapshot: current URLs, WordPress version/language/permalinks, Manager/Bridge/Core presence, Theme identity, content counts, front/blog page identity, menu/taxonomy counts, SEO-provider detection and discovery URLs.
+Manager treats malformed permalink syntax and historical SEO authority as two different things.
 
-Manager exposes an explicit environment write contract inside `environment`:
+- `GET /permalinks/preview` — deterministic syntax inspection/recovery candidate; never declares historical SEO authority.
+- `GET /permalinks/redirect-plan` — bounded old/new mapping, ambiguity and collision analysis.
+- `POST /permalinks/legacy-authority-preview` — same-host historical WordPress URL recovery by exact slug reconciliation.
+- `POST /permalinks/authoritative-plan` — revalidates historical authority, compares logical paths while ignoring temporary clone prefixes and returns direct/atomic Apply eligibility.
+- `GET /permalinks/redirect-runtime` — read-only state of the bounded Manager 301 runtime.
+- `POST /permalinks/redirect-runtime/preview` — derives a runtime candidate only from a freshly verified authoritative plan; arbitrary caller-supplied maps are not accepted.
+- `POST /permalinks/apply` — exact-path-preservation Apply for authoritative plans requiring zero redirects.
+- `POST /permalinks/redirect-apply` — atomic structure + 301 Apply for authoritative plans that genuinely change historical paths.
+- `POST /permalinks/operations/{operation_id}/rollback` — dispatches to the correct reversible engine and blocks stale/cross-environment rollback.
 
-- `type`: the standard WordPress environment type (`production`, `staging`, `development` or `local`);
-- `fingerprint`: deterministic SHA-256 identity derived from environment type + current `home_url()` + current `site_url()`;
-- `write_approval_required`: `true` in production, `false` otherwise.
+#### Exact-path Apply
 
-The environment fingerprint is an acknowledgement token, not a secret. Automation must inspect the current site and echo the exact fingerprint before production mutation. If a clone, URL or environment type changes, the old fingerprint becomes stale automatically.
+The zero-redirect path requires:
 
-### `GET /site/intelligence`
+- verified complete historical authority;
+- collision-free complete plan;
+- matching authority/plan/current-state fingerprints;
+- explicit permalink-change confirmation;
+- current environment approval when required;
+- idempotency key.
 
-Authenticated Build / Finish intelligence. It currently includes:
+WordPress writes the target structure, flushes rewrite rules and then re-runs the authoritative plan. Verification failure restores the exact previous Manager-captured structure, including malformed prior values.
 
-- bounded page/post inventory;
-- current permalink/path/logical-path mapping;
-- stored-content and WordPress-menu internal-link evidence;
-- clone/current-environment leakage candidates;
-- unresolved internal paths and published orphan-page candidates;
-- optional rendered scan of up to 20 pages (`include_rendered=1`);
-- active SEO/GEO Theme preset contract when available;
-- expected strategic-page mapping with resolution method/confidence;
-- semantic model IDs and required structured-slot completeness;
-- required-any and required verified-group presence signals;
-- page-level media signals and bounded library alt hygiene;
-- resolved read-only SEO output authority with adapter identity/capabilities;
-- aggregated Build / Finish readiness by structure, content, navigation, SEO authority, media, frontend verification and operations.
+#### Atomic 301 Apply — Manager 0.3.21
 
-A high-confidence environment leakage candidate maps to a real local WordPress resource but escapes the installation's current `home_url()` path. This is the EMMAKE `/nuevaweb/` production-link acceptance case.
+When verified historical SEO paths differ from the routes generated by the authoritative target structure, Manager does **not** use the direct Apply path. It requires the atomic 301 path.
 
-Manager 0.3.1 resolves SEO public-output ownership without writing provider metadata. It collapses free/pro variants into one provider family and recognizes Yoast, Rank Math, All in One SEO and The SEO Framework. Exactly one external family wins over the Theme fallback; multiple families are a blocker; with no external provider, the active SEO/GEO Theme becomes the resolved native authority. Title/meta, canonical, robots, Open Graph, Schema, hreflang and sitemap signals expose the same resolved owner. `safe_to_write_seo_metadata` remains `false` until that authority's write adapter is implemented and runtime-verified.
+The operation is deliberately staged:
 
-### `POST /changes/preview`
+1. Revalidate historical authority, plan fingerprint and current permalink fingerprint.
+2. Derive the redirect map server-side from that plan.
+3. Reject duplicate sources, invalid/root/identical paths, chains, loops and concurrent active runtimes.
+4. Reserve the operation/idempotency key.
+5. Persist the redirect runtime **armed but ineffective**, bound to the operation, plan and expected target structure.
+6. Change `permalink_structure` and flush rewrite rules.
+7. The runtime becomes effective only when WordPress reports the exact expected structure.
+8. Revalidate the authoritative plan and verify each 301 source resolves to its planned target.
+9. Persist the operation only after structure + runtime verification succeeds.
+10. On failure, restore the previous structure and remove the runtime.
 
-M2 read-only change-set validation and field-level diff.
+Atomic Apply requires both `confirm_permalink_change=true` and `confirm_redirect_runtime=true`, plus the normal environment/idempotency/stale-state guards.
 
-Requires:
+Rollback validates both the currently active permalink structure and the exact runtime fingerprint. It restores the previous structure first (making the armed runtime ineffective), removes the runtime, verifies both pieces and records the rollback. If either side has changed since Apply, rollback is blocked instead of overwriting newer state.
 
-- schema v1;
-- target WordPress ID;
-- the target fingerprint obtained during inspection;
-- one or more supported changes.
-
-Preview checks stale state, permissions, slug collisions, destructive empty-content intent and published-target policy without writing WordPress state. It also returns the current Manager environment contract so callers can carry the inspected fingerprint into an approved apply.
-
-### `POST /changes/apply`
-
-M2 controlled mutation endpoint.
-
-Apply adds:
-
-- mandatory idempotency key;
-- optimistic-concurrency enforcement;
-- draft-first published-target guard;
-- pre-change revision attempt;
-- bounded previous-value capture;
-- exact post-apply verification;
-- persisted operation/rollback record;
-- explicit production environment approval;
-- operation-to-environment binding.
-
-Initial fields are `title`, `slug`, `excerpt`, `content` and `status`. Baseline status writes are limited to `draft` and `pending`.
-
-When WordPress reports `production`, callers must include `environment_fingerprint` with the exact current fingerprint returned by `GET /site/snapshot`. Missing or stale approval is rejected before the mutation engine runs. Staging/development/local environments keep all M2 safety guards but do not require this extra acknowledgement.
-
-A currently published target is blocked unless the caller explicitly sends `allow_published_target=true` and has the post type publish capability. This remains a second, separate approval: environment approval confirms **where** the write is happening, while published-target approval confirms **what lifecycle state** is being changed.
-
-### `POST /theme/structured/preview`
-
-Manager 0.3.0 added the first Theme-aware write adapter. It updates **content slots only** while leaving Theme-owned layout and section structure untouched.
-
-The request must provide:
-
-- schema v1;
-- a target page ID and current content fingerprint;
-- an exact Theme `model_id` already mapped to that page by `/site/intelligence`;
-- a `slots` object containing only slot IDs defined by that model.
-
-Writable slot types in this first slice are:
-
-- `text`: a non-empty plain-text string;
-- `link`: an object with non-empty `text` and safe `url` values.
-
-Manager refuses unknown model slots, missing/duplicate slot markers, arbitrary HTML, unsupported slot types and model/target mismatches. Preview returns a slot-level diff instead of exposing a full-page replacement diff.
-
-For model slots that declare `requires_verification`, the caller must explicitly include the matching group in `verified_groups`. This acknowledgement does not manufacture evidence: it only lets Manager write a slot after the operator/automation workflow has already verified the evidence source.
-
-### `POST /theme/structured/apply`
-
-Applies the exact slot transformation previewed above through the same M2 mutation engine used by generic changes. Therefore structured writes inherit:
-
-- current target fingerprint validation;
-- idempotency;
-- draft-first published-target policy;
-- explicit production environment approval;
-- revisions/previous-value capture;
-- exact post-write verification;
-- stale-safe rollback.
-
-The stored Manager operation includes `structured_model` metadata with preset, page key, model ID, changed slot diff and verified groups. The operation is also bound to the environment where it was applied.
-
-This endpoint does **not** accept arbitrary page HTML or layout instructions. Its purpose is to let Build / Finish hydrate SEO/GEO Theme surfaces without turning Manager into a page builder.
-
-### `GET /changes/{operation_id}`
-
-Reads one Manager operation when the current user can still edit the target. New operations include the environment contract they were applied under. Structured Theme writes additionally include their `structured_model` metadata.
-
-### `POST /changes/{operation_id}/rollback`
-
-Restores only fields changed by that Manager operation. Rollback is blocked if the current fingerprint differs from the recorded post-apply fingerprint, protecting newer human/plugin changes.
-
-Production rollback also requires the current `environment_fingerprint` and refuses an operation that is not bound to the same environment. This prevents operation metadata copied during a clone/migration from being replayed blindly against a different site.
-
-Structured Theme writes currently roll back by restoring the exact previous `post_content`, which preserves the pre-operation Theme composition byte-for-byte when no newer edit has intervened.
+The runtime handles only frontend GET/HEAD requests, excludes admin/AJAX, preserves query strings and supports bounded one-hop 301 targets only.
 
 ## Safety invariants
 
 1. Inspect before mutate.
 2. No hardcoded production domain for internal resource identity.
 3. Production mutations require current-environment acknowledgement.
-4. Draft-first baseline.
+4. Draft-first baseline for content.
 5. Idempotent writes.
-6. Optimistic concurrency.
+6. Optimistic concurrency / stale-plan protection.
 7. Bounded rollback.
 8. One accepted SEO authority per public output.
-9. SEO authority resolution never implies write permission; write adapters must be verified separately.
+9. SEO authority resolution never implies provider-metadata write permission.
 10. No fabricated proof/facts.
 11. Content is not layout on Theme-owned strategic surfaces.
 12. Theme structured writes accept only contract-defined slots and supported value types.
-13. Normal blog posts remain normal WordPress posts.
+13. Malformed permalink syntax is never treated as historical SEO authority.
+14. Redirect maps are derived from verified authority; no arbitrary public redirect-map write endpoint exists.
+15. A redirect-required permalink mutation is valid only when structure + runtime are verified as one reversible operation.
 
 ## Authentication
 
-For MVP automation use normal WordPress REST authentication with an authorized WordPress user, preferably Application Passwords over HTTPS. Authorization remains capability-based. Secrets are never stored in content manifests or committed to GitHub.
+For automation use normal WordPress REST authentication with an authorized WordPress user, preferably Application Passwords over HTTPS. Inside WordPress admin, the dashboard uses the authenticated session through WordPress' REST nonce middleware. Authorization remains capability-based; secrets are never stored in content manifests or committed to GitHub.
 
-Inside WordPress admin, the dashboard uses the authenticated session through WordPress' own REST nonce middleware. The protected `/site/intelligence` endpoint therefore remains private while still being usable from the Manager UI.
+## Current candidate
+
+- SEO/GEO Manager `0.3.21`
+- Build / Finish inspection and controlled structured writes are operational.
+- Exact historical permalink preservation is guarded and reversible.
+- Redirect-required authoritative permalink plans now have a separately guarded atomic Apply/rollback path.
+- EMMAKE `/nuevaweb/` remains the first field target before broader promotion.
 
 ## Next implementation slices
 
-- dashboard proposal/preview/apply/verify/rollback controls;
+- field-install and inspect Manager 0.3.21 on EMMAKE `/nuevaweb/` before any real write;
+- first real permalink authority/preview cycle and one accepted reversible field operation when the plan proves safe;
+- first real structured Build / Finish content preview/apply/verify cycle on an EMMAKE strategic page;
+- operation-history/admin visibility and rendered post-write verification;
 - provider-specific SEO metadata write adapters, starting with the accepted field authority;
 - creation manifests for new draft pages/posts;
-- operation history surface;
-- rendered verification after accepted writes;
 - M3 SEO/GEO Optimizer;
 - M4 Landing Engine;
 - M5 Blog Engine;
