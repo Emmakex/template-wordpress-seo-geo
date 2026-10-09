@@ -10,6 +10,7 @@ on:
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   push:
     branches:
@@ -22,6 +23,7 @@ on:
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   workflow_dispatch:
 
@@ -36,7 +38,7 @@ jobs:
   manager-wordpress:
     name: M1/M2 + Theme + SEO authority runtime acceptance
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -45,6 +47,7 @@ jobs:
       - name: Validate acceptance scripts and dashboard JavaScript
         run: |
           bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-permalink-acceptance.sh
           php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
@@ -62,3 +65,6 @@ jobs:
 
       - name: Manager WordPress acceptance
         run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+
+      - name: Permalink redirect-plan acceptance
+        run: bash scripts/ci/seo-geo-manager-permalink-acceptance.sh
