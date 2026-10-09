@@ -15,6 +15,7 @@ DB_PASSWORD="permalink-acceptance-password"
 DB_ROOT_PASSWORD="permalink-acceptance-root"
 TMP_DIR="$(mktemp -d)"
 RUNTIME_LOG="${TMP_DIR}/permalink-runtime.log"
+REDIRECT_RUNTIME_LOG="${TMP_DIR}/redirect-runtime.log"
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
@@ -81,9 +82,11 @@ docker exec "$WP_CONTAINER" test -f /var/www/html/wp-settings.php >/dev/null
 docker exec "$WP_CONTAINER" mkdir -p /var/www/html/wp-content/plugins/seo-geo-manager
 docker cp packages/seo-geo-manager/. "$WP_CONTAINER":/var/www/html/wp-content/plugins/seo-geo-manager/
 docker cp scripts/ci/seo-geo-manager-permalink-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-permalink-acceptance.php
+docker cp scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-redirect-runtime-acceptance.php
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-manager \
-  /var/www/html/seo-geo-manager-permalink-acceptance.php
+  /var/www/html/seo-geo-manager-permalink-acceptance.php \
+  /var/www/html/seo-geo-manager-redirect-runtime-acceptance.php
 
 wp_cli core install \
   --url="http://seo-geo-permalink.test" \
@@ -108,6 +111,15 @@ grep -q '"collision_guard":true' "$RUNTIME_LOG"
 grep -q '"ambiguous_old_source_guard":true' "$RUNTIME_LOG"
 grep -q '"legacy_authority_guard":true' "$RUNTIME_LOG"
 
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-redirect-runtime-acceptance.php >"$REDIRECT_RUNTIME_LOG" 2>&1; then
+  cat "$REDIRECT_RUNTIME_LOG"
+  exit 1
+fi
+cat "$REDIRECT_RUNTIME_LOG"
+grep -q '"ok":true' "$REDIRECT_RUNTIME_LOG"
+grep -q '"one_hop_guard":true' "$REDIRECT_RUNTIME_LOG"
+grep -q '"reversible_runtime":true' "$REDIRECT_RUNTIME_LOG"
+
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
   docker exec "$WP_CONTAINER" sh -lc "test ! -s '$DEBUG_LOG'" || {
@@ -116,4 +128,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
   }
 fi
 
-printf '[manager] Permalink redirect-plan and legacy-authority acceptance OK.\n'
+printf '[manager] Permalink authority, apply/rollback and guarded 301 runtime acceptance OK.\n'
