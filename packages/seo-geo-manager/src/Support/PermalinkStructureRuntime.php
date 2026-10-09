@@ -32,7 +32,7 @@ final class PermalinkStructureRuntime {
 		wp_cache_delete( 'permalink_structure', 'options' );
 		wp_cache_delete( 'alloptions', 'options' );
 
-		if ( $structure !== (string) get_option( 'permalink_structure', '' ) ) {
+		if ( (string) get_option( 'permalink_structure', '' ) !== $structure ) {
 			return new WP_Error(
 				'seo_geo_manager_permalink_write_failed',
 				'WordPress did not persist the requested permalink structure.',
