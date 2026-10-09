@@ -48,7 +48,7 @@ final class LegacyPermalinkAuthority {
 			return self::blocked( $base, (string) $remote['message'], $local, $remote );
 		}
 
-		$remote_by_slug = array();
+		$remote_by_slug         = array();
 		$duplicate_remote_slugs = array();
 		foreach ( $remote['posts'] as $row ) {
 			if ( ! is_array( $row ) ) {
@@ -66,12 +66,12 @@ final class LegacyPermalinkAuthority {
 			$remote_by_slug[ $slug ] = $link;
 		}
 
-		$rows               = array();
-		$missing            = array();
-		$invalid_links      = array();
-		$structure_counts   = array();
-		$local_slug_counts  = array_count_values( array_column( $local['posts'], 'slug' ) );
-		$duplicate_local    = array_keys( array_filter( $local_slug_counts, static fn ( int $count ): bool => 1 < $count ) );
+		$rows              = array();
+		$missing           = array();
+		$invalid_links     = array();
+		$structure_counts  = array();
+		$local_slug_counts = array_count_values( array_column( $local['posts'], 'slug' ) );
+		$duplicate_local   = array_keys( array_filter( $local_slug_counts, static fn ( int $count ): bool => 1 < $count ) );
 
 		foreach ( $local['posts'] as $post ) {
 			$post_id = (int) $post['post_id'];
@@ -132,30 +132,30 @@ final class LegacyPermalinkAuthority {
 		}
 
 		return array(
-			'mode'                         => 'legacy-permalink-authority-preview',
-			'write_performed'              => false,
-			'legacy_base_url'              => $base,
-			'rest_endpoint'                => trailingslashit( $base ) . 'wp-json/wp/v2/posts',
-			'current_posts_scanned'        => count( $local['posts'] ),
-			'legacy_posts_scanned'         => count( $remote['posts'] ),
-			'matched_posts'                => count( $rows ),
-			'missing_count'                => count( $missing ),
-			'missing'                      => $missing,
-			'duplicate_local_slugs'        => $duplicate_local,
-			'duplicate_legacy_slugs'       => $duplicate_remote,
-			'invalid_legacy_links'         => $invalid_links,
-			'complete_scan'                => $complete_scan,
-			'mapping_authoritative'        => $mapping_authoritative,
-			'inferred_structure'           => $inferred_structure,
-			'structure_consistent'         => $structure_consistent,
-			'seo_authority_verified'       => $seo_authority_verified,
-			'authority_fingerprint'        => $authority_fingerprint,
-			'rows'                         => $rows,
-			'apply_blocked'                => true,
-			'block_reason'                 => $block_reason,
-			'next_action'                  => $seo_authority_verified ? 'integrate-authoritative-permalink-plan' : 'review-legacy-authority-gaps',
-			'environment'                  => EnvironmentPolicy::snapshot(),
-			'policy'                       => array(
+			'mode'                               => 'legacy-permalink-authority-preview',
+			'write_performed'                    => false,
+			'legacy_base_url'                    => $base,
+			'rest_endpoint'                      => trailingslashit( $base ) . 'wp-json/wp/v2/posts',
+			'current_posts_scanned'              => count( $local['posts'] ),
+			'legacy_posts_scanned'               => count( $remote['posts'] ),
+			'matched_posts'                      => count( $rows ),
+			'missing_count'                      => count( $missing ),
+			'missing'                            => $missing,
+			'duplicate_local_slugs'              => $duplicate_local,
+			'duplicate_legacy_slugs'             => $duplicate_remote,
+			'invalid_legacy_links'               => $invalid_links,
+			'complete_scan'                      => $complete_scan,
+			'mapping_authoritative'              => $mapping_authoritative,
+			'inferred_structure'                 => $inferred_structure,
+			'structure_consistent'               => $structure_consistent,
+			'seo_authority_verified'             => $seo_authority_verified,
+			'authority_fingerprint'              => $authority_fingerprint,
+			'rows'                               => $rows,
+			'apply_blocked'                      => true,
+			'block_reason'                       => $block_reason,
+			'next_action'                        => $seo_authority_verified ? 'integrate-authoritative-permalink-plan' : 'review-legacy-authority-gaps',
+			'environment'                        => EnvironmentPolicy::snapshot(),
+			'policy'                             => array(
 				'preview_only'                 => true,
 				'same_host_only'               => true,
 				'current_clone_path_rejected'  => true,
@@ -208,11 +208,12 @@ final class LegacyPermalinkAuthority {
 	 * @return array{ok:bool,posts:array<int,array<string,mixed>>,complete:bool,message:string}
 	 */
 	private static function remote_posts( string $base ): array {
-		$posts = array();
+		$posts       = array();
 		$total_pages = null;
-		$complete = true;
+		$complete    = true;
+		$max_pages   = (int) ceil( self::MAX_POSTS / self::PER_PAGE );
 
-		for ( $page = 1; $page <= (int) ceil( self::MAX_POSTS / self::PER_PAGE ); ++$page ) {
+		for ( $page = 1; $page <= $max_pages; ++$page ) {
 			$url = add_query_arg(
 				array(
 					'per_page' => self::PER_PAGE,
@@ -245,9 +246,9 @@ final class LegacyPermalinkAuthority {
 			}
 
 			if ( null === $total_pages ) {
-				$header = wp_remote_retrieve_header( $response, 'x-wp-totalpages' );
+				$header      = wp_remote_retrieve_header( $response, 'x-wp-totalpages' );
 				$total_pages = is_numeric( $header ) ? max( 1, (int) $header ) : null;
-				if ( null !== $total_pages && $total_pages > (int) ceil( self::MAX_POSTS / self::PER_PAGE ) ) {
+				if ( null !== $total_pages && $total_pages > $max_pages ) {
 					$complete = false;
 				}
 			}
@@ -258,7 +259,7 @@ final class LegacyPermalinkAuthority {
 				}
 			}
 			if ( count( $posts ) > self::MAX_POSTS ) {
-				$posts = array_slice( $posts, 0, self::MAX_POSTS );
+				$posts    = array_slice( $posts, 0, self::MAX_POSTS );
 				$complete = false;
 				break;
 			}
