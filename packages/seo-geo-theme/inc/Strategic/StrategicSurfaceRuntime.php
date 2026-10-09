@@ -4,6 +4,7 @@
  *
  * @package SeoGeoTheme
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Theme\Strategic;
@@ -15,13 +16,26 @@ use WP_Post;
  * public master-layout authority.
  */
 final class StrategicSurfaceRuntime {
-	/** Active strategic page for the current request. */
+	/**
+	 * Active strategic page for the current request.
+	 *
+	 * @var WP_Post|null
+	 */
 	private ?WP_Post $active_post = null;
 
-	/** Active strategic preset for renderer dispatch. */
+	/**
+	 * Active strategic preset for renderer dispatch.
+	 *
+	 * @var string|null
+	 */
 	private ?string $active_preset = null;
 
-	/** Build the strategic runtime. */
+	/**
+	 * Build the strategic runtime.
+	 *
+	 * @param CorporateHomeRenderer $corporate_home_renderer Corporate Home renderer.
+	 * @param ResearchHomeRenderer  $research_home_renderer  Research Home renderer.
+	 */
 	public function __construct(
 		private readonly CorporateHomeRenderer $corporate_home_renderer,
 		private readonly ResearchHomeRenderer $research_home_renderer
