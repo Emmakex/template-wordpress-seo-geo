@@ -4,6 +4,7 @@
  *
  * @package SeoGeoTheme
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Theme\Strategic;
@@ -16,9 +17,18 @@ use WP_Query;
  * responsible for the public composition.
  */
 final class ResearchHomeRenderer {
+	/**
+	 * Build the Research Home renderer.
+	 *
+	 * @param ResearchHomeModelResolver $resolver Structured model resolver.
+	 */
 	public function __construct( private readonly ResearchHomeModelResolver $resolver ) {}
 
-	/** Whether this page has a complete Research Home model. */
+	/**
+	 * Determine whether this page has a complete Research Home model.
+	 *
+	 * @param WP_Post $post Source WordPress page.
+	 */
 	public function supports( WP_Post $post ): bool {
 		return $this->resolver->supports( $post );
 	}
@@ -26,6 +36,7 @@ final class ResearchHomeRenderer {
 	/**
 	 * Render one Research Home.
 	 *
+	 * @param WP_Post $post Source WordPress page.
 	 * @return string Theme-owned HTML. Model values are escaped at composition.
 	 */
 	public function render( WP_Post $post ): string {
@@ -52,6 +63,7 @@ final class ResearchHomeRenderer {
 	 *
 	 * @param array<string,mixed> $slots Semantic slots.
 	 * @param array<string,mixed> $model Structured model.
+	 * @param bool                $is_es Whether the active locale is Spanish.
 	 */
 	private function render_hero( array $slots, array $model, bool $is_es ): string {
 		$cta = $this->link( $slots, 'hero-primary-cta' );
@@ -65,12 +77,14 @@ final class ResearchHomeRenderer {
 			if ( ! is_array( $identifier ) ) {
 				continue;
 			}
+
 			$label = isset( $identifier['label'] ) && is_string( $identifier['label'] ) ? $identifier['label'] : '';
 			$value = isset( $identifier['value'] ) && is_string( $identifier['value'] ) ? $identifier['value'] : '';
 			$url   = isset( $identifier['url'] ) && is_string( $identifier['url'] ) ? $identifier['url'] : '';
 			if ( '' === $label || '' === $value ) {
 				continue;
 			}
+
 			$content = '<span>' . esc_html( $label ) . '</span><strong>' . esc_html( $value ) . '</strong>';
 			$verified .= '' !== $url
 				? '<a class="seo-geo-research-verified-chip" href="' . esc_url( $url ) . '" rel="me">' . $content . '</a>'
@@ -103,6 +117,7 @@ final class ResearchHomeRenderer {
 	 *
 	 * @param array<string,mixed> $slots Semantic slots.
 	 * @param array<string,mixed> $model Structured model.
+	 * @param bool                $is_es Whether the active locale is Spanish.
 	 */
 	private function render_research_lines( array $slots, array $model, bool $is_es ): string {
 		$items = isset( $model['research_lines'] ) && is_array( $model['research_lines'] ) ? $model['research_lines'] : array();
@@ -137,6 +152,7 @@ final class ResearchHomeRenderer {
 	 *
 	 * @param array<string,mixed> $slots Semantic slots.
 	 * @param array<string,mixed> $model Structured model.
+	 * @param bool                $is_es Whether the active locale is Spanish.
 	 */
 	private function render_outputs( array $slots, array $model, bool $is_es ): string {
 		$items = isset( $model['selected_outputs'] ) && is_array( $model['selected_outputs'] ) ? $model['selected_outputs'] : array();
@@ -176,6 +192,7 @@ final class ResearchHomeRenderer {
 	 *
 	 * @param array<string,mixed> $slots Semantic slots.
 	 * @param array<string,mixed> $model Structured model.
+	 * @param bool                $is_es Whether the active locale is Spanish.
 	 */
 	private function render_identifiers( array $slots, array $model, bool $is_es ): string {
 		$items = isset( $model['academic_identifiers'] ) && is_array( $model['academic_identifiers'] ) ? $model['academic_identifiers'] : array();
@@ -205,7 +222,12 @@ final class ResearchHomeRenderer {
 			. '</div></section>';
 	}
 
-	/** Render the latest three published native WordPress posts. */
+	/**
+	 * Render the latest three published native WordPress posts.
+	 *
+	 * @param array<string,mixed> $slots Semantic slots.
+	 * @param bool                $is_es Whether the active locale is Spanish.
+	 */
 	private function render_latest_insights( array $slots, bool $is_es ): string {
 		$query = new WP_Query(
 			array(
@@ -246,7 +268,11 @@ final class ResearchHomeRenderer {
 			. '</div></section>';
 	}
 
-	/** Render the closing contact/collaboration CTA. */
+	/**
+	 * Render the closing contact/collaboration CTA.
+	 *
+	 * @param array<string,mixed> $slots Semantic slots.
+	 */
 	private function render_final_cta( array $slots ): string {
 		$link = $this->link( $slots, 'final-cta-button' );
 		if ( null === $link ) {
@@ -261,7 +287,14 @@ final class ResearchHomeRenderer {
 			. '</div></section>';
 	}
 
-	/** Render a reusable section heading. */
+	/**
+	 * Render a reusable section heading.
+	 *
+	 * @param string $eyebrow Compact section label.
+	 * @param string $id      Heading DOM identifier.
+	 * @param string $heading Visible section heading.
+	 * @param string $intro   Supporting introduction.
+	 */
 	private function section_heading( string $eyebrow, string $id, string $heading, string $intro ): string {
 		return '<header class="seo-geo-research-section-heading">'
 			. '<p class="seo-geo-research-eyebrow">' . esc_html( $eyebrow ) . '</p>'
@@ -270,19 +303,33 @@ final class ResearchHomeRenderer {
 			. '</header>';
 	}
 
-	/** Read one validated text slot. */
+	/**
+	 * Read one validated text slot.
+	 *
+	 * @param array<string,mixed> $slots Semantic slots.
+	 * @param string              $key   Slot key.
+	 */
 	private function text( array $slots, string $key ): string {
 		$value = $slots[ $key ] ?? '';
 		return is_string( $value ) ? $value : '';
 	}
 
-	/** @return array{label:string,url:string}|null */
+	/**
+	 * Read one validated link slot.
+	 *
+	 * @param array<string,mixed> $slots Semantic slots.
+	 * @param string              $key   Slot key.
+	 * @return array{label:string,url:string}|null
+	 */
 	private function link( array $slots, string $key ): ?array {
 		$value = $slots[ $key ] ?? null;
 		if ( ! is_array( $value ) || ! isset( $value['label'], $value['url'] ) || ! is_string( $value['label'] ) || ! is_string( $value['url'] ) ) {
 			return null;
 		}
 
-		return array( 'label' => $value['label'], 'url' => $value['url'] );
+		return array(
+			'label' => $value['label'],
+			'url'   => $value['url'],
+		);
 	}
 }
