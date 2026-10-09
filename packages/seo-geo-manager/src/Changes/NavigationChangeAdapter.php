@@ -479,7 +479,7 @@ final class NavigationChangeAdapter {
 		foreach ( $items as $item ) {
 			if ( ! is_object( $item ) || ! isset( $item->ID ) ) {
 				continue;
-		}
+			}
 			$state[] = array(
 				'id'          => (int) $item->ID,
 				'order'       => (int) ( $item->menu_order ?? 0 ),
