@@ -80,9 +80,9 @@ The Corporate strategic master does not rely on Gutenberg `contentSize` / `wideS
 
 ## SEO/GEO Manager relationship
 
-SEO/GEO Manager is a separate plugin product and is not required for Theme stable runtime.
+SEO/GEO Manager is a separate plugin product.
 
-The renderer boundary is compatible with Manager because Manager writes structured content/model state while Theme remains the public renderer. Manager may create/update strategic models and normal WordPress posts, while Theme owns strategic presentation and exactly one accepted SEO/GEO output authority remains active per signal.
+It is not required for Theme stable runtime. The renderer boundary is compatible with Manager because Manager writes structured content/model state while Theme remains the public renderer. Manager may create/update strategic models and normal WordPress posts, while Theme owns strategic presentation and exactly one accepted SEO/GEO output authority remains active per signal.
 
 ## Selected real-site pilot
 
