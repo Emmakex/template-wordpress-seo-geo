@@ -303,19 +303,103 @@ $live_apply = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/changes/appl
 seo_geo_manager_accept( 200 === $live_apply['status'], 'Explicitly approved published-target update failed for administrator.' );
 seo_geo_manager_accept( 'Published changed' === get_post_field( 'post_title', (int) $live_id ), 'Approved published-target title did not persist.' );
 
+/* Navigation-menu adapter: preview -> explicit public approval -> apply -> replay -> rollback. */
+$menu_id = wp_create_nav_menu( 'SEO GEO Manager Acceptance Menu' );
+seo_geo_manager_accept( ! is_wp_error( $menu_id ) && 0 < (int) $menu_id, 'Could not create navigation menu fixture.' );
+$old_menu_url = $site_root . '/blog-transformacion-digital/';
+$new_menu_url = home_url( '/blog-transformacion-digital/' );
+$menu_item_id = wp_update_nav_menu_item(
+	(int) $menu_id,
+	0,
+	array(
+		'menu-item-title'  => 'Blog',
+		'menu-item-url'    => $old_menu_url,
+		'menu-item-status' => 'publish',
+		'menu-item-type'   => 'custom',
+	)
+);
+seo_geo_manager_accept( ! is_wp_error( $menu_item_id ) && 0 < (int) $menu_item_id, 'Could not create custom navigation item fixture.' );
+
+$menu_preview_payload = array(
+	'schema_version'       => 1,
+	'menu_id'              => (int) $menu_id,
+	'current_urls'         => array( $old_menu_url ),
+	'expected_occurrences' => 1,
+	'suggested_url'        => $new_menu_url,
+);
+$menu_preview = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/navigation/changes/preview', $menu_preview_payload );
+seo_geo_manager_accept( 200 === $menu_preview['status'] && is_array( $menu_preview['data'] ), 'Navigation preview failed.' );
+seo_geo_manager_accept( true === ( $menu_preview['data']['has_changes'] ?? false ), 'Navigation preview did not report changes.' );
+seo_geo_manager_accept( 'navigation-menu' === ( $menu_preview['data']['adapter'] ?? '' ), 'Navigation preview adapter identity mismatch.' );
+seo_geo_manager_accept( 1 === count( $menu_preview['data']['matches'] ?? array() ), 'Navigation preview occurrence accounting mismatch.' );
+$menu_fingerprint = (string) ( $menu_preview['data']['fingerprint'] ?? '' );
+seo_geo_manager_accept( '' !== $menu_fingerprint, 'Navigation preview fingerprint is missing.' );
+
+$menu_blocked_payload                            = $menu_preview_payload;
+$menu_blocked_payload['expected_fingerprint']    = $menu_fingerprint;
+$menu_blocked_payload['idempotency_key']         = 'acceptance-menu-blocked';
+$menu_blocked_payload['environment_fingerprint'] = $environment_fingerprint;
+$menu_blocked = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/navigation/changes/apply', $menu_blocked_payload );
+seo_geo_manager_accept( 409 === $menu_blocked['status'], 'Navigation changed without explicit public-navigation approval.' );
+seo_geo_manager_accept( 'seo_geo_manager_navigation_public_approval_required' === seo_geo_manager_error_code( $menu_blocked['data'] ), 'Unexpected public-navigation approval guard code.' );
+
+$menu_apply_payload                            = $menu_blocked_payload;
+$menu_apply_payload['idempotency_key']         = 'acceptance-menu-approved';
+$menu_apply_payload['allow_public_navigation'] = true;
+$menu_apply = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/navigation/changes/apply', $menu_apply_payload );
+seo_geo_manager_accept( 200 === $menu_apply['status'] && is_array( $menu_apply['data'] ), 'Navigation apply failed.' );
+seo_geo_manager_accept( 'applied' === ( $menu_apply['data']['status'] ?? '' ), 'Navigation operation status mismatch.' );
+seo_geo_manager_accept( 'navigation-menu' === ( $menu_apply['data']['adapter'] ?? '' ), 'Navigation apply adapter identity mismatch.' );
+$menu_operation_id = (string) ( $menu_apply['data']['operation_id'] ?? '' );
+seo_geo_manager_accept( '' !== $menu_operation_id, 'Navigation operation ID is missing.' );
+
+$menu_items = wp_get_nav_menu_items( (int) $menu_id );
+$updated_menu_url = '';
+foreach ( is_array( $menu_items ) ? $menu_items : array() as $menu_item ) {
+	if ( is_object( $menu_item ) && (int) ( $menu_item->ID ?? 0 ) === (int) $menu_item_id ) {
+		$updated_menu_url = (string) ( $menu_item->url ?? '' );
+		break;
+	}
+}
+seo_geo_manager_accept( untrailingslashit( $new_menu_url ) === untrailingslashit( $updated_menu_url ), 'Navigation apply did not persist the corrected URL.' );
+
+$menu_replay = seo_geo_manager_request( 'POST', '/seo-geo-manager/v1/navigation/changes/apply', $menu_apply_payload );
+seo_geo_manager_accept( 200 === $menu_replay['status'] && $menu_operation_id === ( $menu_replay['data']['operation_id'] ?? '' ), 'Navigation idempotent replay failed.' );
+seo_geo_manager_accept( true === ( $menu_replay['data']['idempotent_replay'] ?? false ), 'Navigation idempotent replay flag is missing.' );
+
+$menu_read = seo_geo_manager_request( 'GET', '/seo-geo-manager/v1/navigation/changes/' . $menu_operation_id );
+seo_geo_manager_accept( 200 === $menu_read['status'] && $environment_fingerprint === ( $menu_read['data']['environment']['fingerprint'] ?? '' ), 'Navigation operation was not bound to the inspected environment.' );
+
+$menu_rollback = seo_geo_manager_request(
+	'POST',
+	'/seo-geo-manager/v1/navigation/changes/' . $menu_operation_id . '/rollback',
+	array( 'environment_fingerprint' => $environment_fingerprint )
+);
+seo_geo_manager_accept( 200 === $menu_rollback['status'] && 'rolled-back' === ( $menu_rollback['data']['status'] ?? '' ), 'Navigation rollback failed.' );
+$menu_items = wp_get_nav_menu_items( (int) $menu_id );
+$restored_menu_url = '';
+foreach ( is_array( $menu_items ) ? $menu_items : array() as $menu_item ) {
+	if ( is_object( $menu_item ) && (int) ( $menu_item->ID ?? 0 ) === (int) $menu_item_id ) {
+		$restored_menu_url = (string) ( $menu_item->url ?? '' );
+		break;
+	}
+}
+seo_geo_manager_accept( untrailingslashit( $old_menu_url ) === untrailingslashit( $restored_menu_url ), 'Navigation rollback did not restore the original URL.' );
+
 $result = array(
-	'ok'                          => true,
-	'plugin_version'              => defined( 'SEO_GEO_MANAGER_VERSION' ) ? SEO_GEO_MANAGER_VERSION : '',
-	'clone_home_url'              => home_url( '/' ),
-	'environment_approval'        => true,
-	'leakage_candidates'          => count( $leakage ),
-	'theme_preset'                => $theme_contract['preset'] ?? null,
-	'preview_apply_rollback'      => true,
-	'idempotent_replay'           => true,
-	'stale_write_protection'      => true,
-	'slug_collision_protection'   => true,
-	'stale_rollback_protection'   => true,
-	'published_target_guard'      => true,
+	'ok'                         => true,
+	'plugin_version'             => defined( 'SEO_GEO_MANAGER_VERSION' ) ? SEO_GEO_MANAGER_VERSION : '',
+	'clone_home_url'             => home_url( '/' ),
+	'environment_approval'       => true,
+	'leakage_candidates'         => count( $leakage ),
+	'theme_preset'               => $theme_contract['preset'] ?? null,
+	'preview_apply_rollback'     => true,
+	'idempotent_replay'          => true,
+	'stale_write_protection'     => true,
+	'slug_collision_protection'  => true,
+	'stale_rollback_protection'  => true,
+	'published_target_guard'     => true,
+	'navigation_menu_adapter'    => true,
 );
 
 echo wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) . PHP_EOL;
