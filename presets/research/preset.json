@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "id": "research",
+  "version": "0.1.0",
+  "site_type": "research",
+  "intended_for": [
+    "researcher",
+    "doctoral-candidate",
+    "academic-profile",
+    "research-group-member",
+    "research-software-author"
+  ],
+  "required_templates": [
+    "page",
+    "single",
+    "archive",
+    "index",
+    "404"
+  ],
+  "recommended_base_patterns": [],
+  "preset_patterns": [],
+  "schema": {
+    "expected_entities": [
+      "Person",
+      "ProfilePage",
+      "WebSite",
+      "WebPage",
+      "BreadcrumbList",
+      "ScholarlyArticle",
+      "Article",
+      "Report",
+      "Dataset",
+      "SoftwareSourceCode"
+    ],
+    "site_identity": "person",
+    "requires_confirmation": true,
+    "researcher_source": "structured-researcher-profile",
+    "publication_source": "structured-research-output",
+    "identifier_source": "verified-academic-identifiers",
+    "notes": "Research extends the native SEO/GEO entity graph with verified researcher and research-output entities. Credentials, affiliations, review status, identifiers and metrics must not be inferred."
+  },
+  "research_model": {
+    "theme_owned_frontend": true,
+    "gutenberg_layout_authority": false,
+    "structured_page_models": true,
+    "researcher_profile_required": true,
+    "research_lines_structured": true,
+    "research_outputs_structured": true,
+    "explicit_review_status": true,
+    "persistent_identifiers_first_class": true,
+    "evidence_first_claims": true,
+    "academic_metadata_native": true,
+    "auto_infer_credentials": false,
+    "auto_infer_affiliation": false,
+    "auto_infer_peer_review": false,
+    "auto_infer_identifiers": false,
+    "auto_infer_citation_metrics": false
+  },
+  "navigation": {
+    "primary": [
+      "home",
+      "research",
+      "publications",
+      "projects",
+      "software",
+      "datasets",
+      "about",
+      "cv",
+      "contact"
+    ],
+    "footer": [
+      "insights",
+      "privacy-policy",
+      "legal-notice",
+      "contact"
+    ]
+  },
+  "multilingual": {
+    "baseline_locales": [
+      "en_US",
+      "es_ES"
+    ],
+    "fallback_locale": "en_US",
+    "localized_slugs": true,
+    "translation_relationships_required": true,
+    "bibliographic_language_preserved": true
+  },
+  "seo_acceptance": [
+    "one canonical per indexable page",
+    "localized canonical and hreflang agree",
+    "one H1 owned by the Theme composition",
+    "researcher identity is explicit and consistent",
+    "research outputs have stable canonical URLs",
+    "publication status is explicit and never inferred",
+    "academic identifiers are emitted only when verified",
+    "structured data reflects visible supported facts",
+    "Google Scholar citation metadata is emitted only from known bibliographic fields",
+    "private and draft research resources are excluded from discovery surfaces"
+  ],
+  "optional_integrations": [
+    "orcid",
+    "google-scholar-profile",
+    "crossref",
+    "zenodo",
+    "openalex",
+    "github"
+  ],
+  "explicitly_disabled": [
+    "Gutenberg as preset page layout authority",
+    "page-builder dependency",
+    "fabricated academic credentials",
+    "invented affiliations",
+    "invented publication status",
+    "invented DOI or academic identifiers",
+    "Google Scholar scraping dependency",
+    "fabricated citations or metrics",
+    "duplicate SEO or Schema authority"
+  ],
+  "seo_geo_runtime": {
+    "html_delivery": "semantic-server-rendered",
+    "primary_navigation": "crawlable-html-anchors",
+    "javascript_policy": "zero-by-default",
+    "canonical_authority": "shared-core-or-declared-provider",
+    "indexability_authority": "shared-core",
+    "hreflang_authority": "shared-core",
+    "schema_authority": "shared-core-or-declared-provider",
+    "single_h1_required": true,
+    "internal_links": "crawlable-html-anchors",
+    "structured_data_visible_fact_gate": true,
+    "llms_txt": "optional-indexable-content-only",
+    "markdown_alternates": "optional-noncanonical",
+    "content_provenance": "required-when-applicable",
+    "responsive_images": "wordpress-srcset-sizes",
+    "below_fold_media": "lazy",
+    "lcp_media": "not-lazy-loaded",
+    "performance_profile": "core-web-vitals-strict"
+  },
+  "design_direction": {
+    "north_star": "fast-verifiable-research-identity-and-output-discovery",
+    "functional_patterns": [
+      "researcher-identity",
+      "research-line-discovery",
+      "scholarly-output-discovery",
+      "project-output-linkage",
+      "academic-identifier-discovery",
+      "citation-and-source-discovery",
+      "research-contact"
+    ],
+    "modern_traits": [
+      "type-led-academic-identity",
+      "calm-editorial-surfaces",
+      "structured-output-cards",
+      "high-information-clarity",
+      "subtle-technology-language",
+      "accessible-data-presentation"
+    ],
+    "avoid": [
+      "generic-university-template-look",
+      "marketing-heavy-hero-copy",
+      "decorative-science-as-evidence",
+      "motion-heavy-reading-surfaces",
+      "metric-gamification",
+      "layout-composition-in-gutenberg"
+    ]
+  }
+}
