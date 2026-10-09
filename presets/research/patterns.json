@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "preset": "research",
+  "category": {
+    "slug": "seo-geo-research",
+    "labels": {
+      "en_US": "Research",
+      "es_ES": "Investigación"
+    }
+  },
+  "patterns": []
+}
