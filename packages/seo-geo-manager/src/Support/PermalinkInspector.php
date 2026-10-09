@@ -15,6 +15,11 @@ final class PermalinkInspector {
 	/**
 	 * Build a bounded, read-only permalink repair preview.
 	 *
+	 * The restored token sequence is a syntactic recovery candidate only. It is
+	 * deliberately not treated as authoritative historical SEO structure: a
+	 * migrated/cloned database may contain a corrupted option that no longer
+	 * reflects the public URLs which search engines saw before the migration.
+	 *
 	 * @return array<string, mixed>
 	 */
 	public static function preview(): array {
@@ -49,6 +54,8 @@ final class PermalinkInspector {
 			'write_performed'        => false,
 			'current_structure'      => $current,
 			'proposed_structure'     => $proposed,
+			'candidate_kind'         => 'syntactic-placeholder-recovery',
+			'seo_authority_verified' => false,
 			'current_fingerprint'    => self::fingerprint( $current ),
 			'restored_tokens'        => array_values( array_unique( $tokens ) ),
 			'malformed_fragments'    => $malformed_fragments,
@@ -61,10 +68,11 @@ final class PermalinkInspector {
 			'next_action'            => $safe_candidate ? 'build-permalink-redirect-plan' : 'manual-permalink-review',
 			'environment'            => EnvironmentPolicy::snapshot(),
 			'policy'                 => array(
-				'preview_only'               => true,
-				'no_option_write'            => true,
-				'no_rewrite_flush'           => true,
-				'redirect_plan_before_apply' => true,
+				'preview_only'                         => true,
+				'no_option_write'                      => true,
+				'no_rewrite_flush'                     => true,
+				'redirect_plan_before_apply'           => true,
+				'syntactic_candidate_not_seo_authority'=> true,
 			),
 		);
 	}
