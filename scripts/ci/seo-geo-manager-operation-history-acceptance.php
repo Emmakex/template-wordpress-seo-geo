@@ -117,6 +117,7 @@ $allowed_keys = array(
 	'changed_fields',
 	'structured_model',
 	'planned_redirects',
+	'rendered_verification_status',
 	'environment_type',
 	'created_at_gmt',
 	'rolled_back_at_gmt',
