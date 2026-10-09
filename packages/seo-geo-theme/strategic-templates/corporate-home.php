@@ -67,6 +67,41 @@ if ( function_exists( 'seo_geo_theme_strategic_surface_runtime' ) ) {
 	</div>
 </footer>
 
+<?php
+$mobile_navigation_script = <<<'JS'
+(() => {
+	const menus = document.querySelectorAll('.seo-geo-preset-navigation__mobile');
+	if (!menus.length) return;
+
+	const closeMenu = (menu, restoreFocus = false) => {
+		if (!menu.open) return;
+		menu.removeAttribute('open');
+		if (restoreFocus) menu.querySelector('summary')?.focus();
+	};
+
+	menus.forEach((menu) => {
+		menu.querySelectorAll('a').forEach((link) => {
+			link.addEventListener('click', () => closeMenu(menu));
+		});
+	});
+
+	document.addEventListener('click', (event) => {
+		menus.forEach((menu) => {
+			if (menu.open && !menu.contains(event.target)) closeMenu(menu);
+		});
+	});
+
+	document.addEventListener('keydown', (event) => {
+		if (event.key !== 'Escape') return;
+		menus.forEach((menu) => closeMenu(menu, true));
+	});
+})();
+JS;
+wp_print_inline_script_tag(
+	$mobile_navigation_script,
+	array( 'id' => 'seo-geo-mobile-navigation-js' )
+);
+?>
 <?php wp_footer(); ?>
 </body>
 </html>

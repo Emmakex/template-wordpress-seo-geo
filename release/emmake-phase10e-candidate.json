@@ -8,11 +8,11 @@
   },
   "target_version": "0.1.1",
   "release_channel": "prestable",
-  "source_commit": "c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00",
+  "source_commit": "eb3c523e2302f464ed253b4693831967b7be4c8a",
   "theme": {
     "version": "0.1.1",
     "file": "seo-geo-theme.zip",
-    "sha256": "f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f"
+    "sha256": "c19935f45b7997090cf5fbcae85da584e159be66608820d0030eff3c9f7a92cc"
   },
   "migration_bridge": {
     "version": "0.8.60",
@@ -21,9 +21,9 @@
   },
   "field_pilot_pack": {
     "file": "emmake-home-field-pilot-pack.zip",
-    "sha256": "1736d8b6dfb9aeec8cc8132a4ee1c42d5d9e4a3afb4510934edfd0cecd5a9fe2"
+    "sha256": "d444e196dd2addca512ba9cc286bc8e094d2aca0cab52c0adccb48181a365561"
   },
   "stable_decision": "no-go",
   "acceptance_status": "pending",
-  "candidate_frozen_on": "2026-10-07"
+  "candidate_frozen_on": "2026-10-09"
 }

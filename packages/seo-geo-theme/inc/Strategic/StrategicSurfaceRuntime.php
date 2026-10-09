@@ -97,9 +97,11 @@ final class StrategicSurfaceRuntime {
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' );
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
 
-		$path          = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
-		$closure_path  = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
-		$bundle_marker = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
+		$path             = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
+		$closure_path     = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
+		$field_css_path   = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-mf08-3.css';
+		$field_media_path = get_template_directory() . '/assets/images/presets/corporate/v5/mf08-media-atlas.webp';
+		$bundle_marker    = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
 		if ( ! is_readable( $path ) ) {
 			return;
 		}
@@ -122,6 +124,7 @@ final class StrategicSurfaceRuntime {
 			$dependencies,
 			$version
 		);
+		wp_add_inline_style( 'seo-geo-theme-preset-corporate-v5-runtime', $this->navigation_style() );
 
 		if ( ! $is_bundled && is_readable( $closure_path ) ) {
 			$closure_version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $closure_path ) : '0.1.1';
@@ -132,6 +135,86 @@ final class StrategicSurfaceRuntime {
 				$closure_version
 			);
 		}
+
+		wp_register_script(
+			'seo-geo-theme-preset-navigation',
+			false,
+			array(),
+			'0.1.1',
+			true
+		);
+		wp_enqueue_script( 'seo-geo-theme-preset-navigation' );
+		wp_add_inline_script( 'seo-geo-theme-preset-navigation', $this->navigation_script() );
+
+		if ( is_readable( $field_media_path ) && is_readable( $field_css_path ) ) {
+			$field_dependencies = $is_bundled
+				? array( 'seo-geo-theme-preset-corporate-v5-runtime' )
+				: array( 'seo-geo-theme-preset-corporate-v5-a3-1' );
+			$field_version      = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $field_css_path ) : '0.1.1';
+			wp_enqueue_style(
+				'seo-geo-theme-preset-corporate-v5-mf08-3',
+				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-mf08-3.css',
+				$field_dependencies,
+				$field_version
+			);
+		}
+	}
+
+	/**
+	 * Return the tiny no-request mobile navigation presentation closure.
+	 */
+	private function navigation_style(): string {
+		return <<<'CSS'
+@media (max-width:820px){
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header summary{position:relative;z-index:3;min-width:96px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.55rem .8rem;text-align:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] summary{font-size:0}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] summary::after{content:"×";font-size:1.55rem;font-weight:500;line-height:1;pointer-events:none}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__list{top:calc(100% + .45rem);gap:.1rem;padding:.55rem}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__item a{min-height:44px;display:flex;align-items:center;padding:.6rem .75rem}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header details[open] .seo-geo-preset-navigation__item:last-child a{min-height:52px;justify-content:center;padding:.65rem .9rem;text-align:center}
+}
+CSS;
+	}
+
+	/**
+	 * Return the tiny no-request mobile navigation runtime.
+	 */
+	private function navigation_script(): string {
+		return <<<'JS'
+(() => {
+	'use strict';
+	const selector = '.seo-geo-preset-navigation__mobile';
+	const close = (details, restoreFocus = false) => {
+		if (!(details instanceof HTMLDetailsElement) || !details.open) return;
+		details.open = false;
+		if (restoreFocus) details.querySelector('summary')?.focus();
+	};
+	document.addEventListener('click', (event) => {
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const summary = target.closest(`${selector} > summary`);
+		if (summary) {
+			const details = summary.parentElement;
+			if (details instanceof HTMLDetailsElement) {
+				event.preventDefault();
+				details.open = !details.open;
+			}
+			return;
+		}
+		const link = target.closest(`${selector} a`);
+		if (link) close(link.closest(selector));
+	});
+	document.addEventListener('pointerdown', (event) => {
+		document.querySelectorAll(`${selector}[open]`).forEach((details) => {
+			if (!details.contains(event.target)) close(details);
+		});
+	});
+	document.addEventListener('keydown', (event) => {
+		if (event.key !== 'Escape') return;
+		document.querySelectorAll(`${selector}[open]`).forEach((details) => close(details, true));
+	});
+})();
+JS;
 	}
 
 	/**
