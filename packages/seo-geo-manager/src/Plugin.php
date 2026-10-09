@@ -21,6 +21,7 @@ use SeoGeo\Manager\Rest\PermalinkController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
 use SeoGeo\Manager\Rest\ThemeStructuredContentController;
+use SeoGeo\Manager\Support\PermalinkRedirectRuntime;
 
 final class Plugin {
 	private static bool $booted = false;
@@ -31,6 +32,7 @@ final class Plugin {
 		}
 
 		self::$booted = true;
+		PermalinkRedirectRuntime::register();
 
 		if ( is_admin() ) {
 			Dashboard::register();
