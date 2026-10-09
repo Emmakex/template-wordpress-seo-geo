@@ -112,71 +112,120 @@
 		if ( rows.length > 12 ) container.appendChild( text( 'p', `Se muestran 12 de ${ rows.length } rutas comparadas.`, 'description' ) );
 	}
 
-	function wireAuthoritativeApply( plan, authority, legacyBaseUrl, result, status, apply ) {
+	function wireRollback( operation, plan, result, status ) {
+		const rollback = text( 'button', 'Revertir esta reparación' );
+		rollback.type = 'button';
+		rollback.className = 'button button-secondary';
+		result.appendChild( rollback );
+		rollback.addEventListener( 'click', async () => {
+			const rollbackApproved = window.confirm( 'Se restaurará exactamente la estructura anterior. Si esta operación instaló un mapa 301, también se retirará de forma atómica. ¿Revertir esta operación?' );
+			if ( ! rollbackApproved ) return;
+			rollback.disabled = true;
+			status.textContent = 'Restaurando la estructura anterior y verificando rollback…';
+			try {
+				const rolledBack = await window.wp.apiFetch( {
+					path: `/seo-geo-manager/v1/permalinks/operations/${ operation.operation_id }/rollback`,
+					method: 'POST',
+					data: { environment_fingerprint: plan.environment?.fingerprint || '' }
+				} );
+				status.textContent = `Rollback verificado. Estructura restaurada: ${ rolledBack.before_structure || 'anterior' }.${ rolledBack.redirect_runtime_removed ? ' Runtime 301 retirado.' : '' }`;
+			} catch ( error ) {
+				rollback.disabled = false;
+				status.textContent = error && error.message ? error.message : 'No se pudo completar el rollback.';
+			}
+		} );
+	}
+
+	async function wireAuthoritativeApply( plan, authority, legacyBaseUrl, result, status, apply ) {
 		apply.onclick = null;
-		if ( ! plan.apply_available ) {
+		apply.textContent = 'Aplicar reparación';
+		let atomic = false;
+		let runtimePreview = null;
+
+		if ( plan.requires_redirect_runtime && plan.safe_structure_candidate ) {
+			status.textContent = 'Validando el runtime 301 atómico contra el plan autoritativo actual…';
+			try {
+				runtimePreview = await window.wp.apiFetch( {
+					path: '/seo-geo-manager/v1/permalinks/redirect-runtime/preview',
+					method: 'POST',
+					data: {
+						legacy_base_url: legacyBaseUrl,
+						authority_fingerprint: authority.authority_fingerprint || ''
+					}
+				} );
+				result.appendChild( renderFact( 'Runtime 301 atómico disponible', runtimePreview.atomic_apply_available ? 'sí' : 'no' ) );
+				result.appendChild( renderFact( '301 validados para activación', runtimePreview.redirect_count ?? 0 ) );
+				result.appendChild( renderFact( 'Runtime 301 activo actualmente', runtimePreview.active_runtime?.active ? 'sí' : 'no' ) );
+				atomic = Boolean( runtimePreview.atomic_apply_available );
+			} catch ( error ) {
+				apply.disabled = true;
+				apply.title = 'No se pudo validar el runtime 301 atómico.';
+				status.textContent = error && error.message ? error.message : 'No se pudo validar el runtime 301 atómico.';
+				return { available: false, atomic: false };
+			}
+		}
+
+		const available = Boolean( plan.apply_available || atomic );
+		if ( ! available ) {
 			apply.disabled = true;
 			apply.title = plan.requires_redirect_runtime
-				? 'Apply bloqueado: existen rutas históricas que requieren un runtime 301 probado.'
+				? ( runtimePreview?.block_reason || 'Apply bloqueado: el runtime 301 atómico no supera todavía sus guardas.' )
 				: 'Apply bloqueado por el plan autoritativo.';
-			return;
+			return { available: false, atomic: false };
 		}
 
 		apply.disabled = false;
-		apply.title = 'Aplicar la estructura histórica verificada con comprobación posterior y rollback disponible.';
+		apply.textContent = atomic ? 'Aplicar estructura + 301' : 'Aplicar reparación';
+		apply.title = atomic
+			? 'Aplicar estructura histórica y mapa 301 como una sola operación verificada y reversible.'
+			: 'Aplicar la estructura histórica verificada con comprobación posterior y rollback disponible.';
+
 		apply.onclick = async () => {
-			const approved = window.confirm( `Se cambiará permalink_structure a ${ plan.authoritative_structure } y se regenerarán las reglas de reescritura. El Manager verificará todas las rutas y registrará rollback. ¿Continuar?` );
-			if ( ! approved ) return;
+			const confirmation = atomic
+				? `Se cambiará permalink_structure a ${ plan.authoritative_structure } y se activarán ${ plan.planned_redirects } redirección(es) 301 verificadas. El Manager armará el mapa primero, aplicará la estructura, verificará ambos estados y revertirá todo si algo falla. ¿Continuar?`
+				: `Se cambiará permalink_structure a ${ plan.authoritative_structure } y se regenerarán las reglas de reescritura. El Manager verificará todas las rutas y registrará rollback. ¿Continuar?`;
+			if ( ! window.confirm( confirmation ) ) return;
 			apply.disabled = true;
-			status.textContent = 'Aplicando estructura autoritativa, regenerando reglas y verificando rutas SEO…';
+			status.textContent = atomic
+				? 'Armando mapa 301, aplicando estructura y verificando la operación atómica…'
+				: 'Aplicando estructura autoritativa, regenerando reglas y verificando rutas SEO…';
 			try {
 				const operation = await window.wp.apiFetch( {
-					path: '/seo-geo-manager/v1/permalinks/apply',
+					path: atomic ? '/seo-geo-manager/v1/permalinks/redirect-apply' : '/seo-geo-manager/v1/permalinks/apply',
 					method: 'POST',
 					data: {
 						legacy_base_url: legacyBaseUrl,
 						authority_fingerprint: authority.authority_fingerprint || '',
 						plan_fingerprint: plan.plan_fingerprint || '',
 						current_fingerprint: plan.current_fingerprint || '',
-						idempotency_key: `permalink-${ ( plan.plan_fingerprint || '' ).slice( 0, 64 ) }`,
+						idempotency_key: `${ atomic ? 'permalink-301' : 'permalink' }-${ ( plan.plan_fingerprint || '' ).slice( 0, 64 ) }`,
 						confirm_permalink_change: true,
+						confirm_redirect_runtime: atomic,
 						environment_fingerprint: plan.environment?.fingerprint || ''
 					}
 				} );
-				result.appendChild( text( 'h4', 'Cambio aplicado y verificado' ) );
+				result.appendChild( text( 'h4', atomic ? 'Estructura y 301 aplicados y verificados' : 'Cambio aplicado y verificado' ) );
 				result.appendChild( renderFact( 'Operación', operation.operation_id || '—' ) );
 				result.appendChild( renderFact( 'Estructura anterior', operation.before_structure || '—' ) );
 				result.appendChild( renderFact( 'Estructura activa', operation.after_structure || '—' ) );
-				result.appendChild( renderFact( 'Rutas históricas preservadas', operation.path_preservation_count ?? 0 ) );
-				result.appendChild( renderFact( '301 necesarios', operation.planned_redirects ?? 0 ) );
-				status.textContent = 'Estructura aplicada y verificada. El Manager conserva una operación reversible y bloquea rollback si detecta cambios posteriores.';
-
-				const rollback = text( 'button', 'Revertir esta reparación' );
-				rollback.type = 'button';
-				rollback.className = 'button button-secondary';
-				result.appendChild( rollback );
-				rollback.addEventListener( 'click', async () => {
-					const rollbackApproved = window.confirm( 'Se restaurará exactamente la estructura anterior y se regenerarán las reglas. ¿Revertir esta operación?' );
-					if ( ! rollbackApproved ) return;
-					rollback.disabled = true;
-					status.textContent = 'Restaurando la estructura anterior y verificando rollback…';
-					try {
-						const rolledBack = await window.wp.apiFetch( {
-							path: `/seo-geo-manager/v1/permalinks/operations/${ operation.operation_id }/rollback`,
-							method: 'POST',
-							data: { environment_fingerprint: plan.environment?.fingerprint || '' }
-						} );
-						status.textContent = `Rollback verificado. Estructura restaurada: ${ rolledBack.before_structure || 'anterior' }.`;
-					} catch ( error ) {
-						rollback.disabled = false;
-						status.textContent = error && error.message ? error.message : 'No se pudo completar el rollback.';
-					}
-				} );
+				result.appendChild( renderFact( '301 activos', operation.planned_redirects ?? 0 ) );
+				if ( atomic ) {
+					result.appendChild( renderFact( 'Runtime 301 efectivo', operation.redirect_runtime_effective ? 'sí' : 'no' ) );
+					result.appendChild( renderFact( 'Fingerprint runtime', operation.redirect_runtime_fingerprint || '—' ) );
+				} else {
+					result.appendChild( renderFact( 'Rutas históricas preservadas', operation.path_preservation_count ?? 0 ) );
+				}
+				status.textContent = atomic
+					? 'Operación atómica verificada: estructura y mapa 301 están activos y el rollback conjunto queda protegido contra estado obsoleto.'
+					: 'Estructura aplicada y verificada. El Manager conserva una operación reversible y bloquea rollback si detecta cambios posteriores.';
+				wireRollback( operation, plan, result, status );
 			} catch ( error ) {
 				apply.disabled = false;
 				status.textContent = error && error.message ? error.message : 'No se pudo aplicar la reparación de permalinks.';
 			}
 		};
+
+		return { available: true, atomic };
 	}
 
 	async function renderAuthoritativePlan( authority, legacyBaseUrl, result, status, apply ) {
@@ -199,17 +248,19 @@
 		result.appendChild( renderFact( 'Colisiones', plan.collision_count ?? 0 ) );
 		result.appendChild( renderFact( 'Escaneo completo', plan.complete_scan ? 'sí' : 'no' ) );
 		result.appendChild( renderFact( 'Candidato seguro para cambio de estructura', plan.safe_structure_candidate ? 'sí' : 'no' ) );
-		result.appendChild( renderFact( 'Apply disponible', plan.apply_available ? 'sí' : 'no' ) );
+		result.appendChild( renderFact( 'Apply directo sin 301', plan.apply_available ? 'sí' : 'no' ) );
 		result.appendChild( renderFact( 'Fingerprint del plan', plan.plan_fingerprint || '—' ) );
 		renderCollisions( plan, result );
 		renderAuthoritativeSample( plan, result );
 		renderRedirectSample( plan, result );
-		wireAuthoritativeApply( plan, authority, legacyBaseUrl, result, status, apply );
+		const applyMode = await wireAuthoritativeApply( plan, authority, legacyBaseUrl, result, status, apply );
 
 		if ( plan.apply_available ) {
-			status.textContent = `Plan autoritativo cerrado: ${ plan.path_preservation_count } ruta(s) histórica(s) se conservan exactamente al ignorar el prefijo temporal del clon. No hacen falta 301 y Apply está disponible con verificación y rollback.`;
+			status.textContent = `Plan autoritativo cerrado: ${ plan.path_preservation_count } ruta(s) histórica(s) se conservan exactamente. No hacen falta 301 y Apply está disponible con verificación y rollback.`;
+		} else if ( applyMode.atomic ) {
+			status.textContent = `Plan autoritativo cerrado: ${ plan.planned_redirects } ruta(s) requieren 301 y el runtime atómico ha sido validado. Apply conjunto está disponible con rollback de estructura + redirecciones.`;
 		} else if ( plan.safe_structure_candidate ) {
-			status.textContent = `Plan autoritativo cerrado, pero ${ plan.planned_redirects } ruta(s) necesitan 301. Apply permanece bloqueado hasta implementar el runtime de redirecciones.`;
+			status.textContent = `Plan autoritativo cerrado, pero ${ plan.planned_redirects } ruta(s) necesitan 301 y el runtime atómico no está disponible para este estado.`;
 		} else {
 			status.textContent = plan.block_reason || 'El plan autoritativo todavía contiene bloqueos y no permite avanzar a Apply.';
 		}
@@ -231,7 +282,7 @@
 		input.value = `${ window.location.origin }/`;
 		label.appendChild( input );
 		section.appendChild( label );
-		section.appendChild( text( 'p', 'Se propone la raíz del mismo host como punto de partida; revísala antes de comprobar. La 0.3.19 mantiene esta recuperación histórica limitada al mismo host.', 'description' ) );
+		section.appendChild( text( 'p', 'Se propone la raíz del mismo host como punto de partida; revísala antes de comprobar. La recuperación histórica permanece limitada al mismo host.', 'description' ) );
 
 		const button = text( 'button', 'Comprobar URLs históricas' );
 		button.type = 'button';
@@ -300,7 +351,7 @@
 			renderLegacyAuthorityControls( plan, status, body, apply );
 
 			if ( plan.safe_to_apply ) {
-				status.textContent = 'Plan sintáctico completo y sin colisiones. Si la URL antigua es ambigua, recupera primero la autoridad histórica; el Apply solo se habilita desde un plan autoritativo exacto.';
+				status.textContent = 'Plan sintáctico completo y sin colisiones. Si la URL antigua es ambigua, recupera primero la autoridad histórica; Apply solo se habilita desde un plan autoritativo verificado.';
 			} else if ( plan.requires_authoritative_legacy_urls ) {
 				status.textContent = plan.block_reason || 'La URL antigua es compartida por varias entradas; no se puede construir un 301 exacto por entrada desde la estructura corrupta.';
 			} else {
