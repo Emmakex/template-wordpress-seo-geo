@@ -26,9 +26,9 @@ final class PresetPageResolver {
 	/**
 	 * Resolve an existing strategic page without creating or mutating content.
 	 *
-	 * Exact semantic aliases are intentionally small and role-based. If more
-	 * than one page matches an alias family, the resolver refuses to guess and
-	 * leaves the page unresolved for operator review.
+	 * Exact semantic aliases are intentionally small and role-based. An exact
+	 * unique slug is stronger evidence than a title alias, so it wins before
+	 * title matching. Ambiguity at the same evidence level is never guessed.
 	 *
 	 * @param mixed                $resolved_id     Existing filtered result.
 	 * @param string               $key             Preset page key.
@@ -52,11 +52,19 @@ final class PresetPageResolver {
 		$accepted_slugs  = array_values( array_unique( array_merge( $accepted_slugs, $semantic_aliases['slugs'] ) ) );
 		$accepted_titles = array_values( array_unique( array_merge( $accepted_titles, $semantic_aliases['titles'] ) ) );
 
-		$exact_matches = self::exact_alias_matches( $accepted_slugs, $accepted_titles );
-		if ( 1 === count( $exact_matches ) ) {
-			return (int) array_key_first( $exact_matches );
+		$slug_matches = self::exact_slug_matches( $accepted_slugs );
+		if ( 1 === count( $slug_matches ) ) {
+			return (int) array_key_first( $slug_matches );
 		}
-		if ( 1 < count( $exact_matches ) ) {
+		if ( 1 < count( $slug_matches ) ) {
+			return 0;
+		}
+
+		$title_matches = self::exact_title_matches( $accepted_titles );
+		if ( 1 === count( $title_matches ) ) {
+			return (int) array_key_first( $title_matches );
+		}
+		if ( 1 < count( $title_matches ) ) {
 			return 0;
 		}
 
@@ -108,13 +116,11 @@ final class PresetPageResolver {
 	}
 
 	/**
-	 * @param list<string> $slugs  Accepted exact slugs.
-	 * @param list<string> $titles Accepted exact titles.
+	 * @param list<string> $slugs Accepted exact slugs.
 	 * @return array<int, WP_Post>
 	 */
-	private static function exact_alias_matches( array $slugs, array $titles ): array {
+	private static function exact_slug_matches( array $slugs ): array {
 		$matches = array();
-
 		foreach ( $slugs as $slug ) {
 			$post = get_page_by_path( trim( $slug, '/' ), OBJECT, 'page' );
 			if ( $post instanceof WP_Post ) {
@@ -122,6 +128,15 @@ final class PresetPageResolver {
 			}
 		}
 
+		return $matches;
+	}
+
+	/**
+	 * @param list<string> $titles Accepted exact titles.
+	 * @return array<int, WP_Post>
+	 */
+	private static function exact_title_matches( array $titles ): array {
+		$matches = array();
 		foreach ( $titles as $title ) {
 			$query = new WP_Query(
 				array(
