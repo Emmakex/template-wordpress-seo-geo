@@ -93,8 +93,10 @@
 		body.setAttribute( 'data-seo-geo-operation-body', '' );
 		section.appendChild( body );
 
-		const raw = root.querySelector( '.seo-geo-manager-admin__raw' );
-		if ( raw ) raw.before( section );
+		const technicalBody = root.querySelector( '.seo-geo-manager-admin__technical-body' );
+		const technicalRaw = root.querySelector( '.seo-geo-manager-admin__technical-body > .seo-geo-manager-admin__raw' );
+		if ( technicalRaw ) technicalRaw.before( section );
+		else if ( technicalBody ) technicalBody.appendChild( section );
 		else root.appendChild( section );
 
 		return section;
