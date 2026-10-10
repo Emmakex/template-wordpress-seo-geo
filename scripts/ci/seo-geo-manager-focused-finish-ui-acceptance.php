@@ -25,10 +25,22 @@ $dashboard_source = (string) file_get_contents( $dashboard );
 $field_gate_source = (string) file_get_contents( $field_gate );
 $actions_source = (string) file_get_contents( $actions );
 
-$required_plugin = array(
-	'Version: 0.3.31',
-	"SEO_GEO_MANAGER_VERSION', '0.3.31'",
-);
+$header_match = array();
+$constant_match = array();
+if ( 1 !== preg_match( '/^ \* Version:\s*([^\r\n]+)/m', $plugin_source, $header_match ) ) {
+	fwrite( STDERR, "Focused Finish UI plugin header version is missing.\n" );
+	exit( 1 );
+}
+if ( 1 !== preg_match( "/SEO_GEO_MANAGER_VERSION'\s*,\s*'([^']+)'/", $plugin_source, $constant_match ) ) {
+	fwrite( STDERR, "Focused Finish UI runtime version constant is missing.\n" );
+	exit( 1 );
+}
+$version = trim( (string) $header_match[1] );
+if ( '' === $version || $version !== trim( (string) $constant_match[1] ) ) {
+	fwrite( STDERR, "Focused Finish UI plugin header/runtime versions do not match.\n" );
+	exit( 1 );
+}
+
 $required_dashboard = array(
 	'Finalizar migración SEO/GEO',
 	'data-seo-geo-field-slot',
@@ -54,12 +66,6 @@ $required_actions = array(
 	'collision_count',
 );
 
-foreach ( $required_plugin as $needle ) {
-	if ( false === strpos( $plugin_source, $needle ) ) {
-		fwrite( STDERR, "Focused Finish UI version contract missing: {$needle}\n" );
-		exit( 1 );
-	}
-}
 foreach ( $required_dashboard as $needle ) {
 	if ( false === strpos( $dashboard_source, $needle ) ) {
 		fwrite( STDERR, "Focused dashboard contract missing: {$needle}\n" );
@@ -94,7 +100,7 @@ fwrite(
 	json_encode(
 		array(
 			'ok' => true,
-			'version' => '0.3.31',
+			'version' => $version,
 			'focused_finish_ui' => true,
 			'advanced_diagnostics_collapsed' => true,
 			'atomic_301_action_present' => true,
