@@ -15,6 +15,7 @@ use Exception;
 use SeoGeo\Manager\Support\ContentFingerprint;
 use WP_Error;
 use WP_Post;
+use WP_Post_Type;
 
 final class ContentLifecycleEngine {
 	private const SCHEMA_VERSION      = 1;
@@ -106,6 +107,7 @@ final class ContentLifecycleEngine {
 			'post_status'  => $normalized['status'],
 			'post_author'  => get_current_user_id(),
 		);
+
 		if ( 'future' === $normalized['status'] ) {
 			$insert['post_date_gmt'] = $normalized['scheduled_mysql_gmt'];
 			$insert['post_date']     = get_date_from_gmt( $normalized['scheduled_mysql_gmt'] );
@@ -113,32 +115,37 @@ final class ContentLifecycleEngine {
 
 		$result = wp_insert_post( $insert, true );
 		if ( is_wp_error( $result ) ) {
-			self::save_failed_operation( $operation_id, 'content-create', $payload_hash, $normalized['idempotency_key'], $result );
+			self::save_failed_operation(
+				$operation_id,
+				'content-create',
+				$payload_hash,
+				$normalized['idempotency_key'],
+				$result
+			);
 
 			return $result;
 		}
 
 		$post = get_post( (int) $result );
 		if ( ! $post instanceof WP_Post ) {
-			return new WP_Error(
+			return self::error(
 				'seo_geo_manager_create_reload_failed',
 				'The resource was created but could not be reloaded.',
-				array( 'status' => 500 )
+				500
 			);
 		}
 
 		$verification = self::verify_created_post( $post, $normalized );
-		$status       = array() === $verification ? 'created' : 'verification-failed';
 		$operation    = array(
 			'operation_id'      => $operation_id,
 			'operation_type'    => 'content-create',
 			'schema_version'    => self::SCHEMA_VERSION,
-			'status'            => $status,
+			'status'            => array() === $verification ? 'created' : 'verification-failed',
 			'target_id'         => (int) $post->ID,
 			'target_type'       => (string) $post->post_type,
 			'idempotency_key'   => $normalized['idempotency_key'],
 			'payload_hash'      => $payload_hash,
-			'changes'           => self::operation_changes( $normalized ),
+			'changes'           => self::public_create_plan( $normalized ),
 			'after_fingerprint' => ContentFingerprint::for_post( $post ),
 			'permalink'         => (string) get_permalink( $post ),
 			'verification'      => $verification,
@@ -246,10 +253,10 @@ final class ContentLifecycleEngine {
 			return $guard;
 		}
 		if ( ! self::publication_has_changes( $post, $normalized ) ) {
-			return new WP_Error(
+			return self::error(
 				'seo_geo_manager_publication_no_changes',
 				'The requested publication state already matches the target resource.',
-				array( 'status' => 400 )
+				400
 			);
 		}
 
@@ -288,17 +295,23 @@ final class ContentLifecycleEngine {
 
 		$result = wp_update_post( $update, true );
 		if ( is_wp_error( $result ) ) {
-			self::save_failed_operation( $operation_id, 'content-publication', $payload_hash, $normalized['idempotency_key'], $result );
+			self::save_failed_operation(
+				$operation_id,
+				'content-publication',
+				$payload_hash,
+				$normalized['idempotency_key'],
+				$result
+			);
 
 			return $result;
 		}
 
 		$after = get_post( $post->ID );
 		if ( ! $after instanceof WP_Post ) {
-			return new WP_Error(
+			return self::error(
 				'seo_geo_manager_publication_reload_failed',
 				'The publication transition completed but the resource could not be reloaded.',
-				array( 'status' => 500 )
+				500
 			);
 		}
 
@@ -452,13 +465,13 @@ final class ContentLifecycleEngine {
 		}
 
 		return array(
-			'schema_version'      => self::SCHEMA_VERSION,
-			'target_id'           => $target_id,
-			'expected_fingerprint'=> $fingerprint,
-			'status'              => $status,
-			'scheduled_at_gmt'    => $schedule['iso'],
-			'scheduled_mysql_gmt' => $schedule['mysql'],
-			'idempotency_key'     => $idempotency_key,
+			'schema_version'       => self::SCHEMA_VERSION,
+			'target_id'            => $target_id,
+			'expected_fingerprint' => $fingerprint,
+			'status'               => $status,
+			'scheduled_at_gmt'     => $schedule['iso'],
+			'scheduled_mysql_gmt'  => $schedule['mysql'],
+			'idempotency_key'      => $idempotency_key,
 		);
 	}
 
@@ -473,7 +486,10 @@ final class ContentLifecycleEngine {
 				return self::error( 'seo_geo_manager_schedule_unexpected', 'scheduled_at_gmt is only valid when status is future.', 400 );
 			}
 
-			return array( 'iso' => '', 'mysql' => '' );
+			return array(
+				'iso'   => '',
+				'mysql' => '',
+			);
 		}
 		if ( '' === $value ) {
 			return self::error( 'seo_geo_manager_schedule_required', 'scheduled_at_gmt is required when status is future.', 400 );
@@ -503,26 +519,27 @@ final class ContentLifecycleEngine {
 	 * @return true|WP_Error
 	 */
 	private static function guard_create( array $normalized ) {
-		$object = get_post_type_object( $normalized['type'] );
-		if ( ! is_object( $object ) || ! isset( $object->cap ) || ! is_object( $object->cap ) ) {
-			return self::error( 'seo_geo_manager_create_type_unavailable', 'The requested WordPress content type is unavailable.', 400 );
+		$object = self::post_type_object( $normalized['type'] );
+		if ( is_wp_error( $object ) ) {
+			return $object;
 		}
 
-		$create_cap = isset( $object->cap->create_posts ) && is_string( $object->cap->create_posts )
-			? $object->cap->create_posts
-			: ( isset( $object->cap->edit_posts ) && is_string( $object->cap->edit_posts ) ? $object->cap->edit_posts : '' );
+		$create_cap = self::post_type_capability( $object, 'create_posts' );
+		if ( '' === $create_cap ) {
+			$create_cap = self::post_type_capability( $object, 'edit_posts' );
+		}
 		if ( '' === $create_cap || ! current_user_can( $create_cap ) ) {
 			return self::error( 'seo_geo_manager_create_forbidden', 'You cannot create this WordPress content type.', 403 );
 		}
 
 		if ( in_array( $normalized['status'], array( 'publish', 'future' ), true ) ) {
-			$publish_cap = isset( $object->cap->publish_posts ) && is_string( $object->cap->publish_posts ) ? $object->cap->publish_posts : '';
+			$publish_cap = self::post_type_capability( $object, 'publish_posts' );
 			if ( '' === $publish_cap || ! current_user_can( $publish_cap ) ) {
 				return self::error( 'seo_geo_manager_publish_capability_required', 'Publishing or scheduling requires the post type publish capability.', 403 );
 			}
 		}
 
-		if ( '' !== $normalized['slug'] && self::slug_collision( $normalized['type'], $normalized['slug'], 0 ) ) {
+		if ( '' !== $normalized['slug'] && self::slug_collision( $normalized['type'], $normalized['slug'] ) ) {
 			return self::error( 'seo_geo_manager_create_slug_collision', 'The requested slug is already used by another resource of this type.', 409 );
 		}
 
@@ -562,16 +579,36 @@ final class ContentLifecycleEngine {
 			);
 		}
 
-		$object = get_post_type_object( $post->post_type );
-		if ( ! is_object( $object ) || ! isset( $object->cap ) || ! is_object( $object->cap ) ) {
-			return self::error( 'seo_geo_manager_publication_type_unavailable', 'The target content type is unavailable.', 400 );
+		$object = self::post_type_object( $post->post_type );
+		if ( is_wp_error( $object ) ) {
+			return $object;
 		}
-		$publish_cap = isset( $object->cap->publish_posts ) && is_string( $object->cap->publish_posts ) ? $object->cap->publish_posts : '';
+
+		$publish_cap = self::post_type_capability( $object, 'publish_posts' );
 		if ( '' === $publish_cap || ! current_user_can( $publish_cap ) ) {
 			return self::error( 'seo_geo_manager_publish_capability_required', 'Publishing or scheduling requires the post type publish capability.', 403 );
 		}
 
 		return true;
+	}
+
+	/**
+	 * @return WP_Post_Type|WP_Error
+	 */
+	private static function post_type_object( string $type ) {
+		$object = get_post_type_object( $type );
+		if ( ! $object instanceof WP_Post_Type ) {
+			return self::error( 'seo_geo_manager_content_type_unavailable', 'The requested WordPress content type is unavailable.', 400 );
+		}
+
+		return $object;
+	}
+
+	private static function post_type_capability( WP_Post_Type $object, string $name ): string {
+		$capabilities = (array) $object->cap;
+		$value        = $capabilities[ $name ] ?? '';
+
+		return is_string( $value ) ? $value : '';
 	}
 
 	/**
@@ -592,32 +629,24 @@ final class ContentLifecycleEngine {
 
 	/**
 	 * @param array<string, mixed> $normalized Normalized payload.
-	 * @return array<string, mixed>
-	 */
-	private static function operation_changes( array $normalized ): array {
-		return self::public_create_plan( $normalized );
-	}
-
-	/**
-	 * @param array<string, mixed> $normalized Normalized payload.
 	 * @return array<string, array<string, string>>
 	 */
 	private static function verify_created_post( WP_Post $post, array $normalized ): array {
-		$mismatches = array();
-		$expected   = array(
+		$expected = array(
 			'type'    => $normalized['type'],
 			'title'   => $normalized['title'],
 			'excerpt' => $normalized['excerpt'],
 			'content' => $normalized['content'],
 			'status'  => $normalized['status'],
 		);
-		$actual = array(
+		$actual   = array(
 			'type'    => (string) $post->post_type,
 			'title'   => (string) $post->post_title,
 			'excerpt' => (string) $post->post_excerpt,
 			'content' => (string) $post->post_content,
 			'status'  => (string) $post->post_status,
 		);
+
 		if ( '' !== $normalized['slug'] ) {
 			$expected['slug'] = $normalized['slug'];
 			$actual['slug']   = (string) $post->post_name;
@@ -627,16 +656,7 @@ final class ContentLifecycleEngine {
 			$actual['scheduled_at_gmt']   = (string) $post->post_date_gmt;
 		}
 
-		foreach ( $expected as $field => $value ) {
-			if ( $actual[ $field ] !== $value ) {
-				$mismatches[ $field ] = array(
-					'expected' => $value,
-					'actual'   => $actual[ $field ],
-				);
-			}
-		}
-
-		return $mismatches;
+		return self::mismatches( $expected, $actual );
 	}
 
 	/**
@@ -644,18 +664,35 @@ final class ContentLifecycleEngine {
 	 * @return array<string, array<string, string>>
 	 */
 	private static function verify_publication( WP_Post $post, array $normalized ): array {
-		$mismatches = array();
-		if ( (string) $post->post_status !== $normalized['status'] ) {
-			$mismatches['status'] = array(
-				'expected' => $normalized['status'],
-				'actual'   => (string) $post->post_status,
-			);
+		$expected = array(
+			'status' => $normalized['status'],
+		);
+		$actual   = array(
+			'status' => (string) $post->post_status,
+		);
+
+		if ( 'future' === $normalized['status'] ) {
+			$expected['scheduled_at_gmt'] = $normalized['scheduled_mysql_gmt'];
+			$actual['scheduled_at_gmt']   = (string) $post->post_date_gmt;
 		}
-		if ( 'future' === $normalized['status'] && (string) $post->post_date_gmt !== $normalized['scheduled_mysql_gmt'] ) {
-			$mismatches['scheduled_at_gmt'] = array(
-				'expected' => $normalized['scheduled_mysql_gmt'],
-				'actual'   => (string) $post->post_date_gmt,
-			);
+
+		return self::mismatches( $expected, $actual );
+	}
+
+	/**
+	 * @param array<string, string> $expected Expected values.
+	 * @param array<string, string> $actual Actual values.
+	 * @return array<string, array<string, string>>
+	 */
+	private static function mismatches( array $expected, array $actual ): array {
+		$mismatches = array();
+		foreach ( $expected as $field => $value ) {
+			if ( ! isset( $actual[ $field ] ) || $actual[ $field ] !== $value ) {
+				$mismatches[ $field ] = array(
+					'expected' => $value,
+					'actual'   => $actual[ $field ] ?? '',
+				);
+			}
 		}
 
 		return $mismatches;
@@ -675,14 +712,13 @@ final class ContentLifecycleEngine {
 		return false;
 	}
 
-	private static function slug_collision( string $type, string $slug, int $exclude_id ): bool {
+	private static function slug_collision( string $type, string $slug ): bool {
 		$matches = get_posts(
 			array(
 				'name'           => $slug,
 				'post_type'      => $type,
 				'post_status'    => array( 'publish', 'future', 'draft', 'pending', 'private' ),
-				'posts_per_page' => 2,
-				'exclude'        => 0 < $exclude_id ? array( $exclude_id ) : array(),
+				'posts_per_page' => 1,
 				'fields'         => 'ids',
 			)
 		);
@@ -731,7 +767,13 @@ final class ContentLifecycleEngine {
 		);
 	}
 
-	private static function save_failed_operation( string $operation_id, string $type, string $payload_hash, string $idempotency_key, WP_Error $error ): void {
+	private static function save_failed_operation(
+		string $operation_id,
+		string $type,
+		string $payload_hash,
+		string $idempotency_key,
+		WP_Error $error
+	): void {
 		OperationStore::save(
 			$operation_id,
 			array(
