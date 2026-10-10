@@ -13,6 +13,7 @@ final class LegacyPermalinkAuthority {
 	private const MAX_POSTS = 2000;
 	private const PER_PAGE  = 100;
 	private const TIMEOUT   = 8;
+	private const MIGRATION_MARKER_PATTERN = '/\{([a-f0-9]{32,64})\}/i';
 
 	/**
 	 * Recover authoritative historical links for the current site's published posts.
@@ -49,63 +50,115 @@ final class LegacyPermalinkAuthority {
 		}
 
 		$remote_by_slug         = array();
+		$remote_by_id           = array();
 		$duplicate_remote_slugs = array();
+		$duplicate_remote_ids   = array();
 		foreach ( $remote['posts'] as $row ) {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
-			$slug = isset( $row['slug'] ) && is_string( $row['slug'] ) ? sanitize_title( $row['slug'] ) : '';
-			$link = isset( $row['link'] ) && is_string( $row['link'] ) ? esc_url_raw( $row['link'] ) : '';
+			$remote_id = isset( $row['id'] ) && is_numeric( $row['id'] ) ? (int) $row['id'] : 0;
+			$slug      = isset( $row['slug'] ) && is_string( $row['slug'] ) ? sanitize_title( $row['slug'] ) : '';
+			$link      = isset( $row['link'] ) && is_string( $row['link'] ) ? esc_url_raw( $row['link'] ) : '';
 			if ( '' === $slug || '' === $link ) {
 				continue;
 			}
-			if ( isset( $remote_by_slug[ $slug ] ) && $remote_by_slug[ $slug ] !== $link ) {
+
+			$record = array(
+				'id'   => $remote_id,
+				'slug' => $slug,
+				'link' => $link,
+			);
+
+			if ( isset( $remote_by_slug[ $slug ] ) && (string) $remote_by_slug[ $slug ]['link'] !== $link ) {
 				$duplicate_remote_slugs[ $slug ] = true;
-				continue;
+			} else {
+				$remote_by_slug[ $slug ] = $record;
 			}
-			$remote_by_slug[ $slug ] = $link;
+
+			if ( 0 < $remote_id ) {
+				if (
+					isset( $remote_by_id[ $remote_id ] )
+					&& (
+						(string) $remote_by_id[ $remote_id ]['slug'] !== $slug
+						|| (string) $remote_by_id[ $remote_id ]['link'] !== $link
+					)
+				) {
+					$duplicate_remote_ids[ $remote_id ] = true;
+				} else {
+					$remote_by_id[ $remote_id ] = $record;
+				}
+			}
 		}
 
 		$rows              = array();
 		$missing           = array();
 		$invalid_links     = array();
+		$recovered_by_id   = array();
 		$structure_counts  = array();
 		$local_slug_counts = array_count_values( array_column( $local['posts'], 'slug' ) );
 		$duplicate_local   = array_keys( array_filter( $local_slug_counts, static fn ( int $count ): bool => 1 < $count ) );
 
 		foreach ( $local['posts'] as $post ) {
-			$post_id = (int) $post['post_id'];
-			$slug    = (string) $post['slug'];
-			if ( '' === $slug || ! isset( $remote_by_slug[ $slug ] ) ) {
+			$post_id            = (int) $post['post_id'];
+			$slug               = (string) $post['slug'];
+			$legacy_record      = null;
+			$match_method       = 'slug';
+			$local_slug_corrupt = self::is_recoverably_corrupted_slug( $slug );
+
+			if ( '' !== $slug && isset( $remote_by_slug[ $slug ] ) ) {
+				$legacy_record = $remote_by_slug[ $slug ];
+			} elseif (
+				$local_slug_corrupt
+				&& isset( $remote_by_id[ $post_id ] )
+				&& ! isset( $duplicate_remote_ids[ $post_id ] )
+			) {
+				$legacy_record = $remote_by_id[ $post_id ];
+				$match_method  = 'corrupted-slug-id-fallback';
+			} else {
 				$missing[] = array( 'post_id' => $post_id, 'slug' => $slug );
 				continue;
 			}
 
-			$legacy_url = (string) $remote_by_slug[ $slug ];
-			if ( self::host_key( $legacy_url ) !== self::host_key( $base ) || ! self::url_inside_base( $legacy_url, $base ) ) {
+			$historical_slug = isset( $legacy_record['slug'] ) && is_string( $legacy_record['slug'] ) ? $legacy_record['slug'] : '';
+			$legacy_url      = isset( $legacy_record['link'] ) && is_string( $legacy_record['link'] ) ? $legacy_record['link'] : '';
+			if ( '' === $historical_slug || '' === $legacy_url || self::host_key( $legacy_url ) !== self::host_key( $base ) || ! self::url_inside_base( $legacy_url, $base ) ) {
 				$invalid_links[] = array( 'post_id' => $post_id, 'slug' => $slug, 'legacy_url' => $legacy_url );
 				continue;
 			}
 
-			$candidate = self::candidate_structure( $legacy_url, $base, $slug );
+			$candidate = self::candidate_structure( $legacy_url, $base, $historical_slug );
 			if ( '' !== $candidate ) {
 				$structure_counts[ $candidate ] = ( $structure_counts[ $candidate ] ?? 0 ) + 1;
 			}
 
+			if ( 'corrupted-slug-id-fallback' === $match_method ) {
+				$recovered_by_id[] = array(
+					'post_id'         => $post_id,
+					'local_slug'      => $slug,
+					'historical_slug' => $historical_slug,
+					'legacy_url'      => $legacy_url,
+				);
+			}
+
 			$rows[] = array(
-				'post_id'             => $post_id,
-				'slug'                => $slug,
-				'title'               => (string) $post['title'],
-				'legacy_url'          => $legacy_url,
-				'legacy_path'         => self::url_path( $legacy_url ),
-				'candidate_structure' => $candidate,
+				'post_id'              => $post_id,
+				'slug'                 => $slug,
+				'historical_slug'      => $historical_slug,
+				'match_method'         => $match_method,
+				'local_slug_corrupted' => $local_slug_corrupt,
+				'title'                => (string) $post['title'],
+				'legacy_url'           => $legacy_url,
+				'legacy_path'          => self::url_path( $legacy_url ),
+				'candidate_structure'  => $candidate,
 			);
 		}
 
 		$complete_scan          = true === $remote['complete'] && true === $local['complete'];
 		$duplicate_remote       = array_keys( $duplicate_remote_slugs );
+		$duplicate_ids          = array_map( 'intval', array_keys( $duplicate_remote_ids ) );
 		$all_mapped             = count( $rows ) === count( $local['posts'] ) && array() === $missing && array() === $invalid_links;
-		$mapping_authoritative  = $complete_scan && $all_mapped && array() === $duplicate_local && array() === $duplicate_remote;
+		$mapping_authoritative  = $complete_scan && $all_mapped && array() === $duplicate_local && array() === $duplicate_remote && array() === $duplicate_ids;
 		$inferred_structure     = 1 === count( $structure_counts ) ? (string) array_key_first( $structure_counts ) : '';
 		$structure_consistent   = '' !== $inferred_structure && count( $rows ) === (int) ( $structure_counts[ $inferred_structure ] ?? 0 );
 		$seo_authority_verified = $mapping_authoritative && $structure_consistent;
@@ -121,8 +174,8 @@ final class LegacyPermalinkAuthority {
 		$block_reason = '';
 		if ( ! $complete_scan ) {
 			$block_reason = 'El escaneo histórico quedó incompleto; no se puede usar como autoridad SEO.';
-		} elseif ( array() !== $duplicate_local || array() !== $duplicate_remote ) {
-			$block_reason = 'Hay slugs duplicados y la correspondencia histórica no es unívoca.';
+		} elseif ( array() !== $duplicate_local || array() !== $duplicate_remote || array() !== $duplicate_ids ) {
+			$block_reason = 'Hay slugs o IDs históricos duplicados y la correspondencia histórica no es unívoca.';
 		} elseif ( array() !== $missing ) {
 			$block_reason = 'Faltan URLs históricas para una o más entradas publicadas del clon.';
 		} elseif ( array() !== $invalid_links ) {
@@ -141,8 +194,11 @@ final class LegacyPermalinkAuthority {
 			'matched_posts'                      => count( $rows ),
 			'missing_count'                      => count( $missing ),
 			'missing'                            => $missing,
+			'recovered_by_id_count'              => count( $recovered_by_id ),
+			'recovered_by_id'                    => $recovered_by_id,
 			'duplicate_local_slugs'              => $duplicate_local,
 			'duplicate_legacy_slugs'             => $duplicate_remote,
+			'duplicate_legacy_ids'               => $duplicate_ids,
 			'invalid_legacy_links'               => $invalid_links,
 			'complete_scan'                      => $complete_scan,
 			'mapping_authoritative'              => $mapping_authoritative,
@@ -153,16 +209,19 @@ final class LegacyPermalinkAuthority {
 			'rows'                               => $rows,
 			'apply_blocked'                      => true,
 			'block_reason'                       => $block_reason,
-			'next_action'                        => $seo_authority_verified ? 'integrate-authoritative-permalink-plan' : 'review-legacy-authority-gaps',
+			'next_action'                        => $seo_authority_verified ? ( array() === $recovered_by_id ? 'integrate-authoritative-permalink-plan' : 'review-corrupted-local-slug-repair' ) : 'review-legacy-authority-gaps',
 			'environment'                        => EnvironmentPolicy::snapshot(),
 			'policy'                             => array(
-				'preview_only'                 => true,
-				'same_host_only'               => true,
-				'current_clone_path_rejected'  => true,
-				'no_local_write'               => true,
-				'no_remote_write'              => true,
-				'complete_mapping_required'    => true,
-				'unique_slug_mapping_required' => true,
+				'preview_only'                          => true,
+				'same_host_only'                        => true,
+				'current_clone_path_rejected'           => true,
+				'no_local_write'                        => true,
+				'no_remote_write'                       => true,
+				'complete_mapping_required'             => true,
+				'unique_slug_mapping_required'          => true,
+				'corrupted_slug_id_fallback_only'       => true,
+				'id_fallback_requires_unique_remote_id' => true,
+				'clean_slug_id_fallback_forbidden'      => true,
 			),
 		);
 	}
@@ -287,6 +346,34 @@ final class LegacyPermalinkAuthority {
 		return '/' . ( $prefix ? implode( '/', $prefix ) . '/' : '' ) . '%postname%/';
 	}
 
+	private static function is_recoverably_corrupted_slug( string $slug ): bool {
+		if ( '' === $slug || ! preg_match_all( self::MIGRATION_MARKER_PATTERN, $slug, $matches ) || empty( $matches[0] ) ) {
+			return false;
+		}
+
+		$markers = array_values(
+			array_unique(
+				array_map(
+					static fn ( string $marker ): string => strtolower( $marker ),
+					array_values( array_filter( $matches[0], 'is_string' ) )
+				)
+			)
+		);
+		if ( 1 !== count( $markers ) ) {
+			return false;
+		}
+
+		$restored = str_ireplace( $markers[0], '%', $slug );
+		if ( $restored === $slug || preg_match( self::MIGRATION_MARKER_PATTERN, $restored ) ) {
+			return false;
+		}
+		if ( preg_match( '/%(?![a-f0-9]{2})/i', $restored ) ) {
+			return false;
+		}
+
+		return 1 === preg_match( '/(?:%[a-f0-9]{2}){2,}/i', $restored );
+	}
+
 	private static function normalize_base_url( string $url ): string {
 		$url   = trim( $url );
 		$parts = wp_parse_url( $url );
@@ -347,6 +434,11 @@ final class LegacyPermalinkAuthority {
 			'current_posts_scanned'  => is_array( $local ) && isset( $local['posts'] ) && is_array( $local['posts'] ) ? count( $local['posts'] ) : 0,
 			'legacy_posts_scanned'   => is_array( $remote ) && isset( $remote['posts'] ) && is_array( $remote['posts'] ) ? count( $remote['posts'] ) : 0,
 			'matched_posts'          => 0,
+			'missing_count'          => 0,
+			'missing'                => array(),
+			'recovered_by_id_count'  => 0,
+			'recovered_by_id'        => array(),
+			'duplicate_legacy_ids'   => array(),
 			'complete_scan'          => false,
 			'mapping_authoritative'  => false,
 			'inferred_structure'     => '',
