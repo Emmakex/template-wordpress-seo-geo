@@ -30,6 +30,7 @@ THEME_MODEL_LOG="${TMP_DIR}/theme-model-runtime.log"
 C6_READ_LOG="${TMP_DIR}/c6-read-runtime.log"
 C6_WRITE_LOG="${TMP_DIR}/c6-write-runtime.log"
 C6_MEDIA_LOG="${TMP_DIR}/c6-media-runtime.log"
+C6_UPLOAD_LOG="${TMP_DIR}/c6-upload-runtime.log"
 AUTHORITY_LOG="${TMP_DIR}/seo-authority-runtime.log"
 ACCEPTANCE_FIXTURE="${TMP_DIR}/seo-geo-manager-acceptance.php"
 CAPABILITIES_FIXTURE="${TMP_DIR}/seo-geo-manager-capabilities-acceptance.php"
@@ -38,6 +39,7 @@ THEME_MODEL_FIXTURE="${TMP_DIR}/seo-geo-manager-theme-model-read-acceptance.php"
 C6_READ_FIXTURE="${TMP_DIR}/seo-geo-manager-link-media-read-acceptance.php"
 C6_WRITE_FIXTURE="${TMP_DIR}/seo-geo-manager-contextual-link-write-acceptance.php"
 C6_MEDIA_FIXTURE="${TMP_DIR}/seo-geo-manager-media-alt-write-acceptance.php"
+C6_UPLOAD_FIXTURE="${TMP_DIR}/seo-geo-manager-media-upload-acceptance.php"
 AUTHORITY_FIXTURE="${TMP_DIR}/seo-geo-manager-seo-authority-acceptance.php"
 MANAGER_VERSION="$(awk '/^ \* Version:/ {print $3; exit}' packages/seo-geo-manager/seo-geo-manager.php | tr -d '\r')"
 
@@ -193,7 +195,9 @@ cp scripts/ci/seo-geo-manager-link-media-read-acceptance.php "$C6_READ_FIXTURE" 
 cp scripts/ci/seo-geo-manager-contextual-link-write-acceptance.php "$C6_WRITE_FIXTURE" \
   || fail_acceptance "c6-write-fixture-prepare" "Could not prepare C6.2 contextual-link write fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-media-alt-write-acceptance.php "$C6_MEDIA_FIXTURE" \
-  || fail_acceptance "c6-media-fixture-prepare" "Could not prepare C6.3 media-alt write fixture" "fixture copied" "cp failed"
+  || fail_acceptance "c6-media-fixture-prepare" "Could not prepare C6.3/C6.4 media fixture" "fixture copied" "cp failed"
+cp scripts/ci/seo-geo-manager-media-upload-acceptance.php "$C6_UPLOAD_FIXTURE" \
+  || fail_acceptance "c6-upload-fixture-prepare" "Could not prepare C6.5 media-upload fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-seo-authority-acceptance.php "$AUTHORITY_FIXTURE" \
   || fail_acceptance "authority-fixture-prepare" "Could not prepare SEO authority acceptance fixture" "fixture copied" "cp failed"
 
@@ -210,7 +214,9 @@ docker cp "$C6_READ_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-link-
 docker cp "$C6_WRITE_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-contextual-link-write-acceptance.php \
   || fail_acceptance "c6-write-fixture-copy" "Could not copy C6.2 contextual-link write fixture" "fixture copied" "docker cp failed"
 docker cp "$C6_MEDIA_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-media-alt-write-acceptance.php \
-  || fail_acceptance "c6-media-fixture-copy" "Could not copy C6.3 media-alt write fixture" "fixture copied" "docker cp failed"
+  || fail_acceptance "c6-media-fixture-copy" "Could not copy C6.3/C6.4 media fixture" "fixture copied" "docker cp failed"
+docker cp "$C6_UPLOAD_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-media-upload-acceptance.php \
+  || fail_acceptance "c6-upload-fixture-copy" "Could not copy C6.5 media-upload fixture" "fixture copied" "docker cp failed"
 docker cp "$AUTHORITY_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-seo-authority-acceptance.php \
   || fail_acceptance "authority-fixture-copy" "Could not copy SEO authority acceptance fixture" "fixture copied" "docker cp failed"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
@@ -223,6 +229,7 @@ docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/seo-geo-manager-link-media-read-acceptance.php \
   /var/www/html/seo-geo-manager-contextual-link-write-acceptance.php \
   /var/www/html/seo-geo-manager-media-alt-write-acceptance.php \
+  /var/www/html/seo-geo-manager-media-upload-acceptance.php \
   /var/www/html/seo-geo-manager-seo-authority-acceptance.php \
   || fail_acceptance "package-permissions" "Could not set WordPress package permissions" "www-data owns packages" "chown failed"
 
@@ -309,16 +316,27 @@ grep -q '"ok":true' "$C6_WRITE_LOG" \
 grep -q "\"plugin_version\":\"${MANAGER_VERSION}\"" "$C6_WRITE_LOG" \
   || fail_acceptance "c6-write-version" "C6.2 write acceptance did not execute current Manager version" "\"plugin_version\":\"${MANAGER_VERSION}\"" "$(tail -c 1200 "$C6_WRITE_LOG" | tr '\n' ' ')"
 
-printf '[manager] Running C6.3 guarded image-alt write acceptance.\n'
+printf '[manager] Running C6.3/C6.4 guarded image metadata write acceptance.\n'
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-media-alt-write-acceptance.php >"$C6_MEDIA_LOG" 2>&1; then
   cat "$C6_MEDIA_LOG"
-  fail_acceptance "c6-media-runtime" "Manager C6.3 image-alt write acceptance failed" 'JSON with "ok":true' "$(tail -c 1400 "$C6_MEDIA_LOG" | tr '\n' ' ')"
+  fail_acceptance "c6-media-runtime" "Manager C6.3/C6.4 media write acceptance failed" 'JSON with "ok":true' "$(tail -c 1600 "$C6_MEDIA_LOG" | tr '\n' ' ')"
 fi
 cat "$C6_MEDIA_LOG"
 grep -q '"ok":true' "$C6_MEDIA_LOG" \
-  || fail_acceptance "c6-media-result" "C6.3 media-alt acceptance did not emit success marker" '"ok":true' "$(tail -c 1400 "$C6_MEDIA_LOG" | tr '\n' ' ')"
+  || fail_acceptance "c6-media-result" "C6.3/C6.4 media acceptance did not emit success marker" '"ok":true' "$(tail -c 1600 "$C6_MEDIA_LOG" | tr '\n' ' ')"
 grep -q "\"plugin_version\":\"${MANAGER_VERSION}\"" "$C6_MEDIA_LOG" \
-  || fail_acceptance "c6-media-version" "C6.3 media-alt acceptance did not execute current Manager version" "\"plugin_version\":\"${MANAGER_VERSION}\"" "$(tail -c 1400 "$C6_MEDIA_LOG" | tr '\n' ' ')"
+  || fail_acceptance "c6-media-version" "C6.3/C6.4 media acceptance did not execute current Manager version" "\"plugin_version\":\"${MANAGER_VERSION}\"" "$(tail -c 1600 "$C6_MEDIA_LOG" | tr '\n' ' ')"
+
+printf '[manager] Running C6.5 guarded direct image-upload acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-media-upload-acceptance.php >"$C6_UPLOAD_LOG" 2>&1; then
+  cat "$C6_UPLOAD_LOG"
+  fail_acceptance "c6-upload-runtime" "Manager C6.5 media-upload acceptance failed" 'JSON with "ok":true' "$(tail -c 1800 "$C6_UPLOAD_LOG" | tr '\n' ' ')"
+fi
+cat "$C6_UPLOAD_LOG"
+grep -q '"ok":true' "$C6_UPLOAD_LOG" \
+  || fail_acceptance "c6-upload-result" "C6.5 media-upload acceptance did not emit success marker" '"ok":true' "$(tail -c 1800 "$C6_UPLOAD_LOG" | tr '\n' ' ')"
+grep -q "\"plugin_version\":\"${MANAGER_VERSION}\"" "$C6_UPLOAD_LOG" \
+  || fail_acceptance "c6-upload-version" "C6.5 media-upload acceptance did not execute current Manager version" "\"plugin_version\":\"${MANAGER_VERSION}\"" "$(tail -c 1800 "$C6_UPLOAD_LOG" | tr '\n' ' ')"
 
 printf '[manager] Running SEO output authority resolver acceptance.\n'
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-seo-authority-acceptance.php >"$AUTHORITY_LOG" 2>&1; then

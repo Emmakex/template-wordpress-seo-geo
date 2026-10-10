@@ -81,6 +81,8 @@ def inspect_zip(path: Path) -> None:
             ZIP_ROOT + "src/Changes/MediaAltChangeAdapter.php",
             ZIP_ROOT + "src/Rest/MediaContextChangeController.php",
             ZIP_ROOT + "src/Changes/MediaContextChangeAdapter.php",
+            ZIP_ROOT + "src/Rest/MediaUploadController.php",
+            ZIP_ROOT + "src/Changes/MediaUploadEngine.php",
             ZIP_ROOT + "src/Support/MediaFingerprint.php",
         }
         missing_required = sorted(required - actual)
@@ -131,6 +133,12 @@ def inspect_zip(path: Path) -> None:
         ).decode("utf-8")
         media_context_adapter = archive.read(
             ZIP_ROOT + "src/Changes/MediaContextChangeAdapter.php"
+        ).decode("utf-8")
+        media_upload_controller = archive.read(
+            ZIP_ROOT + "src/Rest/MediaUploadController.php"
+        ).decode("utf-8")
+        media_upload_engine = archive.read(
+            ZIP_ROOT + "src/Changes/MediaUploadEngine.php"
         ).decode("utf-8")
         media_fingerprint = archive.read(
             ZIP_ROOT + "src/Support/MediaFingerprint.php"
@@ -226,6 +234,8 @@ def inspect_zip(path: Path) -> None:
             raise SystemExit("Release ZIP media reader does not declare binary mutation policy")
         if "'context_mutation_available'" not in media_reader or "'caption_truncated'" not in media_reader or "'description_truncated'" not in media_reader:
             raise SystemExit("Release ZIP media reader lacks bounded editorial-context discovery")
+        if "'binary_upload_available'" not in media_reader:
+            raise SystemExit("Release ZIP media reader does not expose direct upload availability")
 
         media_alt_routes = (
             "'/media/(?P<media_id>\\d+)/alt/changes/preview'",
@@ -291,6 +301,41 @@ def inspect_zip(path: Path) -> None:
                 raise SystemExit(f"Release ZIP media fingerprint omits context marker: {marker}")
         if "modified_gmt" in media_fingerprint:
             raise SystemExit("Release ZIP media fingerprint must not depend on volatile modified timestamps")
+
+        media_upload_routes = (
+            "'/media/uploads/preview'",
+            "'/media/uploads/apply'",
+        )
+        if any(marker not in media_upload_controller for marker in media_upload_routes):
+            raise SystemExit("Release ZIP media-upload routes are incomplete")
+        if "MediaUploadController::register_routes();" not in plugin:
+            raise SystemExit("Release ZIP does not register media uploads")
+        if "'media_upload'" not in manifest:
+            raise SystemExit("Release ZIP capability manifest omits media uploads")
+        for marker in ("'media.upload.preview'", "'media.upload.apply'"):
+            if marker not in manifest:
+                raise SystemExit(f"Release ZIP media-upload operation missing: {marker}")
+        for marker in (
+            "wp_check_filetype_and_ext",
+            "wp_handle_sideload",
+            "hash_file( 'sha256'",
+            "expected_file_sha256",
+            "allow_public_media",
+            "idempotency_key",
+            "remote_fetch_supported",
+            "rollback_supported",
+            "existing_binary_replacement_supported",
+            "seo_geo_manager_media_upload_remote_fetch_unsupported",
+        ):
+            if marker not in media_upload_engine:
+                raise SystemExit(f"Release ZIP media-upload safety marker missing: {marker}")
+        if "EnvironmentPolicy::validate_payload" not in media_upload_controller:
+            raise SystemExit("Release ZIP media-upload Apply lacks environment binding")
+        for forbidden in ("wp_remote_get(", "wp_remote_request(", "download_url("):
+            if forbidden in media_upload_engine:
+                raise SystemExit(f"Release ZIP media-upload engine contains forbidden remote fetch primitive: {forbidden}")
+        if "'remote_media_fetch_supported'" not in manifest or "'existing_media_binary_replacement_supported'" not in manifest:
+            raise SystemExit("Release ZIP media-upload capability safety declarations are missing")
 
         for info in archive.infolist():
             if info.is_dir():

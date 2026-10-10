@@ -149,6 +149,7 @@ final class MediaReferenceReader {
 			'mutation_supported'               => false,
 			'alt_mutation_available'           => true,
 			'context_mutation_available'       => true,
+			'binary_upload_available'          => true,
 			'binary_mutation_supported'        => false,
 		);
 	}

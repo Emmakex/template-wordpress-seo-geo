@@ -57,6 +57,7 @@ final class CapabilityManifest {
 		);
 		$capabilities['media_read'] = self::capability( $can_upload_files, 'upload_files' );
 		$capabilities['media_write'] = self::capability( $can_upload_files, 'upload_files' );
+		$capabilities['media_upload'] = self::capability( $can_upload_files, 'upload_files' );
 		$capabilities['media_alt_write'] = self::capability(
 			$can_upload_files,
 			'upload_files + edit_post(attachment)'
@@ -122,6 +123,8 @@ final class CapabilityManifest {
 				'rendered_verification_supported' => true,
 				'bounded_responses' => true,
 				'client_specific_code_required' => false,
+				'remote_media_fetch_supported' => false,
+				'existing_media_binary_replacement_supported' => false,
 			),
 		);
 	}
@@ -246,6 +249,18 @@ final class CapabilityManifest {
 		);
 		$operations['media.list'] = self::operation( $can_upload_files, 'GET', '/media', 'read-only' );
 		$operations['media.read'] = self::operation( $can_upload_files, 'GET', '/media/{media_id}', 'read-only' );
+		$operations['media.upload.preview'] = self::operation(
+			$can_upload_files,
+			'POST',
+			'/media/uploads/preview',
+			'read-only-preview'
+		);
+		$operations['media.upload.apply'] = self::operation(
+			$can_upload_files,
+			'POST',
+			'/media/uploads/apply',
+			'creation-mutation'
+		);
 		$operations['media.alt.preview'] = self::operation(
 			$can_upload_files,
 			'POST',

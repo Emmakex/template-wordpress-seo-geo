@@ -59,8 +59,11 @@ $required_manifest_markers = array(
 	"'contextual_link_read'",
 	"'contextual_link_write'",
 	"'media_read'",
+	"'media_upload'",
 	"'media_alt_write'",
 	"'media_context_write'",
+	"'media.upload.preview'",
+	"'media.upload.apply'",
 	"'media.alt.preview'",
 	"'media.alt.apply'",
 	"'media.alt.rollback'",
@@ -70,6 +73,8 @@ $required_manifest_markers = array(
 	"'permalink_administration'",
 	"'expected_fingerprint_supported'",
 	"'stale_safe_rollback_supported'",
+	"'remote_media_fetch_supported'",
+	"'existing_media_binary_replacement_supported'",
 );
 
 foreach ( $required_manifest_markers as $marker ) {
@@ -86,6 +91,8 @@ $required_manifest_values = array(
 	"/'generic_remote_shell'\s*=>\s*false/" => 'generic_remote_shell=false',
 	"/'expected_fingerprint_supported'\s*=>\s*true/" => 'expected_fingerprint_supported=true',
 	"/'stale_safe_rollback_supported'\s*=>\s*true/" => 'stale_safe_rollback_supported=true',
+	"/'remote_media_fetch_supported'\s*=>\s*false/" => 'remote_media_fetch_supported=false',
+	"/'existing_media_binary_replacement_supported'\s*=>\s*false/" => 'existing_media_binary_replacement_supported=false',
 );
 
 foreach ( $required_manifest_values as $pattern => $description ) {
@@ -102,6 +109,9 @@ if ( ! str_contains( $plugin, 'MediaAltChangeController::register_routes();' ) )
 }
 if ( ! str_contains( $plugin, 'MediaContextChangeController::register_routes();' ) ) {
 	throw new RuntimeException( 'Media context controller is not registered by Manager bootstrap.' );
+}
+if ( ! str_contains( $plugin, 'MediaUploadController::register_routes();' ) ) {
+	throw new RuntimeException( 'Media upload controller is not registered by Manager bootstrap.' );
 }
 
 $header_match   = array();
