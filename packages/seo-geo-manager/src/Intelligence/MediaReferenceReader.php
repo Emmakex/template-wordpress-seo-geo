@@ -4,6 +4,7 @@
  *
  * @package SeoGeoManager
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Intelligence;

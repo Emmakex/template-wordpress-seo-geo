@@ -71,6 +71,10 @@ def inspect_zip(path: Path) -> None:
             ZIP_ROOT + "src/Support/CapabilityManifest.php",
             ZIP_ROOT + "src/Rest/ThemeModelController.php",
             ZIP_ROOT + "src/Intelligence/ThemeModelReader.php",
+            ZIP_ROOT + "src/Rest/ContextualLinkController.php",
+            ZIP_ROOT + "src/Intelligence/ContextualLinkReader.php",
+            ZIP_ROOT + "src/Rest/MediaReferenceController.php",
+            ZIP_ROOT + "src/Intelligence/MediaReferenceReader.php",
         }
         missing_required = sorted(required - actual)
         if missing_required:
@@ -90,6 +94,18 @@ def inspect_zip(path: Path) -> None:
         ).decode("utf-8")
         theme_model_reader = archive.read(
             ZIP_ROOT + "src/Intelligence/ThemeModelReader.php"
+        ).decode("utf-8")
+        contextual_controller = archive.read(
+            ZIP_ROOT + "src/Rest/ContextualLinkController.php"
+        ).decode("utf-8")
+        contextual_reader = archive.read(
+            ZIP_ROOT + "src/Intelligence/ContextualLinkReader.php"
+        ).decode("utf-8")
+        media_controller = archive.read(
+            ZIP_ROOT + "src/Rest/MediaReferenceController.php"
+        ).decode("utf-8")
+        media_reader = archive.read(
+            ZIP_ROOT + "src/Intelligence/MediaReferenceReader.php"
         ).decode("utf-8")
 
         if "'/capabilities'" not in controller or "CapabilityManifest::build()" not in controller:
@@ -121,6 +137,32 @@ def inspect_zip(path: Path) -> None:
             raise SystemExit("Release ZIP Theme model reader lacks preset contract authority")
         if "ContentFingerprint::for_post( $post )" not in theme_model_reader:
             raise SystemExit("Release ZIP Theme model reader does not return mutation-safe fingerprints")
+
+        if "'/links/contextual'" not in contextual_controller or "ContextualLinkReader::read" not in contextual_controller:
+            raise SystemExit("Release ZIP contextual-link read route is incomplete")
+        if "ContextualLinkController::register_routes();" not in plugin:
+            raise SystemExit("Release ZIP does not register contextual-link discovery")
+        if "'contextual_link_read'" not in manifest or "'links.contextual.read'" not in manifest:
+            raise SystemExit("Release ZIP capability manifest omits contextual-link discovery")
+        if "'raw_post_content_returned'" not in contextual_reader or "'mutation_supported'" not in contextual_reader:
+            raise SystemExit("Release ZIP contextual-link reader lacks bounded read-only policy")
+        if "environment-leakage-candidate" not in contextual_reader:
+            raise SystemExit("Release ZIP contextual-link reader lacks environment leakage classification")
+        if "ContentFingerprint::for_post( $post )" not in contextual_reader:
+            raise SystemExit("Release ZIP contextual-link reader lacks source fingerprints")
+
+        if "'/media'" not in media_controller or "MediaReferenceReader::list_media()" not in media_controller:
+            raise SystemExit("Release ZIP media list route is incomplete")
+        if "MediaReferenceReader::read_media" not in media_controller:
+            raise SystemExit("Release ZIP media detail route is incomplete")
+        if "MediaReferenceController::register_routes();" not in plugin:
+            raise SystemExit("Release ZIP does not register media reference discovery")
+        if "'media_read'" not in manifest or "'media.read'" not in manifest:
+            raise SystemExit("Release ZIP capability manifest omits media reference discovery")
+        if "'raw_attachment_metadata_returned'" not in media_reader or "'fabricated_metadata'" not in media_reader:
+            raise SystemExit("Release ZIP media reader lacks bounded non-fabrication policy")
+        if "'_wp_attachment_image_alt'" not in media_reader or "'fingerprint'" not in media_reader:
+            raise SystemExit("Release ZIP media reader lacks alt-aware mutation-safe identity")
 
         for info in archive.infolist():
             if info.is_dir():

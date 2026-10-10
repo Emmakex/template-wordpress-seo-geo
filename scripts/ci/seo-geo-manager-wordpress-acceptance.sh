@@ -27,11 +27,13 @@ RUNTIME_LOG="${TMP_DIR}/runtime.log"
 CAPABILITIES_LOG="${TMP_DIR}/capabilities-runtime.log"
 STRUCTURED_LOG="${TMP_DIR}/structured-runtime.log"
 THEME_MODEL_LOG="${TMP_DIR}/theme-model-runtime.log"
+C6_READ_LOG="${TMP_DIR}/c6-read-runtime.log"
 AUTHORITY_LOG="${TMP_DIR}/seo-authority-runtime.log"
 ACCEPTANCE_FIXTURE="${TMP_DIR}/seo-geo-manager-acceptance.php"
 CAPABILITIES_FIXTURE="${TMP_DIR}/seo-geo-manager-capabilities-acceptance.php"
 STRUCTURED_FIXTURE="${TMP_DIR}/seo-geo-manager-structured-acceptance.php"
 THEME_MODEL_FIXTURE="${TMP_DIR}/seo-geo-manager-theme-model-read-acceptance.php"
+C6_READ_FIXTURE="${TMP_DIR}/seo-geo-manager-link-media-read-acceptance.php"
 AUTHORITY_FIXTURE="${TMP_DIR}/seo-geo-manager-seo-authority-acceptance.php"
 
 signature() {
@@ -178,6 +180,8 @@ cp scripts/ci/seo-geo-manager-structured-acceptance.php "$STRUCTURED_FIXTURE" \
   || fail_acceptance "structured-fixture-prepare" "Could not prepare structured Manager acceptance fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-theme-model-read-acceptance.php "$THEME_MODEL_FIXTURE" \
   || fail_acceptance "theme-model-fixture-prepare" "Could not prepare Theme model reader fixture" "fixture copied" "cp failed"
+cp scripts/ci/seo-geo-manager-link-media-read-acceptance.php "$C6_READ_FIXTURE" \
+  || fail_acceptance "c6-read-fixture-prepare" "Could not prepare C6.1 read acceptance fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-seo-authority-acceptance.php "$AUTHORITY_FIXTURE" \
   || fail_acceptance "authority-fixture-prepare" "Could not prepare SEO authority acceptance fixture" "fixture copied" "cp failed"
 
@@ -189,6 +193,8 @@ docker cp "$STRUCTURED_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-st
   || fail_acceptance "structured-fixture-copy" "Could not copy structured Manager acceptance fixture" "fixture copied" "docker cp failed"
 docker cp "$THEME_MODEL_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-theme-model-read-acceptance.php \
   || fail_acceptance "theme-model-fixture-copy" "Could not copy Theme model reader fixture" "fixture copied" "docker cp failed"
+docker cp "$C6_READ_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-link-media-read-acceptance.php \
+  || fail_acceptance "c6-read-fixture-copy" "Could not copy C6.1 read acceptance fixture" "fixture copied" "docker cp failed"
 docker cp "$AUTHORITY_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-seo-authority-acceptance.php \
   || fail_acceptance "authority-fixture-copy" "Could not copy SEO authority acceptance fixture" "fixture copied" "docker cp failed"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
@@ -198,6 +204,7 @@ docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/seo-geo-manager-capabilities-acceptance.php \
   /var/www/html/seo-geo-manager-structured-acceptance.php \
   /var/www/html/seo-geo-manager-theme-model-read-acceptance.php \
+  /var/www/html/seo-geo-manager-link-media-read-acceptance.php \
   /var/www/html/seo-geo-manager-seo-authority-acceptance.php \
   || fail_acceptance "package-permissions" "Could not set WordPress package permissions" "www-data owns packages" "chown failed"
 
@@ -259,8 +266,19 @@ fi
 cat "$THEME_MODEL_LOG"
 grep -q '"ok":true' "$THEME_MODEL_LOG" \
   || fail_acceptance "theme-model-result" "Theme model reader acceptance did not emit success marker" '"ok":true' "$(tail -c 800 "$THEME_MODEL_LOG" | tr '\n' ' ')"
-grep -q '"plugin_version":"0.3.36"' "$THEME_MODEL_LOG" \
-  || fail_acceptance "theme-model-version" "Theme model reader did not execute Manager 0.3.36" '"plugin_version":"0.3.36"' "$(tail -c 800 "$THEME_MODEL_LOG" | tr '\n' ' ')"
+grep -q '"plugin_version":"0.3.37"' "$THEME_MODEL_LOG" \
+  || fail_acceptance "theme-model-version" "Theme model reader did not execute Manager 0.3.37" '"plugin_version":"0.3.37"' "$(tail -c 800 "$THEME_MODEL_LOG" | tr '\n' ' ')"
+
+printf '[manager] Running C6.1 contextual-link and media read acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-link-media-read-acceptance.php >"$C6_READ_LOG" 2>&1; then
+  cat "$C6_READ_LOG"
+  fail_acceptance "c6-read-runtime" "Manager C6.1 contextual-link/media acceptance failed" 'JSON with "ok":true' "$(tail -c 1000 "$C6_READ_LOG" | tr '\n' ' ')"
+fi
+cat "$C6_READ_LOG"
+grep -q '"ok":true' "$C6_READ_LOG" \
+  || fail_acceptance "c6-read-result" "C6.1 read acceptance did not emit success marker" '"ok":true' "$(tail -c 1000 "$C6_READ_LOG" | tr '\n' ' ')"
+grep -q '"plugin_version":"0.3.37"' "$C6_READ_LOG" \
+  || fail_acceptance "c6-read-version" "C6.1 read acceptance did not execute Manager 0.3.37" '"plugin_version":"0.3.37"' "$(tail -c 1000 "$C6_READ_LOG" | tr '\n' ' ')"
 
 printf '[manager] Running SEO output authority resolver acceptance.\n'
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-seo-authority-acceptance.php >"$AUTHORITY_LOG" 2>&1; then

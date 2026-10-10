@@ -4,6 +4,7 @@
  *
  * @package SeoGeoManager
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Intelligence;
@@ -71,9 +72,9 @@ final class ContextualLinkReader {
 			),
 			'items'          => $items,
 			'policy'         => array(
-				'raw_post_content_returned'  => false,
-				'mutation_supported'         => false,
-				'targets_verified_current'   => true,
+				'raw_post_content_returned'   => false,
+				'mutation_supported'          => false,
+				'targets_verified_current'    => true,
 				'environment_leakage_flagged' => true,
 			),
 		);
