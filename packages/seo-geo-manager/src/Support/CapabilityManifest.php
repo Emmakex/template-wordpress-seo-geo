@@ -57,6 +57,10 @@ final class CapabilityManifest {
 		);
 		$capabilities['media_read'] = self::capability( $can_upload_files, 'upload_files' );
 		$capabilities['media_write'] = self::capability( $can_upload_files, 'upload_files' );
+		$capabilities['media_alt_write'] = self::capability(
+			$can_upload_files,
+			'upload_files + edit_post(attachment)'
+		);
 		$capabilities['taxonomy_management'] = self::capability(
 			$can_manage_categories,
 			'manage_categories'
@@ -238,6 +242,24 @@ final class CapabilityManifest {
 		);
 		$operations['media.list'] = self::operation( $can_upload_files, 'GET', '/media', 'read-only' );
 		$operations['media.read'] = self::operation( $can_upload_files, 'GET', '/media/{media_id}', 'read-only' );
+		$operations['media.alt.preview'] = self::operation(
+			$can_upload_files,
+			'POST',
+			'/media/{media_id}/alt/changes/preview',
+			'read-only-preview'
+		);
+		$operations['media.alt.apply'] = self::operation(
+			$can_upload_files,
+			'POST',
+			'/media/{media_id}/alt/changes/apply',
+			'mutation'
+		);
+		$operations['media.alt.rollback'] = self::operation(
+			$can_upload_files,
+			'POST',
+			'/media/alt/changes/{operation_id}/rollback',
+			'rollback-mutation'
+		);
 		$operations['operations.read'] = self::operation( $can_edit_posts, 'GET', '/operations', 'read-only' );
 		$operations['field_gate.inspect'] = self::operation(
 			$can_manage_options,

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Intelligence;
 
+use SeoGeo\Manager\Support\MediaFingerprint;
 use WP_Error;
 use WP_Post;
 use WP_Query;
@@ -100,18 +101,6 @@ final class MediaReferenceReader {
 		$width    = isset( $metadata['width'] ) && is_numeric( $metadata['width'] ) ? (int) $metadata['width'] : 0;
 		$height   = isset( $metadata['height'] ) && is_numeric( $metadata['height'] ) ? (int) $metadata['height'] : 0;
 
-		$fingerprint_payload = array(
-			'id'           => (int) $attachment->ID,
-			'modified_gmt' => (string) $attachment->post_modified_gmt,
-			'title'        => (string) $attachment->post_title,
-			'mime'         => (string) $attachment->post_mime_type,
-			'parent'       => (int) $attachment->post_parent,
-			'url'          => $url,
-			'alt'          => $alt,
-			'width'        => $width,
-			'height'       => $height,
-		);
-
 		return array(
 			'id'          => (int) $attachment->ID,
 			'status'      => (string) $attachment->post_status,
@@ -125,7 +114,7 @@ final class MediaReferenceReader {
 				'width'  => $width,
 				'height' => $height,
 			),
-			'fingerprint' => hash( 'sha256', (string) wp_json_encode( $fingerprint_payload ) ),
+			'fingerprint' => MediaFingerprint::for_attachment( $attachment ),
 		);
 	}
 
@@ -138,6 +127,8 @@ final class MediaReferenceReader {
 			'exif_returned'                    => false,
 			'fabricated_metadata'              => false,
 			'mutation_supported'               => false,
+			'alt_mutation_available'           => true,
+			'binary_mutation_supported'        => false,
 		);
 	}
 }

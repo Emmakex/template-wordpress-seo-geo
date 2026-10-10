@@ -73,8 +73,13 @@ def inspect_zip(path: Path) -> None:
             ZIP_ROOT + "src/Intelligence/ThemeModelReader.php",
             ZIP_ROOT + "src/Rest/ContextualLinkController.php",
             ZIP_ROOT + "src/Intelligence/ContextualLinkReader.php",
+            ZIP_ROOT + "src/Rest/ContextualLinkChangeController.php",
+            ZIP_ROOT + "src/Changes/ContextualLinkChangeAdapter.php",
             ZIP_ROOT + "src/Rest/MediaReferenceController.php",
             ZIP_ROOT + "src/Intelligence/MediaReferenceReader.php",
+            ZIP_ROOT + "src/Rest/MediaAltChangeController.php",
+            ZIP_ROOT + "src/Changes/MediaAltChangeAdapter.php",
+            ZIP_ROOT + "src/Support/MediaFingerprint.php",
         }
         missing_required = sorted(required - actual)
         if missing_required:
@@ -101,11 +106,26 @@ def inspect_zip(path: Path) -> None:
         contextual_reader = archive.read(
             ZIP_ROOT + "src/Intelligence/ContextualLinkReader.php"
         ).decode("utf-8")
+        contextual_change_controller = archive.read(
+            ZIP_ROOT + "src/Rest/ContextualLinkChangeController.php"
+        ).decode("utf-8")
+        contextual_change_adapter = archive.read(
+            ZIP_ROOT + "src/Changes/ContextualLinkChangeAdapter.php"
+        ).decode("utf-8")
         media_controller = archive.read(
             ZIP_ROOT + "src/Rest/MediaReferenceController.php"
         ).decode("utf-8")
         media_reader = archive.read(
             ZIP_ROOT + "src/Intelligence/MediaReferenceReader.php"
+        ).decode("utf-8")
+        media_alt_controller = archive.read(
+            ZIP_ROOT + "src/Rest/MediaAltChangeController.php"
+        ).decode("utf-8")
+        media_alt_adapter = archive.read(
+            ZIP_ROOT + "src/Changes/MediaAltChangeAdapter.php"
+        ).decode("utf-8")
+        media_fingerprint = archive.read(
+            ZIP_ROOT + "src/Support/MediaFingerprint.php"
         ).decode("utf-8")
 
         if "'/capabilities'" not in controller or "CapabilityManifest::build()" not in controller:
@@ -151,6 +171,37 @@ def inspect_zip(path: Path) -> None:
         if "ContentFingerprint::for_post( $post )" not in contextual_reader:
             raise SystemExit("Release ZIP contextual-link reader lacks source fingerprints")
 
+        contextual_routes = (
+            "'/links/contextual/changes/preview'",
+            "'/links/contextual/changes/apply'",
+            "'/links/contextual/changes/(?P<operation_id>[a-f0-9\\-]{36})/rollback'",
+        )
+        if any(marker not in contextual_change_controller for marker in contextual_routes):
+            raise SystemExit("Release ZIP contextual-link write routes are incomplete")
+        if "ContextualLinkChangeController::register_routes();" not in plugin:
+            raise SystemExit("Release ZIP does not register contextual-link writes")
+        if "'contextual_link_write'" not in manifest:
+            raise SystemExit("Release ZIP capability manifest omits contextual-link writes")
+        for marker in (
+            "'links.contextual.preview'",
+            "'links.contextual.apply'",
+            "'links.contextual.rollback'",
+        ):
+            if marker not in manifest:
+                raise SystemExit(f"Release ZIP contextual-link operation missing: {marker}")
+        for marker in (
+            "target_resource_id",
+            "expected_fingerprint",
+            "idempotency_key",
+            "seo_geo_manager_contextual_link_rollback_stale",
+        ):
+            if marker not in contextual_change_adapter:
+                raise SystemExit(f"Release ZIP contextual-link safety marker missing: {marker}")
+        if "public_operation" not in contextual_change_controller:
+            raise SystemExit("Release ZIP contextual-link controller lacks public operation filtering")
+        if "before_content" not in contextual_change_controller or "after_content" not in contextual_change_controller:
+            raise SystemExit("Release ZIP contextual-link controller does not filter rollback snapshots")
+
         if "'/media'" not in media_controller or "MediaReferenceReader::list_media()" not in media_controller:
             raise SystemExit("Release ZIP media list route is incomplete")
         if "MediaReferenceReader::read_media" not in media_controller:
@@ -161,8 +212,36 @@ def inspect_zip(path: Path) -> None:
             raise SystemExit("Release ZIP capability manifest omits media reference discovery")
         if "'raw_attachment_metadata_returned'" not in media_reader or "'fabricated_metadata'" not in media_reader:
             raise SystemExit("Release ZIP media reader lacks bounded non-fabrication policy")
-        if "'_wp_attachment_image_alt'" not in media_reader or "'fingerprint'" not in media_reader:
+        if "'_wp_attachment_image_alt'" not in media_reader or "MediaFingerprint::for_attachment" not in media_reader:
             raise SystemExit("Release ZIP media reader lacks alt-aware mutation-safe identity")
+        if "'binary_mutation_supported'" not in media_reader:
+            raise SystemExit("Release ZIP media reader does not declare binary mutation policy")
+
+        media_alt_routes = (
+            "'/media/(?P<media_id>\\d+)/alt/changes/preview'",
+            "'/media/(?P<media_id>\\d+)/alt/changes/apply'",
+            "'/media/alt/changes/(?P<operation_id>[a-f0-9\\-]{36})/rollback'",
+        )
+        if any(marker not in media_alt_controller for marker in media_alt_routes):
+            raise SystemExit("Release ZIP media-alt routes are incomplete")
+        if "MediaAltChangeController::register_routes();" not in plugin:
+            raise SystemExit("Release ZIP does not register media-alt writes")
+        if "'media_alt_write'" not in manifest:
+            raise SystemExit("Release ZIP capability manifest omits media-alt writes")
+        for marker in ("'media.alt.preview'", "'media.alt.apply'", "'media.alt.rollback'"):
+            if marker not in manifest:
+                raise SystemExit(f"Release ZIP media-alt operation missing: {marker}")
+        for marker in (
+            "_wp_attachment_image_alt",
+            "MediaFingerprint::for_attachment",
+            "allow_public_media",
+            "idempotency_key",
+            "seo_geo_manager_media_alt_rollback_stale",
+        ):
+            if marker not in media_alt_adapter:
+                raise SystemExit(f"Release ZIP media-alt safety marker missing: {marker}")
+        if "alt_exists" not in media_fingerprint or "_wp_attachment_image_alt" not in media_fingerprint:
+            raise SystemExit("Release ZIP media fingerprint does not preserve exact alt-meta state")
 
         for info in archive.infolist():
             if info.is_dir():
