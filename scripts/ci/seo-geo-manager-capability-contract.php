@@ -43,18 +43,22 @@ foreach ( $required_controller_markers as $marker ) {
 }
 
 $required_manifest_markers = array(
-	"'schema_version' => 1",
-	"'remote_transport_requires_https' => true",
+	"'schema_version'",
+	"'remote_transport_requires_https'",
 	"'application_passwords_supported'",
 	"'application_passwords_available'",
 	"'revocable_identity_required'",
-	"'secrets_returned'                => false",
-	"'generic_remote_shell'            => false",
-	"'environment'    => EnvironmentPolicy::snapshot()",
+	"'secrets_returned'",
+	"'generic_remote_shell'",
+	"'environment'",
+	'EnvironmentPolicy::snapshot()',
 	"'site_intelligence'",
 	"'content_change_set'",
 	"'theme_structured_content'",
 	"'navigation_change_set'",
+	"'contextual_link_read'",
+	"'contextual_link_write'",
+	"'media_read'",
 	"'permalink_administration'",
 	"'expected_fingerprint_supported'",
 	"'stale_safe_rollback_supported'",
@@ -63,6 +67,22 @@ $required_manifest_markers = array(
 foreach ( $required_manifest_markers as $marker ) {
 	if ( ! str_contains( $manifest, $marker ) ) {
 		throw new RuntimeException( 'Capability manifest contract marker missing: ' . $marker );
+	}
+}
+
+$required_manifest_values = array(
+	"/'schema_version'\s*=>\s*1/" => 'schema_version=1',
+	"/'remote_transport_requires_https'\s*=>\s*true/" => 'remote_transport_requires_https=true',
+	"/'revocable_identity_required'\s*=>\s*true/" => 'revocable_identity_required=true',
+	"/'secrets_returned'\s*=>\s*false/" => 'secrets_returned=false',
+	"/'generic_remote_shell'\s*=>\s*false/" => 'generic_remote_shell=false',
+	"/'expected_fingerprint_supported'\s*=>\s*true/" => 'expected_fingerprint_supported=true',
+	"/'stale_safe_rollback_supported'\s*=>\s*true/" => 'stale_safe_rollback_supported=true',
+);
+
+foreach ( $required_manifest_values as $pattern => $description ) {
+	if ( 1 !== preg_match( $pattern, $manifest ) ) {
+		throw new RuntimeException( 'Capability manifest semantic contract missing: ' . $description );
 	}
 }
 
