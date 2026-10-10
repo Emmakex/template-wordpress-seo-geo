@@ -29,6 +29,7 @@ Technical documents for specific accepted subsystems remain authoritative for th
 
 Examples include:
 
+- Manager versioned implementation contracts such as `docs/SEO_GEO_MANAGER_0.3.34_CAPABILITY_DISCOVERY.md`;
 - SEO/GEO specifications;
 - native SEO/Schema/discovery contracts;
 - performance/accessibility contracts;
