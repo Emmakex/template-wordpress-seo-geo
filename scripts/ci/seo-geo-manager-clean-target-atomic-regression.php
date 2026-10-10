@@ -49,7 +49,7 @@ $assert(
 	'Operation history is no longer anchored inside advanced technical details.'
 );
 
-echo wp_json_encode(
+echo json_encode(
 	array(
 		'ok'                               => true,
 		'clean_target_atomic_mode'         => true,
