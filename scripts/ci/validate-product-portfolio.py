@@ -94,14 +94,17 @@ def main() -> int:
             "Track A — SEO/GEO Migration Bridge",
             "Track B — SEO/GEO Theme",
             "Track C — SEO/GEO Manager",
-            "External orchestration workflows after Manager primitives",
+            "C0 — Product boundary freeze",
             "C1 — Site Intelligence / eyes",
+            "C2 — Authentication / capability contract",
+            "0.3.34 capability-discovery slice implemented",
             "C3 — Generic change-set engine / hands",
             "C4 — WordPress content operations",
             "C5 — Theme semantic-model operations",
+            "External orchestration workflows after Manager primitives",
             "EMMAKE immediate decision",
-            "Three-product commercial readiness matrix",
-            "Drift alarms",
+            "Commercial packaging target",
+            "Anti-drift review",
         ),
         "CURRENT_THREE_PRODUCT_ROADMAP.md",
     )
@@ -216,9 +219,6 @@ def main() -> int:
         "RESET_REBUILD_CONTRACT.md",
     )
 
-    # Existing publication safety remains valid. "Manager capability" in this
-    # document means local WordPress publication capability, not ownership of
-    # strategic research/creation intelligence.
     require(
         docs["publishing"],
         (
@@ -234,8 +234,6 @@ def main() -> int:
         "CONTENT_PUBLISHING.md",
     )
 
-    # Portable sandbox remains migration workflow evidence even where old
-    # product-home wording survives in historical text.
     require(
         docs["sandbox"],
         (
@@ -247,8 +245,6 @@ def main() -> int:
         "PORTABLE_SANDBOX.md",
     )
 
-    # Historical roadmap/release/pilot files remain required as evidence. They
-    # do not define current product ownership; DOCUMENTATION_AUTHORITY.md does.
     require(
         docs["historical_roadmap"],
         (
