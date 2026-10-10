@@ -347,7 +347,7 @@ final class LegacyPermalinkAuthority {
 	}
 
 	private static function is_recoverably_corrupted_slug( string $slug ): bool {
-		if ( '' === $slug || ! preg_match_all( self::MIGRATION_MARKER_PATTERN, $slug, $matches ) || empty( $matches[0] ) ) {
+		if ( '' === $slug || ! preg_match_all( self::MIGRATION_MARKER_PATTERN, $slug, $matches ) ) {
 			return false;
 		}
 
