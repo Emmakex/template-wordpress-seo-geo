@@ -63,9 +63,35 @@ def inspect_zip(path: Path) -> None:
             raise SystemExit(
                 f"Release ZIP source mismatch: missing={missing} extra={extra}"
             )
-        required = ZIP_ROOT + "seo-geo-manager.php"
-        if required not in actual:
-            raise SystemExit("Release ZIP is missing the main WordPress plugin file")
+
+        required = {
+            ZIP_ROOT + "seo-geo-manager.php",
+            ZIP_ROOT + "src/Rest/CapabilitiesController.php",
+            ZIP_ROOT + "src/Support/CapabilityManifest.php",
+        }
+        missing_required = sorted(required - actual)
+        if missing_required:
+            raise SystemExit(
+                f"Release ZIP is missing required Manager runtime files: {missing_required}"
+            )
+
+        controller = archive.read(
+            ZIP_ROOT + "src/Rest/CapabilitiesController.php"
+        ).decode("utf-8")
+        manifest = archive.read(
+            ZIP_ROOT + "src/Support/CapabilityManifest.php"
+        ).decode("utf-8")
+        plugin = archive.read(ZIP_ROOT + "src/Plugin.php").decode("utf-8")
+
+        if "'/capabilities'" not in controller or "CapabilityManifest::build()" not in controller:
+            raise SystemExit("Release ZIP capability endpoint contract is incomplete")
+        if "'schema_version' => 1" not in manifest:
+            raise SystemExit("Release ZIP capability manifest schema is missing")
+        if "'generic_remote_shell'" not in manifest or "'secrets_returned'" not in manifest:
+            raise SystemExit("Release ZIP capability safety declarations are missing")
+        if "CapabilitiesController::register_routes();" not in plugin:
+            raise SystemExit("Release ZIP does not register capability discovery")
+
         for info in archive.infolist():
             if info.is_dir():
                 continue
