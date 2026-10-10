@@ -29,6 +29,12 @@ final class CapabilityManifest {
 		$can_edit_theme        = current_user_can( 'edit_theme_options' );
 		$can_manage_categories = current_user_can( 'manage_categories' );
 		$can_manage_options    = current_user_can( 'manage_options' );
+		$app_passwords_supported = function_exists( 'wp_is_application_passwords_supported' )
+			? wp_is_application_passwords_supported()
+			: false;
+		$app_passwords_available = function_exists( 'wp_is_application_passwords_available_for_user' )
+			? wp_is_application_passwords_available_for_user( $user )
+			: false;
 
 		return array(
 			'schema_version' => 1,
@@ -43,7 +49,8 @@ final class CapabilityManifest {
 			),
 			'authentication' => array(
 				'remote_transport_requires_https' => true,
-				'wordpress_application_passwords' => true,
+				'application_passwords_supported' => $app_passwords_supported,
+				'application_passwords_available' => $app_passwords_available,
 				'browser_session_nonce'           => true,
 				'revocable_identity_required'     => true,
 				'secrets_returned'                => false,
@@ -76,15 +83,15 @@ final class CapabilityManifest {
 				$can_manage_options
 			),
 			'safety'         => array(
-				'preview_before_mutation'          => true,
-				'idempotency_supported'            => true,
-				'expected_fingerprint_supported'   => true,
-				'environment_binding_supported'    => true,
-				'operation_history_supported'      => true,
-				'stale_safe_rollback_supported'    => true,
-				'rendered_verification_supported'  => true,
-				'bounded_responses'                => true,
-				'client_specific_code_required'    => false,
+				'preview_before_mutation'         => true,
+				'idempotency_supported'           => true,
+				'expected_fingerprint_supported'  => true,
+				'environment_binding_supported'   => true,
+				'operation_history_supported'     => true,
+				'stale_safe_rollback_supported'   => true,
+				'rendered_verification_supported' => true,
+				'bounded_responses'               => true,
+				'client_specific_code_required'   => false,
 			),
 		);
 	}
