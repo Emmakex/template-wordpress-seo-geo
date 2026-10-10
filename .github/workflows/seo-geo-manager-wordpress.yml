@@ -18,6 +18,7 @@ on:
       - 'scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-clean-target-acceptance.php'
       - 'scripts/ci/seo-geo-manager-slug-repair-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   push:
@@ -39,6 +40,7 @@ on:
       - 'scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-clean-target-acceptance.php'
       - 'scripts/ci/seo-geo-manager-slug-repair-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   workflow_dispatch:
@@ -76,6 +78,8 @@ jobs:
           php -l scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php
           php -l scripts/ci/seo-geo-manager-clean-target-acceptance.php
           php -l scripts/ci/seo-geo-manager-slug-repair-acceptance.php
+          php -l scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php
+          php scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php
           node --check packages/seo-geo-manager/assets/admin/dashboard.js
           node --check packages/seo-geo-manager/assets/admin/json-export-actions.js
           node --check packages/seo-geo-manager/assets/admin/correction-actions.js
