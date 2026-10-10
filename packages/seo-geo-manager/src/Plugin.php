@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager;
@@ -15,6 +14,7 @@ use SeoGeo\Manager\Admin\FieldGate;
 use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\PermalinkActions;
+use SeoGeo\Manager\Intelligence\PresetPageResolver;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\FieldGateController;
@@ -36,6 +36,7 @@ final class Plugin {
 		}
 
 		self::$booted = true;
+		PresetPageResolver::register();
 		PermalinkRedirectRuntime::register();
 
 		if ( is_admin() ) {
