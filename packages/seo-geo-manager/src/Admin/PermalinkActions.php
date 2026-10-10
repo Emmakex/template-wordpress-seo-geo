@@ -32,6 +32,14 @@ final class PermalinkActions {
 			SEO_GEO_MANAGER_VERSION,
 			true
 		);
+
+		wp_enqueue_script(
+			'seo-geo-manager-slug-repair-actions',
+			self::asset_url( 'assets/admin/slug-repair-actions.js' ),
+			array( 'seo-geo-manager-permalink-actions' ),
+			SEO_GEO_MANAGER_VERSION,
+			true
+		);
 	}
 
 	private static function asset_url( string $relative_path ): string {
