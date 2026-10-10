@@ -69,14 +69,17 @@ final class CapabilityManifest {
 				'content_change_set'        => self::capability( $can_edit_posts, 'edit_posts' ),
 				'post_create'               => self::capability( $can_edit_posts, 'edit_posts' ),
 				'page_create'               => self::capability( $can_edit_pages, 'edit_pages' ),
-				'theme_model_read'          => self::capability( $can_edit_pages || $can_edit_posts, 'edit_pages|edit_posts' ),
-				'theme_structured_content'  => self::capability( $can_edit_posts, 'edit_posts' ),
+			
+'theme_model_read'          => self::capability( $can_edit_pages || $can_edit_posts, 'edit_pages|edit_posts' ),
+			
+'theme_structured_content'  => self::capability( $can_edit_posts, 'edit_posts' ),
 				'navigation_change_set'     => self::capability( $can_edit_theme, 'edit_theme_options' ),
 				'contextual_link_read'      => self::capability( $can_read_links, 'edit_pages|edit_posts' ),
 				'contextual_link_write'     => self::capability( $can_read_links, 'edit_pages|edit_posts + edit_post(source)' ),
 				'media_read'                => self::capability( $can_upload_files, 'upload_files' ),
 				'media_write'               => self::capability( $can_upload_files, 'upload_files' ),
-				'taxonomy_management'       => self::capability( $can_manage_categories, 'manage_categories' ),
+			
+'taxonomy_management'       => self::capability( $can_manage_categories, 'manage_categories' ),
 				'post_publish'              => self::capability( $can_publish_posts, 'publish_posts' ),
 				'page_write'                => self::capability( $can_edit_pages, 'edit_pages' ),
 				'page_publish'              => self::capability( $can_publish_pages, 'publish_pages' ),
