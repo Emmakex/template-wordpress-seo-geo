@@ -50,7 +50,7 @@ final class FieldGatePreflight {
 					$runtime_preview = PermalinkRedirectRuntime::preview(
 						isset( $plan['redirects'] ) && is_array( $plan['redirects'] ) ? $plan['redirects'] : array(),
 						isset( $plan['plan_fingerprint'] ) && is_string( $plan['plan_fingerprint'] ) ? $plan['plan_fingerprint'] : '',
-						isset( $plan['authoritative_structure'] ) && is_string( $plan['authoritative_structure'] ) ? $plan['authoritative_structure'] : ''
+						isset( $plan['target_structure'] ) && is_string( $plan['target_structure'] ) ? $plan['target_structure'] : ''
 					);
 				}
 			}
@@ -78,21 +78,21 @@ final class FieldGatePreflight {
 			),
 			'site_intelligence'     => $site,
 			'permalinks'            => array(
-				'inspection'       => $inspection,
-				'active_runtime'   => $runtime,
-				'legacy_authority' => $authority,
+				'inspection'         => $inspection,
+				'active_runtime'     => $runtime,
+				'legacy_authority'   => $authority,
 				'authoritative_plan' => $plan,
-				'runtime_preview'  => $runtime_preview,
+				'runtime_preview'    => $runtime_preview,
 			),
 			'field_gate'            => $gate,
 			'policy'                => array(
-				'preview_only'                    => true,
-				'no_content_write'                => true,
-				'no_permalink_write'              => true,
-				'no_redirect_runtime_activation'  => true,
-				'no_rewrite_flush'                => true,
-				'no_operation_created'            => true,
-				'write_requires_separate_endpoint'=> true,
+				'preview_only'                     => true,
+				'no_content_write'                 => true,
+				'no_permalink_write'               => true,
+				'no_redirect_runtime_activation'   => true,
+				'no_rewrite_flush'                 => true,
+				'no_operation_created'             => true,
+				'write_requires_separate_endpoint' => true,
 			),
 		);
 	}
@@ -122,7 +122,7 @@ final class FieldGatePreflight {
 	 *
 	 * @param array<string, mixed>      $site Site intelligence.
 	 * @param array<string, mixed>|null $authority Historical authority evidence.
-	 * @param array<string, mixed>|null $plan Authoritative permalink plan.
+	 * @param array<string, mixed>|null $plan Target permalink plan.
 	 * @param array<string, mixed>|null $runtime_preview Optional atomic runtime preview.
 	 * @return array<string, mixed>
 	 */
@@ -137,8 +137,24 @@ final class FieldGatePreflight {
 			: 'unknown';
 
 		$authority_status = 'not-requested';
+		$authority_mode   = 'none';
 		if ( is_array( $authority ) ) {
-			$authority_status = true === ( $authority['seo_authority_verified'] ?? false ) ? 'verified' : 'blocked';
+			$historical_structure_verified = true === ( $authority['seo_authority_verified'] ?? false );
+			$clean_target_verified = is_array( $plan )
+				&& 'seo-geo-clean-target' === ( $plan['target_strategy'] ?? '' )
+				&& true === ( $plan['migration_target']['verified_for_migration'] ?? false );
+			$mapping_verified = true === ( $authority['mapping_authoritative'] ?? false );
+
+			if ( $historical_structure_verified ) {
+				$authority_status = 'verified';
+				$authority_mode   = 'historical-structure';
+			} elseif ( $mapping_verified && $clean_target_verified ) {
+				$authority_status = 'verified';
+				$authority_mode   = 'historical-url-map-for-clean-target';
+			} else {
+				$authority_status = 'blocked';
+				$authority_mode   = $mapping_verified ? 'url-map-only' : 'unverified';
+			}
 		}
 
 		$plan_status = 'not-requested';
@@ -161,49 +177,88 @@ final class FieldGatePreflight {
 			}
 		}
 
+		$repairable_permalink_blocker = self::only_repairable_permalink_blocker( $site );
+		$blocking_gate_open            = 0 === $blockers || ( $repairable_permalink_blocker && $plan_ready );
+
 		$status      = 'blocked';
 		$next_action = 'resolve-build-finish-blockers';
 		$eligible    = false;
 		$reason      = 'Build / Finish still has blocking findings.';
 
-		if ( 0 === $blockers ) {
+		if ( $blocking_gate_open ) {
 			if ( '' === $legacy_base_url ) {
 				$status      = 'needs-input';
 				$next_action = 'provide-legacy-base-url';
-				$reason      = 'Build / Finish has no blocker, but historical permalink authority has not been inspected yet.';
+				$reason      = 'Build / Finish has no unrelated blocker, but historical permalink authority has not been inspected yet.';
 			} elseif ( 'verified' !== $authority_status ) {
 				$status      = 'blocked';
 				$next_action = 'resolve-legacy-authority-blockers';
-				$reason      = 'Historical URLs are not yet a complete, unambiguous SEO authority.';
+				$reason      = 'Historical URLs are not yet a complete, unambiguous SEO authority for preservation or redirect planning.';
 			} elseif ( ! $plan_ready ) {
 				$status      = 'blocked';
-				$next_action = 'resolve-authoritative-plan-blockers';
-				$reason      = 'Historical authority is verified, but the guarded permalink plan is not ready for a separate Apply.';
+				$next_action = is_array( $plan ) && is_string( $plan['next_action'] ?? null )
+					? (string) $plan['next_action']
+					: 'resolve-target-plan-blockers';
+				$reason      = 'Historical URL authority is verified, but the guarded target permalink plan is not ready for a separate Apply.';
 			} else {
 				$status      = 'ready-for-guarded-write';
 				$next_action = 'atomic-301' === $write_mode ? 'preview-atomic-permalink-apply' : 'preview-direct-permalink-apply';
-				$reason      = 'Read-only field evidence has no blocker for the next separately confirmed permalink operation.';
+				$reason      = $repairable_permalink_blocker
+					? 'The only Build / Finish blocker is the permalink defect addressed by this separately guarded reversible operation.'
+					: 'Read-only field evidence has no blocker for the next separately confirmed permalink operation.';
 				$eligible    = true;
 			}
 		}
 
 		return array(
-			'status'               => $status,
-			'next_action'          => $next_action,
-			'reason'               => $reason,
-			'guarded_write_eligible'=> $eligible,
-			'guarded_write_mode'   => $write_mode,
-			'build_finish'         => array(
+			'status'                         => $status,
+			'next_action'                    => $next_action,
+			'reason'                         => $reason,
+			'guarded_write_eligible'         => $eligible,
+			'guarded_write_mode'             => $write_mode,
+			'repairable_permalink_blocker'   => $repairable_permalink_blocker,
+			'build_finish'                   => array(
 				'status'   => $build_status,
 				'blockers' => $blockers,
 				'warnings' => $warnings,
 			),
-			'historical_authority' => array(
+			'historical_authority'           => array(
 				'status' => $authority_status,
+				'mode'   => $authority_mode,
 			),
-			'permalink_plan'       => array(
-				'status' => $plan_status,
+			'permalink_plan'                 => array(
+				'status'          => $plan_status,
+				'target_strategy' => is_array( $plan ) ? (string) ( $plan['target_strategy'] ?? '' ) : '',
+				'target_structure'=> is_array( $plan ) ? (string) ( $plan['target_structure'] ?? '' ) : '',
 			),
 		);
+	}
+
+	/**
+	 * Allow a ready guarded permalink operation to resolve the exact blocker it was
+	 * designed for; unrelated Build / Finish blockers still keep the gate closed.
+	 *
+	 * @param array<string, mixed> $site Site intelligence.
+	 */
+	private static function only_repairable_permalink_blocker( array $site ): bool {
+		$diagnostics = isset( $site['actionable_diagnostics'] ) && is_array( $site['actionable_diagnostics'] )
+			? $site['actionable_diagnostics']
+			: array();
+		$items = isset( $diagnostics['items'] ) && is_array( $diagnostics['items'] ) ? $diagnostics['items'] : array();
+		$blockers = array_values(
+			array_filter(
+				$items,
+				static fn ( $item ): bool => is_array( $item ) && 'blocker' === ( $item['severity'] ?? '' )
+			)
+		);
+
+		if ( 1 !== count( $blockers ) ) {
+			return false;
+		}
+
+		$blocker = $blockers[0];
+
+		return 'permalinks' === ( $blocker['category'] ?? '' )
+			&& 'malformed-permalink-template' === ( $blocker['code'] ?? '' );
 	}
 }
