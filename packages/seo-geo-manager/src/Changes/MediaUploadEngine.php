@@ -155,7 +155,7 @@ final class MediaUploadEngine {
 			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $prepared['alt'] );
 		}
 
-		$attachment = get_post( $attachment_id );
+		$attachment   = get_post( $attachment_id );
 		$verification = self::verify_created_attachment( $attachment, $prepared );
 		if ( is_wp_error( $verification ) ) {
 			wp_delete_attachment( $attachment_id, true );
@@ -170,18 +170,18 @@ final class MediaUploadEngine {
 		$url         = is_string( $url ) ? $url : '';
 
 		$operation = array(
-			'operation_id'       => $operation_id,
-			'operation_type'     => 'media-upload',
-			'adapter'            => self::ADAPTER,
-			'schema_version'     => self::SCHEMA_VERSION,
-			'status'             => 'created',
-			'target_id'          => $attachment_id,
-			'target_type'        => 'attachment',
-			'idempotency_key'    => $prepared['idempotency_key'],
-			'payload_hash'       => $payload_hash,
-			'after_fingerprint'  => MediaFingerprint::for_attachment( $attachment ),
-			'changes'            => self::change_markers( $prepared ),
-			'file'               => array(
+			'operation_id'      => $operation_id,
+			'operation_type'    => 'media-upload',
+			'adapter'           => self::ADAPTER,
+			'schema_version'    => self::SCHEMA_VERSION,
+			'status'            => 'created',
+			'target_id'         => $attachment_id,
+			'target_type'       => 'attachment',
+			'idempotency_key'   => $prepared['idempotency_key'],
+			'payload_hash'      => $payload_hash,
+			'after_fingerprint' => MediaFingerprint::for_attachment( $attachment ),
+			'changes'           => self::change_markers( $prepared ),
+			'file'              => array(
 				'name'       => wp_basename( $stored_file ),
 				'mime_type'  => (string) $attachment->post_mime_type,
 				'bytes'      => is_int( $stored_size ) ? $stored_size : 0,
@@ -192,9 +192,9 @@ final class MediaUploadEngine {
 				),
 				'url'        => $url,
 			),
-			'policy'             => self::policy( $prepared['upload_limit_bytes'] ),
-			'created_at_gmt'     => gmdate( 'c' ),
-			'idempotent_replay'  => false,
+			'policy'            => self::policy( $prepared['upload_limit_bytes'] ),
+			'created_at_gmt'    => gmdate( 'c' ),
+			'idempotent_replay' => false,
 		);
 
 		if ( ! OperationStore::save( $operation_id, $operation ) ) {
@@ -223,15 +223,15 @@ final class MediaUploadEngine {
 			);
 		}
 
-		$schema_version = isset( $payload['schema_version'] ) ? (int) $payload['schema_version'] : self::SCHEMA_VERSION;
-		$title          = isset( $payload['title'] ) && is_string( $payload['title'] ) ? sanitize_text_field( $payload['title'] ) : '';
-		$parent_id      = isset( $payload['parent_id'] ) ? absint( $payload['parent_id'] ) : 0;
-		$alt_provided   = array_key_exists( 'alt', $payload ) && is_string( $payload['alt'] );
-		$caption_set    = array_key_exists( 'caption', $payload ) && is_string( $payload['caption'] );
+		$schema_version  = isset( $payload['schema_version'] ) ? (int) $payload['schema_version'] : self::SCHEMA_VERSION;
+		$title           = isset( $payload['title'] ) && is_string( $payload['title'] ) ? sanitize_text_field( $payload['title'] ) : '';
+		$parent_id       = isset( $payload['parent_id'] ) ? absint( $payload['parent_id'] ) : 0;
+		$alt_provided    = array_key_exists( 'alt', $payload ) && is_string( $payload['alt'] );
+		$caption_set     = array_key_exists( 'caption', $payload ) && is_string( $payload['caption'] );
 		$description_set = array_key_exists( 'description', $payload ) && is_string( $payload['description'] );
-		$alt            = $alt_provided ? sanitize_text_field( $payload['alt'] ) : '';
-		$caption        = $caption_set ? sanitize_textarea_field( $payload['caption'] ) : '';
-		$description    = $description_set ? wp_kses_post( $payload['description'] ) : '';
+		$alt             = $alt_provided ? sanitize_text_field( $payload['alt'] ) : '';
+		$caption         = $caption_set ? sanitize_textarea_field( $payload['caption'] ) : '';
+		$description     = $description_set ? wp_kses_post( $payload['description'] ) : '';
 
 		if ( self::SCHEMA_VERSION !== $schema_version ) {
 			return new WP_Error( 'seo_geo_manager_media_upload_schema_invalid', 'Unsupported media upload schema version.', array( 'status' => 400 ) );
@@ -275,19 +275,19 @@ final class MediaUploadEngine {
 		}
 
 		return array(
-			'schema_version'     => self::SCHEMA_VERSION,
-			'title'              => $title,
-			'alt'                => $alt,
-			'alt_provided'       => $alt_provided,
-			'caption'            => $caption,
-			'caption_provided'   => $caption_set,
-			'description'        => $description,
+			'schema_version'       => self::SCHEMA_VERSION,
+			'title'                => $title,
+			'alt'                  => $alt,
+			'alt_provided'         => $alt_provided,
+			'caption'              => $caption,
+			'caption_provided'     => $caption_set,
+			'description'          => $description,
 			'description_provided' => $description_set,
-			'parent_id'          => $parent_id,
-			'file'               => $file_info,
-			'upload_limit_bytes' => self::upload_limit_bytes(),
-			'idempotency_key'    => $idempotency_key,
-			'allow_public_media' => true === self::truthy( $payload['allow_public_media'] ?? false ),
+			'parent_id'            => $parent_id,
+			'file'                 => $file_info,
+			'upload_limit_bytes'   => self::upload_limit_bytes(),
+			'idempotency_key'      => $idempotency_key,
+			'allow_public_media'   => true === self::truthy( $payload['allow_public_media'] ?? false ),
 		);
 	}
 
@@ -315,10 +315,10 @@ final class MediaUploadEngine {
 			return new WP_Error( 'seo_geo_manager_media_upload_hash_failed', 'Could not hash the uploaded image.', array( 'status' => 400 ) );
 		}
 
-		$checked       = wp_check_filetype_and_ext( $tmp_name, $name, get_allowed_mime_types() );
-		$extension     = isset( $checked['ext'] ) && is_string( $checked['ext'] ) ? strtolower( $checked['ext'] ) : '';
-		$mime_type     = isset( $checked['type'] ) && is_string( $checked['type'] ) ? strtolower( $checked['type'] ) : '';
-		$proper_name   = isset( $checked['proper_filename'] ) && is_string( $checked['proper_filename'] ) ? sanitize_file_name( $checked['proper_filename'] ) : '';
+		$checked     = wp_check_filetype_and_ext( $tmp_name, $name, get_allowed_mime_types() );
+		$extension   = isset( $checked['ext'] ) && is_string( $checked['ext'] ) ? strtolower( $checked['ext'] ) : '';
+		$mime_type   = isset( $checked['type'] ) && is_string( $checked['type'] ) ? strtolower( $checked['type'] ) : '';
+		$proper_name = isset( $checked['proper_filename'] ) && is_string( $checked['proper_filename'] ) ? sanitize_file_name( $checked['proper_filename'] ) : '';
 		if ( '' === $extension || '' === $mime_type || ! str_starts_with( $mime_type, 'image/' ) ) {
 			return new WP_Error( 'seo_geo_manager_media_upload_type_invalid', 'Only WordPress-allowed image file types are accepted.', array( 'status' => 415 ) );
 		}
@@ -347,7 +347,7 @@ final class MediaUploadEngine {
 	}
 
 	/**
-	 * @param WP_Post|mixed       $attachment Created attachment.
+	 * @param WP_Post|mixed        $attachment Created attachment.
 	 * @param array<string, mixed> $prepared Prepared upload.
 	 * @return true|WP_Error
 	 */
@@ -358,7 +358,7 @@ final class MediaUploadEngine {
 		if ( $prepared['title'] !== (string) $attachment->post_title || $prepared['caption'] !== (string) $attachment->post_excerpt || $prepared['description'] !== (string) $attachment->post_content || $prepared['parent_id'] !== (int) $attachment->post_parent ) {
 			return new WP_Error( 'seo_geo_manager_media_upload_metadata_verify_failed', 'Created image attachment metadata does not match the requested values.', array( 'status' => 409 ) );
 		}
-		if ( $prepared['file']['mime_type'] !== strtolower( (string) $attachment->post_mime_type ) ) {
+		if ( strtolower( (string) $attachment->post_mime_type ) !== $prepared['file']['mime_type'] ) {
 			return new WP_Error( 'seo_geo_manager_media_upload_mime_verify_failed', 'Created image MIME type does not match Preview.', array( 'status' => 409 ) );
 		}
 		if ( $prepared['alt_provided'] ) {
@@ -461,14 +461,14 @@ final class MediaUploadEngine {
 			'sha256',
 			(string) wp_json_encode(
 				array(
-					'schema_version' => self::SCHEMA_VERSION,
-					'file_sha256'    => $prepared['file']['sha256'],
-					'file_name'      => $prepared['file']['name'],
-					'title'          => $prepared['title'],
-					'alt'            => $prepared['alt_provided'] ? $prepared['alt'] : null,
-					'caption'        => $prepared['caption_provided'] ? $prepared['caption'] : null,
-					'description'    => $prepared['description_provided'] ? $prepared['description'] : null,
-					'parent_id'      => $prepared['parent_id'],
+					'schema_version'     => self::SCHEMA_VERSION,
+					'file_sha256'        => $prepared['file']['sha256'],
+					'file_name'          => $prepared['file']['name'],
+					'title'              => $prepared['title'],
+					'alt'                => $prepared['alt_provided'] ? $prepared['alt'] : null,
+					'caption'            => $prepared['caption_provided'] ? $prepared['caption'] : null,
+					'description'        => $prepared['description_provided'] ? $prepared['description'] : null,
+					'parent_id'          => $prepared['parent_id'],
 					'allow_public_media' => $prepared['allow_public_media'],
 				)
 			)
@@ -497,18 +497,18 @@ final class MediaUploadEngine {
 		OperationStore::save(
 			$operation_id,
 			array(
-				'operation_id'      => $operation_id,
-				'operation_type'    => 'media-upload',
-				'adapter'           => self::ADAPTER,
-				'schema_version'    => self::SCHEMA_VERSION,
-				'status'            => 'failed',
-				'target_id'         => 0,
-				'target_type'       => 'attachment',
-				'idempotency_key'   => $prepared['idempotency_key'],
-				'payload_hash'      => $payload_hash,
-				'changes'           => self::change_markers( $prepared ),
-				'error'             => sanitize_text_field( $message ),
-				'created_at_gmt'    => gmdate( 'c' ),
+				'operation_id'    => $operation_id,
+				'operation_type'  => 'media-upload',
+				'adapter'         => self::ADAPTER,
+				'schema_version'  => self::SCHEMA_VERSION,
+				'status'          => 'failed',
+				'target_id'       => 0,
+				'target_type'     => 'attachment',
+				'idempotency_key' => $prepared['idempotency_key'],
+				'payload_hash'    => $payload_hash,
+				'changes'         => self::change_markers( $prepared ),
+				'error'           => sanitize_text_field( $message ),
+				'created_at_gmt'  => gmdate( 'c' ),
 			)
 		);
 	}
