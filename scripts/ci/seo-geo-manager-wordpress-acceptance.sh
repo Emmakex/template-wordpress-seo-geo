@@ -26,10 +26,12 @@ TMP_DIR="$(mktemp -d)"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
 CAPABILITIES_LOG="${TMP_DIR}/capabilities-runtime.log"
 STRUCTURED_LOG="${TMP_DIR}/structured-runtime.log"
+THEME_MODEL_LOG="${TMP_DIR}/theme-model-runtime.log"
 AUTHORITY_LOG="${TMP_DIR}/seo-authority-runtime.log"
 ACCEPTANCE_FIXTURE="${TMP_DIR}/seo-geo-manager-acceptance.php"
 CAPABILITIES_FIXTURE="${TMP_DIR}/seo-geo-manager-capabilities-acceptance.php"
 STRUCTURED_FIXTURE="${TMP_DIR}/seo-geo-manager-structured-acceptance.php"
+THEME_MODEL_FIXTURE="${TMP_DIR}/seo-geo-manager-theme-model-read-acceptance.php"
 AUTHORITY_FIXTURE="${TMP_DIR}/seo-geo-manager-seo-authority-acceptance.php"
 
 signature() {
@@ -174,6 +176,8 @@ cp scripts/ci/seo-geo-manager-capabilities-acceptance.php "$CAPABILITIES_FIXTURE
   || fail_acceptance "capabilities-fixture-prepare" "Could not prepare capability acceptance fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-structured-acceptance.php "$STRUCTURED_FIXTURE" \
   || fail_acceptance "structured-fixture-prepare" "Could not prepare structured Manager acceptance fixture" "fixture copied" "cp failed"
+cp scripts/ci/seo-geo-manager-theme-model-read-acceptance.php "$THEME_MODEL_FIXTURE" \
+  || fail_acceptance "theme-model-fixture-prepare" "Could not prepare Theme model reader fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-seo-authority-acceptance.php "$AUTHORITY_FIXTURE" \
   || fail_acceptance "authority-fixture-prepare" "Could not prepare SEO authority acceptance fixture" "fixture copied" "cp failed"
 
@@ -183,6 +187,8 @@ docker cp "$CAPABILITIES_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-
   || fail_acceptance "capabilities-fixture-copy" "Could not copy capability acceptance fixture" "fixture copied" "docker cp failed"
 docker cp "$STRUCTURED_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-structured-acceptance.php \
   || fail_acceptance "structured-fixture-copy" "Could not copy structured Manager acceptance fixture" "fixture copied" "docker cp failed"
+docker cp "$THEME_MODEL_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-theme-model-read-acceptance.php \
+  || fail_acceptance "theme-model-fixture-copy" "Could not copy Theme model reader fixture" "fixture copied" "docker cp failed"
 docker cp "$AUTHORITY_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-seo-authority-acceptance.php \
   || fail_acceptance "authority-fixture-copy" "Could not copy SEO authority acceptance fixture" "fixture copied" "docker cp failed"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
@@ -191,6 +197,7 @@ docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/seo-geo-manager-acceptance.php \
   /var/www/html/seo-geo-manager-capabilities-acceptance.php \
   /var/www/html/seo-geo-manager-structured-acceptance.php \
+  /var/www/html/seo-geo-manager-theme-model-read-acceptance.php \
   /var/www/html/seo-geo-manager-seo-authority-acceptance.php \
   || fail_acceptance "package-permissions" "Could not set WordPress package permissions" "www-data owns packages" "chown failed"
 
@@ -204,8 +211,6 @@ wp_cli core install \
   --skip-email >/dev/null \
   || fail_acceptance "core-install" "WP-CLI could not install WordPress" "core install succeeds" "wp core install failed"
 
-# The leakage detector reasons about logical content paths. Use the same pretty
-# permalink contract as a real SEO/GEO site instead of WordPress' default ?page_id=.
 wp_cli option update permalink_structure '/%postname%/' >/dev/null \
   || fail_acceptance "permalink-structure" "Could not enable pretty permalinks" "/%postname%/" "option update failed"
 
@@ -224,7 +229,6 @@ if ! wp_cli eval-file /var/www/html/seo-geo-manager-acceptance.php >"$RUNTIME_LO
   cat "$RUNTIME_LOG"
   fail_acceptance "manager-runtime" "Manager M1/M2 acceptance fixture failed" 'JSON with "ok":true' "$(tail -c 500 "$RUNTIME_LOG" | tr '\n' ' ')"
 fi
-
 cat "$RUNTIME_LOG"
 grep -q '"ok":true' "$RUNTIME_LOG" \
   || fail_acceptance "manager-result" "Manager acceptance did not emit success marker" '"ok":true' "$(tail -c 500 "$RUNTIME_LOG" | tr '\n' ' ')"
@@ -234,7 +238,6 @@ if ! wp_cli eval-file /var/www/html/seo-geo-manager-capabilities-acceptance.php 
   cat "$CAPABILITIES_LOG"
   fail_acceptance "capabilities-runtime" "Manager capability least-privilege acceptance failed" 'JSON with "ok":true' "$(tail -c 500 "$CAPABILITIES_LOG" | tr '\n' ' ')"
 fi
-
 cat "$CAPABILITIES_LOG"
 grep -q '"ok":true' "$CAPABILITIES_LOG" \
   || fail_acceptance "capabilities-result" "Capability acceptance did not emit success marker" '"ok":true' "$(tail -c 500 "$CAPABILITIES_LOG" | tr '\n' ' ')"
@@ -244,17 +247,26 @@ if ! wp_cli eval-file /var/www/html/seo-geo-manager-structured-acceptance.php >"
   cat "$STRUCTURED_LOG"
   fail_acceptance "structured-runtime" "Manager Theme structured-content acceptance failed" 'JSON with "ok":true' "$(tail -c 500 "$STRUCTURED_LOG" | tr '\n' ' ')"
 fi
-
 cat "$STRUCTURED_LOG"
 grep -q '"ok":true' "$STRUCTURED_LOG" \
   || fail_acceptance "structured-result" "Structured Manager acceptance did not emit success marker" '"ok":true' "$(tail -c 500 "$STRUCTURED_LOG" | tr '\n' ' ')"
+
+printf '[manager] Running Theme semantic-model readback acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-theme-model-read-acceptance.php >"$THEME_MODEL_LOG" 2>&1; then
+  cat "$THEME_MODEL_LOG"
+  fail_acceptance "theme-model-runtime" "Manager Theme semantic-model reader acceptance failed" 'JSON with "ok":true' "$(tail -c 800 "$THEME_MODEL_LOG" | tr '\n' ' ')"
+fi
+cat "$THEME_MODEL_LOG"
+grep -q '"ok":true' "$THEME_MODEL_LOG" \
+  || fail_acceptance "theme-model-result" "Theme model reader acceptance did not emit success marker" '"ok":true' "$(tail -c 800 "$THEME_MODEL_LOG" | tr '\n' ' ')"
+grep -q '"plugin_version":"0.3.36"' "$THEME_MODEL_LOG" \
+  || fail_acceptance "theme-model-version" "Theme model reader did not execute Manager 0.3.36" '"plugin_version":"0.3.36"' "$(tail -c 800 "$THEME_MODEL_LOG" | tr '\n' ' ')"
 
 printf '[manager] Running SEO output authority resolver acceptance.\n'
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-seo-authority-acceptance.php >"$AUTHORITY_LOG" 2>&1; then
   cat "$AUTHORITY_LOG"
   fail_acceptance "authority-runtime" "Manager SEO output authority acceptance failed" 'JSON with "ok":true' "$(tail -c 500 "$AUTHORITY_LOG" | tr '\n' ' ')"
 fi
-
 cat "$AUTHORITY_LOG"
 grep -q '"ok":true' "$AUTHORITY_LOG" \
   || fail_acceptance "authority-result" "SEO authority acceptance did not emit success marker" '"ok":true' "$(tail -c 500 "$AUTHORITY_LOG" | tr '\n' ' ')"
