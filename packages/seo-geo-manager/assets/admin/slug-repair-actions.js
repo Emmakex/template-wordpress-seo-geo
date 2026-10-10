@@ -115,7 +115,7 @@
 							authority_fingerprint: preview.authority_fingerprint || '',
 							plan_fingerprint: preview.plan_fingerprint || '',
 							repair_fingerprint: preview.repair_fingerprint || '',
-							idempotency_key: `slug-repair-${ ( preview.repair_fingerprint || '' ).slice( 0, 64 ) }`,
+							idempotency_key: `slug-repair-${ ( preview.repair_fingerprint || '' ).slice( 0, 64 ) }-${ Date.now() }`,
 							confirm_slug_repair: true,
 							environment_fingerprint: report.environment?.fingerprint || ''
 						}
