@@ -66,8 +66,11 @@ def inspect_zip(path: Path) -> None:
 
         required = {
             ZIP_ROOT + "seo-geo-manager.php",
+            ZIP_ROOT + "src/Plugin.php",
             ZIP_ROOT + "src/Rest/CapabilitiesController.php",
             ZIP_ROOT + "src/Support/CapabilityManifest.php",
+            ZIP_ROOT + "src/Rest/ThemeModelController.php",
+            ZIP_ROOT + "src/Intelligence/ThemeModelReader.php",
         }
         missing_required = sorted(required - actual)
         if missing_required:
@@ -82,6 +85,12 @@ def inspect_zip(path: Path) -> None:
             ZIP_ROOT + "src/Support/CapabilityManifest.php"
         ).decode("utf-8")
         plugin = archive.read(ZIP_ROOT + "src/Plugin.php").decode("utf-8")
+        theme_model_controller = archive.read(
+            ZIP_ROOT + "src/Rest/ThemeModelController.php"
+        ).decode("utf-8")
+        theme_model_reader = archive.read(
+            ZIP_ROOT + "src/Intelligence/ThemeModelReader.php"
+        ).decode("utf-8")
 
         if "'/capabilities'" not in controller or "CapabilityManifest::build()" not in controller:
             raise SystemExit("Release ZIP capability endpoint contract is incomplete")
@@ -91,6 +100,27 @@ def inspect_zip(path: Path) -> None:
             raise SystemExit("Release ZIP capability safety declarations are missing")
         if "CapabilitiesController::register_routes();" not in plugin:
             raise SystemExit("Release ZIP does not register capability discovery")
+
+        if "'/theme/models'" not in theme_model_controller:
+            raise SystemExit("Release ZIP Theme model list route is missing")
+        if "'/theme/models/(?P<model_id>[a-z0-9-]+)'" not in theme_model_controller:
+            raise SystemExit("Release ZIP Theme model detail route is missing")
+        if "ThemeModelReader::list_models()" not in theme_model_controller:
+            raise SystemExit("Release ZIP Theme model list reader is not wired")
+        if "ThemeModelReader::read_model( $model_id )" not in theme_model_controller:
+            raise SystemExit("Release ZIP Theme model detail reader is not wired")
+        if "ThemeModelController::register_routes();" not in plugin:
+            raise SystemExit("Release ZIP does not register Theme model discovery")
+        if "'theme_model_read'" not in manifest:
+            raise SystemExit("Release ZIP capability manifest does not expose Theme model read")
+        if "'theme.models.list'" not in manifest or "'theme.models.read'" not in manifest:
+            raise SystemExit("Release ZIP capability operations omit Theme model discovery")
+        if "'raw_post_content_returned' => false" not in theme_model_reader:
+            raise SystemExit("Release ZIP Theme model reader does not enforce bounded content output")
+        if "'contract_authority'" not in theme_model_reader or "active-theme-preset-page-models" not in theme_model_reader:
+            raise SystemExit("Release ZIP Theme model reader lacks preset contract authority")
+        if "ContentFingerprint::for_post( $post )" not in theme_model_reader:
+            raise SystemExit("Release ZIP Theme model reader does not return mutation-safe fingerprints")
 
         for info in archive.infolist():
             if info.is_dir():
