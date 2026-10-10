@@ -63,7 +63,8 @@ final class MediaReferenceReader {
 	 */
 	public static function read_media( int $media_id ) {
 		$attachment = get_post( $media_id );
-		if ( ! $attachment instanceof WP_Post || 'attachment' !== $attachment->post_type || ! wp_attachment_is_image( $attachment->ID ) ) {
+		$is_image   = $attachment instanceof WP_Post && str_starts_with( strtolower( (string) $attachment->post_mime_type ), 'image/' );
+		if ( ! $attachment instanceof WP_Post || 'attachment' !== $attachment->post_type || ! $is_image ) {
 			return new WP_Error(
 				'seo_geo_manager_media_not_found',
 				'The requested image attachment was not found.',
