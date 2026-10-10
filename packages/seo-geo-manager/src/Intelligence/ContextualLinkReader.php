@@ -149,15 +149,12 @@ final class ContextualLinkReader {
 
 		$result = array();
 		foreach ( $matches as $match ) {
-			if ( ! is_array( $match ) ) {
-				continue;
-			}
-			$attrs = isset( $match['attrs'] ) && is_string( $match['attrs'] ) ? $match['attrs'] : '';
+			$attrs = is_string( $match['attrs'] ) ? $match['attrs'] : '';
 			$href  = self::attribute_value( $attrs, 'href' );
 			if ( self::skip_href( $href ) ) {
 				continue;
 			}
-			$inner    = isset( $match['inner'] ) && is_string( $match['inner'] ) ? $match['inner'] : '';
+			$inner    = is_string( $match['inner'] ) ? $match['inner'] : '';
 			$result[] = array(
 				'href' => $href,
 				'text' => self::clean_text( $inner ),
