@@ -40,13 +40,13 @@ final class MediaContextChangeAdapter {
 			'changes'        => self::preview_changes( $prepared['before_fields'], $prepared['after_fields'] ),
 			'has_changes'    => true,
 			'policy'         => array(
-				'context_fields_only'        => true,
-				'supported_fields'           => array( 'title', 'caption', 'description' ),
-				'attachment_id_only'         => true,
-				'fabricated_metadata'        => false,
-				'binary_mutation_supported'  => false,
-				'public_media_blocked'       => true !== ( $payload['allow_public_media'] ?? false ),
-				'allow_public_media'         => true === ( $payload['allow_public_media'] ?? false ),
+				'context_fields_only'       => true,
+				'supported_fields'          => array( 'title', 'caption', 'description' ),
+				'attachment_id_only'        => true,
+				'fabricated_metadata'       => false,
+				'binary_mutation_supported' => false,
+				'public_media_blocked'      => true !== ( $payload['allow_public_media'] ?? false ),
+				'allow_public_media'        => true === ( $payload['allow_public_media'] ?? false ),
 			),
 		);
 	}
@@ -200,7 +200,7 @@ final class MediaContextChangeAdapter {
 			return $result;
 		}
 
-		$restored = get_post( $attachment->ID );
+		$restored           = get_post( $attachment->ID );
 		$before_fingerprint = isset( $operation['before_fingerprint'] ) && is_string( $operation['before_fingerprint'] ) ? $operation['before_fingerprint'] : '';
 		if ( ! $restored instanceof WP_Post || ! self::fields_match( $restored, $before_fields ) || '' === $before_fingerprint || ! hash_equals( $before_fingerprint, MediaFingerprint::for_attachment( $restored ) ) ) {
 			wp_update_post( self::update_payload( $attachment->ID, $after_fields ) );
@@ -366,7 +366,12 @@ final class MediaContextChangeAdapter {
 		return $update;
 	}
 
-	/** @param array<string, mixed> $fields Expected fields. */
+	/**
+	 * Match the requested fields against the current attachment.
+	 *
+	 * @param WP_Post              $attachment Attachment.
+	 * @param array<string, mixed> $fields Expected fields.
+	 */
 	private static function fields_match( WP_Post $attachment, array $fields ): bool {
 		$current = self::current_fields( $attachment );
 		foreach ( $fields as $field => $value ) {
@@ -377,7 +382,12 @@ final class MediaContextChangeAdapter {
 		return true;
 	}
 
-	/** @param array<string, mixed> $fields Previous fields. */
+	/**
+	 * Restore a previous bounded field set.
+	 *
+	 * @param int                  $media_id Media ID.
+	 * @param array<string, mixed> $fields Previous fields.
+	 */
 	private static function restore_fields( int $media_id, array $fields ): void {
 		wp_update_post( self::update_payload( $media_id, $fields ) );
 	}
@@ -419,7 +429,7 @@ final class MediaContextChangeAdapter {
 	 * @param array<string, mixed> $payload Request payload.
 	 */
 	private static function payload_hash( array $payload ): string {
-		$fields = isset( $payload['fields'] ) && is_array( $payload['fields'] ) ? $payload['fields'] : array();
+		$fields     = isset( $payload['fields'] ) && is_array( $payload['fields'] ) ? $payload['fields'] : array();
 		$normalized = array();
 		if ( isset( $fields['title'] ) && is_string( $fields['title'] ) ) {
 			$normalized['title'] = sanitize_text_field( $fields['title'] );
