@@ -8,6 +8,7 @@ on:
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-capability-contract.php'
+      - 'scripts/ci/seo-geo-manager-capabilities-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
@@ -32,6 +33,7 @@ on:
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-capability-contract.php'
+      - 'scripts/ci/seo-geo-manager-capabilities-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
@@ -73,6 +75,7 @@ jobs:
           php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-capability-contract.php
           php scripts/ci/seo-geo-manager-capability-contract.php
+          php -l scripts/ci/seo-geo-manager-capabilities-acceptance.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
           php -l scripts/ci/seo-geo-manager-permalink-acceptance.php
