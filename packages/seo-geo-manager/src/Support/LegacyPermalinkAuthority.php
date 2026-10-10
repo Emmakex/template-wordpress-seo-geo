@@ -13,6 +13,7 @@ final class LegacyPermalinkAuthority {
 	private const MAX_POSTS = 2000;
 	private const PER_PAGE  = 100;
 	private const TIMEOUT   = 8;
+	private const MAX_STRUCTURE_MISMATCH_EVIDENCE = 20;
 	private const MIGRATION_MARKER_PATTERN = '/\{([a-f0-9]{32,64})\}/i';
 
 	/**
@@ -154,20 +155,44 @@ final class LegacyPermalinkAuthority {
 			);
 		}
 
-		$complete_scan          = true === $remote['complete'] && true === $local['complete'];
-		$duplicate_remote       = array_keys( $duplicate_remote_slugs );
-		$duplicate_ids          = array_map( 'intval', array_keys( $duplicate_remote_ids ) );
-		$all_mapped             = count( $rows ) === count( $local['posts'] ) && array() === $missing && array() === $invalid_links;
-		$mapping_authoritative  = $complete_scan && $all_mapped && array() === $duplicate_local && array() === $duplicate_remote && array() === $duplicate_ids;
-		$inferred_structure     = 1 === count( $structure_counts ) ? (string) array_key_first( $structure_counts ) : '';
-		$structure_consistent   = '' !== $inferred_structure && count( $rows ) === (int) ( $structure_counts[ $inferred_structure ] ?? 0 );
+		$complete_scan         = true === $remote['complete'] && true === $local['complete'];
+		$duplicate_remote      = array_keys( $duplicate_remote_slugs );
+		$duplicate_ids         = array_map( 'intval', array_keys( $duplicate_remote_ids ) );
+		$all_mapped            = count( $rows ) === count( $local['posts'] ) && array() === $missing && array() === $invalid_links;
+		$mapping_authoritative = $complete_scan && $all_mapped && array() === $duplicate_local && array() === $duplicate_remote && array() === $duplicate_ids;
+		$inferred_structure    = 1 === count( $structure_counts ) ? (string) array_key_first( $structure_counts ) : '';
+		$structure_consistent  = '' !== $inferred_structure && count( $rows ) === (int) ( $structure_counts[ $inferred_structure ] ?? 0 );
+		$structure_validation  = null;
+		$structure_method      = $structure_consistent ? 'literal-prefix' : 'unresolved';
+
+		if ( $mapping_authoritative && ! $structure_consistent ) {
+			$inspection = PermalinkInspector::preview();
+			$syntactic_candidate = isset( $inspection['proposed_structure'] ) && is_string( $inspection['proposed_structure'] )
+				? $inspection['proposed_structure']
+				: '';
+			if (
+				true === ( $inspection['safe_candidate'] ?? false )
+				&& '' !== $syntactic_candidate
+				&& false !== strpos( $syntactic_candidate, '%postname%' )
+			) {
+				$structure_validation = self::validate_dynamic_structure( $rows, $base, $syntactic_candidate );
+				if ( true === ( $structure_validation['verified'] ?? false ) ) {
+					$inferred_structure   = $syntactic_candidate;
+					$structure_consistent = true;
+					$structure_method     = 'syntactic-candidate-rendered-match';
+				}
+			}
+		}
+
 		$seo_authority_verified = $mapping_authoritative && $structure_consistent;
 
 		$fingerprint_payload = array(
-			'legacy_base_url'    => $base,
-			'local_posts'        => $local['posts'],
-			'rows'               => $rows,
-			'inferred_structure' => $inferred_structure,
+			'legacy_base_url'             => $base,
+			'local_posts'                 => $local['posts'],
+			'rows'                        => $rows,
+			'inferred_structure'          => $inferred_structure,
+			'structure_validation_method' => $structure_method,
+			'structure_validation'        => $structure_validation,
 		);
 		$authority_fingerprint = hash( 'sha256', (string) wp_json_encode( $fingerprint_payload ) );
 
@@ -181,7 +206,7 @@ final class LegacyPermalinkAuthority {
 		} elseif ( array() !== $invalid_links ) {
 			$block_reason = 'La fuente histórica devolvió enlaces fuera de la base autorizada.';
 		} elseif ( ! $structure_consistent ) {
-			$block_reason = 'Las URLs históricas se recuperaron, pero no comparten una estructura simple y única que pueda convertirse automáticamente en permalink_structure.';
+			$block_reason = 'Las URLs históricas se recuperaron, pero no comparten una estructura simple o una estructura dinámica de WordPress verificada que pueda convertirse automáticamente en permalink_structure.';
 		}
 
 		return array(
@@ -204,6 +229,8 @@ final class LegacyPermalinkAuthority {
 			'mapping_authoritative'              => $mapping_authoritative,
 			'inferred_structure'                 => $inferred_structure,
 			'structure_consistent'               => $structure_consistent,
+			'structure_validation_method'        => $structure_method,
+			'structure_validation'               => $structure_validation,
 			'seo_authority_verified'             => $seo_authority_verified,
 			'authority_fingerprint'              => $authority_fingerprint,
 			'rows'                               => $rows,
@@ -222,6 +249,9 @@ final class LegacyPermalinkAuthority {
 				'corrupted_slug_id_fallback_only'       => true,
 				'id_fallback_requires_unique_remote_id' => true,
 				'clean_slug_id_fallback_forbidden'      => true,
+				'dynamic_structure_candidate_safe_only' => true,
+				'dynamic_structure_rendered_match'      => true,
+				'corrupted_slug_rows_skipped_in_structure_proof' => true,
 			),
 		);
 	}
@@ -346,6 +376,141 @@ final class LegacyPermalinkAuthority {
 		return '/' . ( $prefix ? implode( '/', $prefix ) . '/' : '' ) . '%postname%/';
 	}
 
+	/**
+	 * Validate a syntactically recovered dynamic WordPress permalink candidate by
+	 * rendering each clean local post through WordPress and comparing logical paths
+	 * with its verified historical URL. Corrupted local slugs are deliberately
+	 * excluded from structure proof; their identity is handled separately by the
+	 * same-ID migration fallback and remains a repair blocker in the planner.
+	 *
+	 * @param array<int, array<string, mixed>> $rows Historical mapping rows.
+	 * @return array<string, mixed>
+	 */
+	private static function validate_dynamic_structure( array $rows, string $legacy_base, string $candidate ): array {
+		$current_base = trailingslashit( home_url( '/' ) );
+		$eligible     = 0;
+		$matched      = 0;
+		$skipped      = 0;
+		$mismatches   = array();
+
+		foreach ( $rows as $row ) {
+			if ( true === ( $row['local_slug_corrupted'] ?? false ) ) {
+				++$skipped;
+				continue;
+			}
+
+			$post_id    = (int) ( $row['post_id'] ?? 0 );
+			$legacy_url = isset( $row['legacy_url'] ) && is_string( $row['legacy_url'] ) ? $row['legacy_url'] : '';
+			if ( 0 >= $post_id || '' === $legacy_url ) {
+				self::append_structure_mismatch(
+					$mismatches,
+					array(
+						'post_id' => $post_id,
+						'reason'  => 'missing-post-or-historical-url',
+					)
+				);
+				continue;
+			}
+
+			$post = get_post( $post_id );
+			if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) {
+				self::append_structure_mismatch(
+					$mismatches,
+					array(
+						'post_id' => $post_id,
+						'reason'  => 'local-post-no-longer-published',
+					)
+				);
+				continue;
+			}
+
+			++$eligible;
+			$candidate_url  = self::permalink_for_structure( $post_id, $candidate );
+			$candidate_path = self::logical_path( $candidate_url, $current_base );
+			$legacy_path    = self::logical_path( $legacy_url, $legacy_base );
+
+			if ( '' !== $candidate_path && '' !== $legacy_path && $candidate_path === $legacy_path ) {
+				++$matched;
+				continue;
+			}
+
+			self::append_structure_mismatch(
+				$mismatches,
+				array(
+					'post_id'        => $post_id,
+					'candidate_path' => $candidate_path,
+					'legacy_path'    => $legacy_path,
+					'reason'         => 'rendered-path-mismatch',
+				)
+			);
+		}
+
+		$mismatch_count = max( 0, $eligible - $matched );
+		$verified       = 0 < $eligible && $eligible === $matched && 0 === $mismatch_count;
+
+		return array(
+			'candidate'               => $candidate,
+			'eligible_posts'          => $eligible,
+			'matched_posts'           => $matched,
+			'skipped_corrupted_posts' => $skipped,
+			'mismatch_count'          => $mismatch_count,
+			'mismatches'              => $mismatches,
+			'evidence_truncated'       => $mismatch_count > count( $mismatches ),
+			'verified'                 => $verified,
+			'write_performed'          => false,
+		);
+	}
+
+	private static function permalink_for_structure( int $post_id, string $structure ): string {
+		$filter = static function () use ( $structure ): string {
+			return $structure;
+		};
+		add_filter( 'pre_option_permalink_structure', $filter, PHP_INT_MAX, 0 );
+		try {
+			$url = get_permalink( $post_id );
+		} finally {
+			remove_filter( 'pre_option_permalink_structure', $filter, PHP_INT_MAX );
+		}
+
+		return is_string( $url ) ? $url : '';
+	}
+
+	private static function logical_path( string $url, string $base ): string {
+		$url_parts  = wp_parse_url( $url );
+		$base_parts = wp_parse_url( $base );
+		if ( ! is_array( $url_parts ) || ! is_array( $base_parts ) || empty( $url_parts['host'] ) || empty( $base_parts['host'] ) ) {
+			return '';
+		}
+
+		$url_host  = strtolower( (string) $url_parts['host'] ) . ( isset( $url_parts['port'] ) ? ':' . (int) $url_parts['port'] : '' );
+		$base_host = strtolower( (string) $base_parts['host'] ) . ( isset( $base_parts['port'] ) ? ':' . (int) $base_parts['port'] : '' );
+		if ( $url_host !== $base_host ) {
+			return '';
+		}
+
+		$url_path  = isset( $url_parts['path'] ) ? '/' . ltrim( (string) $url_parts['path'], '/' ) : '/';
+		$base_path = isset( $base_parts['path'] ) ? '/' . trim( (string) $base_parts['path'], '/' ) : '/';
+		$base_path = '/' === $base_path ? '/' : trailingslashit( $base_path );
+		if ( '/' !== $base_path && 0 !== strpos( trailingslashit( $url_path ), $base_path ) ) {
+			return '';
+		}
+
+		$relative = '/' === $base_path ? $url_path : '/' . ltrim( substr( $url_path, strlen( untrailingslashit( $base_path ) ) ), '/' );
+		$relative = '/' . ltrim( $relative, '/' );
+
+		return '/' === $relative ? '/' : trailingslashit( $relative );
+	}
+
+	/**
+	 * @param array<int, array<string, mixed>> $mismatches Mismatch evidence.
+	 * @param array<string, mixed>             $row Mismatch row.
+	 */
+	private static function append_structure_mismatch( array &$mismatches, array $row ): void {
+		if ( count( $mismatches ) < self::MAX_STRUCTURE_MISMATCH_EVIDENCE ) {
+			$mismatches[] = $row;
+		}
+	}
+
 	private static function is_recoverably_corrupted_slug( string $slug ): bool {
 		if ( '' === $slug || ! preg_match_all( self::MIGRATION_MARKER_PATTERN, $slug, $matches ) ) {
 			return false;
@@ -443,6 +608,8 @@ final class LegacyPermalinkAuthority {
 			'mapping_authoritative'  => false,
 			'inferred_structure'     => '',
 			'structure_consistent'   => false,
+			'structure_validation_method' => 'unresolved',
+			'structure_validation'   => null,
 			'seo_authority_verified' => false,
 			'authority_fingerprint'  => '',
 			'rows'                   => array(),
