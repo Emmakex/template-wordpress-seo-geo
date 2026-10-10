@@ -1,0 +1,50 @@
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+  level: 6
+  paths:
+    - packages/seo-geo-manager
+  tmpDir: .phpstan-manager-cache
+  reportUnmatchedIgnoredErrors: true
+  treatPhpDocTypesAsCertain: false
+
+  # WordPress 7.1 runtime accepts string tag selectors in WP_HTML_Tag_Processor,
+  # while the currently pinned wordpress-stubs package narrows next_tag() to an
+  # array query. Keep the ignores path- and count-bounded until the stub catches up.
+  ignoreErrors:
+    -
+      message: '#Parameter \#1 \$query of method WP_HTML_Tag_Processor::next_tag\(\) expects .*#'
+      path: packages/seo-geo-manager/src/Intelligence/SiteIntelligenceScanner.php
+      count: 1
+    -
+      message: '#Parameter \#1 \$query of method WP_HTML_Tag_Processor::next_tag\(\) expects .*#'
+      path: packages/seo-geo-manager/src/Intelligence/ThemeContractScanner.php
+      count: 2
+
+    # The Theme integration calls are explicitly guarded at runtime. PHPStan
+    # analyzes Manager without loading Theme functions, so these cross-product
+    # callables are intentionally path- and count-bounded.
+    -
+      message: '#Parameter \#1 \$callback of function call_user_func expects callable\(\): mixed, .* given\.#'
+      path: packages/seo-geo-manager/src/Intelligence/ThemeContractScanner.php
+      count: 2
+    -
+      message: '#Parameter \#1 \$callback of function call_user_func expects callable\(\): mixed, .* given\.#'
+      path: packages/seo-geo-manager/src/Intelligence/ThemeModelReader.php
+      count: 1
+    -
+      message: '#Call to function is_callable\(\) with .* will always evaluate to false\.#'
+      path: packages/seo-geo-manager/src/Changes/ThemeStructuredContentAdapter.php
+      count: 1
+    -
+      message: '#Parameter \#1 \$callback of function call_user_func expects callable\(\): mixed, .* given\.#'
+      path: packages/seo-geo-manager/src/Changes/ThemeStructuredContentAdapter.php
+      count: 1
+
+    # WordPress stubs type WP_Post_Type::$cap as a non-null stdClass; the runtime
+    # guard remains intentionally defensive for third-party/custom post types.
+    -
+      message: '#Property WP_Post_Type::\$cap \(stdClass\) in isset\(\) is not nullable\.#'
+      path: packages/seo-geo-manager/src/Changes/ChangeSetEngine.php
+      count: 1

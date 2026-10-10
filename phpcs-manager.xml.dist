@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<ruleset name="SEO GEO Manager WordPress">
+  <description>SEO/GEO Manager follows WordPress standards with temporary documentation/alignment debt isolated from the established products.</description>
+
+  <arg name="basepath" value="."/>
+  <arg name="colors"/>
+  <arg name="parallel" value="8"/>
+  <arg value="ps"/>
+
+  <file>packages/seo-geo-manager</file>
+  <exclude-pattern>*/vendor/*</exclude-pattern>
+  <exclude-pattern>*/assets/*</exclude-pattern>
+
+  <config name="minimum_supported_wp_version" value="6.7"/>
+
+  <rule ref="WordPress">
+    <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+    <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+
+    <!--
+      M0-M2 were created as a vertical MVP slice. Keep behavioral/security
+      WordPress checks active while documentation and alignment are normalized
+      before the Manager release branch is promoted from draft.
+    -->
+    <exclude name="Squiz.Commenting.ClassComment.Missing"/>
+    <exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+    <exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+    <exclude name="Squiz.Commenting.FunctionComment.ParamNameNoMatch"/>
+    <exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint"/>
+    <exclude name="Squiz.Commenting.FunctionComment.SpacingAfterParamType"/>
+    <exclude name="Squiz.Commenting.VariableComment.Missing"/>
+    <exclude name="Generic.Commenting.DocComment.MissingShort"/>
+    <exclude name="WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned"/>
+    <exclude name="Generic.Formatting.MultipleStatementAlignment.NotSameWarning"/>
+    <exclude name="WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound"/>
+    <exclude name="WordPress.WhiteSpace.OperatorSpacing.NoSpaceBefore"/>
+    <exclude name="Universal.Operators.DisallowShortTernary.Found"/>
+  </rule>
+</ruleset>

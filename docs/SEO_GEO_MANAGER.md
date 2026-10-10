@@ -1,62 +1,118 @@
 # SEO/GEO Manager
 
+Status: **authoritative Manager product contract**
+
+Canonical product boundary: `docs/THREE_PRODUCT_OPERATING_MODEL.md`.
+
 ## Purpose
 
-SEO/GEO Manager is the permanent WordPress plugin product for **continuous SEO/GEO optimization, automated content generation/publication and editorial operations**.
+SEO/GEO Manager is the permanent, independently installable **WordPress bridge/control agent** that gives an authorized external operator safe eyes and hands inside a client's WordPress.
 
-Its primary product case is the site **after launch or rebuild**: keep improving content, internal linking, landing pages, blogs and SEO/GEO signals without returning to a developer-led rebuild cycle.
+Manager is **not the strategic brain**. Strategy, research, content creation, optimization reasoning, opportunity prioritization and growth decisions live in the external orchestration layer operated by us.
 
-It may also support existing WordPress sites that keep their current theme, but that compatibility path must not distort the clean Theme + preset workflow.
+Manager's job is to expose reliable WordPress capabilities so external orchestration can:
 
-The Manager must not require GitHub, a staging environment, a specific hosting company, Elementor, Divi or the SEO/GEO Theme.
+```text
+Inspect
+ -> Preview
+ -> Execute
+ -> Publish / Schedule
+ -> Verify
+ -> History / Rollback
+```
 
-The canonical Theme/Manager/Gutenberg ownership contract is `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`.
+The plugin must remain generic, client-agnostic and useful on supported WordPress sites whether or not SEO/GEO Theme is installed.
 
-## Planned package boundary
+## Product position
 
-Target package: `packages/seo-geo-manager/`.
+The three sellable products remain separate:
 
-The current `packages/seo-geo-migration-bridge` remains the accepted migration implementation until its capabilities are deliberately absorbed into the Manager. Do not rename or remove the accepted bridge package before migration parity is proven.
+- **SEO/GEO Migration Bridge** — scan/clone/export/import/rescue/reset/replatform/cutover transition product;
+- **SEO/GEO Theme** — frontend rendering/design/semantic HTML/accessibility/performance/native SEO/GEO product;
+- **SEO/GEO Manager** — permanent safe WordPress control bridge.
 
-## Architectural principle
+The external orchestration layer is not a fourth WordPress plugin. It is where our team and AI-assisted workflows reason about client state and decide what should change.
 
-Manager is the **control plane**, not the public renderer.
+## Core principle
 
-When the SEO/GEO Theme is active:
+> **Manager exposes capabilities; external orchestration supplies intelligence.**
 
-- Manager creates and updates structured content and WordPress resources;
-- Theme renders strategic surfaces from versioned semantic models;
-- Gutenberg remains available for article editing and simple client-authored pages;
-- normal public rendering remains local to WordPress and does not require a remote Manager/controller request.
+A feature belongs inside Manager when it answers:
 
-The permanent split is:
+> How can an authorized external operator safely read, write, publish or verify this WordPress state?
 
-> **Gutenberg provides editorial autonomy. SEO/GEO Manager provides automation and growth. SEO/GEO Theme provides frontend rendering, design, semantic HTML and performance.**
+A feature normally belongs outside Manager when it answers:
 
-## Modules
+> What keyword should we target, what content should we create, what should it say, which opportunity should we prioritize, or why should we make this change?
 
-### 1. Site Intelligence
+## Manager capability layers
 
-Read-only by default and intentionally lightweight for already-rebuilt Theme sites. Deep legacy-stack analysis is only required when operating on a non-Theme existing site.
+### 1. Site Intelligence / Inspect
 
-Responsibilities:
+Read-only current-state APIs provide bounded evidence about:
 
-- WordPress/PHP/runtime inventory;
-- theme/child-theme inventory;
-- plugin and must-use plugin inventory;
-- builder detection;
-- CPT/taxonomy/shortcode/widget/menu inventory;
-- public URL inventory;
-- SEO/GEO baseline capture;
-- forms, analytics, consent, redirects, cache/CDN and business-system detection;
-- content-model and customization signals;
-- bounded, privacy-safe diagnostics.
+- WordPress/PHP/runtime;
+- current environment identity;
+- Theme/preset/model capability;
+- pages/posts/CPTs/taxonomies;
+- resource IDs/slugs/URLs/statuses;
+- internal-link/navigation evidence;
+- media signals;
+- permalink/redirect state;
+- SEO output authority/providers;
+- launch-readiness diagnostics;
+- recent privacy-bounded operation summaries.
 
-The accepted Phase 8 analyzer/baseline contracts are the starting point.
+Deep migration analysis belongs to Migration Bridge. Manager inspection should remain lightweight and useful after launch.
 
-### 2. Output Authority Resolver
+### 2. Authentication and capability discovery
 
-Before Manager writes or emits SEO/GEO signals it resolves the current owner for each surface.
+Manager uses WordPress authentication rather than inventing a parallel account system.
+
+Preferred managed remote baseline:
+
+```text
+HTTPS
++ dedicated WordPress operator identity
++ WordPress Application Password
++ least-privilege capabilities
++ revocable credential
+```
+
+Browser-admin calls use normal WordPress session + REST nonce protections.
+
+Manager 0.3.34 introduces:
+
+```text
+GET /wp-json/seo-geo-manager/v1/capabilities
+```
+
+The authenticated endpoint returns a bounded manifest describing what the current principal may do through this Manager installation, including:
+
+- Manager/API version;
+- current principal ID;
+- actual WordPress Application Password support/availability;
+- environment write-approval contract;
+- per-capability availability;
+- required WordPress capability per family;
+- semantic operation paths/risk classes;
+- supported safety primitives.
+
+It never returns credentials, nonces, cookies, secrets or private content.
+
+Detailed 0.3.34 contract: `docs/SEO_GEO_MANAGER_0.3.34_CAPABILITY_DISCOVERY.md`.
+
+### 3. Output Authority Resolver
+
+Before any public SEO/GEO output is modified, Manager determines the accepted owner for that surface.
+
+Potential owners include:
+
+- SEO/GEO Theme;
+- WordPress Core;
+- Manager-native adapter where explicitly enabled;
+- accepted external provider adapter;
+- blocked/manual-review state.
 
 Surfaces include:
 
@@ -65,313 +121,306 @@ Surfaces include:
 - robots/indexability;
 - Open Graph/social metadata;
 - hreflang;
-- Schema graph;
-- sitemap extensions;
-- redirects;
-- discovery surfaces such as llms.txt/Markdown alternates where enabled.
+- Schema;
+- sitemap/discovery surfaces;
+- redirects where the relevant operation owns them.
 
-The resolver produces one of:
+Manager must not create duplicate public authority.
 
-- theme-native;
-- manager-native;
-- external-provider adapter;
-- wordpress-core;
-- manual-review;
-- blocked-conflict.
+### 4. Preview / Change-set Core
 
-No signal is emitted by Manager while ownership is ambiguous.
+External orchestration submits a bounded proposed change. Manager validates current WordPress state and produces an exact preview/diff without silently mutating the site.
 
-### 3. Content Publishing Core
+Required protections include:
 
-Provider-neutral publishing infrastructure for strategic pages and blog posts.
+- deterministic target identity;
+- expected fingerprint/revision;
+- collision checks;
+- current permissions;
+- environment policy;
+- explicit changed fields/model slots;
+- no hidden layout mutation.
 
-Responsibilities:
+### 5. Execute / Apply
 
-- versioned content manifest;
-- dry-run validation;
-- draft-first creation;
-- preview;
-- explicit or policy-authorized schedule/publish;
-- idempotency key;
-- stable resource identity;
-- revision/change-set recording;
-- rollback;
-- per-language relationship data;
-- bounded publication report;
-- expected-revision protection against overwriting newer human changes.
+Manager applies only supported semantic operations through WordPress APIs.
 
-Detailed contract: `docs/CONTENT_PUBLISHING.md`.
+Execution must support as appropriate:
 
-### 4. Landing Engine
+- idempotency;
+- stale-state rejection;
+- environment binding;
+- exact stored-value verification;
+- bounded previous-value/revision evidence;
+- operation ID;
+- rollback reference where safe.
 
-Landing Engine owns automated strategic-page creation and refresh.
+Manager must never expose a generic remote shell as a shortcut.
 
-Responsibilities:
+### 6. Publish / Schedule
 
-- create/update Home, service, product, solution, location, campaign and commercial hub resources through accepted models/adapters;
-- preserve or explicitly plan slugs/canonicals;
-- create versioned semantic content models rather than preset-specific Gutenberg layout trees when the SEO/GEO Theme is active;
-- inject unique local/service/product value rather than token-swapped doorway content;
-- support internal-link plans and content clusters;
-- coordinate page SEO/GEO through the resolved authority;
-- prevent duplicate intent/URL collisions;
-- support preview, schedule/publish, verification and rollback.
+Manager provides publication primitives; it does not decide editorial strategy.
 
-#### Theme path
+Required direction includes:
 
-With SEO/GEO Theme active, Manager writes structured content and the Theme renderer owns visual composition. Manager does not need to build `Group`, `Columns`, `alignwide`, `contentSize` or other Gutenberg layout structures.
-
-#### Non-Theme path
-
-On supported non-Theme WordPress sites, Manager may publish through explicitly accepted native-block/builder/provider adapters. Those compatibility adapters do not redefine the canonical Theme architecture.
-
-### 5. Blog Engine
-
-Automated blog publication is a **first-class Manager feature**.
-
-Blog Engine must be able to generate, draft, optimize, schedule/publish, update and refresh normal WordPress posts.
-
-Responsibilities:
-
-- topic/keyword/search-intent assignment;
-- content-cluster relationship;
-- structured article model;
-- outline/headings/body generation or ingestion;
-- author and provenance binding;
-- source/reference metadata;
-- categories/tags only through explicit policy;
-- internal-link plan;
-- links to real service/landing/product targets;
+- create/update page;
+- create/update normal WordPress post;
+- draft;
+- schedule;
+- publish under capability/policy;
+- author binding;
+- excerpt/title/body;
+- categories/tags under explicit policy;
 - featured media references;
-- localized article relationships;
-- SEO title/meta/canonical/indexability intent;
-- publication/update timestamps from WordPress authority;
-- Article/BlogPosting behavior only when visible content and output authority support it;
-- expected-revision protection;
-- refresh/update workflow;
-- rollback and public verification.
+- multilingual relations through accepted adapters.
 
-The engine never fabricates authors, sources, reviews, dates, claims or expertise.
+External orchestration may generate a complete article. Manager materializes it as a normal WordPress post and safely manages its lifecycle.
 
-#### Gutenberg interoperability
+### 7. Theme semantic-model operations
 
-A Manager-created blog article becomes a **normal WordPress post** and must remain editable by authorized client users in Gutenberg.
+When SEO/GEO Theme is active, Manager operates semantic content/model data rather than Gutenberg visual layout trees.
 
-Manager may use a structured article model internally for generation, validation and future refresh. The editable body should use a minimal stable WordPress/Gutenberg-compatible editorial representation, not preset-specific layout markup.
+Manager must be able to:
 
-Gutenberg may control **article body editing**. SEO/GEO Theme controls the public article shell: reading width, header treatment, typography, author/date/provenance presentation, related content, CTAs, Schema integration, responsive behavior, accessibility and performance.
+- discover supported model versions;
+- read the current model;
+- preview changes;
+- validate slots/types;
+- apply accepted changes;
+- verify persistence;
+- request bounded rendered verification;
+- roll back where safe.
 
-This gives clients autonomy without making automated publishing depend on Gutenberg as the frontend layout engine.
+SEO/GEO Theme remains the public strategic frontend authority.
 
-### 6. Growth / Opportunity Engine
+### 8. Navigation / internal-link / media operations
 
-Long-term Manager operation should use connected search/analytics signals to discover opportunities rather than wait only for manual briefs.
+Manager should expose semantic primitives for externally prepared plans:
 
-Potential inputs:
+- menu target reads/updates;
+- bounded contextual-link updates;
+- real target validation;
+- clone/source-host leakage prevention;
+- media ID/reference operations;
+- alt/context updates under policy.
 
-- Search Console;
-- Bing Webmaster/search data;
-- analytics;
-- current rankings/impressions/clicks;
-- content inventory;
-- internal-link graph;
-- stale-content signals;
-- commercial/service priorities;
-- local/GEO gaps.
+External orchestration decides the linking/media strategy. Manager executes and verifies it.
 
-Potential outputs:
+### 9. Verify
 
-- new landing opportunity;
-- new automated blog topic;
-- existing landing refresh;
-- existing article refresh;
-- internal-link recommendation/change set;
-- cluster expansion;
-- local/GEO content opportunity.
+Stored-state verification and frontend verification are separate facts.
 
-Every resulting mutation still passes the Publishing Core, authority resolution, validation and rollback contracts.
+Manager verifies exact stored WordPress state after mutation.
 
-### 7. Migration module
+Where supported, optional rendered verification checks the exact current same-site public route with bounded HTTP behavior and stores compact evidence, never the response body.
 
-This is an **optional secondary/backward-compatibility module**, not the primary reason the Manager exists. It absorbs accepted Migration Bridge capabilities only after the Manager's optimization/content core is already stable:
+### 10. Operation history and rollback
 
-- analyzer;
-- baseline;
-- dependency graph;
-- builder migration adapters;
-- parity;
-- cutover/rollback;
-- bounded final report.
+Manager keeps private operation detail needed for verification/rollback and exposes bounded summaries for operator/remote visibility.
 
-Migration mode is optional. After accepted handoff it can be disabled while the Manager remains active for publishing.
+Requirements include:
 
-### 8. Portable Sandbox coordinator
+- operation IDs;
+- changed field/model-slot names;
+- verification status;
+- rollback eligibility;
+- environment binding;
+- stale-safe rollback;
+- no secrets/private mutation values in summary APIs.
 
-Supports clients who have no staging environment.
+## External orchestration contract
 
-Responsibilities:
+External orchestration is the brain.
 
-- determine available sandbox mode;
-- produce a bounded migration/export manifest;
-- coordinate backup references;
-- enforce sandbox indexing isolation;
-- verify candidate artifact identity;
-- run parity/quality evidence collection;
-- never treat production as the first test environment.
+It owns activities such as:
 
-Detailed contract: `docs/PORTABLE_SANDBOX.md`.
+- business/market understanding;
+- keyword/search-intent research;
+- competitor research;
+- content strategy;
+- landing selection and content creation;
+- blog topic selection and complete article creation;
+- entity/GEO reasoning;
+- internal-link/cluster strategy;
+- Search Console/Bing/analytics interpretation;
+- opportunity prioritization;
+- content-refresh decisions;
+- growth planning.
 
-### 9. Integrations
-
-Adapters are optional and individually accepted.
-
-Potential families:
-
-- SEO: Yoast SEO, Rank Math, All in One SEO;
-- builders/editors: Gutenberg/native blocks, Elementor, Divi where specifically supported;
-- multilingual: native SEO/GEO language layer, WPML, Polylang;
-- commerce/business: WooCommerce and client-specific systems;
-- forms/analytics/consent/cache: detection first, mutation only with explicit adapter authority.
-
-Detection is not compatibility. A provider is supported only after its adapter contract passes real WordPress acceptance.
-
-## Theme-owned strategic content models
-
-When Theme + Manager are both active, strategic resources use versioned semantic models.
-
-Initial families may include:
+Typical flow:
 
 ```text
-corporate-home-v1
-corporate-landing-v1
-service-page-v1
-location-page-v1
-campaign-page-v1
-saas-home-v1
-local-home-v1
-publisher-home-v1
-ecommerce-home-v1
+external request/research
+ -> GET Manager capabilities/current state
+ -> external reasoning
+ -> bounded Manager preview
+ -> approval/policy
+ -> Manager execute/publish
+ -> Manager verify
+ -> external measurement/next decision
 ```
 
-The model expresses semantic slots/content, not layout implementation. The Theme maps accepted model versions to preset renderers.
+Improving research/generation intelligence should normally **not require a WordPress plugin release**.
 
-A future Manager release must be able to create a new strategic landing without knowing the renderer's CSS grid or Gutenberg block nesting.
+## Build / Finish, Optimize and Grow
 
-## Automated publication modes
+These remain useful lifecycle workflows, but they are externally orchestrated workflows using Manager capabilities.
 
-Manager may expose policy levels such as:
+### Build / Finish
 
-- draft-only;
-- draft + explicit publish approval;
-- approved schedule;
-- future policy-authorized direct publish.
+Take a fresh/rebuilt site to launch readiness.
 
-Draft-first remains the baseline and must always remain available. Autonomous modes require explicit administrator policy, audit, guardrails and rollback.
+Manager supplies inspection and safe execution. External orchestration determines fixes/content/SEO/link/media work.
 
-## Output-authority matrix
+### Optimize
 
-### SEO/GEO Theme active
+Improve an existing site from real site/search evidence.
 
-The Theme remains native output authority. Manager publishes content/configuration through supported public contracts and does not duplicate Theme output.
+External reasoning prepares prioritized bounded changes; Manager previews/applies/verifies them.
 
-### Supported external SEO provider active
+### Grow
 
-Manager writes through that provider adapter where the adapter has explicit ownership support. Manager-native overlapping output remains disabled.
+Run continuous publication/refresh/linking workflows.
 
-### No supported SEO provider and generic theme
+External orchestration decides opportunities and creates content; Manager safely materializes and publishes the accepted work inside WordPress.
 
-Manager may offer a manager-native SEO/GEO authority mode only after:
+## wp-admin UI role
 
-- conflict scan is clean;
-- administrator explicitly enables it;
-- the relevant shared Core runtime is packaged in the Manager;
-- zero-duplicate runtime acceptance passes.
+The Manager admin UI remains useful for:
 
-### Multiple/conflicting providers
+- local diagnostics;
+- connection/capability status;
+- previews;
+- safety confirmation for high-risk operations;
+- operation history;
+- downloadable technical evidence;
+- recovery/emergency actions.
 
-Publishing may remain draft-only, but SEO/GEO activation is blocked until ownership is resolved.
+It is **not** intended to become the primary strategic control center for managed advanced operation. The advanced workflow is external orchestration through authenticated Manager APIs.
 
-## Security model
+## WordPress/Gutenberg role
 
-Every mutation surface must require:
+WordPress remains resource authority for:
 
-- authenticated WordPress user or authenticated scoped API client;
-- least-privilege capability checks;
-- nonce for browser-admin mutations;
-- request authentication/signature for remote publishing;
-- explicit resource/action scope;
-- idempotency key for create/update operations;
-- validation before mutation;
-- bounded audit/change-set record.
+- IDs;
+- slugs/URLs;
+- statuses;
+- authors;
+- revisions;
+- permissions;
+- media;
+- taxonomies;
+- local persistent content.
 
-Credentials and tokens:
+Gutenberg remains available for normal editorial autonomy, including manual editing of Manager-created blog posts where allowed.
 
-- are never committed to repository or content;
-- are never included in migration/publication reports;
-- must be revocable;
-- must be stored using the safest available deployment mechanism;
-- should prefer environment/secret-manager injection for managed installations.
+Gutenberg is not the master layout authority for Theme-owned strategic pages.
 
-## Privacy model
+## Theme relationship
 
-- Analyzer defaults to metadata/fingerprints rather than raw private content export.
-- Remote publishing transports only the content/configuration required for the requested operation.
-- Client/customer/order/form data is outside the content-generation contract.
-- Telemetry is opt-in and must be documented separately.
-- GDPR/data-processing responsibilities must be explicit for any future hosted controller.
+Manager must work without SEO/GEO Theme on accepted WordPress stacks.
 
-## Performance model
+When Theme + Manager are both active:
 
-Manager must not turn every frontend request into a remote API call.
+- Manager reads/writes WordPress resources and semantic model data;
+- Theme renders strategic frontend;
+- output-authority resolution prevents duplicate SEO/GEO signals;
+- frontend rendering remains local to WordPress and does not depend on a live remote orchestration request.
 
-Default principles:
+## Migration Bridge relationship
 
-- publication is a control-plane operation;
-- public pages render from WordPress-local state;
-- remote services are not required to serve normal frontend HTML;
-- Theme-owned renderers execute locally/server-side;
-- background operations are bounded and observable;
-- caches are invalidated only for affected surfaces.
+Migration Bridge remains a separate sellable product.
 
-## Commercial independence
+Manager does **not** need to absorb/replace the complete migration product.
 
-Manager receives its own installable ZIP and release lifecycle. Licensing/update delivery, if added, is a distribution concern and cannot disable client content or break the public site when a license server is unavailable.
+Migration-derived safety primitives already built inside Manager may remain when useful for Build / Finish/launch readiness, but new scan/clone/export/import/rescue/reset/cutover product work belongs to Migration Bridge.
 
-## Definition of done for first stable Manager release
+## Authentication and security
 
-A first stable Manager release requires:
+Every mutation surface requires the narrowest appropriate WordPress authority plus operation-specific guards.
+
+Remote operation principles:
+
+- HTTPS;
+- dedicated/revocable WordPress identity;
+- least privilege;
+- no credentials in repository/content/operation reports;
+- no unrestricted shell;
+- bounded inputs/outputs;
+- idempotency where retry is possible;
+- current environment acknowledgement for guarded production changes;
+- exact target/revision/fingerprint protection;
+- auditable operations.
+
+## Privacy
+
+- remote inspection should prefer metadata/fingerprints where full content is unnecessary;
+- private/customer/order/form data is outside the SEO/content operation contract unless an explicit future adapter requires narrowly scoped access;
+- operation summary APIs must not expose rollback payload values or secrets;
+- remote generation transports only what is needed for the requested operation.
+
+## Performance/runtime
+
+Manager is a control plane, not a frontend dependency.
+
+Normal public requests must render from local WordPress state without contacting an external orchestration service.
+
+Manager background/remote operations must remain bounded and invalidate only affected caches/surfaces.
+
+## First stable Manager direction
+
+A first stable Manager requires a proven generic bridge rather than embedded strategy engines.
+
+Minimum product acceptance includes:
 
 - independent install/activate/upgrade/rollback;
-- WordPress/PHP support matrix;
-- Site Intelligence accepted on representative legacy fixtures;
-- authority resolver accepted with Theme and at least one generic/no-provider path;
-- secure draft-first publication core;
-- idempotent create/update and rollback;
-- create one Theme-owned strategic landing from a versioned semantic model;
-- render that landing without Gutenberg controlling the master layout;
-- automatically create one complete normal WordPress blog draft;
-- preserve author/source/provenance metadata;
-- allow the automated blog draft to be edited in Gutenberg;
-- schedule/publish the blog through an authorized path;
-- refresh an article with stale-revision protection;
-- internal-link/cluster handling;
-- Migration module regression parity with accepted Phase 8 contracts;
-- portable-sandbox path validated;
-- EN/ES operator UX;
+- supported WordPress/PHP matrix;
+- authenticated capability discovery;
+- real least-privilege remote connection acceptance;
+- Site Intelligence;
+- generic preview/apply/verify/rollback;
+- normal post/page creation lifecycle;
+- Theme semantic-model operations when Theme is active;
+- navigation/link/media primitives;
+- output-authority coordination;
+- operation evidence/history;
+- EN/ES operator UX where human UI is required;
 - no duplicate SEO/GEO output;
-- real-site acceptance on at least one Theme site and one non-Theme WordPress site.
+- one Theme-site and one non-Theme-site field acceptance.
 
-## Roadmap dependency
+The first stable Manager does **not** require an embedded autonomous keyword strategist, competitor researcher, copywriter or growth brain.
 
-Before implementing the Manager Landing Engine against the Theme, the project must prove **Corporate v5 — Theme-owned frontend** and generalize its semantic renderer contract.
+## Current implementation state
 
-The current recommended order is:
+Existing M1/M2 work already provides substantial foundations:
 
-1. Corporate v5 renderer from existing `corporate-home-v1` content;
-2. generalized Theme semantic renderer/model registry;
-3. remaining preset master renderers;
-4. Manager Content Publishing Core;
-5. Manager Landing Engine;
-6. Manager automated Blog Engine with Gutenberg interoperability;
-7. growth/opportunity feedback loops;
-8. Migration Bridge capability absorption after the optimization/publishing core is stable.
+- health/content APIs;
+- Site Intelligence;
+- environment fingerprints;
+- generic change-set preview/apply/rollback;
+- Theme structured changes;
+- navigation correction path;
+- output-authority inspection;
+- operation history;
+- rendered verification;
+- guarded URL/permalink launch-safety operations derived from EMMAKE field work.
+
+Manager **0.3.34** adds authenticated capability discovery and begins the explicit post-boundary-freeze C2 remote-control roadmap.
+
+The migration/permalink field machinery must not continue expanding as the center of the product. After the real EMMAKE transition is closed, development returns to generic remote-control/content capabilities.
+
+## Roadmap
+
+Canonical current execution order is maintained in `docs/CURRENT_THREE_PRODUCT_ROADMAP.md`.
+
+Immediate Manager direction:
+
+1. C2 capability discovery — implemented in 0.3.34;
+2. real HTTPS Application Password + least-privilege field acceptance;
+3. C3 generic hands/change-set generalization;
+4. C4 complete page/post lifecycle;
+5. C5 Theme semantic-model lifecycle;
+6. C6 links/navigation/media;
+7. C7 provider adapters;
+8. C8 evidence/rollback completeness;
+9. C9 Theme + non-Theme field acceptance.

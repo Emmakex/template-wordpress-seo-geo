@@ -1,0 +1,220 @@
+.seo-geo-manager-admin {
+	max-width: 980px;
+}
+
+.seo-geo-manager-admin__hero--focused {
+	align-items: center;
+}
+
+.seo-geo-manager-admin__version {
+	display: grid;
+	gap: 4px;
+	min-width: 120px;
+	padding: 14px 18px;
+	border: 1px solid #c8e6df;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.82);
+	text-align: right;
+}
+
+.seo-geo-manager-admin__version span {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+.seo-geo-manager-admin__version strong {
+	font-size: 18px;
+	color: #0f766e;
+}
+
+.seo-geo-manager-flow {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	padding: 16px;
+	margin-top: 18px;
+}
+
+.seo-geo-manager-flow__step {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 14px;
+	border-radius: 10px;
+	background: #f6f7f7;
+}
+
+.seo-geo-manager-flow__step > span {
+	display: grid;
+	place-items: center;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	background: #dcdcde;
+	font-weight: 700;
+}
+
+.seo-geo-manager-flow__step.is-current {
+	background: #eefaf7;
+}
+
+.seo-geo-manager-flow__step.is-current > span {
+	background: #0f766e;
+	color: #fff;
+}
+
+.seo-geo-manager-flow__step div {
+	display: grid;
+	gap: 2px;
+}
+
+.seo-geo-manager-flow__step small {
+	color: #646970;
+}
+
+[data-seo-geo-field-slot] .seo-geo-manager-admin__panel,
+[data-seo-geo-finalization-actions] .seo-geo-manager-admin__panel,
+.seo-geo-manager-slug-repair {
+	margin-top: 18px;
+}
+
+[data-seo-geo-field-slot] .seo-geo-manager-admin__actions {
+	align-items: flex-start;
+	min-width: 0;
+}
+
+[data-seo-geo-field-slot] .seo-geo-manager-admin__actions label {
+	display: grid;
+	gap: 6px;
+	width: 100%;
+	max-width: 520px;
+}
+
+[data-seo-geo-field-slot] input.regular-text {
+	width: min(100%, 520px);
+}
+
+.seo-geo-manager-focus {
+	border-color: #b7ddd4;
+	box-shadow: 0 10px 30px rgba(15, 118, 110, 0.08);
+}
+
+.seo-geo-manager-focus.is-ready {
+	border-left: 4px solid #00a32a;
+}
+
+.seo-geo-manager-focus.is-blocked {
+	border-left: 4px solid #dba617;
+}
+
+.seo-geo-manager-focus__message {
+	max-width: 760px;
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+.seo-geo-manager-focus__metrics {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 10px;
+	margin: 18px 0;
+}
+
+.seo-geo-manager-focus__metric {
+	padding: 14px;
+	border: 1px solid #e2e4e7;
+	border-radius: 10px;
+	background: #f9fafb;
+}
+
+.seo-geo-manager-focus__metric span {
+	display: block;
+	margin-bottom: 6px;
+	font-size: 11px;
+	font-weight: 600;
+	color: #646970;
+}
+
+.seo-geo-manager-focus__metric strong {
+	display: block;
+	font-size: 16px;
+	line-height: 1.35;
+	word-break: break-word;
+}
+
+.seo-geo-manager-focus__preview {
+	margin: 18px 0;
+	padding: 16px;
+	border: 1px solid #b7ddd4;
+	border-radius: 10px;
+	background: #f4fbf9;
+}
+
+.seo-geo-manager-focus__preview h3 {
+	margin-top: 0;
+}
+
+.seo-geo-manager-focus__status {
+	padding: 12px 14px;
+	border-radius: 8px;
+	background: #f6f7f7;
+}
+
+.seo-geo-manager-focus__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 14px;
+}
+
+.seo-geo-manager-admin__technical {
+	margin: 24px 0 40px;
+	border: 1px solid #dcdcde;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.seo-geo-manager-admin__technical > summary {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 16px 18px;
+	cursor: pointer;
+}
+
+.seo-geo-manager-admin__technical > summary span {
+	font-size: 12px;
+	font-weight: 400;
+	color: #646970;
+}
+
+.seo-geo-manager-admin__technical-body {
+	padding: 0 18px 18px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.seo-geo-manager-admin__technical-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 14px;
+	padding-top: 18px;
+}
+
+.seo-geo-manager-admin__technical .seo-geo-manager-admin__metrics {
+	margin-top: 16px;
+}
+
+@media (max-width: 782px) {
+	.seo-geo-manager-flow,
+	.seo-geo-manager-focus__metrics {
+		grid-template-columns: 1fr;
+	}
+
+	.seo-geo-manager-admin__version {
+		text-align: left;
+	}
+}

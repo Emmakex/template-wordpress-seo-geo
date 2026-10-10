@@ -1,0 +1,134 @@
+name: SEO GEO Manager WordPress CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-capability-contract.php'
+      - 'scripts/ci/seo-geo-manager-capabilities-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-application-password-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
+      - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-theme-model-read-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-operation-history-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-rendered-verification-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-field-gate-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-clean-target-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-clean-target-atomic-regression.php'
+      - 'scripts/ci/seo-geo-manager-slug-repair-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
+      - '.github/workflows/seo-geo-manager-wordpress.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/build-theme-package.sh'
+      - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-capability-contract.php'
+      - 'scripts/ci/seo-geo-manager-capabilities-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-application-password-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
+      - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-theme-model-read-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-operation-history-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-rendered-verification-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-field-gate-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-clean-target-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-clean-target-atomic-regression.php'
+      - 'scripts/ci/seo-geo-manager-slug-repair-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
+      - '.github/workflows/seo-geo-manager-wordpress.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-geo-manager-wordpress-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manager-wordpress:
+    name: C1-C5 + capability/auth + Theme + SEO authority + guarded field operations
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate acceptance scripts and dashboard JavaScript
+        run: |
+          bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-application-password-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-permalink-acceptance.sh
+          php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
+          php -l scripts/ci/seo-geo-manager-capability-contract.php
+          php scripts/ci/seo-geo-manager-capability-contract.php
+          php -l scripts/ci/seo-geo-manager-capabilities-acceptance.php
+          php -l scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php
+          php -l scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php
+          php -l scripts/ci/seo-geo-manager-structured-acceptance.php
+          php -l scripts/ci/seo-geo-manager-theme-model-read-acceptance.php
+          php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
+          php -l scripts/ci/seo-geo-manager-permalink-acceptance.php
+          php -l scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php
+          php -l scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php
+          php -l scripts/ci/seo-geo-manager-operation-history-acceptance.php
+          php -l scripts/ci/seo-geo-manager-rendered-verification-acceptance.php
+          php -l scripts/ci/seo-geo-manager-field-gate-acceptance.php
+          php -l scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php
+          php -l scripts/ci/seo-geo-manager-clean-target-acceptance.php
+          php -l scripts/ci/seo-geo-manager-clean-target-atomic-regression.php
+          php scripts/ci/seo-geo-manager-clean-target-atomic-regression.php
+          php -l scripts/ci/seo-geo-manager-slug-repair-acceptance.php
+          php -l scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php
+          php scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php
+          node --check packages/seo-geo-manager/assets/admin/dashboard.js
+          node --check packages/seo-geo-manager/assets/admin/json-export-actions.js
+          node --check packages/seo-geo-manager/assets/admin/correction-actions.js
+          node --check packages/seo-geo-manager/assets/admin/permalink-actions.js
+          node --check packages/seo-geo-manager/assets/admin/slug-repair-actions.js
+          node --check packages/seo-geo-manager/assets/admin/operation-history.js
+          node --check packages/seo-geo-manager/assets/admin/field-gate.js
+          node --check packages/seo-geo-manager/assets/admin/finalization-actions.js
+
+      - name: Pull pinned WordPress fixture images
+        run: |
+          docker pull wordpress:7.1.0-php8.2-apache
+          docker pull wordpress:cli-2.12.0-php8.2
+          docker pull mariadb:11.8.9
+
+      - name: Manager WordPress acceptance
+        run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+
+      - name: Application Password transport and revocation acceptance
+        run: bash scripts/ci/seo-geo-manager-application-password-acceptance.sh
+
+      - name: Content create publish and schedule acceptance
+        run: bash scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh
+
+      - name: Permalink authority, clean target, protected slug repair, atomic redirect, history, rendered verification and field gate acceptance
+        run: bash scripts/ci/seo-geo-manager-permalink-acceptance.sh

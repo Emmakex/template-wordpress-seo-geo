@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+WORDPRESS_IMAGE="wordpress:7.1.0-php8.2-apache"
+WPCLI_IMAGE="wordpress:cli-2.12.0-php8.2"
+MARIADB_IMAGE="mariadb:11.8.9"
+SUFFIX="${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}-$$"
+NETWORK="seo-geo-permalink-${SUFFIX}"
+DB_CONTAINER="seo-geo-permalink-db-${SUFFIX}"
+WP_CONTAINER="seo-geo-permalink-wp-${SUFFIX}"
+WP_VOLUME="seo-geo-permalink-wp-${SUFFIX}"
+DB_NAME="wordpress"
+DB_USER="wordpress"
+DB_PASSWORD="permalink-acceptance-password"
+DB_ROOT_PASSWORD="permalink-acceptance-root"
+TMP_DIR="$(mktemp -d)"
+RUNTIME_LOG="${TMP_DIR}/permalink-runtime.log"
+REDIRECT_RUNTIME_LOG="${TMP_DIR}/redirect-runtime.log"
+ATOMIC_RUNTIME_LOG="${TMP_DIR}/atomic-runtime.log"
+HISTORY_RUNTIME_LOG="${TMP_DIR}/history-runtime.log"
+RENDERED_RUNTIME_LOG="${TMP_DIR}/rendered-runtime.log"
+FIELD_GATE_RUNTIME_LOG="${TMP_DIR}/field-gate-runtime.log"
+CORRUPTED_SLUG_RUNTIME_LOG="${TMP_DIR}/corrupted-slug-runtime.log"
+CLEAN_TARGET_RUNTIME_LOG="${TMP_DIR}/clean-target-runtime.log"
+SLUG_REPAIR_RUNTIME_LOG="${TMP_DIR}/slug-repair-runtime.log"
+
+cleanup() {
+  docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
+  docker rm -f "$DB_CONTAINER" >/dev/null 2>&1 || true
+  docker volume rm "$WP_VOLUME" >/dev/null 2>&1 || true
+  docker network rm "$NETWORK" >/dev/null 2>&1 || true
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+wp_cli() {
+  docker run --rm \
+    --network "$NETWORK" \
+    --volumes-from "$WP_CONTAINER" \
+    --user 33:33 \
+    -e HOME=/tmp \
+    -e "WORDPRESS_DB_HOST=${DB_CONTAINER}:3306" \
+    -e "WORDPRESS_DB_USER=${DB_USER}" \
+    -e "WORDPRESS_DB_PASSWORD=${DB_PASSWORD}" \
+    -e "WORDPRESS_DB_NAME=${DB_NAME}" \
+    "$WPCLI_IMAGE" wp "$@" --path=/var/www/html
+}
+
+docker network create "$NETWORK" >/dev/null
+docker volume create "$WP_VOLUME" >/dev/null
+
+docker run -d \
+  --name "$DB_CONTAINER" \
+  --network "$NETWORK" \
+  -e "MARIADB_DATABASE=${DB_NAME}" \
+  -e "MARIADB_USER=${DB_USER}" \
+  -e "MARIADB_PASSWORD=${DB_PASSWORD}" \
+  -e "MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}" \
+  "$MARIADB_IMAGE" >/dev/null
+
+for _ in $(seq 1 60); do
+  if docker exec "$DB_CONTAINER" mariadb-admin ping -h 127.0.0.1 -uroot "-p${DB_ROOT_PASSWORD}" --silent >/dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
+docker exec "$DB_CONTAINER" mariadb-admin ping -h 127.0.0.1 -uroot "-p${DB_ROOT_PASSWORD}" --silent >/dev/null
+
+docker run -d \
+  --name "$WP_CONTAINER" \
+  --network "$NETWORK" \
+  -v "${WP_VOLUME}:/var/www/html" \
+  -e "WORDPRESS_DB_HOST=${DB_CONTAINER}:3306" \
+  -e "WORDPRESS_DB_USER=${DB_USER}" \
+  -e "WORDPRESS_DB_PASSWORD=${DB_PASSWORD}" \
+  -e "WORDPRESS_DB_NAME=${DB_NAME}" \
+  -e WORDPRESS_DEBUG=1 \
+  -e "WORDPRESS_CONFIG_EXTRA=define( 'WP_DEBUG_LOG', true ); define( 'WP_DEBUG_DISPLAY', false ); @ini_set( 'display_errors', '0' );" \
+  "$WORDPRESS_IMAGE" >/dev/null
+
+for _ in $(seq 1 60); do
+  if docker exec "$WP_CONTAINER" test -f /var/www/html/wp-settings.php >/dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
+docker exec "$WP_CONTAINER" test -f /var/www/html/wp-settings.php >/dev/null
+
+docker exec "$WP_CONTAINER" mkdir -p /var/www/html/wp-content/plugins/seo-geo-manager
+docker cp packages/seo-geo-manager/. "$WP_CONTAINER":/var/www/html/wp-content/plugins/seo-geo-manager/
+docker cp scripts/ci/seo-geo-manager-permalink-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-permalink-acceptance.php
+docker cp scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-redirect-runtime-acceptance.php
+docker cp scripts/ci/seo-geo-manager-atomic-redirect-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-atomic-redirect-acceptance.php
+docker cp scripts/ci/seo-geo-manager-operation-history-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-operation-history-acceptance.php
+docker cp scripts/ci/seo-geo-manager-rendered-verification-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-rendered-verification-acceptance.php
+docker cp scripts/ci/seo-geo-manager-field-gate-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-field-gate-acceptance.php
+docker cp scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-corrupted-slug-authority-acceptance.php
+docker cp scripts/ci/seo-geo-manager-clean-target-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-clean-target-acceptance.php
+docker cp scripts/ci/seo-geo-manager-slug-repair-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-slug-repair-acceptance.php
+docker exec "$WP_CONTAINER" chown -R www-data:www-data \
+  /var/www/html/wp-content/plugins/seo-geo-manager \
+  /var/www/html/seo-geo-manager-permalink-acceptance.php \
+  /var/www/html/seo-geo-manager-redirect-runtime-acceptance.php \
+  /var/www/html/seo-geo-manager-atomic-redirect-acceptance.php \
+  /var/www/html/seo-geo-manager-operation-history-acceptance.php \
+  /var/www/html/seo-geo-manager-rendered-verification-acceptance.php \
+  /var/www/html/seo-geo-manager-field-gate-acceptance.php \
+  /var/www/html/seo-geo-manager-corrupted-slug-authority-acceptance.php \
+  /var/www/html/seo-geo-manager-clean-target-acceptance.php \
+  /var/www/html/seo-geo-manager-slug-repair-acceptance.php
+
+wp_cli core install \
+  --url="http://seo-geo-permalink.test" \
+  --title="SEO GEO Permalink Acceptance" \
+  --admin_user=admin \
+  --admin_password=permalink-acceptance-admin \
+  --admin_email=admin@example.test \
+  --skip-email >/dev/null
+
+wp_cli option update permalink_structure '/%postname%/' >/dev/null
+wp_cli plugin activate seo-geo-manager >/dev/null
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-permalink-acceptance.php >"$RUNTIME_LOG" 2>&1; then
+  cat "$RUNTIME_LOG"
+  exit 1
+fi
+cat "$RUNTIME_LOG"
+grep -q '"ok":true' "$RUNTIME_LOG"
+grep -q '"collision_guard":true' "$RUNTIME_LOG"
+grep -q '"ambiguous_old_source_guard":true' "$RUNTIME_LOG"
+grep -q '"legacy_authority_guard":true' "$RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-redirect-runtime-acceptance.php >"$REDIRECT_RUNTIME_LOG" 2>&1; then
+  cat "$REDIRECT_RUNTIME_LOG"
+  exit 1
+fi
+cat "$REDIRECT_RUNTIME_LOG"
+grep -q '"ok":true' "$REDIRECT_RUNTIME_LOG"
+grep -q '"one_hop_guard":true' "$REDIRECT_RUNTIME_LOG"
+grep -q '"armed_structure_guard":true' "$REDIRECT_RUNTIME_LOG"
+grep -q '"reversible_runtime":true' "$REDIRECT_RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-atomic-redirect-acceptance.php >"$ATOMIC_RUNTIME_LOG" 2>&1; then
+  cat "$ATOMIC_RUNTIME_LOG"
+  exit 1
+fi
+cat "$ATOMIC_RUNTIME_LOG"
+grep -q '"ok":true' "$ATOMIC_RUNTIME_LOG"
+grep -q '"authoritative_301":true' "$ATOMIC_RUNTIME_LOG"
+grep -q '"atomic_apply":true' "$ATOMIC_RUNTIME_LOG"
+grep -q '"atomic_rollback":true' "$ATOMIC_RUNTIME_LOG"
+grep -q '"runtime_removed":true' "$ATOMIC_RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-operation-history-acceptance.php >"$HISTORY_RUNTIME_LOG" 2>&1; then
+  cat "$HISTORY_RUNTIME_LOG"
+  exit 1
+fi
+cat "$HISTORY_RUNTIME_LOG"
+grep -q '"ok":true' "$HISTORY_RUNTIME_LOG"
+grep -q '"privacy_safe":true' "$HISTORY_RUNTIME_LOG"
+grep -q '"rollback_status_refresh":true' "$HISTORY_RUNTIME_LOG"
+grep -q '"editor_scope_filter":true' "$HISTORY_RUNTIME_LOG"
+grep -q '"sitewide_admin_only":true' "$HISTORY_RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-rendered-verification-acceptance.php >"$RENDERED_RUNTIME_LOG" 2>&1; then
+  cat "$RENDERED_RUNTIME_LOG"
+  exit 1
+fi
+cat "$RENDERED_RUNTIME_LOG"
+grep -q '"ok":true' "$RENDERED_RUNTIME_LOG"
+grep -q '"bounded_same_origin":true' "$RENDERED_RUNTIME_LOG"
+grep -q '"body_not_persisted":true' "$RENDERED_RUNTIME_LOG"
+grep -q '"no_auto_rollback_on_http":true' "$RENDERED_RUNTIME_LOG"
+grep -q '"manual_rollback_after_fail":true' "$RENDERED_RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-field-gate-acceptance.php >"$FIELD_GATE_RUNTIME_LOG" 2>&1; then
+  cat "$FIELD_GATE_RUNTIME_LOG"
+  exit 1
+fi
+cat "$FIELD_GATE_RUNTIME_LOG"
+grep -q '"ok":true' "$FIELD_GATE_RUNTIME_LOG"
+grep -q '"read_only":true' "$FIELD_GATE_RUNTIME_LOG"
+grep -q '"no_operation_created":true' "$FIELD_GATE_RUNTIME_LOG"
+grep -q '"permalink_unchanged":true' "$FIELD_GATE_RUNTIME_LOG"
+grep -q '"historical_authority":true' "$FIELD_GATE_RUNTIME_LOG"
+grep -q '"direct_plan_ready":true' "$FIELD_GATE_RUNTIME_LOG"
+grep -q '"administrator_only":true' "$FIELD_GATE_RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-corrupted-slug-authority-acceptance.php >"$CORRUPTED_SLUG_RUNTIME_LOG" 2>&1; then
+  cat "$CORRUPTED_SLUG_RUNTIME_LOG"
+  exit 1
+fi
+cat "$CORRUPTED_SLUG_RUNTIME_LOG"
+grep -q '"ok":true' "$CORRUPTED_SLUG_RUNTIME_LOG"
+grep -q '"corrupted_slug_id_fallback":true' "$CORRUPTED_SLUG_RUNTIME_LOG"
+grep -q '"clean_slug_id_fallback_blocked":true' "$CORRUPTED_SLUG_RUNTIME_LOG"
+grep -q '"planner_requires_slug_repair":true' "$CORRUPTED_SLUG_RUNTIME_LOG"
+grep -q '"read_only":true' "$CORRUPTED_SLUG_RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-clean-target-acceptance.php >"$CLEAN_TARGET_RUNTIME_LOG" 2>&1; then
+  cat "$CLEAN_TARGET_RUNTIME_LOG"
+  exit 1
+fi
+cat "$CLEAN_TARGET_RUNTIME_LOG"
+grep -q '"ok":true' "$CLEAN_TARGET_RUNTIME_LOG"
+grep -q '"historical_map_authoritative":true' "$CLEAN_TARGET_RUNTIME_LOG"
+grep -q '"clean_target_verified":true' "$CLEAN_TARGET_RUNTIME_LOG"
+grep -q '"legacy_architecture_not_required":true' "$CLEAN_TARGET_RUNTIME_LOG"
+grep -q '"dominant_paths_preserved":true' "$CLEAN_TARGET_RUNTIME_LOG"
+grep -q '"outliers_use_one_hop_301":true' "$CLEAN_TARGET_RUNTIME_LOG"
+grep -q '"read_only":true' "$CLEAN_TARGET_RUNTIME_LOG"
+
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-slug-repair-acceptance.php >"$SLUG_REPAIR_RUNTIME_LOG" 2>&1; then
+  cat "$SLUG_REPAIR_RUNTIME_LOG"
+  exit 1
+fi
+cat "$SLUG_REPAIR_RUNTIME_LOG"
+grep -q '"ok":true' "$SLUG_REPAIR_RUNTIME_LOG"
+grep -q '"slug_repair_preview":true' "$SLUG_REPAIR_RUNTIME_LOG"
+grep -q '"slug_repair_apply":true' "$SLUG_REPAIR_RUNTIME_LOG"
+grep -q '"slug_repair_idempotent":true' "$SLUG_REPAIR_RUNTIME_LOG"
+grep -q '"slug_repair_stale_guard":true' "$SLUG_REPAIR_RUNTIME_LOG"
+grep -q '"slug_repair_rollback":true' "$SLUG_REPAIR_RUNTIME_LOG"
+grep -q '"permalink_structure_untouched":true' "$SLUG_REPAIR_RUNTIME_LOG"
+grep -q '"redirect_runtime_untouched":true' "$SLUG_REPAIR_RUNTIME_LOG"
+
+DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
+if [[ -n "$DEBUG_LOG" ]]; then
+  docker exec "$WP_CONTAINER" sh -lc "test ! -s '$DEBUG_LOG'" || {
+    docker exec "$WP_CONTAINER" sh -lc "tail -n 80 '$DEBUG_LOG'" || true
+    exit 1
+  }
+fi
+
+printf '[manager] Historical authority, clean target, protected slug repair, atomic 301, operation-history, rendered post-write and field-gate acceptance OK.\n'
