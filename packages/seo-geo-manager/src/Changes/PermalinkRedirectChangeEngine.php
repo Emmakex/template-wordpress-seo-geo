@@ -181,7 +181,7 @@ final class PermalinkRedirectChangeEngine {
 				'after_structure'              => $after_structure,
 				'before_fingerprint'           => $before_fingerprint,
 				'after_fingerprint'            => PermalinkStructureRuntime::fingerprint( (string) get_option( 'permalink_structure', '' ) ),
-				'seo_preservation_mode'        => 'authoritative-301',
+				'seo_preservation_mode'        => (string) ( $plan['seo_preservation_mode'] ?? 'authoritative-301' ),
 				'planned_redirects'            => count( $redirects ),
 				'redirect_runtime_fingerprint' => $runtime_fingerprint,
 				'redirect_runtime_effective'   => true,
@@ -386,12 +386,16 @@ final class PermalinkRedirectChangeEngine {
 	 * @return array<int, string>
 	 */
 	private static function verification_errors( array $original, array $verified, string $structure, string $operation_id, string $plan_fingerprint, string $runtime_fingerprint ): array {
-		$errors            = array();
-		$current_structure = (string) get_option( 'permalink_structure', '' );
+		$errors             = array();
+		$current_structure  = (string) get_option( 'permalink_structure', '' );
+		$original_mode      = (string) ( $original['seo_preservation_mode'] ?? '' );
+		$verified_mode      = (string) ( $verified['seo_preservation_mode'] ?? '' );
+		$supported_301_mode = in_array( $original_mode, array( 'authoritative-301', 'one-hop-301-to-clean-target' ), true );
+		$mode_stable        = $supported_301_mode && 0 === strcmp( $original_mode, $verified_mode );
 		if (
 			0 !== strcmp( $structure, $current_structure ) ||
 			true !== ( $verified['safe_structure_candidate'] ?? false ) ||
-			'authoritative-301' !== (string) ( $verified['seo_preservation_mode'] ?? '' )
+			! $mode_stable
 		) {
 			$errors[] = 'authoritative-structure-verification-failed';
 		}
