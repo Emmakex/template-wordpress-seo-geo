@@ -135,16 +135,41 @@ If migration damage affected `post_name`:
 
 This prevents a damaged local slug from becoming a permanent redirect target.
 
+### Protected slug repair contract — Manager 0.3.30
+
+The local-slug repair is a **separate operation** from permalink migration. It never changes `permalink_structure`, never activates the redirect runtime and never flushes rewrite rules.
+
+A repair candidate is eligible only when:
+
+- the complete historical authority map has already identified that exact post through the guarded migration-corruption fallback;
+- the local `post_name` still exactly matches the damaged value seen during preview;
+- the target slug is derived only from the verified historical slug;
+- WordPress confirms that the target slug is unique for the post;
+- no unrelated permalink-plan collision exists;
+- the authority, plan and repair fingerprints still match the current state;
+- production environment acknowledgement is current.
+
+Apply is idempotent and records one reversible Manager operation. The operation snapshots the exact pre-repair slug and the existing `_wp_old_slug` metadata. Rollback is stale-safe: if a repaired slug was changed later, rollback is refused rather than overwriting newer state.
+
+After Apply, Manager must regenerate the authoritative permalink plan and confirm that:
+
+- historical mapping is still complete;
+- zero local slug repairs remain;
+- the selected SEO/GEO target structure is unchanged.
+
+Even a successful slug repair **does not authorize permalink Apply**. A fresh Field Gate is mandatory before reviewing the subsequent atomic target-structure + 301 operation.
+
 ## Field decision — EMMAKE `/nuevaweb/`
 
-The real field evidence that motivated this policy shows:
+The real Manager 0.3.29 Field Gate evidence confirms:
 
 - 1,726 current published posts mapped to 1,726 historical posts;
 - zero missing historical identities;
-- 1,702 historical routes already under `/blog/%postname%/`;
-- 18 routes under `/uncategorized/%postname%/`;
-- 6 routes under isolated category prefixes such as `/redes-sociales/`, `/marketing-digital/`, `/consultoria/`, `/business-intelligence/`, `/analisis-de-datos/` and `/investigacion-de-mercado/`;
-- 2 local slugs damaged by the migration marker and recovered safely by same-ID historical evidence.
+- 1,702 historical routes support `/blog/%postname%/`;
+- support ratio `0.986095` (98.6095%);
+- 24 historical outliers need one-hop 301 preservation under the clean target;
+- 2 local slugs are damaged by the migration marker and were recovered safely by same-ID historical evidence;
+- the current permalink template itself is still malformed and remains untouched during slug repair.
 
 The practical SEO/GEO target is therefore:
 
@@ -152,11 +177,9 @@ The practical SEO/GEO target is therefore:
 /blog/%postname%/
 ```
 
-The six category-prefixed routes are **not** a reason to restore legacy category assignments or keep `%category%` in the permanent structure. They are historical outliers to preserve with one-hop 301s.
+The category-prefixed and `/uncategorized/` routes are **not** a reason to restore legacy category assignments or keep `%category%` in the permanent structure. They are historical outliers to preserve with one-hop 301s.
 
-The 18 `/uncategorized/` routes are likewise migration/legacy debt, not target architecture.
-
-The two corrupted slugs remain a protected repair step before the final atomic permalink operation.
+The two corrupted slugs are the only local-data prerequisite before the final permalink plan can become eligible for atomic review.
 
 ## Field workflow
 
@@ -166,16 +189,19 @@ The two corrupted slugs remain a protected repair step before the final atomic p
 3. Manager Field Gate
 4. Recover complete historical URL authority
 5. Select SEO/GEO target architecture
-6. Repair only bounded damaged local data
-7. Build exact one-hop redirect map for intentional URL changes
-8. Preview atomic target structure + redirect runtime
-9. Explicitly confirm guarded Apply on clone/staging
-10. Verify stored structure, public routes and redirects
-11. Update internal links/canonicals/sitemap to final URLs
-12. Continue Build / Finish content/media/SEO work
+6. Preview protected local-slug repair
+7. Explicitly confirm protected local-slug Apply
+8. Verify repaired local state and keep permalink/runtime untouched
+9. Rerun Field Gate
+10. Build exact one-hop redirect map for intentional URL changes
+11. Preview atomic target structure + redirect runtime
+12. Explicitly confirm guarded Apply on clone/staging
+13. Verify stored structure, public routes and redirects
+14. Update internal links/canonicals/sitemap to final URLs
+15. Continue Build / Finish content/media/SEO work
 ```
 
-Do not rerun Migration Bridge Reset, clone or Theme hydration merely because Manager changes its target-planning logic.
+Do not rerun Migration Bridge Reset, clone or Theme hydration merely because Manager changes its target-planning or protected-repair logic.
 
 ## Product boundary
 
