@@ -3,7 +3,8 @@
  * Static acceptance for SEO/GEO Manager capability discovery.
  *
  * This complements runtime WordPress acceptance by guarding the product-level
- * endpoint and safety contract against accidental removal.
+ * endpoint and safety contract against accidental removal. The capability
+ * contract was introduced in 0.3.34 and remains mandatory for later versions.
  */
 
 declare(strict_types=1);
@@ -69,8 +70,21 @@ if ( ! str_contains( $plugin, 'CapabilitiesController::register_routes();' ) ) {
 	throw new RuntimeException( 'Capability controller is not registered by Manager bootstrap.' );
 }
 
-if ( ! str_contains( $main, 'Version: 0.3.34' ) || ! str_contains( $main, "SEO_GEO_MANAGER_VERSION', '0.3.34" ) ) {
-	throw new RuntimeException( 'Manager 0.3.34 version markers are not aligned.' );
+$header_match   = array();
+$constant_match = array();
+if ( 1 !== preg_match( '/^ \* Version:\s*([^\r\n]+)/m', $main, $header_match ) ) {
+	throw new RuntimeException( 'Manager plugin header version is missing.' );
+}
+if ( 1 !== preg_match( "/SEO_GEO_MANAGER_VERSION'\s*,\s*'([^']+)'/", $main, $constant_match ) ) {
+	throw new RuntimeException( 'Manager runtime version constant is missing.' );
+}
+$header_version   = trim( (string) $header_match[1] );
+$constant_version = trim( (string) $constant_match[1] );
+if ( $header_version !== $constant_version ) {
+	throw new RuntimeException( 'Manager header/runtime versions are not aligned.' );
+}
+if ( version_compare( $header_version, '0.3.34', '<' ) ) {
+	throw new RuntimeException( 'Capability discovery requires Manager 0.3.34 or later.' );
 }
 
 $required_doc_markers = array(
@@ -87,4 +101,4 @@ foreach ( $required_doc_markers as $marker ) {
 	}
 }
 
-echo "SEO/GEO Manager 0.3.34 capability contract OK.\n";
+echo 'SEO/GEO Manager capability contract OK: version=' . $header_version . ".\n";
