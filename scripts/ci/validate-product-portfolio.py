@@ -81,7 +81,8 @@ def main() -> int:
             '"Two-product portfolio"',
             '"Migration Bridge package will be retired after Manager absorbs migration"',
             '"Manager owns the strategic Landing/Blog/Optimizer/Growth intelligence"',
-            "Historical phase docs and older PR notes",
+            "Level 3 — historical roadmap / phase evidence",
+            "do **not** override Level 1 architecture",
         ),
         "DOCUMENTATION_AUTHORITY.md",
     )
@@ -121,9 +122,7 @@ def main() -> int:
     )
     forbid(
         docs["vision"],
-        (
-            "The portfolio has two independently sellable products",
-        ),
+        ("The portfolio has two independently sellable products",),
         "PRODUCT_VISION.md",
     )
 
@@ -217,9 +216,9 @@ def main() -> int:
         "RESET_REBUILD_CONTRACT.md",
     )
 
-    # Keep the existing technical publishing contract as an implementation contract.
-    # Its "Manager capability" language means WordPress publication capability, not
-    # ownership of strategic research/creation intelligence.
+    # Existing publication safety remains valid. "Manager capability" in this
+    # document means local WordPress publication capability, not ownership of
+    # strategic research/creation intelligence.
     require(
         docs["publishing"],
         (
@@ -235,8 +234,8 @@ def main() -> int:
         "CONTENT_PUBLISHING.md",
     )
 
-    # Portable sandbox remains a migration workflow capability and therefore
-    # stays valid technical evidence even if historical product-home wording exists.
+    # Portable sandbox remains migration workflow evidence even where old
+    # product-home wording survives in historical text.
     require(
         docs["sandbox"],
         (
@@ -248,8 +247,8 @@ def main() -> int:
         "PORTABLE_SANDBOX.md",
     )
 
-    # Historical roadmap/release/pilot files remain required as evidence. They do
-    # not define current product ownership; DOCUMENTATION_AUTHORITY.md makes this explicit.
+    # Historical roadmap/release/pilot files remain required as evidence. They
+    # do not define current product ownership; DOCUMENTATION_AUTHORITY.md does.
     require(
         docs["historical_roadmap"],
         (
