@@ -28,6 +28,14 @@ final class FieldGate {
 			SEO_GEO_MANAGER_VERSION,
 			true
 		);
+
+		wp_enqueue_script(
+			'seo-geo-manager-finalization-actions',
+			self::asset_url( 'assets/admin/finalization-actions.js' ),
+			array( 'seo-geo-manager-field-gate' ),
+			SEO_GEO_MANAGER_VERSION,
+			true
+		);
 	}
 
 	private static function asset_url( string $relative_path ): string {
