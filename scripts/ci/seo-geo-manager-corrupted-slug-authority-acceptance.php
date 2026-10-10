@@ -1,7 +1,7 @@
 <?php
 /**
  * Regression acceptance for historical authority recovery when migration markers
- * corrupt percent-encoded post_name values.
+ * corrupt percent-encoded post_name values and historical paths use %category%.
  */
 
 use SeoGeo\Manager\Support\AuthoritativePermalinkPlanner;
@@ -33,6 +33,36 @@ $target_id = wp_insert_post(
 seo_geo_manager_corrupted_slug_accept( ! is_wp_error( $target_id ), 'Could not create corrupted-slug fixture post.' );
 $target_id = (int) $target_id;
 
+$clean_a_id = wp_insert_post(
+	array(
+		'post_type'    => 'post',
+		'post_status'  => 'publish',
+		'post_title'   => 'Dynamic Category Alpha Fixture',
+		'post_name'    => 'dynamic-category-alpha-fixture',
+		'post_content' => '<p>Dynamic category alpha fixture.</p>',
+	),
+	true
+);
+seo_geo_manager_corrupted_slug_accept( ! is_wp_error( $clean_a_id ), 'Could not create dynamic category alpha fixture post.' );
+$clean_a_id = (int) $clean_a_id;
+
+$clean_b_id = wp_insert_post(
+	array(
+		'post_type'    => 'post',
+		'post_status'  => 'publish',
+		'post_title'   => 'Dynamic Category Beta Fixture',
+		'post_name'    => 'dynamic-category-beta-fixture',
+		'post_content' => '<p>Dynamic category beta fixture.</p>',
+	),
+	true
+);
+seo_geo_manager_corrupted_slug_accept( ! is_wp_error( $clean_b_id ), 'Could not create dynamic category beta fixture post.' );
+$clean_b_id = (int) $clean_b_id;
+
+$alpha_id = wp_create_category( 'Dynamic Alpha' );
+$beta_id  = wp_create_category( 'Dynamic Beta' );
+seo_geo_manager_corrupted_slug_accept( 0 < (int) $alpha_id && 0 < (int) $beta_id, 'Could not create dynamic permalink fixture categories.' );
+
 $marker         = '{d276abfeceab40cca0e158fc6217176554b8e54a1f85b6eb004941797db52171}';
 $corrupted_slug = 'caf' . $marker . 'c3' . $marker . 'a9';
 
@@ -63,7 +93,25 @@ $published_posts = get_posts(
 		'suppress_filters' => false,
 	)
 );
-seo_geo_manager_corrupted_slug_accept( array() !== $published_posts, 'Historical fixture has no published posts.' );
+seo_geo_manager_corrupted_slug_accept( 3 <= count( $published_posts ), 'Historical fixture does not have enough published posts for dynamic category validation.' );
+
+$category_by_post = array();
+$index            = 0;
+foreach ( $published_posts as $post ) {
+	if ( ! $post instanceof WP_Post ) {
+		continue;
+	}
+	$category_id = 0 === $index % 2 ? (int) $alpha_id : (int) $beta_id;
+	$result      = wp_set_post_categories( (int) $post->ID, array( $category_id ), false );
+	seo_geo_manager_corrupted_slug_accept( ! is_wp_error( $result ), 'Could not assign fixture category to published post.' );
+	$category_by_post[ (int) $post->ID ] = $category_id;
+	++$index;
+}
+
+$malformed_structure = '/' . $marker . 'category' . $marker . '/' . $marker . 'postname' . $marker . '/';
+update_option( 'permalink_structure', $malformed_structure );
+$before_structure = (string) get_option( 'permalink_structure', '' );
+seo_geo_manager_corrupted_slug_accept( $malformed_structure === $before_structure, 'Could not prepare malformed dynamic permalink fixture.' );
 
 $legacy_base = trailingslashit( home_url( '/legacy-source-corrupted/' ) );
 $legacy_rows = array();
@@ -72,11 +120,16 @@ foreach ( $published_posts as $post ) {
 		continue;
 	}
 
-	$historical_slug = (int) $post->ID === $target_id ? 'cafe-historico' : (string) $post->post_name;
-	$legacy_rows[]   = array(
-		'id'   => (int) $post->ID,
+	$post_id         = (int) $post->ID;
+	$historical_slug = $post_id === $target_id ? 'cafe-historico' : (string) $post->post_name;
+	$category_id     = (int) ( $category_by_post[ $post_id ] ?? 0 );
+	$category        = 0 < $category_id ? get_category( $category_id ) : null;
+	seo_geo_manager_corrupted_slug_accept( $category instanceof WP_Term, 'Could not resolve fixture category.' );
+	$category_slug = (string) $category->slug;
+	$legacy_rows[] = array(
+		'id'   => $post_id,
 		'slug' => $historical_slug,
-		'link' => $legacy_base . 'blog/' . rawurlencode( $historical_slug ) . '/',
+		'link' => $legacy_base . rawurlencode( $category_slug ) . '/' . rawurlencode( $historical_slug ) . '/',
 	);
 }
 
@@ -108,18 +161,24 @@ add_filter(
 	3
 );
 
-$before_structure = (string) get_option( 'permalink_structure', '' );
-$authority        = LegacyPermalinkAuthority::preview( $legacy_base );
+$authority = LegacyPermalinkAuthority::preview( $legacy_base );
 
 seo_geo_manager_corrupted_slug_accept( false === ( $authority['write_performed'] ?? true ), 'Historical authority unexpectedly wrote state.' );
 seo_geo_manager_corrupted_slug_accept( count( $legacy_rows ) === (int) ( $authority['matched_posts'] ?? -1 ), 'Historical authority did not recover every published post.' );
 seo_geo_manager_corrupted_slug_accept( 0 === (int) ( $authority['missing_count'] ?? -1 ), 'Corrupted slug remained missing after safe ID fallback.' );
 seo_geo_manager_corrupted_slug_accept( 1 === (int) ( $authority['recovered_by_id_count'] ?? 0 ), 'Exactly one corrupted slug should have used ID fallback.' );
 seo_geo_manager_corrupted_slug_accept( true === ( $authority['mapping_authoritative'] ?? false ), 'Recovered mapping was not authoritative.' );
-seo_geo_manager_corrupted_slug_accept( true === ( $authority['seo_authority_verified'] ?? false ), 'Recovered historical authority was not SEO verified.' );
-seo_geo_manager_corrupted_slug_accept( '/blog/%postname%/' === ( $authority['inferred_structure'] ?? '' ), 'Historical structure inference changed during fallback.' );
+seo_geo_manager_corrupted_slug_accept( true === ( $authority['seo_authority_verified'] ?? false ), 'Dynamic historical authority was not SEO verified.' );
+seo_geo_manager_corrupted_slug_accept( '/%category%/%postname%/' === ( $authority['inferred_structure'] ?? '' ), 'Dynamic historical structure was not inferred from the safe syntactic candidate.' );
+seo_geo_manager_corrupted_slug_accept( 'syntactic-candidate-rendered-match' === ( $authority['structure_validation_method'] ?? '' ), 'Dynamic structure validation method was not recorded.' );
+seo_geo_manager_corrupted_slug_accept( true === ( $authority['structure_validation']['verified'] ?? false ), 'Dynamic structure validation did not verify.' );
+seo_geo_manager_corrupted_slug_accept( count( $legacy_rows ) - 1 === (int) ( $authority['structure_validation']['eligible_posts'] ?? -1 ), 'Dynamic structure eligible-post count is incorrect.' );
+seo_geo_manager_corrupted_slug_accept( count( $legacy_rows ) - 1 === (int) ( $authority['structure_validation']['matched_posts'] ?? -1 ), 'Dynamic structure did not match every clean post.' );
+seo_geo_manager_corrupted_slug_accept( 1 === (int) ( $authority['structure_validation']['skipped_corrupted_posts'] ?? 0 ), 'Corrupted slug was not excluded from dynamic structure proof.' );
+seo_geo_manager_corrupted_slug_accept( 0 === (int) ( $authority['structure_validation']['mismatch_count'] ?? -1 ), 'Dynamic structure proof contains unexpected mismatches.' );
 seo_geo_manager_corrupted_slug_accept( true === ( $authority['policy']['corrupted_slug_id_fallback_only'] ?? false ), 'Corrupted-slug-only fallback policy missing.' );
 seo_geo_manager_corrupted_slug_accept( true === ( $authority['policy']['clean_slug_id_fallback_forbidden'] ?? false ), 'Clean-slug fallback prohibition policy missing.' );
+seo_geo_manager_corrupted_slug_accept( true === ( $authority['policy']['dynamic_structure_rendered_match'] ?? false ), 'Dynamic rendered-match policy missing.' );
 
 $recovered_rows = array_values(
 	array_filter(
@@ -171,10 +230,11 @@ seo_geo_manager_corrupted_slug_accept( $before_structure === (string) get_option
 
 echo wp_json_encode(
 	array(
-		'ok'                             => true,
-		'corrupted_slug_id_fallback'     => true,
-		'clean_slug_id_fallback_blocked' => true,
-		'planner_requires_slug_repair'   => true,
-		'read_only'                      => true,
+		'ok'                                  => true,
+		'corrupted_slug_id_fallback'          => true,
+		'clean_slug_id_fallback_blocked'      => true,
+		'dynamic_category_structure_verified' => true,
+		'planner_requires_slug_repair'        => true,
+		'read_only'                           => true,
 	)
 );
