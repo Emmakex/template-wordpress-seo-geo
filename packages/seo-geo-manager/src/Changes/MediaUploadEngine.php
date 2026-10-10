@@ -82,19 +82,18 @@ final class MediaUploadEngine {
 
 		self::load_media_dependencies();
 
-		$sideload = wp_handle_sideload(
-			array(
-				'name'     => $prepared['file']['name'],
-				'type'     => $prepared['file']['mime_type'],
-				'tmp_name' => $prepared['file']['tmp_name'],
-				'error'    => UPLOAD_ERR_OK,
-				'size'     => $prepared['file']['bytes'],
-			),
-			array(
-				'test_form' => false,
-				'mimes'     => get_allowed_mime_types(),
-			)
+		$upload = array(
+			'name'     => $prepared['file']['name'],
+			'type'     => $prepared['file']['mime_type'],
+			'tmp_name' => $prepared['file']['tmp_name'],
+			'error'    => UPLOAD_ERR_OK,
+			'size'     => $prepared['file']['bytes'],
 		);
+		$overrides = array(
+			'test_form' => false,
+			'mimes'     => get_allowed_mime_types(),
+		);
+		$sideload = wp_handle_sideload( $upload, $overrides );
 
 		if ( isset( $sideload['error'] ) ) {
 			$error_message = is_string( $sideload['error'] ) ? $sideload['error'] : 'WordPress rejected the image upload.';
