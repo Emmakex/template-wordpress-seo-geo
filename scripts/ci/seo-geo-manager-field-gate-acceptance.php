@@ -168,7 +168,7 @@ seo_geo_manager_field_gate_accept( false === ( $without_legacy['data']['write_pe
 seo_geo_manager_field_gate_accept( 'not-requested' === ( $without_legacy['data']['field_gate']['historical_authority']['status'] ?? '' ), 'Missing legacy source was not represented explicitly.' );
 seo_geo_manager_field_gate_accept( null === ( $without_legacy['data']['permalinks']['legacy_authority'] ?? null ), 'Field gate unexpectedly inspected historical authority.' );
 
-$contract_pages = $without_legacy['data']['site']['theme_contract']['pages'] ?? array();
+$contract_pages = $without_legacy['data']['site_intelligence']['theme_contract']['pages'] ?? array();
 $resolved_pages = array();
 if ( is_array( $contract_pages ) ) {
 	foreach ( $contract_pages as $contract_page ) {
@@ -231,16 +231,16 @@ wp_set_current_user( 1 );
 wp_delete_user( (int) $editor_id );
 
 $result = array(
-	'ok'                         => true,
-	'read_only'                  => true,
-	'no_operation_created'       => true,
-	'permalink_unchanged'        => true,
-	'historical_authority'       => true,
-	'direct_plan_ready'          => true,
-	'administrator_only'         => true,
-	'large_site_alias_resolution'=> true,
-	'build_finish_status'        => $data['field_gate']['build_finish']['status'] ?? '',
-	'guarded_write_eligible'     => true === ( $data['field_gate']['guarded_write_eligible'] ?? false ),
+	'ok'                          => true,
+	'read_only'                   => true,
+	'no_operation_created'        => true,
+	'permalink_unchanged'         => true,
+	'historical_authority'        => true,
+	'direct_plan_ready'           => true,
+	'administrator_only'          => true,
+	'large_site_alias_resolution' => true,
+	'build_finish_status'         => $data['field_gate']['build_finish']['status'] ?? '',
+	'guarded_write_eligible'      => true === ( $data['field_gate']['guarded_write_eligible'] ?? false ),
 );
 
 echo wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) . PHP_EOL;
