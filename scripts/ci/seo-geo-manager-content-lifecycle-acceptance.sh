@@ -177,8 +177,12 @@ cat "$RUNTIME_LOG"
 grep -q '"ok":true' "$RUNTIME_LOG" \
   || fail_acceptance "lifecycle-result" "Lifecycle acceptance did not emit success marker" '"ok":true' "$(tail -c 800 "$RUNTIME_LOG" | tr '\n' ' ')"
 
-grep -q '"plugin_version":"0.3.35"' "$RUNTIME_LOG" \
-  || fail_acceptance "lifecycle-version" "Lifecycle fixture did not execute Manager 0.3.35" '"plugin_version":"0.3.35"' "$(tail -c 800 "$RUNTIME_LOG" | tr '\n' ' ')"
+LIFECYCLE_VERSION="$(sed -n 's/.*"plugin_version":"\([^"]*\)".*/\1/p' "$RUNTIME_LOG" | tail -n 1)"
+[[ -n "$LIFECYCLE_VERSION" ]] \
+  || fail_acceptance "lifecycle-version-missing" "Lifecycle fixture did not report the Manager version" ">=0.3.35" "missing"
+LOWEST_VERSION="$(printf '%s\n' '0.3.35' "$LIFECYCLE_VERSION" | sort -V | head -n 1)"
+[[ "$LOWEST_VERSION" == '0.3.35' ]] \
+  || fail_acceptance "lifecycle-version" "Lifecycle fixture executed a Manager older than the C4 contract" ">=0.3.35" "$LIFECYCLE_VERSION"
 
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
