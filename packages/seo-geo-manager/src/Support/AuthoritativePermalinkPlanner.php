@@ -33,31 +33,51 @@ final class AuthoritativePermalinkPlanner {
 			return self::blocked( $authority, 'La estructura histórica verificada no contiene un patrón de post utilizable.', 'review-legacy-authority-gaps' );
 		}
 
-		$home_base   = trailingslashit( home_url( '/' ) );
-		$legacy_base = (string) ( $authority['legacy_base_url'] ?? '' );
-		$existing    = self::existing_public_resource_index( $home_base );
-		$rows        = array();
-		$redirects   = array();
-		$collisions  = array();
-		$sources     = array();
-		$targets     = array();
-		$preserved   = 0;
+		$home_base          = trailingslashit( home_url( '/' ) );
+		$legacy_base        = (string) ( $authority['legacy_base_url'] ?? '' );
+		$existing           = self::existing_public_resource_index( $home_base );
+		$rows               = array();
+		$redirects          = array();
+		$collisions         = array();
+		$local_slug_repairs = array();
+		$sources            = array();
+		$targets            = array();
+		$preserved          = 0;
 
 		foreach ( (array) ( $authority['rows'] ?? array() ) as $authority_row ) {
 			if ( ! is_array( $authority_row ) ) {
 				continue;
 			}
 
-			$post_id    = (int) ( $authority_row['post_id'] ?? 0 );
-			$slug       = (string) ( $authority_row['slug'] ?? '' );
-			$legacy_url = (string) ( $authority_row['legacy_url'] ?? '' );
-			$post       = 0 < $post_id ? get_post( $post_id ) : null;
+			$post_id         = (int) ( $authority_row['post_id'] ?? 0 );
+			$slug            = (string) ( $authority_row['slug'] ?? '' );
+			$historical_slug = (string) ( $authority_row['historical_slug'] ?? $slug );
+			$match_method    = (string) ( $authority_row['match_method'] ?? 'slug' );
+			$legacy_url      = (string) ( $authority_row['legacy_url'] ?? '' );
+			$post            = 0 < $post_id ? get_post( $post_id ) : null;
 
 			if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status || $slug !== (string) $post->post_name ) {
 				$collisions[] = array(
 					'type'    => 'local-post-changed-since-authority-scan',
 					'post_id' => $post_id,
 					'slug'    => $slug,
+				);
+				continue;
+			}
+
+			if ( 'corrupted-slug-id-fallback' === $match_method ) {
+				$repair = array(
+					'post_id'         => $post_id,
+					'local_slug'      => $slug,
+					'historical_slug' => $historical_slug,
+					'historical_url'  => $legacy_url,
+				);
+				$local_slug_repairs[] = $repair;
+				$collisions[] = array(
+					'type'            => 'corrupted-local-slug-requires-repair',
+					'post_id'         => $post_id,
+					'slug'            => $slug,
+					'historical_slug' => $historical_slug,
 				);
 				continue;
 			}
@@ -122,6 +142,8 @@ final class AuthoritativePermalinkPlanner {
 			$rows[] = array(
 				'post_id'             => $post_id,
 				'slug'                => $slug,
+				'historical_slug'     => $historical_slug,
+				'match_method'        => $match_method,
 				'title'               => (string) $post->post_title,
 				'historical_url'      => $legacy_url,
 				'historical_path'     => $historical_path,
@@ -135,7 +157,7 @@ final class AuthoritativePermalinkPlanner {
 		$safe_structure_candidate = $complete_scan && array() === $collisions && count( $rows ) === (int) ( $authority['matched_posts'] ?? 0 );
 		$requires_redirect_runtime = 0 < count( $redirects );
 		$apply_available           = $safe_structure_candidate && ! $requires_redirect_runtime;
-		$preservation_mode         = array() === $redirects ? 'exact-path-preservation' : 'authoritative-301';
+		$preservation_mode         = array() !== $local_slug_repairs ? 'blocked-local-slug-repair' : ( array() === $redirects ? 'exact-path-preservation' : 'authoritative-301' );
 		$inspection                = PermalinkInspector::preview();
 
 		$plan_payload = array(
@@ -145,17 +167,26 @@ final class AuthoritativePermalinkPlanner {
 			'rows'                    => $rows,
 			'redirects'               => $redirects,
 			'collisions'              => $collisions,
+			'local_slug_repairs'      => $local_slug_repairs,
 		);
 		$plan_fingerprint = hash( 'sha256', (string) wp_json_encode( $plan_payload ) );
 
 		$block_reason = '';
 		if ( ! $complete_scan ) {
 			$block_reason = 'El inventario de recursos públicos quedó truncado y no permite aprobar el cambio de estructura.';
+		} elseif ( array() !== $local_slug_repairs ) {
+			$block_reason = 'La autoridad histórica es completa, pero el clon conserva uno o más post_name dañados por la migración. Deben repararse de forma protegida antes de planificar permalinks o redirecciones.';
 		} elseif ( array() !== $collisions ) {
 			$block_reason = 'El plan histórico contiene colisiones o cambios locales que deben resolverse antes de modificar los enlaces permanentes.';
 		} elseif ( $requires_redirect_runtime ) {
 			$block_reason = 'La estructura histórica verificada cambia una o más rutas públicas; Apply queda bloqueado hasta disponer de runtime 301 probado.';
 		}
+
+		$next_action = $apply_available
+			? 'apply-authoritative-structure'
+			: ( array() !== $local_slug_repairs
+				? 'repair-corrupted-local-slugs-first'
+				: ( $safe_structure_candidate ? 'implement-authoritative-redirect-runtime-and-rollback' : 'resolve-authoritative-plan-blockers' ) );
 
 		return array(
 			'mode'                         => 'authoritative-permalink-plan-preview',
@@ -167,10 +198,13 @@ final class AuthoritativePermalinkPlanner {
 			'authoritative_structure'      => $authoritative_structure,
 			'plan_fingerprint'             => $plan_fingerprint,
 			'matched_posts'                => count( $rows ),
+			'authority_matched_posts'      => (int) ( $authority['matched_posts'] ?? 0 ),
 			'path_preservation_count'      => $preserved,
 			'planned_redirects'            => count( $redirects ),
 			'redirects'                    => $redirects,
 			'rows'                         => $rows,
+			'local_slug_repair_count'      => count( $local_slug_repairs ),
+			'local_slug_repairs'           => $local_slug_repairs,
 			'collision_count'              => count( $collisions ),
 			'collisions'                   => $collisions,
 			'complete_scan'                => $complete_scan,
@@ -180,13 +214,14 @@ final class AuthoritativePermalinkPlanner {
 			'apply_available'              => $apply_available,
 			'apply_blocked'                => ! $apply_available,
 			'block_reason'                 => $block_reason,
-			'next_action'                  => $apply_available ? 'apply-authoritative-structure' : ( $safe_structure_candidate ? 'implement-authoritative-redirect-runtime-and-rollback' : 'resolve-authoritative-plan-blockers' ),
+			'next_action'                  => $next_action,
 			'environment'                  => EnvironmentPolicy::snapshot(),
 			'policy'                       => array(
 				'preview_only'                    => true,
 				'authority_revalidated'            => true,
 				'logical_paths_compared'           => true,
 				'clone_base_ignored_for_seo_path'  => true,
+				'corrupted_local_slug_blocks_plan' => true,
 				'apply_requires_explicit_confirm'  => true,
 				'apply_requires_current_plan'      => true,
 				'apply_requires_environment_guard' => true,
@@ -209,10 +244,13 @@ final class AuthoritativePermalinkPlanner {
 			'authoritative_structure'   => (string) ( $authority['inferred_structure'] ?? '' ),
 			'plan_fingerprint'          => '',
 			'matched_posts'             => 0,
+			'authority_matched_posts'   => (int) ( $authority['matched_posts'] ?? 0 ),
 			'path_preservation_count'   => 0,
 			'planned_redirects'         => 0,
 			'redirects'                 => array(),
 			'rows'                      => array(),
+			'local_slug_repair_count'   => 0,
+			'local_slug_repairs'        => array(),
 			'collision_count'           => 0,
 			'collisions'                => array(),
 			'complete_scan'             => false,
