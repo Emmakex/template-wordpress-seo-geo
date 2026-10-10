@@ -73,6 +73,11 @@ Manager provides Site Intelligence, resource/model operations, provider/output-a
 
 Manager must work on supported WordPress sites without requiring SEO/GEO Theme or Migration Bridge.
 
+Current development line:
+
+- `0.3.33` — final migration-specific Field Gate UI handoff correction from the EMMAKE pilot;
+- `0.3.34` — first explicit generic remote-control slice: authenticated `GET /capabilities` for least-privilege capability discovery.
+
 ## External orchestration
 
 The external operating layer is where we work like we do on modern software projects:
@@ -217,49 +222,17 @@ EMMAKE-specific migration/permalink edge cases are field evidence, not the perma
 Start here:
 
 - `docs/THREE_PRODUCT_OPERATING_MODEL.md` — **canonical product/operating boundary**;
+- `docs/CURRENT_THREE_PRODUCT_ROADMAP.md` — current execution order;
+- `docs/DOCUMENTATION_AUTHORITY.md` — documentation precedence and superseded directions;
 - `docs/PRODUCT_VISION.md`;
 - `docs/PRODUCT_PORTFOLIO.md`;
-- `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`;
 - `docs/SEO_GEO_MANAGER.md`;
-- `docs/SEO_GEO_MANAGER_PRODUCT_MODES.md`;
+- `docs/SEO_GEO_MANAGER_0.3.34_CAPABILITY_DISCOVERY.md`;
+- `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`;
 - `docs/RESET_REBUILD_CONTRACT.md`;
 - `docs/REPLATFORMING_CONTRACT.md`;
-- `docs/MIGRATION_BRIDGE.md`;
-- `docs/CONTENT_PUBLISHING.md`;
-- `docs/PORTABLE_SANDBOX.md`;
-- `docs/ARCHITECTURE.md`;
-- `docs/SEO_GEO_SPEC.md`;
-- `docs/NATIVE_SEO.md`;
-- `docs/NATIVE_SCHEMA.md`;
-- `docs/DISCOVERY_METADATA.md`;
-- `docs/GEO_CRAWLERS.md`;
-- `docs/LLMS_TXT.md`;
-- `docs/MARKDOWN_ALTERNATES.md`;
-- `docs/CONTENT_PROVENANCE.md`;
-- `docs/DISCOVERY_PRIVACY.md`;
-- `docs/CACHE_INVALIDATION.md`;
-- `docs/MULTILINGUAL.md`;
-- `docs/PERFORMANCE.md`;
-- `docs/ACCESSIBILITY.md`;
-- `docs/DESIGN_SYSTEM.md`;
-- `docs/MODERN_PRESET_DESIGN_STRATEGY.md`;
-- `docs/PATTERNS.md`;
-- `docs/PRESETS.md`;
-- `docs/COMPATIBILITY.md`;
-- `docs/ONBOARDING.md`;
-- `docs/RELEASE_ARTIFACT.md`;
-- `docs/RELEASE_VERSIONING.md`;
-- `docs/CLIENT_INSTALLATION.md`;
-- `docs/CLIENT_CLONING.md`;
-- `docs/SANDBOX_TO_PRODUCTION.md`;
-- `docs/PRODUCTION_VERIFICATION.md`;
-- `docs/ROLLBACK_RECOVERY.md`;
-- `docs/STABLE_RELEASE_DECISION.md`;
-- `docs/REAL_SITE_PILOT.md`;
-- `docs/CI_QUALITY_GATES.md`;
-- `docs/ROADMAP.md`;
-- `docs/engineering/GLOBAL_ENGINEERING_RULES.md`;
-- `docs/engineering/ERRORS_AND_SOLUTIONS.md`.
+- `docs/MIGRATION_BRIDGE.md` — historical/technical migration implementation evidence;
+- `docs/ROADMAP.md` — historical phase evidence.
 
 ## Authoritative references
 
@@ -268,5 +241,5 @@ The project tracks primary documentation rather than SEO folklore:
 - WordPress Theme Handbook and `theme.json` reference;
 - Google Search Central documentation for AI features, localized pages, structured data and Core Web Vitals;
 - OpenAI publisher/developer crawler guidance;
-- Open Graph protocol;
-- `llms.txt` as optional interoperability, never a claimed ranking requirement.
+- The Open Graph protocol for social discovery metadata;
+- The `llms.txt` proposal as an optional interoperability mechanism, never as a claimed Google ranking requirement.
