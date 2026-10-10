@@ -99,7 +99,7 @@
 		details.className = 'seo-geo-manager-admin__raw';
 		const summary = text( 'summary', 'Ver evidencia JSON del Field Gate' );
 		details.appendChild( summary );
-		const raw = text( 'pre', '{}' );
+		const raw = text( 'pre', '' );
 		raw.setAttribute( 'data-seo-geo-field-raw', '' );
 		details.appendChild( raw );
 
@@ -109,6 +109,7 @@
 		const copyButton = text( 'button', 'Copiar JSON' );
 		copyButton.type = 'button';
 		copyButton.className = 'button button-secondary';
+		copyButton.disabled = true;
 		copyButton.setAttribute( 'data-seo-geo-field-copy', '' );
 		evidenceActions.appendChild( copyButton );
 
@@ -138,6 +139,7 @@
 		const metrics = panel.querySelector( '[data-seo-geo-field-metrics]' );
 		const decision = panel.querySelector( '[data-seo-geo-field-decision]' );
 		const raw = panel.querySelector( '[data-seo-geo-field-raw]' );
+		const copyButton = panel.querySelector( '[data-seo-geo-field-copy]' );
 		const downloadButton = panel.querySelector( '[data-seo-geo-field-download]' );
 
 		if ( metrics ) {
@@ -163,12 +165,18 @@
 			decision.appendChild( list );
 		}
 
-		if ( raw ) raw.textContent = JSON.stringify( report, null, 2 );
-		if ( downloadButton ) downloadButton.disabled = false;
+		const evidence = report && typeof report === 'object' && report.field_gate ? JSON.stringify( report, null, 2 ) : '';
+		if ( raw ) raw.textContent = evidence;
+		if ( copyButton ) copyButton.disabled = '' === evidence;
+		if ( downloadButton ) downloadButton.disabled = '' === evidence;
 	}
 
 	function downloadJson( raw, status ) {
-		const json = raw.textContent || '{}';
+		const json = ( raw.textContent || '' ).trim();
+		if ( ! json ) {
+			status.textContent = 'Todavía no hay evidencia válida del Field Gate para descargar.';
+			return;
+		}
 		const blob = new Blob( [ json ], { type: 'application/json;charset=utf-8' } );
 		const url = URL.createObjectURL( blob );
 		const link = document.createElement( 'a' );
@@ -197,7 +205,9 @@
 
 	async function execute() {
 		run.disabled = true;
+		copyButton.disabled = true;
 		downloadButton.disabled = true;
+		raw.textContent = '';
 		status.textContent = 'Ejecutando preflight de solo lectura…';
 		try {
 			const params = new URLSearchParams();
@@ -208,6 +218,9 @@
 			const gate = report && report.field_gate ? report.field_gate : {};
 			status.textContent = `Field Gate completado: ${ statusLabel( gate.status ) }. No se ha realizado ninguna escritura.`;
 		} catch ( error ) {
+			copyButton.disabled = true;
+			downloadButton.disabled = true;
+			raw.textContent = '';
 			status.textContent = error && error.message ? error.message : 'No se pudo completar el Field Gate.';
 		} finally {
 			run.disabled = false;
@@ -216,8 +229,13 @@
 
 	run.addEventListener( 'click', execute );
 	copyButton.addEventListener( 'click', async function () {
+		const json = ( raw.textContent || '' ).trim();
+		if ( ! json ) {
+			status.textContent = 'Todavía no hay evidencia válida del Field Gate para copiar.';
+			return;
+		}
 		try {
-			await navigator.clipboard.writeText( raw.textContent || '{}' );
+			await navigator.clipboard.writeText( json );
 			status.textContent = 'JSON del Field Gate copiado.';
 		} catch ( error ) {
 			status.textContent = 'No se pudo copiar automáticamente. Usa “Descargar JSON” para guardar la evidencia como archivo.';
