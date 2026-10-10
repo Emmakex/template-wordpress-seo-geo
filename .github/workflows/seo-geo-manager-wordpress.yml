@@ -16,6 +16,7 @@ on:
       - 'scripts/ci/seo-geo-manager-rendered-verification-acceptance.php'
       - 'scripts/ci/seo-geo-manager-field-gate-acceptance.php'
       - 'scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-clean-target-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   push:
@@ -35,6 +36,7 @@ on:
       - 'scripts/ci/seo-geo-manager-rendered-verification-acceptance.php'
       - 'scripts/ci/seo-geo-manager-field-gate-acceptance.php'
       - 'scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-clean-target-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
       - '.github/workflows/seo-geo-manager-wordpress.yml'
   workflow_dispatch:
@@ -48,7 +50,7 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: M1/M2 + Theme + SEO authority + corrupted slug recovery + atomic runtime + history + rendered verification + field gate
+    name: M1/M2 + Theme + SEO authority + clean target + corrupted slug recovery + atomic runtime + history + rendered verification + field gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -70,6 +72,7 @@ jobs:
           php -l scripts/ci/seo-geo-manager-rendered-verification-acceptance.php
           php -l scripts/ci/seo-geo-manager-field-gate-acceptance.php
           php -l scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php
+          php -l scripts/ci/seo-geo-manager-clean-target-acceptance.php
           node --check packages/seo-geo-manager/assets/admin/dashboard.js
           node --check packages/seo-geo-manager/assets/admin/json-export-actions.js
           node --check packages/seo-geo-manager/assets/admin/correction-actions.js
@@ -86,5 +89,5 @@ jobs:
       - name: Manager WordPress acceptance
         run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
 
-      - name: Permalink authority, corrupted slug recovery, atomic redirect, history, rendered verification and field gate acceptance
+      - name: Permalink authority, clean target, corrupted slug recovery, atomic redirect, history, rendered verification and field gate acceptance
         run: bash scripts/ci/seo-geo-manager-permalink-acceptance.sh
