@@ -74,10 +74,12 @@ final class ContextualLinkChangeController {
 		if ( is_wp_error( $guard ) ) {
 			return $guard;
 		}
+
 		$result = ContextualLinkChangeAdapter::apply( $payload );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
+
 		$environment           = EnvironmentPolicy::snapshot();
 		$result['environment'] = $environment;
 		$operation_id          = isset( $result['operation_id'] ) && is_string( $result['operation_id'] ) ? $result['operation_id'] : '';
@@ -89,7 +91,8 @@ final class ContextualLinkChangeController {
 				$result['environment'] = $stored['environment'];
 			}
 		}
-		return new WP_REST_Response( $result, 200 );
+
+		return new WP_REST_Response( self::public_operation( $result ), 200 );
 	}
 
 	/** @return WP_REST_Response|WP_Error */
@@ -116,6 +119,27 @@ final class ContextualLinkChangeController {
 			return $result;
 		}
 		$result['environment'] = EnvironmentPolicy::snapshot();
-		return new WP_REST_Response( $result, 200 );
+
+		return new WP_REST_Response( self::public_operation( $result ), 200 );
+	}
+
+	/**
+	 * Remove private rollback snapshots before returning an operation over REST.
+	 *
+	 * Exact content snapshots stay only in OperationStore so rollback remains
+	 * deterministic without exposing full page/post content to remote callers.
+	 *
+	 * @param array<string, mixed> $operation Stored or replayed operation.
+	 * @return array<string, mixed>
+	 */
+	private static function public_operation( array $operation ): array {
+		unset(
+			$operation['before_content'],
+			$operation['after_content'],
+			$operation['post_content'],
+			$operation['raw_content']
+		);
+
+		return $operation;
 	}
 }
