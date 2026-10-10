@@ -16,6 +16,7 @@ use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\PermalinkActions;
 use SeoGeo\Manager\Intelligence\PresetPageResolver;
+use SeoGeo\Manager\Rest\CapabilitiesController;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\FieldGateController;
@@ -53,6 +54,7 @@ final class Plugin {
 			'rest_api_init',
 			static function (): void {
 				HealthController::register_routes();
+				CapabilitiesController::register_routes();
 				ContentController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
