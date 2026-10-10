@@ -61,6 +61,10 @@ final class CapabilityManifest {
 			$can_upload_files,
 			'upload_files + edit_post(attachment)'
 		);
+		$capabilities['media_context_write'] = self::capability(
+			$can_upload_files,
+			'upload_files + edit_post(attachment)'
+		);
 		$capabilities['taxonomy_management'] = self::capability(
 			$can_manage_categories,
 			'manage_categories'
@@ -258,6 +262,24 @@ final class CapabilityManifest {
 			$can_upload_files,
 			'POST',
 			'/media/alt/changes/{operation_id}/rollback',
+			'rollback-mutation'
+		);
+		$operations['media.context.preview'] = self::operation(
+			$can_upload_files,
+			'POST',
+			'/media/{media_id}/context/changes/preview',
+			'read-only-preview'
+		);
+		$operations['media.context.apply'] = self::operation(
+			$can_upload_files,
+			'POST',
+			'/media/{media_id}/context/changes/apply',
+			'mutation'
+		);
+		$operations['media.context.rollback'] = self::operation(
+			$can_upload_files,
+			'POST',
+			'/media/context/changes/{operation_id}/rollback',
 			'rollback-mutation'
 		);
 		$operations['operations.read'] = self::operation( $can_edit_posts, 'GET', '/operations', 'read-only' );

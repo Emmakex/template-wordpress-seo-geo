@@ -25,6 +25,7 @@ use SeoGeo\Manager\Rest\ContextualLinkController;
 use SeoGeo\Manager\Rest\FieldGateController;
 use SeoGeo\Manager\Rest\HealthController;
 use SeoGeo\Manager\Rest\MediaAltChangeController;
+use SeoGeo\Manager\Rest\MediaContextChangeController;
 use SeoGeo\Manager\Rest\MediaReferenceController;
 use SeoGeo\Manager\Rest\NavigationChangeController;
 use SeoGeo\Manager\Rest\OperationHistoryController;
@@ -69,6 +70,7 @@ final class Plugin {
 				ContextualLinkChangeController::register_routes();
 				MediaReferenceController::register_routes();
 				MediaAltChangeController::register_routes();
+				MediaContextChangeController::register_routes();
 				FieldGateController::register_routes();
 				ChangeSetController::register_routes();
 				NavigationChangeController::register_routes();

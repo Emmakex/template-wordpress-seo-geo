@@ -15,7 +15,9 @@ use WP_Post;
 use WP_Query;
 
 final class MediaReferenceReader {
-	private const MAX_MEDIA = 100;
+	private const MAX_MEDIA             = 100;
+	private const MAX_CAPTION_BYTES     = 4000;
+	private const MAX_DESCRIPTION_BYTES = 12000;
 
 	/**
 	 * List bounded image references available to the current operator.
@@ -51,7 +53,11 @@ final class MediaReferenceReader {
 			'media_count'    => count( $items ),
 			'total_images'   => (int) $query->found_posts,
 			'truncated'      => (int) $query->found_posts > self::MAX_MEDIA,
-			'limits'         => array( 'max_media' => self::MAX_MEDIA ),
+			'limits'         => array(
+				'max_media'             => self::MAX_MEDIA,
+				'max_caption_bytes'     => self::MAX_CAPTION_BYTES,
+				'max_description_bytes' => self::MAX_DESCRIPTION_BYTES,
+			),
 			'items'          => $items,
 			'policy'         => self::policy(),
 		);
@@ -92,30 +98,44 @@ final class MediaReferenceReader {
 	 * @return array<string, mixed>
 	 */
 	private static function summary( WP_Post $attachment ): array {
-		$alt      = get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true );
-		$alt      = is_string( $alt ) ? $alt : '';
-		$url      = wp_get_attachment_url( $attachment->ID );
-		$url      = is_string( $url ) ? $url : '';
-		$metadata = wp_get_attachment_metadata( $attachment->ID );
-		$metadata = is_array( $metadata ) ? $metadata : array();
-		$width    = isset( $metadata['width'] ) && is_numeric( $metadata['width'] ) ? (int) $metadata['width'] : 0;
-		$height   = isset( $metadata['height'] ) && is_numeric( $metadata['height'] ) ? (int) $metadata['height'] : 0;
+		$alt         = get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true );
+		$alt         = is_string( $alt ) ? $alt : '';
+		$url         = wp_get_attachment_url( $attachment->ID );
+		$url         = is_string( $url ) ? $url : '';
+		$metadata    = wp_get_attachment_metadata( $attachment->ID );
+		$metadata    = is_array( $metadata ) ? $metadata : array();
+		$width       = isset( $metadata['width'] ) && is_numeric( $metadata['width'] ) ? (int) $metadata['width'] : 0;
+		$height      = isset( $metadata['height'] ) && is_numeric( $metadata['height'] ) ? (int) $metadata['height'] : 0;
+		$caption     = (string) $attachment->post_excerpt;
+		$description = (string) $attachment->post_content;
 
 		return array(
-			'id'          => (int) $attachment->ID,
-			'status'      => (string) $attachment->post_status,
-			'title'       => html_entity_decode( get_the_title( $attachment ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ),
-			'mime_type'   => (string) $attachment->post_mime_type,
-			'url'         => $url,
-			'attached_to' => (int) $attachment->post_parent,
-			'alt'         => $alt,
-			'alt_present' => '' !== trim( $alt ),
-			'dimensions'  => array(
+			'id'                    => (int) $attachment->ID,
+			'status'                => (string) $attachment->post_status,
+			'title'                 => html_entity_decode( get_the_title( $attachment ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ),
+			'caption'               => self::bounded_text( $caption, self::MAX_CAPTION_BYTES ),
+			'caption_truncated'     => self::is_truncated( $caption, self::MAX_CAPTION_BYTES ),
+			'description'           => self::bounded_text( $description, self::MAX_DESCRIPTION_BYTES ),
+			'description_truncated' => self::is_truncated( $description, self::MAX_DESCRIPTION_BYTES ),
+			'mime_type'             => (string) $attachment->post_mime_type,
+			'url'                   => $url,
+			'attached_to'           => (int) $attachment->post_parent,
+			'alt'                   => $alt,
+			'alt_present'           => '' !== trim( $alt ),
+			'dimensions'            => array(
 				'width'  => $width,
 				'height' => $height,
 			),
-			'fingerprint' => MediaFingerprint::for_attachment( $attachment ),
+			'fingerprint'           => MediaFingerprint::for_attachment( $attachment ),
 		);
+	}
+
+	private static function bounded_text( string $value, int $max_bytes ): string {
+		return strlen( $value ) > $max_bytes ? substr( $value, 0, $max_bytes ) : $value;
+	}
+
+	private static function is_truncated( string $value, int $max_bytes ): bool {
+		return strlen( $value ) > $max_bytes;
 	}
 
 	/**
@@ -128,6 +148,7 @@ final class MediaReferenceReader {
 			'fabricated_metadata'              => false,
 			'mutation_supported'               => false,
 			'alt_mutation_available'           => true,
+			'context_mutation_available'       => true,
 			'binary_mutation_supported'        => false,
 		);
 	}
