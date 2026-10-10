@@ -19,6 +19,7 @@ use SeoGeo\Manager\Intelligence\PresetPageResolver;
 use SeoGeo\Manager\Rest\CapabilitiesController;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
+use SeoGeo\Manager\Rest\ContentLifecycleController;
 use SeoGeo\Manager\Rest\FieldGateController;
 use SeoGeo\Manager\Rest\HealthController;
 use SeoGeo\Manager\Rest\NavigationChangeController;
@@ -56,6 +57,7 @@ final class Plugin {
 				HealthController::register_routes();
 				CapabilitiesController::register_routes();
 				ContentController::register_routes();
+				ContentLifecycleController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
 				FieldGateController::register_routes();
