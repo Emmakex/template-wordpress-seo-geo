@@ -138,9 +138,9 @@
 		const environment = report && report.environment ? report.environment : {};
 		const metrics = panel.querySelector( '[data-seo-geo-field-metrics]' );
 		const decision = panel.querySelector( '[data-seo-geo-field-decision]' );
-		const raw = panel.querySelector( '[data-seo-geo-field-raw]' );
-		const copyButton = panel.querySelector( '[data-seo-geo-field-copy]' );
-		const downloadButton = panel.querySelector( '[data-seo-geo-field-download]' );
+		const raw = root.querySelector( '[data-seo-geo-field-raw]' );
+		const copyButton = root.querySelector( '[data-seo-geo-field-copy]' );
+		const downloadButton = root.querySelector( '[data-seo-geo-field-download]' );
 
 		if ( metrics ) {
 			metrics.replaceChildren(
