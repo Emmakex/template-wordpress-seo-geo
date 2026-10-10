@@ -380,7 +380,7 @@ final class ContextualLinkChangeAdapter {
 		$replaced = preg_replace_callback(
 			'~\bhref\s*=\s*(["\'])(.*?)\1~is',
 			static function ( array $link_match ) use ( $target_url ): string {
-				$quote = isset( $link_match[1] ) && is_string( $link_match[1] ) ? $link_match[1] : '"';
+				$quote = $link_match[1];
 				return 'href=' . $quote . esc_attr( $target_url ) . $quote;
 			},
 			$anchor_html,
