@@ -24,9 +24,11 @@ DB_ROOT_PASSWORD="manager-acceptance-root"
 
 TMP_DIR="$(mktemp -d)"
 RUNTIME_LOG="${TMP_DIR}/runtime.log"
+CAPABILITIES_LOG="${TMP_DIR}/capabilities-runtime.log"
 STRUCTURED_LOG="${TMP_DIR}/structured-runtime.log"
 AUTHORITY_LOG="${TMP_DIR}/seo-authority-runtime.log"
 ACCEPTANCE_FIXTURE="${TMP_DIR}/seo-geo-manager-acceptance.php"
+CAPABILITIES_FIXTURE="${TMP_DIR}/seo-geo-manager-capabilities-acceptance.php"
 STRUCTURED_FIXTURE="${TMP_DIR}/seo-geo-manager-structured-acceptance.php"
 AUTHORITY_FIXTURE="${TMP_DIR}/seo-geo-manager-seo-authority-acceptance.php"
 
@@ -168,6 +170,8 @@ docker cp "$SELF_CONTAINED_THEME/." "$WP_CONTAINER":/var/www/html/wp-content/the
 
 cp scripts/ci/seo-geo-manager-wordpress-acceptance.php "$ACCEPTANCE_FIXTURE" \
   || fail_acceptance "fixture-prepare" "Could not prepare Manager acceptance fixture" "fixture copied" "cp failed"
+cp scripts/ci/seo-geo-manager-capabilities-acceptance.php "$CAPABILITIES_FIXTURE" \
+  || fail_acceptance "capabilities-fixture-prepare" "Could not prepare capability acceptance fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-structured-acceptance.php "$STRUCTURED_FIXTURE" \
   || fail_acceptance "structured-fixture-prepare" "Could not prepare structured Manager acceptance fixture" "fixture copied" "cp failed"
 cp scripts/ci/seo-geo-manager-seo-authority-acceptance.php "$AUTHORITY_FIXTURE" \
@@ -175,6 +179,8 @@ cp scripts/ci/seo-geo-manager-seo-authority-acceptance.php "$AUTHORITY_FIXTURE" 
 
 docker cp "$ACCEPTANCE_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-acceptance.php \
   || fail_acceptance "fixture-copy" "Could not copy Manager acceptance fixture" "fixture copied" "docker cp failed"
+docker cp "$CAPABILITIES_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-capabilities-acceptance.php \
+  || fail_acceptance "capabilities-fixture-copy" "Could not copy capability acceptance fixture" "fixture copied" "docker cp failed"
 docker cp "$STRUCTURED_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-structured-acceptance.php \
   || fail_acceptance "structured-fixture-copy" "Could not copy structured Manager acceptance fixture" "fixture copied" "docker cp failed"
 docker cp "$AUTHORITY_FIXTURE" "$WP_CONTAINER":/var/www/html/seo-geo-manager-seo-authority-acceptance.php \
@@ -183,6 +189,7 @@ docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-manager \
   /var/www/html/wp-content/themes/seo-geo-theme \
   /var/www/html/seo-geo-manager-acceptance.php \
+  /var/www/html/seo-geo-manager-capabilities-acceptance.php \
   /var/www/html/seo-geo-manager-structured-acceptance.php \
   /var/www/html/seo-geo-manager-seo-authority-acceptance.php \
   || fail_acceptance "package-permissions" "Could not set WordPress package permissions" "www-data owns packages" "chown failed"
@@ -221,6 +228,16 @@ fi
 cat "$RUNTIME_LOG"
 grep -q '"ok":true' "$RUNTIME_LOG" \
   || fail_acceptance "manager-result" "Manager acceptance did not emit success marker" '"ok":true' "$(tail -c 500 "$RUNTIME_LOG" | tr '\n' ' ')"
+
+printf '[manager] Running capability least-privilege acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-capabilities-acceptance.php >"$CAPABILITIES_LOG" 2>&1; then
+  cat "$CAPABILITIES_LOG"
+  fail_acceptance "capabilities-runtime" "Manager capability least-privilege acceptance failed" 'JSON with "ok":true' "$(tail -c 500 "$CAPABILITIES_LOG" | tr '\n' ' ')"
+fi
+
+cat "$CAPABILITIES_LOG"
+grep -q '"ok":true' "$CAPABILITIES_LOG" \
+  || fail_acceptance "capabilities-result" "Capability acceptance did not emit success marker" '"ok":true' "$(tail -c 500 "$CAPABILITIES_LOG" | tr '\n' ' ')"
 
 printf '[manager] Running Theme structured-content acceptance.\n'
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-structured-acceptance.php >"$STRUCTURED_LOG" 2>&1; then
