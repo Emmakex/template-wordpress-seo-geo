@@ -44,11 +44,11 @@ final class ContextualLinkChangeAdapter {
 			'target'         => self::target_summary( $prepared['target'], $prepared['after_href'] ),
 			'has_changes'    => $prepared['before_href'] !== $prepared['after_href'],
 			'policy'         => array(
-				'href_only'                => true,
-				'target_resource_id_only'  => true,
+				'href_only'                 => true,
+				'target_resource_id_only'   => true,
 				'published_target_required' => true,
-				'public_source_blocked'    => 'publish' === $prepared['source']->post_status && true !== ( $payload['allow_published_target'] ?? false ),
-				'allow_published_target'   => true === ( $payload['allow_published_target'] ?? false ),
+				'public_source_blocked'     => 'publish' === $prepared['source']->post_status && true !== ( $payload['allow_published_target'] ?? false ),
+				'allow_published_target'    => true === ( $payload['allow_published_target'] ?? false ),
 			),
 		);
 	}
@@ -207,8 +207,7 @@ final class ContextualLinkChangeAdapter {
 		}
 
 		$restored = get_post( $source->ID );
-		$before   = isset( $operation['before_fingerprint'] ) && is_string( $operation['before_fingerprint'] ) ? $operation['before_fingerprint'] : '';
-		if ( ! $restored instanceof WP_Post || '' === $before || ! hash_equals( $before, ContentFingerprint::for_post( $restored ) ) ) {
+		if ( ! $restored instanceof WP_Post || $restored->post_content !== $before_content ) {
 			self::compensate( $source->ID, $after_content );
 			return new WP_Error(
 				'seo_geo_manager_contextual_link_rollback_verify_failed',
@@ -433,12 +432,12 @@ final class ContextualLinkChangeAdapter {
 	/** @param array<string, mixed> $payload Request payload. */
 	private static function payload_hash( array $payload ): string {
 		$material = array(
-			'schema_version'          => isset( $payload['schema_version'] ) ? (int) $payload['schema_version'] : self::SCHEMA_VERSION,
-			'source_id'               => isset( $payload['source_id'] ) ? absint( $payload['source_id'] ) : 0,
-			'edge_id'                 => isset( $payload['edge_id'] ) && is_string( $payload['edge_id'] ) ? strtolower( trim( $payload['edge_id'] ) ) : '',
-			'expected_fingerprint'    => isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] ) ? trim( $payload['expected_fingerprint'] ) : '',
-			'target_resource_id'      => isset( $payload['target_resource_id'] ) ? absint( $payload['target_resource_id'] ) : 0,
-			'allow_published_target'  => true === ( $payload['allow_published_target'] ?? false ),
+			'schema_version'         => isset( $payload['schema_version'] ) ? (int) $payload['schema_version'] : self::SCHEMA_VERSION,
+			'source_id'              => isset( $payload['source_id'] ) ? absint( $payload['source_id'] ) : 0,
+			'edge_id'                => isset( $payload['edge_id'] ) && is_string( $payload['edge_id'] ) ? strtolower( trim( $payload['edge_id'] ) ) : '',
+			'expected_fingerprint'   => isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] ) ? trim( $payload['expected_fingerprint'] ) : '',
+			'target_resource_id'     => isset( $payload['target_resource_id'] ) ? absint( $payload['target_resource_id'] ) : 0,
+			'allow_published_target' => true === ( $payload['allow_published_target'] ?? false ),
 		);
 		return hash( 'sha256', (string) wp_json_encode( $material ) );
 	}
