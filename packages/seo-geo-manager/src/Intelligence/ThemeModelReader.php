@@ -167,9 +167,8 @@ final class ThemeModelReader {
 	 * @return array<string, mixed>|null
 	 */
 	private static function preset_document( string $preset, string $filename ): ?array {
-		$loader = 'seo_geo_theme_preset_document';
-		if ( is_callable( $loader ) ) {
-			$value = $loader( $preset, $filename );
+		if ( function_exists( 'seo_geo_theme_preset_document' ) ) {
+			$value = call_user_func( 'seo_geo_theme_preset_document', $preset, $filename );
 			if ( is_array( $value ) ) {
 				return $value;
 			}
@@ -390,12 +389,12 @@ final class ThemeModelReader {
 	private static function slot_pattern( string $marker ): string {
 		$marker = preg_quote( $marker, '~' );
 
-		return '~(?P<open><(?P<tag>[a-z][a-z0-9]*)\\b(?=[^>]*\\bclass\\s*=\\s*(?:"[^"]*\\b' . $marker . '\\b[^"]*"|\'[^\']*\\b' . $marker . '\\b[^\']*\'))[^>]*>)(?P<inner>.*?)(?P<close></(?P=tag)\\s*>)~is';
+		return '~(?P<open><(?P<tag>[a-z][a-z0-9]*)\b(?=[^>]*\bclass\s*=\s*(?:"[^"]*\b' . $marker . '\b[^"]*"|\'[^\']*\b' . $marker . '\b[^\']*\'))[^>]*>)(?P<inner>.*?)(?P<close></(?P=tag)\s*>)~is';
 	}
 
 	private static function attribute_value( string $opening_tag, string $attribute ): string {
 		$attribute = preg_quote( $attribute, '~' );
-		if ( 1 === preg_match( '~\\b' . $attribute . '\\s*=\\s*(["\'])(.*?)\\1~is', $opening_tag, $match ) && isset( $match[2] ) && is_string( $match[2] ) ) {
+		if ( 1 === preg_match( '~\b' . $attribute . '\s*=\s*(["\'])(.*?)\1~is', $opening_tag, $match ) && isset( $match[2] ) && is_string( $match[2] ) ) {
 			return html_entity_decode( $match[2], ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) );
 		}
 
