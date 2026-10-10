@@ -379,8 +379,8 @@ final class ContextualLinkChangeAdapter {
 
 		$replaced = preg_replace_callback(
 			'~\bhref\s*=\s*(["\'])(.*?)\1~is',
-			static function ( array $match ) use ( $target_url ): string {
-				$quote = isset( $match[1] ) && is_string( $match[1] ) ? $match[1] : '"';
+			static function ( array $link_match ) use ( $target_url ): string {
+				$quote = isset( $link_match[1] ) && is_string( $link_match[1] ) ? $link_match[1] : '"';
 				return 'href=' . $quote . esc_attr( $target_url ) . $quote;
 			},
 			$anchor_html,
@@ -396,7 +396,9 @@ final class ContextualLinkChangeAdapter {
 		wp_update_post( array( 'ID' => $source_id, 'post_content' => $content ) );
 	}
 
-	/** @param array<string, mixed> $prepared Prepared mutation. */
+	/**
+	 * @param array<string, mixed> $prepared Prepared mutation.
+	 */
 	private static function save_failed_operation( string $operation_id, array $prepared ): void {
 		OperationStore::save(
 			$operation_id,
@@ -429,7 +431,9 @@ final class ContextualLinkChangeAdapter {
 		return $operation;
 	}
 
-	/** @param array<string, mixed> $payload Request payload. */
+	/**
+	 * @param array<string, mixed> $payload Request payload.
+	 */
 	private static function payload_hash( array $payload ): string {
 		$material = array(
 			'schema_version'         => isset( $payload['schema_version'] ) ? (int) $payload['schema_version'] : self::SCHEMA_VERSION,
