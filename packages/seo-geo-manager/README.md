@@ -40,6 +40,7 @@ Current operator capabilities include:
 - one-click Site Intelligence with optional rendered-frontend verification;
 - Build / Finish readiness with blockers and warnings;
 - Theme/preset/model inspection and resolved SEO output authority;
+- semantic recognition of existing strategic pages whose safe URL/title differs from the preset canonical label;
 - navigation/environment leakage correction workflows;
 - safe permalink inspection and historical-authority recovery;
 - exact-path permalink Apply with verification and rollback;
@@ -69,7 +70,7 @@ Base namespace: `/wp-json/seo-geo-manager/v1`.
 
 `/operations` exposes a bounded privacy-safe summary of recent Manager operations. It intentionally excludes content bodies, previous values, mutation payloads, payload hashes, environment fingerprints and rendered response bodies/digests. Site-wide summaries require `manage_options`; editors only see content operations for resources they can edit.
 
-### Build / Finish Field Gate — Manager 0.3.24
+### Build / Finish Field Gate — Manager 0.3.24+
 
 `GET /field-gate/preflight` is the inspection-only gate used immediately after installing Manager on a real target such as a clone or staging site.
 
@@ -107,7 +108,20 @@ The Field Gate contract is explicit:
 - no hidden confirmation or Apply step;
 - every real mutation still requires its separate endpoint, current fingerprints, explicit confirmations, environment policy and idempotency/stale-state guards.
 
-The WordPress runtime fixture proves that a Field Gate run leaves `permalink_structure` unchanged, creates no operation-history entry, can validate a complete same-host historical source, can derive a direct exact-path plan and rejects editor-level execution.
+### Semantic preset page resolution — Manager 0.3.26
+
+A real migrated site does not always use the exact canonical labels defined by a preset. Manager 0.3.26 adds a generic, read-only semantic resolver before Theme Contract Intelligence declares a strategic page missing.
+
+The resolver:
+
+- uses the existing `seo_geo_manager_resolve_preset_page_id` contract rather than hardcoding a client site;
+- recognizes a deliberately small role-based set of safe semantic equivalents for surfaces such as About and the editorial/posts index;
+- treats a unique exact semantic slug as stronger evidence than a title alias;
+- uses a bounded fallback that can inspect up to the Manager inventory ceiling on larger migrated sites;
+- refuses to guess when evidence is ambiguous at the same confidence level;
+- never creates, renames or mutates a page by itself.
+
+This prevents Build / Finish from recommending duplicate strategic pages when an existing migrated URL is already a valid semantic equivalent. Runtime acceptance explicitly covers a site with more than 100 pages and verifies mappings equivalent to `Sobre Nosotros -> about` and `Blog -> insights`.
 
 ### Controlled generic changes
 
@@ -178,6 +192,7 @@ The rendered gate is opt-in, same-site only, exact `get_permalink()`, no redirec
 16. Operation-history surfaces expose summaries only; mutation values and rollback payloads remain private.
 17. Rendered verification uses only the exact same-site public permalink, stores no HTML body and never auto-rolls back solely because HTTP verification failed.
 18. Field Gate is inspection-only: it never creates an operation, writes content/permalinks, flushes rewrites or activates redirects.
+19. Semantic page resolution is inspection-only and never creates duplicate pages automatically.
 
 ## Authentication
 
@@ -185,29 +200,31 @@ Automation uses normal WordPress REST authentication with an authorized WordPres
 
 ## Current candidate
 
-- **SEO/GEO Manager `0.3.24`**.
+- **SEO/GEO Manager `0.3.26`**.
 - Build / Finish inspection and controlled structured writes are operational.
 - Exact historical permalink preservation and redirect-required migrations have separate guarded reversible paths.
 - Privacy-safe operation history and rendered post-write verification are operational.
-- The new administrator Field Gate provides one read-only preflight before any real field mutation.
+- Field Gate provides one read-only preflight before any real field mutation.
+- Semantic preset page resolution prevents false missing-page findings for safe existing equivalents on larger migrated sites.
 - EMMAKE `/nuevaweb/` remains the first real field target before broader promotion.
 
 ### Real field sequence
 
-For the first EMMAKE field cycle:
+For the next EMMAKE field cycle:
 
-1. Install the exact SEO/GEO Theme MF-08 candidate and Manager 0.3.24 on `/nuevaweb/` without rerunning Reset/hydration.
+1. Keep the exact SEO/GEO Theme MF-08 candidate already selected for `/nuevaweb/`; replace/update only SEO/GEO Manager to **0.3.26**. Do **not** rerun Reset/hydration merely for this Manager correction.
 2. Open SEO/GEO Manager → **Field Gate · Build / Finish**.
-3. Use historical origin `https://emmake.com/` and keep rendered verification enabled.
-4. Run the Field Gate and retain its JSON evidence.
-5. Do **not** mutate anything unless the evidence is reviewed and `guarded_write_eligible=true` for the relevant operation.
-6. If safe, perform one separately confirmed reversible permalink operation and retain Operation History/rollback evidence.
-7. Run the first real Theme-structured `Preview -> Apply -> stored verify -> rendered verify` cycle on an accepted published strategic page.
-8. Only after this field acceptance continue into provider write adapters and M3 SEO/GEO Optimizer.
+3. Set historical origin to `https://emmake.com/` and keep rendered verification enabled.
+4. Run the Field Gate once and retain its JSON evidence.
+5. Confirm that existing semantic equivalents are resolved instead of being proposed as duplicate missing pages.
+6. Do **not** mutate anything unless the evidence is reviewed and `guarded_write_eligible=true` for the relevant operation.
+7. If safe, perform one separately confirmed reversible permalink operation and retain Operation History/rollback evidence.
+8. Run the first real Theme-structured `Preview -> Apply -> stored verify -> rendered verify` cycle on an accepted published strategic page.
+9. Only after this field acceptance continue into provider write adapters and M3 SEO/GEO Optimizer.
 
 ## Next implementation slices
 
-- real `/nuevaweb/` installation and 0.3.24 Field Gate evidence;
+- real `/nuevaweb/` Manager 0.3.26 Field Gate evidence with historical origin supplied;
 - first accepted reversible real permalink operation, only if the field plan proves safe;
 - first real structured Build / Finish rendered-verification cycle;
 - provider-specific SEO metadata write adapters after field authority is confirmed;
