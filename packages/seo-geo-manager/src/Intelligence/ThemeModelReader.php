@@ -15,6 +15,8 @@ use WP_Post;
 
 final class ThemeModelReader {
 	private const DEFAULT_SLOT_PREFIX = 'seo-geo-content-slot--';
+	private const MAX_MODELS          = 100;
+	private const MAX_SLOTS           = 250;
 
 	/**
 	 * List semantic models exposed by the active preset contract.
@@ -28,16 +30,16 @@ final class ThemeModelReader {
 		}
 
 		$models = array();
+		$count  = 0;
 		foreach ( $context['models'] as $model_id => $model ) {
+			if ( self::MAX_MODELS <= $count ) {
+				break;
+			}
 			if ( ! is_string( $model_id ) || ! is_array( $model ) ) {
 				continue;
 			}
-
-			$models[] = self::model_summary(
-				sanitize_key( $model_id ),
-				$model,
-				$context['scan']
-			);
+			$models[] = self::model_summary( sanitize_key( $model_id ), $model, $context['scan'] );
+			++$count;
 		}
 
 		usort(
@@ -52,11 +54,13 @@ final class ThemeModelReader {
 			'preset'         => $context['preset'],
 			'locale'         => $context['scan']['locale'] ?? null,
 			'model_count'    => count( $models ),
+			'truncated'      => count( $context['models'] ) > self::MAX_MODELS,
 			'models'         => $models,
 			'policy'         => array(
-				'contract_authority'       => 'active-theme-preset-page-models',
-				'arbitrary_template_read' => false,
-				'raw_post_content_returned'=> false,
+				'contract_authority'        => 'active-theme-preset-page-models',
+				'arbitrary_template_read'   => false,
+				'raw_post_content_returned' => false,
+				'max_models'                => self::MAX_MODELS,
 			),
 		);
 	}
@@ -83,22 +87,15 @@ final class ThemeModelReader {
 		}
 
 		$mapping = self::mapped_page( $model_id, $context['scan'] );
-		$post    = null;
-		if ( 0 < $mapping['resource_id'] ) {
-			$candidate = get_post( $mapping['resource_id'] );
-			if ( $candidate instanceof WP_Post && 'page' === $candidate->post_type ) {
-				$post = $candidate;
-			}
-		}
-
+		$post    = self::mapped_post( $mapping['resource_id'] );
 		if ( $post instanceof WP_Post && ! current_user_can( 'edit_post', $post->ID ) ) {
 			return self::error( 'seo_geo_manager_theme_model_forbidden', 'You cannot inspect the mapped Theme page.', 403 );
 		}
 
-		$slots       = self::slot_definitions( $model );
-		$slot_values = array();
-		foreach ( $slots as $slot ) {
-			$slot_values[] = self::slot_state( $slot, $model, $post );
+		$definitions = self::slot_definitions( $model );
+		$slots       = array();
+		foreach ( $definitions as $slot ) {
+			$slots[] = self::slot_state( $slot, $model, $post );
 		}
 
 		return array(
@@ -108,27 +105,28 @@ final class ThemeModelReader {
 			'preset'         => $context['preset'],
 			'locale'         => $context['scan']['locale'] ?? null,
 			'model'          => array(
-				'model_id'                 => $model_id,
-				'schema_version'            => isset( $model['schema_version'] ) ? (int) $model['schema_version'] : 1,
-				'page_key'                  => self::model_page_key( $model_id, $model, $context['document'] ),
-				'slot_prefix'               => self::slot_prefix( $model ),
-				'required_any_slots'        => self::string_groups( $model['required_any_slots'] ?? array() ),
-				'required_verified_groups'  => self::string_list( $model['required_verified_groups'] ?? array() ),
-				'section_policy'            => self::safe_array_list( $model['section_policy'] ?? array() ),
-				'safety'                    => isset( $model['safety'] ) && is_array( $model['safety'] ) ? $model['safety'] : array(),
+				'model_id'                => $model_id,
+				'schema_version'           => isset( $model['schema_version'] ) ? (int) $model['schema_version'] : 1,
+				'page_key'                 => self::model_page_key( $model_id, $model, $context['document'] ),
+				'slot_prefix'              => self::slot_prefix( $model ),
+				'required_any_slots'       => self::string_groups( $model['required_any_slots'] ?? array() ),
+				'required_verified_groups' => self::string_list( $model['required_verified_groups'] ?? array() ),
+				'section_policy'           => self::safe_array_list( $model['section_policy'] ?? array() ),
+				'safety'                   => isset( $model['safety'] ) && is_array( $model['safety'] ) ? $model['safety'] : array(),
 			),
 			'mapping'        => array(
-				'mapped'      => $post instanceof WP_Post,
-				'page_key'    => $mapping['page_key'],
-				'resource'    => self::resource_summary( $post ),
-				'resolution'  => $mapping['resolution'],
+				'mapped'     => $post instanceof WP_Post,
+				'page_key'   => $mapping['page_key'],
+				'resource'   => self::resource_summary( $post ),
+				'resolution' => $mapping['resolution'],
 			),
-			'slots'          => $slot_values,
+			'slots'          => $slots,
 			'policy'         => array(
 				'contract_authority'        => 'active-theme-preset-page-models',
 				'current_values_bounded'    => true,
 				'raw_post_content_returned' => false,
 				'layout_mutation'            => false,
+				'max_slots'                  => self::MAX_SLOTS,
 			),
 		);
 	}
@@ -139,11 +137,7 @@ final class ThemeModelReader {
 	private static function context() {
 		$scan = ThemeContractScanner::scan();
 		if ( true !== ( $scan['applicable'] ?? false ) ) {
-			return self::error(
-				'seo_geo_manager_theme_models_unavailable',
-				'The active Theme does not expose an applicable semantic preset contract.',
-				409
-			);
+			return self::error( 'seo_geo_manager_theme_models_unavailable', 'The active Theme does not expose an applicable semantic preset contract.', 409 );
 		}
 
 		$preset = isset( $scan['preset'] ) && is_string( $scan['preset'] ) ? sanitize_key( $scan['preset'] ) : '';
@@ -156,9 +150,7 @@ final class ThemeModelReader {
 			return self::error( 'seo_geo_manager_theme_models_document_missing', 'The active preset page-models contract is unavailable.', 409 );
 		}
 
-		$models = isset( $document['native_content_models'] ) && is_array( $document['native_content_models'] )
-			? $document['native_content_models']
-			: array();
+		$models = isset( $document['native_content_models'] ) && is_array( $document['native_content_models'] ) ? $document['native_content_models'] : array();
 		if ( array() === $models ) {
 			return self::error( 'seo_geo_manager_theme_models_empty', 'The active preset exposes no native content models.', 409 );
 		}
@@ -199,12 +191,10 @@ final class ThemeModelReader {
 	 */
 	private static function model_summary( string $model_id, array $model, array $scan ): array {
 		$mapping  = self::mapped_page( $model_id, $scan );
+		$post     = self::mapped_post( $mapping['resource_id'] );
 		$resource = null;
-		if ( 0 < $mapping['resource_id'] ) {
-			$post = get_post( $mapping['resource_id'] );
-			if ( $post instanceof WP_Post && 'page' === $post->post_type && current_user_can( 'edit_post', $post->ID ) ) {
-				$resource = self::resource_summary( $post );
-			}
+		if ( $post instanceof WP_Post && current_user_can( 'edit_post', $post->ID ) ) {
+			$resource = self::resource_summary( $post );
 		}
 
 		$slots    = self::slot_definitions( $model );
@@ -221,14 +211,14 @@ final class ThemeModelReader {
 		}
 
 		return array(
-			'model_id'              => $model_id,
-			'schema_version'         => isset( $model['schema_version'] ) ? (int) $model['schema_version'] : 1,
-			'page_key'               => isset( $model['page_key'] ) && is_string( $model['page_key'] ) ? sanitize_key( $model['page_key'] ) : $mapping['page_key'],
-			'slot_count'             => count( $slots ),
-			'required_slot_count'    => $required,
-			'verification_groups'    => array_values( array_unique( $verified ) ),
-			'mapped'                 => null !== $resource,
-			'resource'               => $resource,
+			'model_id'           => $model_id,
+			'schema_version'      => isset( $model['schema_version'] ) ? (int) $model['schema_version'] : 1,
+			'page_key'            => isset( $model['page_key'] ) && is_string( $model['page_key'] ) ? sanitize_key( $model['page_key'] ) : $mapping['page_key'],
+			'slot_count'          => count( $slots ),
+			'required_slot_count' => $required,
+			'verification_groups' => array_values( array_unique( $verified ) ),
+			'mapped'              => null !== $resource,
+			'resource'            => $resource,
 		);
 	}
 
@@ -243,7 +233,7 @@ final class ThemeModelReader {
 				continue;
 			}
 			$model = isset( $page['model'] ) && is_array( $page['model'] ) ? $page['model'] : array();
-			if ( $model_id !== ( $model['model_id'] ?? '' ) ) {
+			if ( ( $model['model_id'] ?? '' ) !== $model_id ) {
 				continue;
 			}
 
@@ -263,6 +253,15 @@ final class ThemeModelReader {
 		);
 	}
 
+	private static function mapped_post( int $resource_id ): ?WP_Post {
+		if ( 1 > $resource_id ) {
+			return null;
+		}
+		$post = get_post( $resource_id );
+
+		return $post instanceof WP_Post && 'page' === $post->post_type ? $post : null;
+	}
+
 	/**
 	 * @param array<string, mixed> $model Model definition.
 	 * @return list<array<string, mixed>>
@@ -271,6 +270,9 @@ final class ThemeModelReader {
 		$result = array();
 		$slots  = isset( $model['slots'] ) && is_array( $model['slots'] ) ? $model['slots'] : array();
 		foreach ( $slots as $slot ) {
+			if ( self::MAX_SLOTS <= count( $result ) ) {
+				break;
+			}
 			if ( ! is_array( $slot ) || ! isset( $slot['id'] ) || ! is_string( $slot['id'] ) ) {
 				continue;
 			}
@@ -297,7 +299,7 @@ final class ThemeModelReader {
 	 * @return array<string, mixed>
 	 */
 	private static function slot_state( array $slot, array $model, ?WP_Post $post ): array {
-		$state = $slot;
+		$state             = $slot;
 		$state['writable'] = in_array( $slot['type'], array( 'text', 'link' ), true );
 		if ( ! $post instanceof WP_Post ) {
 			$state['marker_count'] = 0;
@@ -306,12 +308,10 @@ final class ThemeModelReader {
 			return $state;
 		}
 
-		$prefix  = self::slot_prefix( $model );
-		$pattern = self::slot_pattern( $prefix . $slot['id'] );
+		$pattern = self::slot_pattern( self::slot_prefix( $model ) . $slot['id'] );
 		$count   = preg_match_all( $pattern, (string) $post->post_content, $matches, PREG_SET_ORDER );
 		$state['marker_count'] = is_int( $count ) ? $count : 0;
 		$state['value']        = null;
-
 		if ( 1 !== $count || ! isset( $matches[0] ) || ! is_array( $matches[0] ) ) {
 			return $state;
 		}
@@ -346,7 +346,6 @@ final class ThemeModelReader {
 		if ( ! $post instanceof WP_Post ) {
 			return null;
 		}
-
 		$permalink = get_permalink( $post );
 
 		return array(
@@ -370,7 +369,7 @@ final class ThemeModelReader {
 
 		$map = isset( $document['models_by_page'] ) && is_array( $document['models_by_page'] ) ? $document['models_by_page'] : array();
 		foreach ( $map as $page_key => $mapped_model_id ) {
-			if ( is_string( $page_key ) && is_string( $mapped_model_id ) && $model_id === sanitize_key( $mapped_model_id ) ) {
+			if ( is_string( $page_key ) && is_string( $mapped_model_id ) && sanitize_key( $mapped_model_id ) === $model_id ) {
 				return sanitize_key( $page_key );
 			}
 		}
