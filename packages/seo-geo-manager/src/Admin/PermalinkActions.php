@@ -36,7 +36,7 @@ final class PermalinkActions {
 		wp_enqueue_script(
 			'seo-geo-manager-slug-repair-actions',
 			self::asset_url( 'assets/admin/slug-repair-actions.js' ),
-			array( 'seo-geo-manager-permalink-actions' ),
+			array( 'seo-geo-manager-permalink-actions', 'seo-geo-manager-field-gate' ),
 			SEO_GEO_MANAGER_VERSION,
 			true
 		);
