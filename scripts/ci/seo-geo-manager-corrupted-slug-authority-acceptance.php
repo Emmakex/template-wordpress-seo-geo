@@ -108,8 +108,22 @@ foreach ( $published_posts as $post ) {
 	++$index;
 }
 
+/*
+ * permalink_structure is normally sanitized by update_option(). The real field
+ * failure came from an imported already-corrupted option, so inject it directly
+ * and invalidate the option caches to reproduce that exact storage state.
+ */
 $malformed_structure = '/' . $marker . 'category' . $marker . '/' . $marker . 'postname' . $marker . '/';
-update_option( 'permalink_structure', $malformed_structure );
+$option_updated      = $wpdb->update(
+	$wpdb->options,
+	array( 'option_value' => $malformed_structure ),
+	array( 'option_name' => 'permalink_structure' ),
+	array( '%s' ),
+	array( '%s' )
+);
+seo_geo_manager_corrupted_slug_accept( false !== $option_updated, 'Could not inject malformed dynamic permalink fixture.' );
+wp_cache_delete( 'permalink_structure', 'options' );
+wp_cache_delete( 'alloptions', 'options' );
 $before_structure = (string) get_option( 'permalink_structure', '' );
 seo_geo_manager_corrupted_slug_accept( $malformed_structure === $before_structure, 'Could not prepare malformed dynamic permalink fixture.' );
 
