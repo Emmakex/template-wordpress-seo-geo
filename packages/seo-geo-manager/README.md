@@ -43,12 +43,13 @@ Current operator capabilities include:
 - semantic recognition of existing strategic pages whose safe URL/title differs from the preset canonical label;
 - navigation/environment leakage correction workflows;
 - safe permalink inspection and historical-authority recovery;
+- guarded historical identity recovery by WordPress post ID only when a local slug is unequivocally damaged by the migration marker pattern;
 - exact-path permalink Apply with verification and rollback;
 - atomic permalink + one-hop 301 Apply when historical SEO paths genuinely change;
 - optional same-site rendered post-write verification for published generic and Theme-structured content;
 - privacy-bounded operation history with rollback and rendered-verification state;
 - **Field Gate** preflight that combines Build / Finish, frontend, historical authority and permalink evidence without writing anything;
-- raw JSON evidence for technical review and handoff.
+- raw JSON evidence for technical review and handoff, with copy/download disabled until a valid preflight result exists.
 
 ## API v1
 
@@ -123,6 +124,24 @@ The resolver:
 
 This prevents Build / Finish from recommending duplicate strategic pages when an existing migrated URL is already a valid semantic equivalent. Runtime acceptance explicitly covers a site with more than 100 pages and verifies mappings equivalent to `Sobre Nosotros -> about` and `Blog -> insights`.
 
+### Migration-corrupted slug recovery — Manager 0.3.27
+
+Field evidence from a migrated WordPress can expose a narrow failure mode: the same temporary migration marker that damages `%category%` / `%postname%` may also replace the percent bytes inside an already percent-encoded `post_name`. In that case the historical post still exists, but exact slug matching alone can incorrectly report the URL as missing.
+
+Manager 0.3.27 keeps slug matching as the primary authority and adds a deliberately narrow identity fallback:
+
+- the local slug must contain one repeated braced hexadecimal migration marker of the accepted bounded length;
+- replacing that marker with `%` must reconstruct valid percent-encoded byte sequences;
+- the historical REST row must have the **same WordPress post ID** and that remote ID must be unique;
+- same-host, complete-scan, unique-mapping and historical-link guards remain mandatory;
+- a normal clean slug mismatch is never rescued by ID;
+- the recovered row records `match_method=corrupted-slug-id-fallback`, the current local slug and the historical slug as evidence;
+- authority can become complete/read-only again, but the permalink planner explicitly blocks Apply/301 and returns `repair-corrupted-local-slugs-first` until the damaged local `post_name` is repaired by a separate protected operation.
+
+This separates **proving historical identity** from **mutating local storage**. The authority preview never repairs a slug, changes `permalink_structure`, activates redirects or creates an operation record.
+
+The WordPress runtime regression fixture proves all four critical properties: corrupted-marker ID recovery works, a clean mismatch cannot use ID fallback, the planner requires local slug repair first, and the entire inspection remains read-only.
+
 ### Controlled generic changes
 
 - `POST /changes/preview`
@@ -154,6 +173,8 @@ Theme writes mutate contract-defined structured text/link slots only. Manager ne
 - `POST /permalinks/operations/{operation_id}/rollback` — reversible stale/environment-safe rollback.
 
 The redirect map is derived from verified historical authority; arbitrary public redirect maps are never accepted. Atomic Apply arms the runtime first, mutates the structure second, revalidates every source/target after the change and restores/removes both pieces if verification fails.
+
+When historical identity is recovered through the 0.3.27 corrupted-slug ID fallback, the authoritative plan intentionally remains blocked. A damaged local `post_name` must not be converted into a redirect target; it first requires an explicit, reversible slug-repair operation.
 
 ### Operation History — Manager 0.3.22
 
@@ -193,6 +214,7 @@ The rendered gate is opt-in, same-site only, exact `get_permalink()`, no redirec
 17. Rendered verification uses only the exact same-site public permalink, stores no HTML body and never auto-rolls back solely because HTTP verification failed.
 18. Field Gate is inspection-only: it never creates an operation, writes content/permalinks, flushes rewrites or activates redirects.
 19. Semantic page resolution is inspection-only and never creates duplicate pages automatically.
+20. Historical post-ID fallback is allowed only for unequivocally migration-corrupted local slugs; it never authorizes permalink Apply while the damaged local `post_name` remains unrepaired.
 
 ## Authentication
 
@@ -200,32 +222,37 @@ Automation uses normal WordPress REST authentication with an authorized WordPres
 
 ## Current candidate
 
-- **SEO/GEO Manager `0.3.26`**.
+- **SEO/GEO Manager `0.3.27`**.
 - Build / Finish inspection and controlled structured writes are operational.
 - Exact historical permalink preservation and redirect-required migrations have separate guarded reversible paths.
 - Privacy-safe operation history and rendered post-write verification are operational.
 - Field Gate provides one read-only preflight before any real field mutation.
 - Semantic preset page resolution prevents false missing-page findings for safe existing equivalents on larger migrated sites.
+- Migration-corrupted slugs can be identified against same-ID historical WordPress posts without silently accepting ordinary slug mismatches.
+- The permalink planner blocks until every recovered corrupted local slug is repaired through a separate guarded operation.
+- Field Gate JSON copy/download actions stay disabled until valid evidence exists.
 - EMMAKE `/nuevaweb/` remains the first real field target before broader promotion.
 
 ### Real field sequence
 
 For the next EMMAKE field cycle:
 
-1. Keep the exact SEO/GEO Theme MF-08 candidate already selected for `/nuevaweb/`; replace/update only SEO/GEO Manager to **0.3.26**. Do **not** rerun Reset/hydration merely for this Manager correction.
+1. Keep the exact SEO/GEO Theme MF-08 candidate already selected for `/nuevaweb/`; replace/update only SEO/GEO Manager to **0.3.27**. Do **not** rerun Reset/hydration merely for this Manager correction.
 2. Open SEO/GEO Manager → **Field Gate · Build / Finish**.
 3. Set historical origin to `https://emmake.com/` and keep rendered verification enabled.
 4. Run the Field Gate once and retain its JSON evidence.
-5. Confirm that existing semantic equivalents are resolved instead of being proposed as duplicate missing pages.
-6. Do **not** mutate anything unless the evidence is reviewed and `guarded_write_eligible=true` for the relevant operation.
-7. If safe, perform one separately confirmed reversible permalink operation and retain Operation History/rollback evidence.
-8. Run the first real Theme-structured `Preview -> Apply -> stored verify -> rendered verify` cycle on an accepted published strategic page.
-9. Only after this field acceptance continue into provider write adapters and M3 SEO/GEO Optimizer.
+5. Confirm whether the historical authority now maps the full published-post inventory with zero missing entries and reports the previously damaged slugs under `recovered_by_id` rather than treating them as absent.
+6. Expect the authoritative permalink plan to remain blocked with `repair-corrupted-local-slugs-first` whenever `recovered_by_id_count > 0`; do **not** Apply permalinks or 301s at that point.
+7. Implement/review the next protected reversible local-slug repair slice using the verified historical slug evidence.
+8. Rerun Field Gate after that repair; only a fresh safe plan may unlock a separately confirmed reversible permalink operation.
+9. Run the first real Theme-structured `Preview -> Apply -> stored verify -> rendered verify` cycle on an accepted published strategic page.
+10. Only after this field acceptance continue into provider write adapters and M3 SEO/GEO Optimizer.
 
 ## Next implementation slices
 
-- real `/nuevaweb/` Manager 0.3.26 Field Gate evidence with historical origin supplied;
-- first accepted reversible real permalink operation, only if the field plan proves safe;
+- real `/nuevaweb/` Manager 0.3.27 Field Gate evidence with historical origin supplied;
+- guarded preview/apply/rollback for the narrowly identified migration-corrupted local `post_name` values;
+- fresh Field Gate after slug repair, then first accepted reversible real permalink operation only if the plan proves safe;
 - first real structured Build / Finish rendered-verification cycle;
 - provider-specific SEO metadata write adapters after field authority is confirmed;
 - creation manifests for new draft pages/posts;
