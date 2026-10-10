@@ -102,11 +102,24 @@
 		const raw = text( 'pre', '{}' );
 		raw.setAttribute( 'data-seo-geo-field-raw', '' );
 		details.appendChild( raw );
+
+		const evidenceActions = document.createElement( 'div' );
+		evidenceActions.className = 'seo-geo-manager-admin__actions';
+
 		const copyButton = text( 'button', 'Copiar JSON' );
 		copyButton.type = 'button';
 		copyButton.className = 'button button-secondary';
 		copyButton.setAttribute( 'data-seo-geo-field-copy', '' );
-		details.appendChild( copyButton );
+		evidenceActions.appendChild( copyButton );
+
+		const downloadButton = text( 'button', 'Descargar JSON' );
+		downloadButton.type = 'button';
+		downloadButton.className = 'button button-secondary';
+		downloadButton.disabled = true;
+		downloadButton.setAttribute( 'data-seo-geo-field-download', '' );
+		evidenceActions.appendChild( downloadButton );
+
+		details.appendChild( evidenceActions );
 		section.appendChild( details );
 
 		const rawAnchor = root.querySelector( '.seo-geo-manager-admin__raw' );
@@ -125,6 +138,7 @@
 		const metrics = panel.querySelector( '[data-seo-geo-field-metrics]' );
 		const decision = panel.querySelector( '[data-seo-geo-field-decision]' );
 		const raw = panel.querySelector( '[data-seo-geo-field-raw]' );
+		const downloadButton = panel.querySelector( '[data-seo-geo-field-download]' );
 
 		if ( metrics ) {
 			metrics.replaceChildren(
@@ -150,6 +164,25 @@
 		}
 
 		if ( raw ) raw.textContent = JSON.stringify( report, null, 2 );
+		if ( downloadButton ) downloadButton.disabled = false;
+	}
+
+	function downloadJson( raw, status ) {
+		const json = raw.textContent || '{}';
+		const blob = new Blob( [ json ], { type: 'application/json;charset=utf-8' } );
+		const url = URL.createObjectURL( blob );
+		const link = document.createElement( 'a' );
+		const host = ( window.location.hostname || 'wordpress' ).replace( /[^a-z0-9.-]+/gi, '-' );
+		const stamp = new Date().toISOString().replace( /[:.]/g, '-' );
+
+		link.href = url;
+		link.download = `seo-geo-field-gate-${ host }-${ stamp }.json`;
+		link.style.display = 'none';
+		document.body.appendChild( link );
+		link.click();
+		link.remove();
+		URL.revokeObjectURL( url );
+		status.textContent = 'JSON del Field Gate descargado.';
 	}
 
 	const panel = buildPanel();
@@ -159,10 +192,12 @@
 	const status = panel.querySelector( '[data-seo-geo-field-status]' );
 	const raw = panel.querySelector( '[data-seo-geo-field-raw]' );
 	const copyButton = panel.querySelector( '[data-seo-geo-field-copy]' );
-	if ( ! run || ! legacy || ! rendered || ! status || ! raw || ! copyButton ) return;
+	const downloadButton = panel.querySelector( '[data-seo-geo-field-download]' );
+	if ( ! run || ! legacy || ! rendered || ! status || ! raw || ! copyButton || ! downloadButton ) return;
 
 	async function execute() {
 		run.disabled = true;
+		downloadButton.disabled = true;
 		status.textContent = 'Ejecutando preflight de solo lectura…';
 		try {
 			const params = new URLSearchParams();
@@ -185,7 +220,10 @@
 			await navigator.clipboard.writeText( raw.textContent || '{}' );
 			status.textContent = 'JSON del Field Gate copiado.';
 		} catch ( error ) {
-			status.textContent = 'No se pudo copiar automáticamente. Abre la evidencia JSON y cópiala manualmente.';
+			status.textContent = 'No se pudo copiar automáticamente. Usa “Descargar JSON” para guardar la evidencia como archivo.';
 		}
+	} );
+	downloadButton.addEventListener( 'click', function () {
+		downloadJson( raw, status );
 	} );
 }() );
