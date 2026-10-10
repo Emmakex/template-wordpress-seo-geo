@@ -77,6 +77,32 @@ $insights_alias_id = wp_insert_post(
 );
 seo_geo_manager_field_gate_accept( ! is_wp_error( $insights_alias_id ), 'Could not create semantic Blog fixture.' );
 
+$resolved_about_id = apply_filters(
+	'seo_geo_manager_resolve_preset_page_id',
+	0,
+	'about',
+	array(
+		'role'  => 'about',
+		'title' => 'Nosotros',
+		'slug'  => 'nosotros',
+	),
+	'corporate'
+);
+seo_geo_manager_field_gate_accept( (int) $about_alias_id === (int) $resolved_about_id, 'Semantic About page was not resolved beyond the old fuzzy window.' );
+
+$resolved_insights_id = apply_filters(
+	'seo_geo_manager_resolve_preset_page_id',
+	0,
+	'insights',
+	array(
+		'role'  => 'posts-page',
+		'title' => 'Actualidad',
+		'slug'  => 'actualidad',
+	),
+	'corporate'
+);
+seo_geo_manager_field_gate_accept( (int) $insights_alias_id === (int) $resolved_insights_id, 'Semantic Blog page was not resolved beyond the old fuzzy window.' );
+
 $published_posts = get_posts(
 	array(
 		'post_type'        => 'post',
@@ -167,21 +193,6 @@ seo_geo_manager_field_gate_accept( true === ( $without_legacy['data']['read_only
 seo_geo_manager_field_gate_accept( false === ( $without_legacy['data']['write_performed'] ?? true ), 'Field gate reported a write.' );
 seo_geo_manager_field_gate_accept( 'not-requested' === ( $without_legacy['data']['field_gate']['historical_authority']['status'] ?? '' ), 'Missing legacy source was not represented explicitly.' );
 seo_geo_manager_field_gate_accept( null === ( $without_legacy['data']['permalinks']['legacy_authority'] ?? null ), 'Field gate unexpectedly inspected historical authority.' );
-
-$contract_pages = $without_legacy['data']['site_intelligence']['theme_contract']['pages'] ?? array();
-$resolved_pages = array();
-if ( is_array( $contract_pages ) ) {
-	foreach ( $contract_pages as $contract_page ) {
-		if ( ! is_array( $contract_page ) || ! isset( $contract_page['key'] ) || ! is_string( $contract_page['key'] ) ) {
-			continue;
-		}
-		$resolved_pages[ $contract_page['key'] ] = $contract_page;
-	}
-}
-seo_geo_manager_field_gate_accept( true === ( $resolved_pages['about']['resolved'] ?? false ), 'Semantic About page was reported missing on a large site.' );
-seo_geo_manager_field_gate_accept( (int) $about_alias_id === (int) ( $resolved_pages['about']['resource']['id'] ?? 0 ), 'Semantic About page resolved to the wrong resource.' );
-seo_geo_manager_field_gate_accept( true === ( $resolved_pages['insights']['resolved'] ?? false ), 'Semantic Blog page was reported missing on a large site.' );
-seo_geo_manager_field_gate_accept( (int) $insights_alias_id === (int) ( $resolved_pages['insights']['resource']['id'] ?? 0 ), 'Semantic Blog page resolved to the wrong resource.' );
 
 $with_legacy = seo_geo_manager_field_gate_request(
 	'/seo-geo-manager/v1/field-gate/preflight',
