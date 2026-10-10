@@ -17,6 +17,7 @@ on:
       - 'scripts/ci/seo-geo-manager-field-gate-acceptance.php'
       - 'scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-clean-target-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-clean-target-atomic-regression.php'
       - 'scripts/ci/seo-geo-manager-slug-repair-acceptance.php'
       - 'scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
@@ -39,6 +40,7 @@ on:
       - 'scripts/ci/seo-geo-manager-field-gate-acceptance.php'
       - 'scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-clean-target-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-clean-target-atomic-regression.php'
       - 'scripts/ci/seo-geo-manager-slug-repair-acceptance.php'
       - 'scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.sh'
@@ -77,6 +79,8 @@ jobs:
           php -l scripts/ci/seo-geo-manager-field-gate-acceptance.php
           php -l scripts/ci/seo-geo-manager-corrupted-slug-authority-acceptance.php
           php -l scripts/ci/seo-geo-manager-clean-target-acceptance.php
+          php -l scripts/ci/seo-geo-manager-clean-target-atomic-regression.php
+          php scripts/ci/seo-geo-manager-clean-target-atomic-regression.php
           php -l scripts/ci/seo-geo-manager-slug-repair-acceptance.php
           php -l scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php
           php scripts/ci/seo-geo-manager-focused-finish-ui-acceptance.php
