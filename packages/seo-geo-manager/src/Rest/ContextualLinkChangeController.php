@@ -41,16 +41,6 @@ final class ContextualLinkChangeController {
 		);
 		register_rest_route(
 			self::NAMESPACE,
-			'/links/contextual/changes/(?P<operation_id>[a-f0-9\-]{36})',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( self::class, 'show' ),
-				'permission_callback' => array( self::class, 'can_write' ),
-				'args'                => array( 'operation_id' => array( 'sanitize_callback' => 'sanitize_text_field' ) ),
-			)
-		);
-		register_rest_route(
-			self::NAMESPACE,
 			'/links/contextual/changes/(?P<operation_id>[a-f0-9\-]{36})/rollback',
 			array(
 				'methods'             => 'POST',
@@ -100,19 +90,6 @@ final class ContextualLinkChangeController {
 			}
 		}
 		return new WP_REST_Response( $result, 200 );
-	}
-
-	/** @return WP_REST_Response|WP_Error */
-	public static function show( WP_REST_Request $request ) {
-		$operation = OperationStore::get( (string) $request->get_param( 'operation_id' ) );
-		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
-			return new WP_Error( 'seo_geo_manager_contextual_link_operation_not_found', 'Contextual-link operation not found.', array( 'status' => 404 ) );
-		}
-		$source_id = isset( $operation['source_id'] ) ? absint( $operation['source_id'] ) : 0;
-		if ( 1 > $source_id || ! current_user_can( 'edit_post', $source_id ) ) {
-			return new WP_Error( 'seo_geo_manager_forbidden', 'You cannot inspect this contextual-link operation.', array( 'status' => 403 ) );
-		}
-		return new WP_REST_Response( $operation, 200 );
 	}
 
 	/** @return WP_REST_Response|WP_Error */
