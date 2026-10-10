@@ -14,6 +14,7 @@ on:
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-theme-model-read-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
       - 'scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php'
@@ -43,6 +44,7 @@ on:
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-theme-model-read-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
       - 'scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php'
@@ -68,7 +70,7 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: C1-C4 + capability/auth + Theme + SEO authority + guarded field operations
+    name: C1-C5 + capability/auth + Theme + SEO authority + guarded field operations
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -89,6 +91,7 @@ jobs:
           php -l scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php
           php -l scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
+          php -l scripts/ci/seo-geo-manager-theme-model-read-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
           php -l scripts/ci/seo-geo-manager-permalink-acceptance.php
           php -l scripts/ci/seo-geo-manager-redirect-runtime-acceptance.php
