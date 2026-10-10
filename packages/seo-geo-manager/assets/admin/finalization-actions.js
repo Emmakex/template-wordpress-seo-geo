@@ -12,6 +12,12 @@
 	const raw = root.querySelector( '[data-seo-geo-field-raw]' );
 	if ( ! slot || ! raw ) return;
 
+	const technicalBody = root.querySelector( '.seo-geo-manager-admin__technical-body' );
+	const fieldEvidence = raw.closest( '.seo-geo-manager-admin__raw' );
+	if ( technicalBody && fieldEvidence && fieldEvidence.parentElement !== technicalBody ) {
+		technicalBody.appendChild( fieldEvidence );
+	}
+
 	let latestReport = null;
 
 	function text( tag, value, className ) {
@@ -27,6 +33,22 @@
 		node.appendChild( text( 'span', label ) );
 		node.appendChild( text( 'strong', value ) );
 		return node;
+	}
+
+	function verificationMessage( error ) {
+		const labels = {
+			'authoritative-structure-verification-failed': 'la estructura o el modo SEO/GEO revalidado no coincide con el plan aprobado',
+			'authoritative-redirect-map-changed': 'el mapa 301 cambió durante la operación',
+			'redirect-runtime-verification-failed': 'el runtime 301 no quedó activo con la identidad esperada',
+			'redirect-runtime-invalid-row': 'el runtime contiene una fila de redirección no válida',
+			'redirect-resolution-mismatch': 'una URL histórica no resolvió al destino 301 esperado'
+		};
+		const codes = Array.isArray( error?.data?.verification ) ? error.data.verification : [];
+		if ( ! codes.length ) return error && error.message ? error.message : 'No se pudo completar la operación atómica.';
+
+		const detail = codes.map( ( code ) => labels[ code ] || code ).join( '; ' );
+		const operation = error?.data?.operation_id ? ` · operación ${ error.data.operation_id }` : '';
+		return `${ error.message || 'La operación falló y fue revertida.' } Motivo: ${ detail }${ operation }.`;
 	}
 
 	function rerunButton() {
@@ -169,7 +191,7 @@
 				} catch ( error ) {
 					apply.disabled = false;
 					previewButton.disabled = false;
-					status.textContent = error && error.message ? error.message : 'No se pudo completar la operación atómica.';
+					status.textContent = verificationMessage( error );
 				}
 			} );
 		} catch ( error ) {
