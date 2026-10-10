@@ -30,6 +30,10 @@ parameters:
       path: packages/seo-geo-manager/src/Intelligence/ThemeContractScanner.php
       count: 2
     -
+      message: '#Parameter \#1 \$callback of function call_user_func expects callable\(\): mixed, .* given\.#'
+      path: packages/seo-geo-manager/src/Intelligence/ThemeModelReader.php
+      count: 1
+    -
       message: '#Call to function is_callable\(\) with .* will always evaluate to false\.#'
       path: packages/seo-geo-manager/src/Changes/ThemeStructuredContentAdapter.php
       count: 1
