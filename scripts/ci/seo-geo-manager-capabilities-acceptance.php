@@ -3,9 +3,9 @@
  * Runtime acceptance for SEO/GEO Manager capability discovery.
  *
  * Executed with WP-CLI eval-file inside the Manager WordPress fixture.
+ * WP-CLI evaluates this file inside its own wrapper, so a strict_types
+ * declaration cannot be used here.
  */
-
-declare(strict_types=1);
 
 if ( ! defined( 'ABSPATH' ) ) {
 	throw new RuntimeException( 'WordPress is not loaded.' );
@@ -133,14 +133,14 @@ seo_geo_manager_capabilities_assert_no_secret_keys( $admin_data );
 
 echo wp_json_encode(
 	array(
-		'ok'               => true,
-		'schema_version'   => 1,
-		'anonymous_status' => $anonymous['status'],
-		'subscriber_status'=> $subscriber_response['status'],
-		'editor_status'    => $editor_response['status'],
-		'admin_status'     => $admin_response['status'],
-		'least_privilege'  => true,
-		'secrets_returned' => false,
+		'ok'                => true,
+		'schema_version'    => 1,
+		'anonymous_status'  => $anonymous['status'],
+		'subscriber_status' => $subscriber_response['status'],
+		'editor_status'     => $editor_response['status'],
+		'admin_status'      => $admin_response['status'],
+		'least_privilege'   => true,
+		'secrets_returned'  => false,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
