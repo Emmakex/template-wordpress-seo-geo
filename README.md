@@ -231,6 +231,8 @@ Start here:
 - `docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md`;
 - `docs/RESET_REBUILD_CONTRACT.md`;
 - `docs/REPLATFORMING_CONTRACT.md`;
+- `docs/CLIENT_INSTALLATION.md`;
+- `docs/CLIENT_CLONING.md`;
 - `docs/MIGRATION_BRIDGE.md` — historical/technical migration implementation evidence;
 - `docs/ROADMAP.md` — historical phase evidence.
 
