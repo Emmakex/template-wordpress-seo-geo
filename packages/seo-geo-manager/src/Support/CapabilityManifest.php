@@ -21,14 +21,14 @@ final class CapabilityManifest {
 	public static function build(): array {
 		$user = wp_get_current_user();
 
-		$can_edit_posts        = current_user_can( 'edit_posts' );
-		$can_publish_posts     = current_user_can( 'publish_posts' );
-		$can_edit_pages        = current_user_can( 'edit_pages' );
-		$can_publish_pages     = current_user_can( 'publish_pages' );
-		$can_upload_files      = current_user_can( 'upload_files' );
-		$can_edit_theme        = current_user_can( 'edit_theme_options' );
-		$can_manage_categories = current_user_can( 'manage_categories' );
-		$can_manage_options    = current_user_can( 'manage_options' );
+		$can_edit_posts          = current_user_can( 'edit_posts' );
+		$can_publish_posts       = current_user_can( 'publish_posts' );
+		$can_edit_pages          = current_user_can( 'edit_pages' );
+		$can_publish_pages       = current_user_can( 'publish_pages' );
+		$can_upload_files        = current_user_can( 'upload_files' );
+		$can_edit_theme          = current_user_can( 'edit_theme_options' );
+		$can_manage_categories   = current_user_can( 'manage_categories' );
+		$can_manage_options      = current_user_can( 'manage_options' );
 		$app_passwords_supported = function_exists( 'wp_is_application_passwords_supported' )
 			? wp_is_application_passwords_supported()
 			: false;
@@ -66,6 +66,8 @@ final class CapabilityManifest {
 				'site_intelligence'         => self::capability( $can_edit_posts, 'edit_posts' ),
 				'content_read'              => self::capability( $can_edit_posts, 'edit_posts' ),
 				'content_change_set'        => self::capability( $can_edit_posts, 'edit_posts' ),
+				'post_create'               => self::capability( $can_edit_posts, 'edit_posts' ),
+				'page_create'               => self::capability( $can_edit_pages, 'edit_pages' ),
 				'theme_structured_content'  => self::capability( $can_edit_posts, 'edit_posts' ),
 				'navigation_change_set'     => self::capability( $can_edit_theme, 'edit_theme_options' ),
 				'media_write'               => self::capability( $can_upload_files, 'upload_files' ),
@@ -79,6 +81,9 @@ final class CapabilityManifest {
 			),
 			'operations'     => self::operations(
 				$can_edit_posts,
+				$can_edit_pages,
+				$can_publish_posts,
+				$can_publish_pages,
 				$can_edit_theme,
 				$can_manage_options
 			),
@@ -109,7 +114,17 @@ final class CapabilityManifest {
 	/**
 	 * @return array<string, array<string, mixed>>
 	 */
-	private static function operations( bool $can_edit_posts, bool $can_edit_theme, bool $can_manage_options ): array {
+	private static function operations(
+		bool $can_edit_posts,
+		bool $can_edit_pages,
+		bool $can_publish_posts,
+		bool $can_publish_pages,
+		bool $can_edit_theme,
+		bool $can_manage_options
+	): array {
+		$can_create_content  = $can_edit_posts || $can_edit_pages;
+		$can_publish_content = $can_publish_posts || $can_publish_pages;
+
 		return array(
 			'inspect.site' => array(
 				'available' => $can_edit_posts,
@@ -134,6 +149,30 @@ final class CapabilityManifest {
 				'method'    => 'POST',
 				'path'      => '/changes/apply',
 				'risk'      => 'mutation',
+			),
+			'content.create.preview' => array(
+				'available' => $can_create_content,
+				'method'    => 'POST',
+				'path'      => '/content/resources/preview',
+				'risk'      => 'read-only-preview',
+			),
+			'content.create.apply' => array(
+				'available' => $can_create_content,
+				'method'    => 'POST',
+				'path'      => '/content/resources/apply',
+				'risk'      => 'mutation',
+			),
+			'content.publication.preview' => array(
+				'available' => $can_publish_content,
+				'method'    => 'POST',
+				'path'      => '/content/{id}/publication/preview',
+				'risk'      => 'read-only-preview',
+			),
+			'content.publication.apply' => array(
+				'available' => $can_publish_content,
+				'method'    => 'POST',
+				'path'      => '/content/{id}/publication/apply',
+				'risk'      => 'publication-mutation',
 			),
 			'theme.preview' => array(
 				'available' => $can_edit_posts,
