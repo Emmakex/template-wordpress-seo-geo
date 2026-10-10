@@ -80,6 +80,7 @@ jobs:
           node --check packages/seo-geo-manager/assets/admin/json-export-actions.js
           node --check packages/seo-geo-manager/assets/admin/correction-actions.js
           node --check packages/seo-geo-manager/assets/admin/permalink-actions.js
+          node --check packages/seo-geo-manager/assets/admin/slug-repair-actions.js
           node --check packages/seo-geo-manager/assets/admin/operation-history.js
           node --check packages/seo-geo-manager/assets/admin/field-gate.js
 
