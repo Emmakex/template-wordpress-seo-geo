@@ -73,6 +73,7 @@ final class CapabilityManifest {
 				'theme_structured_content'  => self::capability( $can_edit_posts, 'edit_posts' ),
 				'navigation_change_set'     => self::capability( $can_edit_theme, 'edit_theme_options' ),
 				'contextual_link_read'      => self::capability( $can_read_links, 'edit_pages|edit_posts' ),
+				'contextual_link_write'     => self::capability( $can_read_links, 'edit_pages|edit_posts + edit_post(source)' ),
 				'media_read'                => self::capability( $can_upload_files, 'upload_files' ),
 				'media_write'               => self::capability( $can_upload_files, 'upload_files' ),
 				'taxonomy_management'       => self::capability( $can_manage_categories, 'manage_categories' ),
@@ -182,25 +183,29 @@ final class CapabilityManifest {
 				'path'      => '/content/{id}/publication/apply',
 				'risk'      => 'publication-mutation',
 			),
-			'theme.models.list' => array(
+		
+'theme.models.list' => array(
 				'available' => $can_read_models,
 				'method'    => 'GET',
 				'path'      => '/theme/models',
 				'risk'      => 'read-only',
 			),
-			'theme.models.read' => array(
+		
+'theme.models.read' => array(
 				'available' => $can_read_models,
 				'method'    => 'GET',
 				'path'      => '/theme/models/{model_id}',
 				'risk'      => 'read-only',
 			),
-			'theme.preview' => array(
+		
+'theme.preview' => array(
 				'available' => $can_edit_posts,
 				'method'    => 'POST',
 				'path'      => '/theme/structured/preview',
 				'risk'      => 'read-only-preview',
 			),
-			'theme.apply' => array(
+		
+'theme.apply' => array(
 				'available' => $can_edit_posts,
 				'method'    => 'POST',
 				'path'      => '/theme/structured/apply',
@@ -223,6 +228,24 @@ final class CapabilityManifest {
 				'method'    => 'GET',
 				'path'      => '/links/contextual',
 				'risk'      => 'read-only',
+			),
+			'links.contextual.preview' => array(
+				'available' => $can_read_links,
+				'method'    => 'POST',
+				'path'      => '/links/contextual/changes/preview',
+				'risk'      => 'read-only-preview',
+			),
+			'links.contextual.apply' => array(
+				'available' => $can_read_links,
+				'method'    => 'POST',
+				'path'      => '/links/contextual/changes/apply',
+				'risk'      => 'mutation',
+			),
+			'links.contextual.rollback' => array(
+				'available' => $can_read_links,
+				'method'    => 'POST',
+				'path'      => '/links/contextual/changes/{operation_id}/rollback',
+				'risk'      => 'rollback-mutation',
 			),
 			'media.list' => array(
 				'available' => $can_upload_files,
