@@ -71,7 +71,7 @@ HTTPS
 
 Browser-admin calls continue using the logged-in WordPress session and REST nonce protections.
 
-The capability endpoint declares supported authentication policy but never returns or creates credentials.
+The capability endpoint declares the actual WordPress Application Password support/availability observed for the current principal but never returns or creates credentials.
 
 ## Capability families
 
@@ -157,8 +157,14 @@ C2 is not fully closed by 0.3.34. Remaining acceptance work includes:
 
 - explicit real HTTPS Application Password field connection on a client/sandbox installation;
 - least-privilege operator-role acceptance rather than administrator-only acceptance;
-- revocation verification;
+- credential revocation verification;
 - bounded remote-auth failure behavior;
 - final remote-operation runbook.
 
 No autonomous SEO/content intelligence is added to WordPress in this slice.
+
+## EMMAKE installation boundary
+
+Do **not** replace the currently installed 0.3.33 on `/nuevaweb/` merely because 0.3.34 exists in the development branch.
+
+0.3.33 remains the field candidate for the pending final permalink/301 UI cycle. 0.3.34 should be installed on EMMAKE only after its repository CI is green and we intentionally move the field pilot to the remote-control/capability acceptance phase.
