@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Support;
@@ -29,6 +28,7 @@ final class CapabilityManifest {
 		$can_edit_theme          = current_user_can( 'edit_theme_options' );
 		$can_manage_categories   = current_user_can( 'manage_categories' );
 		$can_manage_options      = current_user_can( 'manage_options' );
+		$can_read_links          = $can_edit_posts || $can_edit_pages;
 		$app_passwords_supported = function_exists( 'wp_is_application_passwords_supported' )
 			? wp_is_application_passwords_supported()
 			: false;
@@ -71,6 +71,8 @@ final class CapabilityManifest {
 				'theme_model_read'          => self::capability( $can_edit_pages || $can_edit_posts, 'edit_pages|edit_posts' ),
 				'theme_structured_content'  => self::capability( $can_edit_posts, 'edit_posts' ),
 				'navigation_change_set'     => self::capability( $can_edit_theme, 'edit_theme_options' ),
+				'contextual_link_read'      => self::capability( $can_read_links, 'edit_pages|edit_posts' ),
+				'media_read'                => self::capability( $can_upload_files, 'upload_files' ),
 				'media_write'               => self::capability( $can_upload_files, 'upload_files' ),
 				'taxonomy_management'       => self::capability( $can_manage_categories, 'manage_categories' ),
 				'post_publish'              => self::capability( $can_publish_posts, 'publish_posts' ),
@@ -85,6 +87,7 @@ final class CapabilityManifest {
 				$can_edit_pages,
 				$can_publish_posts,
 				$can_publish_pages,
+				$can_upload_files,
 				$can_edit_theme,
 				$can_manage_options
 			),
@@ -120,12 +123,14 @@ final class CapabilityManifest {
 		bool $can_edit_pages,
 		bool $can_publish_posts,
 		bool $can_publish_pages,
+		bool $can_upload_files,
 		bool $can_edit_theme,
 		bool $can_manage_options
 	): array {
 		$can_create_content  = $can_edit_posts || $can_edit_pages;
 		$can_publish_content = $can_publish_posts || $can_publish_pages;
 		$can_read_models     = $can_edit_posts || $can_edit_pages;
+		$can_read_links      = $can_edit_posts || $can_edit_pages;
 
 		return array(
 			'inspect.site' => array(
@@ -211,6 +216,24 @@ final class CapabilityManifest {
 				'method'    => 'POST',
 				'path'      => '/navigation/changes/apply',
 				'risk'      => 'mutation',
+			),
+			'links.contextual.read' => array(
+				'available' => $can_read_links,
+				'method'    => 'GET',
+				'path'      => '/links/contextual',
+				'risk'      => 'read-only',
+			),
+			'media.list' => array(
+				'available' => $can_upload_files,
+				'method'    => 'GET',
+				'path'      => '/media',
+				'risk'      => 'read-only',
+			),
+			'media.read' => array(
+				'available' => $can_upload_files,
+				'method'    => 'GET',
+				'path'      => '/media/{media_id}',
+				'risk'      => 'read-only',
 			),
 			'operations.read' => array(
 				'available' => $can_edit_posts,

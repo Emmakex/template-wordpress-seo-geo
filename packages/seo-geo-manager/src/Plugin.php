@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager;
@@ -20,8 +19,10 @@ use SeoGeo\Manager\Rest\CapabilitiesController;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
 use SeoGeo\Manager\Rest\ContentLifecycleController;
+use SeoGeo\Manager\Rest\ContextualLinkController;
 use SeoGeo\Manager\Rest\FieldGateController;
 use SeoGeo\Manager\Rest\HealthController;
+use SeoGeo\Manager\Rest\MediaReferenceController;
 use SeoGeo\Manager\Rest\NavigationChangeController;
 use SeoGeo\Manager\Rest\OperationHistoryController;
 use SeoGeo\Manager\Rest\PermalinkController;
@@ -61,6 +62,8 @@ final class Plugin {
 				ContentLifecycleController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
+				ContextualLinkController::register_routes();
+				MediaReferenceController::register_routes();
 				FieldGateController::register_routes();
 				ChangeSetController::register_routes();
 				NavigationChangeController::register_routes();
