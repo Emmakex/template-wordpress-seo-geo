@@ -179,19 +179,22 @@ The Manager's commercial value is not that it contains our entire intelligence. 
 
 ## C0 — Product boundary freeze
 
-Status: **current architectural decision**.
+Status: **complete**.
 
-Required:
+Completed:
 
 - Manager documented as bridge/control agent;
 - no migration-product absorption requirement;
 - no requirement to embed autonomous SEO/content strategy;
 - Theme/Manager independence;
-- external orchestration contract documented.
+- external orchestration contract documented;
+- documentation precedence and CI anti-drift contract established.
 
 ## C1 — Site Intelligence / eyes
 
-Manager must expose machine-readable current state for remote use:
+Status: **implemented foundation; field acceptance continues**.
+
+Manager exposes machine-readable current state for remote use:
 
 - site/environment identity;
 - WordPress/PHP/runtime;
@@ -213,6 +216,8 @@ External orchestration can understand a supported client's real current WordPres
 
 ## C2 — Authentication / capability contract
 
+Status: **in progress — 0.3.34 capability-discovery slice implemented**.
+
 Required:
 
 - scoped authenticated remote identity;
@@ -225,11 +230,34 @@ Required:
 - bounded requests/responses;
 - no generic remote shell.
 
+### Implemented in 0.3.34
+
+- authenticated `GET /capabilities`;
+- current principal ID without credential reflection;
+- per-capability availability;
+- required WordPress capability per family;
+- semantic operation discovery;
+- operation risk classification;
+- actual WordPress Application Password support/availability reporting;
+- explicit HTTPS/revocation/no-shell safety declarations;
+- current environment safety contract;
+- CI contract protecting capability-discovery semantics.
+
+### Remaining before C2 closes
+
+- real HTTPS Application Password connection against a client/sandbox Manager installation;
+- dedicated least-privilege remote operator acceptance;
+- credential revocation acceptance;
+- bounded unauthenticated/insufficient-capability failure acceptance;
+- remote-operation runbook.
+
 ### Exit criterion
 
 We can connect to a client WordPress safely enough to use it as an operational API rather than sharing full admin credentials for every routine task.
 
 ## C3 — Generic change-set engine / hands
+
+Status: **substantial M2 foundation already implemented; generalization continues after C2 field acceptance**.
 
 Required generic contract:
 
@@ -429,73 +457,49 @@ The existing URL/permalink/slug work remains valid because launch readiness requ
 
 However:
 
-- we finish the **minimum real EMMAKE URL/301 transition** with the existing guarded machinery;
-- we do not keep expanding permalink/migration edge-case intelligence as the main Manager roadmap;
-- after that field gate is accepted, Manager work returns to the generic control primitives in Track C;
-- Theme and Manager field acceptance continue independently;
-- external Build / Finish becomes the first full operating workflow.
+- it is a bounded field-safety slice, not the product center;
+- do not keep expanding historical migration modeling inside Manager merely because another edge case can be imagined;
+- close the real EMMAKE transition with the already-built guarded machinery;
+- preserve reusable safety primitives;
+- send new migration/rescue/clone requirements to Migration Bridge;
+- continue Manager through C2/C3/C4 generic remote-control capabilities.
 
-## EMMAKE sequence from here
+0.3.33 remains the final migration-specific Field Gate UI correction. 0.3.34 starts the generic remote-control capability line.
+
+---
+
+# Commercial packaging target
+
+The repository should ultimately produce three independently versioned installable artifacts:
 
 ```text
-1. Close current safe permalink/301 operation.
-2. Re-run final site evidence.
-3. Freeze that migration-specific Manager slice.
-4. Complete remaining Corporate launch-readiness issues.
-5. Stabilize remote Manager API/control primitives.
-6. Operate EMMAKE from external orchestration rather than growing wp-admin into the brain.
-7. Prove Optimize.
-8. Prove landing creation.
-9. Prove automated blog publication.
-10. Connect measurement/growth signals.
+seo-geo-migration-bridge-x.y.z.zip
+seo-geo-theme-x.y.z.zip
+seo-geo-manager-x.y.z.zip
 ```
 
----
+They may be sold:
 
-# Three-product commercial readiness matrix
+- separately;
+- as migration + redesign bundle;
+- as Theme + managed operations bundle;
+- as complete Bridge + Theme + Manager stack;
+- Manager-only for supported existing WordPress clients.
 
-## Migration Bridge sellable when
-
-- installable artifact exists;
-- clone/export/import/rescue/reset/cutover path is accepted;
-- privacy/safety evidence exists;
-- operator documentation is clear;
-- no Theme/Manager purchase is required for a valid supported migration engagement.
-
-## Theme sellable when
-
-- deterministic installable artifact exists;
-- baseline requires zero SEO/GEO plugins;
-- preset rendering contracts are accepted;
-- SEO/GEO/accessibility/performance gates pass;
-- client installation/update/rollback is documented.
-
-## Manager sellable when
-
-- deterministic installable artifact exists;
-- secure remote authentication works;
-- Site Intelligence is reliable;
-- generic preview/apply/verify/rollback works;
-- WordPress content operations work;
-- Theme model operations work when Theme is present;
-- supported non-Theme path exists;
-- operation history/evidence is accepted;
-- no client-specific hardcoding exists.
+External orchestration/services may be commercialized separately as managed SEO/GEO/content/growth operations.
 
 ---
 
-# Drift alarms
+# Anti-drift review
 
-Stop and re-evaluate when any of these happens:
+Before merging any substantial new feature, reviewers must answer:
 
-- one Manager edge case generates many versions without improving generic remote control;
-- wp-admin starts becoming the primary research/content strategy application;
-- Manager starts duplicating Theme rendering responsibilities;
-- Manager starts absorbing complete Migration Bridge workflows without a compelling shared-primitive reason;
-- Theme begins depending on Manager for normal public rendering;
-- client-specific URLs/business rules enter generic product code;
-- external intelligence improvements require unnecessary plugin releases;
-- Gutenberg layout trees become canonical strategic models;
-- a feature cannot be clearly assigned to Bridge, Theme, Manager or external orchestration.
+1. Which of the three products owns it?
+2. Is it actually intelligence that belongs outside WordPress?
+3. Does it hardcode a field-client workaround instead of creating a reusable contract?
+4. Does it duplicate a responsibility another product already owns?
+5. Does it make WordPress frontend rendering depend on a remote control service?
+6. Does it weaken preview/idempotency/verification/rollback safety?
+7. Does it preserve independent installability?
 
-When a drift alarm fires, return to `docs/THREE_PRODUCT_OPERATING_MODEL.md` before coding further.
+If ownership cannot be answered cleanly, stop and re-evaluate before implementation.
