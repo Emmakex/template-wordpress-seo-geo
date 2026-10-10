@@ -34,6 +34,49 @@ function seo_geo_manager_field_gate_request( string $route, array $query = array
 wp_set_current_user( 1 );
 seo_geo_manager_field_gate_accept( current_user_can( 'manage_options' ), 'Acceptance administrator could not be loaded.' );
 
+/*
+ * Reproduce a migrated real-world site whose strategic pages sit beyond the
+ * old 100-page fuzzy window. The resolver must recognize semantic equivalents
+ * instead of telling Build / Finish to create duplicate pages.
+ */
+for ( $index = 1; $index <= 120; ++$index ) {
+	$filler_id = wp_insert_post(
+		array(
+			'post_type'    => 'page',
+			'post_status'  => 'publish',
+			'post_title'   => 'Legacy Page ' . $index,
+			'post_name'    => 'legacy-page-' . $index,
+			'post_content' => '<p>Legacy field fixture.</p>',
+		),
+		true
+	);
+	seo_geo_manager_field_gate_accept( ! is_wp_error( $filler_id ), 'Could not create large-site filler page.' );
+}
+
+$about_alias_id = wp_insert_post(
+	array(
+		'post_type'    => 'page',
+		'post_status'  => 'publish',
+		'post_title'   => 'Sobre Nosotros',
+		'post_name'    => 'sobre-nosotros',
+		'post_content' => '<p>Existing organization page.</p>',
+	),
+	true
+);
+seo_geo_manager_field_gate_accept( ! is_wp_error( $about_alias_id ), 'Could not create semantic About fixture.' );
+
+$insights_alias_id = wp_insert_post(
+	array(
+		'post_type'    => 'page',
+		'post_status'  => 'publish',
+		'post_title'   => 'Blog',
+		'post_name'    => 'blog',
+		'post_content' => '<p>Existing editorial index.</p>',
+	),
+	true
+);
+seo_geo_manager_field_gate_accept( ! is_wp_error( $insights_alias_id ), 'Could not create semantic Blog fixture.' );
+
 $published_posts = get_posts(
 	array(
 		'post_type'        => 'post',
@@ -125,6 +168,21 @@ seo_geo_manager_field_gate_accept( false === ( $without_legacy['data']['write_pe
 seo_geo_manager_field_gate_accept( 'not-requested' === ( $without_legacy['data']['field_gate']['historical_authority']['status'] ?? '' ), 'Missing legacy source was not represented explicitly.' );
 seo_geo_manager_field_gate_accept( null === ( $without_legacy['data']['permalinks']['legacy_authority'] ?? null ), 'Field gate unexpectedly inspected historical authority.' );
 
+$contract_pages = $without_legacy['data']['site']['theme_contract']['pages'] ?? array();
+$resolved_pages = array();
+if ( is_array( $contract_pages ) ) {
+	foreach ( $contract_pages as $contract_page ) {
+		if ( ! is_array( $contract_page ) || ! isset( $contract_page['key'] ) || ! is_string( $contract_page['key'] ) ) {
+			continue;
+		}
+		$resolved_pages[ $contract_page['key'] ] = $contract_page;
+	}
+}
+seo_geo_manager_field_gate_accept( true === ( $resolved_pages['about']['resolved'] ?? false ), 'Semantic About page was reported missing on a large site.' );
+seo_geo_manager_field_gate_accept( (int) $about_alias_id === (int) ( $resolved_pages['about']['resource']['id'] ?? 0 ), 'Semantic About page resolved to the wrong resource.' );
+seo_geo_manager_field_gate_accept( true === ( $resolved_pages['insights']['resolved'] ?? false ), 'Semantic Blog page was reported missing on a large site.' );
+seo_geo_manager_field_gate_accept( (int) $insights_alias_id === (int) ( $resolved_pages['insights']['resource']['id'] ?? 0 ), 'Semantic Blog page resolved to the wrong resource.' );
+
 $with_legacy = seo_geo_manager_field_gate_request(
 	'/seo-geo-manager/v1/field-gate/preflight',
 	array(
@@ -173,15 +231,16 @@ wp_set_current_user( 1 );
 wp_delete_user( (int) $editor_id );
 
 $result = array(
-	'ok'                     => true,
-	'read_only'              => true,
-	'no_operation_created'   => true,
-	'permalink_unchanged'    => true,
-	'historical_authority'   => true,
-	'direct_plan_ready'      => true,
-	'administrator_only'     => true,
-	'build_finish_status'    => $data['field_gate']['build_finish']['status'] ?? '',
-	'guarded_write_eligible' => true === ( $data['field_gate']['guarded_write_eligible'] ?? false ),
+	'ok'                         => true,
+	'read_only'                  => true,
+	'no_operation_created'       => true,
+	'permalink_unchanged'        => true,
+	'historical_authority'       => true,
+	'direct_plan_ready'          => true,
+	'administrator_only'         => true,
+	'large_site_alias_resolution'=> true,
+	'build_finish_status'        => $data['field_gate']['build_finish']['status'] ?? '',
+	'guarded_write_eligible'     => true === ( $data['field_gate']['guarded_write_eligible'] ?? false ),
 );
 
 echo wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) . PHP_EOL;
