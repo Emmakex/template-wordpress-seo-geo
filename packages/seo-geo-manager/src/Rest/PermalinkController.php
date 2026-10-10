@@ -12,6 +12,7 @@ namespace SeoGeo\Manager\Rest;
 use SeoGeo\Manager\Changes\OperationStore;
 use SeoGeo\Manager\Changes\PermalinkChangeEngine;
 use SeoGeo\Manager\Changes\PermalinkRedirectChangeEngine;
+use SeoGeo\Manager\Changes\SlugRepairChangeEngine;
 use SeoGeo\Manager\Support\AuthoritativePermalinkPlanner;
 use SeoGeo\Manager\Support\EnvironmentPolicy;
 use SeoGeo\Manager\Support\LegacyPermalinkAuthority;
@@ -58,6 +59,24 @@ final class PermalinkController {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( self::class, 'authoritative_plan' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
+			'/permalinks/slug-repair/preview',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'slug_repair_preview' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
+			'/permalinks/slug-repair/apply',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'slug_repair_apply' ),
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
@@ -124,16 +143,14 @@ final class PermalinkController {
 	}
 
 	public static function legacy_authority_preview( WP_REST_Request $request ): WP_REST_Response {
-		$payload = $request->get_json_params();
-		$payload = is_array( $payload ) ? $payload : array();
+		$payload = self::payload( $request );
 		$base    = isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? $payload['legacy_base_url'] : '';
 
 		return new WP_REST_Response( LegacyPermalinkAuthority::preview( $base ), 200 );
 	}
 
 	public static function authoritative_plan( WP_REST_Request $request ): WP_REST_Response {
-		$payload = $request->get_json_params();
-		$payload = is_array( $payload ) ? $payload : array();
+		$payload = self::payload( $request );
 		$base    = isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? $payload['legacy_base_url'] : '';
 		$expected_authority_fingerprint = isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? $payload['authority_fingerprint'] : '';
 		$plan = AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint );
@@ -147,13 +164,35 @@ final class PermalinkController {
 		return new WP_REST_Response( $plan, 200 );
 	}
 
+	public static function slug_repair_preview( WP_REST_Request $request ): WP_REST_Response {
+		$payload = self::payload( $request );
+		$base    = isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? $payload['legacy_base_url'] : '';
+		$authority_fingerprint = isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? $payload['authority_fingerprint'] : '';
+		$plan_fingerprint      = isset( $payload['plan_fingerprint'] ) && is_string( $payload['plan_fingerprint'] ) ? $payload['plan_fingerprint'] : '';
+
+		return new WP_REST_Response( SlugRepairChangeEngine::preview( $base, $authority_fingerprint, $plan_fingerprint ), 200 );
+	}
+
+	/**
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public static function slug_repair_apply( WP_REST_Request $request ) {
+		$payload = self::payload( $request );
+		$guard   = EnvironmentPolicy::validate_payload( $payload );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
+		$result = SlugRepairChangeEngine::apply( $payload );
+
+		return is_wp_error( $result ) ? $result : new WP_REST_Response( $result, 200 );
+	}
+
 	public static function redirect_runtime(): WP_REST_Response {
 		return new WP_REST_Response( PermalinkRedirectRuntime::snapshot(), 200 );
 	}
 
 	public static function redirect_runtime_preview( WP_REST_Request $request ): WP_REST_Response {
-		$payload = $request->get_json_params();
-		$payload = is_array( $payload ) ? $payload : array();
+		$payload = self::payload( $request );
 		$base    = isset( $payload['legacy_base_url'] ) && is_string( $payload['legacy_base_url'] ) ? $payload['legacy_base_url'] : '';
 		$expected_authority_fingerprint = isset( $payload['authority_fingerprint'] ) && is_string( $payload['authority_fingerprint'] ) ? $payload['authority_fingerprint'] : '';
 		$plan = AuthoritativePermalinkPlanner::preview( $base, $expected_authority_fingerprint );
@@ -220,9 +259,16 @@ final class PermalinkController {
 			}
 		}
 
-		$result = is_array( $operation ) && 'permalink-structure-with-redirects' === ( $operation['operation_type'] ?? '' )
-			? PermalinkRedirectChangeEngine::rollback( $operation_id )
-			: PermalinkChangeEngine::rollback( $operation_id );
+		$operation_type = is_array( $operation ) && isset( $operation['operation_type'] ) && is_string( $operation['operation_type'] )
+			? $operation['operation_type']
+			: '';
+		if ( 'post-slug-repair' === $operation_type ) {
+			$result = SlugRepairChangeEngine::rollback( $operation_id );
+		} elseif ( 'permalink-structure-with-redirects' === $operation_type ) {
+			$result = PermalinkRedirectChangeEngine::rollback( $operation_id );
+		} else {
+			$result = PermalinkChangeEngine::rollback( $operation_id );
+		}
 
 		return is_wp_error( $result ) ? $result : new WP_REST_Response( $result, 200 );
 	}
