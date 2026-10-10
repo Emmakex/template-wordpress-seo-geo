@@ -27,6 +27,7 @@ use SeoGeo\Manager\Rest\OperationHistoryController;
 use SeoGeo\Manager\Rest\PermalinkController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
+use SeoGeo\Manager\Rest\ThemeModelController;
 use SeoGeo\Manager\Rest\ThemeStructuredContentController;
 use SeoGeo\Manager\Support\PermalinkRedirectRuntime;
 
@@ -65,6 +66,7 @@ final class Plugin {
 				NavigationChangeController::register_routes();
 				PermalinkController::register_routes();
 				OperationHistoryController::register_routes();
+				ThemeModelController::register_routes();
 				ThemeStructuredContentController::register_routes();
 			}
 		);
