@@ -7,6 +7,7 @@ on:
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-capability-contract.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
@@ -30,6 +31,7 @@ on:
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-capability-contract.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
@@ -56,7 +58,7 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: M1/M2 + Theme + SEO authority + clean target + protected slug repair + atomic runtime + history + rendered verification + field gate
+    name: M1/M2 + capability discovery + Theme + SEO authority + clean target + protected slug repair + atomic runtime + history + rendered verification + field gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -69,6 +71,8 @@ jobs:
           bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-permalink-acceptance.sh
           php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
+          php -l scripts/ci/seo-geo-manager-capability-contract.php
+          php scripts/ci/seo-geo-manager-capability-contract.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
           php -l scripts/ci/seo-geo-manager-permalink-acceptance.php
