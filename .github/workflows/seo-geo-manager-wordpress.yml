@@ -83,6 +83,7 @@ jobs:
           node --check packages/seo-geo-manager/assets/admin/slug-repair-actions.js
           node --check packages/seo-geo-manager/assets/admin/operation-history.js
           node --check packages/seo-geo-manager/assets/admin/field-gate.js
+          node --check packages/seo-geo-manager/assets/admin/finalization-actions.js
 
       - name: Pull pinned WordPress fixture images
         run: |
