@@ -15,12 +15,23 @@ final class AuthoritativePermalinkPlanner {
 	/**
 	 * Build a bounded SEO preservation plan from verified historical URLs.
 	 *
+	 * Historical URLs remain the authority for what must be preserved or redirected,
+	 * while the target architecture may deliberately be cleaner than the legacy site.
+	 *
 	 * @return array<string, mixed>
 	 */
 	public static function preview( string $legacy_base_url, string $expected_authority_fingerprint = '' ): array {
-		$authority = LegacyPermalinkAuthority::preview( $legacy_base_url );
-		if ( true !== ( $authority['seo_authority_verified'] ?? false ) ) {
-			return self::blocked( $authority, 'La fuente histórica todavía no constituye una autoridad SEO completa y unívoca.', 'refresh-legacy-authority-preview' );
+		$authority        = LegacyPermalinkAuthority::preview( $legacy_base_url );
+		$migration_target = SeoMigrationTargetPlanner::preview( $authority );
+
+		if ( true !== ( $authority['mapping_authoritative'] ?? false ) ) {
+			return self::blocked( $authority, 'La fuente histórica todavía no constituye un mapa completo y unívoco de URLs públicas.', 'refresh-legacy-authority-preview' );
+		}
+
+		$historical_structure_verified = true === ( $authority['seo_authority_verified'] ?? false );
+		$clean_target_verified         = true === ( $migration_target['verified_for_migration'] ?? false );
+		if ( ! $historical_structure_verified && ! $clean_target_verified ) {
+			return self::blocked( $authority, 'El mapa histórico está completo, pero todavía no existe una estructura histórica verificable ni un target SEO/GEO limpio suficientemente dominante.', 'review-migration-target-evidence' );
 		}
 
 		$authority_fingerprint = (string) ( $authority['authority_fingerprint'] ?? '' );
@@ -28,9 +39,13 @@ final class AuthoritativePermalinkPlanner {
 			return self::blocked( $authority, 'La autoridad histórica cambió desde la previsualización anterior. Vuelve a inspeccionarla antes de continuar.', 'refresh-legacy-authority-preview', true );
 		}
 
-		$authoritative_structure = (string) ( $authority['inferred_structure'] ?? '' );
-		if ( '' === $authoritative_structure || false === strpos( $authoritative_structure, '%postname%' ) ) {
-			return self::blocked( $authority, 'La estructura histórica verificada no contiene un patrón de post utilizable.', 'review-legacy-authority-gaps' );
+		$target_strategy = $clean_target_verified ? 'seo-geo-clean-target' : 'historical-exact';
+		$target_structure = $clean_target_verified
+			? (string) ( $migration_target['candidate'] ?? '' )
+			: (string) ( $authority['inferred_structure'] ?? '' );
+
+		if ( '' === $target_structure || false === strpos( $target_structure, '%postname%' ) ) {
+			return self::blocked( $authority, 'El target de permalink verificado no contiene un patrón de post utilizable.', 'review-migration-target-evidence' );
 		}
 
 		$home_base          = trailingslashit( home_url( '/' ) );
@@ -82,7 +97,7 @@ final class AuthoritativePermalinkPlanner {
 				continue;
 			}
 
-			$target_url          = self::permalink_for_structure( $post_id, $authoritative_structure );
+			$target_url          = self::permalink_for_structure( $post_id, $target_structure );
 			$historical_path     = self::logical_path( $legacy_url, $legacy_base );
 			$target_logical_path = self::logical_path( $target_url, $home_base );
 
@@ -109,7 +124,7 @@ final class AuthoritativePermalinkPlanner {
 
 			if ( isset( $targets[ $target_logical_path ] ) && $post_id !== $targets[ $target_logical_path ] ) {
 				$collisions[] = array(
-					'type'          => 'duplicate-authoritative-target',
+					'type'          => 'duplicate-target',
 					'post_id'       => $post_id,
 					'other_post_id' => $targets[ $target_logical_path ],
 					'target_path'   => $target_logical_path,
@@ -157,45 +172,56 @@ final class AuthoritativePermalinkPlanner {
 		$safe_structure_candidate = $complete_scan && array() === $collisions && count( $rows ) === (int) ( $authority['matched_posts'] ?? 0 );
 		$requires_redirect_runtime = 0 < count( $redirects );
 		$apply_available           = $safe_structure_candidate && ! $requires_redirect_runtime;
-		$preservation_mode         = array() !== $local_slug_repairs ? 'blocked-local-slug-repair' : ( array() === $redirects ? 'exact-path-preservation' : 'authoritative-301' );
+		$preservation_mode         = array() !== $local_slug_repairs
+			? 'blocked-local-slug-repair'
+			: ( array() === $redirects
+				? 'exact-path-preservation'
+				: ( 'seo-geo-clean-target' === $target_strategy ? 'one-hop-301-to-clean-target' : 'authoritative-301' ) );
 		$inspection                = PermalinkInspector::preview();
 
 		$plan_payload = array(
-			'authority_fingerprint'   => $authority_fingerprint,
-			'current_fingerprint'     => (string) ( $inspection['current_fingerprint'] ?? '' ),
-			'authoritative_structure' => $authoritative_structure,
-			'rows'                    => $rows,
-			'redirects'               => $redirects,
-			'collisions'              => $collisions,
-			'local_slug_repairs'      => $local_slug_repairs,
+			'authority_fingerprint' => $authority_fingerprint,
+			'current_fingerprint'   => (string) ( $inspection['current_fingerprint'] ?? '' ),
+			'target_strategy'       => $target_strategy,
+			'target_structure'      => $target_structure,
+			'migration_target'      => $migration_target,
+			'rows'                  => $rows,
+			'redirects'             => $redirects,
+			'collisions'            => $collisions,
+			'local_slug_repairs'    => $local_slug_repairs,
 		);
 		$plan_fingerprint = hash( 'sha256', (string) wp_json_encode( $plan_payload ) );
 
 		$block_reason = '';
 		if ( ! $complete_scan ) {
-			$block_reason = 'El inventario de recursos públicos quedó truncado y no permite aprobar el cambio de estructura.';
+			$block_reason = 'El inventario de recursos públicos quedó truncado y no permite aprobar el target de permalinks.';
 		} elseif ( array() !== $local_slug_repairs ) {
-			$block_reason = 'La autoridad histórica es completa, pero el clon conserva uno o más post_name dañados por la migración. Deben repararse de forma protegida antes de planificar permalinks o redirecciones.';
+			$block_reason = 'El mapa histórico es completo y el target SEO/GEO está definido, pero el clon conserva uno o más post_name dañados por la migración. Deben repararse de forma protegida antes de activar estructura o redirecciones.';
 		} elseif ( array() !== $collisions ) {
-			$block_reason = 'El plan histórico contiene colisiones o cambios locales que deben resolverse antes de modificar los enlaces permanentes.';
+			$block_reason = 'El plan contiene colisiones o cambios locales que deben resolverse antes de modificar los enlaces permanentes.';
 		} elseif ( $requires_redirect_runtime ) {
-			$block_reason = 'La estructura histórica verificada cambia una o más rutas públicas; Apply queda bloqueado hasta disponer de runtime 301 probado.';
+			$block_reason = 'El target SEO/GEO cambia una o más rutas históricas; la escritura solo puede hacerse de forma atómica con 301 de un salto verificados.';
 		}
 
 		$next_action = $apply_available
-			? 'apply-authoritative-structure'
+			? 'apply-target-structure'
 			: ( array() !== $local_slug_repairs
 				? 'repair-corrupted-local-slugs-first'
-				: ( $safe_structure_candidate ? 'implement-authoritative-redirect-runtime-and-rollback' : 'resolve-authoritative-plan-blockers' ) );
+				: ( $safe_structure_candidate ? 'preview-atomic-permalink-apply' : 'resolve-target-plan-blockers' ) );
 
 		return array(
 			'mode'                         => 'authoritative-permalink-plan-preview',
 			'write_performed'              => false,
 			'legacy_base_url'              => $legacy_base,
 			'authority_fingerprint'        => $authority_fingerprint,
+			'authority_mapping_verified'   => true === ( $authority['mapping_authoritative'] ?? false ),
+			'historical_structure_verified'=> $historical_structure_verified,
+			'target_strategy'              => $target_strategy,
+			'migration_target'             => $migration_target,
 			'current_structure'            => (string) ( $inspection['current_structure'] ?? '' ),
 			'current_fingerprint'          => (string) ( $inspection['current_fingerprint'] ?? '' ),
-			'authoritative_structure'      => $authoritative_structure,
+			'authoritative_structure'      => $target_structure,
+			'target_structure'             => $target_structure,
 			'plan_fingerprint'             => $plan_fingerprint,
 			'matched_posts'                => count( $rows ),
 			'authority_matched_posts'      => (int) ( $authority['matched_posts'] ?? 0 ),
@@ -217,16 +243,19 @@ final class AuthoritativePermalinkPlanner {
 			'next_action'                  => $next_action,
 			'environment'                  => EnvironmentPolicy::snapshot(),
 			'policy'                       => array(
-				'preview_only'                    => true,
-				'authority_revalidated'            => true,
-				'logical_paths_compared'           => true,
-				'clone_base_ignored_for_seo_path'  => true,
-				'corrupted_local_slug_blocks_plan' => true,
-				'apply_requires_explicit_confirm'  => true,
-				'apply_requires_current_plan'      => true,
-				'apply_requires_environment_guard' => true,
-				'no_redirect_registration'         => true,
-				'complete_collision_scan_required' => true,
+				'preview_only'                           => true,
+				'historical_urls_are_authority'           => true,
+				'legacy_architecture_is_not_mandatory'    => true,
+				'clean_target_can_use_one_hop_301'        => true,
+				'authority_revalidated'                   => true,
+				'logical_paths_compared'                  => true,
+				'clone_base_ignored_for_seo_path'         => true,
+				'corrupted_local_slug_blocks_plan'        => true,
+				'apply_requires_explicit_confirm'         => true,
+				'apply_requires_current_plan'             => true,
+				'apply_requires_environment_guard'        => true,
+				'no_redirect_registration'                => true,
+				'complete_collision_scan_required'        => true,
 			),
 		);
 	}
@@ -241,7 +270,11 @@ final class AuthoritativePermalinkPlanner {
 			'write_performed'           => false,
 			'legacy_base_url'           => (string) ( $authority['legacy_base_url'] ?? '' ),
 			'authority_fingerprint'     => (string) ( $authority['authority_fingerprint'] ?? '' ),
-			'authoritative_structure'   => (string) ( $authority['inferred_structure'] ?? '' ),
+			'authority_mapping_verified'=> true === ( $authority['mapping_authoritative'] ?? false ),
+			'target_strategy'           => 'blocked',
+			'migration_target'          => SeoMigrationTargetPlanner::preview( $authority ),
+			'authoritative_structure'   => '',
+			'target_structure'          => '',
 			'plan_fingerprint'          => '',
 			'matched_posts'             => 0,
 			'authority_matched_posts'   => (int) ( $authority['matched_posts'] ?? 0 ),
