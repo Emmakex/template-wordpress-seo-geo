@@ -68,6 +68,7 @@ final class CapabilityManifest {
 				'content_change_set'        => self::capability( $can_edit_posts, 'edit_posts' ),
 				'post_create'               => self::capability( $can_edit_posts, 'edit_posts' ),
 				'page_create'               => self::capability( $can_edit_pages, 'edit_pages' ),
+				'theme_model_read'          => self::capability( $can_edit_pages || $can_edit_posts, 'edit_pages|edit_posts' ),
 				'theme_structured_content'  => self::capability( $can_edit_posts, 'edit_posts' ),
 				'navigation_change_set'     => self::capability( $can_edit_theme, 'edit_theme_options' ),
 				'media_write'               => self::capability( $can_upload_files, 'upload_files' ),
@@ -124,6 +125,7 @@ final class CapabilityManifest {
 	): array {
 		$can_create_content  = $can_edit_posts || $can_edit_pages;
 		$can_publish_content = $can_publish_posts || $can_publish_pages;
+		$can_read_models     = $can_edit_posts || $can_edit_pages;
 
 		return array(
 			'inspect.site' => array(
@@ -173,6 +175,18 @@ final class CapabilityManifest {
 				'method'    => 'POST',
 				'path'      => '/content/{id}/publication/apply',
 				'risk'      => 'publication-mutation',
+			),
+			'theme.models.list' => array(
+				'available' => $can_read_models,
+				'method'    => 'GET',
+				'path'      => '/theme/models',
+				'risk'      => 'read-only',
+			),
+			'theme.models.read' => array(
+				'available' => $can_read_models,
+				'method'    => 'GET',
+				'path'      => '/theme/models/{model_id}',
+				'risk'      => 'read-only',
 			),
 			'theme.preview' => array(
 				'available' => $can_edit_posts,
