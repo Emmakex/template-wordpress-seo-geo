@@ -263,7 +263,7 @@ final class SlugRepairChangeEngine {
 				),
 				true
 			);
-			if ( is_wp_error( $updated ) || $post_id !== (int) $updated || $target_slug !== (string) get_post_field( 'post_name', $post_id ) ) {
+			if ( is_wp_error( $updated ) || (int) $updated !== $post_id || (string) get_post_field( 'post_name', $post_id ) !== $target_slug ) {
 				self::restore_states( $states );
 				$message = is_wp_error( $updated ) ? $updated->get_error_message() : 'WordPress did not persist the exact verified historical slug.';
 				return self::failed_apply( $operation_id, $normalized, $payload_hash, $states, $message );
@@ -442,7 +442,7 @@ final class SlugRepairChangeEngine {
 		if ( 0 !== (int) ( $plan['local_slug_repair_count'] ?? -1 ) ) {
 			$errors[] = 'local-slug-repairs-remain';
 		}
-		if ( '' === $expected_target_structure || $expected_target_structure !== (string) ( $plan['target_structure'] ?? '' ) ) {
+		if ( '' === $expected_target_structure || (string) ( $plan['target_structure'] ?? '' ) !== $expected_target_structure ) {
 			$errors[] = 'target-structure-changed-after-slug-repair';
 		}
 
@@ -470,6 +470,7 @@ final class SlugRepairChangeEngine {
 				continue;
 			}
 
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Exact rollback must restore the pre-operation migration-corrupted slug, which WordPress sanitization would alter.
 			$updated = $wpdb->update(
 				$wpdb->posts,
 				array( 'post_name' => $before_slug ),
@@ -490,7 +491,7 @@ final class SlugRepairChangeEngine {
 				}
 			}
 			clean_post_cache( $post_id );
-			if ( $before_slug !== (string) get_post_field( 'post_name', $post_id ) ) {
+			if ( (string) get_post_field( 'post_name', $post_id ) !== $before_slug ) {
 				$ok = false;
 			}
 		}
@@ -505,22 +506,22 @@ final class SlugRepairChangeEngine {
 	private static function failed_apply( string $operation_id, array $normalized, string $payload_hash, array $states, string $message ): WP_Error {
 		$operation = EnvironmentPolicy::bind_operation(
 			array(
-				'operation_id'         => $operation_id,
-				'operation_type'       => self::OPERATION_TYPE,
-				'status'               => 'verification-failed-rolled-back',
-				'idempotency_key'      => $normalized['idempotency_key'],
-				'payload_hash'         => $payload_hash,
-				'legacy_base_url'      => $normalized['legacy_base_url'],
-				'authority_fingerprint'=> $normalized['authority_fingerprint'],
-				'plan_fingerprint'     => $normalized['plan_fingerprint'],
-				'repair_fingerprint'   => $normalized['repair_fingerprint'],
-				'target_type'          => 'post-batch',
-				'target_id'            => 0,
-				'changes'              => array( 'post_name' => count( $states ) ),
-				'repair_count'         => count( $states ),
-				'repairs'              => $states,
-				'failure_message'      => $message,
-				'created_at_gmt'       => gmdate( 'c' ),
+				'operation_id'          => $operation_id,
+				'operation_type'        => self::OPERATION_TYPE,
+				'status'                => 'verification-failed-rolled-back',
+				'idempotency_key'       => $normalized['idempotency_key'],
+				'payload_hash'          => $payload_hash,
+				'legacy_base_url'       => $normalized['legacy_base_url'],
+				'authority_fingerprint' => $normalized['authority_fingerprint'],
+				'plan_fingerprint'      => $normalized['plan_fingerprint'],
+				'repair_fingerprint'    => $normalized['repair_fingerprint'],
+				'target_type'           => 'post-batch',
+				'target_id'             => 0,
+				'changes'               => array( 'post_name' => count( $states ) ),
+				'repair_count'          => count( $states ),
+				'repairs'               => $states,
+				'failure_message'       => $message,
+				'created_at_gmt'        => gmdate( 'c' ),
 			)
 		);
 		OperationStore::save( $operation_id, $operation );
