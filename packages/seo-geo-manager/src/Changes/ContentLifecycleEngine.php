@@ -604,8 +604,8 @@ final class ContentLifecycleEngine {
 		return $object;
 	}
 
-	private static function post_type_capability( WP_Post_Type $object, string $name ): string {
-		$capabilities = (array) $object->cap;
+	private static function post_type_capability( WP_Post_Type $post_type, string $name ): string {
+		$capabilities = (array) $post_type->cap;
 		$value        = $capabilities[ $name ] ?? '';
 
 		return is_string( $value ) ? $value : '';
