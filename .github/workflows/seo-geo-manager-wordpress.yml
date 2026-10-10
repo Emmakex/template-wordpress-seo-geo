@@ -9,6 +9,8 @@ on:
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-capability-contract.php'
       - 'scripts/ci/seo-geo-manager-capabilities-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-application-password-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
@@ -34,6 +36,8 @@ on:
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-capability-contract.php'
       - 'scripts/ci/seo-geo-manager-capabilities-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-application-password-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
       - 'scripts/ci/seo-geo-manager-permalink-acceptance.php'
@@ -60,9 +64,9 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: M1/M2 + capability discovery + Theme + SEO authority + clean target + protected slug repair + atomic runtime + history + rendered verification + field gate
+    name: M1/M2 + capability/auth + Theme + SEO authority + clean target + protected slug repair + atomic runtime + history + rendered verification + field gate
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -71,11 +75,13 @@ jobs:
       - name: Validate acceptance scripts and dashboard JavaScript
         run: |
           bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-application-password-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-permalink-acceptance.sh
           php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-capability-contract.php
           php scripts/ci/seo-geo-manager-capability-contract.php
           php -l scripts/ci/seo-geo-manager-capabilities-acceptance.php
+          php -l scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
           php -l scripts/ci/seo-geo-manager-permalink-acceptance.php
@@ -108,6 +114,9 @@ jobs:
 
       - name: Manager WordPress acceptance
         run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+
+      - name: Application Password transport and revocation acceptance
+        run: bash scripts/ci/seo-geo-manager-application-password-acceptance.sh
 
       - name: Permalink authority, clean target, protected slug repair, atomic redirect, history, rendered verification and field gate acceptance
         run: bash scripts/ci/seo-geo-manager-permalink-acceptance.sh
