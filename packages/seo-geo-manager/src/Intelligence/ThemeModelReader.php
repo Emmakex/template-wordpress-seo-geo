@@ -167,8 +167,9 @@ final class ThemeModelReader {
 	 * @return array<string, mixed>|null
 	 */
 	private static function preset_document( string $preset, string $filename ): ?array {
-		if ( function_exists( 'seo_geo_theme_preset_document' ) ) {
-			$value = call_user_func( 'seo_geo_theme_preset_document', $preset, $filename );
+		$loader = 'seo_geo_theme_preset_document';
+		if ( is_callable( $loader ) ) {
+			$value = $loader( $preset, $filename );
 			if ( is_array( $value ) ) {
 				return $value;
 			}
