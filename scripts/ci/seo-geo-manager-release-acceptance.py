@@ -79,6 +79,8 @@ def inspect_zip(path: Path) -> None:
             ZIP_ROOT + "src/Intelligence/MediaReferenceReader.php",
             ZIP_ROOT + "src/Rest/MediaAltChangeController.php",
             ZIP_ROOT + "src/Changes/MediaAltChangeAdapter.php",
+            ZIP_ROOT + "src/Rest/MediaContextChangeController.php",
+            ZIP_ROOT + "src/Changes/MediaContextChangeAdapter.php",
             ZIP_ROOT + "src/Support/MediaFingerprint.php",
         }
         missing_required = sorted(required - actual)
@@ -123,6 +125,12 @@ def inspect_zip(path: Path) -> None:
         ).decode("utf-8")
         media_alt_adapter = archive.read(
             ZIP_ROOT + "src/Changes/MediaAltChangeAdapter.php"
+        ).decode("utf-8")
+        media_context_controller = archive.read(
+            ZIP_ROOT + "src/Rest/MediaContextChangeController.php"
+        ).decode("utf-8")
+        media_context_adapter = archive.read(
+            ZIP_ROOT + "src/Changes/MediaContextChangeAdapter.php"
         ).decode("utf-8")
         media_fingerprint = archive.read(
             ZIP_ROOT + "src/Support/MediaFingerprint.php"
@@ -216,6 +224,8 @@ def inspect_zip(path: Path) -> None:
             raise SystemExit("Release ZIP media reader lacks alt-aware mutation-safe identity")
         if "'binary_mutation_supported'" not in media_reader:
             raise SystemExit("Release ZIP media reader does not declare binary mutation policy")
+        if "'context_mutation_available'" not in media_reader or "'caption_truncated'" not in media_reader or "'description_truncated'" not in media_reader:
+            raise SystemExit("Release ZIP media reader lacks bounded editorial-context discovery")
 
         media_alt_routes = (
             "'/media/(?P<media_id>\\d+)/alt/changes/preview'",
@@ -242,6 +252,45 @@ def inspect_zip(path: Path) -> None:
                 raise SystemExit(f"Release ZIP media-alt safety marker missing: {marker}")
         if "alt_exists" not in media_fingerprint or "_wp_attachment_image_alt" not in media_fingerprint:
             raise SystemExit("Release ZIP media fingerprint does not preserve exact alt-meta state")
+
+        media_context_routes = (
+            "'/media/(?P<media_id>\\d+)/context/changes/preview'",
+            "'/media/(?P<media_id>\\d+)/context/changes/apply'",
+            "'/media/context/changes/(?P<operation_id>[a-f0-9\\-]{36})/rollback'",
+        )
+        if any(marker not in media_context_controller for marker in media_context_routes):
+            raise SystemExit("Release ZIP media-context routes are incomplete")
+        if "MediaContextChangeController::register_routes();" not in plugin:
+            raise SystemExit("Release ZIP does not register media-context writes")
+        if "'media_context_write'" not in manifest:
+            raise SystemExit("Release ZIP capability manifest omits media-context writes")
+        for marker in (
+            "'media.context.preview'",
+            "'media.context.apply'",
+            "'media.context.rollback'",
+        ):
+            if marker not in manifest:
+                raise SystemExit(f"Release ZIP media-context operation missing: {marker}")
+        for marker in (
+            "expected_fingerprint",
+            "allow_public_media",
+            "idempotency_key",
+            "title",
+            "caption",
+            "description",
+            "seo_geo_manager_media_context_rollback_stale",
+        ):
+            if marker not in media_context_adapter:
+                raise SystemExit(f"Release ZIP media-context safety marker missing: {marker}")
+        if "public_operation" not in media_context_controller:
+            raise SystemExit("Release ZIP media-context controller lacks public operation filtering")
+        if "before_fields" not in media_context_controller or "after_fields" not in media_context_controller:
+            raise SystemExit("Release ZIP media-context controller does not filter rollback snapshots")
+        for marker in ("'caption'", "'description'", "'alt_exists'", "'_wp_attachment_image_alt'"):
+            if marker not in media_fingerprint:
+                raise SystemExit(f"Release ZIP media fingerprint omits context marker: {marker}")
+        if "modified_gmt" in media_fingerprint:
+            raise SystemExit("Release ZIP media fingerprint must not depend on volatile modified timestamps")
 
         for info in archive.infolist():
             if info.is_dir():

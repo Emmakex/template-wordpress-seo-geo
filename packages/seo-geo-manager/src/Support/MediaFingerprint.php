@@ -27,20 +27,19 @@ final class MediaFingerprint {
 			'sha256',
 			(string) wp_json_encode(
 				array(
-					'id'           => (int) $attachment->ID,
-					'modified_gmt' => (string) $attachment->post_modified_gmt,
-					'title'        => (string) $attachment->post_title,
-					'slug'         => (string) $attachment->post_name,
-					'status'       => (string) $attachment->post_status,
-					'caption'      => (string) $attachment->post_excerpt,
-					'description'  => (string) $attachment->post_content,
-					'mime'         => (string) $attachment->post_mime_type,
-					'parent'       => (int) $attachment->post_parent,
-					'url'          => $url,
-					'alt_exists'   => $alt_exists,
-					'alt'          => $alt,
-					'width'        => $width,
-					'height'       => $height,
+					'id'          => (int) $attachment->ID,
+					'title'       => (string) $attachment->post_title,
+					'slug'        => (string) $attachment->post_name,
+					'status'      => (string) $attachment->post_status,
+					'caption'     => (string) $attachment->post_excerpt,
+					'description' => (string) $attachment->post_content,
+					'mime'        => (string) $attachment->post_mime_type,
+					'parent'      => (int) $attachment->post_parent,
+					'url'         => $url,
+					'alt_exists'  => $alt_exists,
+					'alt'         => $alt,
+					'width'       => $width,
+					'height'      => $height,
 				)
 			)
 		);

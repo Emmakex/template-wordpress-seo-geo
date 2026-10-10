@@ -60,9 +60,13 @@ $required_manifest_markers = array(
 	"'contextual_link_write'",
 	"'media_read'",
 	"'media_alt_write'",
+	"'media_context_write'",
 	"'media.alt.preview'",
 	"'media.alt.apply'",
 	"'media.alt.rollback'",
+	"'media.context.preview'",
+	"'media.context.apply'",
+	"'media.context.rollback'",
 	"'permalink_administration'",
 	"'expected_fingerprint_supported'",
 	"'stale_safe_rollback_supported'",
@@ -92,6 +96,12 @@ foreach ( $required_manifest_values as $pattern => $description ) {
 
 if ( ! str_contains( $plugin, 'CapabilitiesController::register_routes();' ) ) {
 	throw new RuntimeException( 'Capability controller is not registered by Manager bootstrap.' );
+}
+if ( ! str_contains( $plugin, 'MediaAltChangeController::register_routes();' ) ) {
+	throw new RuntimeException( 'Media alt controller is not registered by Manager bootstrap.' );
+}
+if ( ! str_contains( $plugin, 'MediaContextChangeController::register_routes();' ) ) {
+	throw new RuntimeException( 'Media context controller is not registered by Manager bootstrap.' );
 }
 
 $header_match   = array();
