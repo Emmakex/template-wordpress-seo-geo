@@ -16,6 +16,7 @@ use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\PermalinkActions;
 use SeoGeo\Manager\Intelligence\PresetPageResolver;
+use SeoGeo\Manager\Rest\AuthorBindingController;
 use SeoGeo\Manager\Rest\CapabilitiesController;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
@@ -69,6 +70,7 @@ final class Plugin {
 				CapabilitiesController::register_routes();
 				ContentController::register_routes();
 				ContentLifecycleController::register_routes();
+				AuthorBindingController::register_routes();
 				TaxonomyAssignmentController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
