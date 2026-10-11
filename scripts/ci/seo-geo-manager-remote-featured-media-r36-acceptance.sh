@@ -17,7 +17,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-featured-media-r36-acceptance.php"
 LOG="$(mktemp)"
 EXPECTED_VERSION="$(awk '/^[[:space:]]*\* Version:/ {print $3; exit}' "$ROOT/packages/seo-geo-manager/seo-geo-manager.php")"
+EXPECTED_MILESTONE="$(awk -F"'" "/'remote_milestone'[[:space:]]*=>/ {print \$4; exit}" "$ROOT/packages/seo-geo-manager/src/Rest/RemoteReadController.php")"
 [[ -n "$EXPECTED_VERSION" ]] || { echo '[r36-featured-media] could not resolve current Manager version' >&2; exit 1; }
+[[ -n "$EXPECTED_MILESTONE" ]] || { echo '[r36-featured-media] could not resolve current remote milestone' >&2; exit 1; }
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
@@ -64,9 +66,10 @@ wp_cli option update permalink_structure '/%postname%/' >/dev/null
 wp_cli plugin activate seo-geo-manager >/dev/null
 
 docker cp "$FIXTURE" "$WP_CONTAINER:/var/www/html/r36-featured-media.php"
+docker exec "$WP_CONTAINER" sed -i "s/R3\.6/${EXPECTED_MILESTONE}/g" /var/www/html/r36-featured-media.php
 docker exec "$WP_CONTAINER" chown www-data:www-data /var/www/html/r36-featured-media.php
 
-printf '[r36-featured-media] Running Inspect -> Plan -> Approval -> Apply -> Verify -> Rollback acceptance.\n'
+printf '[r36-featured-media] Running Inspect -> Plan -> Approval -> Apply -> Verify -> Rollback regression against %s.\n' "$EXPECTED_MILESTONE"
 wp_cli eval-file /var/www/html/r36-featured-media.php >"$LOG" 2>&1 || { cat "$LOG"; exit 1; }
 cat "$LOG"
 
@@ -91,4 +94,4 @@ grep -q '"rollback_exact":true' "$LOG"
 grep -q '"rollback_fingerprint_exact":true' "$LOG"
 grep -q '"audit_secret_free":true' "$LOG"
 grep -q '"generic_proxy":false' "$LOG"
-printf '[r36-featured-media] SEO/GEO Manager R3.6 featured-media acceptance OK on Manager %s.\n' "$EXPECTED_VERSION"
+printf '[r36-featured-media] SEO/GEO Manager R3.6 featured-media regression OK on Manager %s / milestone %s.\n' "$EXPECTED_VERSION" "$EXPECTED_MILESTONE"
