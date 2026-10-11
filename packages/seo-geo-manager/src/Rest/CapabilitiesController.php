@@ -42,6 +42,7 @@ final class CapabilitiesController {
 			&& function_exists( 'seo_geo_theme_strategic_media_fingerprint' )
 			&& function_exists( 'seo_geo_theme_strategic_media_contract' );
 		$available      = $write_contract && current_user_can( 'upload_files' ) && current_user_can( 'edit_pages' );
+		$can_assign_terms = current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' );
 
 		$manifest['theme_contracts']['strategic_media_write'] = array(
 			'available'              => $write_contract,
@@ -68,6 +69,36 @@ final class CapabilitiesController {
 			$available,
 			'POST',
 			'/theme/media-bindings/changes/{operation_id}/rollback',
+			'rollback-mutation'
+		);
+
+		$manifest['capabilities']['taxonomy_assignment'] = array(
+			'available'                     => $can_assign_terms,
+			'required_wordpress_capability' => 'edit_post(resource) + taxonomy.assign_terms',
+			'existing_terms_only'           => true,
+		);
+		$manifest['operations']['content.taxonomy_assignment.read'] = self::operation(
+			$can_assign_terms,
+			'GET',
+			'/content/{resource_id}/taxonomies/{taxonomy}',
+			'read-only'
+		);
+		$manifest['operations']['content.taxonomy_assignment.preview'] = self::operation(
+			$can_assign_terms,
+			'POST',
+			'/content/{resource_id}/taxonomies/{taxonomy}/changes/preview',
+			'read-only-preview'
+		);
+		$manifest['operations']['content.taxonomy_assignment.apply'] = self::operation(
+			$can_assign_terms,
+			'POST',
+			'/content/{resource_id}/taxonomies/{taxonomy}/changes/apply',
+			'mutation'
+		);
+		$manifest['operations']['content.taxonomy_assignment.rollback'] = self::operation(
+			$can_assign_terms,
+			'POST',
+			'/content/taxonomies/changes/{operation_id}/rollback',
 			'rollback-mutation'
 		);
 
