@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'packages/seo-geo-manager/src/Remote/**'
+      - 'packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php'
+      - 'packages/seo-geo-manager/src/Changes/NativeSeoMetadataChangeAdapter.php'
+      - 'packages/seo-geo-manager/src/Changes/YoastSeoMetadataChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Rest/RemoteReadController.php'
       - 'packages/seo-geo-manager/src/Rest/RemoteMutationController.php'
       - 'packages/seo-geo-manager/src/Admin/RemoteAccess.php'
@@ -17,16 +20,24 @@ on:
       - 'scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-theme-structured-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
       - 'docs/SEO_GEO_MANAGER_0.3.51_REMOTE_CONTENT_CHANGE.md'
       - 'docs/SEO_GEO_MANAGER_0.3.52_REMOTE_THEME_STRUCTURED_CONTENT.md'
+      - 'docs/SEO_GEO_MANAGER_0.3.53_REMOTE_SEO_AUTHORITY.md'
       - '.github/workflows/seo-geo-manager-remote-bridge.yml'
   push:
     branches:
       - main
     paths:
       - 'packages/seo-geo-manager/src/Remote/**'
+      - 'packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php'
+      - 'packages/seo-geo-manager/src/Changes/NativeSeoMetadataChangeAdapter.php'
+      - 'packages/seo-geo-manager/src/Changes/YoastSeoMetadataChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Rest/RemoteReadController.php'
       - 'packages/seo-geo-manager/src/Rest/RemoteMutationController.php'
       - 'packages/seo-geo-manager/src/Admin/RemoteAccess.php'
@@ -40,10 +51,15 @@ on:
       - 'scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-theme-structured-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
       - 'docs/SEO_GEO_MANAGER_0.3.51_REMOTE_CONTENT_CHANGE.md'
       - 'docs/SEO_GEO_MANAGER_0.3.52_REMOTE_THEME_STRUCTURED_CONTENT.md'
+      - 'docs/SEO_GEO_MANAGER_0.3.53_REMOTE_SEO_AUTHORITY.md'
       - '.github/workflows/seo-geo-manager-remote-bridge.yml'
   workflow_dispatch:
 
@@ -56,7 +72,7 @@ concurrency:
 
 jobs:
   remote-bridge-contract:
-    name: Manager-owned remote bridge R1-R3.2 contract
+    name: Manager-owned remote bridge R1-R3.3 contract
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -71,6 +87,7 @@ jobs:
           php -l packages/seo-geo-manager/src/Remote/Authenticator.php
           php -l packages/seo-geo-manager/src/Remote/PlanStore.php
           php -l packages/seo-geo-manager/src/Remote/MutationOperations.php
+          php -l packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php
           php -l packages/seo-geo-manager/src/Rest/RemoteReadController.php
           php -l packages/seo-geo-manager/src/Rest/RemoteMutationController.php
           php -l packages/seo-geo-manager/src/Admin/RemoteAccess.php
@@ -79,13 +96,17 @@ jobs:
           php -l scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-remote-theme-structured-wordpress-acceptance.php
+          php -l scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.php
+          php -l scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.php
           bash -n scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.sh
 
-      - name: Remote bridge R1-R3.2 contract
+      - name: Remote bridge R1-R3.3 contract
         run: php scripts/ci/seo-geo-manager-remote-bridge-contract.php
 
   remote-bridge-wordpress:
-    name: Manager-owned remote bridge R1-R3.2 WordPress runtime
+    name: Manager-owned remote bridge R1-R3.2 regression runtime
     runs-on: ubuntu-latest
     needs: remote-bridge-contract
     steps:
@@ -98,5 +119,39 @@ jobs:
           docker pull wordpress:cli-2.12.0-php8.2
           docker pull mariadb:11.8.9
 
-      - name: Remote bridge WordPress acceptance
+      - name: Remote bridge regression acceptance
         run: bash scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh
+
+  remote-seo-theme-native:
+    name: Manager-owned R3.3 Theme-native SEO runtime
+    runs-on: ubuntu-latest
+    needs: remote-bridge-contract
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Pull pinned fixtures
+        run: |
+          docker pull wordpress:7.1.0-php8.2-apache
+          docker pull wordpress:cli-2.12.0-php8.2
+          docker pull mariadb:11.8.9
+
+      - name: Theme-native remote SEO acceptance
+        run: bash scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.sh
+
+  remote-seo-yoast:
+    name: Manager-owned R3.3 Yoast 28.6 SEO runtime
+    runs-on: ubuntu-latest
+    needs: remote-bridge-contract
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Pull pinned fixtures
+        run: |
+          docker pull wordpress:7.1.0-php8.2-apache
+          docker pull wordpress:cli-2.12.0-php8.2
+          docker pull mariadb:11.8.9
+
+      - name: Yoast 28.6 remote SEO acceptance
+        run: bash scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.sh
