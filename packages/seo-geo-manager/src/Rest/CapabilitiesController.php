@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\Manager\Rest;
 
 use SeoGeo\Manager\Support\CapabilityManifest;
+use SeoGeo\Manager\Support\NativeTranslationBridge;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -35,15 +36,17 @@ final class CapabilitiesController {
 	public static function show( WP_REST_Request $request ): WP_REST_Response {
 		unset( $request );
 
-		$manifest         = CapabilityManifest::build();
-		$write_contract   = function_exists( 'seo_geo_theme_set_strategic_media_slot' )
+		$manifest                = CapabilityManifest::build();
+		$write_contract          = function_exists( 'seo_geo_theme_set_strategic_media_slot' )
 			&& function_exists( 'seo_geo_theme_remove_strategic_media_slot' )
 			&& function_exists( 'seo_geo_theme_strategic_media_slot' )
 			&& function_exists( 'seo_geo_theme_strategic_media_fingerprint' )
 			&& function_exists( 'seo_geo_theme_strategic_media_contract' );
-		$available        = $write_contract && current_user_can( 'upload_files' ) && current_user_can( 'edit_pages' );
-		$can_assign_terms = current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' );
-		$can_bind_author  = current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' );
+		$available               = $write_contract && current_user_can( 'upload_files' ) && current_user_can( 'edit_pages' );
+		$can_assign_terms        = current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' );
+		$can_bind_author         = current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' );
+		$native_provider         = NativeTranslationBridge::available();
+		$can_manage_translations = $native_provider && ( current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' ) );
 
 		$manifest['theme_contracts']['strategic_media_write'] = array(
 			'available'              => $write_contract,
@@ -131,6 +134,40 @@ final class CapabilitiesController {
 			$can_bind_author,
 			'POST',
 			'/content/authors/changes/{operation_id}/rollback',
+			'rollback-mutation'
+		);
+
+		$manifest['capabilities']['native_translation_groups'] = array(
+			'available'                     => $can_manage_translations,
+			'provider_available'            => $native_provider,
+			'provider'                      => $native_provider ? 'native-core' : null,
+			'required_wordpress_capability' => 'edit_post(all affected resources) + accepted native multilingual provider',
+			'complete_group_replace'        => true,
+			'raw_meta_exposed'              => false,
+			'raw_meta_write_supported'      => false,
+		);
+		$manifest['operations']['content.native_translation_group.read'] = self::operation(
+			$can_manage_translations,
+			'GET',
+			'/content/translation-groups/{group_id}',
+			'read-only'
+		);
+		$manifest['operations']['content.native_translation_group.preview'] = self::operation(
+			$can_manage_translations,
+			'POST',
+			'/content/translation-groups/{group_id}/changes/preview',
+			'read-only-preview'
+		);
+		$manifest['operations']['content.native_translation_group.apply'] = self::operation(
+			$can_manage_translations,
+			'POST',
+			'/content/translation-groups/{group_id}/changes/apply',
+			'mutation'
+		);
+		$manifest['operations']['content.native_translation_group.rollback'] = self::operation(
+			$can_manage_translations,
+			'POST',
+			'/content/translation-groups/changes/{operation_id}/rollback',
 			'rollback-mutation'
 		);
 
