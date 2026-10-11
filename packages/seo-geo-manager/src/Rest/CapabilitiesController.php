@@ -35,14 +35,15 @@ final class CapabilitiesController {
 	public static function show( WP_REST_Request $request ): WP_REST_Response {
 		unset( $request );
 
-		$manifest       = CapabilityManifest::build();
-		$write_contract = function_exists( 'seo_geo_theme_set_strategic_media_slot' )
+		$manifest         = CapabilityManifest::build();
+		$write_contract   = function_exists( 'seo_geo_theme_set_strategic_media_slot' )
 			&& function_exists( 'seo_geo_theme_remove_strategic_media_slot' )
 			&& function_exists( 'seo_geo_theme_strategic_media_slot' )
 			&& function_exists( 'seo_geo_theme_strategic_media_fingerprint' )
 			&& function_exists( 'seo_geo_theme_strategic_media_contract' );
-		$available      = $write_contract && current_user_can( 'upload_files' ) && current_user_can( 'edit_pages' );
+		$available        = $write_contract && current_user_can( 'upload_files' ) && current_user_can( 'edit_pages' );
 		$can_assign_terms = current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' );
+		$can_bind_author  = current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' );
 
 		$manifest['theme_contracts']['strategic_media_write'] = array(
 			'available'              => $write_contract,
@@ -99,6 +100,37 @@ final class CapabilitiesController {
 			$can_assign_terms,
 			'POST',
 			'/content/taxonomies/changes/{operation_id}/rollback',
+			'rollback-mutation'
+		);
+
+		$manifest['capabilities']['author_binding'] = array(
+			'available'                     => $can_bind_author,
+			'required_wordpress_capability' => 'edit_post(resource); assigning another user also requires post_type.edit_others_posts',
+			'existing_users_only'           => true,
+			'public_profile_fields_only'    => true,
+		);
+		$manifest['operations']['content.author_binding.read'] = self::operation(
+			$can_bind_author,
+			'GET',
+			'/content/{resource_id}/author',
+			'read-only'
+		);
+		$manifest['operations']['content.author_binding.preview'] = self::operation(
+			$can_bind_author,
+			'POST',
+			'/content/{resource_id}/author/changes/preview',
+			'read-only-preview'
+		);
+		$manifest['operations']['content.author_binding.apply'] = self::operation(
+			$can_bind_author,
+			'POST',
+			'/content/{resource_id}/author/changes/apply',
+			'mutation'
+		);
+		$manifest['operations']['content.author_binding.rollback'] = self::operation(
+			$can_bind_author,
+			'POST',
+			'/content/authors/changes/{operation_id}/rollback',
 			'rollback-mutation'
 		);
 
