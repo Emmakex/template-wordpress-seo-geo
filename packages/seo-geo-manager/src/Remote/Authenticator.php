@@ -24,47 +24,47 @@ final class Authenticator {
 	) {
 	}
 
-	public function authorize( WP_REST_Request $request, string $required_scope ): bool|WP_Error {
+	public function authorize( WP_REST_Request $request, string $required_scope, string $event = 'remote-read' ): bool|WP_Error {
 		$metadata = $this->guard->validate_metadata( $request );
 		if ( is_wp_error( $metadata ) ) {
-			$this->record_failure( $request, $required_scope, $metadata, array(), array() );
+			$this->record_failure( $request, $required_scope, $event, $metadata, array(), array() );
 			return $metadata;
 		}
 
 		if ( $this->requires_ssl() && ! is_ssl() ) {
 			$error = new WP_Error( 'authentication_failed', 'Remote Manager API requires HTTPS.', array( 'status' => 403 ) );
-			$this->record_failure( $request, $required_scope, $error, $metadata, array() );
+			$this->record_failure( $request, $required_scope, $event, $error, $metadata, array() );
 			return $error;
 		}
 
 		$credential = $this->bearer_credential( $request );
 		if ( '' === $credential ) {
 			$error = new WP_Error( 'authentication_failed', 'Remote Manager bearer credential is required.', array( 'status' => 401 ) );
-			$this->record_failure( $request, $required_scope, $error, $metadata, array() );
+			$this->record_failure( $request, $required_scope, $event, $error, $metadata, array() );
 			return $error;
 		}
 
 		$connection = $this->tokens->authenticate( $credential );
 		if ( is_wp_error( $connection ) ) {
-			$this->record_failure( $request, $required_scope, $connection, $metadata, array() );
+			$this->record_failure( $request, $required_scope, $event, $connection, $metadata, array() );
 			return $connection;
 		}
 
 		if ( ! $this->credentials->has_scope( $connection, $required_scope ) ) {
 			$error = new WP_Error( 'scope_denied', sprintf( 'Remote Manager connection does not grant %s.', $required_scope ), array( 'status' => 403 ) );
-			$this->record_failure( $request, $required_scope, $error, $metadata, $connection );
+			$this->record_failure( $request, $required_scope, $event, $error, $metadata, $connection );
 			return $error;
 		}
 
 		$rate = $this->guard->enforce_rate_limit( (string) $connection['connection_id'] );
 		if ( is_wp_error( $rate ) ) {
-			$this->record_failure( $request, $required_scope, $rate, $metadata, $connection );
+			$this->record_failure( $request, $required_scope, $event, $rate, $metadata, $connection );
 			return $rate;
 		}
 
 		$nonce = $this->guard->consume_nonce( (string) $connection['connection_id'], (string) $metadata['nonce'] );
 		if ( is_wp_error( $nonce ) ) {
-			$this->record_failure( $request, $required_scope, $nonce, $metadata, $connection );
+			$this->record_failure( $request, $required_scope, $event, $nonce, $metadata, $connection );
 			return $nonce;
 		}
 
@@ -72,7 +72,7 @@ final class Authenticator {
 		wp_set_current_user( $user_id );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			$error = new WP_Error( 'capability_unavailable', 'The local WordPress execution identity is not authorised.', array( 'status' => 403 ) );
-			$this->record_failure( $request, $required_scope, $error, $metadata, $connection );
+			$this->record_failure( $request, $required_scope, $event, $error, $metadata, $connection );
 			return $error;
 		}
 
@@ -80,6 +80,7 @@ final class Authenticator {
 			'connection' => $connection,
 			'metadata'   => $metadata,
 			'scope'      => $required_scope,
+			'event'      => $event,
 		);
 		$this->tokens->note_used( (string) $metadata['request_id'] );
 
@@ -93,7 +94,10 @@ final class Authenticator {
 		return $this->contexts[ spl_object_id( $request ) ] ?? array();
 	}
 
-	public function record_success( WP_REST_Request $request ): void {
+	/**
+	 * @param array<string, scalar> $extra Bounded non-secret audit metadata.
+	 */
+	public function record_success( WP_REST_Request $request, array $extra = array() ): void {
 		$context    = $this->context( $request );
 		$metadata   = is_array( $context['metadata'] ?? null ) ? $context['metadata'] : array();
 		$connection = is_array( $context['connection'] ?? null ) ? $context['connection'] : array();
@@ -106,8 +110,10 @@ final class Authenticator {
 				'method'            => $request->get_method(),
 				'route'             => $request->get_route(),
 				'scope'             => (string) ( $context['scope'] ?? '' ),
-				'event'             => 'remote-read',
+				'event'             => (string) ( $context['event'] ?? 'remote-read' ),
 				'outcome'           => 'success',
+				'plan_id'           => (string) ( $extra['plan_id'] ?? '' ),
+				'operation_id'      => (string) ( $extra['operation_id'] ?? '' ),
 			)
 		);
 	}
@@ -131,7 +137,7 @@ final class Authenticator {
 	 * @param array<string, mixed> $metadata Request metadata when valid.
 	 * @param array<string, mixed> $connection Public connection state when available.
 	 */
-	private function record_failure( WP_REST_Request $request, string $scope, WP_Error $error, array $metadata, array $connection ): void {
+	private function record_failure( WP_REST_Request $request, string $scope, string $event, WP_Error $error, array $metadata, array $connection ): void {
 		$this->audit->record(
 			array(
 				'request_id'        => (string) ( $metadata['request_id'] ?? '' ),
@@ -140,7 +146,7 @@ final class Authenticator {
 				'method'            => $request->get_method(),
 				'route'             => $request->get_route(),
 				'scope'             => $scope,
-				'event'             => 'remote-read',
+				'event'             => $event,
 				'outcome'           => 'rejected',
 				'error_code'        => $error->get_error_code(),
 				'reason'            => $error->get_error_message(),
