@@ -14,6 +14,7 @@ use SeoGeo\Manager\Admin\FieldGate;
 use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\PermalinkActions;
+use SeoGeo\Manager\Admin\RemoteAccess;
 use SeoGeo\Manager\Admin\WorkspaceDashboard;
 use SeoGeo\Manager\Intelligence\PresetPageResolver;
 use SeoGeo\Manager\Rest\AuthorBindingController;
@@ -60,6 +61,7 @@ final class Plugin {
 
 		if ( is_admin() ) {
 			WorkspaceDashboard::register();
+			RemoteAccess::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
 			PermalinkActions::register();
