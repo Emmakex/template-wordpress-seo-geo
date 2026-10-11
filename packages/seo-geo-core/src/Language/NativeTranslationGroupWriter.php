@@ -101,7 +101,7 @@ final class NativeTranslationGroupWriter {
 
 		ksort( $translations );
 		foreach ( $members as $member ) {
-			if ( $translations !== ( $member['translations'] ?? null ) ) {
+			if ( ( $member['translations'] ?? null ) !== $translations ) {
 				$consistent = false;
 				break;
 			}
@@ -467,7 +467,7 @@ final class NativeTranslationGroupWriter {
 
 		update_post_meta( $post_id, $key, $value );
 
-		return $value === get_post_meta( $post_id, $key, true );
+		return get_post_meta( $post_id, $key, true ) === $value;
 	}
 
 	/**
