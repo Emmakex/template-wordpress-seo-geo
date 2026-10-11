@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Remote;
 
+use WP_Error;
+
 final class Credentials {
 	private const OPTION = 'seo_geo_manager_remote_connection';
 
@@ -78,6 +80,38 @@ final class Credentials {
 		if ( '' === (string) ( $state['connection_id'] ?? '' ) ) {
 			return $this->ensure_identity();
 		}
+
+		return $this->public_state( $state );
+	}
+
+	/**
+	 * @param list<string> $scopes Requested scopes.
+	 * @return array<string, mixed>|WP_Error
+	 */
+	public function set_scopes( array $scopes ): array|WP_Error {
+		$scopes = $this->normalize_scopes( $scopes );
+		if ( array() === $scopes ) {
+			return new WP_Error( 'validation_failed', 'At least one supported remote scope is required.', array( 'status' => 400 ) );
+		}
+
+		$state           = $this->raw_state();
+		$state['scopes'] = $scopes;
+		$this->persist( $state );
+
+		return $this->public_state( $state );
+	}
+
+	/**
+	 * @return array<string, mixed>|WP_Error
+	 */
+	public function set_enabled( bool $enabled ): array|WP_Error {
+		$state = $this->raw_state();
+		if ( $enabled && '' === (string) ( $state['credential_hash'] ?? '' ) ) {
+			return new WP_Error( 'capability_unavailable', 'Generate a connection credential before enabling remote access.', array( 'status' => 409 ) );
+		}
+
+		$state['enabled'] = $enabled;
+		$this->persist( $state );
 
 		return $this->public_state( $state );
 	}
