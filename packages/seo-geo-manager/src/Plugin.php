@@ -38,6 +38,7 @@ use SeoGeo\Manager\Rest\NativeTranslationGroupController;
 use SeoGeo\Manager\Rest\NavigationChangeController;
 use SeoGeo\Manager\Rest\OperationHistoryController;
 use SeoGeo\Manager\Rest\PermalinkController;
+use SeoGeo\Manager\Rest\RemoteMutationController;
 use SeoGeo\Manager\Rest\RemoteReadController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
@@ -102,6 +103,7 @@ final class Plugin {
 				ThemeStrategicMediaController::register_routes();
 				ThemeStructuredContentController::register_routes();
 				RemoteReadController::register_routes();
+				RemoteMutationController::register_routes();
 			}
 		);
 	}
