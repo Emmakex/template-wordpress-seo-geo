@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Support;
@@ -30,6 +29,7 @@ final class CapabilityManifest {
 		$can_manage_categories = current_user_can( 'manage_categories' );
 		$can_manage_options = current_user_can( 'manage_options' );
 		$can_read_links = $can_edit_posts || $can_edit_pages;
+		$can_featured_media = $can_upload_files && ( $can_edit_posts || $can_edit_pages );
 
 		$app_passwords_supported = function_exists( 'wp_is_application_passwords_supported' )
 			? wp_is_application_passwords_supported()
@@ -58,6 +58,14 @@ final class CapabilityManifest {
 		$capabilities['media_read'] = self::capability( $can_upload_files, 'upload_files' );
 		$capabilities['media_write'] = self::capability( $can_upload_files, 'upload_files' );
 		$capabilities['media_upload'] = self::capability( $can_upload_files, 'upload_files' );
+		$capabilities['featured_media_read'] = self::capability(
+			$can_featured_media,
+			'upload_files + edit_post(resource)'
+		);
+		$capabilities['featured_media_write'] = self::capability(
+			$can_featured_media,
+			'upload_files + edit_post(resource) + edit_post(attachment)'
+		);
 		$capabilities['media_alt_write'] = self::capability(
 			$can_upload_files,
 			'upload_files + edit_post(attachment)'
@@ -167,6 +175,7 @@ final class CapabilityManifest {
 		$can_publish_content = $can_publish_posts || $can_publish_pages;
 		$can_read_models = $can_edit_posts || $can_edit_pages;
 		$can_read_links = $can_edit_posts || $can_edit_pages;
+		$can_featured_media = $can_upload_files && ( $can_edit_posts || $can_edit_pages );
 
 		$operations = array();
 		$operations['inspect.site'] = self::operation( $can_edit_posts, 'GET', '/site/intelligence', 'read-only' );
@@ -196,6 +205,30 @@ final class CapabilityManifest {
 			'POST',
 			'/content/{id}/publication/apply',
 			'publication-mutation'
+		);
+		$operations['content.featured_media.read'] = self::operation(
+			$can_featured_media,
+			'GET',
+			'/content/{resource_id}/featured-media',
+			'read-only'
+		);
+		$operations['content.featured_media.preview'] = self::operation(
+			$can_featured_media,
+			'POST',
+			'/content/{resource_id}/featured-media/changes/preview',
+			'read-only-preview'
+		);
+		$operations['content.featured_media.apply'] = self::operation(
+			$can_featured_media,
+			'POST',
+			'/content/{resource_id}/featured-media/changes/apply',
+			'mutation'
+		);
+		$operations['content.featured_media.rollback'] = self::operation(
+			$can_featured_media,
+			'POST',
+			'/content/featured-media/changes/{operation_id}/rollback',
+			'rollback-mutation'
 		);
 		$operations['theme.models.list'] = self::operation( $can_read_models, 'GET', '/theme/models', 'read-only' );
 		$operations['theme.models.read'] = self::operation(

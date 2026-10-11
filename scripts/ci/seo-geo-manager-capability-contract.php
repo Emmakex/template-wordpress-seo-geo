@@ -60,10 +60,16 @@ $required_manifest_markers = array(
 	"'contextual_link_write'",
 	"'media_read'",
 	"'media_upload'",
+	"'featured_media_read'",
+	"'featured_media_write'",
 	"'media_alt_write'",
 	"'media_context_write'",
 	"'media.upload.preview'",
 	"'media.upload.apply'",
+	"'content.featured_media.read'",
+	"'content.featured_media.preview'",
+	"'content.featured_media.apply'",
+	"'content.featured_media.rollback'",
 	"'media.alt.preview'",
 	"'media.alt.apply'",
 	"'media.alt.rollback'",
@@ -112,6 +118,12 @@ if ( ! str_contains( $plugin, 'MediaContextChangeController::register_routes();'
 }
 if ( ! str_contains( $plugin, 'MediaUploadController::register_routes();' ) ) {
 	throw new RuntimeException( 'Media upload controller is not registered by Manager bootstrap.' );
+}
+if ( ! str_contains( $plugin, 'FeaturedMediaController::register_routes();' ) ) {
+	throw new RuntimeException( 'Featured-media reader controller is not registered by Manager bootstrap.' );
+}
+if ( ! str_contains( $plugin, 'FeaturedMediaChangeController::register_routes();' ) ) {
+	throw new RuntimeException( 'Featured-media change controller is not registered by Manager bootstrap.' );
 }
 
 $header_match   = array();
