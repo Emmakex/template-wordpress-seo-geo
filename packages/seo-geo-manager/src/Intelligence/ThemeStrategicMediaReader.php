@@ -57,8 +57,8 @@ final class ThemeStrategicMediaReader {
 			);
 		}
 
-		$slots      = \seo_geo_theme_strategic_media_contract( $model_id );
-		$definition = is_array( $slots ) ? ( $slots[ $slot_id ] ?? null ) : null;
+		$slots      = self::theme_contract( $model_id );
+		$definition = $slots[ $slot_id ] ?? null;
 		if ( ! self::is_image_slot_definition( $definition ) ) {
 			return new WP_Error(
 				'seo_geo_manager_theme_media_binding_slot_not_declared',
@@ -67,10 +67,10 @@ final class ThemeStrategicMediaReader {
 			);
 		}
 
-		$attachment_id = absint( \seo_geo_theme_strategic_media_slot( $resource->ID, $model_id, $slot_id ) );
+		$attachment_id = absint( self::theme_slot( $resource->ID, $model_id, $slot_id ) );
 		$attachment    = 0 < $attachment_id ? get_post( $attachment_id ) : null;
 		$media         = self::is_image_attachment( $attachment ) ? self::media_summary( $attachment ) : null;
-		$fingerprint   = (string) \seo_geo_theme_strategic_media_fingerprint( $resource->ID, $model_id, $slot_id );
+		$fingerprint   = self::theme_fingerprint( $resource->ID, $model_id, $slot_id );
 		if ( '' === $fingerprint ) {
 			return new WP_Error(
 				'seo_geo_manager_theme_media_binding_fingerprint_unavailable',
@@ -119,6 +119,34 @@ final class ThemeStrategicMediaReader {
 		return function_exists( 'seo_geo_theme_strategic_media_contract' )
 			&& function_exists( 'seo_geo_theme_strategic_media_slot' )
 			&& function_exists( 'seo_geo_theme_strategic_media_fingerprint' );
+	}
+
+	/**
+	 * Invoke the Theme contract callback after capability discovery.
+	 *
+	 * @return array<string, array{type:string,required:bool,accept:string}>
+	 */
+	private static function theme_contract( string $model_id ): array {
+		/** @var callable(string):array<string, array{type:string,required:bool,accept:string}> $callback */
+		$callback = 'seo_geo_theme_strategic_media_contract';
+
+		return $callback( $model_id );
+	}
+
+	/** Invoke the Theme slot callback after capability discovery. */
+	private static function theme_slot( int $resource_id, string $model_id, string $slot_id ): int {
+		/** @var callable(int, string, string):int $callback */
+		$callback = 'seo_geo_theme_strategic_media_slot';
+
+		return $callback( $resource_id, $model_id, $slot_id );
+	}
+
+	/** Invoke the Theme fingerprint callback after capability discovery. */
+	private static function theme_fingerprint( int $resource_id, string $model_id, string $slot_id ): string {
+		/** @var callable(int, string, string):string $callback */
+		$callback = 'seo_geo_theme_strategic_media_fingerprint';
+
+		return $callback( $resource_id, $model_id, $slot_id );
 	}
 
 	/**
