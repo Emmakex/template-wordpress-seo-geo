@@ -17,6 +17,7 @@ use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\PermalinkActions;
 use SeoGeo\Manager\Intelligence\PresetPageResolver;
 use SeoGeo\Manager\Rest\AuthorBindingController;
+use SeoGeo\Manager\Rest\C9FieldPreflightController;
 use SeoGeo\Manager\Rest\CapabilitiesController;
 use SeoGeo\Manager\Rest\ChangeSetController;
 use SeoGeo\Manager\Rest\ContentController;
@@ -89,6 +90,7 @@ final class Plugin {
 				FeaturedMediaController::register_routes();
 				FeaturedMediaChangeController::register_routes();
 				FieldGateController::register_routes();
+				C9FieldPreflightController::register_routes();
 				ChangeSetController::register_routes();
 				NavigationChangeController::register_routes();
 				PermalinkController::register_routes();
