@@ -354,6 +354,7 @@ final class CorporateHomeModelResolver {
 	 * Merge effective Theme-owned media bindings into the semantic model.
 	 *
 	 * @param array<string, mixed> $model Authored semantic model.
+	 * @param WP_Post              $post  Source WordPress page.
 	 * @return array<string, mixed>
 	 */
 	private function with_strategic_media( array $model, WP_Post $post ): array {

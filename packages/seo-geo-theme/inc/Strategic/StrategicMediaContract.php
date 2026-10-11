@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Theme\Strategic;
 
+/** Resolve allowlisted strategic media slots for the active Theme preset. */
 final class StrategicMediaContract {
 	private const FILENAME       = 'strategic-media.json';
 	private const SCHEMA_VERSION = 1;
@@ -16,6 +17,7 @@ final class StrategicMediaContract {
 	/**
 	 * Return media-slot definitions for one model in the active preset.
 	 *
+	 * @param string $model_id Semantic model identifier.
 	 * @return array<string, array{type:string,required:bool,accept:string}>
 	 */
 	public static function model_slots( string $model_id ): array {
@@ -58,6 +60,8 @@ final class StrategicMediaContract {
 	/**
 	 * Return one declared media-slot definition.
 	 *
+	 * @param string $model_id Semantic model identifier.
+	 * @param string $slot_id  Strategic media slot identifier.
 	 * @return array{type:string,required:bool,accept:string}|null
 	 */
 	public static function slot( string $model_id, string $slot_id ): ?array {
@@ -88,7 +92,7 @@ final class StrategicMediaContract {
 		}
 
 		$document = wp_json_file_decode( $path, array( 'associative' => true ) );
-		if ( ! is_array( $document ) || self::SCHEMA_VERSION !== (int) ( $document['schema_version'] ?? 0 ) || $preset_id !== ( $document['preset'] ?? null ) ) {
+		if ( ! is_array( $document ) || self::SCHEMA_VERSION !== (int) ( $document['schema_version'] ?? 0 ) || ( $document['preset'] ?? null ) !== $preset_id ) {
 			return null;
 		}
 

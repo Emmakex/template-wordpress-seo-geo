@@ -81,8 +81,8 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
-		$visual         = $this->hero_visual( $slots );
-		$visual_hidden  = $visual['decorative'] ? ' aria-hidden="true"' : '';
+		$visual        = $this->hero_visual( $slots );
+		$visual_hidden = $visual['decorative'] ? ' aria-hidden="true"' : '';
 
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'

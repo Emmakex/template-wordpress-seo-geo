@@ -19,12 +19,24 @@ require_once __DIR__ . '/Strategic/StrategicSurfaceRuntime.php';
 
 \SeoGeo\Theme\Strategic\StrategicModelMediaState::register();
 
-/** Return one effective image attachment ID for a declared strategic media slot. */
+/**
+ * Return one effective image attachment ID for a declared strategic media slot.
+ *
+ * @param int    $post_id  WordPress page ID.
+ * @param string $model_id Semantic model identifier.
+ * @param string $slot_id  Strategic media slot identifier.
+ */
 function seo_geo_theme_strategic_media_slot( int $post_id, string $model_id, string $slot_id ): int {
 	return \SeoGeo\Theme\Strategic\StrategicModelMediaState::slot( $post_id, $model_id, $slot_id );
 }
 
-/** Return a stable fingerprint for one strategic media binding. */
+/**
+ * Return a stable fingerprint for one strategic media binding.
+ *
+ * @param int    $post_id  WordPress page ID.
+ * @param string $model_id Semantic model identifier.
+ * @param string $slot_id  Strategic media slot identifier.
+ */
 function seo_geo_theme_strategic_media_fingerprint( int $post_id, string $model_id, string $slot_id ): string {
 	return \SeoGeo\Theme\Strategic\StrategicModelMediaState::fingerprint( $post_id, $model_id, $slot_id );
 }
@@ -32,6 +44,10 @@ function seo_geo_theme_strategic_media_fingerprint( int $post_id, string $model_
 /**
  * Bind one declared strategic media slot to a WordPress image attachment.
  *
+ * @param int    $post_id       WordPress page ID.
+ * @param string $model_id      Semantic model identifier.
+ * @param string $slot_id       Strategic media slot identifier.
+ * @param int    $attachment_id WordPress image attachment ID.
  * @return true|WP_Error
  */
 function seo_geo_theme_set_strategic_media_slot( int $post_id, string $model_id, string $slot_id, int $attachment_id ) {
@@ -41,6 +57,9 @@ function seo_geo_theme_set_strategic_media_slot( int $post_id, string $model_id,
 /**
  * Remove one declared strategic media binding.
  *
+ * @param int    $post_id  WordPress page ID.
+ * @param string $model_id Semantic model identifier.
+ * @param string $slot_id  Strategic media slot identifier.
  * @return true|WP_Error
  */
 function seo_geo_theme_remove_strategic_media_slot( int $post_id, string $model_id, string $slot_id ) {
@@ -50,6 +69,7 @@ function seo_geo_theme_remove_strategic_media_slot( int $post_id, string $model_
 /**
  * Return the declared media slots for one active-preset semantic model.
  *
+ * @param string $model_id Semantic model identifier.
  * @return array<string, array{type:string,required:bool,accept:string}>
  */
 function seo_geo_theme_strategic_media_contract( string $model_id ): array {

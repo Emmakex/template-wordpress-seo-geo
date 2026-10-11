@@ -12,6 +12,7 @@ namespace SeoGeo\Theme\Strategic;
 use WP_Error;
 use WP_Post;
 
+/** Store and validate Theme-owned strategic media bindings on WordPress pages. */
 final class StrategicModelMediaState {
 	public const META_KEY = '_seo_geo_theme_strategic_media_v1';
 
@@ -97,6 +98,10 @@ final class StrategicModelMediaState {
 
 	/**
 	 * Return the effective image attachment for one declared media slot.
+	 *
+	 * @param int    $post_id  WordPress page ID.
+	 * @param string $model_id Semantic model identifier.
+	 * @param string $slot_id  Strategic media slot identifier.
 	 */
 	public static function slot( int $post_id, string $model_id, string $slot_id ): int {
 		$model_id = sanitize_key( $model_id );
@@ -117,6 +122,10 @@ final class StrategicModelMediaState {
 
 	/**
 	 * Stable fingerprint for one effective model/slot binding.
+	 *
+	 * @param int    $post_id  WordPress page ID.
+	 * @param string $model_id Semantic model identifier.
+	 * @param string $slot_id  Strategic media slot identifier.
 	 */
 	public static function fingerprint( int $post_id, string $model_id, string $slot_id ): string {
 		$model_id = sanitize_key( $model_id );
@@ -128,6 +137,10 @@ final class StrategicModelMediaState {
 	/**
 	 * Bind one declared strategic media slot to an existing WordPress image.
 	 *
+	 * @param int    $post_id       WordPress page ID.
+	 * @param string $model_id      Semantic model identifier.
+	 * @param string $slot_id       Strategic media slot identifier.
+	 * @param int    $attachment_id WordPress image attachment ID.
 	 * @return true|WP_Error
 	 */
 	public static function set_slot( int $post_id, string $model_id, string $slot_id, int $attachment_id ) {
@@ -143,10 +156,10 @@ final class StrategicModelMediaState {
 			$state['models'][ $model_id ] = array();
 		}
 		$state['models'][ $model_id ][ $slot_id ] = $attachment_id;
-		$state                                      = self::sanitize_state( $state );
+		$state                                    = self::sanitize_state( $state );
 
 		update_post_meta( $post_id, self::META_KEY, $state );
-		if ( $attachment_id !== self::slot( $post_id, $model_id, $slot_id ) ) {
+		if ( self::slot( $post_id, $model_id, $slot_id ) !== $attachment_id ) {
 			return new WP_Error( 'seo_geo_theme_strategic_media_store_failed', 'Strategic media binding could not be verified.' );
 		}
 
@@ -156,6 +169,9 @@ final class StrategicModelMediaState {
 	/**
 	 * Remove one declared strategic media binding while preserving other slots.
 	 *
+	 * @param int    $post_id  WordPress page ID.
+	 * @param string $model_id Semantic model identifier.
+	 * @param string $slot_id  Strategic media slot identifier.
 	 * @return true|WP_Error
 	 */
 	public static function remove_slot( int $post_id, string $model_id, string $slot_id ) {
@@ -186,6 +202,9 @@ final class StrategicModelMediaState {
 	}
 
 	/**
+	 * Read and sanitize the stored strategic media state.
+	 *
+	 * @param int $post_id WordPress page ID.
 	 * @return array{schema_version:int,models:array<string, array<string, int>>}
 	 */
 	private static function state( int $post_id ): array {
@@ -195,6 +214,12 @@ final class StrategicModelMediaState {
 	}
 
 	/**
+	 * Validate one strategic media mutation against resource and permission rules.
+	 *
+	 * @param int      $post_id       WordPress page ID.
+	 * @param string   $model_id      Semantic model identifier.
+	 * @param string   $slot_id       Strategic media slot identifier.
+	 * @param int|null $attachment_id WordPress image attachment ID or null for removal.
 	 * @return true|WP_Error
 	 */
 	private static function mutation_guard( int $post_id, string $model_id, string $slot_id, ?int $attachment_id ) {
@@ -225,7 +250,11 @@ final class StrategicModelMediaState {
 		return true;
 	}
 
-	/** @param WP_Post|mixed $post */
+	/**
+	 * Check whether a WordPress resource is an image attachment.
+	 *
+	 * @param WP_Post|mixed $post WordPress post-like resource.
+	 */
 	private static function is_image_attachment( $post ): bool {
 		return $post instanceof WP_Post
 			&& 'attachment' === $post->post_type
