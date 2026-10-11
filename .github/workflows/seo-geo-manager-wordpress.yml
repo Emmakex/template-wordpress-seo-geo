@@ -15,6 +15,7 @@ on:
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
       - 'scripts/ci/seo-geo-manager-featured-media-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-featured-media-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-theme-media-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-theme-model-read-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
@@ -47,6 +48,7 @@ on:
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
       - 'scripts/ci/seo-geo-manager-featured-media-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-featured-media-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-theme-media-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-theme-model-read-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
@@ -96,6 +98,7 @@ jobs:
           php -l scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php
           php -l scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php
           php -l scripts/ci/seo-geo-manager-featured-media-acceptance.php
+          php -l scripts/ci/seo-geo-manager-theme-media-acceptance.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
           php -l scripts/ci/seo-geo-manager-theme-model-read-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
@@ -136,7 +139,7 @@ jobs:
       - name: Content create publish and schedule acceptance
         run: bash scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh
 
-      - name: Featured-media inspect assign verify and rollback acceptance
+      - name: Featured and strategic Theme media inspect assign verify and rollback acceptance
         run: bash scripts/ci/seo-geo-manager-featured-media-acceptance.sh
 
       - name: Permalink authority, clean target, protected slug repair, atomic redirect, history, rendered verification and field gate acceptance
