@@ -16,7 +16,10 @@ use WP_Post;
 final class ThemeStrategicMediaChangeAdapter {
 	private const ADAPTER = 'theme-strategic-media';
 
-	/** @param array<string, mixed> $payload Request payload. @return array<string, mixed>|WP_Error */
+	/**
+	 * @param array<string, mixed> $payload Request payload.
+	 * @return array<string, mixed>|WP_Error
+	 */
 	public static function preview( array $payload ) {
 		$state = self::prepare( $payload, false );
 		if ( is_wp_error( $state ) ) {
@@ -45,7 +48,10 @@ final class ThemeStrategicMediaChangeAdapter {
 		);
 	}
 
-	/** @param array<string, mixed> $payload Request payload. @return array<string, mixed>|WP_Error */
+	/**
+	 * @param array<string, mixed> $payload Request payload.
+	 * @return array<string, mixed>|WP_Error
+	 */
 	public static function apply( array $payload ) {
 		$key = isset( $payload['idempotency_key'] ) && is_string( $payload['idempotency_key'] ) ? trim( $payload['idempotency_key'] ) : '';
 		if ( '' === $key || 128 < strlen( $key ) ) {
@@ -139,7 +145,7 @@ final class ThemeStrategicMediaChangeAdapter {
 
 		$after_id          = isset( $operation['after_attachment_id'] ) ? absint( $operation['after_attachment_id'] ) : 0;
 		$after_fingerprint = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
-		if ( $after_id !== self::slot( $resource_id, $model_id, $slot_id ) || '' === $after_fingerprint || ! hash_equals( $after_fingerprint, self::fingerprint( $resource_id, $model_id, $slot_id ) ) ) {
+		if ( self::slot( $resource_id, $model_id, $slot_id ) !== $after_id || '' === $after_fingerprint || ! hash_equals( $after_fingerprint, self::fingerprint( $resource_id, $model_id, $slot_id ) ) ) {
 			return new WP_Error( 'seo_geo_manager_theme_media_rollback_stale', 'Strategic media changed after Apply; rollback is blocked.', array( 'status' => 409 ) );
 		}
 
@@ -147,7 +153,7 @@ final class ThemeStrategicMediaChangeAdapter {
 		$before_fingerprint = isset( $operation['before_fingerprint'] ) && is_string( $operation['before_fingerprint'] ) ? $operation['before_fingerprint'] : '';
 		$state              = array( 'resource' => $resource, 'model_id' => $model_id, 'slot_id' => $slot_id );
 		$result             = self::mutate( $state, $before_id );
-		if ( is_wp_error( $result ) || $before_id !== self::slot( $resource_id, $model_id, $slot_id ) || '' === $before_fingerprint || ! hash_equals( $before_fingerprint, self::fingerprint( $resource_id, $model_id, $slot_id ) ) ) {
+		if ( is_wp_error( $result ) || self::slot( $resource_id, $model_id, $slot_id ) !== $before_id || '' === $before_fingerprint || ! hash_equals( $before_fingerprint, self::fingerprint( $resource_id, $model_id, $slot_id ) ) ) {
 			self::mutate( $state, $after_id );
 			return new WP_Error( 'seo_geo_manager_theme_media_rollback_verify_failed', 'Rollback verification failed; Manager attempted to restore the applied state.', array( 'status' => 409 ) );
 		}
@@ -160,7 +166,10 @@ final class ThemeStrategicMediaChangeAdapter {
 		return $operation;
 	}
 
-	/** @param array<string, mixed> $payload Request payload. @return array{resource:WP_Post,model_id:string,slot_id:string,before_attachment_id:int,after_attachment_id:int,before_fingerprint:string}|WP_Error */
+	/**
+	 * @param array<string, mixed> $payload Request payload.
+	 * @return array{resource:WP_Post,model_id:string,slot_id:string,before_attachment_id:int,after_attachment_id:int,before_fingerprint:string}|WP_Error
+	 */
 	private static function prepare( array $payload, bool $for_apply ) {
 		$resource_id = isset( $payload['resource_id'] ) ? absint( $payload['resource_id'] ) : 0;
 		$model_id    = isset( $payload['model_id'] ) && is_string( $payload['model_id'] ) ? sanitize_key( $payload['model_id'] ) : '';
@@ -175,8 +184,8 @@ final class ThemeStrategicMediaChangeAdapter {
 		if ( is_wp_error( $inspection ) ) {
 			return $inspection;
 		}
-		$binding = isset( $inspection['binding'] ) && is_array( $inspection['binding'] ) ? $inspection['binding'] : array();
-		$before_id = isset( $binding['attachment_id'] ) ? absint( $binding['attachment_id'] ) : 0;
+		$binding     = isset( $inspection['binding'] ) && is_array( $inspection['binding'] ) ? $inspection['binding'] : array();
+		$before_id   = isset( $binding['attachment_id'] ) ? absint( $binding['attachment_id'] ) : 0;
 		$fingerprint = isset( $binding['fingerprint'] ) && is_string( $binding['fingerprint'] ) ? $binding['fingerprint'] : '';
 		if ( '' === $fingerprint || ! hash_equals( $expected, $fingerprint ) ) {
 			return new WP_Error( 'seo_geo_manager_theme_media_fingerprint_mismatch', 'Strategic media changed after inspection.', array( 'status' => 409 ) );
@@ -206,7 +215,10 @@ final class ThemeStrategicMediaChangeAdapter {
 		return ThemeStrategicMediaReader::theme_read_supported() && function_exists( 'seo_geo_theme_set_strategic_media_slot' ) && function_exists( 'seo_geo_theme_remove_strategic_media_slot' );
 	}
 
-	/** @param array<string, mixed> $state Prepared state. @return true|WP_Error */
+	/**
+	 * @param array<string, mixed> $state Prepared state.
+	 * @return true|WP_Error
+	 */
 	private static function mutate( array $state, int $attachment_id ) {
 		$resource = $state['resource'] ?? null;
 		$model_id = isset( $state['model_id'] ) && is_string( $state['model_id'] ) ? $state['model_id'] : '';
@@ -236,7 +248,9 @@ final class ThemeStrategicMediaChangeAdapter {
 		return $callback( $resource_id, $model_id, $slot_id );
 	}
 
-	/** @param array<string, mixed> $payload Request payload. */
+	/**
+	 * @param array<string, mixed> $payload Request payload.
+	 */
 	private static function payload_hash( array $payload ): string {
 		return hash( 'sha256', (string) wp_json_encode( array( 'resource_id' => isset( $payload['resource_id'] ) ? absint( $payload['resource_id'] ) : 0, 'model_id' => isset( $payload['model_id'] ) ? sanitize_key( (string) $payload['model_id'] ) : '', 'slot_id' => isset( $payload['slot_id'] ) ? sanitize_key( (string) $payload['slot_id'] ) : '', 'attachment_id' => isset( $payload['attachment_id'] ) ? absint( $payload['attachment_id'] ) : 0, 'expected_fingerprint' => isset( $payload['expected_fingerprint'] ) ? (string) $payload['expected_fingerprint'] : '', 'allow_published_target' => true === ( $payload['allow_published_target'] ?? false ) ) ) );
 	}
