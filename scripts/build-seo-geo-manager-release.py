@@ -15,6 +15,7 @@ SOURCE = ROOT / "packages" / "seo-geo-manager"
 PLUGIN_FILE = SOURCE / "seo-geo-manager.php"
 ZIP_ROOT = "seo-geo-manager"
 FIXED_TIMESTAMP = (2020, 1, 1, 0, 0, 0)
+TREE_ALGORITHM = "sha256-tree-v1"
 
 
 def plugin_version() -> str:
@@ -56,7 +57,21 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def write_zip(output: Path) -> None:
+def tree_sha256(files: list[Path] | None = None) -> str:
+    digest = hashlib.sha256()
+    for source in files if files is not None else source_files():
+        relative = source.relative_to(SOURCE).as_posix().encode("utf-8")
+        data = source.read_bytes()
+        digest.update(relative)
+        digest.update(b"\0")
+        digest.update(str(len(data)).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(data)
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def write_zip(output: Path, files: list[Path]) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.exists():
         output.unlink()
@@ -67,7 +82,7 @@ def write_zip(output: Path) -> None:
         compression=zipfile.ZIP_DEFLATED,
         compresslevel=9,
     ) as archive:
-        for source in source_files():
+        for source in files:
             relative = source.relative_to(SOURCE).as_posix()
             info = zipfile.ZipInfo(f"{ZIP_ROOT}/{relative}", FIXED_TIMESTAMP)
             info.compress_type = zipfile.ZIP_DEFLATED
@@ -92,13 +107,22 @@ def main() -> int:
     output = args.output.resolve()
 
     version = plugin_version()
-    write_zip(output)
+    files = source_files()
+    runtime_fingerprint = tree_sha256(files)
+    write_zip(output, files)
     digest = sha256(output)
     checksum = output.with_suffix(output.suffix + ".sha256")
     checksum.write_text(f"{digest}  {output.name}\n", encoding="utf-8")
+    tree_checksum = output.with_suffix(output.suffix + ".tree-sha256")
+    tree_checksum.write_text(
+        f"{runtime_fingerprint}  {TREE_ALGORITHM}  {len(files)} files\n",
+        encoding="utf-8",
+    )
 
     print(f"SEO/GEO Manager {version} ZIP: {output}")
     print(f"SHA-256: {digest}")
+    print(f"Runtime tree SHA-256 ({TREE_ALGORITHM}): {runtime_fingerprint}")
+    print(f"Runtime files: {len(files)}")
     return 0
 
 
