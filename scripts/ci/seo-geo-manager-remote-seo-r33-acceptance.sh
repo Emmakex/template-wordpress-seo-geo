@@ -17,6 +17,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.php"
 LOG="$(mktemp)"
 THEME_BUILD_DIR="$(mktemp -d)"
+MANAGER_VERSION="$(awk -F"'" '/SEO_GEO_MANAGER_VERSION/ { print $4; exit }' "$ROOT/packages/seo-geo-manager/seo-geo-manager.php")"
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
@@ -34,6 +35,8 @@ wp_cli() {
     -e "WORDPRESS_DB_PASSWORD=${DB_PASSWORD}" -e "WORDPRESS_DB_NAME=${DB_NAME}" \
     "$WPCLI_IMAGE" wp --path=/var/www/html "$@"
 }
+
+[[ -n "$MANAGER_VERSION" ]] || { echo '[r33-native] could not resolve current Manager version' >&2; exit 1; }
 
 for _ in $(seq 1 1); do
   docker network create "$NETWORK" >/dev/null
@@ -74,7 +77,7 @@ wp_cli eval-file /var/www/html/r33-native-seo.php >"$LOG" 2>&1 || { cat "$LOG"; 
 cat "$LOG"
 
 grep -q '"ok":true' "$LOG"
-grep -q '"plugin_version":"0.3.53"' "$LOG"
+grep -Fq "\"plugin_version\":\"${MANAGER_VERSION}\"" "$LOG"
 grep -q '"operation":"seo-authority-change"' "$LOG"
 grep -q '"authority":"seo-geo-theme"' "$LOG"
 grep -q '"authority_auto_resolved":true' "$LOG"
@@ -82,4 +85,4 @@ grep -q '"apply_exact":true' "$LOG"
 grep -q '"verify_exact":true' "$LOG"
 grep -q '"rollback_exact":true' "$LOG"
 grep -q '"generic_proxy":false' "$LOG"
-printf '[r33-native] Theme-native SEO authority acceptance OK.\n'
+printf '[r33-native] Theme-native SEO authority acceptance OK for Manager %s.\n' "$MANAGER_VERSION"
