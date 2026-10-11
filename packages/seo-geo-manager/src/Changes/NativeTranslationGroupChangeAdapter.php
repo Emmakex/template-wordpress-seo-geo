@@ -502,7 +502,12 @@ final class NativeTranslationGroupChangeAdapter {
 		return $resources;
 	}
 
-	/** @return array<string, int> */
+	/**
+	 * Normalize one validated group snapshot.
+	 *
+	 * @param array<string, mixed> $snapshot Validated native translation snapshot.
+	 * @return array<string, int>
+	 */
 	private static function normalized_snapshot_map( array $snapshot ): array {
 		$map = NativeTranslationGroupReader::normalize_translations( $snapshot['translations'] ?? array() );
 
