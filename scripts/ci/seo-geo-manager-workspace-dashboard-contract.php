@@ -69,7 +69,7 @@ foreach ( array( 'seo-geo-manager-workspaces', 'seo-geo-manager-workspace-card',
 	}
 }
 
-echo wp_json_encode(
+echo json_encode(
 	array(
 		'ok' => true,
 		'permanent_control_plane' => true,
@@ -77,5 +77,6 @@ echo wp_json_encode(
 		'migration_is_bounded_tool' => true,
 		'field_gate_mount_preserved' => true,
 		'operation_history_mount_preserved' => true,
-	)
+	),
+	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
