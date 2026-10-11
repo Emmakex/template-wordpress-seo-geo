@@ -1,6 +1,6 @@
 <?php
 /**
- * Authenticated R3 remote mutation lifecycle for one bounded content-change operation.
+ * Authenticated R3.2 remote mutation lifecycle for bounded semantic Manager operations.
  *
  * @package SeoGeoManager
  */
@@ -14,6 +14,7 @@ use SeoGeo\Manager\Changes\OperationStore;
 use SeoGeo\Manager\Remote\Audit;
 use SeoGeo\Manager\Remote\Authenticator;
 use SeoGeo\Manager\Remote\Credentials;
+use SeoGeo\Manager\Remote\MutationOperations;
 use SeoGeo\Manager\Remote\PlanStore;
 use SeoGeo\Manager\Remote\RequestGuard;
 use SeoGeo\Manager\Remote\TokenService;
@@ -113,22 +114,22 @@ final class RemoteMutationController {
 		$params = $request->get_json_params();
 		$params = is_array( $params ) ? $params : array();
 		$operation = sanitize_key( (string) ( $params['operation'] ?? '' ) );
-		if ( 'content-change' !== $operation ) {
+		if ( ! MutationOperations::supports( $operation ) ) {
 			return self::failure(
 				$request,
-				new WP_Error( 'seo_geo_manager_remote_operation_unsupported', 'R3 currently supports only content-change.', array( 'status' => 400 ) )
+				new WP_Error(
+					'seo_geo_manager_remote_operation_unsupported',
+					'The requested remote mutation operation is not supported.',
+					array(
+						'status'               => 400,
+						'supported_operations' => MutationOperations::supported(),
+					)
+				)
 			);
 		}
 
 		$payload = isset( $params['payload'] ) && is_array( $params['payload'] ) ? $params['payload'] : array();
-		if ( true === ( $payload['verify_rendered'] ?? false ) ) {
-			return self::failure(
-				$request,
-				new WP_Error( 'seo_geo_manager_remote_rendered_preview_unsupported', 'R3 content-change does not yet expose rendered verification through the remote bridge.', array( 'status' => 400 ) )
-			);
-		}
-
-		$preview = ChangeSetEngine::preview( $payload );
+		$preview = MutationOperations::preview( $operation, $payload );
 		if ( is_wp_error( $preview ) ) {
 			return self::failure( $request, $preview );
 		}
@@ -138,6 +139,7 @@ final class RemoteMutationController {
 		$plan = self::plans()->create(
 			(string) ( $connection['connection_id'] ?? '' ),
 			(int) ( $connection['wordpress_user_id'] ?? 0 ),
+			$operation,
 			$payload,
 			$preview
 		);
@@ -211,7 +213,8 @@ final class RemoteMutationController {
 
 		$payload = isset( $plan['payload'] ) && is_array( $plan['payload'] ) ? $plan['payload'] : array();
 		$payload['idempotency_key'] = 'remote-plan:' . (string) $plan['plan_id'];
-		$result = ChangeSetEngine::apply( $payload );
+		$operation_type = isset( $plan['operation'] ) && is_string( $plan['operation'] ) ? $plan['operation'] : '';
+		$result = MutationOperations::apply( $operation_type, $payload );
 		if ( is_wp_error( $result ) ) {
 			return self::failure( $request, $result, (string) $plan['plan_id'] );
 		}
@@ -228,6 +231,10 @@ final class RemoteMutationController {
 		$stored['remote_connection_id'] = (string) $plan['connection_id'];
 		$stored['remote_plan_id']       = (string) $plan['plan_id'];
 		$stored['remote_actor_user_id'] = (int) $plan['wordpress_user_id'];
+		$stored['remote_operation_type'] = $operation_type;
+		if ( isset( $result['structured_model'] ) && is_array( $result['structured_model'] ) ) {
+			$stored['structured_model'] = $result['structured_model'];
+		}
 		if ( ! OperationStore::save( $operation_id, $stored ) ) {
 			return self::failure( $request, new WP_Error( 'seo_geo_manager_remote_operation_bind_failed', 'Applied Manager operation could not be bound to the remote connection.', array( 'status' => 500 ) ), (string) $plan['plan_id'], $operation_id );
 		}
@@ -405,6 +412,9 @@ final class RemoteMutationController {
 		$changes = isset( $operation['changes'] ) && is_array( $operation['changes'] ) ? array_keys( $operation['changes'] ) : array();
 		return array(
 			'operation_id' => (string) ( $operation['operation_id'] ?? '' ),
+			'operation' => isset( $operation['remote_operation_type'] ) && is_string( $operation['remote_operation_type'] )
+				? $operation['remote_operation_type']
+				: 'content-change',
 			'status' => (string) ( $operation['status'] ?? '' ),
 			'target_id' => (int) ( $operation['target_id'] ?? 0 ),
 			'target_type' => (string) ( $operation['target_type'] ?? '' ),
@@ -414,8 +424,30 @@ final class RemoteMutationController {
 			'verification' => is_array( $operation['verification'] ?? null ) ? $operation['verification'] : array(),
 			'environment' => is_array( $operation['environment'] ?? null ) ? $operation['environment'] : array(),
 			'remote_plan_id' => (string) ( $operation['remote_plan_id'] ?? '' ),
+			'structured_model' => self::bounded_structured_model( $operation ),
 			'created_at_gmt' => (string) ( $operation['created_at_gmt'] ?? '' ),
 			'rolled_back_at_gmt' => (string) ( $operation['rolled_back_at_gmt'] ?? '' ),
+		);
+	}
+
+	/**
+	 * @param array<string, mixed> $operation Stored operation.
+	 * @return array<string, mixed>
+	 */
+	private static function bounded_structured_model( array $operation ): array {
+		$model = isset( $operation['structured_model'] ) && is_array( $operation['structured_model'] )
+			? $operation['structured_model']
+			: array();
+		if ( array() === $model ) {
+			return array();
+		}
+
+		return array(
+			'preset'           => (string) ( $model['preset'] ?? '' ),
+			'page_key'         => (string) ( $model['page_key'] ?? '' ),
+			'model_id'         => (string) ( $model['model_id'] ?? '' ),
+			'verified_groups'  => isset( $model['verified_groups'] ) && is_array( $model['verified_groups'] ) ? array_values( $model['verified_groups'] ) : array(),
+			'layout_preserved' => true === ( $model['layout_preserved'] ?? false ),
 		);
 	}
 
