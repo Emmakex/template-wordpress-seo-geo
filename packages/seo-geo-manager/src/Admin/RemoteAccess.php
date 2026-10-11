@@ -204,7 +204,7 @@ final class RemoteAccess {
 		if ( is_wp_error( $result ) ) {
 			self::notice( 'error', $result->get_error_message() );
 		} else {
-			if ( is_array( $result ) && isset( $result['credential'] ) && is_string( $result['credential'] ) ) {
+			if ( isset( $result['credential'] ) && is_string( $result['credential'] ) ) {
 				set_transient( self::token_key(), $result['credential'], 5 * MINUTE_IN_SECONDS );
 			}
 			self::notice( 'success', $message );
