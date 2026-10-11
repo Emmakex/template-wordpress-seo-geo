@@ -15,15 +15,15 @@ Frozen Corporate v5 A3.1 field identity:
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen Theme implementation source commit: `c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00`;
-- Theme ZIP SHA-256: `f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f`;
+- frozen Theme implementation source commit: `e54dc8e5a85304fea1d1f2d5f9079b5a26d6dc60`;
+- Theme ZIP SHA-256: `b737b9d7e8c6b5e709aa69570772dd58b5629140b0216bf90cc81fb1bd21724d`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `1736d8b6dfb9aeec8cc8132a4ee1c42d5d9e4a3afb4510934edfd0cecd5a9fe2`;
+- deterministic field-pilot pack SHA-256: `de585bec0fe3e46d77dbb4982a5752f8932ace8c9b4c4516d90027e470949726`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
-This Corporate v5 A3.1 identity is the only current technical field candidate. Deterministic repository evidence is necessary, but it is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
+This Corporate v5 A3.1 identity, now including the C6.6B optional strategic hero-media binding, is the only current technical field candidate. Deterministic repository evidence is necessary, but it is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
 
 ## Current pilot position
 
@@ -83,6 +83,7 @@ Corporate v5 A3.1 is the exact frozen technical candidate for the next single sa
 
 - compacting the hero so the primary actions fit the practical first desktop viewport;
 - adding a real local Theme-owned hero visual;
+- allowing the declared `hero-media` slot to bind an existing WordPress image through versioned Theme-owned state, while preserving the local SVG as fallback;
 - adding stable capability visual treatment without remote dependencies;
 - strengthening Method hierarchy and process continuity;
 - allowing the first Insights card to prefer WordPress featured media and use a local Theme fallback when absent;
@@ -93,6 +94,8 @@ Corporate v5 A3.1 is the exact frozen technical candidate for the next single sa
 The final repository performance fixture for Corporate A3.1 records Lighthouse `100`, FCP `751.72 ms`, LCP `901.72 ms`, CLS `0`, TBT `0`, `8` total requests, `0` third-party requests, `0` project JavaScript bytes and `118` DOM nodes.
 
 A temporary 13-request regression was traced to five decorative SVG data URIs. Those decorative icons were replaced with local CSS/pseudo-element treatment rather than weakening the eight-request product budget. Hero and Insights retain their meaningful media slots.
+
+C6.6B does not put attachment IDs into Gutenberg or transfer layout authority to the Manager. The binding is Theme-owned structured state; the public renderer reads the declared slot, outputs normal responsive WordPress image markup when valid, and falls back to the existing local SVG when no binding exists.
 
 ## Corporate v5 — Theme-owned frontend
 
@@ -125,12 +128,13 @@ WordPress remains the CMS and resource authority. Gutenberg remains available fo
 
 ## Repository acceptance boundary
 
-The exact A3.1 implementation source `c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00` has passed the repository gates for Foundation, Design System, Corporate Page Pipeline, Package, Release Artifact, PHP Quality/PHPStan, Native Multilingual, Self-contained Theme, WordPress Smoke, Accessibility/Responsive and Performance Baseline.
+The exact A3.1 Theme implementation source `e54dc8e5a85304fea1d1f2d5f9079b5a26d6dc60` has passed the repository gates for Foundation, Design System, Corporate Page Pipeline, Package, Release Artifact, PHP Quality/PHPStan, Native Multilingual, Self-contained Theme, WordPress Smoke, Accessibility/Responsive and Performance Baseline. The strategic-media extension is additionally exercised in the zero-plugin WordPress acceptance with fallback, valid image binding, invalid non-image rejection, unchanged `post_content`, fingerprint restoration and cleanup.
 
 The accepted v5 baseline covers:
 
 - Theme-owned semantic header/main/footer and one strategic H1;
 - server-side rendering and dynamic WordPress Insights;
+- declared Theme-owned strategic media bindings without Gutenberg layout mutation;
 - no strategic `wp-block-post-content` authority;
 - no legacy Corporate v4 visual CSS in the v5 client bundle;
 - keyboard/focus and reduced-motion behavior;
@@ -157,25 +161,26 @@ Corporate v5 must prove all of the following before the other preset master surf
 - remain within performance budgets;
 - remain stable at `1440 / 1024 / 768 / 390`;
 - meet the premium/WOW visual gate on the real `/nuevaweb/` sandbox;
-- establish a reusable renderer boundary that SEO/GEO Manager can later use for generated landings.
+- establish a reusable renderer boundary that SEO/GEO Manager can later operate through declared capabilities.
 
 The `320` compact-mobile automated check remains an additional stress case.
 
 ## Relationship with SEO/GEO Manager
 
-The v5 renderer boundary is intentionally designed for the future Manager.
+The v5 renderer boundary is intentionally designed for the Manager bridge/control plane.
 
-Manager will be able to:
+External orchestration will be able to decide strategy, research, content, optimization and which bounded change should happen. Manager then provides safe WordPress primitives to:
 
-- create/update structured strategic landing models without generating Gutenberg layout trees;
-- create complete blog posts automatically;
-- materialize automated articles as normal WordPress posts;
+- inspect WordPress resources and Theme capabilities;
+- preview and apply structured strategic-model changes without generating Gutenberg layout trees;
+- bind existing media only to Theme-declared semantic media slots;
+- create complete blog posts as normal WordPress resources;
 - let authorized clients edit those articles in Gutenberg;
-- schedule/publish/refresh content under explicit policy;
-- maintain internal-link/cluster plans;
+- schedule/publish/verify changes under explicit policy;
+- retain operation history and stale-safe rollback;
 - resolve SEO/GEO output ownership without duplicating Theme output.
 
-This Manager roadmap does **not** require Manager to run the public frontend. Theme rendering remains local to WordPress.
+Manager does **not** run the public frontend or own the strategic layout. Theme rendering remains local to WordPress.
 
 ## Existing milestones remain valid
 
@@ -206,14 +211,15 @@ The destructive/reset portion must **not** be repeated unless a real data/state 
 1. Keep the existing `/nuevaweb/` clone and Step 1–7 evidence.
 2. Keep Migration Bridge `0.8.60` unchanged.
 3. Preserve the existing clean hydrated Home data/content.
-4. Verify the Theme ZIP SHA-256 is exactly `f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f` before installation.
+4. Verify the Theme ZIP SHA-256 is exactly `b737b9d7e8c6b5e709aa69570772dd58b5629140b0216bf90cc81fb1bd21724d` before installation.
 5. Replace the Theme with that frozen Corporate v5 A3.1 candidate **only** on `/nuevaweb/`.
 6. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
 7. Open the same logical hydrated Home through the Theme-owned renderer.
 8. Verify first that the header is a single coherent strategic header and that no legacy list/title/`Menu` stack remains.
 9. Review the full desktop composition before advancing to narrower viewports.
 10. After desktop visual direction is accepted, run field QA at `1024 / 768 / 390` one viewport at a time.
-11. Do not advance the next roadmap stage until the Home receives explicit visual approval.
+11. If a real hero image is bound, verify that it appears with its authored alt text and responsive WordPress markup; if no binding is present, verify the local SVG fallback remains intact.
+12. Do not advance the next roadmap stage until the Home receives explicit visual approval.
 
 If the semantic data or Step 7 state has drifted, stop and investigate instead of recreating evidence casually.
 
@@ -255,7 +261,7 @@ This is **not** automatic production cutover.
 
 Theme stable promotion remains **NO-GO**.
 
-SEO/GEO Manager is a separate product and is not itself a dependency for Theme stable acceptance. However, the Theme renderer architecture must be suitable for the future Manager Landing Engine before the Corporate master is considered product-complete.
+SEO/GEO Manager is a separate product and is not itself a dependency for Theme stable acceptance. However, the Theme renderer architecture must expose the bounded capabilities the Manager bridge needs without making Manager a frontend/layout authority.
 
 Until Corporate v5 A3.1 and later production acceptance exist:
 

@@ -10,12 +10,13 @@ Target release: `0.1.1`.
 
 Release channel: `prestable`.
 
-The migration/reset/hydration/SEO-GEO engine, deterministic packaging, onboarding, upgrade/rollback and the Corporate v5 Theme-owned renderer boundary are working. Corporate v5 A1 proved the renderer/model boundary. Corporate v5 A2 proved clean Theme-owned strategic chrome and removed inherited v4 presentation debt. Corporate v5 A3 lightened the real-site visual system. The current exact field candidate is **Corporate v5 A3.1**, the bounded visual closure before the next `/nuevaweb/` pass.
+The migration/reset/hydration/SEO-GEO engine, deterministic packaging, onboarding, upgrade/rollback and the Corporate v5 Theme-owned renderer boundary are working. Corporate v5 A1 proved the renderer/model boundary. Corporate v5 A2 proved clean Theme-owned strategic chrome and removed inherited v4 presentation debt. Corporate v5 A3 lightened the real-site visual system. The current exact field candidate is **Corporate v5 A3.1 with the C6.6B strategic-media binding extension**, preserving the bounded visual closure while allowing a declared hero image to be bound without moving layout authority into Gutenberg or Manager.
 
 A3.1 keeps the accepted A2/A3 architecture and hydrated content state intact while:
 
 - compacting the hero so the primary actions fit the practical desktop first viewport;
 - adding a real local hero visual slot;
+- allowing the declared `hero-media` slot to bind an existing WordPress image through Theme-owned structured state, with the local SVG retained as the safe fallback;
 - adding stable capability visual treatment without external dependencies;
 - strengthening Method hierarchy and process continuity;
 - allowing the featured Insights card to prefer a WordPress featured image with a local Theme fallback;
@@ -35,12 +36,12 @@ The machine-readable source of truth remains:
 
 Frozen Corporate v5 A3.1 technical identity:
 
-- Theme implementation source commit: `c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00`;
+- Theme implementation source commit: `e54dc8e5a85304fea1d1f2d5f9079b5a26d6dc60`;
 - Theme: `0.1.1` / `prestable`;
-- Theme ZIP SHA-256: `f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f`;
+- Theme ZIP SHA-256: `b737b9d7e8c6b5e709aa69570772dd58b5629140b0216bf90cc81fb1bd21724d`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic EMMAKE field-pilot pack SHA-256: `1736d8b6dfb9aeec8cc8132a4ee1c42d5d9e4a3afb4510934edfd0cecd5a9fe2`.
+- deterministic EMMAKE field-pilot pack SHA-256: `de585bec0fe3e46d77dbb4982a5752f8932ace8c9b4c4516d90027e470949726`.
 
 This identity is reproducible technical evidence for the next `/nuevaweb/` field pass. It is **not** an accepted stable or production candidate. Any Theme implementation change requires a new deterministic Theme SHA and a newly frozen candidate before field installation.
 
@@ -48,7 +49,7 @@ The candidate metadata may be committed after the implementation source commit w
 
 ## A3.1 repository acceptance
 
-The exact A3.1 implementation passed the repository gates for:
+The exact A3.1 implementation, including the optional Theme-owned strategic hero-media binding, passed the repository gates for:
 
 - Foundation;
 - Design System;
@@ -90,7 +91,7 @@ Corporate v4.3 passed repository-side technical gates but failed the human visua
 
 Corporate v5 A1 established the renderer/model boundary. Corporate v5 A2 corrected strategic chrome and presentation ownership. Corporate v5 A3 refined the palette after real `/nuevaweb/` findings. Corporate v5 A3.1 closes the remaining bounded visual/asset treatment before the next single sandbox installation.
 
-A3.1 does **not** change Reset, hydration, Migration Bridge, content, URLs or SEO/GEO ownership.
+A3.1 does **not** change Reset, hydration, Migration Bridge, content, URLs or SEO/GEO ownership. C6.6B only adds a versioned Theme-owned binding for declared strategic media resources; the Theme remains the rendering authority and the local SVG remains the fallback when no valid binding exists.
 
 The permanent ownership rule remains:
 
@@ -117,16 +118,16 @@ The accepted repository baseline preserves semantic header/main/footer landmarks
 
 ## SEO/GEO Manager relationship
 
-SEO/GEO Manager is a separate future plugin product and is not required for Theme stable runtime.
+SEO/GEO Manager is a separate plugin product and is not required for Theme stable runtime.
 
-The v5 renderer boundary supports the future Manager direction:
+The v5 renderer boundary supports the Manager bridge/control-plane direction:
 
-- Manager Landing Engine creates or updates structured strategic-page models rather than visual Gutenberg block trees;
-- Theme renders those models;
-- Manager Blog Engine can create complete normal WordPress posts;
-- automated blog posts remain editable by authorized users in Gutenberg;
-- Manager handles draft/preview/schedule/publish/refresh/rollback;
-- Theme owns the public article shell and strategic frontend presentation;
+- external orchestration decides strategy, research, content, optimization and which bounded change should happen;
+- Manager inspects WordPress/Theme capabilities and safely applies approved structured operations;
+- strategic landing content is written as semantic models rather than visual Gutenberg layout trees;
+- Theme renders those models and declared strategic media slots;
+- complete automated articles remain normal WordPress posts editable by authorized users in Gutenberg;
+- Manager handles inspect/preview/apply/publish/verify/history/rollback primitives;
 - exactly one SEO/GEO output owner remains active per signal.
 
 ## Selected real-site pilot
