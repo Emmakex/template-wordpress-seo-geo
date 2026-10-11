@@ -2,7 +2,7 @@
 
 Status: **authoritative current execution roadmap**
 
-Date: 2026-10-10
+Date: 2026-10-11
 
 Canonical architecture: `docs/THREE_PRODUCT_OPERATING_MODEL.md`.
 
@@ -216,7 +216,7 @@ External orchestration can understand a supported client's real current WordPres
 
 ## C2 — Authentication / capability contract
 
-Status: **in progress — 0.3.34 capability-discovery slice implemented**.
+Status: **repository contract implemented; per-client HTTPS field acceptance continues**.
 
 Required:
 
@@ -230,7 +230,7 @@ Required:
 - bounded requests/responses;
 - no generic remote shell.
 
-### Implemented in 0.3.34
+### Implemented from 0.3.34
 
 - authenticated `GET /capabilities`;
 - current principal ID without credential reflection;
@@ -241,15 +241,15 @@ Required:
 - actual WordPress Application Password support/availability reporting;
 - explicit HTTPS/revocation/no-shell safety declarations;
 - current environment safety contract;
-- CI contract protecting capability-discovery semantics.
+- CI contract protecting capability-discovery semantics;
+- isolated WordPress acceptance for least privilege, Application Password transport and revocation.
 
-### Remaining before C2 closes
+### Remaining before field closure
 
-- real HTTPS Application Password connection against a client/sandbox Manager installation;
-- dedicated least-privilege remote operator acceptance;
-- credential revocation acceptance;
-- bounded unauthenticated/insufficient-capability failure acceptance;
-- remote-operation runbook.
+- real HTTPS Application Password connection against each accepted client/sandbox installation;
+- dedicated least-privilege remote operator acceptance on that installation;
+- credential revocation acceptance on that installation;
+- retained non-secret connection evidence.
 
 ### Exit criterion
 
@@ -257,7 +257,7 @@ We can connect to a client WordPress safely enough to use it as an operational A
 
 ## C3 — Generic change-set engine / hands
 
-Status: **substantial M2 foundation already implemented; generalization continues after C2 field acceptance**.
+Status: **substantial generic foundation implemented; incremental resource adapters continue**.
 
 Required generic contract:
 
@@ -288,6 +288,8 @@ External orchestration can safely change supported WordPress resources without a
 
 ## C4 — WordPress content operations
 
+Status: **in progress — lifecycle + taxonomy-assignment slices accepted**.
+
 Required primitives:
 
 - create/update page;
@@ -302,9 +304,87 @@ Required primitives:
 - featured media/reference operations;
 - safe multilingual relationship operations where supported.
 
+### Accepted slices
+
+#### 0.3.35 — normal post/page lifecycle
+
+Repository acceptance covers:
+
+- normal post creation;
+- normal page creation;
+- draft-first operation;
+- exact slug-collision rejection;
+- idempotent create replay;
+- publish now;
+- future scheduling;
+- expected-fingerprint publication protection;
+- per-post-type WordPress capability checks.
+
+Generic change sets continue to own bounded edits of existing title/slug/excerpt/content fields.
+
+#### 0.3.44 — existing-term taxonomy assignment
+
+Repository acceptance covers a generic `resource_id + taxonomy` contract:
+
+```text
+Inspect assignment
+ -> Preview exact replacement
+ -> validate existing term IDs + permissions + fingerprint
+ -> explicit approval for published target
+ -> Apply
+ -> exact readback verification
+ -> operation evidence
+ -> stale-safe Rollback
+```
+
+Properties:
+
+- registered taxonomies only;
+- normal posts/pages only for this slice;
+- current principal must have `edit_post(resource)` plus the taxonomy's real `assign_terms` capability;
+- existing term IDs only;
+- no implicit term creation;
+- deterministic relationship fingerprint;
+- production environment binding;
+- idempotent Apply;
+- rollback re-checks current permission;
+- newer human/automation edits block rollback;
+- taxonomy operations do not rewrite `post_content`.
+
+Repository acceptance proves both `category` and `post_tag` while keeping the implementation generic.
+
+Detailed contract: `docs/SEO_GEO_MANAGER_0.3.44_TAXONOMY_ASSIGNMENT.md`.
+
+### Next C4 slice — author binding
+
+Current normal content creation safely defaults `post_author` to the authenticated operating identity. That is not enough for managed editorial workflows where the remote operator and public author are intentionally different users.
+
+Next implementation should support selecting an **existing WordPress author identity** through a bounded contract with:
+
+- explicit author ID;
+- target post/post type validation;
+- current operator capability checks;
+- no invented author/persona creation;
+- Preview before mutation;
+- expected fingerprint/revision;
+- idempotency;
+- exact persistence verification;
+- stale-safe rollback where supported.
+
+External orchestration decides which accepted author should own the article. Manager only validates/applies the relationship.
+
+### Still remaining in C4
+
+After author binding, reassess only the actual remaining generic gaps, especially:
+
+- safe multilingual relationship operations through accepted adapters;
+- any missing generic status/content lifecycle primitive exposed by real field use.
+
+Do not turn C4 into an autonomous editorial/SEO engine.
+
 ### Exit criterion
 
-External orchestration can create and manage a normal WordPress article end to end through Manager.
+External orchestration can create and manage a normal WordPress article end to end through Manager while preserving WordPress identity, permissions and editorial autonomy.
 
 ## C5 — Theme semantic-model operations
 
@@ -462,7 +542,7 @@ However:
 - close the real EMMAKE transition with the already-built guarded machinery;
 - preserve reusable safety primitives;
 - send new migration/rescue/clone requirements to Migration Bridge;
-- continue Manager through C2/C3/C4 generic remote-control capabilities.
+- continue Manager through generic remote-control capabilities.
 
 0.3.33 remains the final migration-specific Field Gate UI correction. 0.3.34 starts the generic remote-control capability line.
 
