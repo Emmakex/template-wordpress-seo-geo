@@ -5,13 +5,16 @@ on:
     paths:
       - 'packages/seo-geo-manager/src/Remote/**'
       - 'packages/seo-geo-manager/src/Rest/RemoteReadController.php'
+      - 'packages/seo-geo-manager/src/Rest/RemoteMutationController.php'
       - 'packages/seo-geo-manager/src/Admin/RemoteAccess.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/seo-geo-manager.php'
       - 'scripts/ci/seo-geo-manager-remote-bridge-contract.php'
       - 'scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
+      - 'docs/SEO_GEO_MANAGER_0.3.51_REMOTE_CONTENT_CHANGE.md'
       - '.github/workflows/seo-geo-manager-remote-bridge.yml'
   push:
     branches:
@@ -19,13 +22,16 @@ on:
     paths:
       - 'packages/seo-geo-manager/src/Remote/**'
       - 'packages/seo-geo-manager/src/Rest/RemoteReadController.php'
+      - 'packages/seo-geo-manager/src/Rest/RemoteMutationController.php'
       - 'packages/seo-geo-manager/src/Admin/RemoteAccess.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/seo-geo-manager.php'
       - 'scripts/ci/seo-geo-manager-remote-bridge-contract.php'
       - 'scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
+      - 'docs/SEO_GEO_MANAGER_0.3.51_REMOTE_CONTENT_CHANGE.md'
       - '.github/workflows/seo-geo-manager-remote-bridge.yml'
   workflow_dispatch:
 
@@ -38,7 +44,7 @@ concurrency:
 
 jobs:
   remote-bridge-contract:
-    name: Manager-owned remote bridge R1-R2 contract
+    name: Manager-owned remote bridge R1-R3 contract
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,18 +57,21 @@ jobs:
           php -l packages/seo-geo-manager/src/Remote/RequestGuard.php
           php -l packages/seo-geo-manager/src/Remote/Audit.php
           php -l packages/seo-geo-manager/src/Remote/Authenticator.php
+          php -l packages/seo-geo-manager/src/Remote/PlanStore.php
           php -l packages/seo-geo-manager/src/Rest/RemoteReadController.php
+          php -l packages/seo-geo-manager/src/Rest/RemoteMutationController.php
           php -l packages/seo-geo-manager/src/Admin/RemoteAccess.php
           php -l packages/seo-geo-manager/src/Plugin.php
           php -l scripts/ci/seo-geo-manager-remote-bridge-contract.php
           php -l scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php
+          php -l scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php
           bash -n scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh
 
-      - name: Remote bridge contract
+      - name: Remote bridge R1-R3 contract
         run: php scripts/ci/seo-geo-manager-remote-bridge-contract.php
 
   remote-bridge-wordpress:
-    name: Manager-owned remote bridge WordPress runtime
+    name: Manager-owned remote bridge R1-R3 WordPress runtime
     runs-on: ubuntu-latest
     needs: remote-bridge-contract
     steps:
