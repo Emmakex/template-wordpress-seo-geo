@@ -53,7 +53,9 @@ final class TaxonomyAssignmentChangeAdapter {
 	 * @return array<string, mixed>|WP_Error
 	 */
 	public static function apply( array $payload ) {
-		$key = isset( $payload['idempotency_key'] ) && is_string( $payload['idempotency_key'] ) ? trim( $payload['idempotency_key'] ) : '';
+		$key = isset( $payload['idempotency_key'] ) && is_string( $payload['idempotency_key'] )
+			? trim( $payload['idempotency_key'] )
+			: '';
 		if ( '' === $key || 128 < strlen( $key ) ) {
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_idempotency_required',
@@ -93,12 +95,14 @@ final class TaxonomyAssignmentChangeAdapter {
 		);
 		if ( is_wp_error( $result ) ) {
 			self::save_failed( $operation_id, $state, $hash, $key, $result );
+
 			return $result;
 		}
 
 		$after_ids = TaxonomyAssignmentReader::term_ids( $state['resource']->ID, $state['taxonomy'] );
 		if ( is_wp_error( $after_ids ) || $after_ids !== $state['after_term_ids'] ) {
 			self::restore( $state['resource']->ID, $state['taxonomy'], $state['before_term_ids'] );
+
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_verify_failed',
 				'Taxonomy assignment verification failed; Manager attempted compensation.',
@@ -113,6 +117,7 @@ final class TaxonomyAssignmentChangeAdapter {
 		);
 		if ( hash_equals( $state['before_fingerprint'], $after_fingerprint ) ) {
 			self::restore( $state['resource']->ID, $state['taxonomy'], $state['before_term_ids'] );
+
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_fingerprint_unchanged',
 				'Taxonomy assignment did not produce a verifiable state change.',
@@ -130,8 +135,8 @@ final class TaxonomyAssignmentChangeAdapter {
 			'target_type'        => (string) $state['resource']->post_type,
 			'resource_id'        => (int) $state['resource']->ID,
 			'taxonomy'           => $state['taxonomy'],
-			'before_term_ids'     => $state['before_term_ids'],
-			'after_term_ids'      => $after_ids,
+			'before_term_ids'    => $state['before_term_ids'],
+			'after_term_ids'     => $after_ids,
 			'before_fingerprint' => $state['before_fingerprint'],
 			'after_fingerprint'  => $after_fingerprint,
 			'idempotency_key'    => $key,
@@ -142,6 +147,7 @@ final class TaxonomyAssignmentChangeAdapter {
 		);
 		if ( ! OperationStore::save( $operation_id, $operation ) ) {
 			self::restore( $state['resource']->ID, $state['taxonomy'], $state['before_term_ids'] );
+
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_operation_store_failed',
 				'Taxonomy assignment changed but operation history could not be persisted; Manager attempted compensation.',
@@ -152,27 +158,48 @@ final class TaxonomyAssignmentChangeAdapter {
 		return $operation;
 	}
 
-	/** @return array<string, mixed>|WP_Error */
+	/**
+	 * @return array<string, mixed>|WP_Error
+	 */
 	public static function rollback( string $operation_id ) {
 		$operation = OperationStore::get( $operation_id );
 		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
-			return new WP_Error( 'seo_geo_manager_taxonomy_operation_not_found', 'Taxonomy assignment operation not found.', array( 'status' => 404 ) );
+			return new WP_Error(
+				'seo_geo_manager_taxonomy_operation_not_found',
+				'Taxonomy assignment operation not found.',
+				array( 'status' => 404 )
+			);
 		}
 		if ( 'rolled-back' === ( $operation['status'] ?? '' ) ) {
 			return $operation;
 		}
 		if ( 'applied' !== ( $operation['status'] ?? '' ) ) {
-			return new WP_Error( 'seo_geo_manager_taxonomy_rollback_unavailable', 'Only applied taxonomy assignments can be rolled back.', array( 'status' => 409 ) );
+			return new WP_Error(
+				'seo_geo_manager_taxonomy_rollback_unavailable',
+				'Only applied taxonomy assignments can be rolled back.',
+				array( 'status' => 409 )
+			);
 		}
 
 		$resource_id = isset( $operation['resource_id'] ) ? absint( $operation['resource_id'] ) : 0;
-		$taxonomy    = isset( $operation['taxonomy'] ) && is_string( $operation['taxonomy'] ) ? sanitize_key( $operation['taxonomy'] ) : '';
+		$taxonomy    = isset( $operation['taxonomy'] ) && is_string( $operation['taxonomy'] )
+			? sanitize_key( $operation['taxonomy'] )
+			: '';
+
+		$permission_check = TaxonomyAssignmentReader::read( $resource_id, $taxonomy );
+		if ( is_wp_error( $permission_check ) ) {
+			return $permission_check;
+		}
+
 		$current_ids = TaxonomyAssignmentReader::term_ids( $resource_id, $taxonomy );
 		if ( is_wp_error( $current_ids ) ) {
 			return $current_ids;
 		}
-		$after_ids = self::normalize_term_ids( $operation['after_term_ids'] ?? array() );
-		$after_fp  = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
+
+		$after_ids  = self::normalize_term_ids( $operation['after_term_ids'] ?? array() );
+		$after_fp   = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] )
+			? $operation['after_fingerprint']
+			: '';
 		$current_fp = TaxonomyAssignmentReader::fingerprint_from_ids( $resource_id, $taxonomy, $current_ids );
 		if ( $current_ids !== $after_ids || '' === $after_fp || ! hash_equals( $after_fp, $current_fp ) ) {
 			return new WP_Error(
@@ -183,7 +210,9 @@ final class TaxonomyAssignmentChangeAdapter {
 		}
 
 		$before_ids = self::normalize_term_ids( $operation['before_term_ids'] ?? array() );
-		$before_fp  = isset( $operation['before_fingerprint'] ) && is_string( $operation['before_fingerprint'] ) ? $operation['before_fingerprint'] : '';
+		$before_fp  = isset( $operation['before_fingerprint'] ) && is_string( $operation['before_fingerprint'] )
+			? $operation['before_fingerprint']
+			: '';
 		$restore    = self::restore( $resource_id, $taxonomy, $before_ids );
 		if ( is_wp_error( $restore ) ) {
 			return $restore;
@@ -192,11 +221,14 @@ final class TaxonomyAssignmentChangeAdapter {
 		$restored_ids = TaxonomyAssignmentReader::term_ids( $resource_id, $taxonomy );
 		if ( is_wp_error( $restored_ids ) ) {
 			self::restore( $resource_id, $taxonomy, $after_ids );
+
 			return $restored_ids;
 		}
+
 		$restored_fp = TaxonomyAssignmentReader::fingerprint_from_ids( $resource_id, $taxonomy, $restored_ids );
 		if ( $restored_ids !== $before_ids || '' === $before_fp || ! hash_equals( $before_fp, $restored_fp ) ) {
 			self::restore( $resource_id, $taxonomy, $after_ids );
+
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_rollback_verify_failed',
 				'Taxonomy rollback verification failed; Manager attempted to restore the applied state.',
@@ -218,9 +250,13 @@ final class TaxonomyAssignmentChangeAdapter {
 	 */
 	private static function prepare( array $payload, bool $for_apply ) {
 		$resource_id = isset( $payload['resource_id'] ) ? absint( $payload['resource_id'] ) : 0;
-		$taxonomy    = isset( $payload['taxonomy'] ) && is_string( $payload['taxonomy'] ) ? sanitize_key( $payload['taxonomy'] ) : '';
+		$taxonomy    = isset( $payload['taxonomy'] ) && is_string( $payload['taxonomy'] )
+			? sanitize_key( $payload['taxonomy'] )
+			: '';
 		$after_ids   = self::normalize_term_ids( $payload['term_ids'] ?? array() );
-		$expected    = isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] ) ? trim( $payload['expected_fingerprint'] ) : '';
+		$expected    = isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] )
+			? trim( $payload['expected_fingerprint'] )
+			: '';
 		if ( 1 > $resource_id || '' === $taxonomy || '' === $expected ) {
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_request_invalid',
@@ -233,21 +269,38 @@ final class TaxonomyAssignmentChangeAdapter {
 		if ( is_wp_error( $inspection ) ) {
 			return $inspection;
 		}
-		$assignment = isset( $inspection['assignment'] ) && is_array( $inspection['assignment'] ) ? $inspection['assignment'] : array();
+
+		$assignment = isset( $inspection['assignment'] ) && is_array( $inspection['assignment'] )
+			? $inspection['assignment']
+			: array();
 		$before_ids = self::normalize_term_ids( $assignment['term_ids'] ?? array() );
-		$before_fp  = isset( $assignment['fingerprint'] ) && is_string( $assignment['fingerprint'] ) ? $assignment['fingerprint'] : '';
+		$before_fp  = isset( $assignment['fingerprint'] ) && is_string( $assignment['fingerprint'] )
+			? $assignment['fingerprint']
+			: '';
 		if ( '' === $before_fp || ! hash_equals( $expected, $before_fp ) ) {
-			return new WP_Error( 'seo_geo_manager_taxonomy_fingerprint_mismatch', 'Taxonomy assignment changed after inspection.', array( 'status' => 409 ) );
+			return new WP_Error(
+				'seo_geo_manager_taxonomy_fingerprint_mismatch',
+				'Taxonomy assignment changed after inspection.',
+				array( 'status' => 409 )
+			);
 		}
 		if ( $before_ids === $after_ids ) {
-			return new WP_Error( 'seo_geo_manager_taxonomy_no_changes', 'The requested taxonomy assignment is already active.', array( 'status' => 400 ) );
+			return new WP_Error(
+				'seo_geo_manager_taxonomy_no_changes',
+				'The requested taxonomy assignment is already active.',
+				array( 'status' => 400 )
+			);
 		}
 
-		$resource = get_post( $resource_id );
-		if ( ! $resource instanceof WP_Post ) {
-			return new WP_Error( 'seo_geo_manager_taxonomy_resource_not_found', 'The requested post/page was not found.', array( 'status' => 404 ) );
+		$post = get_post( $resource_id );
+		if ( ! $post instanceof WP_Post ) {
+			return new WP_Error(
+				'seo_geo_manager_taxonomy_resource_not_found',
+				'The requested post/page was not found.',
+				array( 'status' => 404 )
+			);
 		}
-		if ( $for_apply && 'publish' === $resource->post_status && true !== ( $payload['allow_published_target'] ?? false ) ) {
+		if ( $for_apply && 'publish' === $post->post_status && true !== ( $payload['allow_published_target'] ?? false ) ) {
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_public_approval_required',
 				'Published resource writes require explicit approval after Preview.',
@@ -261,15 +314,18 @@ final class TaxonomyAssignmentChangeAdapter {
 		}
 
 		return array(
-			'resource'           => $resource,
+			'resource'           => $post,
 			'taxonomy'           => $taxonomy,
-			'before_term_ids'     => $before_ids,
-			'after_term_ids'      => $after_ids,
+			'before_term_ids'    => $before_ids,
+			'after_term_ids'     => $after_ids,
 			'before_fingerprint' => $before_fp,
 		);
 	}
 
-	/** @param mixed $raw Raw term IDs. @return list<int> */
+	/**
+	 * @param mixed $raw Raw term IDs.
+	 * @return list<int>
+	 */
 	private static function normalize_term_ids( $raw ): array {
 		$values = is_array( $raw ) ? $raw : array();
 		$ids    = array_map( 'absint', $values );
@@ -279,7 +335,10 @@ final class TaxonomyAssignmentChangeAdapter {
 		return $ids;
 	}
 
-	/** @param list<int> $term_ids Term IDs. @return true|WP_Error */
+	/**
+	 * @param list<int> $term_ids Term IDs.
+	 * @return true|WP_Error
+	 */
 	private static function validate_existing_terms( string $taxonomy, array $term_ids ) {
 		if ( array() === $term_ids ) {
 			return true;
@@ -296,6 +355,7 @@ final class TaxonomyAssignmentChangeAdapter {
 		if ( is_wp_error( $found ) ) {
 			return $found;
 		}
+
 		$found_ids = array_map( 'absint', $found );
 		$found_ids = array_values( array_filter( $found_ids ) );
 		sort( $found_ids, SORT_NUMERIC );
@@ -310,24 +370,31 @@ final class TaxonomyAssignmentChangeAdapter {
 		return true;
 	}
 
-	/** @param list<int> $term_ids Term IDs. @return array<int, int>|WP_Error */
+	/**
+	 * @param list<int> $term_ids Term IDs.
+	 * @return array<int, int>|WP_Error
+	 */
 	private static function restore( int $resource_id, string $taxonomy, array $term_ids ) {
 		$result = wp_set_object_terms( $resource_id, $term_ids, $taxonomy, false );
 
 		return is_wp_error( $result ) ? $result : array_map( 'absint', $result );
 	}
 
-	/** @return array<string, mixed> */
-	private static function resource_summary( WP_Post $resource ): array {
+	/**
+	 * @return array<string, mixed>
+	 */
+	private static function resource_summary( WP_Post $post ): array {
 		return array(
-			'id'        => (int) $resource->ID,
-			'post_type' => (string) $resource->post_type,
-			'status'    => (string) $resource->post_status,
-			'title'     => html_entity_decode( get_the_title( $resource ), ENT_QUOTES | ENT_HTML5, self::charset() ),
+			'id'        => (int) $post->ID,
+			'post_type' => (string) $post->post_type,
+			'status'    => (string) $post->post_status,
+			'title'     => html_entity_decode( get_the_title( $post ), ENT_QUOTES | ENT_HTML5, self::charset() ),
 		);
 	}
 
-	/** @param array<string, mixed> $payload Request payload. */
+	/**
+	 * @param array<string, mixed> $payload Request payload.
+	 */
 	private static function payload_hash( array $payload ): string {
 		return hash(
 			'sha256',
@@ -343,11 +410,17 @@ final class TaxonomyAssignmentChangeAdapter {
 		);
 	}
 
-	/** @return array<string, mixed>|WP_Error */
+	/**
+	 * @return array<string, mixed>|WP_Error
+	 */
 	private static function replay( string $operation_id ) {
 		$operation = OperationStore::get( $operation_id );
 		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) || 'failed' === ( $operation['status'] ?? '' ) ) {
-			return new WP_Error( 'seo_geo_manager_taxonomy_idempotency_unavailable', 'Idempotency key is unavailable for replay.', array( 'status' => 409 ) );
+			return new WP_Error(
+				'seo_geo_manager_taxonomy_idempotency_unavailable',
+				'Idempotency key is unavailable for replay.',
+				array( 'status' => 409 )
+			);
 		}
 		$operation['idempotent_replay'] = true;
 
@@ -370,8 +443,8 @@ final class TaxonomyAssignmentChangeAdapter {
 				'target_type'        => (string) $state['resource']->post_type,
 				'resource_id'        => (int) $state['resource']->ID,
 				'taxonomy'           => $state['taxonomy'],
-				'before_term_ids'     => $state['before_term_ids'],
-				'after_term_ids'      => $state['after_term_ids'],
+				'before_term_ids'    => $state['before_term_ids'],
+				'after_term_ids'     => $state['after_term_ids'],
 				'before_fingerprint' => $state['before_fingerprint'],
 				'idempotency_key'    => $key,
 				'payload_hash'       => $payload_hash,
