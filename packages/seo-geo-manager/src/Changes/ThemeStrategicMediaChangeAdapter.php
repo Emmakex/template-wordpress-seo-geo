@@ -94,25 +94,25 @@ final class ThemeStrategicMediaChangeAdapter {
 		}
 
 		$operation = array(
-			'operation_id'          => $operation_id,
-			'operation_type'        => 'theme-strategic-media-change',
-			'adapter'               => self::ADAPTER,
-			'schema_version'        => 1,
-			'status'                => 'applied',
-			'target_id'             => (int) $state['resource']->ID,
-			'target_type'           => 'page',
-			'resource_id'           => (int) $state['resource']->ID,
-			'model_id'              => $state['model_id'],
-			'slot_id'               => $state['slot_id'],
-			'before_attachment_id'  => $state['before_attachment_id'],
-			'after_attachment_id'   => $after_id,
-			'before_fingerprint'    => $state['before_fingerprint'],
-			'after_fingerprint'     => $after_fingerprint,
-			'idempotency_key'       => $key,
-			'payload_hash'          => $hash,
-			'changes'               => array( 'strategic_media_binding' => true ),
-			'created_at_gmt'        => gmdate( 'c' ),
-			'idempotent_replay'     => false,
+			'operation_id'         => $operation_id,
+			'operation_type'       => 'theme-strategic-media-change',
+			'adapter'              => self::ADAPTER,
+			'schema_version'       => 1,
+			'status'               => 'applied',
+			'target_id'            => (int) $state['resource']->ID,
+			'target_type'          => 'page',
+			'resource_id'          => (int) $state['resource']->ID,
+			'model_id'             => $state['model_id'],
+			'slot_id'              => $state['slot_id'],
+			'before_attachment_id' => $state['before_attachment_id'],
+			'after_attachment_id'  => $after_id,
+			'before_fingerprint'   => $state['before_fingerprint'],
+			'after_fingerprint'    => $after_fingerprint,
+			'idempotency_key'      => $key,
+			'payload_hash'         => $hash,
+			'changes'              => array( 'strategic_media_binding' => true ),
+			'created_at_gmt'       => gmdate( 'c' ),
+			'idempotent_replay'    => false,
 		);
 		if ( ! OperationStore::save( $operation_id, $operation ) ) {
 			self::mutate( $state, $state['before_attachment_id'] );
@@ -226,26 +226,39 @@ final class ThemeStrategicMediaChangeAdapter {
 		if ( ! $resource instanceof WP_Post ) {
 			return new WP_Error( 'seo_geo_manager_theme_media_resource_not_found', 'Strategic Theme page unavailable.', array( 'status' => 404 ) );
 		}
-		if ( 0 < $attachment_id ) {
-			/** @var callable(int, string, string, int):true|WP_Error $callback */
-			$callback = 'seo_geo_theme_set_strategic_media_slot';
-			return $callback( (int) $resource->ID, $model_id, $slot_id, $attachment_id );
+
+		$callback = 0 < $attachment_id ? 'seo_geo_theme_set_strategic_media_slot' : 'seo_geo_theme_remove_strategic_media_slot';
+		if ( ! is_callable( $callback ) ) {
+			return new WP_Error( 'seo_geo_manager_theme_media_write_unsupported', 'The active Theme does not expose the strategic-media write callback.', array( 'status' => 409 ) );
 		}
-		/** @var callable(int, string, string):true|WP_Error $callback */
-		$callback = 'seo_geo_theme_remove_strategic_media_slot';
-		return $callback( (int) $resource->ID, $model_id, $slot_id );
+
+		$result = 0 < $attachment_id
+			? call_user_func( $callback, (int) $resource->ID, $model_id, $slot_id, $attachment_id )
+			: call_user_func( $callback, (int) $resource->ID, $model_id, $slot_id );
+
+		return true === $result || is_wp_error( $result )
+			? $result
+			: new WP_Error( 'seo_geo_manager_theme_media_write_invalid_response', 'The active Theme returned an invalid strategic-media write response.', array( 'status' => 409 ) );
 	}
 
 	private static function slot( int $resource_id, string $model_id, string $slot_id ): int {
-		/** @var callable(int, string, string):int $callback */
 		$callback = 'seo_geo_theme_strategic_media_slot';
-		return $callback( $resource_id, $model_id, $slot_id );
+		if ( ! is_callable( $callback ) ) {
+			return 0;
+		}
+
+		return absint( call_user_func( $callback, $resource_id, $model_id, $slot_id ) );
 	}
 
 	private static function fingerprint( int $resource_id, string $model_id, string $slot_id ): string {
-		/** @var callable(int, string, string):string $callback */
 		$callback = 'seo_geo_theme_strategic_media_fingerprint';
-		return $callback( $resource_id, $model_id, $slot_id );
+		if ( ! is_callable( $callback ) ) {
+			return '';
+		}
+
+		$result = call_user_func( $callback, $resource_id, $model_id, $slot_id );
+
+		return is_string( $result ) ? $result : '';
 	}
 
 	/**
