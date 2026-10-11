@@ -9,6 +9,8 @@ on:
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-capability-contract.php'
       - 'scripts/ci/seo-geo-manager-capabilities-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-yoast-abilities-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-yoast-abilities-acceptance.php'
       - 'scripts/ci/seo-geo-manager-application-password-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
@@ -44,6 +46,8 @@ on:
       - 'scripts/ci/seo-geo-manager-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-capability-contract.php'
       - 'scripts/ci/seo-geo-manager-capabilities-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-yoast-abilities-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-yoast-abilities-acceptance.php'
       - 'scripts/ci/seo-geo-manager-application-password-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
@@ -80,9 +84,9 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: C1-C6 + capability/auth + Theme + SEO authority + guarded field operations
+    name: C1-C7 + capability/auth + Theme + provider SEO + guarded field operations
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
 
     steps:
       - name: Checkout
@@ -91,6 +95,7 @@ jobs:
       - name: Validate acceptance scripts and dashboard JavaScript
         run: |
           bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-yoast-abilities-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-application-password-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-featured-media-acceptance.sh
@@ -99,6 +104,7 @@ jobs:
           php -l scripts/ci/seo-geo-manager-capability-contract.php
           php scripts/ci/seo-geo-manager-capability-contract.php
           php -l scripts/ci/seo-geo-manager-capabilities-acceptance.php
+          php -l scripts/ci/seo-geo-manager-yoast-abilities-acceptance.php
           php -l scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php
           php -l scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php
           php -l scripts/ci/seo-geo-manager-author-binding-acceptance.php
@@ -138,6 +144,9 @@ jobs:
 
       - name: Manager WordPress acceptance
         run: bash scripts/ci/seo-geo-manager-wordpress-acceptance.sh
+
+      - name: Yoast SEO 28.6 public abilities acceptance
+        run: bash scripts/ci/seo-geo-manager-yoast-abilities-acceptance.sh
 
       - name: Application Password transport and revocation acceptance
         run: bash scripts/ci/seo-geo-manager-application-password-acceptance.sh
