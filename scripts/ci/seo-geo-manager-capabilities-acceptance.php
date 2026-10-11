@@ -112,6 +112,21 @@ seo_geo_manager_capabilities_accept( false === ( $editor_data['capabilities']['s
 seo_geo_manager_capabilities_accept( false === ( $editor_data['capabilities']['permalink_administration']['available'] ?? true ), 'Editor incorrectly received permalink administration.' );
 seo_geo_manager_capabilities_accept( false === ( $editor_data['operations']['field_gate.inspect']['available'] ?? true ), 'Editor incorrectly received administrator Field Gate access.' );
 seo_geo_manager_capabilities_accept( false === ( $editor_data['operations']['permalinks.admin']['available'] ?? true ), 'Editor incorrectly received guarded permalink operations.' );
+seo_geo_manager_capabilities_accept( true === ( $editor_data['capabilities']['native_seo_metadata']['available'] ?? false ), 'Editor did not receive the writable Theme-native SEO capability.' );
+seo_geo_manager_capabilities_accept( true === ( $editor_data['capabilities']['native_seo_metadata']['authority_ready'] ?? false ), 'Theme-native SEO authority is not marked ready.' );
+seo_geo_manager_capabilities_accept( 'seo-geo-theme-native' === ( $editor_data['capabilities']['native_seo_metadata']['adapter'] ?? '' ), 'Theme-native SEO adapter identity is missing.' );
+seo_geo_manager_capabilities_accept(
+	array( 'title-meta', 'canonical', 'robots' ) === ( $editor_data['capabilities']['native_seo_metadata']['writable_signals'] ?? array() ),
+	'Theme-native writable SEO signals changed unexpectedly.'
+);
+seo_geo_manager_capabilities_accept(
+	array( 'open-graph', 'schema', 'hreflang', 'sitemap' ) === ( $editor_data['capabilities']['native_seo_metadata']['read_only_signals'] ?? array() ),
+	'Theme-native read-only SEO signals changed unexpectedly.'
+);
+seo_geo_manager_capabilities_accept( true === ( $editor_data['operations']['content.native_seo_metadata.read']['available'] ?? false ), 'Native SEO read operation discovery is missing.' );
+seo_geo_manager_capabilities_accept( true === ( $editor_data['operations']['content.native_seo_metadata.preview']['available'] ?? false ), 'Native SEO Preview operation discovery is missing.' );
+seo_geo_manager_capabilities_accept( true === ( $editor_data['operations']['content.native_seo_metadata.apply']['available'] ?? false ), 'Native SEO Apply operation discovery is missing.' );
+seo_geo_manager_capabilities_accept( true === ( $editor_data['operations']['content.native_seo_metadata.rollback']['available'] ?? false ), 'Native SEO Rollback operation discovery is missing.' );
 seo_geo_manager_capabilities_accept( false === ( $editor_data['authentication']['secrets_returned'] ?? true ), 'Editor manifest does not declare secret reflection disabled.' );
 seo_geo_manager_capabilities_accept( false === ( $editor_data['authentication']['generic_remote_shell'] ?? true ), 'Editor manifest incorrectly exposes generic remote shell.' );
 seo_geo_manager_capabilities_assert_no_secret_keys( $editor_data );
@@ -127,6 +142,8 @@ seo_geo_manager_capabilities_accept( true === ( $admin_data['capabilities']['sit
 seo_geo_manager_capabilities_accept( true === ( $admin_data['capabilities']['permalink_administration']['available'] ?? false ), 'Administrator permalink capability is missing.' );
 seo_geo_manager_capabilities_accept( true === ( $admin_data['operations']['field_gate.inspect']['available'] ?? false ), 'Administrator Field Gate capability is missing.' );
 seo_geo_manager_capabilities_accept( true === ( $admin_data['operations']['permalinks.admin']['available'] ?? false ), 'Administrator permalink operation discovery is missing.' );
+seo_geo_manager_capabilities_accept( true === ( $admin_data['capabilities']['native_seo_metadata']['available'] ?? false ), 'Administrator native SEO capability is missing.' );
+seo_geo_manager_capabilities_accept( true === ( $admin_data['operations']['content.native_seo_metadata.apply']['available'] ?? false ), 'Administrator native SEO Apply operation discovery is missing.' );
 seo_geo_manager_capabilities_accept( is_bool( $admin_data['authentication']['application_passwords_supported'] ?? null ), 'Application Password support state is not boolean.' );
 seo_geo_manager_capabilities_accept( is_bool( $admin_data['authentication']['application_passwords_available'] ?? null ), 'Application Password availability state is not boolean.' );
 seo_geo_manager_capabilities_assert_no_secret_keys( $admin_data );
