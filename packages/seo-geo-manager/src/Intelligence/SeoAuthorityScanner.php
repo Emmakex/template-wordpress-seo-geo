@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Intelligence;
 
+use SeoGeo\Core\Seo\NativeSeoMetadataWriter;
+
 final class SeoAuthorityScanner {
 	/**
 	 * Inspect and resolve likely public SEO-output ownership without mutating
@@ -34,12 +36,13 @@ final class SeoAuthorityScanner {
 			(string) $theme->get_template(),
 			(string) $theme->get( 'TextDomain' )
 		);
-		$resolution = SeoAuthorityResolver::resolve( $active_plugins, $is_theme );
-		$authority  = isset( $resolution['authority'] ) && is_array( $resolution['authority'] ) ? $resolution['authority'] : null;
-		$providers  = self::provider_ids( $resolution );
-		$resolved   = true === ( $resolution['resolved'] ?? false );
-		$conflict   = true === ( $resolution['conflict'] ?? false );
-		$write_ready = true === ( $resolution['write_adapter_ready'] ?? false );
+		$native_writer_ready = $is_theme && class_exists( NativeSeoMetadataWriter::class );
+		$resolution          = SeoAuthorityResolver::resolve( $active_plugins, $is_theme, $native_writer_ready );
+		$authority           = isset( $resolution['authority'] ) && is_array( $resolution['authority'] ) ? $resolution['authority'] : null;
+		$providers           = self::provider_ids( $resolution );
+		$resolved            = true === ( $resolution['resolved'] ?? false );
+		$conflict            = true === ( $resolution['conflict'] ?? false );
+		$write_ready         = true === ( $resolution['write_adapter_ready'] ?? false );
 
 		if ( $conflict ) {
 			$state = 'multiple-provider-conflict';
