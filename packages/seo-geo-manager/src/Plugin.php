@@ -10,11 +10,11 @@ declare(strict_types=1);
 namespace SeoGeo\Manager;
 
 use SeoGeo\Manager\Admin\CorrectionActions;
-use SeoGeo\Manager\Admin\Dashboard;
 use SeoGeo\Manager\Admin\FieldGate;
 use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\PermalinkActions;
+use SeoGeo\Manager\Admin\WorkspaceDashboard;
 use SeoGeo\Manager\Intelligence\PresetPageResolver;
 use SeoGeo\Manager\Rest\AuthorBindingController;
 use SeoGeo\Manager\Rest\C9FieldPreflightController;
@@ -59,7 +59,7 @@ final class Plugin {
 		PermalinkRedirectRuntime::register();
 
 		if ( is_admin() ) {
-			Dashboard::register();
+			WorkspaceDashboard::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
 			PermalinkActions::register();
