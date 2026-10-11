@@ -46,7 +46,7 @@ function seo_geo_manager_native_translation_rest( string $method, string $route,
 /**
  * Return a REST response body as an array.
  *
- * @return array<string, mixed>
+	 * @return array<string, mixed>
  */
 function seo_geo_manager_native_translation_data( WP_REST_Response $response ): array {
 	$data = $response->get_data();
@@ -156,7 +156,7 @@ seo_geo_manager_native_translation_accept( array() === ( $after_preview['transla
 
 $environment = EnvironmentPolicy::snapshot();
 $blocked_body = $preview_body;
-$blocked_body['idempotency_key']        = 'acceptance-native-translation-blocked';
+$blocked_body['idempotency_key']         = 'acceptance-native-translation-blocked';
 $blocked_body['environment_fingerprint'] = $environment['fingerprint'];
 $blocked = seo_geo_manager_native_translation_rest( 'POST', $group_route . '/changes/apply', $blocked_body );
 seo_geo_manager_native_translation_accept( 409 === $blocked->get_status(), 'Published native translation Apply was not blocked without explicit approval.' );
@@ -265,11 +265,11 @@ seo_geo_manager_native_translation_accept( array() === ( $rolled_back['translati
 // Re-apply from the fresh empty fingerprint, then prove public readiness only after the draft translation is published.
 $fresh_fingerprint = isset( $rolled_back['fingerprint'] ) && is_string( $rolled_back['fingerprint'] ) ? $rolled_back['fingerprint'] : '';
 $second_apply_body = array(
-	'translations'             => $translations,
-	'expected_fingerprint'     => $fresh_fingerprint,
-	'idempotency_key'          => 'acceptance-native-translation-public-ready',
-	'allow_published_targets'  => true,
-	'environment_fingerprint'  => $environment['fingerprint'],
+	'translations'            => $translations,
+	'expected_fingerprint'    => $fresh_fingerprint,
+	'idempotency_key'         => 'acceptance-native-translation-public-ready',
+	'allow_published_targets' => true,
+	'environment_fingerprint' => $environment['fingerprint'],
 );
 $second_apply = seo_geo_manager_native_translation_rest( 'POST', $group_route . '/changes/apply', $second_apply_body );
 seo_geo_manager_native_translation_accept( 200 === $second_apply->get_status(), 'Second native translation Apply failed.' );
@@ -284,7 +284,8 @@ $publish_en = wp_update_post(
 seo_geo_manager_native_translation_accept( ! is_wp_error( $publish_en ), 'Could not publish EN fixture after relationship Apply.' );
 $public_group = seo_geo_manager_native_translation_data( seo_geo_manager_native_translation_rest( 'GET', $group_route ) );
 seo_geo_manager_native_translation_accept( true === ( $public_group['public_ready'] ?? false ), 'Fully published native translation group did not become public-ready.' );
-$registry = new \SeoGeo\Core\Language\NativeTranslationRegistry();
+$registry = \SeoGeo\Core\Runtime::translations();
+seo_geo_manager_native_translation_accept( null !== $registry, 'Native translation registry disappeared after publication.' );
 $es_relationship = $registry->for_post( $es_id );
 $en_relationship = $registry->for_post( $en_id );
 seo_geo_manager_native_translation_accept( null !== $es_relationship && null !== $en_relationship, 'Fully published Manager-created relationship did not resolve through the native registry.' );
