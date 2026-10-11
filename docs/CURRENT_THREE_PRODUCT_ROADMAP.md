@@ -288,7 +288,7 @@ External orchestration can safely change supported WordPress resources without a
 
 ## C4 — WordPress content operations
 
-Status: **in progress — lifecycle + taxonomy-assignment slices accepted**.
+Status: **in progress — lifecycle + taxonomy-assignment + author-binding slices accepted**.
 
 Required primitives:
 
@@ -355,32 +355,73 @@ Repository acceptance proves both `category` and `post_tag` while keeping the im
 
 Detailed contract: `docs/SEO_GEO_MANAGER_0.3.44_TAXONOMY_ASSIGNMENT.md`.
 
-### Next C4 slice — author binding
+#### 0.3.45 — existing-user author binding
 
-Current normal content creation safely defaults `post_author` to the authenticated operating identity. That is not enough for managed editorial workflows where the remote operator and public author are intentionally different users.
+Repository acceptance covers a generic `resource_id + author_id` relationship contract:
 
-Next implementation should support selecting an **existing WordPress author identity** through a bounded contract with:
+```text
+Inspect current author
+ -> Preview existing eligible WordPress author
+ -> validate resource + destination user + post-type permissions + fingerprint
+ -> explicit approval for published target
+ -> Apply
+ -> exact readback verification
+ -> operation evidence
+ -> stale-safe Rollback
+```
 
-- explicit author ID;
-- target post/post type validation;
-- current operator capability checks;
-- no invented author/persona creation;
-- Preview before mutation;
-- expected fingerprint/revision;
-- idempotency;
-- exact persistence verification;
-- stale-safe rollback where supported.
+Properties:
 
-External orchestration decides which accepted author should own the article. Manager only validates/applies the relationship.
+- normal posts/pages only;
+- existing WordPress users only;
+- no implicit user/persona creation;
+- author read API exposes only ID/existence/display name;
+- destination author must be eligible for the target post type;
+- assigning another user requires the target post type's real `edit_others_posts` capability;
+- deterministic author-relationship fingerprint;
+- production environment binding;
+- idempotent Apply;
+- rollback re-checks current permission/previous author eligibility;
+- newer human/automation author edits block rollback;
+- author operations do not rewrite body/title/status/category/tag state.
 
-### Still remaining in C4
+Repository acceptance proves operator != public author, page/post capability awareness, Subscriber rejection and least-privilege Author rejection when `edit_others_posts` is absent.
 
-After author binding, reassess only the actual remaining generic gaps, especially:
+Detailed contract: `docs/SEO_GEO_MANAGER_0.3.45_AUTHOR_BINDING.md`.
 
-- safe multilingual relationship operations through accepted adapters;
-- any missing generic status/content lifecycle primitive exposed by real field use.
+### C4 reassessment after 0.3.45
 
-Do not turn C4 into an autonomous editorial/SEO engine.
+Do **not** automatically add another content feature merely because a new endpoint is possible.
+
+The generic article path now has accepted foundations for:
+
+- create/update normal content;
+- draft/publish/schedule lifecycle;
+- title/excerpt/body field changes;
+- featured-media/reference operations;
+- taxonomy assignment;
+- author binding.
+
+The principal known remaining C4 gap is **safe multilingual relationship operations through accepted adapters**.
+
+Before implementation, inspect the actual existing multilingual architecture/provider contracts and classify exactly what relationship state Manager must read/write. The Manager slice should be plumbing only:
+
+- discover accepted multilingual provider/authority;
+- read current locale/translation relations;
+- Preview a bounded relationship change;
+- apply only through provider/public WordPress APIs;
+- verify exact relationship state;
+- retain idempotency/environment/rollback safety where the provider supports it.
+
+External orchestration continues to own:
+
+- language/market selection;
+- translation strategy;
+- translated content generation;
+- localization decisions;
+- hreflang/SEO strategy reasoning.
+
+If existing multilingual support already covers the needed relationship safely, reuse/adapterize it rather than creating a second authority.
 
 ### Exit criterion
 
