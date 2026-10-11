@@ -7,6 +7,7 @@ on:
       - 'scripts/build-seo-geo-manager-release.py'
       - 'scripts/ci/seo-geo-manager-release-acceptance.py'
       - 'scripts/ci/seo-geo-manager-featured-media-contract.php'
+      - 'scripts/ci/seo-geo-manager-package-identity-contract.php'
       - '.github/workflows/seo-geo-manager-release.yml'
   push:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'scripts/build-seo-geo-manager-release.py'
       - 'scripts/ci/seo-geo-manager-release-acceptance.py'
       - 'scripts/ci/seo-geo-manager-featured-media-contract.php'
+      - 'scripts/ci/seo-geo-manager-package-identity-contract.php'
       - '.github/workflows/seo-geo-manager-release.yml'
   workflow_dispatch:
 
@@ -48,6 +50,7 @@ jobs:
           python3 -m py_compile scripts/build-seo-geo-manager-release.py scripts/ci/seo-geo-manager-release-acceptance.py
           php -l scripts/ci/seo-geo-manager-featured-media-contract.php
           php scripts/ci/seo-geo-manager-featured-media-contract.php
+          php -l scripts/ci/seo-geo-manager-package-identity-contract.php
 
       - name: PHP syntax
         run: |
@@ -58,6 +61,27 @@ jobs:
 
       - name: Build installable candidate
         run: python3 scripts/build-seo-geo-manager-release.py --output dist-seo-geo-manager/seo-geo-manager.zip
+
+      - name: Runtime package identity parity
+        run: |
+          php scripts/ci/seo-geo-manager-package-identity-contract.php packages/seo-geo-manager > dist-seo-geo-manager/runtime-tree.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          runtime = json.loads(Path('dist-seo-geo-manager/runtime-tree.json').read_text(encoding='utf-8'))
+          sidecar = Path('dist-seo-geo-manager/seo-geo-manager.zip.tree-sha256').read_text(encoding='utf-8').split()
+          if len(sidecar) < 4:
+              raise SystemExit('Manager runtime tree sidecar is malformed')
+          expected_sha, algorithm, file_count = sidecar[0], sidecar[1], int(sidecar[2])
+          if runtime['fingerprint'] != expected_sha:
+              raise SystemExit(f"Runtime/build tree mismatch: runtime={runtime['fingerprint']} builder={expected_sha}")
+          if runtime['algorithm'] != algorithm:
+              raise SystemExit(f"Runtime/build algorithm mismatch: runtime={runtime['algorithm']} builder={algorithm}")
+          if int(runtime['file_count']) != file_count:
+              raise SystemExit(f"Runtime/build file-count mismatch: runtime={runtime['file_count']} builder={file_count}")
+          print(f"Manager runtime tree parity OK: {algorithm} {expected_sha}, files={file_count}")
+          PY
 
       - name: Preserve installable candidate
         uses: actions/upload-artifact@v4
