@@ -575,7 +575,9 @@ final class YoastSeoMetadataChangeAdapter {
 		);
 	}
 
-	/** @param mixed $value Provider value. */
+	/**
+	 * @param mixed $value Provider value.
+	 */
 	private static function nullable_string( $value ): ?string {
 		return is_string( $value ) ? $value : null;
 	}
@@ -600,7 +602,9 @@ final class YoastSeoMetadataChangeAdapter {
 		);
 	}
 
-	/** @param array<string, mixed> $payload Request payload. */
+	/**
+	 * @param array<string, mixed> $payload Request payload.
+	 */
 	private static function payload_hash( array $payload ): string {
 		return hash(
 			'sha256',
