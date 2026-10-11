@@ -1,13 +1,13 @@
 <?php
 /**
- * Static acceptance for the focused Build / Finish operator surface.
+ * Static acceptance for the bounded Build / Finish operator surface inside the permanent Manager workspace.
  */
 
 declare(strict_types=1);
 
 $root = dirname( __DIR__, 2 );
 $plugin = $root . '/packages/seo-geo-manager/seo-geo-manager.php';
-$dashboard = $root . '/packages/seo-geo-manager/src/Admin/Dashboard.php';
+$dashboard = $root . '/packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php';
 $field_gate = $root . '/packages/seo-geo-manager/src/Admin/FieldGate.php';
 $actions = $root . '/packages/seo-geo-manager/assets/admin/finalization-actions.js';
 $styles = $root . '/packages/seo-geo-manager/assets/admin/focused-finalization.css';
@@ -42,10 +42,14 @@ if ( '' === $version || $version !== trim( (string) $constant_match[1] ) ) {
 }
 
 $required_dashboard = array(
-	'Finalizar migración SEO/GEO',
+	'Control plane · SEO/GEO',
+	'Build / Finish',
+	'Optimize',
+	'Grow',
+	'Finalización técnica, migración y compatibilidad',
 	'data-seo-geo-field-slot',
 	'data-seo-geo-finalization-actions',
-	'Detalles técnicos y herramientas avanzadas',
+	'Historial, evidencia y herramientas técnicas',
 	'focused-finalization.css',
 );
 $required_field_gate = array(
@@ -68,7 +72,7 @@ $required_actions = array(
 
 foreach ( $required_dashboard as $needle ) {
 	if ( false === strpos( $dashboard_source, $needle ) ) {
-		fwrite( STDERR, "Focused dashboard contract missing: {$needle}\n" );
+		fwrite( STDERR, "Focused workspace contract missing: {$needle}\n" );
 		exit( 1 );
 	}
 }
@@ -90,6 +94,16 @@ if ( false !== strpos( $actions_source, 'emmake.com' ) ) {
 	exit( 1 );
 }
 
+if ( false !== strpos( $dashboard_source, 'Finalizar migración SEO/GEO' ) ) {
+	fwrite( STDERR, "Permanent Manager workspace must not regress to a migration-only product identity.\n" );
+	exit( 1 );
+}
+
+if ( false === strpos( $dashboard_source, '<details class="seo-geo-manager-workspace__build-finish">' ) ) {
+	fwrite( STDERR, "Build / Finish migration compatibility must remain a bounded, collapsible workspace tool.\n" );
+	exit( 1 );
+}
+
 if ( false === strpos( $dashboard_source, '<details class="seo-geo-manager-admin__technical">' ) ) {
 	fwrite( STDERR, "Advanced diagnostics must remain collapsed behind the technical details surface.\n" );
 	exit( 1 );
@@ -101,7 +115,8 @@ fwrite(
 		array(
 			'ok' => true,
 			'version' => $version,
-			'focused_finish_ui' => true,
+			'permanent_control_plane' => true,
+			'focused_finish_is_bounded_tool' => true,
 			'advanced_diagnostics_collapsed' => true,
 			'atomic_301_action_present' => true,
 			'rollback_present' => true,
