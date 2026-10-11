@@ -72,6 +72,7 @@ def main() -> int:
     fingerprint = "b" * 64
 
     assert module.normalize_base_url("https://example.test/") == "https://example.test"
+    assert module.normalize_base_url("https://example.test/nuevaweb/") == "https://example.test/nuevaweb"
     expect_failure(
         lambda: module.normalize_base_url("http://example.test"),
         "C9 harness accepted non-HTTPS field URL",
@@ -79,6 +80,22 @@ def main() -> int:
     expect_failure(
         lambda: module.normalize_base_url("https://user:secret@example.test"),
         "C9 harness accepted credentials embedded in URL",
+    )
+    expect_failure(
+        lambda: module.normalize_base_url("https://example.test/nuevaweb?mode=test"),
+        "C9 harness accepted query text in a WordPress site root",
+    )
+    expect_failure(
+        lambda: module.normalize_base_url("https://example.test/nuevaweb#fragment"),
+        "C9 harness accepted a fragment in a WordPress site root",
+    )
+    expect_failure(
+        lambda: module.normalize_base_url("https://example.test/nuevaweb/../other"),
+        "C9 harness accepted ambiguous dot segments in a WordPress site root",
+    )
+    expect_failure(
+        lambda: module.normalize_base_url("https://example.test/nuevaweb/%2e%2e/other"),
+        "C9 harness accepted encoded ambiguous dot segments in a WordPress site root",
     )
     assert module.validate_fingerprint(fingerprint) == fingerprint
     expect_failure(
@@ -92,8 +109,8 @@ def main() -> int:
         revoked_paths = []
         for index, (site, stack) in enumerate(
             (
-                ("https://theme.example", "theme-native"),
-                ("https://yoast.example", "yoast"),
+                ("https://emmake.example/nuevaweb", "theme-native"),
+                ("https://emmake.example", "yoast"),
             )
         ):
             active = directory / f"active-{index}.json"
@@ -109,8 +126,12 @@ def main() -> int:
         assert final["client_specific_fork"] is False
         assert final["package_identity"]["fingerprint"] == fingerprint
         assert {item["stack"] for item in final["sites"]} == {"theme-native", "yoast"}
+        assert {item["site"] for item in final["sites"]} == {
+            "https://emmake.example",
+            "https://emmake.example/nuevaweb",
+        }
 
-        mismatched = evidence("https://yoast.example", "yoast", "c" * 64, "active")
+        mismatched = evidence("https://emmake.example", "yoast", "c" * 64, "active")
         Path(active_paths[1]).write_text(json.dumps(mismatched), encoding="utf-8")
         expect_failure(
             lambda: module.finalize_proof(active_paths, revoked_paths),
@@ -136,6 +157,8 @@ def main() -> int:
                 "ok": True,
                 "https_required": True,
                 "credentials_not_in_url": True,
+                "subdirectory_site_roots": True,
+                "same_host_distinct_site_roots": True,
                 "two_distinct_sites": True,
                 "theme_and_yoast_required": True,
                 "same_package_required": True,
