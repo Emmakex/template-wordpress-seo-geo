@@ -31,6 +31,7 @@ use SeoGeo\Manager\Rest\MediaAltChangeController;
 use SeoGeo\Manager\Rest\MediaContextChangeController;
 use SeoGeo\Manager\Rest\MediaReferenceController;
 use SeoGeo\Manager\Rest\MediaUploadController;
+use SeoGeo\Manager\Rest\NativeTranslationGroupController;
 use SeoGeo\Manager\Rest\NavigationChangeController;
 use SeoGeo\Manager\Rest\OperationHistoryController;
 use SeoGeo\Manager\Rest\PermalinkController;
@@ -72,6 +73,7 @@ final class Plugin {
 				ContentLifecycleController::register_routes();
 				AuthorBindingController::register_routes();
 				TaxonomyAssignmentController::register_routes();
+				NativeTranslationGroupController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
 				ContextualLinkController::register_routes();
