@@ -5,6 +5,8 @@ parameters:
   level: 6
   paths:
     - packages/seo-geo-manager
+  scanDirectories:
+    - packages/seo-geo-core/src
   tmpDir: .phpstan-manager-cache
   reportUnmatchedIgnoredErrors: true
   treatPhpDocTypesAsCertain: false
