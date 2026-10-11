@@ -17,7 +17,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-navigation-r35-acceptance.php"
 LOG="$(mktemp)"
 EXPECTED_VERSION="$(awk '/^[[:space:]]*\* Version:/ {print $3; exit}' "$ROOT/packages/seo-geo-manager/seo-geo-manager.php")"
+EXPECTED_MILESTONE="$(awk -F"'" "/'remote_milestone'[[:space:]]*=>/ {print \$4; exit}" "$ROOT/packages/seo-geo-manager/src/Rest/RemoteReadController.php")"
 [[ -n "$EXPECTED_VERSION" ]] || { echo '[r35-navigation] could not resolve current Manager version' >&2; exit 1; }
+[[ -n "$EXPECTED_MILESTONE" ]] || { echo '[r35-navigation] could not resolve current remote milestone' >&2; exit 1; }
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
@@ -64,9 +66,10 @@ wp_cli option update permalink_structure '/%postname%/' >/dev/null
 wp_cli plugin activate seo-geo-manager >/dev/null
 
 docker cp "$FIXTURE" "$WP_CONTAINER:/var/www/html/r35-navigation.php"
+docker exec "$WP_CONTAINER" sed -i "s/R3\.5/${EXPECTED_MILESTONE}/g" /var/www/html/r35-navigation.php
 docker exec "$WP_CONTAINER" chown www-data:www-data /var/www/html/r35-navigation.php
 
-printf '[r35-navigation] Running Inspect -> Plan -> Approval -> Apply -> Verify -> Rollback acceptance.\n'
+printf '[r35-navigation] Running Inspect -> Plan -> Approval -> Apply -> Verify -> Rollback acceptance against %s.\n' "$EXPECTED_MILESTONE"
 wp_cli eval-file /var/www/html/r35-navigation.php >"$LOG" 2>&1 || { cat "$LOG"; exit 1; }
 cat "$LOG"
 
@@ -88,4 +91,4 @@ grep -q '"rollback_exact":true' "$LOG"
 grep -q '"rollback_fingerprint_exact":true' "$LOG"
 grep -q '"audit_secret_free":true' "$LOG"
 grep -q '"generic_proxy":false' "$LOG"
-printf '[r35-navigation] SEO/GEO Manager R3.5 navigation acceptance OK on Manager %s.\n' "$EXPECTED_VERSION"
+printf '[r35-navigation] SEO/GEO Manager R3.5 navigation regression OK on Manager %s / milestone %s.\n' "$EXPECTED_VERSION" "$EXPECTED_MILESTONE"
