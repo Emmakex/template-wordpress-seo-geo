@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
+use SeoGeo\Manager\Changes\NavigationChangeAdapter;
 use SeoGeo\Manager\Intelligence\ContextualLinkReader;
 use SeoGeo\Manager\Intelligence\SeoAuthorityScanner;
 use SeoGeo\Manager\Intelligence\SiteIntelligenceScanner;
@@ -37,6 +38,7 @@ final class RemoteReadController {
 		self::register_read_route( '/remote/capabilities', 'site.read', 'capabilities' );
 		self::register_read_route( '/remote/site-intelligence', 'site.diagnostics', 'site_intelligence' );
 		self::register_read_route( '/remote/contextual-links', 'site.diagnostics', 'contextual_links' );
+		self::register_read_route( '/remote/navigation', 'site.diagnostics', 'navigation' );
 		self::register_read_route( '/remote/audit', 'site.diagnostics', 'audit' );
 	}
 
@@ -51,7 +53,7 @@ final class RemoteReadController {
 					'version'          => SEO_GEO_MANAGER_VERSION,
 					'package'          => PackageIdentity::snapshot(),
 					'api_namespace'    => self::NAMESPACE,
-					'remote_milestone' => 'R3.4',
+					'remote_milestone' => 'R3.5',
 				),
 				'environment'   => EnvironmentPolicy::snapshot(),
 				'seo_authority' => array(
@@ -85,11 +87,12 @@ final class RemoteReadController {
 					'/remote/capabilities'      => 'site.read',
 					'/remote/site-intelligence' => 'site.diagnostics',
 					'/remote/contextual-links'  => 'site.diagnostics',
+					'/remote/navigation'        => 'site.diagnostics',
 					'/remote/audit'             => 'site.diagnostics',
 				),
 				'mutation_transport'       => array(
 					'available'            => true,
-					'milestone'            => 'R3.4',
+					'milestone'            => 'R3.5',
 					'supported_operations' => MutationOperations::supported(),
 					'lifecycle'            => array( 'plan', 'apply', 'verify', 'rollback' ),
 					'plan_ttl_seconds'     => 15 * MINUTE_IN_SECONDS,
@@ -144,6 +147,21 @@ final class RemoteReadController {
 	public static function contextual_links( WP_REST_Request $request ) {
 		$source_id = absint( $request->get_param( 'source_id' ) );
 		$result    = ContextualLinkReader::read( $source_id );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return self::response( $request, $result );
+	}
+
+	/**
+	 * Return one bounded navigation menu using the adapter's canonical fingerprint.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function navigation( WP_REST_Request $request ) {
+		$menu_id = absint( $request->get_param( 'menu_id' ) );
+		$result  = NavigationChangeAdapter::inspect( $menu_id );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
