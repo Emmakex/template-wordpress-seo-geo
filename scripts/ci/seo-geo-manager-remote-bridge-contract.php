@@ -1,19 +1,21 @@
 <?php
 /**
- * Offline contract for the SEO/GEO Manager-owned remote bridge foundation.
+ * Offline contract for the SEO/GEO Manager-owned remote bridge.
  */
 
 declare(strict_types=1);
 
 $root = dirname( __DIR__, 2 );
 $files = array(
-	'credentials' => $root . '/packages/seo-geo-manager/src/Remote/Credentials.php',
-	'tokens'      => $root . '/packages/seo-geo-manager/src/Remote/TokenService.php',
-	'guard'       => $root . '/packages/seo-geo-manager/src/Remote/RequestGuard.php',
-	'audit'       => $root . '/packages/seo-geo-manager/src/Remote/Audit.php',
-	'admin'       => $root . '/packages/seo-geo-manager/src/Admin/RemoteAccess.php',
-	'plugin'      => $root . '/packages/seo-geo-manager/src/Plugin.php',
-	'package'     => $root . '/packages/seo-geo-manager/seo-geo-manager.php',
+	'credentials'   => $root . '/packages/seo-geo-manager/src/Remote/Credentials.php',
+	'tokens'        => $root . '/packages/seo-geo-manager/src/Remote/TokenService.php',
+	'guard'         => $root . '/packages/seo-geo-manager/src/Remote/RequestGuard.php',
+	'audit'         => $root . '/packages/seo-geo-manager/src/Remote/Audit.php',
+	'authenticator' => $root . '/packages/seo-geo-manager/src/Remote/Authenticator.php',
+	'controller'    => $root . '/packages/seo-geo-manager/src/Rest/RemoteReadController.php',
+	'admin'         => $root . '/packages/seo-geo-manager/src/Admin/RemoteAccess.php',
+	'plugin'        => $root . '/packages/seo-geo-manager/src/Plugin.php',
+	'package'       => $root . '/packages/seo-geo-manager/seo-geo-manager.php',
 );
 
 $sources = array();
@@ -61,6 +63,27 @@ $required = array(
 		"'scope'",
 		"'outcome'",
 	),
+	'authenticator' => array(
+		'function authorize(',
+		'bearer_credential',
+		'has_scope( $connection, $required_scope )',
+		'enforce_rate_limit',
+		'consume_nonce',
+		'wp_set_current_user',
+		"current_user_can( 'manage_options' )",
+		'record_success',
+	),
+	'controller' => array(
+		"'/remote/status'",
+		"'/remote/capabilities'",
+		"'/remote/site-intelligence'",
+		"'/remote/audit'",
+		"'site.read'",
+		"'site.diagnostics'",
+		"'available' => false",
+		"'planned_milestone' => 'R3'",
+		"'generic_proxy' => false",
+	),
 	'admin' => array(
 		'Conexión remota',
 		'manage_options',
@@ -73,7 +96,9 @@ $required = array(
 	),
 	'plugin' => array(
 		'use SeoGeo\\Manager\\Admin\\RemoteAccess;',
+		'use SeoGeo\\Manager\\Rest\\RemoteReadController;',
 		'RemoteAccess::register();',
+		'RemoteReadController::register_routes();',
 	),
 	'package' => array(
 		'Version: 0.3.50',
@@ -88,6 +113,11 @@ foreach ( $required as $source_key => $markers ) {
 			exit( 1 );
 		}
 	}
+}
+
+if ( preg_match( '/register_rest_route[\s\S]*WP_REST_Server::CREATABLE/', $sources['controller'] ) ) {
+	fwrite( STDERR, "R2 remote controller must remain read-only; mutation routes belong to R3.\n" );
+	exit( 1 );
 }
 
 foreach ( array( 'human_password', 'generic_shell', 'generic_rest_proxy' ) as $forbidden ) {
@@ -108,7 +138,9 @@ echo json_encode(
 		'replay_rate_idempotency_guards' => true,
 		'bounded_audit' => true,
 		'local_admin_console' => true,
-		'remote_routes_registered' => false,
+		'remote_routes_registered' => true,
+		'remote_read_only' => true,
+		'remote_mutations_available' => false,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
