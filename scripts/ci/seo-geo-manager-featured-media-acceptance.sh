@@ -181,6 +181,8 @@ wp_cli core install \
 
 wp_cli option update permalink_structure '/%postname%/' >/dev/null \
   || fail_acceptance "permalink-structure" "Could not enable pretty permalinks" "/%postname%/" "failed"
+wp_cli option update seo_geo_native_languages '{"default":"es","routing":"prefix","languages":{"es":"es_ES","en":"en_US"}}' --format=json >/dev/null \
+  || fail_acceptance "native-language-config" "Could not configure native ES/EN languages before Theme runtime boot" "validated ES/EN native language option" "failed"
 wp_cli plugin activate seo-geo-manager >/dev/null \
   || fail_acceptance "manager-activate" "Could not activate Manager" "plugin active" "failed"
 wp_cli theme activate seo-geo-theme >/dev/null \
