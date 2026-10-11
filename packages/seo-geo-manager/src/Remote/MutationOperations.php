@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\Manager\Remote;
 
 use SeoGeo\Manager\Changes\ChangeSetEngine;
+use SeoGeo\Manager\Changes\ContextualLinkChangeAdapter;
 use SeoGeo\Manager\Changes\SeoAuthorityChangeAdapter;
 use SeoGeo\Manager\Changes\ThemeStructuredContentAdapter;
 use SeoGeo\Manager\Support\ContentFingerprint;
@@ -25,6 +26,7 @@ final class MutationOperations {
 			'content-change',
 			'theme-structured-content',
 			'seo-authority-change',
+			'contextual-link-change',
 		);
 	}
 
@@ -51,6 +53,9 @@ final class MutationOperations {
 		if ( 'seo-authority-change' === $operation ) {
 			return SeoAuthorityChangeAdapter::preview( $payload );
 		}
+		if ( 'contextual-link-change' === $operation ) {
+			return ContextualLinkChangeAdapter::preview( $payload );
+		}
 
 		return self::unsupported();
 	}
@@ -74,6 +79,9 @@ final class MutationOperations {
 		if ( 'seo-authority-change' === $operation ) {
 			return SeoAuthorityChangeAdapter::apply( $payload );
 		}
+		if ( 'contextual-link-change' === $operation ) {
+			return ContextualLinkChangeAdapter::apply( $payload );
+		}
 
 		return self::unsupported();
 	}
@@ -88,7 +96,7 @@ final class MutationOperations {
 		if ( 'seo-authority-change' === $operation ) {
 			return SeoAuthorityChangeAdapter::verify( $stored );
 		}
-		if ( ! in_array( $operation, array( 'content-change', 'theme-structured-content' ), true ) ) {
+		if ( ! in_array( $operation, array( 'content-change', 'theme-structured-content', 'contextual-link-change' ), true ) ) {
 			return self::unsupported();
 		}
 
@@ -127,6 +135,9 @@ final class MutationOperations {
 		if ( 'seo-authority-change' === $operation ) {
 			return SeoAuthorityChangeAdapter::rollback( $operation_id );
 		}
+		if ( 'contextual-link-change' === $operation ) {
+			return ContextualLinkChangeAdapter::rollback( $operation_id );
+		}
 		if ( in_array( $operation, array( 'content-change', 'theme-structured-content' ), true ) ) {
 			return ChangeSetEngine::rollback( $operation_id );
 		}
@@ -144,7 +155,7 @@ final class MutationOperations {
 
 		return new WP_Error(
 			'seo_geo_manager_remote_rendered_verification_unsupported',
-			'Remote R3.3 mutations do not yet expose rendered verification. Use stored-state verification.',
+			'Remote R3.4 mutations do not yet expose rendered verification. Use stored-state verification.',
 			array( 'status' => 400 )
 		);
 	}

@@ -49,7 +49,7 @@ final class RemoteReadController {
 					'version' => SEO_GEO_MANAGER_VERSION,
 					'package' => PackageIdentity::snapshot(),
 					'api_namespace' => self::NAMESPACE,
-					'remote_milestone' => 'R3.3',
+					'remote_milestone' => 'R3.4',
 				),
 				'environment' => EnvironmentPolicy::snapshot(),
 				'seo_authority' => array(
@@ -86,7 +86,7 @@ final class RemoteReadController {
 				),
 				'mutation_transport' => array(
 					'available' => true,
-					'milestone' => 'R3.3',
+					'milestone' => 'R3.4',
 					'supported_operations' => MutationOperations::supported(),
 					'lifecycle' => array( 'plan', 'apply', 'verify', 'rollback' ),
 					'plan_ttl_seconds' => 15 * MINUTE_IN_SECONDS,
@@ -129,13 +129,11 @@ final class RemoteReadController {
 
 	public static function site_intelligence( WP_REST_Request $request ): WP_REST_Response {
 		$rendered = in_array( strtolower( (string) $request->get_param( 'rendered' ) ), array( '1', 'true', 'yes' ), true );
-
 		return self::response( $request, SiteIntelligenceScanner::scan( $rendered ) );
 	}
 
 	public static function audit( WP_REST_Request $request ): WP_REST_Response {
 		$limit = max( 1, min( 100, absint( $request->get_param( 'limit' ) ?: 50 ) ) );
-
 		return self::response(
 			$request,
 			array(
@@ -157,14 +155,11 @@ final class RemoteReadController {
 		);
 	}
 
-	/**
-	 * @param array<string, mixed> $data Bounded response data.
-	 */
+	/** @param array<string, mixed> $data Bounded response data. */
 	private static function response( WP_REST_Request $request, array $data ): WP_REST_Response {
 		$context = self::authenticator()->context( $request );
 		$metadata = is_array( $context['metadata'] ?? null ) ? $context['metadata'] : array();
 		self::authenticator()->record_success( $request );
-
 		return new WP_REST_Response(
 			array(
 				'ok' => true,
