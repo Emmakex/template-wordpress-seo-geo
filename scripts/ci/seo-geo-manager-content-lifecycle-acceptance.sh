@@ -168,10 +168,10 @@ wp_cli option update permalink_structure '/%postname%/' >/dev/null \
 wp_cli plugin activate seo-geo-manager >/dev/null \
   || fail_acceptance "manager-activate" "Could not activate Manager" "plugin active" "failed"
 
-printf '[manager-lifecycle] Running create/publish/schedule acceptance.\n'
+printf '[manager-lifecycle] Running create/publish/schedule/taxonomy acceptance.\n'
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-content-lifecycle-acceptance.php >"$RUNTIME_LOG" 2>&1; then
   cat "$RUNTIME_LOG"
-  fail_acceptance "lifecycle-runtime" "Content lifecycle acceptance failed" 'JSON with "ok":true' "$(tail -c 800 "$RUNTIME_LOG" | tr '\n' ' ')"
+  fail_acceptance "lifecycle-runtime" "Content lifecycle/taxonomy acceptance failed" 'JSON with "ok":true' "$(tail -c 800 "$RUNTIME_LOG" | tr '\n' ' ')"
 fi
 cat "$RUNTIME_LOG"
 grep -q '"ok":true' "$RUNTIME_LOG" \
@@ -179,10 +179,10 @@ grep -q '"ok":true' "$RUNTIME_LOG" \
 
 LIFECYCLE_VERSION="$(sed -n 's/.*"plugin_version":"\([^"]*\)".*/\1/p' "$RUNTIME_LOG" | tail -n 1)"
 [[ -n "$LIFECYCLE_VERSION" ]] \
-  || fail_acceptance "lifecycle-version-missing" "Lifecycle fixture did not report the Manager version" ">=0.3.35" "missing"
-LOWEST_VERSION="$(printf '%s\n' '0.3.35' "$LIFECYCLE_VERSION" | sort -V | head -n 1)"
-[[ "$LOWEST_VERSION" == '0.3.35' ]] \
-  || fail_acceptance "lifecycle-version" "Lifecycle fixture executed a Manager older than the C4 contract" ">=0.3.35" "$LIFECYCLE_VERSION"
+  || fail_acceptance "lifecycle-version-missing" "Lifecycle fixture did not report the Manager version" ">=0.3.44" "missing"
+LOWEST_VERSION="$(printf '%s\n' '0.3.44' "$LIFECYCLE_VERSION" | sort -V | head -n 1)"
+[[ "$LOWEST_VERSION" == '0.3.44' ]] \
+  || fail_acceptance "lifecycle-version" "Lifecycle fixture executed a Manager older than the C4.1 taxonomy contract" ">=0.3.44" "$LIFECYCLE_VERSION"
 
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
@@ -193,4 +193,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
     }
 fi
 
-printf '[manager-lifecycle] SEO/GEO Manager content lifecycle acceptance OK.\n'
+printf '[manager-lifecycle] SEO/GEO Manager content lifecycle + taxonomy acceptance OK.\n'
