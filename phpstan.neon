@@ -9,8 +9,3 @@ parameters:
     - packages/seo-geo-migration-bridge
   tmpDir: .phpstan-cache
   reportUnmatchedIgnoredErrors: true
-  ignoreErrors:
-    -
-      message: '#Call to function is_string\(\) with string will always evaluate to true\.#'
-      path: packages/seo-geo-core/src/Language/NativeTranslationGroupWriter.php
-      count: 2
