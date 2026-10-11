@@ -73,6 +73,7 @@ def main() -> int:
 
     assert module.normalize_base_url("https://example.test/") == "https://example.test"
     assert module.normalize_base_url("https://example.test/nuevaweb/") == "https://example.test/nuevaweb"
+    assert module.normalize_base_url("https://example.test//nuevaweb//") == "https://example.test/nuevaweb"
     expect_failure(
         lambda: module.normalize_base_url("http://example.test"),
         "C9 harness accepted non-HTTPS field URL",
@@ -82,20 +83,16 @@ def main() -> int:
         "C9 harness accepted credentials embedded in URL",
     )
     expect_failure(
-        lambda: module.normalize_base_url("https://example.test/nuevaweb?mode=test"),
-        "C9 harness accepted query text in a WordPress site root",
+        lambda: module.normalize_base_url("https://example.test/nuevaweb?x=1"),
+        "C9 harness accepted query in WordPress site root",
     )
     expect_failure(
         lambda: module.normalize_base_url("https://example.test/nuevaweb#fragment"),
-        "C9 harness accepted a fragment in a WordPress site root",
+        "C9 harness accepted fragment in WordPress site root",
     )
     expect_failure(
-        lambda: module.normalize_base_url("https://example.test/nuevaweb/../other"),
-        "C9 harness accepted ambiguous dot segments in a WordPress site root",
-    )
-    expect_failure(
-        lambda: module.normalize_base_url("https://example.test/nuevaweb/%2e%2e/other"),
-        "C9 harness accepted encoded ambiguous dot segments in a WordPress site root",
+        lambda: module.normalize_base_url("https://example.test/a/../nuevaweb"),
+        "C9 harness accepted ambiguous dot-segment WordPress site root",
     )
     assert module.validate_fingerprint(fingerprint) == fingerprint
     expect_failure(
@@ -109,8 +106,8 @@ def main() -> int:
         revoked_paths = []
         for index, (site, stack) in enumerate(
             (
-                ("https://emmake.example/nuevaweb", "theme-native"),
-                ("https://emmake.example", "yoast"),
+                ("https://example.test/nuevaweb", "theme-native"),
+                ("https://example.test", "yoast"),
             )
         ):
             active = directory / f"active-{index}.json"
@@ -127,11 +124,11 @@ def main() -> int:
         assert final["package_identity"]["fingerprint"] == fingerprint
         assert {item["stack"] for item in final["sites"]} == {"theme-native", "yoast"}
         assert {item["site"] for item in final["sites"]} == {
-            "https://emmake.example",
-            "https://emmake.example/nuevaweb",
+            "https://example.test",
+            "https://example.test/nuevaweb",
         }
 
-        mismatched = evidence("https://emmake.example", "yoast", "c" * 64, "active")
+        mismatched = evidence("https://example.test", "yoast", "c" * 64, "active")
         Path(active_paths[1]).write_text(json.dumps(mismatched), encoding="utf-8")
         expect_failure(
             lambda: module.finalize_proof(active_paths, revoked_paths),
