@@ -36,4 +36,13 @@
     <exclude name="WordPress.WhiteSpace.OperatorSpacing.NoSpaceBefore"/>
     <exclude name="Universal.Operators.DisallowShortTernary.Found"/>
   </rule>
+
+  <!-- Yoast SEO registers this capability for its public advanced-metadata abilities. -->
+  <rule ref="WordPress.WP.Capabilities">
+    <properties>
+      <property name="custom_capabilities" type="array">
+        <element value="wpseo_edit_advanced_metadata"/>
+      </property>
+    </properties>
+  </rule>
 </ruleset>
