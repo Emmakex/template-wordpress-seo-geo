@@ -1,6 +1,6 @@
 <?php
 /**
- * Authenticated R3.5 remote mutation lifecycle for bounded semantic Manager operations.
+ * Authenticated R3.6 remote mutation lifecycle for bounded semantic Manager operations.
  *
  * @package SeoGeoManager
  */
@@ -213,6 +213,9 @@ final class RemoteMutationController {
 		$operation_type = isset( $plan['operation'] ) && is_string( $plan['operation'] ) ? $plan['operation'] : '';
 		if ( 'navigation-change' === $operation_type ) {
 			$payload['allow_public_navigation'] = true === ( $params['allow_public_navigation'] ?? false );
+		}
+		if ( 'featured-media-change' === $operation_type ) {
+			$payload['allow_published_target'] = true === ( $params['allow_published_target'] ?? false );
 		}
 		$result = MutationOperations::apply( $operation_type, $payload );
 		if ( is_wp_error( $result ) ) {
