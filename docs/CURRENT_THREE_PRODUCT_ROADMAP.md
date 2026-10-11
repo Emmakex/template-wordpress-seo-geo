@@ -216,7 +216,7 @@ External orchestration can understand a supported client's real current WordPres
 
 ## C2 — Authentication / capability contract
 
-Status: **repository contract implemented; per-client HTTPS field acceptance continues**.
+Status: **repository contract implemented; per-client HTTPS field acceptance continues — 0.3.34 capability-discovery slice implemented**.
 
 Required:
 
