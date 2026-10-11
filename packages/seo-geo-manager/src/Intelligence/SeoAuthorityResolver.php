@@ -27,12 +27,25 @@ final class SeoAuthorityResolver {
 	);
 
 	/**
+	 * Native Theme signals implemented by the first bounded write adapter.
+	 *
+	 * @var list<string>
+	 */
+	private const THEME_NATIVE_WRITABLE_SIGNALS = array(
+		'title-meta',
+		'canonical',
+		'robots',
+	);
+
+	/**
 	 * Resolve active plugin families plus the Theme fallback.
 	 *
-	 * @param list<string> $active_plugins Active plugin files.
+	 * @param list<string> $active_plugins              Active plugin files.
+	 * @param bool         $theme_available             Whether the SEO/GEO Theme is active.
+	 * @param bool         $theme_native_writer_ready   Whether the verified Core native writer is available.
 	 * @return array<string, mixed>
 	 */
-	public static function resolve( array $active_plugins, bool $theme_available ): array {
+	public static function resolve( array $active_plugins, bool $theme_available, bool $theme_native_writer_ready = false ): array {
 		$families = self::active_families( $active_plugins );
 
 		if ( 1 < count( $families ) ) {
@@ -75,9 +88,11 @@ final class SeoAuthorityResolver {
 				'authority'           => $authority,
 				'provider_families'   => array(),
 				'conflict'            => false,
-				'write_adapter_ready' => false,
-				'signals'             => self::signals( 'seo-geo-theme', false, 'resolved-read-only-adapter' ),
-				'next_action'         => 'implement-and-verify-theme-seo-write-adapter',
+				'write_adapter_ready' => $theme_native_writer_ready,
+				'signals'             => self::theme_signals( $theme_native_writer_ready ),
+				'next_action'         => $theme_native_writer_ready
+					? 'use-bounded-theme-native-seo-write-adapter'
+					: 'implement-and-verify-theme-seo-write-adapter',
 			);
 		}
 
@@ -181,6 +196,26 @@ final class SeoAuthorityResolver {
 				'writable' => $writable,
 				'state'    => $state,
 			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Expose the first native write slice without implying that every Theme SEO
+	 * output already has a verified mutation contract.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	private static function theme_signals( bool $writer_ready ): array {
+		$result = self::signals( 'seo-geo-theme', false, 'resolved-read-only-adapter' );
+		if ( ! $writer_ready ) {
+			return $result;
+		}
+
+		foreach ( self::THEME_NATIVE_WRITABLE_SIGNALS as $signal ) {
+			$result[ $signal ]['writable'] = true;
+			$result[ $signal ]['state']    = 'resolved-native-write-adapter';
 		}
 
 		return $result;
