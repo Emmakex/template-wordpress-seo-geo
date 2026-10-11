@@ -455,38 +455,64 @@ Field/commercial readiness still depends on C2/C9 acceptance and on the remainin
 
 ## C5 — Theme semantic-model operations
 
-Required:
+Status: **complete at repository-contract level**.
 
-- discover supported model versions;
-- read current model;
-- preview model changes;
-- validate required slots/types;
-- apply model changes;
-- verify model persistence;
-- rendered verification through Theme;
-- rollback where safe.
+Accepted evidence covers:
+
+- discovery of supported model/version contracts from the active Theme preset;
+- reading the current resolved model, resource, slots, values and fingerprint;
+- Preview of bounded semantic changes;
+- validation of declared models, writable slots, slot types and verification prerequisites;
+- Apply through the existing Theme semantic contract rather than CSS/Gutenberg layout internals;
+- exact stored-state readback and verification;
+- idempotent operation handling;
+- same-site bounded rendered verification;
+- exact rollback while the applied fingerprint remains current;
+- stale rollback rejection after a newer human edit.
+
+The accepted implementation is represented by `ThemeModelReader`, `ThemeStructuredContentAdapter`, the Theme-model read acceptance and structured-content acceptance fixtures. External orchestration does not need to know the Theme's CSS grid, Gutenberg group nesting or breakpoint implementation.
 
 ### Exit criterion
 
-External orchestration can create/update a Theme-owned strategic page without knowing Gutenberg layout trees or CSS implementation.
+**Met at repository-contract level.** External orchestration can create/update a Theme-owned strategic page through versioned semantic models without knowing Gutenberg layout trees or CSS implementation.
+
+Do not expand C5 into a frontend builder. New model/slot types belong to the Theme contract first and Manager only gains matching safe control after that contract exists.
 
 ## C6 — Navigation, internal link and media primitives
 
-Required:
+Status: **complete at repository-contract level through the accepted 0.3.37–0.3.43 slices**.
 
-- read/modify supported menu targets;
-- read/modify bounded contextual links;
-- verify targets are real/current;
-- avoid clone/source-host leakage;
-- media ID/reference support;
-- alt/context updates under policy;
-- no fabricated media metadata.
+Accepted evidence covers:
+
+- Site Intelligence discovery of navigation/internal-link/media state;
+- clone/source-host leakage detection;
+- bounded navigation-menu correction with exact occurrence accounting;
+- current-environment-only navigation destinations;
+- explicit approval for public navigation writes;
+- idempotent navigation Apply and exact rollback;
+- bounded contextual-link reads/writes with real WordPress target identity;
+- target/fingerprint verification and stale protection;
+- privacy-safe rollback snapshots for link operations;
+- media identity by attachment ID;
+- media `alt` update under policy;
+- title/caption/description context update under policy;
+- direct validated image upload with MIME/hash/size/dimension constraints;
+- no remote-URL media fetcher;
+- featured-media inspect/bind/verify/rollback;
+- Theme strategic-media inspect/bind/verify/rollback through the public Theme contract;
+- no fabricated EXIF/media metadata and no raw metadata exposure.
+
+Repository acceptance proves navigation Preview -> explicit approval -> Apply -> idempotent replay -> environment-bound operation -> Rollback. Dedicated link/media fixtures prove contextual-link writes, media reads, alt/context writes, image upload, featured media and strategic Theme media.
 
 ### Exit criterion
 
-External orchestration can execute real internal-link/navigation/media plans safely.
+**Met at repository-contract level.** External orchestration can execute real internal-link/navigation/media plans safely on supported WordPress resources.
+
+Do not add more media/link operations by default. Additional destructive binary replacement or provider-specific media behavior requires a separately justified contract.
 
 ## C7 — SEO output authority/provider adapters
+
+Status: **active remaining functional track**.
 
 Required:
 
@@ -500,24 +526,38 @@ Required:
 
 External orchestration can request metadata/indexability/Schema intent changes without creating conflicting public output.
 
+### Immediate rule
+
+Do not build many provider adapters speculatively. Audit the already-accepted output-authority resolver and identify the **minimum first-field write path** required for supported Theme and non-Theme stacks while preserving one public owner per signal.
+
 ## C8 — Operation history/evidence/rollback
 
-Required:
+Status: **complete at repository-contract level**.
 
-- private operation detail;
-- bounded operator summary;
-- operation IDs;
-- verification state;
-- rollback eligibility;
-- stale-safe rollback;
-- no secret/private-content leakage in summaries;
-- downloadable machine-readable evidence where useful.
+Accepted evidence covers:
+
+- private per-operation detail through operation IDs;
+- bounded `/operations` operator summaries;
+- status and verification-state reporting;
+- rollback eligibility/state refresh after reversal;
+- adapter-specific stale-safe rollback;
+- environment-bound rollback where required;
+- scoped visibility so normal editors do not receive site-wide administrative operations;
+- privacy-safe summaries that omit previous/private content, payload hashes and environment fingerprints;
+- machine-readable REST/JSON evidence;
+- admin diagnostic JSON copy/download controls for supported evidence surfaces.
+
+`seo-geo-manager-operation-history-acceptance.php` proves the privacy boundary, editor/admin scope filtering and rollback-state refresh. The accepted resource adapters prove stale-safe rollback according to their individual contracts.
 
 ### Exit criterion
 
-Every meaningful remote mutation is auditable and recoverable according to its contract.
+**Met at repository-contract level.** Meaningful supported remote mutations are auditable and recoverable according to their operation contracts.
+
+Do not turn history into a second analytics platform. New operation types must plug into the existing evidence/privacy/rollback conventions.
 
 ## C9 — Client-agnostic field acceptance
+
+Status: **remaining field/commercial track**.
 
 Must prove Manager on at least:
 
@@ -529,6 +569,21 @@ EMMAKE is the first Theme-site reference, not a hardcoded special case.
 ### Exit criterion
 
 The same Manager package operates both classes without client-specific code forks.
+
+---
+
+# Remaining Manager path to field/commercial readiness
+
+With C4, C5, C6 and C8 closed at repository-contract level, do not reopen them without a demonstrated defect or an explicitly justified provider/field requirement.
+
+The remaining path is deliberately narrow:
+
+1. **C7** — close the minimum SEO output-authority/write-provider path required by the first supported field stacks without duplicate public output;
+2. **C9** — prove the same Manager package on one SEO/GEO Theme site and one supported non-Theme WordPress site without forks;
+3. **C2 field closure** — retain real HTTPS + dedicated least-privilege Application Password + revocation evidence on accepted field installations;
+4. re-evaluate C1/C3 field evidence only where C9 exposes an actual gap.
+
+This is the shortest path to a commercially usable Manager. It is not a reason to add autonomous SEO/content intelligence inside WordPress.
 
 ---
 
