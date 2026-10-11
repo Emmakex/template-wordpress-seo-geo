@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'packages/seo-geo-manager/src/Remote/**'
+      - 'packages/seo-geo-manager/src/Rest/RemoteReadController.php'
       - 'packages/seo-geo-manager/src/Admin/RemoteAccess.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/seo-geo-manager.php'
@@ -15,6 +16,7 @@ on:
       - main
     paths:
       - 'packages/seo-geo-manager/src/Remote/**'
+      - 'packages/seo-geo-manager/src/Rest/RemoteReadController.php'
       - 'packages/seo-geo-manager/src/Admin/RemoteAccess.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/seo-geo-manager.php'
@@ -31,8 +33,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  remote-foundation:
-    name: Manager-owned remote bridge foundation
+  remote-bridge:
+    name: Manager-owned remote bridge R1-R2
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -44,9 +46,11 @@ jobs:
           php -l packages/seo-geo-manager/src/Remote/TokenService.php
           php -l packages/seo-geo-manager/src/Remote/RequestGuard.php
           php -l packages/seo-geo-manager/src/Remote/Audit.php
+          php -l packages/seo-geo-manager/src/Remote/Authenticator.php
+          php -l packages/seo-geo-manager/src/Rest/RemoteReadController.php
           php -l packages/seo-geo-manager/src/Admin/RemoteAccess.php
           php -l packages/seo-geo-manager/src/Plugin.php
           php -l scripts/ci/seo-geo-manager-remote-bridge-contract.php
 
-      - name: Remote foundation contract
+      - name: Remote bridge contract
         run: php scripts/ci/seo-geo-manager-remote-bridge-contract.php
