@@ -170,7 +170,7 @@ final class RemoteAccess {
 		switch ( $action ) {
 			case 'generate':
 				$state  = $credentials->state();
-				$scopes = is_array( $state['scopes'] ?? null ) && $state['scopes'] ? $state['scopes'] : Credentials::default_scopes();
+				$scopes = ! empty( $state['scopes'] ) ? $state['scopes'] : Credentials::default_scopes();
 				$result = $tokens->issue( $scopes, $user_id );
 				$message = __( 'Credencial remota generada. Copia el valor de un solo uso mostrado en esta página.', 'seo-geo-manager' );
 				break;
