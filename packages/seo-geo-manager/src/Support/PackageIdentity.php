@@ -13,6 +13,7 @@ use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use SplFileObject;
 
 /** Build the same content fingerprint emitted by the deterministic release builder. */
 final class PackageIdentity {
@@ -32,18 +33,19 @@ final class PackageIdentity {
 			$size = false === $size ? 0 : $size;
 			hash_update( $context, $relative . "\0" . (string) $size . "\0" );
 
-			$handle = fopen( $absolute, 'rb' );
-			if ( false === $handle ) {
+			try {
+				$handle = new SplFileObject( $absolute, 'rb' );
+			} catch ( \RuntimeException $exception ) {
 				continue;
 			}
-			while ( ! feof( $handle ) ) {
-				$chunk = fread( $handle, 1024 * 1024 );
-				if ( false === $chunk ) {
-					break;
+
+			while ( ! $handle->eof() ) {
+				$chunk = $handle->fread( 1024 * 1024 );
+				if ( '' === $chunk ) {
+					continue;
 				}
 				hash_update( $context, $chunk );
 			}
-			fclose( $handle );
 			hash_update( $context, "\0" );
 		}
 
