@@ -84,8 +84,8 @@ if ( '' === $credential || ! str_starts_with( $credential, 'sgm1_' ) ) {
 $status = sgm_remote_request( '/seo-geo-manager/v1/remote/status', sgm_remote_headers( $credential, 'ci-status-0001', 'ci-nonce-status-0001' ) );
 sgm_expect_status( $status, 200, 'remote status' );
 $status_data = sgm_response_data( $status );
-if ( true !== ( $status_data['ok'] ?? false ) || SEO_GEO_MANAGER_VERSION !== ( $status_data['data']['manager']['version'] ?? '' ) || 'R3.5' !== ( $status_data['data']['manager']['remote_milestone'] ?? '' ) ) {
-	fwrite( STDERR, "Remote status did not return current R3.5 Manager identity.\n" );
+if ( true !== ( $status_data['ok'] ?? false ) || SEO_GEO_MANAGER_VERSION !== ( $status_data['data']['manager']['version'] ?? '' ) || 'R3.6' !== ( $status_data['data']['manager']['remote_milestone'] ?? '' ) ) {
+	fwrite( STDERR, "Remote status did not return current R3.6 Manager identity.\n" );
 	exit( 1 );
 }
 
@@ -94,17 +94,21 @@ sgm_expect_status( $capabilities, 200, 'remote capabilities' );
 $capability_data = sgm_response_data( $capabilities );
 $mutation = is_array( $capability_data['data']['mutation_transport'] ?? null ) ? $capability_data['data']['mutation_transport'] : array();
 $read_surface = is_array( $capability_data['data']['read_surface'] ?? null ) ? $capability_data['data']['read_surface'] : array();
-$expected_operations = array( 'content-change', 'theme-structured-content', 'seo-authority-change', 'contextual-link-change', 'navigation-change' );
-if ( true !== ( $capability_data['ok'] ?? false ) || true !== ( $mutation['available'] ?? false ) || 'R3.5' !== ( $mutation['milestone'] ?? '' ) || $expected_operations !== ( $mutation['supported_operations'] ?? array() ) ) {
-	fwrite( STDERR, "R3.5 capabilities did not expose the exact accepted semantic operation allowlist.\n" );
+$expected_operations = array( 'content-change', 'theme-structured-content', 'seo-authority-change', 'contextual-link-change', 'navigation-change', 'featured-media-change' );
+if ( true !== ( $capability_data['ok'] ?? false ) || true !== ( $mutation['available'] ?? false ) || 'R3.6' !== ( $mutation['milestone'] ?? '' ) || $expected_operations !== ( $mutation['supported_operations'] ?? array() ) ) {
+	fwrite( STDERR, "R3.6 capabilities did not expose the exact accepted semantic operation allowlist.\n" );
 	exit( 1 );
 }
 if ( 'site.diagnostics' !== ( $read_surface['/remote/contextual-links'] ?? '' ) ) {
-	fwrite( STDERR, "R3.5 capabilities did not preserve bounded contextual-link discovery.\n" );
+	fwrite( STDERR, "R3.6 capabilities did not preserve bounded contextual-link discovery.\n" );
 	exit( 1 );
 }
 if ( 'site.diagnostics' !== ( $read_surface['/remote/navigation'] ?? '' ) ) {
-	fwrite( STDERR, "R3.5 capabilities did not expose bounded navigation inspection.\n" );
+	fwrite( STDERR, "R3.6 capabilities did not preserve bounded navigation inspection.\n" );
+	exit( 1 );
+}
+if ( 'site.diagnostics' !== ( $read_surface['/remote/featured-media'] ?? '' ) ) {
+	fwrite( STDERR, "R3.6 capabilities did not expose bounded featured-media inspection.\n" );
 	exit( 1 );
 }
 
@@ -128,6 +132,8 @@ $links_scope_denied = sgm_remote_request( '/seo-geo-manager/v1/remote/contextual
 sgm_expect_status( $links_scope_denied, 403, 'contextual-link scope denial' );
 $navigation_scope_denied = sgm_remote_request( '/seo-geo-manager/v1/remote/navigation', sgm_remote_headers( $credential, 'ci-navigation-scope-denied-0001', 'ci-navigation-scope-denied-nonce-0001' ) );
 sgm_expect_status( $navigation_scope_denied, 403, 'navigation scope denial' );
+$featured_scope_denied = sgm_remote_request( '/seo-geo-manager/v1/remote/featured-media?resource_id=1', sgm_remote_headers( $credential, 'ci-featured-scope-denied-0001', 'ci-featured-scope-denied-nonce-0001' ) );
+sgm_expect_status( $featured_scope_denied, 403, 'featured-media scope denial' );
 
 $scope_restore = $credentials->set_scopes( Credentials::default_scopes() );
 if ( is_wp_error( $scope_restore ) ) {
@@ -177,6 +183,7 @@ echo wp_json_encode(
 		'seo_authority_operation'   => true,
 		'contextual_link_discovery' => true,
 		'navigation_inspection'     => true,
+		'featured_media_inspection' => true,
 		'scope_denial'              => true,
 		'nonce_replay_rejected'     => true,
 		'credential_revocation'     => true,
