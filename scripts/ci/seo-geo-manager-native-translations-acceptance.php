@@ -46,7 +46,7 @@ function seo_geo_manager_native_translation_rest( string $method, string $route,
 /**
  * Return a REST response body as an array.
  *
-	 * @return array<string, mixed>
+ * @return array<string, mixed>
  */
 function seo_geo_manager_native_translation_data( WP_REST_Response $response ): array {
 	$data = $response->get_data();
@@ -138,8 +138,8 @@ seo_geo_manager_native_translation_accept( 64 === strlen( $empty_fingerprint ), 
 seo_geo_manager_native_translation_accept( false === str_contains( (string) wp_json_encode( $empty ), '_seo_geo_' ), 'Native translation inspection leaked raw provider metadata keys.' );
 
 $translations = array(
-	'es' => $es_id,
 	'en' => $en_id,
+	'es' => $es_id,
 );
 $preview_body = array(
 	'translations'         => $translations,
