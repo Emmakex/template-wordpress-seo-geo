@@ -227,7 +227,9 @@ final class ThemeStrategicMediaChangeAdapter {
 			return new WP_Error( 'seo_geo_manager_theme_media_resource_not_found', 'Strategic Theme page unavailable.', array( 'status' => 404 ) );
 		}
 
-		$callback = 0 < $attachment_id ? 'seo_geo_theme_set_strategic_media_slot' : 'seo_geo_theme_remove_strategic_media_slot';
+		$callback = 0 < $attachment_id
+			? self::theme_callback( 'set_strategic_media_slot' )
+			: self::theme_callback( 'remove_strategic_media_slot' );
 		if ( ! is_callable( $callback ) ) {
 			return new WP_Error( 'seo_geo_manager_theme_media_write_unsupported', 'The active Theme does not expose the strategic-media write callback.', array( 'status' => 409 ) );
 		}
@@ -242,7 +244,7 @@ final class ThemeStrategicMediaChangeAdapter {
 	}
 
 	private static function slot( int $resource_id, string $model_id, string $slot_id ): int {
-		$callback = 'seo_geo_theme_strategic_media_slot';
+		$callback = self::theme_callback( 'strategic_media_slot' );
 		if ( ! is_callable( $callback ) ) {
 			return 0;
 		}
@@ -251,7 +253,7 @@ final class ThemeStrategicMediaChangeAdapter {
 	}
 
 	private static function fingerprint( int $resource_id, string $model_id, string $slot_id ): string {
-		$callback = 'seo_geo_theme_strategic_media_fingerprint';
+		$callback = self::theme_callback( 'strategic_media_fingerprint' );
 		if ( ! is_callable( $callback ) ) {
 			return '';
 		}
@@ -259,6 +261,11 @@ final class ThemeStrategicMediaChangeAdapter {
 		$result = call_user_func( $callback, $resource_id, $model_id, $slot_id );
 
 		return is_string( $result ) ? $result : '';
+	}
+
+	/** Resolve a Theme callback name without statically coupling Manager to Theme symbols. */
+	private static function theme_callback( string $suffix ): string {
+		return 'seo_geo_theme_' . $suffix;
 	}
 
 	/**
