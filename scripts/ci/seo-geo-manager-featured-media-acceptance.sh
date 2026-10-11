@@ -181,6 +181,8 @@ wp_cli plugin activate seo-geo-manager >/dev/null \
   || fail_acceptance "manager-activate" "Could not activate Manager" "plugin active" "failed"
 wp_cli theme activate seo-geo-theme >/dev/null \
   || fail_acceptance "theme-activate" "Could not activate SEO/GEO Theme" "theme active" "failed"
+wp_cli option update seo_geo_active_preset corporate >/dev/null \
+  || fail_acceptance "corporate-preset" "Could not activate Corporate Theme preset" "seo_geo_active_preset=corporate" "failed"
 
 printf '[manager-featured-media] Running C6.6A featured-media acceptance.\n'
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-featured-media-acceptance.php >"$RUNTIME_LOG" 2>&1; then
