@@ -14,6 +14,7 @@ use SeoGeo\Manager\Intelligence\SiteIntelligenceScanner;
 use SeoGeo\Manager\Remote\Audit;
 use SeoGeo\Manager\Remote\Authenticator;
 use SeoGeo\Manager\Remote\Credentials;
+use SeoGeo\Manager\Remote\MutationOperations;
 use SeoGeo\Manager\Remote\RequestGuard;
 use SeoGeo\Manager\Remote\TokenService;
 use SeoGeo\Manager\Support\EnvironmentPolicy;
@@ -48,7 +49,7 @@ final class RemoteReadController {
 					'version' => SEO_GEO_MANAGER_VERSION,
 					'package' => PackageIdentity::snapshot(),
 					'api_namespace' => self::NAMESPACE,
-					'remote_milestone' => 'R3',
+					'remote_milestone' => 'R3.2',
 				),
 				'environment' => EnvironmentPolicy::snapshot(),
 				'seo_authority' => array(
@@ -85,8 +86,8 @@ final class RemoteReadController {
 				),
 				'mutation_transport' => array(
 					'available' => true,
-					'milestone' => 'R3',
-					'supported_operations' => array( 'content-change' ),
+					'milestone' => 'R3.2',
+					'supported_operations' => MutationOperations::supported(),
 					'lifecycle' => array( 'plan', 'apply', 'verify', 'rollback' ),
 					'plan_ttl_seconds' => 15 * MINUTE_IN_SECONDS,
 					'routes' => array(
