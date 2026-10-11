@@ -61,7 +61,7 @@ final class PackageIdentity {
 	 * @return array<string, string>
 	 */
 	private static function files(): array {
-		$root = realpath( SEO_GEO_MANAGER_DIR );
+		$root = realpath( dirname( __DIR__, 2 ) );
 		if ( false === $root ) {
 			return array();
 		}
