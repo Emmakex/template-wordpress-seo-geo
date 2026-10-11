@@ -84,8 +84,8 @@ if ( '' === $credential || ! str_starts_with( $credential, 'sgm1_' ) ) {
 $status = sgm_remote_request( '/seo-geo-manager/v1/remote/status', sgm_remote_headers( $credential, 'ci-status-0001', 'ci-nonce-status-0001' ) );
 sgm_expect_status( $status, 200, 'remote status' );
 $status_data = sgm_response_data( $status );
-if ( true !== ( $status_data['ok'] ?? false ) || SEO_GEO_MANAGER_VERSION !== ( $status_data['data']['manager']['version'] ?? '' ) || 'R3' !== ( $status_data['data']['manager']['remote_milestone'] ?? '' ) ) {
-	fwrite( STDERR, "Remote status did not return current R3 Manager identity.\n" );
+if ( true !== ( $status_data['ok'] ?? false ) || SEO_GEO_MANAGER_VERSION !== ( $status_data['data']['manager']['version'] ?? '' ) || 'R3.2' !== ( $status_data['data']['manager']['remote_milestone'] ?? '' ) ) {
+	fwrite( STDERR, "Remote status did not return current R3.2 Manager identity.\n" );
 	exit( 1 );
 }
 
@@ -93,8 +93,9 @@ $capabilities = sgm_remote_request( '/seo-geo-manager/v1/remote/capabilities', s
 sgm_expect_status( $capabilities, 200, 'remote capabilities' );
 $capability_data = sgm_response_data( $capabilities );
 $mutation = is_array( $capability_data['data']['mutation_transport'] ?? null ) ? $capability_data['data']['mutation_transport'] : array();
-if ( true !== ( $capability_data['ok'] ?? false ) || true !== ( $mutation['available'] ?? false ) || array( 'content-change' ) !== ( $mutation['supported_operations'] ?? array() ) ) {
-	fwrite( STDERR, "R3 capabilities did not expose only the accepted content-change mutation transport.\n" );
+$expected_operations = array( 'content-change', 'theme-structured-content' );
+if ( true !== ( $capability_data['ok'] ?? false ) || true !== ( $mutation['available'] ?? false ) || $expected_operations !== ( $mutation['supported_operations'] ?? array() ) ) {
+	fwrite( STDERR, "R3.2 capabilities did not expose the exact accepted semantic operation allowlist.\n" );
 	exit( 1 );
 }
 
@@ -158,7 +159,7 @@ echo wp_json_encode(
 		'manager_owned_credential'  => true,
 		'authenticated_read'        => true,
 		'r3_capability_advertised'  => true,
-		'r3_operation_allowlist'    => array( 'content-change' ),
+		'r3_operation_allowlist'    => $expected_operations,
 		'scope_denial'              => true,
 		'nonce_replay_rejected'     => true,
 		'credential_revocation'     => true,
