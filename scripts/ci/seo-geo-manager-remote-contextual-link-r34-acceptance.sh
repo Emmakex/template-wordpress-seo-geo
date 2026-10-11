@@ -16,6 +16,8 @@ DB_ROOT_PASSWORD="r34-links-root"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-contextual-link-r34-acceptance.php"
 LOG="$(mktemp)"
+EXPECTED_VERSION="$(awk '/^[[:space:]]*\* Version:/ {print $3; exit}' "$ROOT/packages/seo-geo-manager/seo-geo-manager.php")"
+[[ -n "$EXPECTED_VERSION" ]] || { echo '[r34-links] could not resolve current Manager version' >&2; exit 1; }
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
@@ -69,7 +71,7 @@ wp_cli eval-file /var/www/html/r34-contextual-links.php >"$LOG" 2>&1 || { cat "$
 cat "$LOG"
 
 grep -q '"ok":true' "$LOG"
-grep -q '"plugin_version":"0.3.54"' "$LOG"
+grep -q "\"plugin_version\":\"${EXPECTED_VERSION}\"" "$LOG"
 grep -q '"operation":"contextual-link-change"' "$LOG"
 grep -q '"edge_discovered_remotely":true' "$LOG"
 grep -q '"fabricated_edge_rejected":true' "$LOG"
@@ -84,4 +86,4 @@ grep -q '"operation_bounded":true' "$LOG"
 grep -q '"rollback_exact":true' "$LOG"
 grep -q '"audit_secret_free":true' "$LOG"
 grep -q '"generic_proxy":false' "$LOG"
-printf '[r34-links] SEO/GEO Manager R3.4 contextual-link acceptance OK.\n'
+printf '[r34-links] SEO/GEO Manager R3.4 contextual-link acceptance OK on Manager %s.\n' "$EXPECTED_VERSION"
