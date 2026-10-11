@@ -10,7 +10,7 @@ Target release: `0.1.1`.
 
 Release channel: `prestable`.
 
-The migration/reset/hydration/SEO-GEO engine, deterministic packaging, onboarding, upgrade/rollback and the Corporate v5 Theme-owned renderer boundary are working. Corporate v5 A1 proved the renderer/model boundary. Corporate v5 A2 proved clean Theme-owned strategic chrome and removed inherited v4 presentation debt. Corporate v5 A3 lightened the real-site visual system. The current exact field candidate is **Corporate v5 A3.1 with the C6.6B strategic-media binding extension**, preserving the bounded visual closure while allowing a declared hero image to be bound without moving layout authority into Gutenberg or Manager.
+The migration/reset/hydration/SEO-GEO engine, deterministic packaging, onboarding, upgrade/rollback and the Corporate v5 Theme-owned renderer boundary are working. Corporate v5 A1 proved the renderer/model boundary. Corporate v5 A2 proved clean Theme-owned strategic chrome and removed inherited v4 presentation debt. Corporate v5 A3 lightened the real-site visual system. The current exact field candidate is **Corporate v5 A3.1 with the C6.6B strategic-media binding extension and the bounded native translation-group writer contract**, preserving the accepted visual closure while adding safe reciprocal multilingual relationship persistence inside the bundled native core.
 
 A3.1 keeps the accepted A2/A3 architecture and hydrated content state intact while:
 
@@ -24,6 +24,8 @@ A3.1 keeps the accepted A2/A3 architecture and hydrated content state intact whi
 - preserving zero required project frontend JavaScript and zero third-party requests;
 - preserving the existing Reset, hydration, URL, content, SEO/GEO and Migration Bridge state.
 
+The bundled native core additionally exposes a bounded translation-group writer that persists only validated reciprocal relationships and leaves public hreflang authority with the existing native registry. This re-freeze changes deterministic package bytes but does not change the accepted A3.1 visual composition, content, URLs or field state.
+
 Stable promotion remains blocked by real-site product acceptance. Repository CI, deterministic hashes and fixture performance are necessary evidence but cannot declare the visual product accepted.
 
 SaaS, Local Pro, Publisher and Ecommerce master-surface rollout remains frozen until Corporate v5 passes the real sandbox gate.
@@ -36,12 +38,12 @@ The machine-readable source of truth remains:
 
 Frozen Corporate v5 A3.1 technical identity:
 
-- Theme implementation source commit: `e54dc8e5a85304fea1d1f2d5f9079b5a26d6dc60`;
+- Theme implementation source commit: `a251c49fc669531418b266acd00b63fcb2a2421e`;
 - Theme: `0.1.1` / `prestable`;
-- Theme ZIP SHA-256: `b737b9d7e8c6b5e709aa69570772dd58b5629140b0216bf90cc81fb1bd21724d`;
+- Theme ZIP SHA-256: `05c3763ad7dcb210ccfe49e9ff60995277483916837ccd9a7539666611d7b835`;
 - Migration Bridge: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic EMMAKE field-pilot pack SHA-256: `de585bec0fe3e46d77dbb4982a5752f8932ace8c9b4c4516d90027e470949726`.
+- deterministic EMMAKE field-pilot pack SHA-256: `d9b917a1bec6d46626a5ffcf9a9e1c44413e68ad3de419419e60f1bd3c383cf3`.
 
 This identity is reproducible technical evidence for the next `/nuevaweb/` field pass. It is **not** an accepted stable or production candidate. Any Theme implementation change requires a new deterministic Theme SHA and a newly frozen candidate before field installation.
 
@@ -49,7 +51,7 @@ The candidate metadata may be committed after the implementation source commit w
 
 ## A3.1 repository acceptance
 
-The exact A3.1 implementation, including the optional Theme-owned strategic hero-media binding, passed the repository gates for:
+The exact A3.1 implementation, including the optional Theme-owned strategic hero-media binding and bounded native translation-group writer, passed the repository gates for:
 
 - Foundation;
 - Design System;
@@ -91,7 +93,7 @@ Corporate v4.3 passed repository-side technical gates but failed the human visua
 
 Corporate v5 A1 established the renderer/model boundary. Corporate v5 A2 corrected strategic chrome and presentation ownership. Corporate v5 A3 refined the palette after real `/nuevaweb/` findings. Corporate v5 A3.1 closes the remaining bounded visual/asset treatment before the next single sandbox installation.
 
-A3.1 does **not** change Reset, hydration, Migration Bridge, content, URLs or SEO/GEO ownership. C6.6B only adds a versioned Theme-owned binding for declared strategic media resources; the Theme remains the rendering authority and the local SVG remains the fallback when no valid binding exists.
+A3.1 does **not** change Reset, hydration, Migration Bridge, content, URLs or SEO/GEO ownership. C6.6B only adds a versioned Theme-owned binding for declared strategic media resources; the Theme remains the rendering authority and the local SVG remains the fallback when no valid binding exists. The native translation-group writer only provides validated relationship persistence for the already-existing native multilingual registry and does not become a second hreflang authority.
 
 The permanent ownership rule remains:
 
