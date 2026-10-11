@@ -351,7 +351,7 @@ final class AuthorBindingChangeAdapter {
 			);
 		}
 
-		if ( $author_id !== get_current_user_id() ) {
+		if ( get_current_user_id() !== $author_id ) {
 			$edit_others = isset( $post_type->cap->edit_others_posts ) && is_string( $post_type->cap->edit_others_posts )
 				? $post_type->cap->edit_others_posts
 				: '';
