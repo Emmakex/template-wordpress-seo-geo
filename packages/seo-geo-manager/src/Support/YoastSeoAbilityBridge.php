@@ -71,6 +71,24 @@ final class YoastSeoAbilityBridge {
 	}
 
 	/**
+	 * Validate an intended update against Yoast's current public ability schema.
+	 *
+	 * @param array<string, mixed> $values Provider values to validate.
+	 * @return true|WP_Error
+	 */
+	public static function validate_update( int $resource_id, array $values ) {
+		$ability = self::ability( self::WRITE_ABILITY );
+		if ( is_wp_error( $ability ) ) {
+			return $ability;
+		}
+
+		$input            = $values;
+		$input['post_id'] = $resource_id;
+
+		return $ability->validate_input( $input );
+	}
+
+	/**
 	 * Update only fields supported by the accepted Manager adapter.
 	 *
 	 * @param array<string, mixed> $values Provider values to update.
