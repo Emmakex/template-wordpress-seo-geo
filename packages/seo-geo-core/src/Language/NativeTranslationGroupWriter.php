@@ -22,10 +22,16 @@ use WP_Post_Type;
 final class NativeTranslationGroupWriter {
 	private const MAX_MEMBERS = 20;
 
-	/** Native server-side language configuration. */
+	/**
+	 * Native server-side language configuration.
+	 *
+	 * @var NativeLanguageConfiguration
+	 */
 	private NativeLanguageConfiguration $configuration;
 
 	/**
+	 * Create a native translation group writer.
+	 *
 	 * @param NativeLanguageConfiguration|null $configuration Validated native configuration.
 	 */
 	public function __construct( ?NativeLanguageConfiguration $configuration = null ) {
@@ -38,6 +44,7 @@ final class NativeTranslationGroupWriter {
 	 * Draft members remain observable here even though NativeTranslationRegistry
 	 * intentionally keeps them out of public hreflang output until publication.
 	 *
+	 * @param string $group_id Native translation group identifier.
 	 * @return array<string, mixed>|WP_Error
 	 */
 	public function inspect( string $group_id ) {
@@ -71,7 +78,7 @@ final class NativeTranslationGroupWriter {
 
 			if ( null === $post_type ) {
 				$post_type = (string) $post->post_type;
-			} elseif ( $post_type !== (string) $post->post_type ) {
+			} elseif ( (string) $post->post_type !== $post_type ) {
 				$consistent = false;
 			}
 
@@ -131,6 +138,7 @@ final class NativeTranslationGroupWriter {
 	 * remains silent until NativeTranslationRegistry validates a fully published
 	 * reciprocal relationship.
 	 *
+	 * @param string                    $group_id     Native translation group identifier.
 	 * @param array<string, int|string> $translations Language-to-post map.
 	 * @return array<string, mixed>|WP_Error
 	 */
@@ -195,6 +203,7 @@ final class NativeTranslationGroupWriter {
 	/**
 	 * Remove one complete native group when its current fingerprint is known.
 	 *
+	 * @param string $group_id Native translation group identifier.
 	 * @return array<string, mixed>|WP_Error
 	 */
 	public function clear( string $group_id ) {
@@ -254,7 +263,10 @@ final class NativeTranslationGroupWriter {
 	}
 
 	/**
-	 * @param array<string, int|string> $translations Raw language-to-post map.
+	 * Normalize a language-to-post map.
+	 *
+	 * @param array $translations Raw language-to-post map.
+	 * @phpstan-param array<string, int|string> $translations
 	 * @return array<string, int>|WP_Error
 	 */
 	private function normalize_translations( array $translations ) {
@@ -299,7 +311,11 @@ final class NativeTranslationGroupWriter {
 	}
 
 	/**
-	 * @param array<string, int> $translations Normalized language-to-post map.
+	 * Validate all members before a reciprocal group write.
+	 *
+	 * @param string $group_id     Native translation group identifier.
+	 * @param array  $translations Normalized language-to-post map.
+	 * @phpstan-param array<string, int> $translations
 	 * @return true|WP_Error
 	 */
 	private function validate_members( string $group_id, array $translations ) {
@@ -317,12 +333,12 @@ final class NativeTranslationGroupWriter {
 
 			if ( null === $post_type ) {
 				$post_type = (string) $post->post_type;
-			} elseif ( $post_type !== (string) $post->post_type ) {
+			} elseif ( (string) $post->post_type !== $post_type ) {
 				return self::error( 'seo_geo_native_group_member_type_mismatch', 'All translation resources must use the same post type.', 400 );
 			}
 
 			$stored_group = self::normalize_group_id( (string) get_post_meta( $post_id, NativeTranslationRegistry::META_GROUP, true ) );
-			if ( null !== $stored_group && $group_id !== $stored_group ) {
+			if ( null !== $stored_group && $stored_group !== $group_id ) {
 				return self::error(
 					'seo_geo_native_group_member_conflict',
 					'A translation resource already belongs to a different native group.',
@@ -335,6 +351,9 @@ final class NativeTranslationGroupWriter {
 	}
 
 	/**
+	 * Find all bounded members that claim one native translation group.
+	 *
+	 * @param string $group_id Native translation group identifier.
 	 * @return list<int>|WP_Error
 	 */
 	private function member_ids_for_group( string $group_id ) {
@@ -344,6 +363,7 @@ final class NativeTranslationGroupWriter {
 			return array();
 		}
 
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Bounded lookup against authoritative native translation-group metadata.
 		$ids = get_posts(
 			array(
 				'post_type'              => $post_types,
@@ -359,6 +379,7 @@ final class NativeTranslationGroupWriter {
 				'meta_value'             => $group_id,
 			)
 		);
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
 		if ( self::MAX_MEMBERS < count( $ids ) ) {
 			return self::error( 'seo_geo_native_group_too_large', 'Native translation group exceeds the supported member bound.', 409 );
@@ -372,7 +393,10 @@ final class NativeTranslationGroupWriter {
 	}
 
 	/**
-	 * @param list<int> $post_ids Affected resource IDs.
+	 * Snapshot native translation metadata for rollback compensation.
+	 *
+	 * @param array $post_ids Affected resource IDs.
+	 * @phpstan-param list<int> $post_ids
 	 * @return array<int, array<string, array{exists:bool,value:mixed}>>
 	 */
 	private function snapshot_posts( array $post_ids ): array {
@@ -396,7 +420,10 @@ final class NativeTranslationGroupWriter {
 	}
 
 	/**
-	 * @param array<int, array<string, array{exists:bool,value:mixed}>> $snapshots Previous metadata.
+	 * Restore previously captured native translation metadata.
+	 *
+	 * @param array $snapshots Previous metadata.
+	 * @phpstan-param array<int, array<string, array{exists:bool,value:mixed}>> $snapshots
 	 */
 	private function restore_snapshots( array $snapshots ): void {
 		foreach ( $snapshots as $post_id => $meta ) {
@@ -411,7 +438,13 @@ final class NativeTranslationGroupWriter {
 	}
 
 	/**
-	 * @param array<string, int> $translations Normalized relationship map.
+	 * Persist one reciprocal translation-group member.
+	 *
+	 * @param int    $post_id      WordPress resource identifier.
+	 * @param string $group_id     Native translation group identifier.
+	 * @param string $language     Native language code.
+	 * @param array  $translations Normalized relationship map.
+	 * @phpstan-param array<string, int> $translations
 	 */
 	private function write_member( int $post_id, string $group_id, string $language, array $translations ): bool {
 		return $this->write_meta( $post_id, NativeTranslationRegistry::META_GROUP, $group_id )
@@ -419,18 +452,29 @@ final class NativeTranslationGroupWriter {
 			&& $this->write_meta( $post_id, NativeTranslationRegistry::META_TRANSLATIONS, $translations );
 	}
 
-	/** @param mixed $value Expected metadata value. */
+	/**
+	 * Persist and verify one metadata value.
+	 *
+	 * @param int    $post_id WordPress resource identifier.
+	 * @param string $key     Metadata key.
+	 * @param mixed  $value   Expected metadata value.
+	 */
 	private function write_meta( int $post_id, string $key, $value ): bool {
 		$current = get_post_meta( $post_id, $key, true );
-		if ( $current === $value && metadata_exists( 'post', $post_id, $key ) ) {
+		if ( $value === $current && metadata_exists( 'post', $post_id, $key ) ) {
 			return true;
 		}
 
 		update_post_meta( $post_id, $key, $value );
 
-		return get_post_meta( $post_id, $key, true ) === $value;
+		return $value === get_post_meta( $post_id, $key, true );
 	}
 
+	/**
+	 * Remove native translation metadata from one member.
+	 *
+	 * @param int $post_id WordPress resource identifier.
+	 */
 	private function clear_member( int $post_id ): void {
 		delete_post_meta( $post_id, NativeTranslationRegistry::META_GROUP );
 		delete_post_meta( $post_id, NativeTranslationRegistry::META_LANGUAGE );
@@ -438,15 +482,20 @@ final class NativeTranslationGroupWriter {
 	}
 
 	/**
-	 * @param array<string, int> $translations Normalized desired relationship.
-	 * @param list<int>          $previous_ids Previous group member IDs.
+	 * Verify an exact reciprocal replacement and removed legacy members.
+	 *
+	 * @param string $group_id      Native translation group identifier.
+	 * @param array  $translations  Normalized desired relationship.
+	 * @param array  $previous_ids  Previous group member IDs.
+	 * @phpstan-param array<string, int> $translations
+	 * @phpstan-param list<int> $previous_ids
 	 */
 	private function verify_replacement( string $group_id, array $translations, array $previous_ids ): bool {
 		foreach ( $translations as $language => $post_id ) {
 			if (
-				$group_id !== get_post_meta( $post_id, NativeTranslationRegistry::META_GROUP, true )
-				|| $language !== get_post_meta( $post_id, NativeTranslationRegistry::META_LANGUAGE, true )
-				|| $translations !== get_post_meta( $post_id, NativeTranslationRegistry::META_TRANSLATIONS, true )
+				get_post_meta( $post_id, NativeTranslationRegistry::META_GROUP, true ) !== $group_id
+				|| get_post_meta( $post_id, NativeTranslationRegistry::META_LANGUAGE, true ) !== $language
+				|| get_post_meta( $post_id, NativeTranslationRegistry::META_TRANSLATIONS, true ) !== $translations
 			) {
 				return false;
 			}
@@ -470,7 +519,10 @@ final class NativeTranslationGroupWriter {
 	}
 
 	/**
-	 * @param array<string, int> $translations Normalized translation map.
+	 * Determine whether every relation is eligible for public registry output.
+	 *
+	 * @param array $translations Normalized translation map.
+	 * @phpstan-param array<string, int> $translations
 	 */
 	private function public_ready( array $translations ): bool {
 		if ( count( $translations ) < 2 ) {
@@ -487,6 +539,11 @@ final class NativeTranslationGroupWriter {
 		return true;
 	}
 
+	/**
+	 * Read and validate one stored native language code.
+	 *
+	 * @param int $post_id WordPress resource identifier.
+	 */
 	private function stored_language( int $post_id ): ?string {
 		$value = get_post_meta( $post_id, NativeTranslationRegistry::META_LANGUAGE, true );
 		if ( ! is_string( $value ) ) {
@@ -498,7 +555,12 @@ final class NativeTranslationGroupWriter {
 		return null !== $this->configuration->locale_for( $language ) ? $language : null;
 	}
 
-	/** @return array<string, int>|null */
+	/**
+	 * Read and normalize one stored reciprocal translation map.
+	 *
+	 * @param int $post_id WordPress resource identifier.
+	 * @return array<string, int>|null
+	 */
 	private function stored_translations( int $post_id ): ?array {
 		$value = get_post_meta( $post_id, NativeTranslationRegistry::META_TRANSLATIONS, true );
 		if ( ! is_array( $value ) ) {
@@ -510,12 +572,24 @@ final class NativeTranslationGroupWriter {
 		return is_wp_error( $normalized ) ? null : $normalized;
 	}
 
+	/**
+	 * Normalize a bounded native translation group identifier.
+	 *
+	 * @param string $group_id Candidate group identifier.
+	 */
 	private static function normalize_group_id( string $group_id ): ?string {
 		$group_id = strtolower( trim( $group_id ) );
 
 		return 1 === preg_match( '/^[a-z0-9][a-z0-9._:-]{0,127}$/', $group_id ) ? $group_id : null;
 	}
 
+	/**
+	 * Create a bounded REST-compatible WordPress error.
+	 *
+	 * @param string $code    Error code.
+	 * @param string $message Error message.
+	 * @param int    $status  HTTP-compatible status.
+	 */
 	private static function error( string $code, string $message, int $status ): WP_Error {
 		return new WP_Error( $code, $message, array( 'status' => $status ) );
 	}
