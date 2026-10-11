@@ -39,12 +39,12 @@ final class MediaAltChangeAdapter {
 			'after_alt'      => $prepared['after_alt'],
 			'has_changes'    => true,
 			'policy'         => array(
-				'alt_only'                   => true,
-				'attachment_id_only'         => true,
-				'fabricated_metadata'        => false,
-				'binary_mutation_supported'  => false,
-				'public_media_blocked'       => true !== ( $payload['allow_public_media'] ?? false ),
-				'allow_public_media'         => true === ( $payload['allow_public_media'] ?? false ),
+				'alt_only'                  => true,
+				'attachment_id_only'        => true,
+				'fabricated_metadata'       => false,
+				'binary_mutation_supported' => false,
+				'public_media_blocked'      => true !== ( $payload['allow_public_media'] ?? false ),
+				'allow_public_media'        => true === ( $payload['allow_public_media'] ?? false ),
 			),
 		);
 	}
@@ -143,6 +143,55 @@ final class MediaAltChangeAdapter {
 		}
 
 		return $operation;
+	}
+
+	/**
+	 * Verify an applied alt-text operation through the canonical media fingerprint.
+	 *
+	 * @param array<string, mixed> $operation Stored Manager operation.
+	 * @return array<string, mixed>|WP_Error
+	 */
+	public static function verify( array $operation ) {
+		if ( self::ADAPTER !== ( $operation['adapter'] ?? '' ) || 'applied' !== ( $operation['status'] ?? '' ) ) {
+			return new WP_Error( 'seo_geo_manager_media_alt_verify_unavailable', 'Only applied media alt operations can be verified.', array( 'status' => 409 ) );
+		}
+
+		$media_id   = isset( $operation['media_id'] ) ? absint( $operation['media_id'] ) : 0;
+		$attachment = get_post( $media_id );
+		if ( ! self::is_image_attachment( $attachment ) ) {
+			return new WP_Error( 'seo_geo_manager_media_alt_attachment_missing', 'Media alt verification attachment no longer exists.', array( 'status' => 404 ) );
+		}
+		if ( ! current_user_can( 'upload_files' ) || ! current_user_can( 'edit_post', $attachment->ID ) ) {
+			return new WP_Error( 'seo_geo_manager_forbidden', 'You cannot verify this image alt.', array( 'status' => 403 ) );
+		}
+
+		$expected_fingerprint = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
+		$current_fingerprint  = MediaFingerprint::for_attachment( $attachment );
+		if ( '' === $expected_fingerprint || ! hash_equals( $expected_fingerprint, $current_fingerprint ) ) {
+			return new WP_Error(
+				'seo_geo_manager_media_alt_verification_stale',
+				'Image metadata no longer matches the applied media alt operation.',
+				array( 'status' => 409 )
+			);
+		}
+
+		$current_alt = get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true );
+		$current_alt = is_string( $current_alt ) ? $current_alt : '';
+		$expected_alt = isset( $operation['after_alt'] ) && is_string( $operation['after_alt'] ) ? $operation['after_alt'] : '';
+		if ( $current_alt !== $expected_alt ) {
+			return new WP_Error(
+				'seo_geo_manager_media_alt_verification_state_mismatch',
+				'Image alt text no longer matches the applied media alt operation.',
+				array( 'status' => 409 )
+			);
+		}
+
+		return array(
+			'verified'            => true,
+			'media_id'            => (int) $attachment->ID,
+			'alt'                 => $current_alt,
+			'current_fingerprint' => $current_fingerprint,
+		);
 	}
 
 	/**
@@ -271,7 +320,7 @@ final class MediaAltChangeAdapter {
 		}
 
 		return array(
-			'attachment'        => $attachment,
+			'attachment'         => $attachment,
 			'before_fingerprint' => $current_fingerprint,
 			'before_alt_exists'  => $before_exists,
 			'before_alt'         => $before_alt,
