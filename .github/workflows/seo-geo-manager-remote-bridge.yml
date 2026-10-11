@@ -20,10 +20,10 @@ on:
       - 'scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-theme-structured-wordpress-acceptance.php'
-      - 'scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.php'
-      - 'scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.sh'
-      - 'scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.php'
-      - 'scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
       - 'docs/SEO_GEO_MANAGER_0.3.51_REMOTE_CONTENT_CHANGE.md'
@@ -51,10 +51,10 @@ on:
       - 'scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-theme-structured-wordpress-acceptance.php'
-      - 'scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.php'
-      - 'scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.sh'
-      - 'scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.php'
-      - 'scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
       - 'docs/SEO_GEO_MANAGER_0.3.51_REMOTE_CONTENT_CHANGE.md'
@@ -96,11 +96,11 @@ jobs:
           php -l scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-remote-theme-structured-wordpress-acceptance.php
-          php -l scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.php
-          php -l scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.php
+          php -l scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.php
+          php -l scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.php
           bash -n scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh
-          bash -n scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.sh
-          bash -n scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.sh
 
       - name: Remote bridge R1-R3.3 contract
         run: php scripts/ci/seo-geo-manager-remote-bridge-contract.php
@@ -137,7 +137,7 @@ jobs:
           docker pull mariadb:11.8.9
 
       - name: Theme-native remote SEO acceptance
-        run: bash scripts/ci/seo-geo-manager-remote-seo-wordpress-acceptance.sh
+        run: bash scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.sh
 
   remote-seo-yoast:
     name: Manager-owned R3.3 Yoast 28.6 SEO runtime
@@ -154,4 +154,4 @@ jobs:
           docker pull mariadb:11.8.9
 
       - name: Yoast 28.6 remote SEO acceptance
-        run: bash scripts/ci/seo-geo-manager-remote-yoast-wordpress-acceptance.sh
+        run: bash scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.sh
