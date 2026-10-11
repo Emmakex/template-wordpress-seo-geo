@@ -42,6 +42,7 @@ use SeoGeo\Manager\Rest\TaxonomyAssignmentController;
 use SeoGeo\Manager\Rest\ThemeModelController;
 use SeoGeo\Manager\Rest\ThemeStrategicMediaController;
 use SeoGeo\Manager\Rest\ThemeStructuredContentController;
+use SeoGeo\Manager\Rest\YoastSeoMetadataController;
 use SeoGeo\Manager\Support\PermalinkRedirectRuntime;
 
 final class Plugin {
@@ -76,6 +77,7 @@ final class Plugin {
 				TaxonomyAssignmentController::register_routes();
 				NativeTranslationGroupController::register_routes();
 				NativeSeoMetadataController::register_routes();
+				YoastSeoMetadataController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
 				ContextualLinkController::register_routes();
