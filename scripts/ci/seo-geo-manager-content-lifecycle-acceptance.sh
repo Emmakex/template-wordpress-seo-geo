@@ -24,6 +24,7 @@ DB_ROOT_PASSWORD="manager-lifecycle-root"
 
 TMP_DIR="$(mktemp -d)"
 RUNTIME_LOG="${TMP_DIR}/content-lifecycle.log"
+AUTHOR_LOG="${TMP_DIR}/author-binding.log"
 
 signature() {
   printf '%s' "$1" | sha256sum | cut -c1-12
@@ -149,10 +150,13 @@ docker cp packages/seo-geo-manager/. "$WP_CONTAINER":/var/www/html/wp-content/pl
   || fail_acceptance "manager-copy" "Could not copy Manager" "plugin copied" "docker cp failed"
 docker cp scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-content-lifecycle-acceptance.php \
   || fail_acceptance "fixture-copy" "Could not copy lifecycle fixture" "fixture copied" "docker cp failed"
+docker cp scripts/ci/seo-geo-manager-author-binding-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-author-binding-acceptance.php \
+  || fail_acceptance "author-fixture-copy" "Could not copy author-binding fixture" "fixture copied" "docker cp failed"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-manager \
   /var/www/html/seo-geo-manager-content-lifecycle-acceptance.php \
-  || fail_acceptance "permissions" "Could not set fixture permissions" "www-data owns fixture" "chown failed"
+  /var/www/html/seo-geo-manager-author-binding-acceptance.php \
+  || fail_acceptance "permissions" "Could not set fixture permissions" "www-data owns fixtures" "chown failed"
 
 wp_cli core install \
   --url="$BASE_URL" \
@@ -184,6 +188,22 @@ LOWEST_VERSION="$(printf '%s\n' '0.3.44' "$LIFECYCLE_VERSION" | sort -V | head -
 [[ "$LOWEST_VERSION" == '0.3.44' ]] \
   || fail_acceptance "lifecycle-version" "Lifecycle fixture executed a Manager older than the C4.1 taxonomy contract" ">=0.3.44" "$LIFECYCLE_VERSION"
 
+printf '[manager-lifecycle] Running existing-user author-binding acceptance in the same WordPress fixture.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-author-binding-acceptance.php >"$AUTHOR_LOG" 2>&1; then
+  cat "$AUTHOR_LOG"
+  fail_acceptance "author-binding-runtime" "Author-binding acceptance failed" 'JSON with "ok":true' "$(tail -c 800 "$AUTHOR_LOG" | tr '\n' ' ')"
+fi
+cat "$AUTHOR_LOG"
+grep -q '"ok":true' "$AUTHOR_LOG" \
+  || fail_acceptance "author-binding-result" "Author-binding acceptance did not emit success marker" '"ok":true' "$(tail -c 800 "$AUTHOR_LOG" | tr '\n' ' ')"
+
+AUTHOR_VERSION="$(sed -n 's/.*"plugin_version":"\([^"]*\)".*/\1/p' "$AUTHOR_LOG" | tail -n 1)"
+[[ -n "$AUTHOR_VERSION" ]] \
+  || fail_acceptance "author-version-missing" "Author-binding fixture did not report the Manager version" ">=0.3.45" "missing"
+LOWEST_AUTHOR_VERSION="$(printf '%s\n' '0.3.45' "$AUTHOR_VERSION" | sort -V | head -n 1)"
+[[ "$LOWEST_AUTHOR_VERSION" == '0.3.45' ]] \
+  || fail_acceptance "author-version" "Author-binding fixture executed a Manager older than the C4.2 contract" ">=0.3.45" "$AUTHOR_VERSION"
+
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
   docker exec "$WP_CONTAINER" sh -lc "test ! -s '$DEBUG_LOG'" \
@@ -193,4 +213,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
     }
 fi
 
-printf '[manager-lifecycle] SEO/GEO Manager content lifecycle + taxonomy acceptance OK.\n'
+printf '[manager-lifecycle] SEO/GEO Manager content lifecycle + taxonomy + author binding acceptance OK.\n'
