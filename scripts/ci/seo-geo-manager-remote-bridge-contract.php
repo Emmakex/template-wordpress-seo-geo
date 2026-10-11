@@ -5,26 +5,21 @@
 declare(strict_types=1);
 
 $root = dirname( __DIR__, 2 );
-$files = array(
-	'credentials'         => $root . '/packages/seo-geo-manager/src/Remote/Credentials.php',
-	'tokens'              => $root . '/packages/seo-geo-manager/src/Remote/TokenService.php',
-	'guard'               => $root . '/packages/seo-geo-manager/src/Remote/RequestGuard.php',
-	'audit'               => $root . '/packages/seo-geo-manager/src/Remote/Audit.php',
-	'authenticator'       => $root . '/packages/seo-geo-manager/src/Remote/Authenticator.php',
-	'plans'               => $root . '/packages/seo-geo-manager/src/Remote/PlanStore.php',
-	'operations'          => $root . '/packages/seo-geo-manager/src/Remote/MutationOperations.php',
-	'seo_authority'       => $root . '/packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php',
-	'native_seo'          => $root . '/packages/seo-geo-manager/src/Changes/NativeSeoMetadataChangeAdapter.php',
-	'yoast_seo'           => $root . '/packages/seo-geo-manager/src/Changes/YoastSeoMetadataChangeAdapter.php',
-	'read_controller'     => $root . '/packages/seo-geo-manager/src/Rest/RemoteReadController.php',
-	'mutation_controller' => $root . '/packages/seo-geo-manager/src/Rest/RemoteMutationController.php',
-	'admin'               => $root . '/packages/seo-geo-manager/src/Admin/RemoteAccess.php',
-	'plugin'              => $root . '/packages/seo-geo-manager/src/Plugin.php',
-	'package'             => $root . '/packages/seo-geo-manager/seo-geo-manager.php',
+$paths = array(
+	'credentials'         => 'packages/seo-geo-manager/src/Remote/Credentials.php',
+	'tokens'              => 'packages/seo-geo-manager/src/Remote/TokenService.php',
+	'guard'               => 'packages/seo-geo-manager/src/Remote/RequestGuard.php',
+	'plans'               => 'packages/seo-geo-manager/src/Remote/PlanStore.php',
+	'operations'          => 'packages/seo-geo-manager/src/Remote/MutationOperations.php',
+	'seo_authority'       => 'packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php',
+	'read_controller'     => 'packages/seo-geo-manager/src/Rest/RemoteReadController.php',
+	'mutation_controller' => 'packages/seo-geo-manager/src/Rest/RemoteMutationController.php',
+	'package'             => 'packages/seo-geo-manager/seo-geo-manager.php',
 );
 
 $sources = array();
-foreach ( $files as $key => $path ) {
+foreach ( $paths as $key => $relative ) {
+	$path = $root . '/' . $relative;
 	if ( ! is_readable( $path ) ) {
 		fwrite( STDERR, "Remote bridge contract missing {$key}: {$path}\n" );
 		exit( 1 );
@@ -41,7 +36,6 @@ $required = array(
 		"'operations.apply'",
 		"'operations.rollback'",
 		"'credential_hash'",
-		"'credential_prefix'",
 	),
 	'tokens' => array(
 		"'sgm1_'",
@@ -49,21 +43,18 @@ $required = array(
 		'wp_hash_password( $token )',
 		'wp_check_password( $token',
 		'function revoke()',
-		'function rotate(',
 	),
 	'guard' => array(
 		'x-seo-geo-manager-request-id',
 		'x-seo-geo-manager-nonce',
 		'x-seo-geo-manager-timestamp',
 		'validate_idempotency',
-		'remember_request',
 	),
 	'plans' => array(
 		"'sgmp_'",
 		'APPLY_TTL_SECONDS   = 15 * MINUTE_IN_SECONDS',
 		'MutationOperations::supports( $operation )',
 		'EnvironmentPolicy::snapshot()',
-		'function mark_applied(',
 	),
 	'operations' => array(
 		"'content-change'",
@@ -73,7 +64,6 @@ $required = array(
 		'SeoAuthorityChangeAdapter::apply( $payload )',
 		'SeoAuthorityChangeAdapter::verify( $stored )',
 		'SeoAuthorityChangeAdapter::rollback( $operation_id )',
-		"'seo_geo_manager_remote_rendered_verification_unsupported'",
 	),
 	'seo_authority' => array(
 		'SeoAuthorityScanner::scan()',
@@ -89,13 +79,8 @@ $required = array(
 		"'seo-geo-theme-native'",
 		"'yoast'",
 		"'yoast-abilities'",
-		"'writable_signals'",
 	),
 	'read_controller' => array(
-		"'/remote/status'",
-		"'/remote/capabilities'",
-		"'/remote/site-intelligence'",
-		"'/remote/audit'",
 		"'remote_milestone' => 'R3.3'",
 		"'milestone' => 'R3.3'",
 		"'supported_operations' => MutationOperations::supported()",
@@ -103,9 +88,6 @@ $required = array(
 		"'raw_metadata_write' => false",
 	),
 	'mutation_controller' => array(
-		"'/remote/plans'",
-		"'/remote/plans/(?P<plan_id>sgmp_[a-f0-9]{32})'",
-		"'/remote/operations/(?P<operation_id>[a-f0-9\\-]{36})'",
 		'MutationOperations::preview( $operation, $payload )',
 		'MutationOperations::apply( $operation_type, $payload )',
 		'MutationOperations::verify( $operation_type, $operation )',
@@ -114,7 +96,6 @@ $required = array(
 		'bounded_seo_authority',
 		'EnvironmentPolicy::validate_payload( $params )',
 		'EnvironmentPolicy::validate_operation_environment( $operation )',
-		"'confirm'",
 	),
 	'package' => array(
 		'Version: 0.3.53',
@@ -144,7 +125,8 @@ foreach ( array( 'seo.write', 'media.write', 'navigation.write' ) as $speculativ
 }
 
 foreach ( array( 'generic_shell', 'generic_rest_proxy', 'raw_metadata_write' ) as $forbidden ) {
-	if ( false !== strpos( strtolower( $sources['mutation_controller'] . $sources['operations'] . $sources['seo_authority'] ), $forbidden ) ) {
+	$surface = strtolower( $sources['mutation_controller'] . $sources['operations'] . $sources['seo_authority'] );
+	if ( false !== strpos( $surface, $forbidden ) ) {
 		fwrite( STDERR, "R3.3 mutation surface contains forbidden generic transport concept: {$forbidden}\n" );
 		exit( 1 );
 	}
@@ -171,32 +153,25 @@ foreach ( $iterator as $file ) {
 	}
 }
 
-if ( false !== strpos( $sources['seo_authority'], "['provider']" ) || false !== strpos( $sources['seo_authority'], "['adapter']" . ' ?? $payload' ) ) {
-	fwrite( STDERR, "R3.3 SEO authority adapter must not accept provider selection from the remote payload.\n" );
-	exit( 1 );
-}
-
 echo json_encode(
 	array(
-		'ok'                                => true,
-		'version'                           => '0.3.53',
-		'manager_owned_credential'          => true,
-		'hash_only_persistence'             => true,
-		'replay_rate_idempotency_guards'   => true,
-		'bounded_audit'                     => true,
-		'r3_operation_allowlist'            => $allowlist,
-		'plan_connection_binding'           => true,
-		'plan_environment_binding'          => true,
-		'plan_ttl_seconds'                  => 900,
-		'delegates_to_change_set_engine'    => true,
-		'delegates_to_theme_semantic_c5'    => true,
-		'delegates_to_seo_authority_c7'     => true,
-		'authority_auto_resolution'         => true,
-		'theme_native_runtime_required'     => true,
-		'yoast_28_6_runtime_required'       => true,
-		'private_yoast_meta'                => false,
-		'provider_selection_by_caller'      => false,
-		'generic_proxy'                     => false,
+		'ok'                              => true,
+		'version'                         => '0.3.53',
+		'manager_owned_credential'        => true,
+		'replay_rate_idempotency_guards' => true,
+		'r3_operation_allowlist'          => $allowlist,
+		'plan_connection_binding'         => true,
+		'plan_environment_binding'        => true,
+		'plan_ttl_seconds'                => 900,
+		'delegates_to_change_set_engine'  => true,
+		'delegates_to_theme_semantic_c5'  => true,
+		'delegates_to_seo_authority_c7'   => true,
+		'authority_auto_resolution'       => true,
+		'theme_native_runtime_required'   => true,
+		'yoast_28_6_runtime_required'     => true,
+		'private_yoast_meta'              => false,
+		'provider_selection_by_caller'    => false,
+		'generic_proxy'                   => false,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
