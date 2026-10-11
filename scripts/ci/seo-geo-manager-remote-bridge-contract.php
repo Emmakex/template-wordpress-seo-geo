@@ -118,7 +118,6 @@ $required = array(
 		"'remote_plan_id'",
 		"'remote_actor_user_id'",
 		"'confirm'",
-		"'environment_fingerprint'",
 	),
 	'admin' => array(
 		'Conexión remota',
