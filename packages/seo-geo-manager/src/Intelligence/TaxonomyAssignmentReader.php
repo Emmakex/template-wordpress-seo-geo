@@ -53,13 +53,13 @@ final class TaxonomyAssignmentReader {
 			return $terms;
 		}
 
-		$term_ids = array();
+		$term_ids  = array();
 		$summaries = array();
 		foreach ( $terms as $term ) {
 			if ( ! $term instanceof WP_Term ) {
 				continue;
 			}
-			$term_ids[] = (int) $term->term_id;
+			$term_ids[]   = (int) $term->term_id;
 			$summaries[] = self::term_summary( $term );
 		}
 		sort( $term_ids, SORT_NUMERIC );
@@ -140,21 +140,23 @@ final class TaxonomyAssignmentReader {
 		);
 	}
 
-	/** @param WP_Post|mixed $resource WordPress resource. */
-	private static function supported_resource( $resource ): bool {
-		return $resource instanceof WP_Post
-			&& in_array( $resource->post_type, array( 'post', 'page' ), true )
-			&& ! in_array( $resource->post_status, array( 'trash', 'auto-draft' ), true );
+	/**
+	 * @param mixed $post WordPress post value.
+	 */
+	private static function supported_resource( $post ): bool {
+		return $post instanceof WP_Post
+			&& in_array( $post->post_type, array( 'post', 'page' ), true )
+			&& ! in_array( $post->post_status, array( 'trash', 'auto-draft' ), true );
 	}
 
 	/** @return WP_Taxonomy|WP_Error */
-	private static function taxonomy_for_resource( WP_Post $resource, string $taxonomy_name ) {
+	private static function taxonomy_for_resource( WP_Post $post, string $taxonomy_name ) {
 		if ( '' === $taxonomy_name ) {
 			return new WP_Error( 'seo_geo_manager_taxonomy_invalid', 'A taxonomy name is required.', array( 'status' => 400 ) );
 		}
 
 		$taxonomy = get_taxonomy( $taxonomy_name );
-		if ( ! $taxonomy instanceof WP_Taxonomy || ! in_array( $resource->post_type, $taxonomy->object_type, true ) ) {
+		if ( ! $taxonomy instanceof WP_Taxonomy || ! in_array( $post->post_type, $taxonomy->object_type, true ) ) {
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_unsupported',
 				'The requested taxonomy is not registered for this content type.',
