@@ -31,6 +31,10 @@ final class CapabilityManifest {
 		$can_manage_options = current_user_can( 'manage_options' );
 		$can_read_links = $can_edit_posts || $can_edit_pages;
 		$can_featured_media = $can_upload_files && ( $can_edit_posts || $can_edit_pages );
+		$theme_media_read_contract = function_exists( 'seo_geo_theme_strategic_media_contract' )
+			&& function_exists( 'seo_geo_theme_strategic_media_slot' )
+			&& function_exists( 'seo_geo_theme_strategic_media_fingerprint' );
+		$can_theme_media_read = $theme_media_read_contract && $can_upload_files && $can_edit_pages;
 
 		$app_passwords_supported = function_exists( 'wp_is_application_passwords_supported' )
 			? wp_is_application_passwords_supported()
@@ -50,6 +54,10 @@ final class CapabilityManifest {
 			'edit_pages|edit_posts'
 		);
 		$capabilities['theme_structured_content'] = self::capability( $can_edit_posts, 'edit_posts' );
+		$capabilities['theme_media_binding_read'] = self::capability(
+			$can_theme_media_read,
+			'upload_files + edit_pages + edit_post(resource)'
+		);
 		$capabilities['navigation_change_set'] = self::capability( $can_edit_theme, 'edit_theme_options' );
 		$capabilities['contextual_link_read'] = self::capability( $can_read_links, 'edit_pages|edit_posts' );
 		$capabilities['contextual_link_write'] = self::capability(
@@ -112,6 +120,13 @@ final class CapabilityManifest {
 				'multisite' => is_multisite(),
 				'blog_id' => get_current_blog_id(),
 			),
+			'theme_contracts' => array(
+				'strategic_media_read' => array(
+					'available' => $theme_media_read_contract,
+					'declared_slots_only' => true,
+					'raw_theme_meta_exposed' => false,
+				),
+			),
 			'capabilities' => $capabilities,
 			'operations' => self::operations(
 				$can_edit_posts,
@@ -120,7 +135,8 @@ final class CapabilityManifest {
 				$can_publish_pages,
 				$can_upload_files,
 				$can_edit_theme,
-				$can_manage_options
+				$can_manage_options,
+				$can_theme_media_read
 			),
 			'safety' => array(
 				'preview_before_mutation' => true,
@@ -170,7 +186,8 @@ final class CapabilityManifest {
 		bool $can_publish_pages,
 		bool $can_upload_files,
 		bool $can_edit_theme,
-		bool $can_manage_options
+		bool $can_manage_options,
+		bool $can_theme_media_read
 	): array {
 		$can_create_content = $can_edit_posts || $can_edit_pages;
 		$can_publish_content = $can_publish_posts || $can_publish_pages;
@@ -236,6 +253,12 @@ final class CapabilityManifest {
 			$can_read_models,
 			'GET',
 			'/theme/models/{model_id}',
+			'read-only'
+		);
+		$operations['theme.media_binding.read'] = self::operation(
+			$can_theme_media_read,
+			'GET',
+			'/theme/media-bindings/{resource_id}/{model_id}/{slot_id}',
 			'read-only'
 		);
 		$operations['theme.preview'] = self::operation(

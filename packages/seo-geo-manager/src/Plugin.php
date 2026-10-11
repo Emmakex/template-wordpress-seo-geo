@@ -36,6 +36,7 @@ use SeoGeo\Manager\Rest\PermalinkController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
 use SeoGeo\Manager\Rest\ThemeModelController;
+use SeoGeo\Manager\Rest\ThemeStrategicMediaController;
 use SeoGeo\Manager\Rest\ThemeStructuredContentController;
 use SeoGeo\Manager\Support\PermalinkRedirectRuntime;
 
@@ -83,6 +84,7 @@ final class Plugin {
 				PermalinkController::register_routes();
 				OperationHistoryController::register_routes();
 				ThemeModelController::register_routes();
+				ThemeStrategicMediaController::register_routes();
 				ThemeStructuredContentController::register_routes();
 			}
 		);
