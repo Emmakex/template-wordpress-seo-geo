@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
+use SeoGeo\Manager\Intelligence\SeoAuthorityScanner;
 use SeoGeo\Manager\Support\CapabilityManifest;
 use SeoGeo\Manager\Support\NativeTranslationBridge;
 use WP_REST_Request;
@@ -47,6 +48,10 @@ final class CapabilitiesController {
 		$can_bind_author         = current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' );
 		$native_provider         = NativeTranslationBridge::available();
 		$can_manage_translations = $native_provider && ( current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' ) );
+		$seo_authority           = SeoAuthorityScanner::scan();
+		$native_seo_ready        = true === ( $seo_authority['safe_to_write_seo_metadata'] ?? false )
+			&& 'resolved-theme-native-writable' === ( $seo_authority['state'] ?? '' );
+		$can_manage_native_seo   = $native_seo_ready && ( current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' ) );
 
 		$manifest['theme_contracts']['strategic_media_write'] = array(
 			'available'              => $write_contract,
@@ -168,6 +173,42 @@ final class CapabilitiesController {
 			$can_manage_translations,
 			'POST',
 			'/content/translation-groups/changes/{operation_id}/rollback',
+			'rollback-mutation'
+		);
+
+		$manifest['capabilities']['native_seo_metadata'] = array(
+			'available'                     => $can_manage_native_seo,
+			'authority_ready'               => $native_seo_ready,
+			'adapter'                       => $native_seo_ready ? 'seo-geo-theme-native' : null,
+			'required_wordpress_capability' => 'edit_posts|edit_pages + edit_post(resource) + single resolved Theme-native SEO authority',
+			'writable_signals'              => array( 'title-meta', 'canonical', 'robots' ),
+			'read_only_signals'             => array( 'open-graph', 'schema', 'hreflang', 'sitemap' ),
+			'single_authority_required'     => true,
+			'raw_provider_meta_exposed'     => false,
+			'raw_provider_meta_write'       => false,
+		);
+		$manifest['operations']['content.native_seo_metadata.read'] = self::operation(
+			$can_manage_native_seo,
+			'GET',
+			'/content/{resource_id}/seo',
+			'read-only'
+		);
+		$manifest['operations']['content.native_seo_metadata.preview'] = self::operation(
+			$can_manage_native_seo,
+			'POST',
+			'/content/{resource_id}/seo/changes/preview',
+			'read-only-preview'
+		);
+		$manifest['operations']['content.native_seo_metadata.apply'] = self::operation(
+			$can_manage_native_seo,
+			'POST',
+			'/content/{resource_id}/seo/changes/apply',
+			'mutation'
+		);
+		$manifest['operations']['content.native_seo_metadata.rollback'] = self::operation(
+			$can_manage_native_seo,
+			'POST',
+			'/content/seo/changes/{operation_id}/rollback',
 			'rollback-mutation'
 		);
 
