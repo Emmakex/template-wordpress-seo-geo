@@ -1,6 +1,6 @@
 <?php
 /**
- * Authenticated R3.2 remote mutation lifecycle for bounded semantic Manager operations.
+ * Authenticated R3.3 remote mutation lifecycle for bounded semantic Manager operations.
  *
  * @package SeoGeoManager
  */
@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
 
-use SeoGeo\Manager\Changes\ChangeSetEngine;
 use SeoGeo\Manager\Changes\OperationStore;
 use SeoGeo\Manager\Remote\Audit;
 use SeoGeo\Manager\Remote\Authenticator;
@@ -18,10 +17,8 @@ use SeoGeo\Manager\Remote\MutationOperations;
 use SeoGeo\Manager\Remote\PlanStore;
 use SeoGeo\Manager\Remote\RequestGuard;
 use SeoGeo\Manager\Remote\TokenService;
-use SeoGeo\Manager\Support\ContentFingerprint;
 use SeoGeo\Manager\Support\EnvironmentPolicy;
 use WP_Error;
-use WP_Post;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -228,12 +225,15 @@ final class RemoteMutationController {
 		if ( ! isset( $stored['environment'] ) ) {
 			$stored = EnvironmentPolicy::bind_operation( $stored );
 		}
-		$stored['remote_connection_id'] = (string) $plan['connection_id'];
-		$stored['remote_plan_id']       = (string) $plan['plan_id'];
-		$stored['remote_actor_user_id'] = (int) $plan['wordpress_user_id'];
+		$stored['remote_connection_id']  = (string) $plan['connection_id'];
+		$stored['remote_plan_id']        = (string) $plan['plan_id'];
+		$stored['remote_actor_user_id']  = (int) $plan['wordpress_user_id'];
 		$stored['remote_operation_type'] = $operation_type;
 		if ( isset( $result['structured_model'] ) && is_array( $result['structured_model'] ) ) {
 			$stored['structured_model'] = $result['structured_model'];
+		}
+		if ( isset( $result['remote_seo_authority'] ) && is_array( $result['remote_seo_authority'] ) ) {
+			$stored['remote_seo_authority'] = $result['remote_seo_authority'];
 		}
 		if ( ! OperationStore::save( $operation_id, $stored ) ) {
 			return self::failure( $request, new WP_Error( 'seo_geo_manager_remote_operation_bind_failed', 'Applied Manager operation could not be bound to the remote connection.', array( 'status' => 500 ) ), (string) $plan['plan_id'], $operation_id );
@@ -266,22 +266,21 @@ final class RemoteMutationController {
 			return self::failure( $request, $operation );
 		}
 
-		$target_id = isset( $operation['target_id'] ) ? (int) $operation['target_id'] : 0;
-		$post = get_post( $target_id );
-		if ( ! $post instanceof WP_Post || ! current_user_can( 'edit_post', $target_id ) ) {
-			return self::failure( $request, new WP_Error( 'seo_geo_manager_remote_verify_target_unavailable', 'Remote operation target is unavailable to the execution identity.', array( 'status' => 403 ) ), '', (string) $operation['operation_id'] );
-		}
-
-		$expected = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
-		$current = ContentFingerprint::for_post( $post );
-		if ( '' === $expected || ! hash_equals( $expected, $current ) ) {
-			return self::failure( $request, new WP_Error( 'seo_geo_manager_remote_verification_stale', 'The resource no longer matches the applied remote operation.', array( 'status' => 409, 'operation_id' => (string) $operation['operation_id'] ) ), '', (string) $operation['operation_id'] );
+		$operation_type = isset( $operation['remote_operation_type'] ) && is_string( $operation['remote_operation_type'] )
+			? $operation['remote_operation_type']
+			: 'content-change';
+		$verification = MutationOperations::verify( $operation_type, $operation );
+		if ( is_wp_error( $verification ) ) {
+			return self::failure( $request, $verification, '', (string) $operation['operation_id'] );
 		}
 
 		$data = self::bounded_operation( $operation );
 		$data['verified'] = true;
 		$data['verified_at'] = gmdate( DATE_W3C );
-		$data['current_fingerprint'] = $current;
+		$data['current_fingerprint'] = (string) ( $verification['current_fingerprint'] ?? '' );
+		if ( isset( $verification['seo_authority'] ) && is_array( $verification['seo_authority'] ) ) {
+			$data['seo_authority'] = $verification['seo_authority'];
+		}
 
 		return self::response( $request, $data, false, array( 'operation_id' => (string) $operation['operation_id'] ) );
 	}
@@ -318,7 +317,10 @@ final class RemoteMutationController {
 			return self::failure( $request, $operation_environment, '', $operation_id );
 		}
 
-		$result = ChangeSetEngine::rollback( $operation_id );
+		$operation_type = isset( $operation['remote_operation_type'] ) && is_string( $operation['remote_operation_type'] )
+			? $operation['remote_operation_type']
+			: 'content-change';
+		$result = MutationOperations::rollback( $operation_type, $operation_id );
 		if ( is_wp_error( $result ) ) {
 			return self::failure( $request, $result, '', $operation_id );
 		}
@@ -425,6 +427,7 @@ final class RemoteMutationController {
 			'environment' => is_array( $operation['environment'] ?? null ) ? $operation['environment'] : array(),
 			'remote_plan_id' => (string) ( $operation['remote_plan_id'] ?? '' ),
 			'structured_model' => self::bounded_structured_model( $operation ),
+			'seo_authority' => self::bounded_seo_authority( $operation ),
 			'created_at_gmt' => (string) ( $operation['created_at_gmt'] ?? '' ),
 			'rolled_back_at_gmt' => (string) ( $operation['rolled_back_at_gmt'] ?? '' ),
 		);
@@ -448,6 +451,28 @@ final class RemoteMutationController {
 			'model_id'         => (string) ( $model['model_id'] ?? '' ),
 			'verified_groups'  => isset( $model['verified_groups'] ) && is_array( $model['verified_groups'] ) ? array_values( $model['verified_groups'] ) : array(),
 			'layout_preserved' => true === ( $model['layout_preserved'] ?? false ),
+		);
+	}
+
+	/**
+	 * @param array<string, mixed> $operation Stored operation.
+	 * @return array<string, mixed>
+	 */
+	private static function bounded_seo_authority( array $operation ): array {
+		$authority = isset( $operation['remote_seo_authority'] ) && is_array( $operation['remote_seo_authority'] )
+			? $operation['remote_seo_authority']
+			: array();
+		if ( array() === $authority ) {
+			return array();
+		}
+
+		return array(
+			'authority_id'     => (string) ( $authority['authority_id'] ?? '' ),
+			'adapter'          => (string) ( $authority['adapter'] ?? '' ),
+			'provider'         => (string) ( $authority['provider'] ?? '' ),
+			'writable_signals' => isset( $authority['writable_signals'] ) && is_array( $authority['writable_signals'] )
+				? array_values( array_filter( array_map( 'sanitize_key', $authority['writable_signals'] ) ) )
+				: array(),
 		);
 	}
 

@@ -49,7 +49,7 @@ final class RemoteReadController {
 					'version' => SEO_GEO_MANAGER_VERSION,
 					'package' => PackageIdentity::snapshot(),
 					'api_namespace' => self::NAMESPACE,
-					'remote_milestone' => 'R3.2',
+					'remote_milestone' => 'R3.3',
 				),
 				'environment' => EnvironmentPolicy::snapshot(),
 				'seo_authority' => array(
@@ -86,7 +86,7 @@ final class RemoteReadController {
 				),
 				'mutation_transport' => array(
 					'available' => true,
-					'milestone' => 'R3.2',
+					'milestone' => 'R3.3',
 					'supported_operations' => MutationOperations::supported(),
 					'lifecycle' => array( 'plan', 'apply', 'verify', 'rollback' ),
 					'plan_ttl_seconds' => 15 * MINUTE_IN_SECONDS,
