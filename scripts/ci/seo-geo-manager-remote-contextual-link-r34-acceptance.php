@@ -3,6 +3,7 @@
  * WordPress runtime acceptance for SEO/GEO Manager R3.4 contextual-link remote control.
  */
 
+use SeoGeo\Manager\Changes\OperationStore;
 use SeoGeo\Manager\Remote\Audit;
 use SeoGeo\Manager\Remote\Credentials;
 use SeoGeo\Manager\Remote\TokenService;
@@ -267,7 +268,9 @@ $rollback_data = sgm_r34_data( $rollback );
 sgm_r34_assert( 'rolled-back' === ( $rollback_data['data']['status'] ?? '' ), 'Contextual-link Rollback status mismatch.' );
 $restored = get_post( $source_id );
 sgm_r34_assert( $restored instanceof WP_Post && $original_content === $restored->post_content, 'Contextual-link Rollback did not restore exact source content.' );
-sgm_r34_assert( $initial_fingerprint === ContentFingerprint::for_post( $restored ), 'Contextual-link Rollback did not restore exact source fingerprint.' );
+$rollback_fingerprint = ContentFingerprint::for_post( $restored );
+$stored_rollback       = OperationStore::get( $operation_id );
+sgm_r34_assert( is_array( $stored_rollback ) && $rollback_fingerprint === ( $stored_rollback['rollback_fingerprint'] ?? '' ), 'Contextual-link Rollback fingerprint does not match restored WordPress state.' );
 
 $audit_json = wp_json_encode( $audit->recent( 100 ) );
 sgm_r34_assert( false !== $audit_json && ! str_contains( $audit_json, $credential ) && str_contains( $audit_json, $plan_id ) && str_contains( $audit_json, $operation_id ), 'Contextual-link audit evidence is incomplete or secret-bearing.' );
@@ -292,6 +295,7 @@ echo wp_json_encode(
 		'verify_exact'             => true,
 		'operation_bounded'        => true,
 		'rollback_exact'           => true,
+		'rollback_fingerprint_current' => true,
 		'audit_secret_free'        => true,
 		'generic_proxy'            => false,
 	),
