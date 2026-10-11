@@ -127,7 +127,7 @@ final class ThemeStrategicMediaReader {
 	 * @return array<string, array{type:string,required:bool,accept:string}>
 	 */
 	private static function theme_contract( string $model_id ): array {
-		$callback = 'seo_geo_theme_strategic_media_contract';
+		$callback = self::theme_callback( 'strategic_media_contract' );
 		if ( ! is_callable( $callback ) ) {
 			return array();
 		}
@@ -139,7 +139,7 @@ final class ThemeStrategicMediaReader {
 
 	/** Invoke the Theme slot callback after capability discovery. */
 	private static function theme_slot( int $resource_id, string $model_id, string $slot_id ): int {
-		$callback = 'seo_geo_theme_strategic_media_slot';
+		$callback = self::theme_callback( 'strategic_media_slot' );
 		if ( ! is_callable( $callback ) ) {
 			return 0;
 		}
@@ -149,7 +149,7 @@ final class ThemeStrategicMediaReader {
 
 	/** Invoke the Theme fingerprint callback after capability discovery. */
 	private static function theme_fingerprint( int $resource_id, string $model_id, string $slot_id ): string {
-		$callback = 'seo_geo_theme_strategic_media_fingerprint';
+		$callback = self::theme_callback( 'strategic_media_fingerprint' );
 		if ( ! is_callable( $callback ) ) {
 			return '';
 		}
@@ -157,6 +157,11 @@ final class ThemeStrategicMediaReader {
 		$result = call_user_func( $callback, $resource_id, $model_id, $slot_id );
 
 		return is_string( $result ) ? $result : '';
+	}
+
+	/** Resolve a Theme callback name without statically coupling Manager to Theme symbols. */
+	private static function theme_callback( string $suffix ): string {
+		return 'seo_geo_theme_' . $suffix;
 	}
 
 	/**
