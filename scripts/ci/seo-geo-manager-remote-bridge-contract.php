@@ -1,6 +1,6 @@
 <?php
 /**
- * Offline contract for the SEO/GEO Manager-owned remote bridge through R3.4.
+ * Offline contract for the SEO/GEO Manager-owned remote bridge through R3.5.
  */
 declare(strict_types=1);
 
@@ -13,6 +13,7 @@ $paths = array(
 	'operations'          => 'packages/seo-geo-manager/src/Remote/MutationOperations.php',
 	'seo_authority'       => 'packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php',
 	'contextual_links'    => 'packages/seo-geo-manager/src/Changes/ContextualLinkChangeAdapter.php',
+	'navigation'          => 'packages/seo-geo-manager/src/Changes/NavigationChangeAdapter.php',
 	'contextual_reader'   => 'packages/seo-geo-manager/src/Intelligence/ContextualLinkReader.php',
 	'read_controller'     => 'packages/seo-geo-manager/src/Rest/RemoteReadController.php',
 	'mutation_controller' => 'packages/seo-geo-manager/src/Rest/RemoteMutationController.php',
@@ -63,6 +64,7 @@ $required = array(
 		"'theme-structured-content'",
 		"'seo-authority-change'",
 		"'contextual-link-change'",
+		"'navigation-change'",
 		'SeoAuthorityChangeAdapter::preview( $payload )',
 		'SeoAuthorityChangeAdapter::apply( $payload )',
 		'SeoAuthorityChangeAdapter::verify( $stored )',
@@ -70,6 +72,11 @@ $required = array(
 		'ContextualLinkChangeAdapter::preview( $payload )',
 		'ContextualLinkChangeAdapter::apply( $payload )',
 		'ContextualLinkChangeAdapter::rollback( $operation_id )',
+		'NavigationChangeAdapter::preview( $payload )',
+		'NavigationChangeAdapter::apply( $payload )',
+		'NavigationChangeAdapter::verify( $stored )',
+		'NavigationChangeAdapter::rollback( $operation_id )',
+		'Remote R3.5 mutations do not yet expose rendered verification.',
 	),
 	'seo_authority' => array(
 		'SeoAuthorityScanner::scan()',
@@ -90,6 +97,16 @@ $required = array(
 		'ContentFingerprint::for_post( $source )',
 		"'target_resource_id'",
 	),
+	'navigation' => array(
+		'public static function inspect( int $menu_id )',
+		'public static function verify( array $operation )',
+		'self::menu_fingerprint( $menu_id )',
+		"'operation_type'     => 'navigation-change'",
+		"'target_type'        => 'navigation-menu'",
+		"'changes'            => array( 'navigation_url' => true )",
+		"'allow_public_navigation'",
+		"'raw_menu_item_meta_returned'",
+	),
 	'contextual_reader' => array(
 		"'edge_id'",
 		"'fingerprint'",
@@ -98,12 +115,14 @@ $required = array(
 	),
 	'read_controller' => array(
 		"'/remote/contextual-links'",
-		"'remote_milestone' => 'R3.4'",
-		"'milestone'            => 'R3.4'",
+		"'/remote/navigation'",
+		"'remote_milestone' => 'R3.5'",
+		"'milestone'            => 'R3.5'",
 		"'supported_operations' => MutationOperations::supported()",
 		"'generic_proxy'        => false",
 		"'raw_metadata_write'   => false",
 		'ContextualLinkReader::read( $source_id )',
+		'NavigationChangeAdapter::inspect( $menu_id )',
 	),
 	'mutation_controller' => array(
 		'MutationOperations::preview( $operation, $payload )',
@@ -114,10 +133,13 @@ $required = array(
 		'bounded_seo_authority',
 		'EnvironmentPolicy::validate_payload( $params )',
 		'EnvironmentPolicy::validate_operation_environment( $operation )',
+		"'navigation-change' === $operation_type",
+		"$payload['allow_public_navigation']",
+		"$params['allow_public_navigation']",
 	),
 	'package' => array(
-		'Version: 0.3.54',
-		"SEO_GEO_MANAGER_VERSION', '0.3.54'",
+		'Version: 0.3.55',
+		"SEO_GEO_MANAGER_VERSION', '0.3.55'",
 	),
 );
 
@@ -137,23 +159,23 @@ if ( preg_match( '/register_rest_route[\s\S]*WP_REST_Server::CREATABLE/', $sourc
 
 foreach ( array( 'seo.write', 'media.write', 'navigation.write', 'links.write' ) as $speculative_scope ) {
 	if ( false !== strpos( $sources['mutation_controller'], "'{$speculative_scope}'" ) ) {
-		fwrite( STDERR, "R3.4 must not silently widen the remote scope model with {$speculative_scope}.\n" );
+		fwrite( STDERR, "R3.5 must not silently widen the remote scope model with {$speculative_scope}.\n" );
 		exit( 1 );
 	}
 }
 
 foreach ( array( 'generic_shell', 'generic_rest_proxy', 'raw_metadata_write' ) as $forbidden ) {
-	$surface = strtolower( $sources['mutation_controller'] . $sources['operations'] . $sources['seo_authority'] . $sources['contextual_links'] );
+	$surface = strtolower( $sources['mutation_controller'] . $sources['operations'] . $sources['seo_authority'] . $sources['contextual_links'] . $sources['navigation'] );
 	if ( false !== strpos( $surface, $forbidden ) ) {
-		fwrite( STDERR, "R3.4 mutation surface contains forbidden generic transport concept: {$forbidden}\n" );
+		fwrite( STDERR, "R3.5 mutation surface contains forbidden generic transport concept: {$forbidden}\n" );
 		exit( 1 );
 	}
 }
 
-$allowlist = array( 'content-change', 'theme-structured-content', 'seo-authority-change', 'contextual-link-change' );
+$allowlist = array( 'content-change', 'theme-structured-content', 'seo-authority-change', 'contextual-link-change', 'navigation-change' );
 foreach ( $allowlist as $operation ) {
 	if ( false === strpos( $sources['operations'], "'{$operation}'" ) ) {
-		fwrite( STDERR, "R3.4 operation allowlist is missing {$operation}.\n" );
+		fwrite( STDERR, "R3.5 operation allowlist is missing {$operation}.\n" );
 		exit( 1 );
 	}
 }
@@ -173,27 +195,33 @@ foreach ( $iterator as $file ) {
 
 echo json_encode(
 	array(
-		'ok'                               => true,
-		'version'                          => '0.3.54',
-		'manager_owned_credential'         => true,
-		'replay_rate_idempotency_guards'  => true,
-		'r3_operation_allowlist'           => $allowlist,
-		'plan_connection_binding'          => true,
-		'plan_environment_binding'         => true,
-		'plan_ttl_seconds'                 => 900,
-		'delegates_to_change_set_engine'   => true,
-		'delegates_to_theme_semantic_c5'   => true,
-		'delegates_to_seo_authority_c7'    => true,
-		'delegates_to_contextual_link_c6'  => true,
-		'contextual_edge_discovery'        => true,
-		'contextual_href_only'             => true,
-		'contextual_runtime_required'      => true,
-		'authority_auto_resolution'        => true,
-		'theme_native_runtime_required'    => true,
-		'yoast_28_6_runtime_required'      => true,
-		'private_yoast_meta'               => false,
-		'provider_selection_by_caller'     => false,
-		'generic_proxy'                    => false,
+		'ok'                                => true,
+		'version'                           => '0.3.55',
+		'milestone'                         => 'R3.5',
+		'manager_owned_credential'          => true,
+		'replay_rate_idempotency_guards'   => true,
+		'r3_operation_allowlist'            => $allowlist,
+		'plan_connection_binding'           => true,
+		'plan_environment_binding'          => true,
+		'plan_ttl_seconds'                  => 900,
+		'delegates_to_change_set_engine'    => true,
+		'delegates_to_theme_semantic_c5'    => true,
+		'delegates_to_seo_authority_c7'     => true,
+		'delegates_to_contextual_link_c6'   => true,
+		'delegates_to_navigation_c6'        => true,
+		'contextual_edge_discovery'         => true,
+		'contextual_href_only'              => true,
+		'contextual_runtime_required'       => true,
+		'navigation_read_surface'           => true,
+		'navigation_canonical_fingerprint'  => true,
+		'navigation_post_preview_approval'  => true,
+		'navigation_runtime_required'       => true,
+		'authority_auto_resolution'         => true,
+		'theme_native_runtime_required'     => true,
+		'yoast_28_6_runtime_required'       => true,
+		'private_yoast_meta'                => false,
+		'provider_selection_by_caller'      => false,
+		'generic_proxy'                     => false,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
