@@ -6,71 +6,74 @@ Canonical architecture:
 
 > **Migration Bridge brings/rescues the website.**  
 > **SEO/GEO Theme builds and renders the website.**  
-> **SEO/GEO Manager gives an authorized external operator eyes, hands and safe control inside WordPress.**  
+> **SEO/GEO Manager gives authorized external orchestration eyes, hands and safe control inside WordPress.**  
 > **External orchestration provides strategy, research, creation, optimization and growth intelligence.**
 
-Manager is not the strategic brain and is not the public frontend renderer. Its value is that it exposes reliable, client-agnostic WordPress capabilities that external orchestration can inspect and use safely.
+Manager is not the strategic brain, not the public frontend renderer and not a migration utility. It exposes reliable, client-agnostic semantic WordPress capabilities that external orchestration can inspect and use safely.
 
 Authoritative product contract: `docs/THREE_PRODUCT_OPERATING_MODEL.md`.
+
+## Permanent control plane
+
+From 0.3.50 the top-level Manager screen follows the same operating pattern proven in `Emmakex/eduardoyauriluna-research` Research Manager.
+
+The permanent workspace has three lifecycle surfaces:
+
+- **Build / Finish** — complete structure, content, SEO, links, media and launch readiness;
+- **Optimize** — inspect and improve a live site through bounded verifiable changes;
+- **Grow** — create new pages, content, languages and assets through semantic Manager operations.
+
+Migration-specific Field Gate, permalink cutover and 301 tooling remain available inside Build / Finish as bounded compatibility/finalization tools. They do **not** define the product identity.
 
 ## Core operating loop
 
 ```text
 Inspect
-  -> Preview
-  -> Execute
-  -> Publish / Schedule
-  -> Verify
-  -> History / Rollback
+ -> Preview
+ -> Apply
+ -> Publish / Schedule where relevant
+ -> Verify
+ -> History / Rollback
 ```
 
-External orchestration decides **what** should be created, changed or optimized and **why**. Manager validates whether the authenticated principal and current WordPress installation can perform the requested operation, applies accepted changes through WordPress-native APIs and returns bounded evidence.
+External orchestration decides **what** should be created, changed or optimized and **why**. Manager validates whether the current installation, authority and authenticated principal can perform the requested operation, executes through accepted WordPress/provider contracts and returns bounded evidence.
 
 ## Manager owns
 
 - authenticated Site Intelligence;
 - capability discovery;
-- current environment identity/fingerprint;
+- environment identity/fingerprint;
 - WordPress resource identity;
-- content/model read operations;
+- content/model reads;
 - exact preview/diff;
 - guarded apply;
-- idempotency;
-- expected-revision/fingerprint protection;
-- production-environment acknowledgement where required;
-- normal page/post operations;
-- bounded taxonomy assignment;
-- bounded existing-user author binding;
-- bounded multilingual relationship plumbing through accepted provider authorities;
+- idempotency and expected-state protection;
+- normal post/page lifecycle;
+- taxonomy and existing-user author relationships;
+- accepted multilingual relationship plumbing;
 - Theme semantic-model operations;
-- supported navigation/internal-link/media operations;
-- SEO output-authority/provider adapters;
+- navigation/internal-link/media operations;
+- SEO authority/provider adapters;
 - stored-state verification;
-- optional bounded rendered verification;
+- bounded rendered verification where applicable;
 - operation IDs/history/evidence;
-- stale-safe rollback where the operation contract supports it.
+- stale-safe rollback where supported;
+- Manager-owned remote connection identity, scopes, rotation/revocation and bounded audit.
 
 ## Manager does not own
 
-- business strategy;
-- keyword/market/competitor research;
-- deciding which landing should exist;
-- deciding which article should be written;
-- deciding taxonomy/content-cluster strategy;
-- deciding author/editorial strategy;
-- deciding language/market/translation strategy;
-- generating translations as a side effect of relationship management;
-- creating invented author personas as a side effect of publishing;
-- autonomous content strategy;
-- autonomous Search Console/Bing prioritization;
+- business/content/keyword strategy;
+- market/competitor research;
+- deciding which landing/article should exist;
+- autonomous editorial/translation/author strategy;
+- fabricated business facts, authors, sources, reviews or proof;
 - frontend visual composition when SEO/GEO Theme is active;
 - cloning/reset/replatform transport owned by Migration Bridge;
 - a generic command shell;
+- a generic WordPress REST proxy;
 - client-specific hardcoded workflows.
 
-## API
-
-Base namespace:
+## API namespace
 
 ```text
 /wp-json/seo-geo-manager/v1
@@ -84,29 +87,78 @@ GET /health
 
 Returns only bounded service/version health information.
 
-### Authenticated capability discovery — 0.3.34+
+### WordPress-authenticated capability discovery
 
 ```text
 GET /capabilities
 ```
 
-Returns what the **current authenticated WordPress identity** can do through this Manager installation.
-
-The manifest includes:
-
-- Manager/API version;
-- current principal user ID;
-- Application Password availability/support state;
-- environment safety contract;
-- WordPress runtime identity;
-- available Manager capability families;
-- required WordPress capability per family;
-- semantic operation paths and risk class;
-- supported safety features.
-
-It never returns passwords, Application Password values, cookies, REST nonces, secrets or private post bodies.
+The pre-0.3.50 authenticated surface remains available for browser administration, compatibility and accepted Application Password integrations.
 
 Detailed contract: `docs/SEO_GEO_MANAGER_0.3.34_CAPABILITY_DISCOVERY.md`.
+
+### Manager-owned remote bridge — 0.3.50
+
+The preferred persistent operating path now mirrors Research Manager:
+
+```text
+local administrator authorizes one Manager connection
+ -> Manager generates one scoped revocable credential
+ -> external orchestration calls bounded Manager endpoints
+ -> local administrator can disable / rotate / revoke at any time
+```
+
+Local security console:
+
+```text
+SEO/GEO Manager -> Conexión remota
+```
+
+The credential is shown once. Manager stores only a password hash plus a short non-secret prefix.
+
+Request metadata:
+
+```text
+Authorization: Bearer <Manager credential>
+X-SEO-GEO-Manager-Request-Id: <stable request id>
+X-SEO-GEO-Manager-Nonce: <unique nonce>
+X-SEO-GEO-Manager-Timestamp: <unix timestamp>
+```
+
+R1/R2 safety includes:
+
+- HTTPS outside local/development;
+- explicit scopes;
+- administrator-bound execution identity;
+- timestamp validity window;
+- nonce replay protection;
+- per-connection rate limit;
+- idempotency primitives for future mutation retries;
+- bounded non-secret audit;
+- local disable/rotation/revocation.
+
+Current authenticated remote read surface:
+
+```text
+GET /remote/status             # site.read
+GET /remote/capabilities       # site.read
+GET /remote/site-intelligence  # site.diagnostics
+GET /remote/audit              # site.diagnostics
+```
+
+R2 is deliberately read-only. Remote mutation transport belongs to R3 and must reuse the Manager's existing semantic mutation services; it will not introduce a raw metadata editor or generic proxy.
+
+Detailed runbook: `docs/SEO_GEO_MANAGER_REMOTE_ACCESS.md`.
+
+### Application Password compatibility
+
+The 0.3.34–0.3.49 line proved WordPress Application Password transport, least privilege and revocation. That path remains valid for compatibility, diagnostics and the frozen 0.3.49 C2/C9 acceptance model.
+
+It is **not the preferred persistent product UX from 0.3.50 onward**.
+
+Do not create temporary WordPress users/Application Passwords merely because older field instructions required them when the Manager-owned connection is available and sufficient.
+
+## Core semantic surfaces
 
 ### Site/read operations
 
@@ -119,11 +171,7 @@ GET /operations
 GET /field-gate/preflight
 ```
 
-`/site/snapshot` exposes the current bounded environment contract. Risky production writes require the exact current `environment_fingerprint` where the mutation endpoint applies that policy.
-
-`/site/intelligence` exposes bounded current WordPress state for external reasoning: resources, paths, internal-link evidence, Theme/model signals, media signals, SEO output authority and launch-readiness diagnostics.
-
-### Generic change sets
+### Generic guarded change sets
 
 ```text
 POST /changes/preview
@@ -132,9 +180,7 @@ GET  /changes/{operation_id}
 POST /changes/{operation_id}/rollback
 ```
 
-The generic change-set engine provides field-level preview, expected fingerprint protection, idempotency, environment binding, exact persistence verification and stale-safe rollback.
-
-### Content lifecycle — 0.3.35+
+### Content lifecycle
 
 ```text
 POST /content/resources/preview
@@ -143,9 +189,7 @@ POST /content/{id}/publication/preview
 POST /content/{id}/publication/apply
 ```
 
-The lifecycle contract supports normal WordPress post/page creation, draft-first operation, publish/schedule, exact slug-collision rejection, idempotent creation and stale-fingerprint publication protection.
-
-### Taxonomy assignment — 0.3.44+
+### Taxonomy assignment
 
 ```text
 GET  /content/{resource_id}/taxonomies/{taxonomy}
@@ -154,26 +198,11 @@ POST /content/{resource_id}/taxonomies/{taxonomy}/changes/apply
 POST /content/taxonomies/changes/{operation_id}/rollback
 ```
 
-This operation assigns **existing term IDs only**. External orchestration decides which terms are appropriate; Manager only executes the accepted relationship change safely.
-
-The contract supports registered taxonomies on normal posts/pages and enforces:
-
-- `edit_post(resource)`;
-- the selected taxonomy's real `assign_terms` capability;
-- exact assignment fingerprint;
-- Preview before mutation;
-- explicit approval for published targets;
-- idempotency;
-- production environment binding;
-- exact readback verification;
-- stale-safe rollback;
-- permission re-check before rollback.
-
-0.3.44 repository acceptance proves both `category` and `post_tag` while keeping the implementation taxonomy-generic. It does not create terms as a side effect and does not modify `post_content`.
+Manager assigns **existing terms only**; strategy remains external.
 
 Detailed contract: `docs/SEO_GEO_MANAGER_0.3.44_TAXONOMY_ASSIGNMENT.md`.
 
-### Author binding — 0.3.45+
+### Author binding
 
 ```text
 GET  /content/{resource_id}/author
@@ -182,28 +211,11 @@ POST /content/{resource_id}/author/changes/apply
 POST /content/authors/changes/{operation_id}/rollback
 ```
 
-This operation binds **existing WordPress users only**. External orchestration chooses the accepted author; Manager validates and applies the relationship without creating personas/users or changing editorial strategy.
-
-The contract enforces:
-
-- `edit_post(resource)`;
-- destination user existence;
-- destination user eligibility for the target post type;
-- the post type's real `edit_others_posts` capability when assigning a different user;
-- public-profile output limited to ID/existence/display name;
-- exact relationship fingerprint;
-- Preview before mutation;
-- explicit approval for published targets;
-- idempotency;
-- production environment binding;
-- exact readback verification;
-- stale-safe rollback and permission re-check.
-
-0.3.45 repository acceptance proves operator != public author, page/post capability awareness, ineligible-user rejection and least-privilege `edit_others_*` enforcement while preserving title/body/status/taxonomy state.
+Manager binds **existing eligible WordPress users only** and never invents personas/users as a publishing side effect.
 
 Detailed contract: `docs/SEO_GEO_MANAGER_0.3.45_AUTHOR_BINDING.md`.
 
-### Native translation groups — 0.3.46+
+### Native translation groups
 
 ```text
 GET  /content/translation-groups/{group_id}
@@ -212,27 +224,7 @@ POST /content/translation-groups/{group_id}/changes/apply
 POST /content/translation-groups/changes/{operation_id}/rollback
 ```
 
-0.3.46 closes the generic C4 multilingual relationship gap for the accepted native Core provider.
-
-External orchestration chooses languages/markets and supplies translated content. Manager only operates the bounded reciprocal relationship through the public native Core authority.
-
-The contract enforces:
-
-- configured language codes only;
-- existing eligible WordPress resources;
-- one consistent post type per relationship group;
-- complete reciprocal group replacement rather than one-way metadata edits;
-- exact relationship fingerprint;
-- Preview before mutation;
-- explicit approval for published targets;
-- production environment binding;
-- idempotent Apply;
-- exact provider readback verification;
-- stale-safe rollback;
-- resource-level least privilege;
-- no raw provider metadata exposure or raw metadata writes.
-
-A persisted relationship containing a draft translation remains non-public. Once every member is published and reciprocal state is valid, the same Manager-created relationship resolves through the native public translation registry used by SEO/GEO output.
+External orchestration supplies language/market decisions and translated content; Manager only operates the accepted relationship contract.
 
 Detailed contract: `docs/SEO_GEO_MANAGER_0.3.46_NATIVE_TRANSLATION_GROUPS.md`.
 
@@ -243,123 +235,62 @@ POST /theme/structured/preview
 POST /theme/structured/apply
 ```
 
-When SEO/GEO Theme is active, Manager changes contract-defined semantic content/model slots. Manager does not generate or control the Theme's CSS grid, visual breakpoints or Gutenberg layout tree.
+When SEO/GEO Theme is active, Manager changes contract-defined semantic content/model slots. Theme owns rendering/design/performance.
 
-### Navigation
+### Navigation, links and media
 
-```text
-POST /navigation/changes/preview
-POST /navigation/changes/apply
-GET  /navigation/changes/{operation_id}
-POST /navigation/changes/{operation_id}/rollback
-```
+Manager exposes guarded semantic navigation, contextual-link, featured-media, strategic-media, media-context, alt-text and upload operations. Each operation retains resource/capability, expected-state, idempotency and verification rules appropriate to its risk.
 
-Navigation operations require the WordPress capability used by the navigation controller and retain the same environment/operation safety model.
+### SEO authority adapters
 
-### Migration-derived URL safety endpoints
+Manager resolves one accepted SEO output authority before writing.
 
-The current package contains guarded permalink/redirect/slug operations created from real EMMAKE field acceptance.
+Accepted write authorities currently include:
 
-They remain valid **launch-readiness safety primitives**, but they do not redefine Manager as a migration product. New migration transport/rescue/reset functionality belongs to SEO/GEO Migration Bridge.
+- SEO/GEO Theme native metadata contract;
+- Yoast SEO via its public WordPress Abilities adapter.
 
-The migration-derived slice is frozen after the minimum accepted EMMAKE transition unless a generic Manager safety defect requires correction.
+Manager does not write provider private meta directly.
 
-## Authentication
+Detailed contracts:
 
-Manager uses WordPress authentication rather than inventing a parallel account system.
+- `docs/SEO_GEO_MANAGER_0.3.47_NATIVE_SEO_METADATA.md`;
+- `docs/SEO_GEO_MANAGER_0.3.48_YOAST_ABILITIES.md`.
 
-Preferred managed remote baseline:
+## Migration-derived URL safety
 
-```text
-HTTPS
-+ dedicated WordPress operator identity
-+ WordPress Application Password
-+ least-privilege WordPress capabilities
-+ revocable credential
-```
+Guarded permalink/redirect/slug operations created from real EMMAKE field acceptance remain useful launch-readiness primitives.
 
-Browser-admin operations use the authenticated WordPress session and normal REST nonce middleware.
-
-Manager never returns credentials through its capability manifest or operation evidence.
+They are nested inside Build / Finish. New migration transport/rescue/reset functionality belongs to SEO/GEO Migration Bridge.
 
 ## Authorization
 
-Discovering an operation does not authorize it.
+Discovering an operation never authorizes it.
 
-Each REST endpoint retains its own capability checks. Resource-specific operations additionally enforce their own `edit_post`/taxonomy/author/media/provider authority as appropriate. Site-wide operations remain more restrictive.
-
-External orchestration must call `/capabilities` and inspect the current resource/environment before preparing an operation.
+Every semantic endpoint retains its WordPress capability, resource, environment and authority checks. Remote scopes add another boundary; they do not replace those checks.
 
 ## Safety invariants
 
 1. Inspect before mutate.
 2. Preview before meaningful mutation.
 3. No client-domain hardcoding.
-4. No generic remote shell.
+4. No generic remote shell or REST proxy.
 5. Use WordPress-native resource identity and permission checks.
 6. Use expected fingerprints/revisions to reject stale automation.
 7. Use idempotency for retry-safe writes.
 8. Bind risky production mutations to the current environment.
 9. Verify stored state after mutation.
 10. Keep rendered verification same-site and bounded.
-11. Keep operation summaries privacy-bounded.
+11. Keep operation/audit evidence privacy-bounded and secret-free.
 12. Roll back only when the operation is still safe to reverse.
 13. Never silently overwrite a newer human edit.
 14. Never emit duplicate SEO/GEO authority.
-15. Never fabricate business facts, authors, sources, reviews or proof.
-16. Never bypass an accepted provider authority by writing its raw relationship metadata directly.
+15. Never fabricate facts/authors/sources/reviews/proof.
+16. Never bypass an accepted provider authority with raw private metadata writes.
+17. Remote credentials remain revocable and scope-bounded.
+18. Remote writes must reuse the existing semantic operation engine.
 
-## Build / Finish, Optimize and Grow
-
-These remain useful lifecycle workflows, but they are **externally orchestrated workflows**, not autonomous AI modes embedded in the plugin.
-
-### Build / Finish
-
-```text
-Manager inspection
- -> external reasoning / content / SEO / link / media plan
- -> Manager preview
- -> Manager apply
- -> Manager verify
- -> repeat until launch-ready
-```
-
-### Optimize
-
-```text
-Manager current state + search/analytics evidence
- -> external analysis
- -> bounded proposed changes
- -> Manager preview/apply/verify
- -> measurement
-```
-
-### Grow
-
-```text
-external research/opportunity/content generation
- -> Manager creates or updates WordPress resources
- -> optional editorial approval
- -> Manager schedules/publishes
- -> Theme/current stack renders
- -> Manager verifies
-```
-
-## Theme relationship
-
-SEO/GEO Theme and Manager are independently installable.
-
-When both are active:
-
-- Manager creates/updates WordPress resources and semantic model data;
-- Theme owns strategic frontend rendering/design/performance;
-- WordPress remains CMS/resource authority;
-- Gutenberg remains available for normal editorial content;
-- output-authority resolution prevents duplicate canonical/robots/hreflang/Schema/social output.
-
-## Migration Bridge relationship
-
-Migration Bridge is a separate sellable product.
+## Product relationships
 
 Typical full-redesign lifecycle:
 
@@ -368,30 +299,25 @@ Migration Bridge
  -> rescued/reset rebuild workspace
  -> SEO/GEO Theme
  -> SEO/GEO Manager
- -> external Build / Finish
+ -> Build / Finish
  -> launch
- -> external Optimize / Grow through Manager
+ -> Optimize / Grow through Manager
 ```
 
-Manager does not need to absorb or replace the complete Migration Bridge product.
+SEO/GEO Theme and Manager remain independently installable.
 
 ## Current development line
 
-- **0.3.33** closed the immediate migration-specific Field Gate UI handoff defect found during EMMAKE finalization.
-- **0.3.34** started the generic remote-control line with authenticated capability discovery.
-- **0.3.35** added generic normal post/page creation plus publish/schedule lifecycle primitives.
-- **0.3.43** closed strategic Theme media binding through the public Theme contract with Read -> Preview -> Apply -> Verify -> Rollback.
-- **0.3.44** closed bounded existing-term taxonomy assignment for generic content operations.
-- **0.3.45** closed bounded existing-user author binding with post-type-aware least-privilege guards.
-- **0.3.46** closes native multilingual reciprocal relationship plumbing through the Core authority without raw metadata writes.
+- **0.3.34** established authenticated capability discovery and the Application Password compatibility baseline.
+- **0.3.35–0.3.46** built generic content, media, taxonomy, author and multilingual relationship operations.
+- **0.3.47** accepted Theme-native SEO metadata authority.
+- **0.3.48** accepted Yoast public-Abilities SEO authority.
+- **0.3.49** froze the deterministic C9 field candidate and exact runtime package identity.
+- **0.3.50** aligns the product with the Research Manager operating pattern: permanent Build / Finish + Optimize + Grow workspace, Manager-owned scoped/revocable connection, bounded audit and authenticated remote read bridge.
 
-**C4 is complete at repository-contract level.** The generic content path now covers normal content lifecycle/fields, media relationships, taxonomies, author binding and accepted native multilingual relationships.
+0.3.49 remains a separate frozen field candidate. 0.3.50 must receive its own deterministic package identity and acceptance before installation/promotion.
 
-This does not mean the entire Manager is complete. C5/C6/C7/C8/C9 retain their own exit criteria, and C2 still requires accepted per-client HTTPS/operator/revocation field evidence.
-
-EMMAKE `/nuevaweb/` remains the first Theme-site field reference, not a hardcoded product assumption.
-
-## Current roadmap
+## Current roadmap and contracts
 
 See:
 
@@ -400,8 +326,11 @@ See:
 - `docs/DOCUMENTATION_AUTHORITY.md`;
 - `docs/SEO_GEO_MANAGER.md`;
 - `docs/SEO_GEO_MANAGER_REMOTE_ACCESS.md`;
+- `docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md`;
 - `docs/SEO_GEO_MANAGER_0.3.44_TAXONOMY_ASSIGNMENT.md`;
 - `docs/SEO_GEO_MANAGER_0.3.45_AUTHOR_BINDING.md`;
-- `docs/SEO_GEO_MANAGER_0.3.46_NATIVE_TRANSLATION_GROUPS.md`.
+- `docs/SEO_GEO_MANAGER_0.3.46_NATIVE_TRANSLATION_GROUPS.md`;
+- `docs/SEO_GEO_MANAGER_0.3.47_NATIVE_SEO_METADATA.md`;
+- `docs/SEO_GEO_MANAGER_0.3.48_YOAST_ABILITIES.md`.
 
-The current Manager focus remains generic bridge/control primitives. New migration transport/rescue/reset work belongs to Migration Bridge, and strategic content/SEO/editorial decisions remain in external orchestration.
+The Manager focus is generic semantic control primitives. Strategy stays in external orchestration; migration transport stays in Migration Bridge; rendering stays in Theme/current public stack.
