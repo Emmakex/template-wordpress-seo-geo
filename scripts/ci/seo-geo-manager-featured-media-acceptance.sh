@@ -25,6 +25,7 @@ DB_ROOT_PASSWORD="manager-featured-media-root"
 TMP_DIR="$(mktemp -d)"
 RUNTIME_LOG="${TMP_DIR}/featured-media.log"
 THEME_RUNTIME_LOG="${TMP_DIR}/theme-media.log"
+NATIVE_RUNTIME_LOG="${TMP_DIR}/native-translations.log"
 THEME_BUILD="${TMP_DIR}/seo-geo-theme"
 
 signature() {
@@ -159,11 +160,14 @@ docker cp scripts/ci/seo-geo-manager-featured-media-acceptance.php "$WP_CONTAINE
   || fail_acceptance "fixture-copy" "Could not copy featured-media fixture" "fixture copied" "docker cp failed"
 docker cp scripts/ci/seo-geo-manager-theme-media-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-theme-media-acceptance.php \
   || fail_acceptance "theme-fixture-copy" "Could not copy Theme-media fixture" "fixture copied" "docker cp failed"
+docker cp scripts/ci/seo-geo-manager-native-translations-acceptance.php "$WP_CONTAINER":/var/www/html/seo-geo-manager-native-translations-acceptance.php \
+  || fail_acceptance "native-fixture-copy" "Could not copy native-translation fixture" "fixture copied" "docker cp failed"
 docker exec "$WP_CONTAINER" chown -R www-data:www-data \
   /var/www/html/wp-content/plugins/seo-geo-manager \
   /var/www/html/wp-content/themes/seo-geo-theme \
   /var/www/html/seo-geo-manager-featured-media-acceptance.php \
   /var/www/html/seo-geo-manager-theme-media-acceptance.php \
+  /var/www/html/seo-geo-manager-native-translations-acceptance.php \
   || fail_acceptance "permissions" "Could not set fixture permissions" "www-data owns fixture" "chown failed"
 
 wp_cli core install \
@@ -215,6 +219,21 @@ LOWEST_THEME_VERSION="$(printf '%s\n' '0.3.43' "$THEME_MEDIA_VERSION" | sort -V 
 [[ "$LOWEST_THEME_VERSION" == '0.3.43' ]] \
   || fail_acceptance "theme-media-version" "Theme-media fixture executed a Manager older than the C6.6B contract" ">=0.3.43" "$THEME_MEDIA_VERSION"
 
+printf '[manager-featured-media] Running C4.3 native translation relationship acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-native-translations-acceptance.php >"$NATIVE_RUNTIME_LOG" 2>&1; then
+  cat "$NATIVE_RUNTIME_LOG"
+  fail_acceptance "native-translation-runtime" "Native translation relationship acceptance failed" 'JSON with "ok":true' "$(tail -c 2200 "$NATIVE_RUNTIME_LOG" | tr '\n' ' ')"
+fi
+cat "$NATIVE_RUNTIME_LOG"
+grep -q '"ok":true' "$NATIVE_RUNTIME_LOG" \
+  || fail_acceptance "native-translation-result" "Native translation acceptance did not emit success marker" '"ok":true' "$(tail -c 2200 "$NATIVE_RUNTIME_LOG" | tr '\n' ' ')"
+NATIVE_VERSION="$(sed -n 's/.*"plugin_version":"\([^"]*\)".*/\1/p' "$NATIVE_RUNTIME_LOG" | tail -n 1)"
+[[ -n "$NATIVE_VERSION" ]] \
+  || fail_acceptance "native-translation-version-missing" "Native translation fixture did not report the Manager version" ">=0.3.46" "missing"
+LOWEST_NATIVE_VERSION="$(printf '%s\n' '0.3.46' "$NATIVE_VERSION" | sort -V | head -n 1)"
+[[ "$LOWEST_NATIVE_VERSION" == '0.3.46' ]] \
+  || fail_acceptance "native-translation-version" "Native translation fixture executed a Manager older than the C4 native relationship contract" ">=0.3.46" "$NATIVE_VERSION"
+
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
   docker exec "$WP_CONTAINER" sh -lc "test ! -s '$DEBUG_LOG'" \
@@ -224,4 +243,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
     }
 fi
 
-printf '[manager-featured-media] SEO/GEO Manager featured-media and strategic-media acceptance OK.\n'
+printf '[manager-featured-media] SEO/GEO Manager featured-media, strategic-media and native-translation acceptance OK.\n'
