@@ -48,7 +48,7 @@ final class RemoteReadController {
 					'version' => SEO_GEO_MANAGER_VERSION,
 					'package' => PackageIdentity::snapshot(),
 					'api_namespace' => self::NAMESPACE,
-					'remote_milestone' => 'R2',
+					'remote_milestone' => 'R3',
 				),
 				'environment' => EnvironmentPolicy::snapshot(),
 				'seo_authority' => array(
@@ -84,10 +84,28 @@ final class RemoteReadController {
 					'/remote/audit' => 'site.diagnostics',
 				),
 				'mutation_transport' => array(
-					'available' => false,
-					'planned_milestone' => 'R3',
-					'planned_lifecycle' => array( 'preview', 'apply', 'verify', 'rollback' ),
+					'available' => true,
+					'milestone' => 'R3',
+					'supported_operations' => array( 'content-change' ),
+					'lifecycle' => array( 'plan', 'apply', 'verify', 'rollback' ),
+					'plan_ttl_seconds' => 15 * MINUTE_IN_SECONDS,
+					'routes' => array(
+						'plan' => 'POST /remote/plans',
+						'plan_read' => 'GET /remote/plans/{plan_id}',
+						'apply' => 'POST /remote/plans/{plan_id}/apply',
+						'operation_read' => 'GET /remote/operations/{operation_id}',
+						'verify' => 'POST /remote/operations/{operation_id}/verify',
+						'rollback' => 'POST /remote/operations/{operation_id}/rollback',
+					),
+					'required_scopes' => array(
+						'plan' => 'content.write',
+						'apply' => 'operations.apply',
+						'operation_read' => 'operations.read',
+						'verify' => 'operations.read',
+						'rollback' => 'operations.rollback',
+					),
 					'generic_proxy' => false,
+					'raw_metadata_write' => false,
 				),
 				'safety' => array(
 					'https_outside_local_development' => true,
@@ -96,6 +114,12 @@ final class RemoteReadController {
 					'timestamp_required' => true,
 					'replay_protection' => true,
 					'rate_limit' => true,
+					'idempotency' => true,
+					'plan_connection_binding' => true,
+					'environment_binding' => true,
+					'target_fingerprint_required' => true,
+					'exact_post_write_verification' => true,
+					'stale_safe_rollback' => true,
 					'bounded_audit' => true,
 				),
 			)
@@ -132,9 +156,7 @@ final class RemoteReadController {
 		);
 	}
 
-	/**
-	 * @param array<string, mixed> $data Bounded response data.
-	 */
+	/** @param array<string, mixed> $data Bounded response data. */
 	private static function response( WP_REST_Request $request, array $data ): WP_REST_Response {
 		$context = self::authenticator()->context( $request );
 		$metadata = is_array( $context['metadata'] ?? null ) ? $context['metadata'] : array();
@@ -154,7 +176,6 @@ final class RemoteReadController {
 		if ( null === self::$credentials ) {
 			self::$credentials = new Credentials();
 		}
-
 		return self::$credentials;
 	}
 
@@ -162,21 +183,14 @@ final class RemoteReadController {
 		if ( null === self::$audit ) {
 			self::$audit = new Audit();
 		}
-
 		return self::$audit;
 	}
 
 	private static function authenticator(): Authenticator {
 		if ( null === self::$authenticator ) {
 			$credentials = self::credentials();
-			self::$authenticator = new Authenticator(
-				$credentials,
-				new TokenService( $credentials ),
-				new RequestGuard(),
-				self::audit_store()
-			);
+			self::$authenticator = new Authenticator( $credentials, new TokenService( $credentials ), new RequestGuard(), self::audit_store() );
 		}
-
 		return self::$authenticator;
 	}
 }
