@@ -266,7 +266,7 @@ final class NativeTranslationGroupWriter {
 	 * Normalize a language-to-post map.
 	 *
 	 * @param array $translations Raw language-to-post map.
-	 * @phpstan-param array<string, int|string> $translations
+	 * @phpstan-param array<array-key, mixed> $translations
 	 * @return array<string, int>|WP_Error
 	 */
 	private function normalize_translations( array $translations ) {
