@@ -21,7 +21,7 @@ from pathlib import Path
 import sys
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlparse
+from urllib.parse import unquote, urlencode, urlparse
 from urllib.request import Request, urlopen
 import uuid
 
@@ -41,10 +41,17 @@ def normalize_base_url(value: str) -> str:
         raise FieldProofError("C9 real field acceptance requires an absolute HTTPS base URL.")
     if parsed.username or parsed.password:
         raise FieldProofError("Credentials must not be embedded in the base URL.")
-    path = parsed.path.rstrip("/")
-    if path not in {"", "/"}:
-        raise FieldProofError("Base URL must identify the WordPress site root without an extra path.")
-    return f"https://{parsed.netloc}"
+    if parsed.params or parsed.query or parsed.fragment:
+        raise FieldProofError("Base URL must identify only the WordPress site root, without params, query or fragment.")
+
+    raw_segments = [segment for segment in parsed.path.split("/") if segment]
+    for raw_segment in raw_segments:
+        decoded = unquote(raw_segment)
+        if decoded in {".", ".."} or "/" in decoded or "\\" in decoded:
+            raise FieldProofError("Base URL contains an ambiguous WordPress site-root path.")
+
+    path = "/" + "/".join(raw_segments) if raw_segments else ""
+    return f"https://{parsed.netloc}{path}"
 
 
 def validate_fingerprint(value: str) -> str:
