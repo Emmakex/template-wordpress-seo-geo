@@ -134,7 +134,11 @@ final class TaxonomyAssignmentReader {
 		return $result;
 	}
 
-	/** Build a deterministic assignment fingerprint. */
+	/**
+	 * Build a deterministic assignment fingerprint.
+	 *
+	 * @param list<int> $term_ids Term IDs.
+	 */
 	public static function fingerprint_from_ids( int $resource_id, string $taxonomy_name, array $term_ids ): string {
 		$ids = array_map( 'absint', $term_ids );
 		$ids = array_values( array_filter( $ids ) );
