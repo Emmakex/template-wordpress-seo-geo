@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\Manager\Intelligence;
 
 use SeoGeo\Core\Seo\NativeSeoMetadataWriter;
+use SeoGeo\Manager\Support\YoastSeoAbilityBridge;
 
 final class SeoAuthorityScanner {
 	/**
@@ -37,7 +38,10 @@ final class SeoAuthorityScanner {
 			(string) $theme->get( 'TextDomain' )
 		);
 		$native_writer_ready = $is_theme && class_exists( NativeSeoMetadataWriter::class );
-		$resolution          = SeoAuthorityResolver::resolve( $active_plugins, $is_theme, $native_writer_ready );
+		$provider_writers    = array(
+			'yoast' => YoastSeoAbilityBridge::available(),
+		);
+		$resolution          = SeoAuthorityResolver::resolve( $active_plugins, $is_theme, $native_writer_ready, $provider_writers );
 		$authority           = isset( $resolution['authority'] ) && is_array( $resolution['authority'] ) ? $resolution['authority'] : null;
 		$providers           = self::provider_ids( $resolution );
 		$resolved            = true === ( $resolution['resolved'] ?? false );
