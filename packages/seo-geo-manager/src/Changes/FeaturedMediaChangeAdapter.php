@@ -100,7 +100,7 @@ final class FeaturedMediaChangeAdapter {
 		}
 
 		$after = get_post( $resource_id );
-		if ( ! $after instanceof WP_Post || $media_id !== (int) get_post_thumbnail_id( $resource_id ) ) {
+		if ( ! $after instanceof WP_Post || (int) get_post_thumbnail_id( $resource_id ) !== $media_id ) {
 			self::restore_media( $resource_id, $prepared['before_media_id'] );
 			self::save_failed_operation( $operation_id, $prepared, $payload_hash, $idempotency_key );
 			return new WP_Error(
@@ -180,7 +180,7 @@ final class FeaturedMediaChangeAdapter {
 		$current_fingerprint = FeaturedMediaFingerprint::for_post( $resource );
 		$after_fingerprint   = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
 		$after_media_id      = isset( $operation['after_media_id'] ) ? absint( $operation['after_media_id'] ) : 0;
-		if ( '' === $after_fingerprint || ! hash_equals( $after_fingerprint, $current_fingerprint ) || $after_media_id !== (int) get_post_thumbnail_id( $resource_id ) ) {
+		if ( '' === $after_fingerprint || ! hash_equals( $after_fingerprint, $current_fingerprint ) || (int) get_post_thumbnail_id( $resource_id ) !== $after_media_id ) {
 			return new WP_Error(
 				'seo_geo_manager_featured_media_rollback_stale',
 				'Featured media changed after Apply; rollback is blocked to avoid overwriting newer edits.',
@@ -192,7 +192,7 @@ final class FeaturedMediaChangeAdapter {
 		self::restore_media( $resource_id, $before_media_id );
 		$restored           = get_post( $resource_id );
 		$before_fingerprint = isset( $operation['before_fingerprint'] ) && is_string( $operation['before_fingerprint'] ) ? $operation['before_fingerprint'] : '';
-		if ( ! $restored instanceof WP_Post || $before_media_id !== (int) get_post_thumbnail_id( $resource_id ) || '' === $before_fingerprint || ! hash_equals( $before_fingerprint, FeaturedMediaFingerprint::for_post( $restored ) ) ) {
+		if ( ! $restored instanceof WP_Post || (int) get_post_thumbnail_id( $resource_id ) !== $before_media_id || '' === $before_fingerprint || ! hash_equals( $before_fingerprint, FeaturedMediaFingerprint::for_post( $restored ) ) ) {
 			self::restore_media( $resource_id, $after_media_id );
 			return new WP_Error(
 				'seo_geo_manager_featured_media_rollback_verify_failed',
@@ -285,14 +285,14 @@ final class FeaturedMediaChangeAdapter {
 	}
 
 	/** @return array<string, mixed> */
-	private static function resource_summary( WP_Post $resource ): array {
+	private static function resource_summary( WP_Post $post ): array {
 		return array(
-			'id'                => (int) $resource->ID,
-			'post_type'         => (string) $resource->post_type,
-			'status'            => (string) $resource->post_status,
-			'title'             => html_entity_decode( get_the_title( $resource ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ),
-			'featured_media_id' => (int) get_post_thumbnail_id( $resource->ID ),
-			'fingerprint'       => FeaturedMediaFingerprint::for_post( $resource ),
+			'id'                => (int) $post->ID,
+			'post_type'         => (string) $post->post_type,
+			'status'            => (string) $post->post_status,
+			'title'             => html_entity_decode( get_the_title( $post ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ),
+			'featured_media_id' => (int) get_post_thumbnail_id( $post->ID ),
+			'fingerprint'       => FeaturedMediaFingerprint::for_post( $post ),
 		);
 	}
 
