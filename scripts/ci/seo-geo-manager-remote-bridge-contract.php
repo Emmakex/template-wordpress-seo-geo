@@ -187,7 +187,7 @@ echo json_encode(
 		'r3_operation_allowlist' => array( 'content-change' ),
 		'plan_connection_binding' => true,
 		'plan_environment_binding' => true,
-		'plan_ttl_seconds' => 15 * MINUTE_IN_SECONDS,
+		'plan_ttl_seconds' => 900,
 		'delegates_to_change_set_engine' => true,
 		'generic_proxy' => false,
 	),
