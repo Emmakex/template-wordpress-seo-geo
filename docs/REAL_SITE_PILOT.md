@@ -15,15 +15,15 @@ Frozen Corporate v5 A3.1 field identity:
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.1`;
 - release channel: `prestable`;
-- frozen Theme implementation source commit: `e54dc8e5a85304fea1d1f2d5f9079b5a26d6dc60`;
-- Theme ZIP SHA-256: `b737b9d7e8c6b5e709aa69570772dd58b5629140b0216bf90cc81fb1bd21724d`;
+- frozen Theme implementation source commit: `a251c49fc669531418b266acd00b63fcb2a2421e`;
+- Theme ZIP SHA-256: `05c3763ad7dcb210ccfe49e9ff60995277483916837ccd9a7539666611d7b835`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `de585bec0fe3e46d77dbb4982a5752f8932ace8c9b4c4516d90027e470949726`;
+- deterministic field-pilot pack SHA-256: `d9b917a1bec6d46626a5ffcf9a9e1c44413e68ad3de419419e60f1bd3c383cf3`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
 
-This Corporate v5 A3.1 identity, now including the C6.6B optional strategic hero-media binding, is the only current technical field candidate. Deterministic repository evidence is necessary, but it is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
+This Corporate v5 A3.1 identity, including the C6.6B optional strategic hero-media binding and the bounded native translation-group writer in the bundled core, is the only current technical field candidate. The re-freeze changes deterministic package bytes but not the accepted A3.1 visual composition or hydrated sandbox state. Deterministic repository evidence is necessary, but it is **not visual acceptance**. The exact frozen artifact must still prove the premium/WOW result on `/nuevaweb/`.
 
 ## Current pilot position
 
@@ -38,7 +38,7 @@ The technical Reset & Rebuild sequence has already reached Step 7 on the real `/
 - native SEO/GEO handoff reported SEO-ready;
 - machine preflight reported `ready_for_browser_qa=true`.
 
-Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge merely because the renderer or presentation changes. The semantic draft and SEO/GEO state are already proven.
+Do **not** rerun Reset, regenerate the Home, rehydrate content or replace the Migration Bridge merely because the renderer, presentation or bundled native relationship contract changes. The semantic draft and SEO/GEO state are already proven.
 
 Corporate v4.3 remains historical evidence: technically valid but **visual/architectural NO-GO**.
 
@@ -91,6 +91,8 @@ Corporate v5 A3.1 is the exact frozen technical candidate for the next single sa
 - keeping the public strategic Home server-rendered with zero required project frontend JavaScript;
 - retaining zero third-party visual requests.
 
+The bundled native core also contains the validated native translation-group writer. It persists reciprocal language relationships for existing WordPress resources but does not emit an independent hreflang surface; public multilingual output continues through the existing native registry only when the relationship is complete and publishable.
+
 The final repository performance fixture for Corporate A3.1 records Lighthouse `100`, FCP `751.72 ms`, LCP `901.72 ms`, CLS `0`, TBT `0`, `8` total requests, `0` third-party requests, `0` project JavaScript bytes and `118` DOM nodes.
 
 A temporary 13-request regression was traced to five decorative SVG data URIs. Those decorative icons were replaced with local CSS/pseudo-element treatment rather than weakening the eight-request product budget. Hero and Insights retain their meaningful media slots.
@@ -128,7 +130,7 @@ WordPress remains the CMS and resource authority. Gutenberg remains available fo
 
 ## Repository acceptance boundary
 
-The exact A3.1 Theme implementation source `e54dc8e5a85304fea1d1f2d5f9079b5a26d6dc60` has passed the repository gates for Foundation, Design System, Corporate Page Pipeline, Package, Release Artifact, PHP Quality/PHPStan, Native Multilingual, Self-contained Theme, WordPress Smoke, Accessibility/Responsive and Performance Baseline. The strategic-media extension is additionally exercised in the zero-plugin WordPress acceptance with fallback, valid image binding, invalid non-image rejection, unchanged `post_content`, fingerprint restoration and cleanup.
+The exact A3.1 Theme implementation source `a251c49fc669531418b266acd00b63fcb2a2421e` has passed the repository quality gates for Foundation, Design System, Corporate Page Pipeline, Package, Release Artifact, PHP Quality/PHPStan and the native multilingual/static contract. The remaining real `/nuevaweb/` browser/product gate is unchanged by the native writer re-freeze. The strategic-media extension is additionally exercised in zero-plugin WordPress acceptance with fallback, valid image binding, invalid non-image rejection, unchanged `post_content`, fingerprint restoration and cleanup.
 
 The accepted v5 baseline covers:
 
@@ -178,13 +180,14 @@ External orchestration will be able to decide strategy, research, content, optim
 - let authorized clients edit those articles in Gutenberg;
 - schedule/publish/verify changes under explicit policy;
 - retain operation history and stale-safe rollback;
-- resolve SEO/GEO output ownership without duplicating Theme output.
+- resolve SEO/GEO output ownership without duplicating Theme output;
+- operate accepted multilingual relationships through the native core contract rather than writing raw multilingual metadata.
 
 Manager does **not** run the public frontend or own the strategic layout. Theme rendering remains local to WordPress.
 
 ## Existing milestones remain valid
 
-The product-owned clone from `https://emmake.com/` to `https://emmake.com/nuevaweb/`, Rescue Manifest, Reset, content rescue, clean semantic Home creation, hydration and SEO/GEO handoff remain accepted evidence. They do not need to be repeated because presentation architecture changes.
+The product-owned clone from `https://emmake.com/` to `https://emmake.com/nuevaweb/`, Rescue Manifest, Reset, content rescue, clean semantic Home creation, hydration and SEO/GEO handoff remain accepted evidence. They do not need to be repeated because presentation architecture or native relationship plumbing changes.
 
 The replatforming rule remains: preserve authored content, URLs/redirects, valid SEO signals, important links, useful media, verified organization/contact facts and required business behavior; replace legacy theme/builder presentation debt rather than copying it into the new site.
 
@@ -211,7 +214,7 @@ The destructive/reset portion must **not** be repeated unless a real data/state 
 1. Keep the existing `/nuevaweb/` clone and Step 1–7 evidence.
 2. Keep Migration Bridge `0.8.60` unchanged.
 3. Preserve the existing clean hydrated Home data/content.
-4. Verify the Theme ZIP SHA-256 is exactly `b737b9d7e8c6b5e709aa69570772dd58b5629140b0216bf90cc81fb1bd21724d` before installation.
+4. Verify the Theme ZIP SHA-256 is exactly `05c3763ad7dcb210ccfe49e9ff60995277483916837ccd9a7539666611d7b835` before installation.
 5. Replace the Theme with that frozen Corporate v5 A3.1 candidate **only** on `/nuevaweb/`.
 6. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
 7. Open the same logical hydrated Home through the Theme-owned renderer.
