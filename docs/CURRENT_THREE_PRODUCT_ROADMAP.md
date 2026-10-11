@@ -288,7 +288,7 @@ External orchestration can safely change supported WordPress resources without a
 
 ## C4 — WordPress content operations
 
-Status: **in progress — lifecycle + taxonomy-assignment + author-binding slices accepted**.
+Status: **complete at repository-contract level through 0.3.46**.
 
 Required primitives:
 
@@ -389,29 +389,53 @@ Repository acceptance proves operator != public author, page/post capability awa
 
 Detailed contract: `docs/SEO_GEO_MANAGER_0.3.45_AUTHOR_BINDING.md`.
 
-### C4 reassessment after 0.3.45
+#### 0.3.46 — native translation relationship groups
 
-Do **not** automatically add another content feature merely because a new endpoint is possible.
+Repository acceptance closes the multilingual relationship gap through the existing native Core authority:
 
-The generic article path now has accepted foundations for:
+```text
+Inspect complete reciprocal group
+ -> Preview full language-to-resource relationship
+ -> validate configured languages/resources/provider authority/fingerprint
+ -> explicit approval for published targets
+ -> Apply through NativeTranslationGroupWriter
+ -> exact readback verification
+ -> operation evidence
+ -> stale-safe Rollback
+```
+
+Properties:
+
+- Core remains storage/public multilingual authority;
+- Manager never writes raw `_seo_geo_translation_*` metadata directly;
+- configured language codes only;
+- existing eligible resources only;
+- all members use one compatible post type;
+- complete reciprocal group replacement, not independent one-way links;
+- deterministic relationship fingerprint;
+- production environment binding;
+- idempotent Apply;
+- exact provider verification;
+- newer valid provider edits block rollback;
+- resource-level least privilege;
+- raw provider metadata is not exposed by Manager responses/evidence;
+- relationship plumbing never rewrites translated `post_content`.
+
+Repository acceptance additionally proves the public-authority boundary: a relationship containing a draft member stays out of public registry output; once every member is published, the same Manager-created relationship becomes public-ready and resolves through the real `NativeTranslationRegistry`.
+
+Detailed contract: `docs/SEO_GEO_MANAGER_0.3.46_NATIVE_TRANSLATION_GROUPS.md`.
+
+### C4 closure
+
+The generic content path now has repository-accepted foundations for:
 
 - create/update normal content;
 - draft/publish/schedule lifecycle;
 - title/excerpt/body field changes;
 - featured-media/reference operations;
 - taxonomy assignment;
-- author binding.
-
-The principal known remaining C4 gap is **safe multilingual relationship operations through accepted adapters**.
-
-Before implementation, inspect the actual existing multilingual architecture/provider contracts and classify exactly what relationship state Manager must read/write. The Manager slice should be plumbing only:
-
-- discover accepted multilingual provider/authority;
-- read current locale/translation relations;
-- Preview a bounded relationship change;
-- apply only through provider/public WordPress APIs;
-- verify exact relationship state;
-- retain idempotency/environment/rollback safety where the provider supports it.
+- existing-user author binding;
+- safe native multilingual relationship plumbing.
 
 External orchestration continues to own:
 
@@ -421,11 +445,13 @@ External orchestration continues to own:
 - localization decisions;
 - hreflang/SEO strategy reasoning.
 
-If existing multilingual support already covers the needed relationship safely, reuse/adapterize it rather than creating a second authority.
+C4 is therefore **closed at repository-contract level**. Do not keep adding content endpoints merely because another operation can be imagined. Any additional provider-specific multilingual support must be justified as an explicit adapter and preserve the single-authority rule.
 
 ### Exit criterion
 
-External orchestration can create and manage a normal WordPress article end to end through Manager while preserving WordPress identity, permissions and editorial autonomy.
+**Met at repository-contract level.** External orchestration can create and manage a normal WordPress article end to end through Manager while preserving WordPress identity, permissions and editorial autonomy.
+
+Field/commercial readiness still depends on C2/C9 acceptance and on the remaining Manager tracks below.
 
 ## C5 — Theme semantic-model operations
 
