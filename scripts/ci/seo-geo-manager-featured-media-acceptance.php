@@ -81,9 +81,13 @@ function seo_geo_manager_featured_media_assert_bounded( $value ): void {
 		return;
 	}
 	foreach ( $value as $key => $child ) {
+		if ( 'raw_attachment_metadata' === $key ) {
+			seo_geo_manager_featured_media_accept( false === $child, 'Featured-media raw metadata policy must remain false.' );
+			continue;
+		}
 		if ( is_string( $key ) ) {
 			seo_geo_manager_featured_media_accept(
-				! in_array( $key, array( '_wp_attachment_metadata', 'image_meta', 'exif', 'raw_attachment_metadata' ), true ),
+				! in_array( $key, array( '_wp_attachment_metadata', 'image_meta', 'exif' ), true ),
 				'Featured-media response exposed raw/private attachment metadata.'
 			);
 		}
@@ -163,10 +167,10 @@ seo_geo_manager_featured_media_accept( 409 === $blocked['status'], 'C6.6A mutate
 seo_geo_manager_featured_media_accept( 'seo_geo_manager_featured_media_public_approval_required' === ( $blocked['data']['code'] ?? '' ), 'Unexpected C6.6A published approval code.' );
 seo_geo_manager_featured_media_accept( $media_a === (int) get_post_thumbnail_id( $post_id ), 'Blocked C6.6A Apply changed featured media.' );
 
-$apply_payload                             = $base_payload;
-$apply_payload['allow_published_target']   = true;
-$apply_payload['environment_fingerprint']  = $environment_fingerprint;
-$apply_payload['idempotency_key']          = 'c6-6a-safe-featured-media';
+$apply_payload                            = $base_payload;
+$apply_payload['allow_published_target']  = true;
+$apply_payload['environment_fingerprint'] = $environment_fingerprint;
+$apply_payload['idempotency_key']         = 'c6-6a-safe-featured-media';
 $apply = seo_geo_manager_featured_media_request( 'POST', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media/changes/apply', $apply_payload );
 seo_geo_manager_featured_media_accept( 200 === $apply['status'] && is_array( $apply['data'] ), 'C6.6A Apply failed.' );
 $operation_id = (string) ( $apply['data']['operation_id'] ?? '' );
@@ -251,14 +255,14 @@ seo_geo_manager_featured_media_accept( $hash_c_before === seo_geo_manager_featur
 
 echo (string) wp_json_encode(
 	array(
-		'ok'                  => true,
-		'plugin_version'      => SEO_GEO_MANAGER_VERSION,
-		'resource_id'         => $post_id,
-		'final_media_id'      => (int) get_post_thumbnail_id( $post_id ),
-		'operation_id'        => $operation_id,
-		'stale_operation_id'  => $stale_operation_id,
-		'content_unchanged'   => true,
-		'binaries_unchanged'  => true,
-		'least_privilege_ok'  => true,
+		'ok'                 => true,
+		'plugin_version'     => SEO_GEO_MANAGER_VERSION,
+		'resource_id'        => $post_id,
+		'final_media_id'     => (int) get_post_thumbnail_id( $post_id ),
+		'operation_id'       => $operation_id,
+		'stale_operation_id' => $stale_operation_id,
+		'content_unchanged'  => true,
+		'binaries_unchanged' => true,
+		'least_privilege_ok' => true,
 	)
 ) . "\n";
