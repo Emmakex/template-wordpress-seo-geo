@@ -41,6 +41,7 @@ External orchestration decides **what** should be created, changed or optimized 
 - normal page/post operations;
 - bounded taxonomy assignment;
 - bounded existing-user author binding;
+- bounded multilingual relationship plumbing through accepted provider authorities;
 - Theme semantic-model operations;
 - supported navigation/internal-link/media operations;
 - SEO output-authority/provider adapters;
@@ -57,6 +58,8 @@ External orchestration decides **what** should be created, changed or optimized 
 - deciding which article should be written;
 - deciding taxonomy/content-cluster strategy;
 - deciding author/editorial strategy;
+- deciding language/market/translation strategy;
+- generating translations as a side effect of relationship management;
 - creating invented author personas as a side effect of publishing;
 - autonomous content strategy;
 - autonomous Search Console/Bing prioritization;
@@ -196,9 +199,42 @@ The contract enforces:
 - exact readback verification;
 - stale-safe rollback and permission re-check.
 
-0.3.45 repository acceptance proves operator ≠ public author, page/post capability awareness, ineligible-user rejection and least-privilege `edit_others_*` enforcement while preserving title/body/status/taxonomy state.
+0.3.45 repository acceptance proves operator != public author, page/post capability awareness, ineligible-user rejection and least-privilege `edit_others_*` enforcement while preserving title/body/status/taxonomy state.
 
 Detailed contract: `docs/SEO_GEO_MANAGER_0.3.45_AUTHOR_BINDING.md`.
+
+### Native translation groups — 0.3.46+
+
+```text
+GET  /content/translation-groups/{group_id}
+POST /content/translation-groups/{group_id}/changes/preview
+POST /content/translation-groups/{group_id}/changes/apply
+POST /content/translation-groups/changes/{operation_id}/rollback
+```
+
+0.3.46 closes the generic C4 multilingual relationship gap for the accepted native Core provider.
+
+External orchestration chooses languages/markets and supplies translated content. Manager only operates the bounded reciprocal relationship through the public native Core authority.
+
+The contract enforces:
+
+- configured language codes only;
+- existing eligible WordPress resources;
+- one consistent post type per relationship group;
+- complete reciprocal group replacement rather than one-way metadata edits;
+- exact relationship fingerprint;
+- Preview before mutation;
+- explicit approval for published targets;
+- production environment binding;
+- idempotent Apply;
+- exact provider readback verification;
+- stale-safe rollback;
+- resource-level least privilege;
+- no raw provider metadata exposure or raw metadata writes.
+
+A persisted relationship containing a draft translation remains non-public. Once every member is published and reciprocal state is valid, the same Manager-created relationship resolves through the native public translation registry used by SEO/GEO output.
+
+Detailed contract: `docs/SEO_GEO_MANAGER_0.3.46_NATIVE_TRANSLATION_GROUPS.md`.
 
 ### Theme structured content
 
@@ -271,6 +307,7 @@ External orchestration must call `/capabilities` and inspect the current resourc
 13. Never silently overwrite a newer human edit.
 14. Never emit duplicate SEO/GEO authority.
 15. Never fabricate business facts, authors, sources, reviews or proof.
+16. Never bypass an accepted provider authority by writing its raw relationship metadata directly.
 
 ## Build / Finish, Optimize and Grow
 
@@ -345,9 +382,12 @@ Manager does not need to absorb or replace the complete Migration Bridge product
 - **0.3.35** added generic normal post/page creation plus publish/schedule lifecycle primitives.
 - **0.3.43** closed strategic Theme media binding through the public Theme contract with Read -> Preview -> Apply -> Verify -> Rollback.
 - **0.3.44** closed bounded existing-term taxonomy assignment for generic content operations.
-- **0.3.45** closes bounded existing-user author binding with post-type-aware least-privilege guards.
+- **0.3.45** closed bounded existing-user author binding with post-type-aware least-privilege guards.
+- **0.3.46** closes native multilingual reciprocal relationship plumbing through the Core authority without raw metadata writes.
 
-C4 remains **in progress**, not complete. After 0.3.45 we reassess the real remaining generic content gap before adding more code; the principal known gap is safe multilingual relationship handling through accepted adapters.
+**C4 is complete at repository-contract level.** The generic content path now covers normal content lifecycle/fields, media relationships, taxonomies, author binding and accepted native multilingual relationships.
+
+This does not mean the entire Manager is complete. C5/C6/C7/C8/C9 retain their own exit criteria, and C2 still requires accepted per-client HTTPS/operator/revocation field evidence.
 
 EMMAKE `/nuevaweb/` remains the first Theme-site field reference, not a hardcoded product assumption.
 
@@ -361,6 +401,7 @@ See:
 - `docs/SEO_GEO_MANAGER.md`;
 - `docs/SEO_GEO_MANAGER_REMOTE_ACCESS.md`;
 - `docs/SEO_GEO_MANAGER_0.3.44_TAXONOMY_ASSIGNMENT.md`;
-- `docs/SEO_GEO_MANAGER_0.3.45_AUTHOR_BINDING.md`.
+- `docs/SEO_GEO_MANAGER_0.3.45_AUTHOR_BINDING.md`;
+- `docs/SEO_GEO_MANAGER_0.3.46_NATIVE_TRANSLATION_GROUPS.md`.
 
 The current Manager focus remains generic bridge/control primitives. New migration transport/rescue/reset work belongs to Migration Bridge, and strategic content/SEO/editorial decisions remain in external orchestration.
