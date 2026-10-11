@@ -1,6 +1,6 @@
 <?php
 /**
- * Offline contract for the SEO/GEO Manager-owned remote bridge through R3.2.
+ * Offline contract for the SEO/GEO Manager-owned remote bridge through R3.3.
  */
 declare(strict_types=1);
 
@@ -13,6 +13,9 @@ $files = array(
 	'authenticator'       => $root . '/packages/seo-geo-manager/src/Remote/Authenticator.php',
 	'plans'               => $root . '/packages/seo-geo-manager/src/Remote/PlanStore.php',
 	'operations'          => $root . '/packages/seo-geo-manager/src/Remote/MutationOperations.php',
+	'seo_authority'       => $root . '/packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php',
+	'native_seo'          => $root . '/packages/seo-geo-manager/src/Changes/NativeSeoMetadataChangeAdapter.php',
+	'yoast_seo'           => $root . '/packages/seo-geo-manager/src/Changes/YoastSeoMetadataChangeAdapter.php',
 	'read_controller'     => $root . '/packages/seo-geo-manager/src/Rest/RemoteReadController.php',
 	'mutation_controller' => $root . '/packages/seo-geo-manager/src/Rest/RemoteMutationController.php',
 	'admin'               => $root . '/packages/seo-geo-manager/src/Admin/RemoteAccess.php',
@@ -39,7 +42,6 @@ $required = array(
 		"'operations.rollback'",
 		"'credential_hash'",
 		"'credential_prefix'",
-		"'sgmc_'",
 	),
 	'tokens' => array(
 		"'sgm1_'",
@@ -53,61 +55,49 @@ $required = array(
 		'x-seo-geo-manager-request-id',
 		'x-seo-geo-manager-nonce',
 		'x-seo-geo-manager-timestamp',
-		'CLOCK_SKEW_SECONDS',
-		'REPLAY_TTL_SECONDS',
-		'RATE_LIMIT_PER_WINDOW',
 		'validate_idempotency',
 		'remember_request',
-	),
-	'audit' => array(
-		'MAX_RECORDS = 200',
-		"'request_id'",
-		"'connection_id'",
-		"'scope'",
-		"'outcome'",
-		"'plan_id'",
-		"'operation_id'",
-	),
-	'authenticator' => array(
-		'function authorize(',
-		'bearer_credential',
-		'has_scope( $connection, $required_scope )',
-		'enforce_rate_limit',
-		'consume_nonce',
-		'wp_set_current_user',
-		"current_user_can( 'manage_options' )",
-		'record_success',
 	),
 	'plans' => array(
 		"'sgmp_'",
 		'APPLY_TTL_SECONDS   = 15 * MINUTE_IN_SECONDS',
-		'STORAGE_TTL_SECONDS = HOUR_IN_SECONDS',
 		'MutationOperations::supports( $operation )',
-		'\'operation\'         => $operation',
-		"'connection_id'",
-		"'wordpress_user_id'",
-		"'environment'",
-		"'expires_at_unix'",
-		"'checksum'",
 		'EnvironmentPolicy::snapshot()',
 		'function mark_applied(',
 	),
 	'operations' => array(
 		"'content-change'",
 		"'theme-structured-content'",
-		'ChangeSetEngine::preview( $payload )',
-		'ChangeSetEngine::apply( $payload )',
-		'ThemeStructuredContentAdapter::preview( $payload )',
-		'ThemeStructuredContentAdapter::apply( $payload )',
+		"'seo-authority-change'",
+		'SeoAuthorityChangeAdapter::preview( $payload )',
+		'SeoAuthorityChangeAdapter::apply( $payload )',
+		'SeoAuthorityChangeAdapter::verify( $stored )',
+		'SeoAuthorityChangeAdapter::rollback( $operation_id )',
 		"'seo_geo_manager_remote_rendered_verification_unsupported'",
+	),
+	'seo_authority' => array(
+		'SeoAuthorityScanner::scan()',
+		'NativeSeoMetadataChangeAdapter::preview( $payload )',
+		'NativeSeoMetadataChangeAdapter::apply( $payload )',
+		'NativeSeoMetadataChangeAdapter::inspect( $resource_id )',
+		'NativeSeoMetadataChangeAdapter::rollback( $operation_id )',
+		'YoastSeoMetadataChangeAdapter::preview( $payload )',
+		'YoastSeoMetadataChangeAdapter::apply( $payload )',
+		'YoastSeoMetadataChangeAdapter::inspect( $resource_id )',
+		'YoastSeoMetadataChangeAdapter::rollback( $operation_id )',
+		"'seo-geo-theme'",
+		"'seo-geo-theme-native'",
+		"'yoast'",
+		"'yoast-abilities'",
+		"'writable_signals'",
 	),
 	'read_controller' => array(
 		"'/remote/status'",
 		"'/remote/capabilities'",
 		"'/remote/site-intelligence'",
 		"'/remote/audit'",
-		"'remote_milestone' => 'R3.2'",
-		"'available' => true",
+		"'remote_milestone' => 'R3.3'",
+		"'milestone' => 'R3.3'",
 		"'supported_operations' => MutationOperations::supported()",
 		"'generic_proxy' => false",
 		"'raw_metadata_write' => false",
@@ -116,44 +106,19 @@ $required = array(
 		"'/remote/plans'",
 		"'/remote/plans/(?P<plan_id>sgmp_[a-f0-9]{32})'",
 		"'/remote/operations/(?P<operation_id>[a-f0-9\\-]{36})'",
-		"'content.write'",
-		"'operations.read'",
-		"'operations.apply'",
-		"'operations.rollback'",
 		'MutationOperations::preview( $operation, $payload )',
 		'MutationOperations::apply( $operation_type, $payload )',
-		'ChangeSetEngine::rollback( $operation_id )',
+		'MutationOperations::verify( $operation_type, $operation )',
+		'MutationOperations::rollback( $operation_type, $operation_id )',
+		"'remote_seo_authority'",
+		'bounded_seo_authority',
 		'EnvironmentPolicy::validate_payload( $params )',
 		'EnvironmentPolicy::validate_operation_environment( $operation )',
-		"'remote_connection_id'",
-		"'remote_plan_id'",
-		"'remote_actor_user_id'",
-		"'remote_operation_type'",
-		"'structured_model'",
-		'bounded_structured_model',
 		"'confirm'",
 	),
-	'admin' => array(
-		'Conexión remota',
-		'manage_options',
-		'Generar / reemplazar credencial',
-		'Rotar',
-		'Revocar',
-		'Guardar scopes',
-		'delete_transient( self::token_key() )',
-		'wp_nonce_field( \'seo_geo_manager_remote_connection\' )',
-	),
-	'plugin' => array(
-		'use SeoGeo\\Manager\\Admin\\RemoteAccess;',
-		'use SeoGeo\\Manager\\Rest\\RemoteReadController;',
-		'use SeoGeo\\Manager\\Rest\\RemoteMutationController;',
-		'RemoteAccess::register();',
-		'RemoteReadController::register_routes();',
-		'RemoteMutationController::register_routes();',
-	),
 	'package' => array(
-		'Version: 0.3.52',
-		"SEO_GEO_MANAGER_VERSION', '0.3.52'",
+		'Version: 0.3.53',
+		"SEO_GEO_MANAGER_VERSION', '0.3.53'",
 	),
 );
 
@@ -167,52 +132,70 @@ foreach ( $required as $source_key => $markers ) {
 }
 
 if ( preg_match( '/register_rest_route[\s\S]*WP_REST_Server::CREATABLE/', $sources['read_controller'] ) ) {
-	fwrite( STDERR, "Remote read controller must remain read-only; mutations belong to the bounded R3.2 controller.\n" );
+	fwrite( STDERR, "Remote read controller must remain read-only.\n" );
 	exit( 1 );
 }
 
-foreach ( array( 'seo.write', 'media.write', 'navigation.write' ) as $forbidden_scope ) {
-	if ( false !== strpos( $sources['mutation_controller'], "'{$forbidden_scope}'" ) ) {
-		fwrite( STDERR, "R3.2 controller must not expose speculative {$forbidden_scope} mutation support.\n" );
+foreach ( array( 'seo.write', 'media.write', 'navigation.write' ) as $speculative_scope ) {
+	if ( false !== strpos( $sources['mutation_controller'], "'{$speculative_scope}'" ) ) {
+		fwrite( STDERR, "R3.3 must not silently widen the remote scope model with {$speculative_scope}.\n" );
 		exit( 1 );
 	}
 }
 
 foreach ( array( 'generic_shell', 'generic_rest_proxy', 'raw_metadata_write' ) as $forbidden ) {
-	if ( false !== strpos( strtolower( $sources['mutation_controller'] . $sources['operations'] ), $forbidden ) ) {
-		fwrite( STDERR, "R3.2 mutation surface contains forbidden generic transport concept: {$forbidden}\n" );
+	if ( false !== strpos( strtolower( $sources['mutation_controller'] . $sources['operations'] . $sources['seo_authority'] ), $forbidden ) ) {
+		fwrite( STDERR, "R3.3 mutation surface contains forbidden generic transport concept: {$forbidden}\n" );
 		exit( 1 );
 	}
 }
 
-$allowlist = array( 'content-change', 'theme-structured-content' );
+$allowlist = array( 'content-change', 'theme-structured-content', 'seo-authority-change' );
 foreach ( $allowlist as $operation ) {
 	if ( false === strpos( $sources['operations'], "'{$operation}'" ) ) {
-		fwrite( STDERR, "R3.2 operation allowlist is missing {$operation}.\n" );
+		fwrite( STDERR, "R3.3 operation allowlist is missing {$operation}.\n" );
 		exit( 1 );
 	}
+}
+
+$manager_root = $root . '/packages/seo-geo-manager';
+$iterator = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $manager_root, FilesystemIterator::SKIP_DOTS ) );
+foreach ( $iterator as $file ) {
+	if ( ! $file instanceof SplFileInfo || ! $file->isFile() ) {
+		continue;
+	}
+	$contents = (string) file_get_contents( $file->getPathname() );
+	if ( false !== strpos( $contents, '_yoast_wpseo_' ) ) {
+		fwrite( STDERR, 'Manager source contains forbidden Yoast private-meta dependency: ' . $file->getPathname() . "\n" );
+		exit( 1 );
+	}
+}
+
+if ( false !== strpos( $sources['seo_authority'], "['provider']" ) || false !== strpos( $sources['seo_authority'], "['adapter']" . ' ?? $payload' ) ) {
+	fwrite( STDERR, "R3.3 SEO authority adapter must not accept provider selection from the remote payload.\n" );
+	exit( 1 );
 }
 
 echo json_encode(
 	array(
 		'ok'                                => true,
-		'version'                           => '0.3.52',
+		'version'                           => '0.3.53',
 		'manager_owned_credential'          => true,
 		'hash_only_persistence'             => true,
-		'scopes'                            => true,
-		'rotation_and_revocation'           => true,
 		'replay_rate_idempotency_guards'   => true,
 		'bounded_audit'                     => true,
-		'local_admin_console'               => true,
-		'remote_read_routes_registered'     => true,
-		'r3_mutations_available'            => true,
 		'r3_operation_allowlist'            => $allowlist,
 		'plan_connection_binding'           => true,
 		'plan_environment_binding'          => true,
 		'plan_ttl_seconds'                  => 900,
 		'delegates_to_change_set_engine'    => true,
 		'delegates_to_theme_semantic_c5'    => true,
-		'bounded_structured_model_evidence' => true,
+		'delegates_to_seo_authority_c7'     => true,
+		'authority_auto_resolution'         => true,
+		'theme_native_runtime_required'     => true,
+		'yoast_28_6_runtime_required'       => true,
+		'private_yoast_meta'                => false,
+		'provider_selection_by_caller'      => false,
 		'generic_proxy'                     => false,
 	),
 	JSON_UNESCAPED_SLASHES
