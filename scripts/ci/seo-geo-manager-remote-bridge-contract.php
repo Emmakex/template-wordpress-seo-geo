@@ -83,17 +83,17 @@ $required = array(
 		"'yoast-abilities'",
 	),
 	'contextual_links' => array(
-		"'operation_type' => 'contextual-link-change'",
-		"'href_only' => true",
+		"'operation_type'",
+		"'contextual-link-change'",
+		"'href_only'",
 		"'contextual_href'",
-		'ContextualLinkReader::read( $source_id )',
 		'ContentFingerprint::for_post( $source )',
 		"'target_resource_id'",
 	),
 	'contextual_reader' => array(
 		"'edge_id'",
 		"'fingerprint'",
-		"'raw_post_content_returned' => false",
+		"'raw_post_content_returned'",
 		"'max_links'",
 	),
 	'read_controller' => array(
