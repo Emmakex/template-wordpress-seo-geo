@@ -9,7 +9,10 @@ on:
       - 'packages/seo-geo-manager/src/Changes/YoastSeoMetadataChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Changes/ContextualLinkChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Changes/NavigationChangeAdapter.php'
+      - 'packages/seo-geo-manager/src/Changes/FeaturedMediaChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Intelligence/ContextualLinkReader.php'
+      - 'packages/seo-geo-manager/src/Intelligence/FeaturedMediaReader.php'
+      - 'packages/seo-geo-manager/src/Support/FeaturedMediaFingerprint.php'
       - 'packages/seo-geo-manager/src/Rest/RemoteReadController.php'
       - 'packages/seo-geo-manager/src/Rest/RemoteMutationController.php'
       - 'packages/seo-geo-manager/src/Admin/RemoteAccess.php'
@@ -31,6 +34,8 @@ on:
       - 'scripts/ci/seo-geo-manager-remote-contextual-link-r34-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-remote-navigation-r35-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-navigation-r35-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-remote-featured-media-r36-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-featured-media-r36-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
       - 'docs/SEO_GEO_MANAGER_0.3.51_REMOTE_CONTENT_CHANGE.md'
@@ -48,7 +53,10 @@ on:
       - 'packages/seo-geo-manager/src/Changes/YoastSeoMetadataChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Changes/ContextualLinkChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Changes/NavigationChangeAdapter.php'
+      - 'packages/seo-geo-manager/src/Changes/FeaturedMediaChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Intelligence/ContextualLinkReader.php'
+      - 'packages/seo-geo-manager/src/Intelligence/FeaturedMediaReader.php'
+      - 'packages/seo-geo-manager/src/Support/FeaturedMediaFingerprint.php'
       - 'packages/seo-geo-manager/src/Rest/RemoteReadController.php'
       - 'packages/seo-geo-manager/src/Rest/RemoteMutationController.php'
       - 'packages/seo-geo-manager/src/Admin/RemoteAccess.php'
@@ -70,6 +78,8 @@ on:
       - 'scripts/ci/seo-geo-manager-remote-contextual-link-r34-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-remote-navigation-r35-acceptance.php'
       - 'scripts/ci/seo-geo-manager-remote-navigation-r35-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-remote-featured-media-r36-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-featured-media-r36-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
       - 'docs/SEO_GEO_MANAGER_0.3.51_REMOTE_CONTENT_CHANGE.md'
@@ -88,7 +98,7 @@ concurrency:
 
 jobs:
   remote-bridge-contract:
-    name: Manager-owned remote bridge R1-R3.5 contract
+    name: Manager-owned remote bridge R1-R3.6 contract
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -106,7 +116,9 @@ jobs:
           php -l packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php
           php -l packages/seo-geo-manager/src/Changes/ContextualLinkChangeAdapter.php
           php -l packages/seo-geo-manager/src/Changes/NavigationChangeAdapter.php
+          php -l packages/seo-geo-manager/src/Changes/FeaturedMediaChangeAdapter.php
           php -l packages/seo-geo-manager/src/Intelligence/ContextualLinkReader.php
+          php -l packages/seo-geo-manager/src/Intelligence/FeaturedMediaReader.php
           php -l packages/seo-geo-manager/src/Rest/RemoteReadController.php
           php -l packages/seo-geo-manager/src/Rest/RemoteMutationController.php
           php -l packages/seo-geo-manager/src/Admin/RemoteAccess.php
@@ -119,13 +131,15 @@ jobs:
           php -l scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.php
           php -l scripts/ci/seo-geo-manager-remote-contextual-link-r34-acceptance.php
           php -l scripts/ci/seo-geo-manager-remote-navigation-r35-acceptance.php
+          php -l scripts/ci/seo-geo-manager-remote-featured-media-r36-acceptance.php
           bash -n scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-remote-seo-r33-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-remote-yoast-r33-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-remote-contextual-link-r34-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-remote-navigation-r35-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-remote-featured-media-r36-acceptance.sh
 
-      - name: Remote bridge R1-R3.5 contract
+      - name: Remote bridge R1-R3.6 contract
         run: php scripts/ci/seo-geo-manager-remote-bridge-contract.php
 
   remote-bridge-wordpress:
@@ -212,3 +226,20 @@ jobs:
 
       - name: Navigation Inspect -> Plan -> Approval -> Apply -> Verify -> Rollback acceptance
         run: bash scripts/ci/seo-geo-manager-remote-navigation-r35-acceptance.sh
+
+  remote-featured-media:
+    name: Manager-owned R3.6 featured-media runtime
+    runs-on: ubuntu-latest
+    needs: remote-bridge-contract
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Pull pinned fixtures
+        run: |
+          docker pull wordpress:7.1.0-php8.2-apache
+          docker pull wordpress:cli-2.12.0-php8.2
+          docker pull mariadb:11.8.9
+
+      - name: Featured media Inspect -> Plan -> Approval -> Apply -> Verify -> Rollback acceptance
+        run: bash scripts/ci/seo-geo-manager-remote-featured-media-r36-acceptance.sh
