@@ -79,7 +79,15 @@ final class RemoteAccess {
 					<tr><th><?php esc_html_e( 'Connection ID', 'seo-geo-manager' ); ?></th><td><code><?php echo esc_html( (string) ( $state['connection_id'] ?? '' ) ); ?></code></td></tr>
 					<tr><th><?php esc_html_e( 'Etiqueta', 'seo-geo-manager' ); ?></th><td><?php echo esc_html( (string) ( $state['label'] ?? '' ) ); ?></td></tr>
 					<tr><th><?php esc_html_e( 'Acceso remoto', 'seo-geo-manager' ); ?></th><td><strong><?php echo ! empty( $state['enabled'] ) ? esc_html__( 'ACTIVO', 'seo-geo-manager' ) : esc_html__( 'DESACTIVADO', 'seo-geo-manager' ); ?></strong></td></tr>
-					<tr><th><?php esc_html_e( 'Credencial', 'seo-geo-manager' ); ?></th><td><?php echo ! empty( $state['credential_present'] ) ? esc_html__( 'Presente', 'seo-geo-manager' ) : esc_html__( 'No generada', 'seo-geo-manager' ); ?><?php if ( ! empty( $state['credential_prefix'] ) ) : ?> — <code><?php echo esc_html( (string) $state['credential_prefix'] ); ?>…</code><?php endif; ?></td></tr>
+					<tr>
+						<th><?php esc_html_e( 'Credencial', 'seo-geo-manager' ); ?></th>
+						<td>
+							<?php echo ! empty( $state['credential_present'] ) ? esc_html__( 'Presente', 'seo-geo-manager' ) : esc_html__( 'No generada', 'seo-geo-manager' ); ?>
+							<?php if ( ! empty( $state['credential_prefix'] ) ) : ?>
+								— <code><?php echo esc_html( (string) $state['credential_prefix'] ); ?>…</code>
+							<?php endif; ?>
+						</td>
+					</tr>
 					<tr><th><?php esc_html_e( 'Escrituras concedidas', 'seo-geo-manager' ); ?></th><td><?php echo ! empty( $state['writes_enabled'] ) ? esc_html__( 'Sí', 'seo-geo-manager' ) : esc_html__( 'No', 'seo-geo-manager' ); ?></td></tr>
 					<tr><th><?php esc_html_e( 'Administrador vinculado', 'seo-geo-manager' ); ?></th><td><?php echo esc_html( (string) (int) ( $state['wordpress_user_id'] ?? 0 ) ); ?></td></tr>
 					<tr><th><?php esc_html_e( 'Generación', 'seo-geo-manager' ); ?></th><td><?php echo esc_html( (string) (int) ( $state['generation'] ?? 0 ) ); ?></td></tr>
