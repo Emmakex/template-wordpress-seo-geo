@@ -156,7 +156,9 @@ final class RemoteReadController {
 		);
 	}
 
-	/** @param array<string, mixed> $data Bounded response data. */
+	/**
+	 * @param array<string, mixed> $data Bounded response data.
+	 */
 	private static function response( WP_REST_Request $request, array $data ): WP_REST_Response {
 		$context = self::authenticator()->context( $request );
 		$metadata = is_array( $context['metadata'] ?? null ) ? $context['metadata'] : array();
