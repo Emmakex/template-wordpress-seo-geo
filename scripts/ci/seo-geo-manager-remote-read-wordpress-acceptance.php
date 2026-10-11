@@ -33,7 +33,7 @@ function sgm_remote_request( string $route, array $headers ): WP_REST_Response {
 /** @return array<string, string> */
 function sgm_remote_headers( string $credential, string $request_id, string $nonce ): array {
 	return array(
-		'authorization'               => 'Bearer ' . $credential,
+		'authorization'                => 'Bearer ' . $credential,
 		'x-seo-geo-manager-request-id' => $request_id,
 		'x-seo-geo-manager-nonce'      => $nonce,
 		'x-seo-geo-manager-timestamp'  => (string) time(),
@@ -84,8 +84,8 @@ if ( '' === $credential || ! str_starts_with( $credential, 'sgm1_' ) ) {
 $status = sgm_remote_request( '/seo-geo-manager/v1/remote/status', sgm_remote_headers( $credential, 'ci-status-0001', 'ci-nonce-status-0001' ) );
 sgm_expect_status( $status, 200, 'remote status' );
 $status_data = sgm_response_data( $status );
-if ( true !== ( $status_data['ok'] ?? false ) || SEO_GEO_MANAGER_VERSION !== ( $status_data['data']['manager']['version'] ?? '' ) || 'R3.2' !== ( $status_data['data']['manager']['remote_milestone'] ?? '' ) ) {
-	fwrite( STDERR, "Remote status did not return current R3.2 Manager identity.\n" );
+if ( true !== ( $status_data['ok'] ?? false ) || SEO_GEO_MANAGER_VERSION !== ( $status_data['data']['manager']['version'] ?? '' ) || 'R3.3' !== ( $status_data['data']['manager']['remote_milestone'] ?? '' ) ) {
+	fwrite( STDERR, "Remote status did not return current R3.3 Manager identity.\n" );
 	exit( 1 );
 }
 
@@ -93,9 +93,9 @@ $capabilities = sgm_remote_request( '/seo-geo-manager/v1/remote/capabilities', s
 sgm_expect_status( $capabilities, 200, 'remote capabilities' );
 $capability_data = sgm_response_data( $capabilities );
 $mutation = is_array( $capability_data['data']['mutation_transport'] ?? null ) ? $capability_data['data']['mutation_transport'] : array();
-$expected_operations = array( 'content-change', 'theme-structured-content' );
-if ( true !== ( $capability_data['ok'] ?? false ) || true !== ( $mutation['available'] ?? false ) || $expected_operations !== ( $mutation['supported_operations'] ?? array() ) ) {
-	fwrite( STDERR, "R3.2 capabilities did not expose the exact accepted semantic operation allowlist.\n" );
+$expected_operations = array( 'content-change', 'theme-structured-content', 'seo-authority-change' );
+if ( true !== ( $capability_data['ok'] ?? false ) || true !== ( $mutation['available'] ?? false ) || 'R3.3' !== ( $mutation['milestone'] ?? '' ) || $expected_operations !== ( $mutation['supported_operations'] ?? array() ) ) {
+	fwrite( STDERR, "R3.3 capabilities did not expose the exact accepted semantic operation allowlist.\n" );
 	exit( 1 );
 }
 
@@ -160,6 +160,7 @@ echo wp_json_encode(
 		'authenticated_read'        => true,
 		'r3_capability_advertised'  => true,
 		'r3_operation_allowlist'    => $expected_operations,
+		'seo_authority_operation'   => true,
 		'scope_denial'              => true,
 		'nonce_replay_rejected'     => true,
 		'credential_revocation'     => true,
