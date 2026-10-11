@@ -64,6 +64,7 @@ jobs:
           php -l packages/seo-geo-core/src/Language/NativeLanguageRouter.php
           php -l packages/seo-geo-core/src/Language/NativeTranslationRelationship.php
           php -l packages/seo-geo-core/src/Language/NativeTranslationRegistry.php
+          php -l packages/seo-geo-core/src/Language/NativeTranslationGroupWriter.php
           php -l packages/seo-geo-core/src/Language/NativeWordPressAdapter.php
           php -l packages/seo-geo-core/src/Language/LanguageManager.php
           php -l packages/seo-geo-core/src/Seo/LocalizedSeoResolver.php
