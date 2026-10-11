@@ -57,8 +57,8 @@ if ( false === strpos( $plugin, 'WorkspaceDashboard::register();' ) ) {
 	exit( 1 );
 }
 
-if ( false !== strpos( $plugin, 'Dashboard::register();' ) ) {
-	fwrite( STDERR, "Legacy migration-focused Dashboard is still registered.\n" );
+if ( false !== strpos( $plugin, 'use SeoGeo\\Manager\\Admin\\Dashboard;' ) ) {
+	fwrite( STDERR, "Legacy migration-focused Dashboard import is still active.\n" );
 	exit( 1 );
 }
 
