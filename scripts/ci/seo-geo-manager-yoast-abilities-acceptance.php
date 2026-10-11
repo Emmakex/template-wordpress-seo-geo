@@ -40,10 +40,15 @@ function seo_geo_manager_yoast_enum_value( WP_Ability $ability, string $field ):
 	return null;
 }
 
-$admin = get_user_by( 'login', 'admin' );
-seo_geo_manager_yoast_accept( $admin instanceof WP_User, 'Acceptance administrator was not found.' );
-wp_set_current_user( (int) $admin->ID );
-seo_geo_manager_yoast_accept( current_user_can( 'wpseo_edit_advanced_metadata' ), 'Administrator lacks Yoast advanced metadata capability.' );
+$yoast_role = get_role( 'wpseo_editor' );
+seo_geo_manager_yoast_accept( $yoast_role instanceof WP_Role, 'Yoast SEO did not register its wpseo_editor role.' );
+$operator_id = wp_create_user( 'manager-yoast-editor', wp_generate_password( 32, true, true ), 'manager-yoast-editor@example.test' );
+seo_geo_manager_yoast_accept( ! is_wp_error( $operator_id ), 'Could not create Yoast SEO operator fixture.' );
+$operator = new WP_User( (int) $operator_id );
+$operator->set_role( 'wpseo_editor' );
+wp_set_current_user( (int) $operator_id );
+seo_geo_manager_yoast_accept( current_user_can( 'edit_posts' ), 'Yoast SEO editor role does not retain normal editorial access.' );
+seo_geo_manager_yoast_accept( current_user_can( 'wpseo_edit_advanced_metadata' ), 'Yoast SEO editor role lacks its advanced metadata capability.' );
 seo_geo_manager_yoast_accept( YoastSeoAbilityBridge::available(), 'Yoast SEO public post SEO abilities are unavailable.' );
 
 $read_ability  = wp_get_ability( 'yoast-seo/get-post-seo-data' );
@@ -66,10 +71,10 @@ foreach ( array( 'title-meta', 'open-graph', 'hreflang', 'sitemap' ) as $signal 
 
 $post_id = wp_insert_post(
 	array(
-		'post_type'   => 'post',
-		'post_status' => 'draft',
-		'post_title'  => 'Yoast abilities acceptance',
-		'post_content'=> 'Provider adapter fixture.',
+		'post_type'    => 'post',
+		'post_status'  => 'draft',
+		'post_title'   => 'Yoast abilities acceptance',
+		'post_content' => 'Provider adapter fixture.',
 	),
 	true
 );
@@ -185,22 +190,23 @@ wp_delete_post( $post_id, true );
 wp_delete_post( $published_id, true );
 
 $result = array(
-	'ok'                         => true,
-	'plugin_version'             => defined( 'SEO_GEO_MANAGER_VERSION' ) ? SEO_GEO_MANAGER_VERSION : '',
-	'yoast_version'              => defined( 'WPSEO_VERSION' ) ? WPSEO_VERSION : '',
-	'abilities_registered'       => true,
-	'provider_authority_writable'=> true,
-	'canonical_write'            => true,
-	'robots_write'               => true,
-	'schema_write'               => true,
-	'title_meta_read_only'       => true,
-	'open_graph_read_only'       => true,
-	'exact_readback'             => true,
-	'idempotent_replay'          => true,
-	'stale_safe_rollback'        => true,
-	'published_approval_guard'   => true,
-	'capability_discovery'       => true,
-	'multiple_provider_conflict' => true,
+	'ok'                          => true,
+	'plugin_version'              => defined( 'SEO_GEO_MANAGER_VERSION' ) ? SEO_GEO_MANAGER_VERSION : '',
+	'yoast_version'               => defined( 'WPSEO_VERSION' ) ? WPSEO_VERSION : '',
+	'provider_role'               => 'wpseo_editor',
+	'abilities_registered'        => true,
+	'provider_authority_writable' => true,
+	'canonical_write'             => true,
+	'robots_write'                => true,
+	'schema_write'                => true,
+	'title_meta_read_only'        => true,
+	'open_graph_read_only'        => true,
+	'exact_readback'              => true,
+	'idempotent_replay'           => true,
+	'stale_safe_rollback'         => true,
+	'published_approval_guard'    => true,
+	'capability_discovery'        => true,
+	'multiple_provider_conflict'  => true,
 );
 
 echo wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) . PHP_EOL;
