@@ -113,6 +113,7 @@ wp_cli core install \
 
 wp_cli plugin activate seo-geo-manager >/dev/null
 wp_cli theme activate seo-geo-theme >/dev/null
+wp_cli option update seo_geo_active_preset corporate >/dev/null
 
 docker cp "$READ_FIXTURE" "$WP_CONTAINER:/var/www/html/seo-geo-manager-remote-read-acceptance.php"
 docker cp "$MUTATION_FIXTURE" "$WP_CONTAINER:/var/www/html/seo-geo-manager-remote-mutation-acceptance.php"
