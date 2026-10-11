@@ -301,7 +301,7 @@ final class NativeTranslationGroupChangeAdapter {
 			);
 		}
 
-		$before = self::normalized_snapshot_map( $inspection );
+		$before             = self::normalized_snapshot_map( $inspection );
 		$before_fingerprint = isset( $inspection['fingerprint'] ) && is_string( $inspection['fingerprint'] )
 			? $inspection['fingerprint']
 			: '';
@@ -325,8 +325,8 @@ final class NativeTranslationGroupChangeAdapter {
 			return $after_resources;
 		}
 
-		$affected = array();
-		$published = false;
+		$affected         = array();
+		$published        = false;
 		$before_resources = isset( $inspection['resources'] ) && is_array( $inspection['resources'] )
 			? $inspection['resources']
 			: array();
@@ -353,12 +353,12 @@ final class NativeTranslationGroupChangeAdapter {
 		}
 
 		return array(
-			'group_id'                 => $group_id,
-			'before_translations'      => $before,
-			'after_translations'       => $after,
-			'before_fingerprint'       => $before_fingerprint,
-			'affected_resources'       => array_values( $affected ),
-			'has_published_affected'   => $published,
+			'group_id'               => $group_id,
+			'before_translations'    => $before,
+			'after_translations'     => $after,
+			'before_fingerprint'     => $before_fingerprint,
+			'affected_resources'     => array_values( $affected ),
+			'has_published_affected' => $published,
 		);
 	}
 
@@ -428,7 +428,7 @@ final class NativeTranslationGroupChangeAdapter {
 			if ( ! is_string( $language ) ) {
 				return new WP_Error( 'seo_geo_manager_native_translation_language_invalid', 'Native translation language code is invalid.', array( 'status' => 400 ) );
 			}
-			$language = strtolower( trim( $language ) );
+			$language    = strtolower( trim( $language ) );
 			$resource_id = is_int( $resource_id ) || ( is_string( $resource_id ) && ctype_digit( $resource_id ) )
 				? absint( $resource_id )
 				: 0;
@@ -521,7 +521,11 @@ final class NativeTranslationGroupChangeAdapter {
 			: NativeTranslationBridge::replace( $group_id, $translations );
 	}
 
-	/** @param array<string, mixed> $payload Request payload. */
+	/**
+	 * Build the idempotency payload hash.
+	 *
+	 * @param array<string, mixed> $payload Request payload.
+	 */
 	private static function payload_hash( array $payload ): string {
 		$translations = self::normalize_map( $payload['translations'] ?? array() );
 		$translations = is_wp_error( $translations ) ? array() : $translations;
@@ -530,10 +534,10 @@ final class NativeTranslationGroupChangeAdapter {
 			'sha256',
 			(string) wp_json_encode(
 				array(
-					'group_id'                => isset( $payload['group_id'] ) && is_string( $payload['group_id'] ) ? strtolower( trim( $payload['group_id'] ) ) : '',
-					'translations'             => $translations,
-					'expected_fingerprint'     => isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] ) ? trim( $payload['expected_fingerprint'] ) : '',
-					'allow_published_targets'  => true === ( $payload['allow_published_targets'] ?? false ),
+					'group_id'               => isset( $payload['group_id'] ) && is_string( $payload['group_id'] ) ? strtolower( trim( $payload['group_id'] ) ) : '',
+					'translations'            => $translations,
+					'expected_fingerprint'    => isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] ) ? trim( $payload['expected_fingerprint'] ) : '',
+					'allow_published_targets' => true === ( $payload['allow_published_targets'] ?? false ),
 				)
 			)
 		);
