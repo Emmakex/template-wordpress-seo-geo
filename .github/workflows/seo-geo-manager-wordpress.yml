@@ -13,6 +13,8 @@ on:
       - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-featured-media-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-featured-media-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-theme-model-read-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
@@ -43,6 +45,8 @@ on:
       - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-featured-media-acceptance.sh'
+      - 'scripts/ci/seo-geo-manager-featured-media-acceptance.php'
       - 'scripts/ci/seo-geo-manager-structured-acceptance.php'
       - 'scripts/ci/seo-geo-manager-theme-model-read-acceptance.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-acceptance.php'
@@ -70,9 +74,9 @@ concurrency:
 
 jobs:
   manager-wordpress:
-    name: C1-C5 + capability/auth + Theme + SEO authority + guarded field operations
+    name: C1-C6 + capability/auth + Theme + SEO authority + guarded field operations
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -83,6 +87,7 @@ jobs:
           bash -n scripts/ci/seo-geo-manager-wordpress-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-application-password-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh
+          bash -n scripts/ci/seo-geo-manager-featured-media-acceptance.sh
           bash -n scripts/ci/seo-geo-manager-permalink-acceptance.sh
           php -l scripts/ci/seo-geo-manager-wordpress-acceptance.php
           php -l scripts/ci/seo-geo-manager-capability-contract.php
@@ -90,6 +95,7 @@ jobs:
           php -l scripts/ci/seo-geo-manager-capabilities-acceptance.php
           php -l scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php
           php -l scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php
+          php -l scripts/ci/seo-geo-manager-featured-media-acceptance.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
           php -l scripts/ci/seo-geo-manager-theme-model-read-acceptance.php
           php -l scripts/ci/seo-geo-manager-seo-authority-acceptance.php
@@ -129,6 +135,9 @@ jobs:
 
       - name: Content create publish and schedule acceptance
         run: bash scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh
+
+      - name: Featured-media inspect assign verify and rollback acceptance
+        run: bash scripts/ci/seo-geo-manager-featured-media-acceptance.sh
 
       - name: Permalink authority, clean target, protected slug repair, atomic redirect, history, rendered verification and field gate acceptance
         run: bash scripts/ci/seo-geo-manager-permalink-acceptance.sh
