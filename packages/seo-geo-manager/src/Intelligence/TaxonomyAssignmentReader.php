@@ -24,7 +24,11 @@ final class TaxonomyAssignmentReader {
 	public static function read( int $resource_id, string $taxonomy_name ) {
 		$taxonomy_name = sanitize_key( $taxonomy_name );
 		$resource      = get_post( $resource_id );
-		if ( ! self::supported_resource( $resource ) ) {
+		if (
+			! $resource instanceof WP_Post
+			|| ! in_array( $resource->post_type, array( 'post', 'page' ), true )
+			|| in_array( $resource->post_status, array( 'trash', 'auto-draft' ), true )
+		) {
 			return new WP_Error(
 				'seo_geo_manager_taxonomy_resource_not_found',
 				'The requested post/page was not found.',
@@ -101,8 +105,16 @@ final class TaxonomyAssignmentReader {
 	 */
 	public static function term_ids( int $resource_id, string $taxonomy_name ) {
 		$resource = get_post( $resource_id );
-		if ( ! self::supported_resource( $resource ) ) {
-			return new WP_Error( 'seo_geo_manager_taxonomy_resource_not_found', 'The requested post/page was not found.', array( 'status' => 404 ) );
+		if (
+			! $resource instanceof WP_Post
+			|| ! in_array( $resource->post_type, array( 'post', 'page' ), true )
+			|| in_array( $resource->post_status, array( 'trash', 'auto-draft' ), true )
+		) {
+			return new WP_Error(
+				'seo_geo_manager_taxonomy_resource_not_found',
+				'The requested post/page was not found.',
+				array( 'status' => 404 )
+			);
 		}
 
 		$taxonomy = self::taxonomy_for_resource( $resource, sanitize_key( $taxonomy_name ) );
@@ -138,15 +150,6 @@ final class TaxonomyAssignmentReader {
 				)
 			)
 		);
-	}
-
-	/**
-	 * @param mixed $post WordPress post value.
-	 */
-	private static function supported_resource( $post ): bool {
-		return $post instanceof WP_Post
-			&& in_array( $post->post_type, array( 'post', 'page' ), true )
-			&& ! in_array( $post->post_status, array( 'trash', 'auto-draft' ), true );
 	}
 
 	/** @return WP_Taxonomy|WP_Error */
