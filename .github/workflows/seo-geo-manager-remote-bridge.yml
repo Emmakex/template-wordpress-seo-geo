@@ -9,6 +9,8 @@ on:
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/seo-geo-manager.php'
       - 'scripts/ci/seo-geo-manager-remote-bridge-contract.php'
+      - 'scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
       - '.github/workflows/seo-geo-manager-remote-bridge.yml'
   push:
@@ -21,6 +23,8 @@ on:
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/seo-geo-manager.php'
       - 'scripts/ci/seo-geo-manager-remote-bridge-contract.php'
+      - 'scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh'
       - 'docs/SEO_GEO_MANAGER_0.3.50_CONTROL_PLANE_REMOTE_BRIDGE.md'
       - '.github/workflows/seo-geo-manager-remote-bridge.yml'
   workflow_dispatch:
@@ -33,14 +37,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  remote-bridge:
-    name: Manager-owned remote bridge R1-R2
+  remote-bridge-contract:
+    name: Manager-owned remote bridge R1-R2 contract
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: PHP syntax
+      - name: Syntax
         run: |
           php -l packages/seo-geo-manager/src/Remote/Credentials.php
           php -l packages/seo-geo-manager/src/Remote/TokenService.php
@@ -51,6 +55,25 @@ jobs:
           php -l packages/seo-geo-manager/src/Admin/RemoteAccess.php
           php -l packages/seo-geo-manager/src/Plugin.php
           php -l scripts/ci/seo-geo-manager-remote-bridge-contract.php
+          php -l scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php
+          bash -n scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh
 
       - name: Remote bridge contract
         run: php scripts/ci/seo-geo-manager-remote-bridge-contract.php
+
+  remote-bridge-wordpress:
+    name: Manager-owned remote bridge WordPress runtime
+    runs-on: ubuntu-latest
+    needs: remote-bridge-contract
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Pull pinned fixtures
+        run: |
+          docker pull wordpress:7.1.0-php8.2-apache
+          docker pull wordpress:cli-2.12.0-php8.2
+          docker pull mariadb:11.8.9
+
+      - name: Remote bridge WordPress acceptance
+        run: bash scripts/ci/seo-geo-manager-remote-wordpress-acceptance.sh
