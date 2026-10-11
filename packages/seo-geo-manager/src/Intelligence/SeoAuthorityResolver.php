@@ -38,14 +38,31 @@ final class SeoAuthorityResolver {
 	);
 
 	/**
+	 * Yoast signals backed by its public WordPress Abilities write contract.
+	 *
+	 * @var list<string>
+	 */
+	private const YOAST_WRITABLE_SIGNALS = array(
+		'canonical',
+		'robots',
+		'schema',
+	);
+
+	/**
 	 * Resolve active plugin families plus the Theme fallback.
 	 *
-	 * @param list<string> $active_plugins              Active plugin files.
-	 * @param bool         $theme_available             Whether the SEO/GEO Theme is active.
-	 * @param bool         $theme_native_writer_ready   Whether the verified Core native writer is available.
+	 * @param list<string>        $active_plugins            Active plugin files.
+	 * @param bool                $theme_available           Whether the SEO/GEO Theme is active.
+	 * @param bool                $theme_native_writer_ready Whether the verified Core native writer is available.
+	 * @param array<string, bool> $provider_write_adapters   Verified provider write-adapter readiness by family ID.
 	 * @return array<string, mixed>
 	 */
-	public static function resolve( array $active_plugins, bool $theme_available, bool $theme_native_writer_ready = false ): array {
+	public static function resolve(
+		array $active_plugins,
+		bool $theme_available,
+		bool $theme_native_writer_ready = false,
+		array $provider_write_adapters = array()
+	): array {
 		$families = self::active_families( $active_plugins );
 
 		if ( 1 < count( $families ) ) {
@@ -61,16 +78,23 @@ final class SeoAuthorityResolver {
 		}
 
 		if ( 1 === count( $families ) ) {
-			$authority = array_values( $families )[0];
+			$authority     = array_values( $families )[0];
+			$family_id     = isset( $authority['id'] ) && is_string( $authority['id'] ) ? $authority['id'] : '';
+			$adapter_ready = '' !== $family_id && true === ( $provider_write_adapters[ $family_id ] ?? false );
+			if ( $adapter_ready && 'yoast' === $family_id ) {
+				$authority['adapter'] = 'yoast-abilities';
+			}
 
 			return array(
 				'resolved'            => true,
 				'authority'           => $authority,
 				'provider_families'   => array( $authority ),
 				'conflict'            => false,
-				'write_adapter_ready' => false,
-				'signals'             => self::signals( (string) $authority['id'], false, 'resolved-read-only-adapter' ),
-				'next_action'         => 'implement-and-verify-provider-write-adapter',
+				'write_adapter_ready' => $adapter_ready,
+				'signals'             => self::provider_signals( $family_id, $adapter_ready ),
+				'next_action'         => $adapter_ready
+					? 'use-verified-provider-write-adapter'
+					: 'implement-and-verify-provider-write-adapter',
 			);
 		}
 
@@ -216,6 +240,25 @@ final class SeoAuthorityResolver {
 		foreach ( self::THEME_NATIVE_WRITABLE_SIGNALS as $signal ) {
 			$result[ $signal ]['writable'] = true;
 			$result[ $signal ]['state']    = 'resolved-native-write-adapter';
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Expose only provider signals backed by an accepted public write contract.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	private static function provider_signals( string $family_id, bool $adapter_ready ): array {
+		$result = self::signals( $family_id, false, 'resolved-read-only-adapter' );
+		if ( ! $adapter_ready || 'yoast' !== $family_id ) {
+			return $result;
+		}
+
+		foreach ( self::YOAST_WRITABLE_SIGNALS as $signal ) {
+			$result[ $signal ]['writable'] = true;
+			$result[ $signal ]['state']    = 'resolved-provider-write-adapter';
 		}
 
 		return $result;
