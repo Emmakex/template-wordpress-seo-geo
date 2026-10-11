@@ -66,6 +66,7 @@ jobs:
           path: |
             dist-seo-geo-manager/seo-geo-manager.zip
             dist-seo-geo-manager/seo-geo-manager.zip.sha256
+            dist-seo-geo-manager/seo-geo-manager.zip.tree-sha256
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
