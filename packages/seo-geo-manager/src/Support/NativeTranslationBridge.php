@@ -62,8 +62,8 @@ final class NativeTranslationBridge {
 	/**
 	 * Invoke one accepted writer method without creating a compile-time dependency on Core.
 	 *
-	 * @param string       $method Method name.
-	 * @param list<mixed>  $args   Method arguments.
+	 * @param string      $method Method name.
+	 * @param list<mixed> $args   Method arguments.
 	 * @return array<string, mixed>|WP_Error
 	 */
 	private static function invoke( string $method, array $args ) {
@@ -103,12 +103,7 @@ final class NativeTranslationBridge {
 		}
 
 		$class_name = self::WRITER_CLASS;
-		$writer     = new $class_name();
-		if ( ! is_object( $writer ) ) {
-			return self::unavailable();
-		}
-
-		return $writer;
+		return new $class_name();
 	}
 
 	private static function unavailable(): WP_Error {
