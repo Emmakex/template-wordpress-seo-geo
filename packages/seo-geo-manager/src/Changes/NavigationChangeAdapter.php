@@ -17,6 +17,66 @@ final class NavigationChangeAdapter {
 	private const ADAPTER        = 'navigation-menu';
 
 	/**
+	 * Inspect one navigation menu using the exact fingerprint used by Preview/Apply/Rollback.
+	 *
+	 * @return array<string, mixed>|WP_Error
+	 */
+	public static function inspect( int $menu_id ) {
+		if ( 1 > $menu_id ) {
+			return new WP_Error( 'seo_geo_manager_navigation_menu_required', 'A navigation menu ID is required.', array( 'status' => 400 ) );
+		}
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
+			return new WP_Error( 'seo_geo_manager_forbidden', 'You cannot inspect WordPress navigation menus.', array( 'status' => 403 ) );
+		}
+
+		$menu = wp_get_nav_menu_object( $menu_id );
+		if ( ! $menu instanceof WP_Term ) {
+			return new WP_Error( 'seo_geo_manager_navigation_menu_missing', 'Navigation menu not found.', array( 'status' => 404 ) );
+		}
+
+		$fingerprint = self::menu_fingerprint( $menu_id );
+		if ( '' === $fingerprint ) {
+			return new WP_Error( 'seo_geo_manager_navigation_fingerprint_unavailable', 'Navigation fingerprint could not be calculated.', array( 'status' => 409 ) );
+		}
+
+		$items = wp_get_nav_menu_items( $menu_id, array( 'post_status' => 'any' ) );
+		$items = is_array( $items ) ? $items : array();
+		$bounded_items = array();
+		foreach ( $items as $item ) {
+			if ( ! is_object( $item ) || ! isset( $item->ID, $item->url ) ) {
+				continue;
+			}
+			$bounded_items[] = array(
+				'id'        => (int) $item->ID,
+				'order'     => (int) ( $item->menu_order ?? 0 ),
+				'parent'    => (int) ( $item->menu_item_parent ?? 0 ),
+				'type'      => (string) ( $item->type ?? '' ),
+				'object'    => (string) ( $item->object ?? '' ),
+				'object_id' => (int) ( $item->object_id ?? 0 ),
+				'title'     => (string) ( $item->title ?? '' ),
+				'url'       => (string) $item->url,
+				'status'    => (string) get_post_status( (int) $item->ID ),
+			);
+		}
+
+		return array(
+			'schema_version' => self::SCHEMA_VERSION,
+			'adapter'        => self::ADAPTER,
+			'bounded'        => true,
+			'menu_id'        => $menu_id,
+			'menu_name'      => (string) $menu->name,
+			'fingerprint'    => $fingerprint,
+			'item_count'     => count( $bounded_items ),
+			'items'          => $bounded_items,
+			'policy'         => array(
+				'custom_links_only_for_automatic_change' => true,
+				'public_navigation_requires_approval'    => true,
+				'raw_menu_item_meta_returned'            => false,
+			),
+		);
+	}
+
+	/**
 	 * Preview a bounded navigation-menu URL correction.
 	 *
 	 * @param array<string, mixed> $payload Request payload.
@@ -69,11 +129,9 @@ final class NavigationChangeAdapter {
 		if ( is_wp_error( $lookup ) ) {
 			return $lookup;
 		}
-
 		if ( true === $lookup['existing'] ) {
 			return self::replay_operation( $lookup['operation_id'] );
 		}
-
 		if ( true !== ( $payload['allow_public_navigation'] ?? false ) ) {
 			return new WP_Error(
 				'seo_geo_manager_navigation_public_approval_required',
@@ -120,15 +178,19 @@ final class NavigationChangeAdapter {
 
 		$operation = array(
 			'operation_id'       => $operation_id,
+			'operation_type'     => 'navigation-change',
 			'adapter'            => self::ADAPTER,
 			'status'             => 'applied',
 			'menu_id'            => $prepared['menu_id'],
 			'target_id'          => $prepared['menu_id'],
+			'target_type'        => 'navigation-menu',
 			'menu_name'          => $prepared['menu_name'],
 			'before_fingerprint' => $prepared['before_fingerprint'],
 			'after_fingerprint'  => $after_fingerprint,
 			'items'              => $prepared['items'],
+			'item_count'         => count( $prepared['items'] ),
 			'suggested_url'      => $prepared['suggested_url'],
+			'changes'            => array( 'navigation_url' => true ),
 			'created_at_gmt'     => gmdate( 'c' ),
 			'idempotent_replay'  => false,
 		);
@@ -143,6 +205,37 @@ final class NavigationChangeAdapter {
 		}
 
 		return $operation;
+	}
+
+	/**
+	 * Verify one applied navigation-menu operation against the current menu fingerprint.
+	 *
+	 * @param array<string, mixed> $operation Stored operation.
+	 * @return array<string, mixed>|WP_Error
+	 */
+	public static function verify( array $operation ) {
+		if ( self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
+			return new WP_Error( 'seo_geo_manager_navigation_operation_not_found', 'Navigation operation not found.', array( 'status' => 404 ) );
+		}
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
+			return new WP_Error( 'seo_geo_manager_forbidden', 'You cannot verify WordPress navigation menus.', array( 'status' => 403 ) );
+		}
+
+		$menu_id = isset( $operation['menu_id'] ) ? absint( $operation['menu_id'] ) : 0;
+		$current = self::menu_fingerprint( $menu_id );
+		$after   = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
+		if ( '' === $current || '' === $after || ! hash_equals( $after, $current ) ) {
+			return new WP_Error(
+				'seo_geo_manager_navigation_verification_stale',
+				'Navigation no longer matches the applied operation.',
+				array( 'status' => 409 )
+			);
+		}
+
+		return array(
+			'verified'            => true,
+			'current_fingerprint' => $current,
+		);
 	}
 
 	/**
@@ -351,10 +444,12 @@ final class NavigationChangeAdapter {
 			$operation_id,
 			array(
 				'operation_id'       => $operation_id,
+				'operation_type'     => 'navigation-change',
 				'adapter'            => self::ADAPTER,
 				'status'             => 'failed',
 				'menu_id'            => $prepared['menu_id'],
 				'target_id'          => $prepared['menu_id'],
+				'target_type'        => 'navigation-menu',
 				'before_fingerprint' => $prepared['before_fingerprint'],
 				'created_at_gmt'     => gmdate( 'c' ),
 			)
