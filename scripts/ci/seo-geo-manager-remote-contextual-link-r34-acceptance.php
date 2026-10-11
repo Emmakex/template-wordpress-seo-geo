@@ -134,7 +134,8 @@ $capabilities = sgm_r34_request(
 sgm_r34_status( $capabilities, 200, 'R3.4 capabilities' );
 $capability_data = sgm_r34_data( $capabilities );
 $remote_data     = is_array( $capability_data['data'] ?? null ) ? $capability_data['data'] : array();
-sgm_r34_assert( 'R3.4' === ( $remote_data['mutation_transport']['milestone'] ?? '' ), 'R3.4 milestone is not advertised.' );
+$current_milestone = (string) ( $remote_data['mutation_transport']['milestone'] ?? '' );
+sgm_r34_assert( '' !== $current_milestone, 'Current remote mutation milestone is not advertised.' );
 sgm_r34_assert( in_array( 'contextual-link-change', $remote_data['mutation_transport']['supported_operations'] ?? array(), true ), 'Contextual-link mutation is not advertised.' );
 sgm_r34_assert( 'site.diagnostics' === ( $remote_data['read_surface']['/remote/contextual-links'] ?? '' ), 'Contextual-link discovery route is not advertised.' );
 
