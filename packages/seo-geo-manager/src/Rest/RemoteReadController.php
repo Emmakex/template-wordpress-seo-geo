@@ -12,6 +12,7 @@ namespace SeoGeo\Manager\Rest;
 use SeoGeo\Manager\Changes\NavigationChangeAdapter;
 use SeoGeo\Manager\Intelligence\ContextualLinkReader;
 use SeoGeo\Manager\Intelligence\FeaturedMediaReader;
+use SeoGeo\Manager\Intelligence\MediaReferenceReader;
 use SeoGeo\Manager\Intelligence\SeoAuthorityScanner;
 use SeoGeo\Manager\Intelligence\SiteIntelligenceScanner;
 use SeoGeo\Manager\Remote\Audit;
@@ -41,6 +42,7 @@ final class RemoteReadController {
 		self::register_read_route( '/remote/contextual-links', 'site.diagnostics', 'contextual_links' );
 		self::register_read_route( '/remote/navigation', 'site.diagnostics', 'navigation' );
 		self::register_read_route( '/remote/featured-media', 'site.diagnostics', 'featured_media' );
+		self::register_read_route( '/remote/media', 'site.diagnostics', 'media' );
 		self::register_read_route( '/remote/audit', 'site.diagnostics', 'audit' );
 	}
 
@@ -55,7 +57,7 @@ final class RemoteReadController {
 					'version'          => SEO_GEO_MANAGER_VERSION,
 					'package'          => PackageIdentity::snapshot(),
 					'api_namespace'    => self::NAMESPACE,
-					'remote_milestone' => 'R3.6',
+					'remote_milestone' => 'R3.7',
 				),
 				'environment'   => EnvironmentPolicy::snapshot(),
 				'seo_authority' => array(
@@ -91,11 +93,12 @@ final class RemoteReadController {
 					'/remote/contextual-links'  => 'site.diagnostics',
 					'/remote/navigation'        => 'site.diagnostics',
 					'/remote/featured-media'    => 'site.diagnostics',
+					'/remote/media'             => 'site.diagnostics',
 					'/remote/audit'             => 'site.diagnostics',
 				),
 				'mutation_transport'       => array(
 					'available'            => true,
-					'milestone'            => 'R3.6',
+					'milestone'            => 'R3.7',
 					'supported_operations' => MutationOperations::supported(),
 					'lifecycle'            => array( 'plan', 'apply', 'verify', 'rollback' ),
 					'plan_ttl_seconds'     => 15 * MINUTE_IN_SECONDS,
@@ -180,6 +183,21 @@ final class RemoteReadController {
 	public static function featured_media( WP_REST_Request $request ) {
 		$resource_id = absint( $request->get_param( 'resource_id' ) );
 		$result      = FeaturedMediaReader::read( $resource_id );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return self::response( $request, $result );
+	}
+
+	/**
+	 * Return one bounded image attachment for remote alt planning.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function media( WP_REST_Request $request ) {
+		$media_id = absint( $request->get_param( 'media_id' ) );
+		$result   = MediaReferenceReader::read_media( $media_id );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
