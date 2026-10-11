@@ -7,8 +7,10 @@ canonical-only Preview -> Apply -> readback -> Rollback cycle on a dedicated
 draft. Revocation is proved in a separate invocation after the credential has
 been deleted. The finalize phase combines two sites without contacting them.
 
-Application Passwords are read from an environment variable and are never
-written to evidence or diagnostic output.
+The base URL may be a root or subdirectory WordPress site root, for example
+https://example.test or https://example.test/nuevaweb. Application Passwords
+are read from an environment variable and are never written to evidence or
+diagnostic output.
 """
 
 from __future__ import annotations
