@@ -227,8 +227,8 @@ final class NativeSeoMetadataWriter {
 		}
 
 		$normalized = esc_url_raw( trim( $value ), array( 'http', 'https' ) );
-		$scheme     = is_string( $normalized ) ? strtolower( (string) wp_parse_url( $normalized, PHP_URL_SCHEME ) ) : '';
-		$host       = is_string( $normalized ) ? (string) wp_parse_url( $normalized, PHP_URL_HOST ) : '';
+		$scheme     = strtolower( (string) wp_parse_url( $normalized, PHP_URL_SCHEME ) );
+		$host       = (string) wp_parse_url( $normalized, PHP_URL_HOST );
 		if ( '' === $normalized || ! in_array( $scheme, array( 'http', 'https' ), true ) || '' === $host ) {
 			return new WP_Error( 'seo_geo_native_seo_canonical_invalid', 'Canonical override must be an absolute HTTP(S) URL or null.', array( 'status' => 400 ) );
 		}
