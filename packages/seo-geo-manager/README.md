@@ -39,6 +39,7 @@ External orchestration decides **what** should be created, changed or optimized 
 - expected-revision/fingerprint protection;
 - production-environment acknowledgement where required;
 - normal page/post operations;
+- bounded taxonomy assignment;
 - Theme semantic-model operations;
 - supported navigation/internal-link/media operations;
 - SEO output-authority/provider adapters;
@@ -53,6 +54,7 @@ External orchestration decides **what** should be created, changed or optimized 
 - keyword/market/competitor research;
 - deciding which landing should exist;
 - deciding which article should be written;
+- deciding taxonomy/content-cluster strategy;
 - autonomous content strategy;
 - autonomous Search Console/Bing prioritization;
 - frontend visual composition when SEO/GEO Theme is active;
@@ -126,6 +128,45 @@ POST /changes/{operation_id}/rollback
 
 The generic change-set engine provides field-level preview, expected fingerprint protection, idempotency, environment binding, exact persistence verification and stale-safe rollback.
 
+### Content lifecycle — 0.3.35+
+
+```text
+POST /content/resources/preview
+POST /content/resources/apply
+POST /content/{id}/publication/preview
+POST /content/{id}/publication/apply
+```
+
+The lifecycle contract supports normal WordPress post/page creation, draft-first operation, publish/schedule, exact slug-collision rejection, idempotent creation and stale-fingerprint publication protection.
+
+### Taxonomy assignment — 0.3.44+
+
+```text
+GET  /content/{resource_id}/taxonomies/{taxonomy}
+POST /content/{resource_id}/taxonomies/{taxonomy}/changes/preview
+POST /content/{resource_id}/taxonomies/{taxonomy}/changes/apply
+POST /content/taxonomies/changes/{operation_id}/rollback
+```
+
+This operation assigns **existing term IDs only**. External orchestration decides which terms are appropriate; Manager only executes the accepted relationship change safely.
+
+The contract supports registered taxonomies on normal posts/pages and enforces:
+
+- `edit_post(resource)`;
+- the selected taxonomy's real `assign_terms` capability;
+- exact assignment fingerprint;
+- Preview before mutation;
+- explicit approval for published targets;
+- idempotency;
+- production environment binding;
+- exact readback verification;
+- stale-safe rollback;
+- permission re-check before rollback.
+
+0.3.44 repository acceptance proves both `category` and `post_tag` while keeping the implementation taxonomy-generic. It does not create terms as a side effect and does not modify `post_content`.
+
+Detailed contract: `docs/SEO_GEO_MANAGER_0.3.44_TAXONOMY_ASSIGNMENT.md`.
+
 ### Theme structured content
 
 ```text
@@ -176,7 +217,7 @@ Manager never returns credentials through its capability manifest or operation e
 
 Discovering an operation does not authorize it.
 
-Each REST endpoint retains its own capability checks. Resource-specific operations may additionally require `edit_post`/resource ownership checks. Site-wide operations remain more restrictive.
+Each REST endpoint retains its own capability checks. Resource-specific operations additionally enforce their own `edit_post`/taxonomy/media/provider authority as appropriate. Site-wide operations remain more restrictive.
 
 External orchestration must call `/capabilities` and inspect the current resource/environment before preparing an operation.
 
@@ -266,8 +307,13 @@ Manager does not need to absorb or replace the complete Migration Bridge product
 
 ## Current development line
 
-- **0.3.33** closed the immediate Field Gate UI handoff defect found during EMMAKE finalization.
-- **0.3.34** begins the post-boundary-freeze Manager roadmap with authenticated capability discovery for generic remote orchestration.
+- **0.3.33** closed the immediate migration-specific Field Gate UI handoff defect found during EMMAKE finalization.
+- **0.3.34** started the generic remote-control line with authenticated capability discovery.
+- **0.3.35** added generic normal post/page creation plus publish/schedule lifecycle primitives.
+- **0.3.43** closed strategic Theme media binding through the public Theme contract with Read -> Preview -> Apply -> Verify -> Rollback.
+- **0.3.44** closes bounded existing-term taxonomy assignment for generic content operations.
+
+C4 remains **in progress**, not complete. The next bounded C4 gap is **author binding**: the remote operator and the public editorial author must be allowed to be different existing WordPress identities under explicit capability and stale-state guards.
 
 EMMAKE `/nuevaweb/` remains the first Theme-site field reference, not a hardcoded product assumption.
 
@@ -279,6 +325,7 @@ See:
 - `docs/CURRENT_THREE_PRODUCT_ROADMAP.md`;
 - `docs/DOCUMENTATION_AUTHORITY.md`;
 - `docs/SEO_GEO_MANAGER.md`;
-- `docs/SEO_GEO_MANAGER_0.3.34_CAPABILITY_DISCOVERY.md`.
+- `docs/SEO_GEO_MANAGER_REMOTE_ACCESS.md`;
+- `docs/SEO_GEO_MANAGER_0.3.44_TAXONOMY_ASSIGNMENT.md`.
 
-The next Manager focus after capability discovery is to close C2 remote-auth acceptance and then continue C3/C4 generic hands/content operations, rather than expanding migration-specific logic.
+The current Manager focus remains generic bridge/control primitives. New migration transport/rescue/reset work belongs to Migration Bridge, and strategic content/SEO decisions remain in external orchestration.
