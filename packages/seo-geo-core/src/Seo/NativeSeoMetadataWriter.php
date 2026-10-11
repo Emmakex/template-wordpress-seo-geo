@@ -318,7 +318,7 @@ final class NativeSeoMetadataWriter {
 	/**
 	 * Restore raw metadata after a failed replacement.
 	 *
-	 * @param int                                             $post_id  WordPress resource ID.
+	 * @param int                                           $post_id  WordPress resource ID.
 	 * @param array<string, array{exists:bool,value:mixed}> $snapshot Previous raw metadata state.
 	 */
 	private function restore( int $post_id, array $snapshot ): void {
