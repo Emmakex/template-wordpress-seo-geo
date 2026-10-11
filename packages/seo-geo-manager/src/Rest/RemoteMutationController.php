@@ -360,7 +360,9 @@ final class RemoteMutationController {
 		return self::guard()->validate_idempotency( $connection_id, $request_id, self::guard()->request_fingerprint( $request ) );
 	}
 
-	/** @param array<string, mixed> $result */
+	/**
+	 * @param array<string, mixed> $result Non-secret idempotency result metadata.
+	 */
 	private static function remember_request( WP_REST_Request $request, array $result ): void {
 		$context = self::authenticator()->context( $request );
 		$metadata = is_array( $context['metadata'] ?? null ) ? $context['metadata'] : array();
@@ -379,7 +381,10 @@ final class RemoteMutationController {
 		return (string) ( $connection['connection_id'] ?? '' );
 	}
 
-	/** @param array<string, mixed> $plan @return array<string, mixed> */
+	/**
+	 * @param array<string, mixed> $plan Remote plan record.
+	 * @return array<string, mixed>
+	 */
 	private static function bounded_plan( array $plan ): array {
 		return array(
 			'plan_id' => (string) ( $plan['plan_id'] ?? '' ),
@@ -392,7 +397,10 @@ final class RemoteMutationController {
 		);
 	}
 
-	/** @param array<string, mixed> $operation @return array<string, mixed> */
+	/**
+	 * @param array<string, mixed> $operation Private Manager operation record.
+	 * @return array<string, mixed>
+	 */
 	private static function bounded_operation( array $operation ): array {
 		$changes = isset( $operation['changes'] ) && is_array( $operation['changes'] ) ? array_keys( $operation['changes'] ) : array();
 		return array(
@@ -412,7 +420,7 @@ final class RemoteMutationController {
 	}
 
 	/**
-	 * @param array<string, scalar> $audit_meta
+	 * @param array<string, scalar> $audit_meta Bounded audit metadata.
 	 */
 	private static function response( WP_REST_Request $request, array $data, bool $idempotent_replay, array $audit_meta = array() ): WP_REST_Response {
 		$context = self::authenticator()->context( $request );
