@@ -26,6 +26,7 @@ final class NativeSeoMetadataWriter {
 	/**
 	 * Inspect the complete normalized native SEO override state.
 	 *
+	 * @param int $post_id WordPress resource ID.
 	 * @return array<string, mixed>|WP_Error
 	 */
 	public function inspect( int $post_id ) {
@@ -58,7 +59,8 @@ final class NativeSeoMetadataWriter {
 	 * Every supported field is required in the payload. A null value clears the
 	 * corresponding override and restores the normal Core fallback behavior.
 	 *
-	 * @param array<string, mixed> $values Complete desired override state.
+	 * @param int                  $post_id WordPress resource ID.
+	 * @param array<string, mixed> $values  Complete desired override state.
 	 * @return array<string, mixed>|WP_Error
 	 */
 	public function replace( int $post_id, array $values ) {
@@ -80,7 +82,7 @@ final class NativeSeoMetadataWriter {
 		}
 
 		$inspection = $this->inspect( $post_id );
-		if ( is_wp_error( $inspection ) || $normalized !== ( $inspection['values'] ?? null ) ) {
+		if ( is_wp_error( $inspection ) || ( $inspection['values'] ?? null ) !== $normalized ) {
 			$this->restore( $post_id, $before );
 
 			return new WP_Error(
@@ -96,7 +98,8 @@ final class NativeSeoMetadataWriter {
 	/**
 	 * Build the deterministic resource SEO fingerprint.
 	 *
-	 * @param array<string, string|null> $values Normalized override state.
+	 * @param int                        $post_id WordPress resource ID.
+	 * @param array<string, string|null> $values  Normalized override state.
 	 */
 	public static function fingerprint( int $post_id, array $values ): string {
 		return hash(
@@ -113,6 +116,7 @@ final class NativeSeoMetadataWriter {
 	/**
 	 * Validate one WordPress resource supported by the native SEO contract.
 	 *
+	 * @param int $post_id WordPress resource ID.
 	 * @return WP_Post|WP_Error
 	 */
 	private function eligible_post( int $post_id ) {
@@ -262,6 +266,7 @@ final class NativeSeoMetadataWriter {
 	/**
 	 * Capture exact raw metadata state for compensation.
 	 *
+	 * @param int $post_id WordPress resource ID.
 	 * @return array<string, array{exists:bool,value:mixed}>
 	 */
 	private function snapshot( int $post_id ): array {
@@ -279,7 +284,8 @@ final class NativeSeoMetadataWriter {
 	/**
 	 * Persist all normalized override values.
 	 *
-	 * @param array<string, string|null> $values Normalized state.
+	 * @param int                        $post_id WordPress resource ID.
+	 * @param array<string, string|null> $values  Normalized state.
 	 * @return true|WP_Error
 	 */
 	private function persist( int $post_id, array $values ) {
@@ -301,7 +307,7 @@ final class NativeSeoMetadataWriter {
 			}
 
 			update_post_meta( $post_id, $meta_key, $value );
-			if ( $value !== get_post_meta( $post_id, $meta_key, true ) ) {
+			if ( get_post_meta( $post_id, $meta_key, true ) !== $value ) {
 				return new WP_Error( 'seo_geo_native_seo_write_failed', 'Could not persist a native SEO override.', array( 'status' => 500 ) );
 			}
 		}
@@ -312,6 +318,7 @@ final class NativeSeoMetadataWriter {
 	/**
 	 * Restore raw metadata after a failed replacement.
 	 *
+	 * @param int                                             $post_id  WordPress resource ID.
 	 * @param array<string, array{exists:bool,value:mixed}> $snapshot Previous raw metadata state.
 	 */
 	private function restore( int $post_id, array $snapshot ): void {
@@ -326,6 +333,9 @@ final class NativeSeoMetadataWriter {
 
 	/**
 	 * Read one normalized text override.
+	 *
+	 * @param int    $post_id  WordPress resource ID.
+	 * @param string $meta_key Native SEO metadata key.
 	 */
 	private function text_value( int $post_id, string $meta_key ): ?string {
 		$value = get_post_meta( $post_id, $meta_key, true );
@@ -340,6 +350,8 @@ final class NativeSeoMetadataWriter {
 
 	/**
 	 * Read one normalized canonical override.
+	 *
+	 * @param int $post_id WordPress resource ID.
 	 */
 	private function canonical_value( int $post_id ): ?string {
 		$value = get_post_meta( $post_id, NativeSeoMetadata::META_CANONICAL, true );
@@ -354,6 +366,8 @@ final class NativeSeoMetadataWriter {
 
 	/**
 	 * Read one normalized indexability override.
+	 *
+	 * @param int $post_id WordPress resource ID.
 	 */
 	private function indexability_value( int $post_id ): ?string {
 		$value = get_post_meta( $post_id, NativeSeoMetadata::META_INDEXABILITY, true );
