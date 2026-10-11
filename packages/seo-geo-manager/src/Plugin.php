@@ -35,6 +35,7 @@ use SeoGeo\Manager\Rest\OperationHistoryController;
 use SeoGeo\Manager\Rest\PermalinkController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
+use SeoGeo\Manager\Rest\TaxonomyAssignmentController;
 use SeoGeo\Manager\Rest\ThemeModelController;
 use SeoGeo\Manager\Rest\ThemeStrategicMediaController;
 use SeoGeo\Manager\Rest\ThemeStructuredContentController;
@@ -68,6 +69,7 @@ final class Plugin {
 				CapabilitiesController::register_routes();
 				ContentController::register_routes();
 				ContentLifecycleController::register_routes();
+				TaxonomyAssignmentController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
 				ContextualLinkController::register_routes();
