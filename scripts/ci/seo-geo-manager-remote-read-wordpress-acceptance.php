@@ -132,7 +132,7 @@ $links_scope_denied = sgm_remote_request( '/seo-geo-manager/v1/remote/contextual
 sgm_expect_status( $links_scope_denied, 403, 'contextual-link scope denial' );
 $navigation_scope_denied = sgm_remote_request( '/seo-geo-manager/v1/remote/navigation', sgm_remote_headers( $credential, 'ci-navigation-scope-denied-0001', 'ci-navigation-scope-denied-nonce-0001' ) );
 sgm_expect_status( $navigation_scope_denied, 403, 'navigation scope denial' );
-$featured_scope_denied = sgm_remote_request( '/seo-geo-manager/v1/remote/featured-media?resource_id=1', sgm_remote_headers( $credential, 'ci-featured-scope-denied-0001', 'ci-featured-scope-denied-nonce-0001' ) );
+$featured_scope_denied = sgm_remote_request( '/seo-geo-manager/v1/remote/featured-media', sgm_remote_headers( $credential, 'ci-featured-scope-denied-0001', 'ci-featured-scope-denied-nonce-0001' ) );
 sgm_expect_status( $featured_scope_denied, 403, 'featured-media scope denial' );
 
 $scope_restore = $credentials->set_scopes( Credentials::default_scopes() );
