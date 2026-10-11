@@ -13,6 +13,7 @@ on:
       - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-author-binding-acceptance.php'
       - 'scripts/ci/seo-geo-manager-featured-media-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-featured-media-acceptance.php'
       - 'scripts/ci/seo-geo-manager-theme-media-acceptance.php'
@@ -46,6 +47,7 @@ on:
       - 'scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php'
+      - 'scripts/ci/seo-geo-manager-author-binding-acceptance.php'
       - 'scripts/ci/seo-geo-manager-featured-media-acceptance.sh'
       - 'scripts/ci/seo-geo-manager-featured-media-acceptance.php'
       - 'scripts/ci/seo-geo-manager-theme-media-acceptance.php'
@@ -97,6 +99,7 @@ jobs:
           php -l scripts/ci/seo-geo-manager-capabilities-acceptance.php
           php -l scripts/ci/seo-geo-manager-application-passwords-mu-plugin.php
           php -l scripts/ci/seo-geo-manager-content-lifecycle-acceptance.php
+          php -l scripts/ci/seo-geo-manager-author-binding-acceptance.php
           php -l scripts/ci/seo-geo-manager-featured-media-acceptance.php
           php -l scripts/ci/seo-geo-manager-theme-media-acceptance.php
           php -l scripts/ci/seo-geo-manager-structured-acceptance.php
@@ -136,7 +139,7 @@ jobs:
       - name: Application Password transport and revocation acceptance
         run: bash scripts/ci/seo-geo-manager-application-password-acceptance.sh
 
-      - name: Content create publish and schedule acceptance
+      - name: Content lifecycle, taxonomy and author binding acceptance
         run: bash scripts/ci/seo-geo-manager-content-lifecycle-acceptance.sh
 
       - name: Featured and strategic Theme media inspect assign verify and rollback acceptance
