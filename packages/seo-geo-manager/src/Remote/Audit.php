@@ -32,6 +32,7 @@ final class Audit {
 			'event'             => substr( $this->text( $record['event'] ?? 'request' ), 0, 80 ),
 			'outcome'           => substr( $this->text( $record['outcome'] ?? '' ), 0, 40 ),
 			'error_code'        => substr( sanitize_key( (string) ( $record['error_code'] ?? '' ) ), 0, 80 ),
+			'plan_id'           => substr( $this->text( $record['plan_id'] ?? '' ), 0, 100 ),
 			'operation_id'      => substr( $this->text( $record['operation_id'] ?? '' ), 0, 100 ),
 			'reason'            => substr( $this->text( $record['reason'] ?? '' ), 0, 500 ),
 		);
