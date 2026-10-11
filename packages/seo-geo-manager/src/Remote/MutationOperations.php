@@ -12,6 +12,7 @@ namespace SeoGeo\Manager\Remote;
 use SeoGeo\Manager\Changes\ChangeSetEngine;
 use SeoGeo\Manager\Changes\ContextualLinkChangeAdapter;
 use SeoGeo\Manager\Changes\FeaturedMediaChangeAdapter;
+use SeoGeo\Manager\Changes\MediaAltChangeAdapter;
 use SeoGeo\Manager\Changes\NavigationChangeAdapter;
 use SeoGeo\Manager\Changes\SeoAuthorityChangeAdapter;
 use SeoGeo\Manager\Changes\ThemeStructuredContentAdapter;
@@ -31,6 +32,7 @@ final class MutationOperations {
 			'contextual-link-change',
 			'navigation-change',
 			'featured-media-change',
+			'media-alt-change',
 		);
 	}
 
@@ -66,6 +68,9 @@ final class MutationOperations {
 		if ( 'featured-media-change' === $operation ) {
 			return FeaturedMediaChangeAdapter::preview( $payload );
 		}
+		if ( 'media-alt-change' === $operation ) {
+			return MediaAltChangeAdapter::preview( $payload );
+		}
 
 		return self::unsupported();
 	}
@@ -98,6 +103,9 @@ final class MutationOperations {
 		if ( 'featured-media-change' === $operation ) {
 			return FeaturedMediaChangeAdapter::apply( $payload );
 		}
+		if ( 'media-alt-change' === $operation ) {
+			return MediaAltChangeAdapter::apply( $payload );
+		}
 
 		return self::unsupported();
 	}
@@ -117,6 +125,9 @@ final class MutationOperations {
 		}
 		if ( 'featured-media-change' === $operation ) {
 			return FeaturedMediaChangeAdapter::verify( $stored );
+		}
+		if ( 'media-alt-change' === $operation ) {
+			return MediaAltChangeAdapter::verify( $stored );
 		}
 		if ( ! in_array( $operation, array( 'content-change', 'theme-structured-content', 'contextual-link-change' ), true ) ) {
 			return self::unsupported();
@@ -166,6 +177,9 @@ final class MutationOperations {
 		if ( 'featured-media-change' === $operation ) {
 			return FeaturedMediaChangeAdapter::rollback( $operation_id );
 		}
+		if ( 'media-alt-change' === $operation ) {
+			return MediaAltChangeAdapter::rollback( $operation_id );
+		}
 		if ( in_array( $operation, array( 'content-change', 'theme-structured-content' ), true ) ) {
 			return ChangeSetEngine::rollback( $operation_id );
 		}
@@ -183,7 +197,7 @@ final class MutationOperations {
 
 		return new WP_Error(
 			'seo_geo_manager_remote_rendered_verification_unsupported',
-			'Remote R3.6 mutations do not yet expose rendered verification. Use stored-state verification.',
+			'Remote R3.7 mutations do not yet expose rendered verification. Use stored-state verification.',
 			array( 'status' => 400 )
 		);
 	}
