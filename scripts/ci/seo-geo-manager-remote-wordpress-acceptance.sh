@@ -16,15 +16,17 @@ DB_USER="wordpress"
 DB_PASSWORD="remote-acceptance-password"
 DB_ROOT_PASSWORD="remote-acceptance-root"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php"
-RUNTIME_LOG="$(mktemp)"
+READ_FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php"
+MUTATION_FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php"
+READ_LOG="$(mktemp)"
+MUTATION_LOG="$(mktemp)"
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
   docker rm -f "$DB_CONTAINER" >/dev/null 2>&1 || true
   docker volume rm "$WP_VOLUME" >/dev/null 2>&1 || true
   docker network rm "$NETWORK" >/dev/null 2>&1 || true
-  rm -f "$RUNTIME_LOG"
+  rm -f "$READ_LOG" "$MUTATION_LOG"
 }
 trap cleanup EXIT
 
@@ -101,23 +103,45 @@ wp_cli core install \
 
 wp_cli plugin activate seo-geo-manager >/dev/null
 
-docker cp "$FIXTURE" "$WP_CONTAINER:/var/www/html/seo-geo-manager-remote-read-acceptance.php"
+docker cp "$READ_FIXTURE" "$WP_CONTAINER:/var/www/html/seo-geo-manager-remote-read-acceptance.php"
+docker cp "$MUTATION_FIXTURE" "$WP_CONTAINER:/var/www/html/seo-geo-manager-remote-mutation-acceptance.php"
+docker exec "$WP_CONTAINER" chown www-data:www-data \
+  /var/www/html/seo-geo-manager-remote-read-acceptance.php \
+  /var/www/html/seo-geo-manager-remote-mutation-acceptance.php
 
-docker exec "$WP_CONTAINER" chown www-data:www-data /var/www/html/seo-geo-manager-remote-read-acceptance.php
-
-printf '[remote] Running Manager-owned credential/read/scope/replay/revocation acceptance.\n'
-if ! wp_cli eval-file /var/www/html/seo-geo-manager-remote-read-acceptance.php >"$RUNTIME_LOG" 2>&1; then
-  cat "$RUNTIME_LOG"
+printf '[remote] Running Manager-owned R2 read/scope/replay/revocation acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-remote-read-acceptance.php >"$READ_LOG" 2>&1; then
+  cat "$READ_LOG"
   exit 1
 fi
-cat "$RUNTIME_LOG"
+cat "$READ_LOG"
 
-grep -q '"ok":true' "$RUNTIME_LOG" || { echo '[remote] Acceptance did not emit success marker.' >&2; exit 1; }
-grep -q '"authenticated_read":true' "$RUNTIME_LOG" || { echo '[remote] Authenticated read proof missing.' >&2; exit 1; }
-grep -q '"scope_denial":true' "$RUNTIME_LOG" || { echo '[remote] Scope denial proof missing.' >&2; exit 1; }
-grep -q '"nonce_replay_rejected":true' "$RUNTIME_LOG" || { echo '[remote] Replay rejection proof missing.' >&2; exit 1; }
-grep -q '"credential_revocation":true' "$RUNTIME_LOG" || { echo '[remote] Revocation proof missing.' >&2; exit 1; }
-grep -q '"remote_mutation_performed":false' "$RUNTIME_LOG" || { echo '[remote] R2 unexpectedly performed a remote mutation.' >&2; exit 1; }
+grep -q '"ok":true' "$READ_LOG" || { echo '[remote] R2/R3 read acceptance did not emit success marker.' >&2; exit 1; }
+grep -q '"authenticated_read":true' "$READ_LOG" || { echo '[remote] Authenticated read proof missing.' >&2; exit 1; }
+grep -q '"r3_capability_advertised":true' "$READ_LOG" || { echo '[remote] R3 capability discovery proof missing.' >&2; exit 1; }
+grep -q '"scope_denial":true' "$READ_LOG" || { echo '[remote] Scope denial proof missing.' >&2; exit 1; }
+grep -q '"nonce_replay_rejected":true' "$READ_LOG" || { echo '[remote] Replay rejection proof missing.' >&2; exit 1; }
+grep -q '"credential_revocation":true' "$READ_LOG" || { echo '[remote] Revocation proof missing.' >&2; exit 1; }
+grep -q '"remote_mutation_performed":false' "$READ_LOG" || { echo '[remote] Read acceptance unexpectedly performed a mutation.' >&2; exit 1; }
+
+printf '[remote] Running R3 content-change Plan -> Apply -> Verify -> Rollback acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-remote-mutation-acceptance.php >"$MUTATION_LOG" 2>&1; then
+  cat "$MUTATION_LOG"
+  exit 1
+fi
+cat "$MUTATION_LOG"
+
+grep -q '"ok":true' "$MUTATION_LOG" || { echo '[remote] R3 mutation acceptance did not emit success marker.' >&2; exit 1; }
+grep -q '"operation":"content-change"' "$MUTATION_LOG" || { echo '[remote] R3 content-change operation proof missing.' >&2; exit 1; }
+grep -q '"plan_created":true' "$MUTATION_LOG" || { echo '[remote] R3 plan proof missing.' >&2; exit 1; }
+grep -q '"preview_no_mutation":true' "$MUTATION_LOG" || { echo '[remote] R3 preview purity proof missing.' >&2; exit 1; }
+grep -q '"apply_exact":true' "$MUTATION_LOG" || { echo '[remote] R3 apply proof missing.' >&2; exit 1; }
+grep -q '"apply_idempotent_replay":true' "$MUTATION_LOG" || { echo '[remote] R3 request idempotency proof missing.' >&2; exit 1; }
+grep -q '"verify_exact":true' "$MUTATION_LOG" || { echo '[remote] R3 verify proof missing.' >&2; exit 1; }
+grep -q '"operation_bounded":true' "$MUTATION_LOG" || { echo '[remote] R3 bounded operation proof missing.' >&2; exit 1; }
+grep -q '"rollback_exact":true' "$MUTATION_LOG" || { echo '[remote] R3 rollback proof missing.' >&2; exit 1; }
+grep -q '"audit_secret_free":true' "$MUTATION_LOG" || { echo '[remote] R3 secret-free audit proof missing.' >&2; exit 1; }
+grep -q '"generic_proxy":false' "$MUTATION_LOG" || { echo '[remote] R3 generic proxy guard proof missing.' >&2; exit 1; }
 
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
@@ -128,4 +152,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
   }
 fi
 
-printf '[remote] SEO/GEO Manager remote WordPress acceptance OK.\n'
+printf '[remote] SEO/GEO Manager R1-R3 WordPress acceptance OK.\n'
