@@ -49,9 +49,17 @@ final class CapabilitiesController {
 		$native_provider         = NativeTranslationBridge::available();
 		$can_manage_translations = $native_provider && ( current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' ) );
 		$seo_authority           = SeoAuthorityScanner::scan();
+		$seo_owner               = isset( $seo_authority['authority'] ) && is_array( $seo_authority['authority'] ) ? $seo_authority['authority'] : array();
 		$native_seo_ready        = true === ( $seo_authority['safe_to_write_seo_metadata'] ?? false )
 			&& 'resolved-theme-native-writable' === ( $seo_authority['state'] ?? '' );
 		$can_manage_native_seo   = $native_seo_ready && ( current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' ) );
+		$yoast_seo_ready         = true === ( $seo_authority['safe_to_write_seo_metadata'] ?? false )
+			&& 'resolved-external-provider-writable' === ( $seo_authority['state'] ?? '' )
+			&& 'yoast' === ( $seo_owner['id'] ?? '' )
+			&& 'yoast-abilities' === ( $seo_owner['adapter'] ?? '' );
+		$can_manage_yoast_seo    = $yoast_seo_ready
+			&& current_user_can( 'wpseo_edit_advanced_metadata' )
+			&& ( current_user_can( 'edit_posts' ) || current_user_can( 'edit_pages' ) );
 
 		$manifest['theme_contracts']['strategic_media_write'] = array(
 			'available'              => $write_contract,
@@ -209,6 +217,44 @@ final class CapabilitiesController {
 			$can_manage_native_seo,
 			'POST',
 			'/content/seo/changes/{operation_id}/rollback',
+			'rollback-mutation'
+		);
+
+		$manifest['capabilities']['yoast_seo_metadata'] = array(
+			'available'                     => $can_manage_yoast_seo,
+			'authority_ready'               => $yoast_seo_ready,
+			'adapter'                       => $yoast_seo_ready ? 'yoast-abilities' : null,
+			'provider'                      => 'yoast',
+			'required_wordpress_capability' => 'wpseo_edit_advanced_metadata + edit_post(resource) + single resolved Yoast SEO authority',
+			'writable_signals'              => array( 'canonical', 'robots', 'schema' ),
+			'read_only_signals'             => array( 'title-meta', 'open-graph', 'hreflang', 'sitemap' ),
+			'single_authority_required'     => true,
+			'public_abilities_only'         => true,
+			'raw_provider_meta_exposed'     => false,
+			'raw_provider_meta_write'       => false,
+		);
+		$manifest['operations']['content.yoast_seo_metadata.read'] = self::operation(
+			$can_manage_yoast_seo,
+			'GET',
+			'/content/{resource_id}/seo/providers/yoast',
+			'read-only'
+		);
+		$manifest['operations']['content.yoast_seo_metadata.preview'] = self::operation(
+			$can_manage_yoast_seo,
+			'POST',
+			'/content/{resource_id}/seo/providers/yoast/changes/preview',
+			'read-only-preview'
+		);
+		$manifest['operations']['content.yoast_seo_metadata.apply'] = self::operation(
+			$can_manage_yoast_seo,
+			'POST',
+			'/content/{resource_id}/seo/providers/yoast/changes/apply',
+			'mutation'
+		);
+		$manifest['operations']['content.yoast_seo_metadata.rollback'] = self::operation(
+			$can_manage_yoast_seo,
+			'POST',
+			'/content/seo/providers/yoast/changes/{operation_id}/rollback',
 			'rollback-mutation'
 		);
 
