@@ -59,7 +59,7 @@ final class YoastSeoAbilityBridge {
 		}
 
 		$item = reset( $result );
-		if ( ! is_array( $item ) || $resource_id !== (int) ( $item['post_id'] ?? 0 ) ) {
+		if ( ! is_array( $item ) || (int) ( $item['post_id'] ?? 0 ) !== $resource_id ) {
 			return new WP_Error(
 				'seo_geo_manager_yoast_read_contract_invalid',
 				'Yoast SEO returned SEO data for an unexpected resource.',
@@ -114,7 +114,7 @@ final class YoastSeoAbilityBridge {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
-		if ( ! is_array( $result ) || $resource_id !== (int) ( $result['post_id'] ?? 0 ) ) {
+		if ( ! is_array( $result ) || (int) ( $result['post_id'] ?? 0 ) !== $resource_id ) {
 			return new WP_Error(
 				'seo_geo_manager_yoast_write_contract_invalid',
 				'Yoast SEO returned an unexpected update response.',
