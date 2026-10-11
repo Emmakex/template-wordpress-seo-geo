@@ -121,21 +121,33 @@ final class ThemeStrategicMediaReader {
 			&& function_exists( 'seo_geo_theme_strategic_media_fingerprint' );
 	}
 
-	/** @param WP_Post|mixed $post WordPress resource. */
+	/**
+	 * Check whether one WordPress resource can own Theme strategic media.
+	 *
+	 * @param WP_Post|mixed $post WordPress resource.
+	 */
 	private static function is_supported_resource( $post ): bool {
 		return $post instanceof WP_Post
 			&& 'page' === $post->post_type
 			&& ! in_array( $post->post_status, array( 'trash', 'auto-draft' ), true );
 	}
 
-	/** @param mixed $definition Theme slot definition. */
+	/**
+	 * Check whether one Theme slot definition is a supported image binding.
+	 *
+	 * @param mixed $definition Theme slot definition.
+	 */
 	private static function is_image_slot_definition( $definition ): bool {
 		return is_array( $definition )
 			&& 'media' === ( $definition['type'] ?? null )
 			&& 'image' === ( $definition['accept'] ?? null );
 	}
 
-	/** @param WP_Post|mixed $post WordPress resource. */
+	/**
+	 * Check whether one WordPress resource is an image attachment.
+	 *
+	 * @param WP_Post|mixed $post WordPress resource.
+	 */
 	private static function is_image_attachment( $post ): bool {
 		return $post instanceof WP_Post
 			&& 'attachment' === $post->post_type
