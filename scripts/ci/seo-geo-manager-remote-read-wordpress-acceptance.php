@@ -5,8 +5,6 @@
  * Executed through WP-CLI after the plugin is active in the pinned WordPress fixture.
  */
 
-declare(strict_types=1);
-
 use SeoGeo\Manager\Remote\Audit;
 use SeoGeo\Manager\Remote\Credentials;
 use SeoGeo\Manager\Remote\TokenService;
