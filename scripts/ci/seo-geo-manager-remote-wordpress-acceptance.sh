@@ -18,15 +18,19 @@ DB_ROOT_PASSWORD="remote-acceptance-root"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 READ_FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-read-wordpress-acceptance.php"
 MUTATION_FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-mutation-wordpress-acceptance.php"
+THEME_FIXTURE="$ROOT/scripts/ci/seo-geo-manager-remote-theme-structured-wordpress-acceptance.php"
 READ_LOG="$(mktemp)"
 MUTATION_LOG="$(mktemp)"
+THEME_LOG="$(mktemp)"
+THEME_BUILD_DIR="$(mktemp -d)"
 
 cleanup() {
   docker rm -f "$WP_CONTAINER" >/dev/null 2>&1 || true
   docker rm -f "$DB_CONTAINER" >/dev/null 2>&1 || true
   docker volume rm "$WP_VOLUME" >/dev/null 2>&1 || true
   docker network rm "$NETWORK" >/dev/null 2>&1 || true
-  rm -f "$READ_LOG" "$MUTATION_LOG"
+  rm -f "$READ_LOG" "$MUTATION_LOG" "$THEME_LOG"
+  rm -rf "$THEME_BUILD_DIR"
 }
 trap cleanup EXIT
 
@@ -92,6 +96,12 @@ docker run -d --name "$WP_CONTAINER" \
 
 wait_for_wordpress || { echo '[remote] WordPress files did not become ready.' >&2; exit 1; }
 
+printf '[remote] Building and installing the self-contained SEO/GEO Theme fixture.\n'
+bash "$ROOT/scripts/build-theme-package.sh" "$THEME_BUILD_DIR/seo-geo-theme"
+docker exec "$WP_CONTAINER" mkdir -p /var/www/html/wp-content/themes/seo-geo-theme
+docker cp "$THEME_BUILD_DIR/seo-geo-theme/." "$WP_CONTAINER:/var/www/html/wp-content/themes/seo-geo-theme/"
+docker exec "$WP_CONTAINER" chown -R www-data:www-data /var/www/html/wp-content/themes/seo-geo-theme
+
 printf '[remote] Installing WordPress fixture.\n'
 wp_cli core install \
   --url='https://manager.test' \
@@ -102,12 +112,15 @@ wp_cli core install \
   --skip-email >/dev/null
 
 wp_cli plugin activate seo-geo-manager >/dev/null
+wp_cli theme activate seo-geo-theme >/dev/null
 
 docker cp "$READ_FIXTURE" "$WP_CONTAINER:/var/www/html/seo-geo-manager-remote-read-acceptance.php"
 docker cp "$MUTATION_FIXTURE" "$WP_CONTAINER:/var/www/html/seo-geo-manager-remote-mutation-acceptance.php"
+docker cp "$THEME_FIXTURE" "$WP_CONTAINER:/var/www/html/seo-geo-manager-remote-theme-structured-acceptance.php"
 docker exec "$WP_CONTAINER" chown www-data:www-data \
   /var/www/html/seo-geo-manager-remote-read-acceptance.php \
-  /var/www/html/seo-geo-manager-remote-mutation-acceptance.php
+  /var/www/html/seo-geo-manager-remote-mutation-acceptance.php \
+  /var/www/html/seo-geo-manager-remote-theme-structured-acceptance.php
 
 printf '[remote] Running Manager-owned R2 read/scope/replay/revocation acceptance.\n'
 if ! wp_cli eval-file /var/www/html/seo-geo-manager-remote-read-acceptance.php >"$READ_LOG" 2>&1; then
@@ -116,9 +129,10 @@ if ! wp_cli eval-file /var/www/html/seo-geo-manager-remote-read-acceptance.php >
 fi
 cat "$READ_LOG"
 
-grep -q '"ok":true' "$READ_LOG" || { echo '[remote] R2/R3 read acceptance did not emit success marker.' >&2; exit 1; }
+grep -q '"ok":true' "$READ_LOG" || { echo '[remote] R2/R3.2 read acceptance did not emit success marker.' >&2; exit 1; }
 grep -q '"authenticated_read":true' "$READ_LOG" || { echo '[remote] Authenticated read proof missing.' >&2; exit 1; }
-grep -q '"r3_capability_advertised":true' "$READ_LOG" || { echo '[remote] R3 capability discovery proof missing.' >&2; exit 1; }
+grep -q '"r3_capability_advertised":true' "$READ_LOG" || { echo '[remote] R3.2 capability discovery proof missing.' >&2; exit 1; }
+grep -q '"theme-structured-content"' "$READ_LOG" || { echo '[remote] R3.2 Theme operation capability proof missing.' >&2; exit 1; }
 grep -q '"scope_denial":true' "$READ_LOG" || { echo '[remote] Scope denial proof missing.' >&2; exit 1; }
 grep -q '"nonce_replay_rejected":true' "$READ_LOG" || { echo '[remote] Replay rejection proof missing.' >&2; exit 1; }
 grep -q '"credential_revocation":true' "$READ_LOG" || { echo '[remote] Revocation proof missing.' >&2; exit 1; }
@@ -143,6 +157,26 @@ grep -q '"rollback_exact":true' "$MUTATION_LOG" || { echo '[remote] R3 rollback 
 grep -q '"audit_secret_free":true' "$MUTATION_LOG" || { echo '[remote] R3 secret-free audit proof missing.' >&2; exit 1; }
 grep -q '"generic_proxy":false' "$MUTATION_LOG" || { echo '[remote] R3 generic proxy guard proof missing.' >&2; exit 1; }
 
+printf '[remote] Running R3.2 Theme structured-content Plan -> Apply -> Verify -> Rollback acceptance.\n'
+if ! wp_cli eval-file /var/www/html/seo-geo-manager-remote-theme-structured-acceptance.php >"$THEME_LOG" 2>&1; then
+  cat "$THEME_LOG"
+  exit 1
+fi
+cat "$THEME_LOG"
+
+grep -q '"ok":true' "$THEME_LOG" || { echo '[remote] R3.2 Theme acceptance did not emit success marker.' >&2; exit 1; }
+grep -q '"operation":"theme-structured-content"' "$THEME_LOG" || { echo '[remote] R3.2 Theme operation proof missing.' >&2; exit 1; }
+grep -q '"theme_active":true' "$THEME_LOG" || { echo '[remote] R3.2 active Theme proof missing.' >&2; exit 1; }
+grep -q '"semantic_model_matched":true' "$THEME_LOG" || { echo '[remote] R3.2 semantic model proof missing.' >&2; exit 1; }
+grep -q '"layout_preserved":true' "$THEME_LOG" || { echo '[remote] R3.2 layout preservation proof missing.' >&2; exit 1; }
+grep -q '"apply_exact":true' "$THEME_LOG" || { echo '[remote] R3.2 semantic apply proof missing.' >&2; exit 1; }
+grep -q '"apply_idempotent_replay":true' "$THEME_LOG" || { echo '[remote] R3.2 idempotency proof missing.' >&2; exit 1; }
+grep -q '"verify_exact":true' "$THEME_LOG" || { echo '[remote] R3.2 verification proof missing.' >&2; exit 1; }
+grep -q '"structured_evidence_bounded":true' "$THEME_LOG" || { echo '[remote] R3.2 bounded structured evidence proof missing.' >&2; exit 1; }
+grep -q '"rollback_exact":true' "$THEME_LOG" || { echo '[remote] R3.2 rollback proof missing.' >&2; exit 1; }
+grep -q '"audit_secret_free":true' "$THEME_LOG" || { echo '[remote] R3.2 secret-free audit proof missing.' >&2; exit 1; }
+grep -q '"generic_proxy":false' "$THEME_LOG" || { echo '[remote] R3.2 generic proxy guard proof missing.' >&2; exit 1; }
+
 DEBUG_LOG="$(wp_cli eval 'echo WP_CONTENT_DIR . "/debug.log";' 2>/dev/null | tr -d '\r\n')"
 if [[ -n "$DEBUG_LOG" ]]; then
   docker exec "$WP_CONTAINER" sh -lc "test ! -s '$DEBUG_LOG'" || {
@@ -152,4 +186,4 @@ if [[ -n "$DEBUG_LOG" ]]; then
   }
 fi
 
-printf '[remote] SEO/GEO Manager R1-R3 WordPress acceptance OK.\n'
+printf '[remote] SEO/GEO Manager R1-R3.2 WordPress acceptance OK.\n'
