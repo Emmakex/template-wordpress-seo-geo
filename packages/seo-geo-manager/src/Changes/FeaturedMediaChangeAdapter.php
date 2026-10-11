@@ -154,6 +154,48 @@ final class FeaturedMediaChangeAdapter {
 	}
 
 	/**
+	 * Verify that a stored featured-media operation still owns the current state.
+	 *
+	 * @param array<string, mixed> $operation Stored Manager operation.
+	 * @return array<string, mixed>|WP_Error
+	 */
+	public static function verify( array $operation ) {
+		if ( self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
+			return new WP_Error( 'seo_geo_manager_featured_media_operation_not_found', 'Featured-media operation not found.', array( 'status' => 404 ) );
+		}
+		if ( 'applied' !== ( $operation['status'] ?? '' ) ) {
+			return new WP_Error( 'seo_geo_manager_featured_media_verify_unavailable', 'Only applied featured-media operations can be verified.', array( 'status' => 409 ) );
+		}
+
+		$resource_id = isset( $operation['resource_id'] ) ? absint( $operation['resource_id'] ) : 0;
+		$resource    = get_post( $resource_id );
+		if ( ! self::is_supported_resource( $resource ) ) {
+			return new WP_Error( 'seo_geo_manager_featured_media_resource_missing', 'Featured-media verification target no longer exists.', array( 'status' => 404 ) );
+		}
+		if ( ! current_user_can( 'edit_post', $resource->ID ) || ! current_user_can( 'upload_files' ) ) {
+			return new WP_Error( 'seo_geo_manager_forbidden', 'You cannot verify featured media on this resource.', array( 'status' => 403 ) );
+		}
+
+		$current_fingerprint = FeaturedMediaFingerprint::for_post( $resource );
+		$expected_fingerprint = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
+		$expected_media_id    = isset( $operation['after_media_id'] ) ? absint( $operation['after_media_id'] ) : 0;
+		$current_media_id     = (int) get_post_thumbnail_id( $resource_id );
+		if ( '' === $expected_fingerprint || ! hash_equals( $expected_fingerprint, $current_fingerprint ) || $expected_media_id !== $current_media_id ) {
+			return new WP_Error(
+				'seo_geo_manager_featured_media_verification_stale',
+				'The resource no longer matches the applied featured-media operation.',
+				array( 'status' => 409 )
+			);
+		}
+
+		return array(
+			'verified'            => true,
+			'current_fingerprint' => $current_fingerprint,
+			'featured_media_id'   => $current_media_id,
+		);
+	}
+
+	/**
 	 * @return array<string, mixed>|WP_Error
 	 */
 	public static function rollback( string $operation_id ) {
