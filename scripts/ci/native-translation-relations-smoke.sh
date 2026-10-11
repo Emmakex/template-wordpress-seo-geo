@@ -149,7 +149,8 @@ bash scripts/build-theme-package.sh "$BUILT_THEME" \
 
 for embedded in \
   NativeTranslationRelationship.php \
-  NativeTranslationRegistry.php; do
+  NativeTranslationRegistry.php \
+  NativeTranslationGroupWriter.php; do
   [[ -f "${BUILT_THEME}/inc/seo-geo-core/src/Language/${embedded}" ]] \
     || fail_smoke "embedded-source" "Built theme is missing translation relationship source" "$embedded bundled" "missing"
 done
@@ -216,6 +217,47 @@ ACTIVE_PLUGINS="$(wp_cli plugin list --status=active --field=name 2>/dev/null | 
 
 wp_cli eval 'update_option( \SeoGeo\Core\Language\NativeLanguageConfiguration::OPTION_NAME, array( "default" => "es", "routing" => "prefix", "languages" => array( "es" => "es_ES", "en" => "en_US" ) ), false );' >/dev/null \
   || fail_smoke "language-option" "Could not persist native ES/EN configuration" "option update succeeds" "failed"
+
+printf '[relations] Exercising bounded native translation-group writer.\n'
+WRITER_ES_ID="$(create_post publish 'Writer ES' 'writer-es')"
+WRITER_EN_ID="$(create_post draft 'Writer EN' 'writer-en')"
+WRITER_RESULT="$(wp_cli eval "\$writer = new \\SeoGeo\\Core\\Language\\NativeTranslationGroupWriter(); \$result = \$writer->replace( 'writer-group', array( 'es' => ${WRITER_ES_ID}, 'en' => ${WRITER_EN_ID} ) ); echo wp_json_encode( is_wp_error( \$result ) ? array( 'error' => \$result->get_error_code() ) : \$result );" 2>/dev/null | tr -d '\r\n')"
+if ! RESULT="$(python3 -c 'import json,sys; s=json.loads(sys.argv[1]); es=int(sys.argv[2]); en=int(sys.argv[3]); assert "error" not in s; assert s["group_id"]=="writer-group"; assert s["consistent"] is True; assert s["public_ready"] is False; assert s["translations"]=={"en":en,"es":es}; assert len(s["members"])==2; assert isinstance(s["fingerprint"],str) and len(s["fingerprint"])==64; print("ok")' "$WRITER_RESULT" "$WRITER_ES_ID" "$WRITER_EN_ID" 2>&1)"; then
+  fail_smoke "writer-replace" "Native writer did not persist an exact reciprocal ES/EN group" "consistent group with public_ready=false while EN is draft" "${RESULT}; json=${WRITER_RESULT}"
+fi
+
+WRITER_DRAFT_RELATION="$(relation_json "$WRITER_ES_ID")"
+[[ "$WRITER_DRAFT_RELATION" == "null" ]] \
+  || fail_smoke "writer-draft-public" "Native writer made an incomplete draft group public" "null public relationship" "$WRITER_DRAFT_RELATION"
+
+wp_cli post update "$WRITER_EN_ID" --post_status=publish >/dev/null \
+  || fail_smoke "writer-publish" "Could not publish the writer EN member" "post publishes" "failed"
+WRITER_PUBLIC_INSPECT="$(wp_cli eval "\$writer = new \\SeoGeo\\Core\\Language\\NativeTranslationGroupWriter(); \$result = \$writer->inspect( 'writer-group' ); echo wp_json_encode( is_wp_error( \$result ) ? array( 'error' => \$result->get_error_code() ) : \$result );" 2>/dev/null | tr -d '\r\n')"
+if ! RESULT="$(python3 -c 'import json,sys; s=json.loads(sys.argv[1]); assert "error" not in s; assert s["consistent"] is True; assert s["public_ready"] is True; print("ok")' "$WRITER_PUBLIC_INSPECT" 2>&1)"; then
+  fail_smoke "writer-public-ready" "Native writer group did not become public-ready after both members published" "public_ready=true" "${RESULT}; json=${WRITER_PUBLIC_INSPECT}"
+fi
+
+WRITER_ES_RELATION="$(relation_json "$WRITER_ES_ID")"
+WRITER_EN_RELATION="$(relation_json "$WRITER_EN_ID")"
+if ! RESULT="$(python3 -c 'import json,sys; s=json.loads(sys.argv[1]); es=int(sys.argv[2]); en=int(sys.argv[3]); assert s["group"]=="writer-group"; assert s["current"]=="es"; assert s["translations"]=={"en":en,"es":es}; print("ok")' "$WRITER_ES_RELATION" "$WRITER_ES_ID" "$WRITER_EN_ID" 2>&1)"; then
+  fail_smoke "writer-registry-es" "Registry did not resolve writer-created ES relationship" "writer-group reciprocal ES relation" "${RESULT}; json=${WRITER_ES_RELATION}"
+fi
+if ! RESULT="$(python3 -c 'import json,sys; s=json.loads(sys.argv[1]); es=int(sys.argv[2]); en=int(sys.argv[3]); assert s["group"]=="writer-group"; assert s["current"]=="en"; assert s["translations"]=={"en":en,"es":es}; print("ok")' "$WRITER_EN_RELATION" "$WRITER_ES_ID" "$WRITER_EN_ID" 2>&1)"; then
+  fail_smoke "writer-registry-en" "Registry did not resolve writer-created EN relationship" "writer-group reciprocal EN relation" "${RESULT}; json=${WRITER_EN_RELATION}"
+fi
+
+WRITER_CONFLICT_EN_ID="$(create_post publish 'Writer Conflict EN' 'writer-conflict-en')"
+WRITER_CONFLICT="$(wp_cli eval "\$writer = new \\SeoGeo\\Core\\Language\\NativeTranslationGroupWriter(); \$result = \$writer->replace( 'other-group', array( 'es' => ${WRITER_ES_ID}, 'en' => ${WRITER_CONFLICT_EN_ID} ) ); echo wp_json_encode( is_wp_error( \$result ) ? array( 'error' => \$result->get_error_code() ) : \$result );" 2>/dev/null | tr -d '\r\n')"
+if ! RESULT="$(python3 -c 'import json,sys; s=json.loads(sys.argv[1]); assert s=={"error":"seo_geo_native_group_member_conflict"}; print("ok")' "$WRITER_CONFLICT" 2>&1)"; then
+  fail_smoke "writer-conflict" "Native writer did not block moving an existing member into a conflicting group" "seo_geo_native_group_member_conflict" "${RESULT}; json=${WRITER_CONFLICT}"
+fi
+
+WRITER_CLEAR="$(wp_cli eval "\$writer = new \\SeoGeo\\Core\\Language\\NativeTranslationGroupWriter(); \$result = \$writer->clear( 'writer-group' ); echo wp_json_encode( is_wp_error( \$result ) ? array( 'error' => \$result->get_error_code() ) : \$result );" 2>/dev/null | tr -d '\r\n')"
+if ! RESULT="$(python3 -c 'import json,sys; s=json.loads(sys.argv[1]); assert "error" not in s; assert s["translations"]==[]; assert s["members"]==[]; assert s["consistent"] is True; assert s["public_ready"] is False; print("ok")' "$WRITER_CLEAR" 2>&1)"; then
+  fail_smoke "writer-clear" "Native writer did not clear the reciprocal group exactly" "empty consistent non-public group" "${RESULT}; json=${WRITER_CLEAR}"
+fi
+[[ "$(relation_json "$WRITER_ES_ID")" == "null" && "$(relation_json "$WRITER_EN_ID")" == "null" ]] \
+  || fail_smoke "writer-clear-public" "Cleared writer group still resolved publicly" "null relationships after clear" "relationship remained"
 
 printf '[relations] Creating valid reciprocal ES/EN group.\n'
 ES_ID="$(create_post publish 'Servicios SEO' 'servicios-seo')"
@@ -294,4 +336,4 @@ if printf '%s\n%s' "$RUNTIME_LOG" "$DEBUG_LOG" | grep -Eqi 'PHP (Fatal error|War
   fail_smoke "runtime-php" "PHP runtime emitted diagnostics" "no fatal/warning/notice/uncaught error" "$MATCH"
 fi
 
-printf 'Native translation relationships OK: zero plugins; explicit reciprocal ES/EN map; invalid relationships rejected.\n'
+printf 'Native translation relationships OK: zero plugins; writer/registry reciprocal ES/EN lifecycle accepted; invalid relationships rejected.\n'
