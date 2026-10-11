@@ -73,10 +73,10 @@ final class NativeSeoMetadataChangeAdapter {
 			),
 			'has_changes'    => true,
 			'policy'         => array(
-				'native_core_authority_only' => true,
-				'provider_meta_writes'       => false,
-				'writable_signals'           => array( 'title-meta', 'canonical', 'robots' ),
-				'read_only_signals'          => array( 'open-graph', 'schema', 'hreflang', 'sitemap' ),
+				'native_core_authority_only'  => true,
+				'provider_meta_writes'        => false,
+				'writable_signals'            => array( 'title-meta', 'canonical', 'robots' ),
+				'read_only_signals'           => array( 'open-graph', 'schema', 'hreflang', 'sitemap' ),
 				'published_approval_required' => 'publish' === $state['post']->post_status,
 				'stale_safe_rollback'         => true,
 			),
@@ -472,8 +472,8 @@ final class NativeSeoMetadataChangeAdapter {
 			return new WP_Error( 'seo_geo_manager_native_seo_canonical_invalid', 'Canonical must be an absolute HTTP(S) URL or null.', array( 'status' => 400 ) );
 		}
 		$normalized = esc_url_raw( trim( $value ), array( 'http', 'https' ) );
-		$scheme     = is_string( $normalized ) ? strtolower( (string) wp_parse_url( $normalized, PHP_URL_SCHEME ) ) : '';
-		$host       = is_string( $normalized ) ? (string) wp_parse_url( $normalized, PHP_URL_HOST ) : '';
+		$scheme     = strtolower( (string) wp_parse_url( $normalized, PHP_URL_SCHEME ) );
+		$host       = (string) wp_parse_url( $normalized, PHP_URL_HOST );
 		if ( '' === $normalized || ! in_array( $scheme, array( 'http', 'https' ), true ) || '' === $host ) {
 			return new WP_Error( 'seo_geo_manager_native_seo_canonical_invalid', 'Canonical must be an absolute HTTP(S) URL or null.', array( 'status' => 400 ) );
 		}
