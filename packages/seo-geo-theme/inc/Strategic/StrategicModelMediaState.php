@@ -152,7 +152,7 @@ final class StrategicModelMediaState {
 		$model_id = sanitize_key( $model_id );
 		$slot_id  = sanitize_key( $slot_id );
 		$state    = self::state( $post_id );
-		if ( ! isset( $state['models'][ $model_id ] ) || ! is_array( $state['models'][ $model_id ] ) ) {
+		if ( ! isset( $state['models'][ $model_id ] ) ) {
 			$state['models'][ $model_id ] = array();
 		}
 		$state['models'][ $model_id ][ $slot_id ] = $attachment_id;
