@@ -420,6 +420,7 @@ final class RemoteMutationController {
 	}
 
 	/**
+	 * @param array<string, mixed>  $data       Bounded response data.
 	 * @param array<string, scalar> $audit_meta Bounded audit metadata.
 	 */
 	private static function response( WP_REST_Request $request, array $data, bool $idempotent_replay, array $audit_meta = array() ): WP_REST_Response {
