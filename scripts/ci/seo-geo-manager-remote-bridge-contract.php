@@ -133,9 +133,9 @@ $required = array(
 		'bounded_seo_authority',
 		'EnvironmentPolicy::validate_payload( $params )',
 		'EnvironmentPolicy::validate_operation_environment( $operation )',
-		"'navigation-change' === $operation_type",
-		"$payload['allow_public_navigation']",
-		"$params['allow_public_navigation']",
+		'\'navigation-change\' === $operation_type',
+		'$payload[\'allow_public_navigation\']',
+		'$params[\'allow_public_navigation\']',
 	),
 	'package' => array(
 		'Version: 0.3.55',
