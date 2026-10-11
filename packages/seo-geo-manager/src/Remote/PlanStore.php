@@ -22,11 +22,11 @@ final class PlanStore {
 	 * @param array<string, mixed> $preview Exact Manager preview returned for the payload.
 	 * @return array<string, mixed>|WP_Error
 	 */
-	public function create( string $connection_id, int $wordpress_user_id, array $payload, array $preview ) {
-		if ( '' === $connection_id || 1 > $wordpress_user_id ) {
+	public function create( string $connection_id, int $wordpress_user_id, string $operation, array $payload, array $preview ) {
+		if ( '' === $connection_id || 1 > $wordpress_user_id || ! MutationOperations::supports( $operation ) ) {
 			return new WP_Error(
 				'seo_geo_manager_remote_plan_identity_invalid',
-				'Remote mutation plans require a bound connection and WordPress execution identity.',
+				'Remote mutation plans require a bound connection, WordPress execution identity and supported operation.',
 				array( 'status' => 400 )
 			);
 		}
@@ -34,7 +34,7 @@ final class PlanStore {
 		$created = time();
 		$plan    = array(
 			'plan_id'           => 'sgmp_' . str_replace( '-', '', wp_generate_uuid4() ),
-			'operation'         => 'content-change',
+			'operation'         => $operation,
 			'status'            => ! empty( $preview['has_changes'] ) ? 'prepared' : 'already-matching',
 			'connection_id'     => $connection_id,
 			'wordpress_user_id' => $wordpress_user_id,
