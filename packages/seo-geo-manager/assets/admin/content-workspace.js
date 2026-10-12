@@ -166,6 +166,7 @@
 		publishedWrap.hidden = 'publish' !== item.status;
 		allowPublished.checked = false;
 		editor.hidden = false;
+		root.dispatchEvent( new CustomEvent( 'seo-geo-manager:content-selected', { detail: { resource: state.current } } ) );
 	}
 
 	async function loadList() {
