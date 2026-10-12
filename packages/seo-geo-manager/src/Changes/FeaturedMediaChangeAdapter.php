@@ -4,6 +4,7 @@
  *
  * @package SeoGeoManager
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Changes;
@@ -44,13 +45,13 @@ final class FeaturedMediaChangeAdapter {
 			),
 			'has_changes'    => true,
 			'policy'         => array(
-				'posts_pages_only'            => true,
-				'image_attachment_only'       => true,
-				'published_approval_required' => 'publish' === $prepared['resource']->post_status,
-				'binary_mutation_supported'   => false,
-				'content_mutation_supported'  => false,
+				'posts_pages_only'              => true,
+				'image_attachment_only'         => true,
+				'published_approval_required'   => 'publish' === $prepared['resource']->post_status,
+				'binary_mutation_supported'     => false,
+				'content_mutation_supported'    => false,
 				'remove_relationship_supported' => true,
-				'stale_safe_rollback'          => true,
+				'stale_safe_rollback'            => true,
 			),
 		);
 	}
@@ -92,7 +93,7 @@ final class FeaturedMediaChangeAdapter {
 			return self::replay_operation( $reservation['operation_id'] );
 		}
 
-		$resource_id   = (int) $prepared['resource']->ID;
+		$resource_id    = (int) $prepared['resource']->ID;
 		$after_media_id = (int) $prepared['after_media_id'];
 		self::restore_media( $resource_id, $after_media_id );
 
