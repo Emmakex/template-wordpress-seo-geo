@@ -1,0 +1,113 @@
+.seo-geo-manager-navigation-workspace {
+	margin-top: 24px;
+}
+
+.seo-geo-manager-navigation-toolbar,
+.seo-geo-manager-navigation-summary,
+.seo-geo-manager-navigation-current,
+.seo-geo-manager-navigation-editor {
+	display: grid;
+	gap: 10px;
+}
+
+.seo-geo-manager-navigation-toolbar {
+	grid-template-columns: minmax(240px, 420px);
+	margin: 16px 0;
+}
+
+.seo-geo-manager-navigation-toolbar label,
+.seo-geo-manager-navigation-editor label {
+	display: grid;
+	gap: 6px;
+	font-weight: 600;
+}
+
+.seo-geo-manager-navigation-toolbar select,
+.seo-geo-manager-navigation-editor select,
+.seo-geo-manager-navigation-editor input[type="search"] {
+	width: 100%;
+	max-width: none;
+}
+
+.seo-geo-manager-navigation-summary {
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	padding: 12px 14px;
+	margin: 12px 0 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.seo-geo-manager-navigation-summary code {
+	grid-column: 1 / -1;
+	word-break: break-all;
+}
+
+.seo-geo-manager-navigation-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+	gap: 20px;
+	align-items: start;
+}
+
+.seo-geo-manager-navigation-list {
+	display: grid;
+	gap: 10px;
+}
+
+.seo-geo-manager-navigation-item {
+	display: grid;
+	gap: 8px;
+	padding: 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.seo-geo-manager-navigation-item__heading {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+}
+
+.seo-geo-manager-navigation-item code,
+.seo-geo-manager-navigation-current code {
+	word-break: break-all;
+	white-space: normal;
+}
+
+.seo-geo-manager-navigation-item .button {
+	justify-self: start;
+}
+
+.seo-geo-manager-navigation-editor {
+	position: sticky;
+	top: 46px;
+	padding: 16px;
+	border: 1px solid #c3c4c7;
+	border-radius: 10px;
+	background: #f6f7f7;
+}
+
+.seo-geo-manager-navigation-approval {
+	grid-template-columns: auto 1fr !important;
+	align-items: start;
+	font-weight: 500 !important;
+}
+
+.seo-geo-manager-navigation-approval input {
+	margin-top: 2px;
+}
+
+@media (max-width: 960px) {
+	.seo-geo-manager-navigation-layout {
+		grid-template-columns: 1fr;
+	}
+
+	.seo-geo-manager-navigation-editor {
+		position: static;
+	}
+}
