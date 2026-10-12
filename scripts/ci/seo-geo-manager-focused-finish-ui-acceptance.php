@@ -46,7 +46,7 @@ $required_dashboard = array(
 	'Build / Finish',
 	'Optimize',
 	'Grow',
-	'Finalización técnica, migración y compatibilidad',
+	'Finalización técnica y compatibilidad',
 	'data-seo-geo-field-slot',
 	'data-seo-geo-finalization-actions',
 	'Historial, evidencia y herramientas técnicas',
@@ -100,7 +100,7 @@ if ( false !== strpos( $dashboard_source, 'Finalizar migración SEO/GEO' ) ) {
 }
 
 if ( false === strpos( $dashboard_source, '<details class="seo-geo-manager-workspace__build-finish">' ) ) {
-	fwrite( STDERR, "Build / Finish migration compatibility must remain a bounded, collapsible workspace tool.\n" );
+	fwrite( STDERR, "Build / Finish compatibility tools must remain bounded and collapsible.\n" );
 	exit( 1 );
 }
 
