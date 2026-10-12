@@ -45,17 +45,28 @@ $assert(
 	'Field evidence is no longer moved out of the focused operator flow.'
 );
 $assert(
-	false !== strpos( $history_ui, "root.querySelector( '.seo-geo-manager-admin__technical-body' )" ),
-	'Operation history is no longer anchored inside advanced technical details.'
+	false === strpos( $history_ui, ".seo-geo-manager-admin__technical-body" ),
+	'Operation Evidence regressed back into advanced technical details.'
+);
+$assert(
+	false !== strpos( $history_ui, "'[data-seo-geo-media-alt-workspace]'" )
+	&& false !== strpos( $history_ui, "insertionAnchor.insertAdjacentElement( 'afterend', section )" ),
+	'Operation Evidence is no longer anchored in the main Manager workflow.'
+);
+$assert(
+	false !== strpos( $history_ui, 'response.privacy_safe' )
+	&& false !== strpos( $history_ui, "'operation-history-summary' !== response.mode" ),
+	'Operation Evidence no longer verifies the privacy-bounded history response.'
 );
 
 echo json_encode(
 	array(
-		'ok'                               => true,
-		'clean_target_atomic_mode'         => true,
-		'preservation_mode_stable'         => true,
-		'verification_evidence_visible'    => true,
-		'focused_ui_keeps_history_advanced'=> true,
+		'ok'                              => true,
+		'clean_target_atomic_mode'        => true,
+		'preservation_mode_stable'        => true,
+		'verification_evidence_visible'   => true,
+		'operation_evidence_main_flow'    => true,
+		'operation_evidence_privacy_safe' => true,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
