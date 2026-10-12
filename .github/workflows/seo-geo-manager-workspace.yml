@@ -4,22 +4,30 @@ on:
   pull_request:
     paths:
       - 'packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php'
+      - 'packages/seo-geo-manager/src/Admin/ContentWorkspace.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
       - 'packages/seo-geo-manager/assets/admin/dashboard.js'
       - 'packages/seo-geo-manager/assets/admin/build-workspace.js'
+      - 'packages/seo-geo-manager/assets/admin/content-workspace.js'
+      - 'packages/seo-geo-manager/assets/admin/content-workspace.css'
       - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
+      - 'scripts/ci/seo-geo-manager-content-workspace-contract.php'
       - '.github/workflows/seo-geo-manager-workspace.yml'
   push:
     branches:
       - main
     paths:
       - 'packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php'
+      - 'packages/seo-geo-manager/src/Admin/ContentWorkspace.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
       - 'packages/seo-geo-manager/assets/admin/dashboard.js'
       - 'packages/seo-geo-manager/assets/admin/build-workspace.js'
+      - 'packages/seo-geo-manager/assets/admin/content-workspace.js'
+      - 'packages/seo-geo-manager/assets/admin/content-workspace.css'
       - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
+      - 'scripts/ci/seo-geo-manager-content-workspace-contract.php'
       - '.github/workflows/seo-geo-manager-workspace.yml'
   workflow_dispatch:
 
@@ -42,13 +50,18 @@ jobs:
       - name: PHP syntax
         run: |
           php -l packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php
+          php -l packages/seo-geo-manager/src/Admin/ContentWorkspace.php
           php -l packages/seo-geo-manager/src/Plugin.php
           php -l scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
+          php -l scripts/ci/seo-geo-manager-content-workspace-contract.php
 
       - name: JavaScript syntax
         run: |
           node --check packages/seo-geo-manager/assets/admin/dashboard.js
           node --check packages/seo-geo-manager/assets/admin/build-workspace.js
+          node --check packages/seo-geo-manager/assets/admin/content-workspace.js
 
       - name: Workspace contract
-        run: php scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
+        run: |
+          php scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
+          php scripts/ci/seo-geo-manager-content-workspace-contract.php
