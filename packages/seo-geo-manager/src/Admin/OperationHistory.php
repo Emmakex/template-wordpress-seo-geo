@@ -1,6 +1,6 @@
 <?php
 /**
- * SEO/GEO Manager operation-history admin surface.
+ * SEO/GEO Manager operation-evidence admin surface.
  *
  * @package SeoGeoManager
  */
@@ -21,12 +21,30 @@ final class OperationHistory {
 			return;
 		}
 
+		wp_enqueue_style(
+			'seo-geo-manager-operation-evidence',
+			self::asset_url( 'assets/admin/operation-evidence.css' ),
+			array( 'seo-geo-manager-dashboard' ),
+			SEO_GEO_MANAGER_VERSION
+		);
+
 		wp_enqueue_script(
 			'seo-geo-manager-operation-history',
 			self::asset_url( 'assets/admin/operation-history.js' ),
 			array( 'wp-api-fetch' ),
 			SEO_GEO_MANAGER_VERSION,
 			true
+		);
+
+		wp_add_inline_script(
+			'seo-geo-manager-operation-history',
+			'window.SeoGeoManagerOperationEvidence = ' . wp_json_encode(
+				array(
+					'operationsPath' => '/seo-geo-manager/v1/operations?per_page=50',
+					'version'        => SEO_GEO_MANAGER_VERSION,
+				)
+			) . ';',
+			'before'
 		);
 	}
 
