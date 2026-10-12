@@ -6,7 +6,9 @@ on:
       - 'packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php'
       - 'packages/seo-geo-manager/src/Admin/ContentWorkspace.php'
       - 'packages/seo-geo-manager/src/Admin/SeoAuthorityWorkspace.php'
+      - 'packages/seo-geo-manager/src/Admin/ContextualLinksWorkspace.php'
       - 'packages/seo-geo-manager/src/Rest/SeoAuthorityController.php'
+      - 'packages/seo-geo-manager/src/Rest/ContextualLinkChangeController.php'
       - 'packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
@@ -16,9 +18,12 @@ on:
       - 'packages/seo-geo-manager/assets/admin/content-workspace.css'
       - 'packages/seo-geo-manager/assets/admin/seo-authority-workspace.js'
       - 'packages/seo-geo-manager/assets/admin/seo-authority-workspace.css'
+      - 'packages/seo-geo-manager/assets/admin/contextual-links-workspace.js'
+      - 'packages/seo-geo-manager/assets/admin/contextual-links-workspace.css'
       - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
       - 'scripts/ci/seo-geo-manager-content-workspace-contract.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php'
+      - 'scripts/ci/seo-geo-manager-contextual-links-workspace-contract.php'
       - '.github/workflows/seo-geo-manager-workspace.yml'
   push:
     branches:
@@ -27,7 +32,9 @@ on:
       - 'packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php'
       - 'packages/seo-geo-manager/src/Admin/ContentWorkspace.php'
       - 'packages/seo-geo-manager/src/Admin/SeoAuthorityWorkspace.php'
+      - 'packages/seo-geo-manager/src/Admin/ContextualLinksWorkspace.php'
       - 'packages/seo-geo-manager/src/Rest/SeoAuthorityController.php'
+      - 'packages/seo-geo-manager/src/Rest/ContextualLinkChangeController.php'
       - 'packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
@@ -37,9 +44,12 @@ on:
       - 'packages/seo-geo-manager/assets/admin/content-workspace.css'
       - 'packages/seo-geo-manager/assets/admin/seo-authority-workspace.js'
       - 'packages/seo-geo-manager/assets/admin/seo-authority-workspace.css'
+      - 'packages/seo-geo-manager/assets/admin/contextual-links-workspace.js'
+      - 'packages/seo-geo-manager/assets/admin/contextual-links-workspace.css'
       - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
       - 'scripts/ci/seo-geo-manager-content-workspace-contract.php'
       - 'scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php'
+      - 'scripts/ci/seo-geo-manager-contextual-links-workspace-contract.php'
       - '.github/workflows/seo-geo-manager-workspace.yml'
   workflow_dispatch:
 
@@ -64,12 +74,15 @@ jobs:
           php -l packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php
           php -l packages/seo-geo-manager/src/Admin/ContentWorkspace.php
           php -l packages/seo-geo-manager/src/Admin/SeoAuthorityWorkspace.php
+          php -l packages/seo-geo-manager/src/Admin/ContextualLinksWorkspace.php
           php -l packages/seo-geo-manager/src/Rest/SeoAuthorityController.php
+          php -l packages/seo-geo-manager/src/Rest/ContextualLinkChangeController.php
           php -l packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php
           php -l packages/seo-geo-manager/src/Plugin.php
           php -l scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
           php -l scripts/ci/seo-geo-manager-content-workspace-contract.php
           php -l scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php
+          php -l scripts/ci/seo-geo-manager-contextual-links-workspace-contract.php
 
       - name: JavaScript syntax
         run: |
@@ -77,11 +90,13 @@ jobs:
           node --check packages/seo-geo-manager/assets/admin/build-workspace.js
           node --check packages/seo-geo-manager/assets/admin/content-workspace.js
           node --check packages/seo-geo-manager/assets/admin/seo-authority-workspace.js
+          node --check packages/seo-geo-manager/assets/admin/contextual-links-workspace.js
 
       - name: Workspace contract
         run: |
           php scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
           php scripts/ci/seo-geo-manager-content-workspace-contract.php
           php scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php
+          php scripts/ci/seo-geo-manager-contextual-links-workspace-contract.php
 
-# Validation PR trigger: Manager 0.3.60 SEO Authority Workspace exact-head certification.
+# Validation coverage marker: Manager 0.3.61 Contextual Links Workspace.
