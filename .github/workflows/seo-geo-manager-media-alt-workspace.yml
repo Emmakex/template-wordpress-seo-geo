@@ -1,0 +1,51 @@
+name: SEO GEO Manager Media ALT Workspace
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/ci/seo-geo-manager-media-alt-workspace-contract.php'
+      - '.github/workflows/seo-geo-manager-media-alt-workspace.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/ci/seo-geo-manager-media-alt-workspace-contract.php'
+      - '.github/workflows/seo-geo-manager-media-alt-workspace.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-geo-manager-media-alt-workspace-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  media-alt-workspace:
+    name: Media ALT bounded metadata contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          php --version | head -n 1
+          node --version
+
+      - name: Syntax
+        run: |
+          php -l packages/seo-geo-manager/src/Admin/MediaAltWorkspace.php
+          php -l packages/seo-geo-manager/src/Rest/MediaAltChangeController.php
+          php -l packages/seo-geo-manager/src/Changes/MediaAltChangeAdapter.php
+          php -l packages/seo-geo-manager/src/Plugin.php
+          php -l packages/seo-geo-manager/seo-geo-manager.php
+          php -l scripts/ci/seo-geo-manager-media-alt-workspace-contract.php
+          node --check packages/seo-geo-manager/assets/admin/media-alt-workspace.js
+
+      - name: Media ALT Workspace contract
+        run: php scripts/ci/seo-geo-manager-media-alt-workspace-contract.php
