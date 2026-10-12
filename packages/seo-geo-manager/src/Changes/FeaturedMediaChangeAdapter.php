@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Changes;
@@ -17,6 +16,8 @@ use WP_Post;
 final class FeaturedMediaChangeAdapter {
 	private const SCHEMA_VERSION = 1;
 	private const ADAPTER        = 'featured-media';
+	private const ACTION_REPLACE = 'replace';
+	private const ACTION_REMOVE  = 'remove';
 
 	/**
 	 * @param array<string, mixed> $payload Request payload.
@@ -28,15 +29,18 @@ final class FeaturedMediaChangeAdapter {
 			return $prepared;
 		}
 
+		$media = $prepared['media'] instanceof WP_Post ? self::media_summary( $prepared['media'] ) : null;
+
 		return array(
 			'schema_version' => self::SCHEMA_VERSION,
 			'mode'           => 'preview',
 			'adapter'        => self::ADAPTER,
 			'resource'       => self::resource_summary( $prepared['resource'] ),
-			'media'          => self::media_summary( $prepared['media'] ),
+			'media'          => $media,
 			'change'         => array(
+				'action'          => $prepared['media_action'],
 				'before_media_id' => $prepared['before_media_id'],
-				'after_media_id'  => (int) $prepared['media']->ID,
+				'after_media_id'  => $prepared['after_media_id'],
 			),
 			'has_changes'    => true,
 			'policy'         => array(
@@ -45,6 +49,7 @@ final class FeaturedMediaChangeAdapter {
 				'published_approval_required' => 'publish' === $prepared['resource']->post_status,
 				'binary_mutation_supported'   => false,
 				'content_mutation_supported'  => false,
+				'remove_relationship_supported' => true,
 				'stale_safe_rollback'          => true,
 			),
 		);
@@ -87,20 +92,12 @@ final class FeaturedMediaChangeAdapter {
 			return self::replay_operation( $reservation['operation_id'] );
 		}
 
-		$resource_id = (int) $prepared['resource']->ID;
-		$media_id    = (int) $prepared['media']->ID;
-		$result      = set_post_thumbnail( $resource_id, $media_id );
-		if ( false === $result ) {
-			self::save_failed_operation( $operation_id, $prepared, $payload_hash, $idempotency_key );
-			return new WP_Error(
-				'seo_geo_manager_featured_media_apply_failed',
-				'WordPress did not accept the featured-media assignment.',
-				array( 'status' => 409 )
-			);
-		}
+		$resource_id   = (int) $prepared['resource']->ID;
+		$after_media_id = (int) $prepared['after_media_id'];
+		self::restore_media( $resource_id, $after_media_id );
 
 		$after = get_post( $resource_id );
-		if ( ! $after instanceof WP_Post || (int) get_post_thumbnail_id( $resource_id ) !== $media_id ) {
+		if ( ! $after instanceof WP_Post || (int) get_post_thumbnail_id( $resource_id ) !== $after_media_id ) {
 			self::restore_media( $resource_id, $prepared['before_media_id'] );
 			self::save_failed_operation( $operation_id, $prepared, $payload_hash, $idempotency_key );
 			return new WP_Error(
@@ -130,8 +127,9 @@ final class FeaturedMediaChangeAdapter {
 			'target_id'          => $resource_id,
 			'target_type'        => (string) $after->post_type,
 			'resource_id'        => $resource_id,
+			'media_action'       => $prepared['media_action'],
 			'before_media_id'    => $prepared['before_media_id'],
-			'after_media_id'     => $media_id,
+			'after_media_id'     => $after_media_id,
 			'before_fingerprint' => $prepared['before_fingerprint'],
 			'after_fingerprint'  => $after_fingerprint,
 			'idempotency_key'    => $idempotency_key,
@@ -176,7 +174,7 @@ final class FeaturedMediaChangeAdapter {
 			return new WP_Error( 'seo_geo_manager_forbidden', 'You cannot verify featured media on this resource.', array( 'status' => 403 ) );
 		}
 
-		$current_fingerprint = FeaturedMediaFingerprint::for_post( $resource );
+		$current_fingerprint  = FeaturedMediaFingerprint::for_post( $resource );
 		$expected_fingerprint = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
 		$expected_media_id    = isset( $operation['after_media_id'] ) ? absint( $operation['after_media_id'] ) : 0;
 		$current_media_id     = (int) get_post_thumbnail_id( $resource_id );
@@ -258,12 +256,12 @@ final class FeaturedMediaChangeAdapter {
 	private static function prepare( array $payload, bool $for_apply ) {
 		$schema_version = isset( $payload['schema_version'] ) ? (int) $payload['schema_version'] : self::SCHEMA_VERSION;
 		$resource_id    = isset( $payload['resource_id'] ) ? absint( $payload['resource_id'] ) : 0;
-		$media_id       = isset( $payload['media_id'] ) ? absint( $payload['media_id'] ) : 0;
 		$expected       = isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] ) ? trim( $payload['expected_fingerprint'] ) : '';
-		if ( self::SCHEMA_VERSION !== $schema_version || 1 > $resource_id || 1 > $media_id || '' === $expected ) {
+		$media_action   = self::normalize_action( $payload );
+		if ( self::SCHEMA_VERSION !== $schema_version || 1 > $resource_id || '' === $expected || ! in_array( $media_action, array( self::ACTION_REPLACE, self::ACTION_REMOVE ), true ) ) {
 			return new WP_Error(
 				'seo_geo_manager_featured_media_request_invalid',
-				'Featured-media requests require resource_id, media_id and expected_fingerprint.',
+				'Featured-media requests require resource_id, expected_fingerprint and a valid media action.',
 				array( 'status' => 400 )
 			);
 		}
@@ -295,6 +293,29 @@ final class FeaturedMediaChangeAdapter {
 			);
 		}
 
+		$before_media_id = (int) get_post_thumbnail_id( $resource_id );
+		if ( self::ACTION_REMOVE === $media_action ) {
+			$requested_media_id = isset( $payload['media_id'] ) ? absint( $payload['media_id'] ) : 0;
+			if ( 0 !== $requested_media_id ) {
+				return new WP_Error( 'seo_geo_manager_featured_media_remove_invalid', 'Remove requests must use media_id 0.', array( 'status' => 400 ) );
+			}
+			if ( 1 > $before_media_id ) {
+				return new WP_Error( 'seo_geo_manager_featured_media_no_changes', 'The resource has no featured media to remove.', array( 'status' => 400 ) );
+			}
+			return array(
+				'resource'           => $resource,
+				'media'              => null,
+				'media_action'       => self::ACTION_REMOVE,
+				'before_media_id'    => $before_media_id,
+				'after_media_id'     => 0,
+				'before_fingerprint' => $current_fingerprint,
+			);
+		}
+
+		$media_id = isset( $payload['media_id'] ) ? absint( $payload['media_id'] ) : 0;
+		if ( 1 > $media_id ) {
+			return new WP_Error( 'seo_geo_manager_featured_media_request_invalid', 'Replace requests require a positive image attachment media_id.', array( 'status' => 400 ) );
+		}
 		$media = get_post( $media_id );
 		if ( ! self::is_image_attachment( $media ) ) {
 			return new WP_Error( 'seo_geo_manager_featured_media_image_not_found', 'The selected image attachment was not found.', array( 'status' => 404 ) );
@@ -302,8 +323,6 @@ final class FeaturedMediaChangeAdapter {
 		if ( ! current_user_can( 'edit_post', $media->ID ) ) {
 			return new WP_Error( 'seo_geo_manager_forbidden', 'You cannot use this image attachment.', array( 'status' => 403 ) );
 		}
-
-		$before_media_id = (int) get_post_thumbnail_id( $resource_id );
 		if ( $media_id === $before_media_id ) {
 			return new WP_Error( 'seo_geo_manager_featured_media_no_changes', 'The selected image is already assigned as featured media.', array( 'status' => 400 ) );
 		}
@@ -311,9 +330,19 @@ final class FeaturedMediaChangeAdapter {
 		return array(
 			'resource'           => $resource,
 			'media'              => $media,
+			'media_action'       => self::ACTION_REPLACE,
 			'before_media_id'    => $before_media_id,
+			'after_media_id'     => $media_id,
 			'before_fingerprint' => $current_fingerprint,
 		);
+	}
+
+	/** @param array<string, mixed> $payload */
+	private static function normalize_action( array $payload ): string {
+		if ( isset( $payload['media_action'] ) && is_string( $payload['media_action'] ) && '' !== trim( $payload['media_action'] ) ) {
+			return strtolower( trim( $payload['media_action'] ) );
+		}
+		return isset( $payload['media_id'] ) && 0 < absint( $payload['media_id'] ) ? self::ACTION_REPLACE : '';
 	}
 
 	/** @param WP_Post|mixed $post */
@@ -341,11 +370,13 @@ final class FeaturedMediaChangeAdapter {
 	/** @return array<string, mixed> */
 	private static function media_summary( WP_Post $media ): array {
 		$url = wp_get_attachment_url( $media->ID );
+		$alt = get_post_meta( $media->ID, '_wp_attachment_image_alt', true );
 		return array(
 			'id'          => (int) $media->ID,
 			'title'       => html_entity_decode( get_the_title( $media ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ),
 			'mime_type'   => (string) $media->post_mime_type,
 			'url'         => is_string( $url ) ? $url : '',
+			'alt'         => is_string( $alt ) ? $alt : '',
 			'fingerprint' => MediaFingerprint::for_attachment( $media ),
 		);
 	}
@@ -364,10 +395,11 @@ final class FeaturedMediaChangeAdapter {
 			'sha256',
 			(string) wp_json_encode(
 				array(
-					'schema_version'        => isset( $payload['schema_version'] ) ? (int) $payload['schema_version'] : self::SCHEMA_VERSION,
-					'resource_id'           => isset( $payload['resource_id'] ) ? absint( $payload['resource_id'] ) : 0,
-					'media_id'              => isset( $payload['media_id'] ) ? absint( $payload['media_id'] ) : 0,
-					'expected_fingerprint'  => isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] ) ? trim( $payload['expected_fingerprint'] ) : '',
+					'schema_version'         => isset( $payload['schema_version'] ) ? (int) $payload['schema_version'] : self::SCHEMA_VERSION,
+					'resource_id'            => isset( $payload['resource_id'] ) ? absint( $payload['resource_id'] ) : 0,
+					'media_action'           => self::normalize_action( $payload ),
+					'media_id'               => isset( $payload['media_id'] ) ? absint( $payload['media_id'] ) : 0,
+					'expected_fingerprint'   => isset( $payload['expected_fingerprint'] ) && is_string( $payload['expected_fingerprint'] ) ? trim( $payload['expected_fingerprint'] ) : '',
 					'allow_published_target' => true === ( $payload['allow_published_target'] ?? false ),
 				)
 			)
@@ -402,8 +434,9 @@ final class FeaturedMediaChangeAdapter {
 				'target_id'          => (int) $prepared['resource']->ID,
 				'target_type'        => (string) $prepared['resource']->post_type,
 				'resource_id'        => (int) $prepared['resource']->ID,
+				'media_action'       => $prepared['media_action'],
 				'before_media_id'    => $prepared['before_media_id'],
-				'after_media_id'     => (int) $prepared['media']->ID,
+				'after_media_id'     => $prepared['after_media_id'],
 				'before_fingerprint' => $prepared['before_fingerprint'],
 				'idempotency_key'    => $idempotency_key,
 				'payload_hash'       => $payload_hash,
