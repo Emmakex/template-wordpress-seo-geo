@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Admin;
@@ -27,6 +26,12 @@ final class OperationHistory {
 			array( 'seo-geo-manager-dashboard' ),
 			SEO_GEO_MANAGER_VERSION
 		);
+		wp_enqueue_style(
+			'seo-geo-manager-operation-recovery',
+			self::asset_url( 'assets/admin/operation-recovery.css' ),
+			array( 'seo-geo-manager-operation-evidence' ),
+			SEO_GEO_MANAGER_VERSION
+		);
 
 		wp_enqueue_script(
 			'seo-geo-manager-operation-history',
@@ -42,6 +47,25 @@ final class OperationHistory {
 				array(
 					'operationsPath' => '/seo-geo-manager/v1/operations?per_page=50',
 					'version'        => SEO_GEO_MANAGER_VERSION,
+				)
+			) . ';',
+			'before'
+		);
+
+		wp_enqueue_script(
+			'seo-geo-manager-operation-recovery',
+			self::asset_url( 'assets/admin/operation-recovery.js' ),
+			array( 'wp-api-fetch', 'seo-geo-manager-operation-history' ),
+			SEO_GEO_MANAGER_VERSION,
+			true
+		);
+		wp_add_inline_script(
+			'seo-geo-manager-operation-recovery',
+			'window.SeoGeoManagerOperationRecovery = ' . wp_json_encode(
+				array(
+					'operationsBase'  => '/seo-geo-manager/v1/operations',
+					'environmentPath' => '/seo-geo-manager/v1/site/snapshot',
+					'version'         => SEO_GEO_MANAGER_VERSION,
 				)
 			) . ';',
 			'before'
