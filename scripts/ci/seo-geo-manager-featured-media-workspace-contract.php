@@ -1,6 +1,6 @@
 <?php
 /**
- * Static contract for Manager 0.3.63 Featured Media Workspace.
+ * Static contract for Manager Featured Media Workspace introduced in 0.3.63.
  */
 declare(strict_types=1);
 
@@ -30,10 +30,6 @@ foreach ( $paths as $label => $path ) {
 }
 
 $requirements = array(
-	'main' => array(
-		'Version: 0.3.63',
-		"SEO_GEO_MANAGER_VERSION', '0.3.63'",
-	),
 	'plugin' => array(
 		'use SeoGeo\\Manager\\Admin\\FeaturedMediaWorkspace;',
 		'FeaturedMediaWorkspace::register();',
@@ -112,6 +108,20 @@ foreach ( $requirements as $scope => $needles ) {
 	}
 }
 
+if ( 1 !== preg_match( '/Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/', $sources['main'], $version_match ) ) {
+	fwrite( STDERR, "Featured Media Workspace contract could not read the Manager package version.\n" );
+	exit( 1 );
+}
+$package_version = $version_match[1];
+if ( version_compare( $package_version, '0.3.63', '<' ) ) {
+	fwrite( STDERR, "Featured Media Workspace requires Manager >= 0.3.63; received {$package_version}.\n" );
+	exit( 1 );
+}
+if ( false === strpos( $sources['main'], "SEO_GEO_MANAGER_VERSION', '{$package_version}'" ) ) {
+	fwrite( STDERR, "Featured Media Workspace contract found a header/runtime version mismatch for {$package_version}.\n" );
+	exit( 1 );
+}
+
 foreach ( array( 'bootstrap', 'controller', 'script' ) as $scope ) {
 	if ( false !== strpos( $sources[ $scope ], 'emmake.com' ) ) {
 		fwrite( STDERR, "Featured Media Workspace must not hardcode the EMMAKE domain.\n" );
@@ -154,8 +164,9 @@ fwrite(
 	STDOUT,
 	json_encode(
 		array(
-			'ok'                           => true,
-			'version'                      => '0.3.63',
+			'ok'                            => true,
+			'package_version'               => $package_version,
+			'minimum_version'               => '0.3.63',
 			'bounded_existing_images'       => true,
 			'image_attachment_only'         => true,
 			'replace_supported'             => true,
