@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Changes;
@@ -15,7 +14,7 @@ use WP_Error;
 /**
  * Resolve the currently accepted SEO authority and delegate to its bounded adapter.
  *
- * The caller never selects the provider. This prevents a remote client from bypassing
+ * The caller never selects the provider. This prevents a client from bypassing
  * the single-authority contract or targeting private provider metadata directly.
  */
 final class SeoAuthorityChangeAdapter {
@@ -23,6 +22,29 @@ final class SeoAuthorityChangeAdapter {
 	private const NATIVE_ADAPTER   = 'seo-geo-theme-native';
 	private const YOAST_AUTHORITY  = 'yoast';
 	private const YOAST_ADAPTER    = 'yoast-abilities';
+
+	/**
+	 * Inspect the resource through the single resolved SEO authority.
+	 *
+	 * @return array<string, mixed>|WP_Error
+	 */
+	public static function inspect( int $resource_id ) {
+		$authority = self::resolve_authority();
+		if ( is_wp_error( $authority ) ) {
+			return $authority;
+		}
+
+		$result = self::NATIVE_AUTHORITY === $authority['authority_id']
+			? NativeSeoMetadataChangeAdapter::inspect( $resource_id )
+			: YoastSeoMetadataChangeAdapter::inspect( $resource_id );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$result['seo_authority'] = self::bounded_authority( $authority, $result );
+
+		return $result;
+	}
 
 	/**
 	 * @param array<string, mixed> $payload Exact adapter payload for the resolved authority.
@@ -152,7 +174,7 @@ final class SeoAuthorityChangeAdapter {
 		if ( true !== ( $scan['authority_resolved'] ?? false ) || true === ( $scan['conflict'] ?? false ) ) {
 			return new WP_Error(
 				'seo_geo_manager_remote_seo_authority_unresolved',
-				'Remote SEO writes require one resolved SEO authority with no provider conflict.',
+				'SEO writes require one resolved SEO authority with no provider conflict.',
 				array( 'status' => 409 )
 			);
 		}
@@ -174,7 +196,7 @@ final class SeoAuthorityChangeAdapter {
 
 		return new WP_Error(
 			'seo_geo_manager_remote_seo_authority_unsupported',
-			'The resolved SEO authority does not have an accepted remote write adapter.',
+			'The resolved SEO authority does not have an accepted write adapter.',
 			array( 'status' => 409 )
 		);
 	}
@@ -220,7 +242,7 @@ final class SeoAuthorityChangeAdapter {
 	private static function unsupported_adapter(): WP_Error {
 		return new WP_Error(
 			'seo_geo_manager_remote_seo_adapter_unsupported',
-			'The stored SEO operation does not use an accepted remote adapter.',
+			'The stored SEO operation does not use an accepted adapter.',
 			array( 'status' => 409 )
 		);
 	}
