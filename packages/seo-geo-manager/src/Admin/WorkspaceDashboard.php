@@ -60,14 +60,24 @@ final class WorkspaceDashboard {
 			SEO_GEO_MANAGER_VERSION,
 			true
 		);
+		wp_enqueue_script(
+			'seo-geo-manager-build-workspace',
+			self::asset_url( 'assets/admin/build-workspace.js' ),
+			array( 'seo-geo-manager-dashboard', 'wp-api-fetch' ),
+			SEO_GEO_MANAGER_VERSION,
+			true
+		);
 
 		wp_add_inline_script(
 			'seo-geo-manager-dashboard',
 			'window.SeoGeoManagerDashboard = ' . wp_json_encode(
 				array(
-					'intelligencePath' => '/seo-geo-manager/v1/site/intelligence',
-					'version'          => SEO_GEO_MANAGER_VERSION,
-					'labels'           => array(
+					'intelligencePath'           => '/seo-geo-manager/v1/site/intelligence',
+					'themeModelsPath'            => '/seo-geo-manager/v1/theme/models',
+					'themeStructuredPreviewPath' => '/seo-geo-manager/v1/theme/structured/preview',
+					'themeStructuredApplyPath'   => '/seo-geo-manager/v1/theme/structured/apply',
+					'version'                    => SEO_GEO_MANAGER_VERSION,
+					'labels'                     => array(
 						'analyzing' => __( 'Analizando el sitio…', 'seo-geo-manager' ),
 						'error'     => __( 'No se pudo completar el análisis.', 'seo-geo-manager' ),
 					),
@@ -93,7 +103,7 @@ final class WorkspaceDashboard {
 				<div>
 					<p class="seo-geo-manager-admin__eyebrow"><?php esc_html_e( 'Control plane · SEO/GEO', 'seo-geo-manager' ); ?></p>
 					<h1><?php esc_html_e( 'SEO/GEO Manager', 'seo-geo-manager' ); ?></h1>
-					<p class="seo-geo-manager-admin__lead"><?php esc_html_e( 'Centro de control permanente para inspeccionar, preparar, aplicar y verificar cambios de contenido, SEO/GEO, estructura, enlaces y medios. La migración es solo una fase del ciclo de vida.', 'seo-geo-manager' ); ?></p>
+					<p class="seo-geo-manager-admin__lead"><?php esc_html_e( 'Centro de control permanente para construir, completar, optimizar y hacer crecer WordPress mediante cambios semánticos, verificables y reversibles.', 'seo-geo-manager' ); ?></p>
 				</div>
 				<div class="seo-geo-manager-workspace__identity">
 					<span><?php esc_html_e( 'Manager', 'seo-geo-manager' ); ?></span>
@@ -107,7 +117,7 @@ final class WorkspaceDashboard {
 					<span class="seo-geo-manager-workspace-card__badge"><?php esc_html_e( 'Activo', 'seo-geo-manager' ); ?></span>
 					<p class="seo-geo-manager-admin__eyebrow"><?php esc_html_e( 'Build / Finish', 'seo-geo-manager' ); ?></p>
 					<h2><?php esc_html_e( 'Construir y completar', 'seo-geo-manager' ); ?></h2>
-					<p><?php esc_html_e( 'Completar estructura, contenido, SEO, enlaces, medios y launch readiness hasta dejar el sitio listo.', 'seo-geo-manager' ); ?></p>
+					<p><?php esc_html_e( 'Trabajar páginas estratégicas, estructura, contenido, SEO, enlaces y medios hasta dejar el sitio listo.', 'seo-geo-manager' ); ?></p>
 				</article>
 				<article class="seo-geo-manager-workspace-card">
 					<span class="seo-geo-manager-workspace-card__badge"><?php esc_html_e( 'Continuo', 'seo-geo-manager' ); ?></span>
@@ -121,6 +131,55 @@ final class WorkspaceDashboard {
 					<h2><?php esc_html_e( 'Crecer', 'seo-geo-manager' ); ?></h2>
 					<p><?php esc_html_e( 'Crear nuevas páginas, contenidos, idiomas y activos mediante operaciones semánticas y verificables del Manager.', 'seo-geo-manager' ); ?></p>
 				</article>
+			</section>
+
+			<section class="seo-geo-manager-admin__panel seo-geo-manager-build" data-seo-geo-build-workspace>
+				<div class="seo-geo-manager-admin__panel-heading">
+					<div>
+						<p class="seo-geo-manager-admin__eyebrow"><?php esc_html_e( 'Build / Finish · Theme', 'seo-geo-manager' ); ?></p>
+						<h2><?php esc_html_e( 'Construcción del sitio', 'seo-geo-manager' ); ?></h2>
+						<p class="description"><?php esc_html_e( 'Abre una página estratégica del Theme, modifica únicamente sus campos semánticos y revisa el diff antes de aplicar. El Theme conserva layout, HTML y rendimiento.', 'seo-geo-manager' ); ?></p>
+					</div>
+					<button type="button" class="button" data-seo-geo-build-refresh><?php esc_html_e( 'Recargar modelos', 'seo-geo-manager' ); ?></button>
+				</div>
+
+				<div class="notice notice-info inline seo-geo-manager-admin__notice" data-seo-geo-build-status role="status" aria-live="polite">
+					<p><?php esc_html_e( 'Cargando modelos semánticos del Theme…', 'seo-geo-manager' ); ?></p>
+				</div>
+
+				<div class="seo-geo-manager-build__layout">
+					<div>
+						<h3><?php esc_html_e( 'Páginas estratégicas', 'seo-geo-manager' ); ?></h3>
+						<div class="seo-geo-manager-build__models" data-seo-geo-build-models></div>
+					</div>
+
+					<div class="seo-geo-manager-build__editor" data-seo-geo-build-editor hidden>
+						<div class="seo-geo-manager-build__editor-heading">
+							<div>
+								<p class="seo-geo-manager-admin__eyebrow"><?php esc_html_e( 'Editor semántico', 'seo-geo-manager' ); ?></p>
+								<h3 data-seo-geo-build-model-title><?php esc_html_e( 'Modelo Theme', 'seo-geo-manager' ); ?></h3>
+								<p class="description" data-seo-geo-build-model-meta>—</p>
+							</div>
+						</div>
+
+						<div class="seo-geo-manager-build__slots" data-seo-geo-build-slots></div>
+						<div class="seo-geo-manager-build__verification" data-seo-geo-build-verification hidden></div>
+
+						<label class="seo-geo-manager-build__published" data-seo-geo-build-published hidden>
+							<input type="checkbox" data-seo-geo-build-allow-published>
+							<span><?php esc_html_e( 'Permitir este cambio sobre la página publicada. La vista previa y la verificación siguen siendo obligatorias.', 'seo-geo-manager' ); ?></span>
+						</label>
+
+						<div class="seo-geo-manager-build__actions">
+							<button type="button" class="button button-secondary" data-seo-geo-build-preview><?php esc_html_e( 'Vista previa', 'seo-geo-manager' ); ?></button>
+							<button type="button" class="button button-primary" data-seo-geo-build-apply disabled><?php esc_html_e( 'Aplicar y verificar', 'seo-geo-manager' ); ?></button>
+						</div>
+
+						<div class="seo-geo-manager-build__preview" data-seo-geo-build-preview-result>
+							<p class="description"><?php esc_html_e( 'Haz una vista previa antes de aplicar cambios.', 'seo-geo-manager' ); ?></p>
+						</div>
+					</div>
+				</div>
 			</section>
 
 			<section class="seo-geo-manager-admin__panel seo-geo-manager-workspace__site-control">
@@ -180,8 +239,8 @@ final class WorkspaceDashboard {
 				<summary>
 					<div>
 						<p class="seo-geo-manager-admin__eyebrow"><?php esc_html_e( 'Build / Finish · herramientas protegidas', 'seo-geo-manager' ); ?></p>
-						<strong><?php esc_html_e( 'Finalización técnica, migración y compatibilidad', 'seo-geo-manager' ); ?></strong>
-						<span><?php esc_html_e( 'Field Gate, permalinks y 301 se conservan como operaciones acotadas cuando un sitio las necesita; no definen el producto.', 'seo-geo-manager' ); ?></span>
+						<strong><?php esc_html_e( 'Finalización técnica y compatibilidad', 'seo-geo-manager' ); ?></strong>
+						<span><?php esc_html_e( 'Field Gate, permalinks y 301 se conservan como operaciones acotadas cuando un sitio las necesita; no son el centro del trabajo diario.', 'seo-geo-manager' ); ?></span>
 					</div>
 				</summary>
 				<div class="seo-geo-manager-workspace__build-finish-body">
