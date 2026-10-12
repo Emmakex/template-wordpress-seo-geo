@@ -7,6 +7,7 @@ on:
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
       - 'packages/seo-geo-manager/assets/admin/dashboard.js'
+      - 'packages/seo-geo-manager/assets/admin/build-workspace.js'
       - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
       - '.github/workflows/seo-geo-manager-workspace.yml'
   push:
@@ -17,6 +18,7 @@ on:
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
       - 'packages/seo-geo-manager/assets/admin/dashboard.js'
+      - 'packages/seo-geo-manager/assets/admin/build-workspace.js'
       - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
       - '.github/workflows/seo-geo-manager-workspace.yml'
   workflow_dispatch:
@@ -43,7 +45,9 @@ jobs:
           php -l scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
 
       - name: JavaScript syntax
-        run: node --check packages/seo-geo-manager/assets/admin/dashboard.js
+        run: |
+          node --check packages/seo-geo-manager/assets/admin/dashboard.js
+          node --check packages/seo-geo-manager/assets/admin/build-workspace.js
 
       - name: Workspace contract
         run: php scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
