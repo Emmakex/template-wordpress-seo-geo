@@ -2,9 +2,17 @@
 
 Status: **authoritative precedence contract**
 
-Date: 2026-10-10
+Date: 2026-10-12
 
 This repository contains valuable historical phase documentation alongside the current product architecture. To prevent an older accepted phase or roadmap sentence from silently redefining the current product direction, documentation has an explicit precedence order.
+
+## Level 0 — temporary execution lock
+
+While `docs/EMMAKE_COMPLETION_SCOPE.md` is active, it is the highest authority for **what work may be executed now**.
+
+It does not redefine the permanent three-product architecture. It constrains sequencing: EMMAKE must close end to end before renderer generalization, other preset rollout, or generic feature expansion resumes.
+
+If an otherwise-current roadmap proposes SaaS, Local Pro, Publisher, Ecommerce, renderer generalization or generic Manager expansion before EMMAKE completion gates E1–E4 are closed, `docs/EMMAKE_COMPLETION_SCOPE.md` wins for execution order.
 
 ## Level 1 — current product authority
 
@@ -92,11 +100,12 @@ Current policy: close the minimum safe real transition, preserve generic safety 
 
 When two documents appear to disagree:
 
-1. identify whether the disagreement is product ownership/roadmap or a local technical safety contract;
-2. use Level 1 for ownership/roadmap;
-3. preserve Level 2 safety invariants unless explicitly replaced;
-4. treat Level 3 text as historical evidence;
-5. update the misleading active document before implementing new code if ambiguity remains.
+1. first apply `docs/EMMAKE_COMPLETION_SCOPE.md` to determine whether the work is allowed while the EMMAKE lock is active;
+2. identify whether the remaining disagreement is product ownership/roadmap or a local technical safety contract;
+3. use Level 1 for ownership/roadmap;
+4. preserve Level 2 safety invariants unless explicitly replaced;
+5. treat Level 3 text as historical evidence;
+6. update the misleading active document before implementing new code if ambiguity remains.
 
 ## Change-control rule
 
@@ -111,3 +120,5 @@ It requires coordinated updates to at least:
 - the affected product contract(s).
 
 A single feature branch, PR note or implementation shortcut cannot silently redefine product ownership.
+
+The EMMAKE completion lock may be retired without redefining the three-product boundary, but only after its E1 + E2 + E3 + E4 completion gates are explicitly closed.
