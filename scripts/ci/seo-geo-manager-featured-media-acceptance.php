@@ -181,11 +181,17 @@ seo_geo_manager_featured_media_accept( $content_before === (string) get_post_fie
 seo_geo_manager_featured_media_accept( $hash_a_before === seo_geo_manager_featured_media_binary_hash( $media_a ), 'C6.6A Apply changed previous media bytes.' );
 seo_geo_manager_featured_media_accept( $hash_b_before === seo_geo_manager_featured_media_binary_hash( $media_b ), 'C6.6A Apply changed selected media bytes.' );
 
+$verify = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-manager/v1/content/featured-media/changes/' . $operation_id . '/verify' );
+seo_geo_manager_featured_media_accept( 200 === $verify['status'] && is_array( $verify['data'] ), 'C6.6A explicit Verify failed.' );
+seo_geo_manager_featured_media_accept( true === ( $verify['data']['verified'] ?? false ), 'C6.6A explicit Verify did not confirm the operation.' );
+seo_geo_manager_featured_media_accept( $media_b === (int) ( $verify['data']['featured_media_id'] ?? 0 ), 'C6.6A explicit Verify returned the wrong image.' );
+
 $read_after = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media' );
 seo_geo_manager_featured_media_accept( 200 === $read_after['status'] && is_array( $read_after['data'] ), 'C6.6A readback after Apply failed.' );
 seo_geo_manager_featured_media_accept( $media_b === (int) ( $read_after['data']['resource']['featured_media_id'] ?? 0 ), 'C6.6A readback does not show applied media.' );
 $after_fingerprint = (string) ( $read_after['data']['resource']['fingerprint'] ?? '' );
 seo_geo_manager_featured_media_accept( $fingerprint !== $after_fingerprint, 'C6.6A assignment fingerprint did not change after Apply.' );
+seo_geo_manager_featured_media_accept( $after_fingerprint === ( $verify['data']['current_fingerprint'] ?? '' ), 'C6.6A explicit Verify fingerprint differs from readback.' );
 
 $replay = seo_geo_manager_featured_media_request( 'POST', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media/changes/apply', $apply_payload );
 seo_geo_manager_featured_media_accept( 200 === $replay['status'] && is_array( $replay['data'] ), 'C6.6A idempotent replay failed.' );
@@ -209,6 +215,55 @@ seo_geo_manager_featured_media_accept( $media_a === (int) get_post_thumbnail_id(
 
 $restored = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media' );
 seo_geo_manager_featured_media_accept( $fingerprint === ( $restored['data']['resource']['fingerprint'] ?? '' ), 'C6.6A rollback did not restore original assignment fingerprint.' );
+
+$remove_payload = array(
+	'schema_version'          => 1,
+	'media_action'            => 'remove',
+	'media_id'                => 0,
+	'expected_fingerprint'    => $fingerprint,
+	'allow_published_target'  => true,
+	'environment_fingerprint' => $environment_fingerprint,
+	'idempotency_key'         => 'c6-6a-remove-featured-media',
+);
+$remove_preview = seo_geo_manager_featured_media_request( 'POST', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media/changes/preview', $remove_payload );
+seo_geo_manager_featured_media_accept( 200 === $remove_preview['status'] && is_array( $remove_preview['data'] ), 'C6.6A remove Preview failed.' );
+seo_geo_manager_featured_media_accept( 'remove' === ( $remove_preview['data']['change']['action'] ?? '' ), 'C6.6A remove Preview action mismatch.' );
+seo_geo_manager_featured_media_accept( $media_a === (int) ( $remove_preview['data']['change']['before_media_id'] ?? 0 ), 'C6.6A remove Preview before-media mismatch.' );
+seo_geo_manager_featured_media_accept( 0 === (int) ( $remove_preview['data']['change']['after_media_id'] ?? -1 ), 'C6.6A remove Preview after-media mismatch.' );
+seo_geo_manager_featured_media_accept( null === ( $remove_preview['data']['media'] ?? 'unexpected' ), 'C6.6A remove Preview fabricated a replacement image.' );
+seo_geo_manager_featured_media_accept( $media_a === (int) get_post_thumbnail_id( $post_id ), 'C6.6A remove Preview mutated WordPress.' );
+
+$remove_apply = seo_geo_manager_featured_media_request( 'POST', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media/changes/apply', $remove_payload );
+seo_geo_manager_featured_media_accept( 200 === $remove_apply['status'] && is_array( $remove_apply['data'] ), 'C6.6A remove Apply failed.' );
+$remove_operation_id = (string) ( $remove_apply['data']['operation_id'] ?? '' );
+seo_geo_manager_featured_media_accept( 36 === strlen( $remove_operation_id ), 'C6.6A remove operation ID missing.' );
+seo_geo_manager_featured_media_accept( 'remove' === ( $remove_apply['data']['media_action'] ?? '' ), 'C6.6A remove operation action mismatch.' );
+seo_geo_manager_featured_media_accept( 0 === (int) get_post_thumbnail_id( $post_id ), 'C6.6A remove Apply did not clear the featured-media relationship.' );
+seo_geo_manager_featured_media_accept( $content_before === (string) get_post_field( 'post_content', $post_id ), 'C6.6A remove Apply changed post content.' );
+seo_geo_manager_featured_media_accept( $hash_a_before === seo_geo_manager_featured_media_binary_hash( $media_a ), 'C6.6A remove Apply changed media A bytes.' );
+seo_geo_manager_featured_media_accept( $hash_b_before === seo_geo_manager_featured_media_binary_hash( $media_b ), 'C6.6A remove Apply changed media B bytes.' );
+seo_geo_manager_featured_media_accept( $hash_c_before === seo_geo_manager_featured_media_binary_hash( $media_c ), 'C6.6A remove Apply changed media C bytes.' );
+
+$remove_verify = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-manager/v1/content/featured-media/changes/' . $remove_operation_id . '/verify' );
+seo_geo_manager_featured_media_accept( 200 === $remove_verify['status'] && is_array( $remove_verify['data'] ), 'C6.6A remove Verify failed.' );
+seo_geo_manager_featured_media_accept( true === ( $remove_verify['data']['verified'] ?? false ), 'C6.6A remove Verify did not confirm the operation.' );
+seo_geo_manager_featured_media_accept( 0 === (int) ( $remove_verify['data']['featured_media_id'] ?? -1 ), 'C6.6A remove Verify returned a featured image.' );
+
+$removed_readback = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media' );
+seo_geo_manager_featured_media_accept( 200 === $removed_readback['status'] && is_array( $removed_readback['data'] ), 'C6.6A remove readback failed.' );
+seo_geo_manager_featured_media_accept( 0 === (int) ( $removed_readback['data']['resource']['featured_media_id'] ?? -1 ), 'C6.6A remove readback retained a featured image.' );
+seo_geo_manager_featured_media_accept( null === ( $removed_readback['data']['media'] ?? 'unexpected' ), 'C6.6A remove readback returned media details.' );
+
+$remove_rollback = seo_geo_manager_featured_media_request(
+	'POST',
+	'/seo-geo-manager/v1/content/featured-media/changes/' . $remove_operation_id . '/rollback',
+	array( 'environment_fingerprint' => $environment_fingerprint )
+);
+seo_geo_manager_featured_media_accept( 200 === $remove_rollback['status'] && is_array( $remove_rollback['data'] ), 'C6.6A remove rollback failed.' );
+seo_geo_manager_featured_media_accept( 'rolled-back' === ( $remove_rollback['data']['status'] ?? '' ), 'C6.6A remove rollback status mismatch.' );
+seo_geo_manager_featured_media_accept( $media_a === (int) get_post_thumbnail_id( $post_id ), 'C6.6A remove rollback did not restore the original image.' );
+$remove_restored = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media' );
+seo_geo_manager_featured_media_accept( $fingerprint === ( $remove_restored['data']['resource']['fingerprint'] ?? '' ), 'C6.6A remove rollback did not restore the original fingerprint.' );
 
 $stale_apply_payload = array(
 	'schema_version'          => 1,
@@ -246,6 +301,8 @@ $subscriber_read = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-mana
 seo_geo_manager_featured_media_accept( 403 === $subscriber_read['status'], 'Subscriber could inspect featured-media state.' );
 $subscriber_apply = seo_geo_manager_featured_media_request( 'POST', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media/changes/apply', $apply_payload );
 seo_geo_manager_featured_media_accept( 403 === $subscriber_apply['status'], 'Subscriber could mutate featured media.' );
+$subscriber_verify = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-manager/v1/content/featured-media/changes/' . $stale_operation_id . '/verify' );
+seo_geo_manager_featured_media_accept( 403 === $subscriber_verify['status'], 'Subscriber could verify privileged featured-media operations.' );
 
 wp_set_current_user( 1 );
 seo_geo_manager_featured_media_accept( $content_before === (string) get_post_field( 'post_content', $post_id ), 'C6.6A acceptance changed post content.' );
@@ -255,14 +312,17 @@ seo_geo_manager_featured_media_accept( $hash_c_before === seo_geo_manager_featur
 
 echo (string) wp_json_encode(
 	array(
-		'ok'                 => true,
-		'plugin_version'     => SEO_GEO_MANAGER_VERSION,
-		'resource_id'        => $post_id,
-		'final_media_id'     => (int) get_post_thumbnail_id( $post_id ),
-		'operation_id'       => $operation_id,
-		'stale_operation_id' => $stale_operation_id,
-		'content_unchanged'  => true,
-		'binaries_unchanged' => true,
-		'least_privilege_ok' => true,
+		'ok'                  => true,
+		'plugin_version'      => SEO_GEO_MANAGER_VERSION,
+		'resource_id'         => $post_id,
+		'final_media_id'      => (int) get_post_thumbnail_id( $post_id ),
+		'operation_id'        => $operation_id,
+		'remove_operation_id' => $remove_operation_id,
+		'stale_operation_id'  => $stale_operation_id,
+		'content_unchanged'   => true,
+		'binaries_unchanged'  => true,
+		'least_privilege_ok'  => true,
+		'explicit_verify_ok'  => true,
+		'remove_roundtrip_ok' => true,
 	)
 ) . "\n";
