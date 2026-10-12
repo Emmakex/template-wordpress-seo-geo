@@ -84,4 +84,4 @@ jobs:
           php scripts/ci/seo-geo-manager-content-workspace-contract.php
           php scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php
 
-# Validation coverage marker: Manager 0.3.60 SEO Authority Workspace.
+# Validation PR trigger: Manager 0.3.60 SEO Authority Workspace exact-head certification.
