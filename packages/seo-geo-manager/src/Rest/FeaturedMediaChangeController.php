@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
@@ -42,6 +41,18 @@ final class FeaturedMediaChangeController {
 				'permission_callback' => array( self::class, 'can_write' ),
 				'args'                => array(
 					'resource_id' => array( 'sanitize_callback' => 'absint' ),
+				),
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
+			'/content/featured-media/changes/(?P<operation_id>[a-f0-9\-]{36})/verify',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( self::class, 'verify' ),
+				'permission_callback' => array( self::class, 'can_write' ),
+				'args'                => array(
+					'operation_id' => array( 'sanitize_callback' => 'sanitize_text_field' ),
 				),
 			)
 		);
@@ -102,6 +113,23 @@ final class FeaturedMediaChangeController {
 			}
 		}
 
+		return new WP_REST_Response( $result, 200 );
+	}
+
+	/** @return WP_REST_Response|WP_Error */
+	public static function verify( WP_REST_Request $request ) {
+		$operation_id = (string) $request->get_param( 'operation_id' );
+		$operation    = OperationStore::get( $operation_id );
+		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
+			return new WP_Error( 'seo_geo_manager_featured_media_operation_not_found', 'Featured-media operation not found.', array( 'status' => 404 ) );
+		}
+
+		$result = FeaturedMediaChangeAdapter::verify( $operation );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$result['operation_id'] = $operation_id;
+		$result['environment']  = EnvironmentPolicy::snapshot();
 		return new WP_REST_Response( $result, 200 );
 	}
 
