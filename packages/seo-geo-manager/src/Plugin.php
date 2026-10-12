@@ -16,6 +16,7 @@ use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\PermalinkActions;
 use SeoGeo\Manager\Admin\RemoteAccess;
+use SeoGeo\Manager\Admin\SeoAuthorityWorkspace;
 use SeoGeo\Manager\Admin\WorkspaceDashboard;
 use SeoGeo\Manager\Intelligence\PresetPageResolver;
 use SeoGeo\Manager\Rest\AuthorBindingController;
@@ -41,6 +42,7 @@ use SeoGeo\Manager\Rest\OperationHistoryController;
 use SeoGeo\Manager\Rest\PermalinkController;
 use SeoGeo\Manager\Rest\RemoteMutationController;
 use SeoGeo\Manager\Rest\RemoteReadController;
+use SeoGeo\Manager\Rest\SeoAuthorityController;
 use SeoGeo\Manager\Rest\SiteIntelligenceController;
 use SeoGeo\Manager\Rest\SiteSnapshotController;
 use SeoGeo\Manager\Rest\TaxonomyAssignmentController;
@@ -65,6 +67,7 @@ final class Plugin {
 		if ( is_admin() ) {
 			WorkspaceDashboard::register();
 			ContentWorkspace::register();
+			SeoAuthorityWorkspace::register();
 			RemoteAccess::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
@@ -85,6 +88,7 @@ final class Plugin {
 				NativeTranslationGroupController::register_routes();
 				NativeSeoMetadataController::register_routes();
 				YoastSeoMetadataController::register_routes();
+				SeoAuthorityController::register_routes();
 				SiteSnapshotController::register_routes();
 				SiteIntelligenceController::register_routes();
 				ContextualLinkController::register_routes();
