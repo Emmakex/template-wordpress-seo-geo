@@ -47,6 +47,18 @@ final class MediaAltChangeController {
 		);
 		register_rest_route(
 			self::NAMESPACE,
+			'/media/alt/changes/(?P<operation_id>[a-f0-9\-]{36})/verify',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( self::class, 'verify' ),
+				'permission_callback' => array( self::class, 'can_write' ),
+				'args'                => array(
+					'operation_id' => array( 'sanitize_callback' => 'sanitize_text_field' ),
+				),
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
 			'/media/alt/changes/(?P<operation_id>[a-f0-9\-]{36})/rollback',
 			array(
 				'methods'             => 'POST',
@@ -103,6 +115,26 @@ final class MediaAltChangeController {
 			}
 		}
 
+		return new WP_REST_Response( $result, 200 );
+	}
+
+	/** @return WP_REST_Response|WP_Error */
+	public static function verify( WP_REST_Request $request ) {
+		$operation_id = (string) $request->get_param( 'operation_id' );
+		$operation    = OperationStore::get( $operation_id );
+		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
+			return new WP_Error( 'seo_geo_manager_media_alt_operation_not_found', 'Media alt operation not found.', array( 'status' => 404 ) );
+		}
+		$operation_guard = EnvironmentPolicy::validate_operation_environment( $operation );
+		if ( is_wp_error( $operation_guard ) ) {
+			return $operation_guard;
+		}
+		$result = MediaAltChangeAdapter::verify( $operation );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$result['operation_id'] = $operation_id;
+		$result['environment']  = EnvironmentPolicy::snapshot();
 		return new WP_REST_Response( $result, 200 );
 	}
 
