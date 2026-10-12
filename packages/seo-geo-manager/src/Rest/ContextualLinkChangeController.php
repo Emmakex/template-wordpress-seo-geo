@@ -4,6 +4,7 @@
  *
  * @package SeoGeoManager
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
@@ -138,11 +139,11 @@ final class ContextualLinkChangeController {
 		$matched = null;
 		$items   = isset( $readback['items'] ) && is_array( $readback['items'] ) ? $readback['items'] : array();
 		foreach ( $items as $item ) {
-			if ( ! is_array( $item ) || $ordinal !== (int) ( $item['ordinal'] ?? -1 ) ) {
+			if ( ! is_array( $item ) || (int) ( $item['ordinal'] ?? -1 ) !== $ordinal ) {
 				continue;
 			}
 			$source = isset( $item['source'] ) && is_array( $item['source'] ) ? $item['source'] : array();
-			if ( $source_id === absint( $source['id'] ?? 0 ) ) {
+			if ( absint( $source['id'] ?? 0 ) === $source_id ) {
 				$matched = $item;
 				break;
 			}
