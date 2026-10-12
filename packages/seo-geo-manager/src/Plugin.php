@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\Manager;
 
 use SeoGeo\Manager\Admin\ContentWorkspace;
+use SeoGeo\Manager\Admin\ContextualLinksWorkspace;
 use SeoGeo\Manager\Admin\CorrectionActions;
 use SeoGeo\Manager\Admin\FieldGate;
 use SeoGeo\Manager\Admin\JsonExportActions;
@@ -68,6 +69,7 @@ final class Plugin {
 			WorkspaceDashboard::register();
 			ContentWorkspace::register();
 			SeoAuthorityWorkspace::register();
+			ContextualLinksWorkspace::register();
 			RemoteAccess::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
