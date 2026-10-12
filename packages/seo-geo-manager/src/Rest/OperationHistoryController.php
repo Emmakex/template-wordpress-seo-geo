@@ -4,6 +4,7 @@
  *
  * @package SeoGeoManager
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Rest;
@@ -153,7 +154,7 @@ final class OperationHistoryController {
 	/** @return array<string, mixed>|null */
 	private static function visible_row( string $operation_id ): ?array {
 		foreach ( OperationStore::recent_summaries( 100 ) as $row ) {
-			if ( $operation_id !== ( $row['operation_id'] ?? '' ) || ! self::can_view_row( $row ) ) {
+			if ( ( $row['operation_id'] ?? '' ) !== $operation_id || ! self::can_view_row( $row ) ) {
 				continue;
 			}
 
