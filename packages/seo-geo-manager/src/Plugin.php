@@ -15,6 +15,7 @@ use SeoGeo\Manager\Admin\CorrectionActions;
 use SeoGeo\Manager\Admin\FeaturedMediaWorkspace;
 use SeoGeo\Manager\Admin\FieldGate;
 use SeoGeo\Manager\Admin\JsonExportActions;
+use SeoGeo\Manager\Admin\MediaAltWorkspace;
 use SeoGeo\Manager\Admin\NavigationWorkspace;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\PermalinkActions;
@@ -74,6 +75,7 @@ final class Plugin {
 			ContextualLinksWorkspace::register();
 			NavigationWorkspace::register();
 			FeaturedMediaWorkspace::register();
+			MediaAltWorkspace::register();
 			RemoteAccess::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
