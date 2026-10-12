@@ -1,0 +1,57 @@
+name: SEO GEO Manager Featured Media Workspace
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/ci/seo-geo-manager-featured-media-workspace-contract.php'
+      - 'scripts/ci/seo-geo-manager-featured-media-contract.php'
+      - '.github/workflows/seo-geo-manager-featured-media-workspace.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/ci/seo-geo-manager-featured-media-workspace-contract.php'
+      - 'scripts/ci/seo-geo-manager-featured-media-contract.php'
+      - '.github/workflows/seo-geo-manager-featured-media-workspace.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-geo-manager-featured-media-workspace-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  featured-media-workspace:
+    name: Featured Media bounded relationship contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          php --version | head -n 1
+          node --version
+
+      - name: Syntax
+        run: |
+          php -l packages/seo-geo-manager/src/Admin/FeaturedMediaWorkspace.php
+          php -l packages/seo-geo-manager/src/Rest/FeaturedMediaChangeController.php
+          php -l packages/seo-geo-manager/src/Changes/FeaturedMediaChangeAdapter.php
+          php -l packages/seo-geo-manager/src/Plugin.php
+          php -l packages/seo-geo-manager/seo-geo-manager.php
+          php -l scripts/ci/seo-geo-manager-featured-media-workspace-contract.php
+          php -l scripts/ci/seo-geo-manager-featured-media-contract.php
+          node --check packages/seo-geo-manager/assets/admin/featured-media-workspace.js
+
+      - name: Existing Featured Media engine contract
+        run: php scripts/ci/seo-geo-manager-featured-media-contract.php
+
+      - name: Featured Media Workspace contract
+        run: php scripts/ci/seo-geo-manager-featured-media-workspace-contract.php
