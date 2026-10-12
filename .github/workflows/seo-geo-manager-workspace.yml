@@ -5,14 +5,20 @@ on:
     paths:
       - 'packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php'
       - 'packages/seo-geo-manager/src/Admin/ContentWorkspace.php'
+      - 'packages/seo-geo-manager/src/Admin/SeoAuthorityWorkspace.php'
+      - 'packages/seo-geo-manager/src/Rest/SeoAuthorityController.php'
+      - 'packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
       - 'packages/seo-geo-manager/assets/admin/dashboard.js'
       - 'packages/seo-geo-manager/assets/admin/build-workspace.js'
       - 'packages/seo-geo-manager/assets/admin/content-workspace.js'
       - 'packages/seo-geo-manager/assets/admin/content-workspace.css'
+      - 'packages/seo-geo-manager/assets/admin/seo-authority-workspace.js'
+      - 'packages/seo-geo-manager/assets/admin/seo-authority-workspace.css'
       - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
       - 'scripts/ci/seo-geo-manager-content-workspace-contract.php'
+      - 'scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php'
       - '.github/workflows/seo-geo-manager-workspace.yml'
   push:
     branches:
@@ -20,14 +26,20 @@ on:
     paths:
       - 'packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php'
       - 'packages/seo-geo-manager/src/Admin/ContentWorkspace.php'
+      - 'packages/seo-geo-manager/src/Admin/SeoAuthorityWorkspace.php'
+      - 'packages/seo-geo-manager/src/Rest/SeoAuthorityController.php'
+      - 'packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php'
       - 'packages/seo-geo-manager/src/Plugin.php'
       - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
       - 'packages/seo-geo-manager/assets/admin/dashboard.js'
       - 'packages/seo-geo-manager/assets/admin/build-workspace.js'
       - 'packages/seo-geo-manager/assets/admin/content-workspace.js'
       - 'packages/seo-geo-manager/assets/admin/content-workspace.css'
+      - 'packages/seo-geo-manager/assets/admin/seo-authority-workspace.js'
+      - 'packages/seo-geo-manager/assets/admin/seo-authority-workspace.css'
       - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
       - 'scripts/ci/seo-geo-manager-content-workspace-contract.php'
+      - 'scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php'
       - '.github/workflows/seo-geo-manager-workspace.yml'
   workflow_dispatch:
 
@@ -51,19 +63,25 @@ jobs:
         run: |
           php -l packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php
           php -l packages/seo-geo-manager/src/Admin/ContentWorkspace.php
+          php -l packages/seo-geo-manager/src/Admin/SeoAuthorityWorkspace.php
+          php -l packages/seo-geo-manager/src/Rest/SeoAuthorityController.php
+          php -l packages/seo-geo-manager/src/Changes/SeoAuthorityChangeAdapter.php
           php -l packages/seo-geo-manager/src/Plugin.php
           php -l scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
           php -l scripts/ci/seo-geo-manager-content-workspace-contract.php
+          php -l scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php
 
       - name: JavaScript syntax
         run: |
           node --check packages/seo-geo-manager/assets/admin/dashboard.js
           node --check packages/seo-geo-manager/assets/admin/build-workspace.js
           node --check packages/seo-geo-manager/assets/admin/content-workspace.js
+          node --check packages/seo-geo-manager/assets/admin/seo-authority-workspace.js
 
       - name: Workspace contract
         run: |
           php scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
           php scripts/ci/seo-geo-manager-content-workspace-contract.php
+          php scripts/ci/seo-geo-manager-seo-authority-workspace-contract.php
 
-# Validation coverage marker: Manager 0.3.59 Content Workspace.
+# Validation coverage marker: Manager 0.3.60 SEO Authority Workspace.
