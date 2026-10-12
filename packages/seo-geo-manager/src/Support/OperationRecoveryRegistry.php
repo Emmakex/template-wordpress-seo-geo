@@ -4,6 +4,7 @@
  *
  * @package SeoGeoManager
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Manager\Support;
@@ -35,17 +36,17 @@ final class OperationRecoveryRegistry {
 				'path'      => $supported ? $route_base . rawurlencode( $operation_id ) . '/verify' : null,
 			),
 			'rollback'       => array(
-				'available'                       => $available,
-				'method'                          => 'POST',
-				'path'                            => $supported ? $route_base . rawurlencode( $operation_id ) . '/rollback' : null,
+				'available'                        => $available,
+				'method'                           => 'POST',
+				'path'                             => $supported ? $route_base . rawurlencode( $operation_id ) . '/rollback' : null,
 				'requires_environment_fingerprint' => true,
 			),
 			'policy'         => array(
-				'allowlisted_operation_types_only' => true,
-				'type_specific_endpoints_only'     => true,
-				'generic_mutation_endpoint'        => false,
-				'generic_rollback_endpoint'        => false,
-				'private_operation_payload_returned'=> false,
+				'allowlisted_operation_types_only'  => true,
+				'type_specific_endpoints_only'      => true,
+				'generic_mutation_endpoint'         => false,
+				'generic_rollback_endpoint'         => false,
+				'private_operation_payload_returned' => false,
 			),
 		);
 	}
