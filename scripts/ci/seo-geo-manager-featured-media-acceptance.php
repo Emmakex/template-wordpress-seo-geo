@@ -230,7 +230,7 @@ seo_geo_manager_featured_media_accept( 200 === $remove_preview['status'] && is_a
 seo_geo_manager_featured_media_accept( 'remove' === ( $remove_preview['data']['change']['action'] ?? '' ), 'C6.6A remove Preview action mismatch.' );
 seo_geo_manager_featured_media_accept( $media_a === (int) ( $remove_preview['data']['change']['before_media_id'] ?? 0 ), 'C6.6A remove Preview before-media mismatch.' );
 seo_geo_manager_featured_media_accept( 0 === (int) ( $remove_preview['data']['change']['after_media_id'] ?? -1 ), 'C6.6A remove Preview after-media mismatch.' );
-seo_geo_manager_featured_media_accept( null === ( $remove_preview['data']['media'] ?? 'unexpected' ), 'C6.6A remove Preview fabricated a replacement image.' );
+seo_geo_manager_featured_media_accept( array_key_exists( 'media', $remove_preview['data'] ) && null === $remove_preview['data']['media'], 'C6.6A remove Preview fabricated a replacement image.' );
 seo_geo_manager_featured_media_accept( $media_a === (int) get_post_thumbnail_id( $post_id ), 'C6.6A remove Preview mutated WordPress.' );
 
 $remove_apply = seo_geo_manager_featured_media_request( 'POST', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media/changes/apply', $remove_payload );
@@ -252,7 +252,7 @@ seo_geo_manager_featured_media_accept( 0 === (int) ( $remove_verify['data']['fea
 $removed_readback = seo_geo_manager_featured_media_request( 'GET', '/seo-geo-manager/v1/content/' . $post_id . '/featured-media' );
 seo_geo_manager_featured_media_accept( 200 === $removed_readback['status'] && is_array( $removed_readback['data'] ), 'C6.6A remove readback failed.' );
 seo_geo_manager_featured_media_accept( 0 === (int) ( $removed_readback['data']['resource']['featured_media_id'] ?? -1 ), 'C6.6A remove readback retained a featured image.' );
-seo_geo_manager_featured_media_accept( null === ( $removed_readback['data']['media'] ?? 'unexpected' ), 'C6.6A remove readback returned media details.' );
+seo_geo_manager_featured_media_accept( array_key_exists( 'media', $removed_readback['data'] ) && null === $removed_readback['data']['media'], 'C6.6A remove readback returned media details.' );
 
 $remove_rollback = seo_geo_manager_featured_media_request(
 	'POST',
