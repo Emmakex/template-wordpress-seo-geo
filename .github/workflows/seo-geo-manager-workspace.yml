@@ -65,3 +65,5 @@ jobs:
         run: |
           php scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
           php scripts/ci/seo-geo-manager-content-workspace-contract.php
+
+# Validation coverage marker: Manager 0.3.59 Content Workspace.

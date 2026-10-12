@@ -58,7 +58,7 @@
 				<label>Slug<input type="text" data-content-field="slug"></label>
 				<label>Extracto<textarea rows="3" data-content-field="excerpt"></textarea></label>
 				<label>Contenido<textarea rows="14" data-content-field="content"></textarea></label>
-				<label>Estado<select data-content-field="status"><option value="draft">Borrador</option><option value="pending">Pendiente</option><option value="private">Privado</option><option value="publish">Publicado</option></select></label>
+				<label>Estado<select data-content-field="status"><option value="draft">Borrador</option><option value="pending">Pendiente</option><option value="future">Programado</option><option value="private">Privado</option><option value="publish">Publicado</option></select></label>
 				<label class="seo-geo-manager-content-published" data-content-published hidden><input type="checkbox" data-content-allow-published> Permitir cambios sobre el recurso publicado.</label>
 				<div class="seo-geo-manager-build__actions"><button type="button" class="button button-secondary" data-content-preview>Vista previa</button><button type="button" class="button button-primary" data-content-apply disabled>Aplicar y verificar</button></div>
 				<div class="seo-geo-manager-build__preview" data-content-preview-box><p class="description">Haz una vista previa antes de aplicar cambios.</p></div>
