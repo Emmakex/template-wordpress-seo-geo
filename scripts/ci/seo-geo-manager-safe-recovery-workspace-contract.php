@@ -51,12 +51,12 @@ $requirements = array(
 		'private static function visible_row',
 	),
 	'registry' => array(
-		"'seo-authority-change' === $operation_type",
+		"'seo-authority-change' === \$operation_type",
 		"array( 'seo-geo-theme-native', 'yoast-abilities' )",
-		"'contextual-link-change' === $operation_type && 'contextual-link' === $adapter",
-		"'navigation-change' === $operation_type && 'navigation-menu' === $adapter",
-		"'featured-media-change' === $operation_type && 'featured-media' === $adapter",
-		"'media-alt-change' === $operation_type && 'media-alt' === $adapter",
+		"'contextual-link-change' === \$operation_type && 'contextual-link' === \$adapter",
+		"'navigation-change' === \$operation_type && 'navigation-menu' === \$adapter",
+		"'featured-media-change' === \$operation_type && 'featured-media' === \$adapter",
+		"'media-alt-change' === \$operation_type && 'media-alt' === \$adapter",
 		"'method'    => 'GET'",
 		"'method'                          => 'POST'",
 		"'requires_environment_fingerprint' => true",
@@ -66,7 +66,7 @@ $requirements = array(
 	),
 	'evidence' => array(
 		'Evidencia de operaciones',
-		'data-operation-evidence-refresh',
+		'refresh.dataset.operationEvidenceRefresh',
 	),
 	'recovery' => array(
 		'Revisar recuperación',
