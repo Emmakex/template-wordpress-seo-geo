@@ -1,0 +1,25 @@
+.seo-geo-manager-operation-recovery__controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+	grid-column: 1 / -1;
+	padding-top: 6px;
+}
+
+.seo-geo-manager-operation-recovery__message {
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.seo-geo-manager-operation-recovery__message.is-success {
+	color: #006b1b;
+}
+
+.seo-geo-manager-operation-recovery__message.is-error {
+	color: #b32d2e;
+}
+
+.seo-geo-manager-operation-recovery__message.is-muted {
+	color: #646970;
+}
