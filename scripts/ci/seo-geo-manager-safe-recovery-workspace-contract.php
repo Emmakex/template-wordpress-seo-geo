@@ -44,8 +44,6 @@ $requirements = array(
 		'OperationRecoveryRegistry::describe( $operation )',
 		"'mode'         => 'operation-recovery-manifest'",
 		"'privacy_safe' => true",
-		"'generic_mutation_endpoint'        => false",
-		"'generic_rollback_endpoint'        => false",
 		"'private_fingerprints_excluded'",
 		"'environment_fingerprint_excluded'",
 		'private static function visible_row',
@@ -57,10 +55,6 @@ $requirements = array(
 		"'navigation-change' === \$operation_type && 'navigation-menu' === \$adapter",
 		"'featured-media-change' === \$operation_type && 'featured-media' === \$adapter",
 		"'media-alt-change' === \$operation_type && 'media-alt' === \$adapter",
-		"'method'    => 'GET'",
-		"'requires_environment_fingerprint' => true",
-		"'generic_mutation_endpoint'        => false",
-		"'generic_rollback_endpoint'        => false",
 	),
 	'evidence' => array(
 		'Evidencia de operaciones',
@@ -98,13 +92,32 @@ foreach ( $requirements as $scope => $needles ) {
 	}
 }
 
-if ( 1 !== preg_match( "/'method'\\s*=>\\s*'POST'/", $sources['registry'] ) ) {
-	fwrite( STDERR, "Safe Recovery registry does not declare the type-specific rollback method as POST.\n" );
-	exit( 1 );
+$registry_contracts = array(
+	"/'method'\\s*=>\\s*'GET'/"                                  => 'type-specific Verify method GET',
+	"/'method'\\s*=>\\s*'POST'/"                                 => 'type-specific rollback method POST',
+	"/'requires_environment_fingerprint'\\s*=>\\s*true/"         => 'environment fingerprint requirement',
+	"/'generic_mutation_endpoint'\\s*=>\\s*false/"               => 'generic mutation disabled',
+	"/'generic_rollback_endpoint'\\s*=>\\s*false/"               => 'generic rollback disabled',
+	"/'private_operation_payload_returned'\\s*=>\\s*false/"      => 'private operation payload excluded',
+);
+foreach ( $registry_contracts as $pattern => $label ) {
+	if ( 1 !== preg_match( $pattern, $sources['registry'] ) ) {
+		fwrite( STDERR, "Safe Recovery registry is missing semantic contract: {$label}.\n" );
+		exit( 1 );
+	}
 }
-if ( 1 !== preg_match( "/'private_operation_payload_returned'\\s*=>\\s*false/", $sources['registry'] ) ) {
-	fwrite( STDERR, "Safe Recovery registry does not preserve the private-payload exclusion policy.\n" );
-	exit( 1 );
+
+$controller_contracts = array(
+	"/'generic_mutation_endpoint'\\s*=>\\s*false/"        => 'controller generic mutation disabled',
+	"/'generic_rollback_endpoint'\\s*=>\\s*false/"        => 'controller generic rollback disabled',
+	"/'private_fingerprints_excluded'\\s*=>\\s*true/"     => 'controller private fingerprints excluded',
+	"/'environment_fingerprint_excluded'\\s*=>\\s*true/" => 'controller environment fingerprint excluded',
+);
+foreach ( $controller_contracts as $pattern => $label ) {
+	if ( 1 !== preg_match( $pattern, $sources['controller'] ) ) {
+		fwrite( STDERR, "Safe Recovery controller is missing semantic contract: {$label}.\n" );
+		exit( 1 );
+	}
 }
 
 if ( preg_match( '/WP_REST_Server::CREATABLE|WP_REST_Server::EDITABLE|\'POST\'/', $sources['controller'] ) ) {
