@@ -48,7 +48,7 @@ $required = array(
 	'navigation asset handle'                   => array( $workspace, 'seo-geo-manager-navigation-workspace' ),
 	'menu inventory route'                      => array( $controller, "'/navigation'" ),
 	'menu inspection route'                     => array( $controller, "'/navigation/(?P<menu_id>\\d+)'" ),
-	'operation verification route'              => array( $controller, "'/verify'" ),
+	'operation verification route'              => array( $controller, '/verify' ),
 	'published resource resolver'                => array( $controller, 'prepare_target_resource' ),
 	'published-only target policy'               => array( $controller, "'publish' !== \$post->post_status" ),
 	'target resource id in workspace'            => array( $javascript, 'target_resource_id' ),
