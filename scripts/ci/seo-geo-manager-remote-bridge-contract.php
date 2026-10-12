@@ -197,10 +197,6 @@ $required = array(
 		'$payload[\'allow_public_media\']',
 		'$params[\'allow_public_media\']',
 	),
-	'package' => array(
-		'Version: 0.3.57',
-		"SEO_GEO_MANAGER_VERSION', '0.3.57'",
-	),
 );
 
 foreach ( $required as $source_key => $markers ) {
@@ -209,7 +205,20 @@ foreach ( $required as $source_key => $markers ) {
 			fwrite( STDERR, "Remote bridge contract missing {$source_key} marker: {$marker}\n" );
 			exit( 1 );
 		}
-	}
+}
+
+if ( 1 !== preg_match( '/Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/', $sources['package'], $version_match ) ) {
+	fwrite( STDERR, "Remote bridge contract could not read the Manager package version.\n" );
+	exit( 1 );
+}
+$package_version = $version_match[1];
+if ( version_compare( $package_version, '0.3.57', '<' ) ) {
+	fwrite( STDERR, "Remote bridge R3.7 requires Manager >= 0.3.57; received {$package_version}.\n" );
+	exit( 1 );
+}
+if ( false === strpos( $sources['package'], "SEO_GEO_MANAGER_VERSION', '{$package_version}'" ) ) {
+	fwrite( STDERR, "Remote bridge contract found a header/runtime version mismatch for {$package_version}.\n" );
+	exit( 1 );
 }
 
 if ( preg_match( '/register_rest_route[\s\S]*WP_REST_Server::CREATABLE/', $sources['read_controller'] ) ) {
@@ -256,7 +265,8 @@ foreach ( $iterator as $file ) {
 echo json_encode(
 	array(
 		'ok'                                     => true,
-		'version'                                => '0.3.57',
+		'package_version'                        => $package_version,
+		'minimum_version'                        => '0.3.57',
 		'milestone'                              => 'R3.7',
 		'manager_owned_credential'               => true,
 		'replay_rate_idempotency_guards'        => true,
