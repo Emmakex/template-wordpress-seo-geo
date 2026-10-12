@@ -161,10 +161,21 @@ seo_geo_manager_c6_media_accept( $metadata_before === wp_get_attachment_metadata
 seo_geo_manager_c6_media_accept( $title_before === get_the_title( $media_id ), 'C6.3 Apply changed attachment title.' );
 seo_geo_manager_c6_media_assert_bounded( $apply['data'] );
 
+$verify = seo_geo_manager_c6_media_request( 'GET', '/seo-geo-manager/v1/media/alt/changes/' . $operation_id . '/verify' );
+seo_geo_manager_c6_media_accept( 200 === $verify['status'] && is_array( $verify['data'] ), 'C6.3 explicit Verify failed.' );
+seo_geo_manager_c6_media_accept( true === ( $verify['data']['verified'] ?? false ), 'C6.3 explicit Verify did not confirm the ALT operation.' );
+seo_geo_manager_c6_media_accept( $operation_id === ( $verify['data']['operation_id'] ?? '' ), 'C6.3 explicit Verify returned the wrong operation.' );
+seo_geo_manager_c6_media_accept( $media_id === (int) ( $verify['data']['media_id'] ?? 0 ), 'C6.3 explicit Verify returned the wrong attachment.' );
+seo_geo_manager_c6_media_accept( 'Descriptive C6.3 image alt' === ( $verify['data']['alt'] ?? '' ), 'C6.3 explicit Verify returned the wrong ALT.' );
+$verified_fingerprint = (string) ( $verify['data']['current_fingerprint'] ?? '' );
+seo_geo_manager_c6_media_accept( '' !== $verified_fingerprint, 'C6.3 explicit Verify fingerprint missing.' );
+seo_geo_manager_c6_media_accept( $environment_fingerprint === ( $verify['data']['environment']['fingerprint'] ?? '' ), 'C6.3 explicit Verify environment mismatch.' );
+
 $read_after = seo_geo_manager_c6_media_request( 'GET', '/seo-geo-manager/v1/media/' . $media_id );
 seo_geo_manager_c6_media_accept( 200 === $read_after['status'] && is_array( $read_after['data'] ), 'C6.3 re-read after Apply failed.' );
 $after_fingerprint = (string) ( $read_after['data']['media']['fingerprint'] ?? '' );
 seo_geo_manager_c6_media_accept( $fingerprint !== $after_fingerprint, 'C6.3 media fingerprint did not change after alt Apply.' );
+seo_geo_manager_c6_media_accept( $verified_fingerprint === $after_fingerprint, 'C6.3 Verify fingerprint differs from media readback.' );
 seo_geo_manager_c6_media_accept( 'Descriptive C6.3 image alt' === ( $read_after['data']['media']['alt'] ?? '' ), 'C6.3 readback alt mismatch.' );
 
 $replay = seo_geo_manager_c6_media_request( 'POST', '/seo-geo-manager/v1/media/' . $media_id . '/alt/changes/apply', $apply_payload );
@@ -417,6 +428,7 @@ echo wp_json_encode(
 		'attachment_id_only'                => true,
 		'public_approval_guard'             => true,
 		'fingerprint_guard'                 => true,
+		'explicit_verify'                   => true,
 		'idempotent_apply'                  => true,
 		'idempotency_conflict_guard'        => true,
 		'exact_missing_alt_rollback'        => true,
