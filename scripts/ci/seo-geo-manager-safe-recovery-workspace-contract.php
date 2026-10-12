@@ -58,11 +58,9 @@ $requirements = array(
 		"'featured-media-change' === \$operation_type && 'featured-media' === \$adapter",
 		"'media-alt-change' === \$operation_type && 'media-alt' === \$adapter",
 		"'method'    => 'GET'",
-		"'method'                          => 'POST'",
 		"'requires_environment_fingerprint' => true",
 		"'generic_mutation_endpoint'        => false",
 		"'generic_rollback_endpoint'        => false",
-		"'private_operation_payload_returned'=> false",
 	),
 	'evidence' => array(
 		'Evidencia de operaciones',
@@ -98,6 +96,15 @@ foreach ( $requirements as $scope => $needles ) {
 			exit( 1 );
 		}
 	}
+}
+
+if ( 1 !== preg_match( "/'method'\\s*=>\\s*'POST'/", $sources['registry'] ) ) {
+	fwrite( STDERR, "Safe Recovery registry does not declare the type-specific rollback method as POST.\n" );
+	exit( 1 );
+}
+if ( 1 !== preg_match( "/'private_operation_payload_returned'\\s*=>\\s*false/", $sources['registry'] ) ) {
+	fwrite( STDERR, "Safe Recovery registry does not preserve the private-payload exclusion policy.\n" );
+	exit( 1 );
 }
 
 if ( preg_match( '/WP_REST_Server::CREATABLE|WP_REST_Server::EDITABLE|\'POST\'/', $sources['controller'] ) ) {
