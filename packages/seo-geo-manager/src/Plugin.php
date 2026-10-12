@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Manager;
@@ -12,6 +11,7 @@ namespace SeoGeo\Manager;
 use SeoGeo\Manager\Admin\ContentWorkspace;
 use SeoGeo\Manager\Admin\ContextualLinksWorkspace;
 use SeoGeo\Manager\Admin\CorrectionActions;
+use SeoGeo\Manager\Admin\FeaturedMediaWorkspace;
 use SeoGeo\Manager\Admin\FieldGate;
 use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\NavigationWorkspace;
@@ -72,6 +72,7 @@ final class Plugin {
 			SeoAuthorityWorkspace::register();
 			ContextualLinksWorkspace::register();
 			NavigationWorkspace::register();
+			FeaturedMediaWorkspace::register();
 			RemoteAccess::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
