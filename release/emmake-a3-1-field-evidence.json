@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "mode": "emmake-a3-1-field-acceptance",
+  "status": "pending",
+  "tracking_issue": 273,
+  "target": {
+    "production_origin": "https://emmake.com/",
+    "sandbox_origin": "https://emmake.com/nuevaweb/"
+  },
+  "candidate": {
+    "theme_version": "0.1.1",
+    "release_channel": "prestable",
+    "implementation_source": "c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00",
+    "freeze_commit": "08be115f6841ae2f59ac7dcd47f7977b8cb829b0",
+    "theme_zip_sha256": "f4c7074dd3105a04375a212845b54c5bec0e8782870d62df041a6086a36a584f",
+    "migration_bridge_version": "0.8.60",
+    "migration_bridge_zip_sha256": "f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183",
+    "field_pilot_pack_sha256": "1736d8b6dfb9aeec8cc8132a4ee1c42d5d9e4a3afb4510934edfd0cecd5a9fe2"
+  },
+  "provenance": {
+    "workflow": "EMMAKE Field Pilot Pack CI",
+    "run_id": 37650586721,
+    "run_number": 317,
+    "conclusion": "success",
+    "artifact_id": 11495474298,
+    "artifact_wrapper_sha256": "b3f1c0baaba5efc2d2ee24a1ac33258c864bdd2cad939aaab4f146357f6e3a63",
+    "artifact_expires_at": "2026-10-21T16:15:29Z",
+    "nested_hashes_verified": true
+  },
+  "execution_policy": {
+    "theme_only_update": true,
+    "rerun_reset": false,
+    "rerun_clone_reset": false,
+    "rerun_blueprint_import": false,
+    "rerun_hydration": false,
+    "production_mutation": false
+  },
+  "qa": {
+    "1440": null,
+    "1024": null,
+    "768": null,
+    "390": null,
+    "premium_wow": null,
+    "seo_geo": null,
+    "accessibility": null,
+    "responsive": null,
+    "performance": null
+  },
+  "defects": [],
+  "decision": null,
+  "accepted_at": null,
+  "notes": []
+}
