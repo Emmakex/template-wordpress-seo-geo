@@ -18,7 +18,7 @@ Validation slice for the Manager-first EMMAKE build path.
 - exact Verify after Apply;
 - operation ID plus stale-safe rollback handoff;
 - unresolved/conflicting SEO authority blocks editing;
-- no direct `_yoast_wpseo_*` private metadata access;
+- no direct private provider metadata access;
 - no client-domain hardcoding.
 
 This validation branch adds only this release note on top of the exact 0.3.60 implementation head `fdc6bcda9118cde17633ae0eb2c2ba716370fc7a` so the full Manager workflows execute before promotion.
