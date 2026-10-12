@@ -69,8 +69,8 @@ $requirements = array(
 		"'target_verified'",
 		"'verified'            => true",
 		'EnvironmentPolicy::validate_operation_environment',
-		"$operation['before_content']",
-		"$operation['after_content']",
+		'$operation[\'before_content\']',
+		'$operation[\'after_content\']',
 	),
 	'content' => array(
 		'seo-geo-manager:content-selected',
