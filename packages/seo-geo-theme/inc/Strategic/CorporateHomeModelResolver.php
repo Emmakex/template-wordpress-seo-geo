@@ -16,9 +16,9 @@ use WP_Post;
  * Resolves the versioned corporate-home-v1 model without making Gutenberg the
  * frontend layout authority.
  *
- * The current transition source is the already-hydrated semantic block draft.
- * A future SEO/GEO Manager can provide the same model through the public filter
- * without changing the renderer or public HTML contract.
+ * Authored text/link/list slots can come from the hydrated semantic block draft.
+ * Theme-owned media bindings are merged from the strategic-media state without
+ * rewriting post_content or making Gutenberg responsible for visual placement.
  */
 final class CorporateHomeModelResolver {
 	private const MODEL_ID    = 'corporate-home-v1';
@@ -36,7 +36,7 @@ final class CorporateHomeModelResolver {
 			$external['source']  = isset( $external['source'] ) && is_string( $external['source'] ) ? $external['source'] : 'external';
 			$external['post_id'] = $post->ID;
 
-			return $external;
+			return $this->with_strategic_media( $external, $post );
 		}
 
 		$contract = $this->contract();
@@ -57,7 +57,7 @@ final class CorporateHomeModelResolver {
 			'slots'    => $slots,
 		);
 
-		return $this->is_valid_model( $model ) ? $model : null;
+		return $this->is_valid_model( $model ) ? $this->with_strategic_media( $model, $post ) : null;
 	}
 
 	/**
@@ -70,7 +70,7 @@ final class CorporateHomeModelResolver {
 	}
 
 	/**
-	 * Return the Theme-owned corporate-home-v1 contract.
+	 * Return the Theme-owned corporate-home-v1 content contract.
 	 *
 	 * @return array<string, mixed>|null
 	 */
@@ -91,7 +91,7 @@ final class CorporateHomeModelResolver {
 	}
 
 	/**
-	 * Build the slot definition map from the canonical preset document.
+	 * Build the authored slot definition map from the canonical content document.
 	 *
 	 * @param array<string, mixed> $contract Model contract.
 	 * @return array<string, array{type:string,required:bool}>
@@ -312,7 +312,7 @@ final class CorporateHomeModelResolver {
 	}
 
 	/**
-	 * Validate model identity and every required slot from the canonical contract.
+	 * Validate model identity and every required authored slot.
 	 *
 	 * @param array<string, mixed> $model Candidate model.
 	 */
@@ -348,6 +348,34 @@ final class CorporateHomeModelResolver {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Merge effective Theme-owned media bindings into the semantic model.
+	 *
+	 * @param array<string, mixed> $model Authored semantic model.
+	 * @param WP_Post              $post  Source WordPress page.
+	 * @return array<string, mixed>
+	 */
+	private function with_strategic_media( array $model, WP_Post $post ): array {
+		if ( ! isset( $model['slots'] ) || ! is_array( $model['slots'] ) ) {
+			return $model;
+		}
+
+		foreach ( StrategicMediaContract::model_slots( self::MODEL_ID ) as $slot_id => $definition ) {
+			if ( 'media' !== $definition['type'] ) {
+				continue;
+			}
+
+			$attachment_id = StrategicModelMediaState::slot( $post->ID, self::MODEL_ID, $slot_id );
+			if ( 0 < $attachment_id ) {
+				$model['slots'][ $slot_id ] = $attachment_id;
+			} else {
+				unset( $model['slots'][ $slot_id ] );
+			}
+		}
+
+		return $model;
 	}
 
 	/** Resolve the WordPress document charset with a safe HTML default. */

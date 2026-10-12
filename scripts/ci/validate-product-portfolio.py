@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
-"""Validate the Theme + Manager + Gutenberg product architecture contracts."""
+"""Validate the three-product WordPress SEO/GEO operating architecture."""
 
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
 FILES = {
+    "operating_model": ROOT / "docs/THREE_PRODUCT_OPERATING_MODEL.md",
+    "documentation_authority": ROOT / "docs/DOCUMENTATION_AUTHORITY.md",
+    "current_roadmap": ROOT / "docs/CURRENT_THREE_PRODUCT_ROADMAP.md",
+    "vision": ROOT / "docs/PRODUCT_VISION.md",
     "portfolio": ROOT / "docs/PRODUCT_PORTFOLIO.md",
     "manager": ROOT / "docs/SEO_GEO_MANAGER.md",
-    "publishing": ROOT / "docs/CONTENT_PUBLISHING.md",
+    "manager_modes": ROOT / "docs/SEO_GEO_MANAGER_PRODUCT_MODES.md",
     "theme_manager": ROOT / "docs/THEME_MANAGER_CONTENT_ARCHITECTURE.md",
-    "current_roadmap": ROOT / "docs/CURRENT_EXECUTION_ROADMAP.md",
+    "reset_rebuild": ROOT / "docs/RESET_REBUILD_CONTRACT.md",
+    "publishing": ROOT / "docs/CONTENT_PUBLISHING.md",
     "sandbox": ROOT / "docs/PORTABLE_SANDBOX.md",
-    "architecture": ROOT / "docs/ARCHITECTURE.md",
-    "roadmap": ROOT / "docs/ROADMAP.md",
+    "historical_roadmap": ROOT / "docs/ROADMAP.md",
     "stable": ROOT / "docs/STABLE_RELEASE_DECISION.md",
     "pilot": ROOT / "docs/REAL_SITE_PILOT.md",
 }
@@ -25,69 +29,198 @@ def require(source: str, values: tuple[str, ...], label: str) -> None:
             raise SystemExit(f"{label} is missing required product contract text: {value}")
 
 
+def forbid(source: str, values: tuple[str, ...], label: str) -> None:
+    for value in values:
+        if value in source:
+            raise SystemExit(f"{label} contains superseded product contract text: {value}")
+
+
+def read(label: str) -> str:
+    path = FILES[label]
+    if not path.is_file():
+        raise SystemExit(f"Required product portfolio document is missing: {path.relative_to(ROOT)}")
+    if path.stat().st_size == 0:
+        raise SystemExit(f"Product portfolio document is empty: {path.relative_to(ROOT)}")
+    return path.read_text(encoding="utf-8")
+
+
 def main() -> int:
-    for label, path in FILES.items():
-        if not path.is_file():
-            raise SystemExit(f"Required product portfolio document is missing: {path.relative_to(ROOT)}")
-        if path.stat().st_size == 0:
-            raise SystemExit(f"Product portfolio document is empty: {path.relative_to(ROOT)}")
+    docs = {label: read(label) for label in FILES}
 
-    portfolio = FILES["portfolio"].read_text(encoding="utf-8")
-    manager = FILES["manager"].read_text(encoding="utf-8")
-    publishing = FILES["publishing"].read_text(encoding="utf-8")
-    theme_manager = FILES["theme_manager"].read_text(encoding="utf-8")
-    current_roadmap = FILES["current_roadmap"].read_text(encoding="utf-8")
-    sandbox = FILES["sandbox"].read_text(encoding="utf-8")
-    architecture = FILES["architecture"].read_text(encoding="utf-8")
-    roadmap = FILES["roadmap"].read_text(encoding="utf-8")
-    stable = FILES["stable"].read_text(encoding="utf-8")
-    pilot = FILES["pilot"].read_text(encoding="utf-8")
-
-    ownership_rule = (
-        "Gutenberg provides editorial autonomy. SEO/GEO Manager provides automation and growth. "
-        "SEO/GEO Theme provides frontend rendering, design, semantic HTML and performance."
+    north_star = (
+        "Migration Bridge brings the asset. Theme builds the experience. "
+        "Manager gives us safe control. We provide the intelligence."
     )
 
     require(
-        portfolio,
+        docs["operating_model"],
+        (
+            "# Three-product operating model",
+            "three independently sellable WordPress products",
+            "Product 1 — SEO/GEO Migration Bridge",
+            "Product 2 — SEO/GEO Theme",
+            "Product 3 — SEO/GEO Manager",
+            "External orchestration — the brain",
+            "Manager is not the strategic brain",
+            "Inspect / Site Intelligence",
+            "Preview",
+            "Execute",
+            "Publish / Schedule",
+            "Verify",
+            "History / Rollback",
+            north_star,
+        ),
+        "THREE_PRODUCT_OPERATING_MODEL.md",
+    )
+
+    require(
+        docs["documentation_authority"],
+        (
+            "# Documentation authority",
+            "three independently sellable products",
+            '"Two-product portfolio"',
+            '"Migration Bridge package will be retired after Manager absorbs migration"',
+            '"Manager owns the strategic Landing/Blog/Optimizer/Growth intelligence"',
+            "Level 3 — historical roadmap / phase evidence",
+            "do **not** override Level 1 architecture",
+        ),
+        "DOCUMENTATION_AUTHORITY.md",
+    )
+
+    require(
+        docs["current_roadmap"],
+        (
+            "# Current three-product roadmap",
+            "Track A — SEO/GEO Migration Bridge",
+            "Track B — SEO/GEO Theme",
+            "Track C — SEO/GEO Manager",
+            "C0 — Product boundary freeze",
+            "C1 — Site Intelligence / eyes",
+            "C2 — Authentication / capability contract",
+            "0.3.34 capability-discovery slice implemented",
+            "C3 — Generic change-set engine / hands",
+            "C4 — WordPress content operations",
+            "C5 — Theme semantic-model operations",
+            "External orchestration workflows after Manager primitives",
+            "EMMAKE immediate decision",
+            "Commercial packaging target",
+            "Anti-drift review",
+        ),
+        "CURRENT_THREE_PRODUCT_ROADMAP.md",
+    )
+
+    require(
+        docs["vision"],
+        (
+            "# Product Vision",
+            "three independently sellable products",
+            "SEO/GEO Migration Bridge",
+            "SEO/GEO Theme",
+            "SEO/GEO Manager",
+            "strategic brain lives outside WordPress",
+            "External orchestration — our operating layer",
+            "three independent installable products",
+        ),
+        "PRODUCT_VISION.md",
+    )
+    forbid(
+        docs["vision"],
+        ("The portfolio has two independently sellable products",),
+        "PRODUCT_VISION.md",
+    )
+
+    require(
+        docs["portfolio"],
         (
             "# Product portfolio",
-            "Product A — SEO/GEO Theme",
-            "Product B — SEO/GEO Manager",
-            "The Theme must remain fully usable when SEO/GEO Manager is not installed.",
-            "works without requiring the SEO/GEO Theme",
-            "The Manager is not the deprecated standalone Core wrapper.",
-            "Product versions and release channels are independent.",
-            "Landings/blogs can be previewed, published idempotently and rolled back.",
-            "complete blog posts can be created automatically by Manager",
-            "Manager-created blog posts remain editable in Gutenberg",
-            "Corporate v5 — Theme-owned frontend",
+            "three-product portfolio",
+            "Product A — SEO/GEO Migration Bridge",
+            "Product B — SEO/GEO Theme",
+            "Product C — SEO/GEO Manager",
+            "External orchestration — not an installable WordPress product",
+            "not the strategic brain",
+            "Migration Bridge remains a separately sellable product",
+            "Manager capability roadmap after the architectural correction",
+        ),
+        "PRODUCT_PORTFOLIO.md",
+    )
+    forbid(
+        docs["portfolio"],
+        (
+            "The WordPress SEO/GEO project is a **two-product portfolio**",
+            "The **bridge package** may eventually be retired",
         ),
         "PRODUCT_PORTFOLIO.md",
     )
 
     require(
-        manager,
+        docs["manager"],
         (
             "# SEO/GEO Manager",
-            "must not require GitHub",
-            "### 1. Site Intelligence",
-            "### 2. Output Authority Resolver",
-            "### 3. Content Publishing Core",
-            "### 4. Landing Engine",
-            "### 5. Blog Engine",
-            "Automated blog publication is a **first-class Manager feature**.",
-            "Manager-created blog article becomes a **normal WordPress post**",
-            "Growth / Opportunity Engine",
-            "Migration mode is optional.",
-            "Manager receives its own installable ZIP and release lifecycle.",
-            "Corporate v5 — Theme-owned frontend",
+            "WordPress bridge/control agent",
+            "not the strategic brain",
+            "Site Intelligence / Inspect",
+            "Output Authority Resolver",
+            "Preview / Change-set Core",
+            "Execute / Apply",
+            "Publish / Schedule",
+            "Verify",
+            "Operation history and rollback",
+            "External orchestration contract",
+            "wp-admin UI role",
+            "Migration Bridge remains a separate sellable product",
+            "first stable Manager does **not** require an embedded autonomous keyword strategist",
         ),
         "SEO_GEO_MANAGER.md",
     )
 
     require(
-        publishing,
+        docs["manager_modes"],
+        (
+            "# SEO/GEO Manager product modes",
+            "External orchestration is the brain",
+            "Mode 1 — Build / Finish",
+            "Mode 2 — Optimize",
+            "Mode 3 — Grow",
+            "Manager owns",
+            "External orchestration owns",
+            "Manager MVP roadmap after this correction",
+            "Anti-drift test",
+        ),
+        "SEO_GEO_MANAGER_PRODUCT_MODES.md",
+    )
+
+    require(
+        docs["theme_manager"],
+        (
+            "# Theme-owned frontend + Manager bridge + external orchestration architecture",
+            "Manager-as-bridge",
+            "external-orchestration-as-brain",
+            "content is not layout, and execution is not strategy",
+            "Strategic landing workflow",
+            "Blog/editorial workflow",
+            "Optimization workflow",
+            "Growth loop",
+            "EMMAKE reference implementation",
+        ),
+        "THEME_MANAGER_CONTENT_ARCHITECTURE.md",
+    )
+
+    require(
+        docs["reset_rebuild"],
+        (
+            "# Reset & Rebuild Contract",
+            "Migration Bridge is the dedicated transition/migration product",
+            "Manager handoff boundary",
+            "Manager does not become the strategic brain",
+            "external Build / Finish",
+            "external Optimize / Grow through Manager",
+        ),
+        "RESET_REBUILD_CONTRACT.md",
+    )
+
+    require(
+        docs["publishing"],
         (
             "# Content publishing contract",
             "Draft-first is the baseline.",
@@ -95,119 +228,56 @@ def main() -> int:
             "## Change set and rollback",
             "The publication engine never assumes it owns SEO output.",
             "no mass city/service token swapping",
-            "Theme-owned landing renderer contract",
-            "Automated blog publication is a **first-class SEO/GEO Manager capability**.",
             "Manager-created articles become **normal WordPress posts**.",
             "remain editable by authorized client users in Gutenberg",
-            "retrying an accepted request cannot create a second page/post",
-            "clean uninstall/deactivation behavior that does not delete client content",
         ),
         "CONTENT_PUBLISHING.md",
     )
 
     require(
-        theme_manager,
-        (
-            "# Theme-owned frontend + SEO/GEO Manager content architecture",
-            ownership_rule,
-            "## Strategic-page rendering",
-            "## Gutenberg boundary",
-            "## SEO/GEO Manager: automated landing creation",
-            "## SEO/GEO Manager: automated blog creation",
-            "Manager-created articles must remain normal WordPress posts",
-            "Corporate v5 — Theme-owned frontend",
-            "Do not continue visual rollout of SaaS, Local Pro, Publisher or Ecommerce",
-        ),
-        "THEME_MANAGER_CONTENT_ARCHITECTURE.md",
-    )
-
-    require(
-        current_roadmap,
-        (
-            "# Current execution roadmap",
-            "## Track A — Corporate v5 Theme-owned frontend",
-            ownership_rule,
-            "Track C — SEO/GEO Manager Landing Engine",
-            "Track D — SEO/GEO Manager Automated Blog Engine",
-            "Manager-created articles become normal WordPress posts.",
-            "remain editable by authorized users in Gutenberg",
-            "Do **not** begin A4 renderer generalization until the exact A3 field candidate passes `/nuevaweb/` visual/browser acceptance.",
-        ),
-        "CURRENT_EXECUTION_ROADMAP.md",
-    )
-
-    require(
-        sandbox,
+        docs["sandbox"],
         (
             "# Portable sandbox strategy",
             "Staging is a capability of our migration workflow",
-            "### Mode A — Client staging exists",
-            "### Mode B — No staging, but WordPress/hosting access exists",
-            "### Mode C — Limited WordPress access",
             "retain production as data authority",
             "Stale sandbox databases",
-            "SEO/GEO Manager coordinates portable-sandbox/migration operations.",
         ),
         "PORTABLE_SANDBOX.md",
     )
 
     require(
-        architecture,
-        (
-            "two-product portfolio",
-            "## SEO/GEO Manager ownership",
-            "Manager must not become a second uncontrolled public-output owner.",
-            "publishing must be draft-first by default, idempotent, authority-aware and rollback-capable",
-            "Gutenberg is not the layout authority for strategic SEO/GEO surfaces",
-            "Manager-created blog posts are normal WordPress posts",
-            "Corporate v5 — Theme-owned frontend",
-        ),
-        "ARCHITECTURE.md",
-    )
-
-    # The historical/global roadmap remains required as accepted phase evidence.
-    # Current execution direction is validated separately by CURRENT_EXECUTION_ROADMAP.md.
-    require(
-        roadmap,
+        docs["historical_roadmap"],
         (
             "## Phase 11 — SEO/GEO Manager product",
             "## Phase 12 — Content operations and agency scale",
-            "Manager is not the deprecated Core wrapper.",
         ),
         "ROADMAP.md",
     )
 
     require(
-        stable,
+        docs["stable"],
         (
             "## Product boundary",
             "SEO/GEO Manager is a separate plugin product.",
-            "not a mandatory dependency or blocker for Theme `0.1.1` stable runtime",
-            "Migration Bridge is the accepted migration/reset implementation for this Theme pilot.",
-            "deprecated-retained-nondistributed",
-            "Corporate v4.3 passed repository-side technical gates",
-            "failed the human visual/architectural acceptance gate",
             "Corporate v5 A3",
         ),
         "STABLE_RELEASE_DECISION.md",
     )
 
     require(
-        pilot,
+        docs["pilot"],
         (
             "## Stable promotion boundary",
             "Theme stable promotion remains **NO-GO**.",
             "Corporate v5 — Theme-owned frontend",
-            "Corporate v4.3 remains historical evidence: technically valid but **visual/architectural NO-GO**.",
-            "Do **not** rerun Reset, regenerate the Home, rehydrate content",
         ),
         "REAL_SITE_PILOT.md",
     )
 
     print(
-        "Product portfolio contract OK: WordPress CMS ownership, Gutenberg editorial autonomy, "
-        "Theme-owned strategic rendering, automated Manager landing/blog operations, single SEO/GEO authority, "
-        "rollback-safe publishing and Corporate v5 A3 execution direction are documented."
+        "Three-product portfolio contract OK: Migration Bridge owns transition, Theme owns rendering, "
+        "Manager owns safe WordPress control, external orchestration owns strategy/intelligence, and "
+        "historical phase documents cannot override the current architecture."
     )
     return 0
 

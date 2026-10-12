@@ -2,24 +2,31 @@
 
 Status: **authoritative for full redesign / replatform projects**
 
+Canonical portfolio boundary: `docs/THREE_PRODUCT_OPERATING_MODEL.md`.
+
 ## Core rule
 
 For a full redesign, the clone is a **disposable working copy**, not a legacy runtime that must be preserved.
 
 The product path is:
 
-1. scan the original site;
-2. create the clone;
+1. scan the original site with SEO/GEO Migration Bridge;
+2. create/transport the clone;
 3. rescue only the valuable digital asset;
 4. reset the clone;
-5. install the SEO/GEO Theme;
+5. install SEO/GEO Theme;
 6. apply the selected preset;
-7. rebuild the site from clean Theme-native components;
+7. rebuild the site from clean Theme-native semantic components;
 8. reinsert only the rescued content/SEO/business material that still matters;
 9. validate the rebuilt site;
-10. connect SEO/GEO Manager for continuous optimization and content operations.
+10. install/connect SEO/GEO Manager as the safe ongoing WordPress control bridge where managed operation is required;
+11. continue strategy, research, creation, optimization and growth through external orchestration using Manager capabilities.
 
 The objective is not to migrate the old website faithfully. The objective is to create a new website without throwing away search equity or useful business information.
+
+North-star product split:
+
+> **Migration Bridge rescues the asset. Theme builds/renders the new site. Manager gives us safe control after handoff. External orchestration provides the intelligence.**
 
 ## Rescue set
 
@@ -59,17 +66,26 @@ The following are removed/replaced by default in the clone:
 
 The reset must make the destination **lighter**, not carry technical debt into the new product.
 
-## What the Migration Bridge owns
+## What Migration Bridge owns
 
-Migration Bridge is the one-time transition tool.
+Migration Bridge is the dedicated transition/migration product.
 
 Its full-redesign path is:
 
-**Scan → Clone → Rescue Manifest → Reset → Theme/Theme preset bootstrap → Rebuild handoff**
+```text
+Scan
+ -> Clone / Export / Import
+ -> Rescue Manifest
+ -> Reset
+ -> Theme/preset bootstrap handoff
+ -> migration/cutover verification
+```
 
-Migration Bridge does not remain as the permanent content/SEO operations product.
+Migration Bridge is independently sellable and does not become the permanent content/SEO operations layer.
 
 For a clone that already exists and is usable, the workflow must not force the operator to repeat historical analysis merely to proceed. Existing evidence may be reused and non-essential UNKNOWN dependencies must not block reset-first reconstruction.
+
+Migration Bridge remains a separate product even when low-level reusable libraries are shared with other packages.
 
 ## Rescue Manifest
 
@@ -91,15 +107,15 @@ The Rescue Manifest is the handoff contract between the old clone and the new Th
 
 After the Rescue Manifest exists, the clone becomes a clean rebuild target.
 
-The Theme and chosen preset become the new authority for:
+SEO/GEO Theme and the chosen preset become the new authority for:
 
 - layout;
 - design system;
 - semantic HTML;
 - responsive behavior;
 - accessibility;
-- technical SEO/GEO;
-- Schema;
+- technical SEO/GEO baseline;
+- Schema/discovery output;
 - multilingual output;
 - performance budgets;
 - native reusable components.
@@ -108,7 +124,7 @@ The old theme/builder is no longer a fallback architecture.
 
 ## Rebuild rule
 
-Pages are reconstructed from the selected preset and Theme-native patterns.
+Pages are reconstructed from the selected preset and Theme-owned semantic renderers/models.
 
 Legacy content may be:
 
@@ -124,45 +140,54 @@ Visual parity with the old site is never a target.
 
 The new website should look and behave like a modern product site, not like a cleaned version of the old builder site.
 
-## Emmake pilot
+## Manager handoff boundary
+
+After rebuild, SEO/GEO Manager becomes the optional/recommended permanent **safe control bridge** for managed operation.
+
+Manager may:
+
+- inspect real WordPress state;
+- expose Theme model/resource capabilities;
+- preview bounded changes;
+- create/update/publish WordPress resources;
+- persist accepted Theme semantic models;
+- update supported SEO/provider fields;
+- verify stored and public results;
+- maintain operation history/rollback references.
+
+Manager does not become the strategic brain.
+
+Strategy, research, content creation, optimization reasoning, Search Console/Bing interpretation and growth prioritization remain in the external orchestration layer.
+
+## EMMAKE pilot
 
 For `emmake.com/nuevaweb/`:
 
 - the clone already exists;
 - clone transport is complete;
-- the Corporate preset is the rebuild target;
-- the current screen's remaining UNKNOWN dependency does not need to block the redesign unless it represents a function that the new site genuinely needs;
-- a new public-baseline capture is not required merely to start rebuilding the already-created clone;
-- the immediate work is Rescue Manifest → reset legacy runtime → Corporate Theme/preset rebuild.
+- Corporate is the rebuild target;
+- a new public-baseline capture is not required merely to continue rebuilding the already-created clone;
+- Migration Bridge work should not be repeated merely because Theme/Manager code changes;
+- the useful source asset is content, URLs, SEO intent, links, selected media, business/contact/legal facts and required functions;
+- the old EMMAKE presentation/runtime is disposable;
+- Theme owns the new Corporate frontend;
+- Manager is the ongoing safe WordPress bridge;
+- our work from outside WordPress becomes the intelligence/optimization/growth layer.
 
-The old Emmake presentation is therefore disposable.
+Correct lifecycle:
 
-The useful source material is primarily:
+```text
+old EMMAKE
+ -> Migration Bridge
+ -> /nuevaweb/ clean workspace
+ -> Corporate Theme
+ -> Manager connection/control
+ -> external Build / Finish
+ -> launch
+ -> external Optimize / Grow through Manager
+```
 
-- content and business facts;
-- current public URL structure;
-- useful SEO metadata/indexability intent;
-- internal/external links;
-- selected images/media;
-- contact/legal/business functions that the new site still requires.
-
-## SEO/GEO Manager boundary
-
-SEO/GEO Manager is the permanent **post-rebuild operating layer**.
-
-Its primary purpose is:
-
-- create optimized landing pages and blog content;
-- improve existing content;
-- manage editorial workflows;
-- improve internal linking;
-- coordinate SEO/GEO metadata and structured output without duplicate ownership;
-- use Search Console/Bing/analytics feedback;
-- identify content decay/opportunities;
-- schedule and publish controlled updates;
-- keep the WordPress site evolving in the same product-development style used by modern Kairoseth/IA Empleado workflows.
-
-Migration capabilities may later be absorbed as an optional Manager module, but they are not the reason the Manager exists.
+EMMAKE-specific permalink/slug edge cases are migration field evidence, not the permanent center of Manager product development.
 
 ## Definition of success
 
@@ -171,12 +196,13 @@ A reset/rebuild is successful when:
 - the new site no longer needs the legacy visual stack;
 - only genuinely useful content/data/integrations survived;
 - URLs/SEO equity required by the project are retained or intentionally redirected;
-- the Theme/preset is the new presentation authority;
+- Theme/preset is the new presentation authority;
 - unused themes/plugins/assets are gone;
 - frontend payload is materially simpler;
 - accessibility/responsive/performance gates pass;
-- the site is ready for continuous operation through SEO/GEO Manager.
+- the rebuilt WordPress can be safely inspected/operated through Manager when managed service is enabled;
+- ongoing strategy/content/optimization can be driven externally without reintroducing legacy page-builder debt.
 
 ### North-star sentence
 
-**Rescue the asset, reset the clone, rebuild the product.**
+> **Rescue the asset, reset the clone, rebuild the product, then operate it through Manager.**

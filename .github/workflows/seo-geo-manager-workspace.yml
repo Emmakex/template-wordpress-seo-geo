@@ -1,0 +1,49 @@
+name: SEO GEO Manager Workspace CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php'
+      - 'packages/seo-geo-manager/src/Plugin.php'
+      - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
+      - 'packages/seo-geo-manager/assets/admin/dashboard.js'
+      - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
+      - '.github/workflows/seo-geo-manager-workspace.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php'
+      - 'packages/seo-geo-manager/src/Plugin.php'
+      - 'packages/seo-geo-manager/assets/admin/workspace-dashboard.css'
+      - 'packages/seo-geo-manager/assets/admin/dashboard.js'
+      - 'scripts/ci/seo-geo-manager-workspace-dashboard-contract.php'
+      - '.github/workflows/seo-geo-manager-workspace.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-geo-manager-workspace-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workspace-contract:
+    name: Permanent control plane dashboard contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: PHP syntax
+        run: |
+          php -l packages/seo-geo-manager/src/Admin/WorkspaceDashboard.php
+          php -l packages/seo-geo-manager/src/Plugin.php
+          php -l scripts/ci/seo-geo-manager-workspace-dashboard-contract.php
+
+      - name: JavaScript syntax
+        run: node --check packages/seo-geo-manager/assets/admin/dashboard.js
+
+      - name: Workspace contract
+        run: php scripts/ci/seo-geo-manager-workspace-dashboard-contract.php

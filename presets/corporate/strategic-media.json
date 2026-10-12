@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "preset": "corporate",
+  "models": {
+    "corporate-home-v1": {
+      "slots": [
+        {
+          "id": "hero-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
+        }
+      ]
+    }
+  }
+}

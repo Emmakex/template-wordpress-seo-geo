@@ -81,7 +81,8 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
-		$visual = $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false );
+		$visual        = $this->hero_visual( $slots );
+		$visual_hidden = $visual['decorative'] ? ' aria-hidden="true"' : '';
 
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'
@@ -90,8 +91,43 @@ final class CorporateHomeRenderer {
 			. '<h1 id="seo-geo-corporate-v5-title" class="seo-geo-corporate-lead">' . esc_html( $lead ) . '</h1>'
 			. $actions
 			. '</div></div>'
-			. '<div class="wp-block-column seo-geo-corporate-native-hero__visual-column" aria-hidden="true">' . $visual . '</div>'
+			. '<div class="wp-block-column seo-geo-corporate-native-hero__visual-column"' . $visual_hidden . '>' . $visual['html'] . '</div>'
 			. '</div></section>';
+	}
+
+	/**
+	 * Render a bound WordPress hero image with the existing local SVG as fallback.
+	 *
+	 * @param array<string, mixed> $slots Semantic slots.
+	 * @return array{html:string,decorative:bool}
+	 */
+	private function hero_visual( array $slots ): array {
+		$media_id = $this->media( $slots, 'hero-media' );
+		if ( 0 < $media_id && wp_attachment_is_image( $media_id ) ) {
+			$image = wp_get_attachment_image(
+				$media_id,
+				'large',
+				false,
+				array(
+					'class'         => 'seo-geo-corporate-hero-visual__image',
+					'loading'       => 'eager',
+					'fetchpriority' => 'high',
+					'decoding'      => 'async',
+					'sizes'         => '(max-width: 781px) calc(100vw - 2rem), 46vw',
+				)
+			);
+			if ( '' !== $image ) {
+				return array(
+					'html'       => $image,
+					'decorative' => false,
+				);
+			}
+		}
+
+		return array(
+			'html'       => $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false ),
+			'decorative' => true,
+		);
 	}
 
 	/**
@@ -318,6 +354,18 @@ final class CorporateHomeRenderer {
 		$value = $slots[ $id ] ?? '';
 
 		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Resolve one positive media attachment ID.
+	 *
+	 * @param array<string, mixed> $slots Semantic slots.
+	 * @param string               $id    Slot identifier.
+	 */
+	private function media( array $slots, string $id ): int {
+		$value = $slots[ $id ] ?? 0;
+
+		return is_int( $value ) && 0 < $value ? $value : 0;
 	}
 
 	/**

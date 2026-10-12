@@ -7,6 +7,7 @@ on:
       - 'packages/seo-geo-core/**'
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/self-contained-theme-smoke.sh'
+      - 'scripts/ci/strategic-media-acceptance.sh'
       - '.github/workflows/self-contained-theme.yml'
       - 'docs/ARCHITECTURE.md'
       - 'docs/PRODUCT_VISION.md'
@@ -18,6 +19,7 @@ on:
       - 'packages/seo-geo-core/**'
       - 'scripts/build-theme-package.sh'
       - 'scripts/ci/self-contained-theme-smoke.sh'
+      - 'scripts/ci/strategic-media-acceptance.sh'
       - '.github/workflows/self-contained-theme.yml'
       - 'docs/ARCHITECTURE.md'
       - 'docs/PRODUCT_VISION.md'
@@ -49,8 +51,13 @@ jobs:
         run: |
           bash -n scripts/build-theme-package.sh
           bash -n scripts/ci/self-contained-theme-smoke.sh
+          bash -n scripts/ci/strategic-media-acceptance.sh
           php -l packages/seo-geo-theme/inc/seo-geo-core/bootstrap.php
           php -l packages/seo-geo-theme/inc/setup.php
+          php -l packages/seo-geo-theme/inc/Strategic/StrategicMediaContract.php
+          php -l packages/seo-geo-theme/inc/Strategic/StrategicModelMediaState.php
+          php -l packages/seo-geo-theme/inc/Strategic/CorporateHomeModelResolver.php
+          php -l packages/seo-geo-theme/inc/Strategic/CorporateHomeRenderer.php
           php -l packages/seo-geo-theme/inc/Setup/SetupConfigurationContract.php
           php -l packages/seo-geo-theme/inc/Setup/MigrationHandoffReader.php
           php -l packages/seo-geo-theme/inc/Setup/SetupCompatibilityDetector.php
@@ -69,4 +76,4 @@ jobs:
         run: bash scripts/build-theme-package.sh /tmp/seo-geo-theme-build
 
       - name: WordPress zero-plugin SEO/GEO smoke
-        run: bash scripts/ci/self-contained-theme-smoke.sh
+        run: bash -c 'source scripts/ci/self-contained-theme-smoke.sh && source scripts/ci/strategic-media-acceptance.sh'

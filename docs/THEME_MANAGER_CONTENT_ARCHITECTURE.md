@@ -1,51 +1,81 @@
-# Theme-owned frontend + SEO/GEO Manager content architecture
+# Theme-owned frontend + Manager bridge + external orchestration architecture
+
+Status: **authoritative content/rendering/control architecture**
+
+Canonical portfolio boundary: `docs/THREE_PRODUCT_OPERATING_MODEL.md`.
 
 ## Decision
 
-The project adopts a **WordPress-as-CMS, Theme-owned-frontend** architecture.
+The project adopts a **WordPress-as-CMS, Theme-owned-frontend, Manager-as-bridge, external-orchestration-as-brain** architecture.
 
-WordPress remains the content, identity, revision, permissions, taxonomy and URL platform. Gutenberg remains available where editorial autonomy is useful. However, Gutenberg is **not** the layout authority for strategic SEO/GEO surfaces such as the Home, commercial landing pages, service pages, location pages, campaign pages and other preset-owned master pages.
+WordPress remains the content, identity, revision, permissions, taxonomy and URL platform.
 
-The permanent separation of responsibilities is:
+Gutenberg remains available where editorial autonomy is useful.
 
-> **Gutenberg provides editorial autonomy. SEO/GEO Manager provides automation and growth. SEO/GEO Theme provides frontend rendering, design, semantic HTML and performance.**
+SEO/GEO Theme owns strategic frontend rendering.
 
-This decision follows the real EMMAKE Corporate field pilot. Corporate v4.x proved that a premium preset can still be visually distorted when Theme composition depends on Gutenberg constrained-layout rules such as `contentSize`, `wideSize`, `is-layout-constrained`, block alignment and generated block CSS. The reusable product must not require an accumulating set of CSS exceptions to override editor layout decisions.
+SEO/GEO Manager exposes safe local WordPress control to an authorized external operator.
 
-## Product architecture
+External orchestration performs strategy, research, creation, optimization and growth reasoning.
+
+The permanent separation is:
+
+> **Gutenberg provides editorial autonomy. Theme provides frontend rendering. Manager provides safe WordPress control. External orchestration provides intelligence.**
+
+This boundary is required so we can operate a client WordPress from outside WordPress in the same inspect/change/verify style used in our software projects, without making public rendering remote-dependent or embedding every strategic workflow inside a plugin.
+
+---
+
+# Product architecture
 
 ```text
+External orchestration / operator
+|
++-- strategy
++-- research
++-- SEO/GEO reasoning
++-- content creation
++-- landing/article briefs
++-- internal-link / cluster strategy
++-- Search Console / Bing / analytics interpretation
++-- optimization and growth decisions
+|
+|   authenticated structured operations
+v
+SEO/GEO Manager
+|
++-- Site Intelligence / capability discovery
++-- WordPress resource APIs
++-- Theme model APIs
++-- output-authority/provider adapters
++-- preview/diff
++-- apply/execute
++-- draft/schedule/publish/update
++-- stored/rendered verification
++-- operation evidence/history
++-- rollback and stale-state guards
+|
+v
 WordPress
 |
-+-- WordPress content/data layer
-|   +-- posts, pages and custom content entities
-|   +-- slugs, status, author, dates and revisions
-|   +-- users, capabilities and permissions
-|   +-- categories, tags and approved taxonomies
-|   +-- media library
-|   +-- REST/admin APIs
++-- content/data layer
+|   +-- posts, pages and custom entities
+|   +-- slugs/status/authors/dates/revisions
+|   +-- users/capabilities
+|   +-- taxonomies
+|   +-- media
+|   +-- local persistent state
 |
 +-- Gutenberg editorial layer
 |   +-- manual blog editing
 |   +-- client-authored posts
 |   +-- legal/privacy/cookie pages
 |   +-- simple informational pages
-|   +-- optional manual editing of Manager-created blog posts
-|
-+-- SEO/GEO Manager
-|   +-- Site Intelligence
-|   +-- Output Authority Resolver
-|   +-- Landing Engine
-|   +-- Blog Engine
-|   +-- internal-link / cluster planning
-|   +-- SEO/GEO metadata orchestration
-|   +-- draft / preview / approval / schedule / publish
-|   +-- revisions, idempotency and rollback
-|   +-- optional migration module
+|   +-- optional editing of Manager-created posts
 |
 +-- SEO/GEO Theme
-    +-- Theme-owned page renderers
-    +-- five preset renderers
+    +-- Theme-owned strategic renderers
+    +-- five preset families
     +-- article/editorial shell
     +-- semantic HTML
     +-- responsive layout
@@ -55,48 +85,50 @@ WordPress
     +-- performance budgets
 ```
 
-## Core rule: content is not layout
-
-Content and presentation are separate contracts.
-
-SEO/GEO Manager creates or modifies **content models and WordPress resources**. It does not need to understand CSS grids, `alignwide`, `contentSize`, Gutenberg Group nesting, preset-specific class names or visual breakpoints.
-
-SEO/GEO Theme converts accepted content models into the public frontend.
-
-For strategic pages the pipeline is:
+Migration Bridge sits before this normal operating loop when a legacy site must be rescued/replatformed:
 
 ```text
-brief / research / existing content
-        |
-        v
-SEO/GEO Manager structured model
-        |
-        v
-WordPress resource + versioned SEO/GEO data
-        |
-        v
-preset renderer owned by SEO/GEO Theme
-        |
-        v
-semantic server-rendered HTML + controlled CSS
+legacy WordPress
+    -> Migration Bridge
+    -> clean destination WordPress
+    -> Theme + Manager + external orchestration as needed
 ```
 
-The renderer, not Gutenberg, owns:
+---
 
-- master width;
-- grids and section composition;
-- typography scale and reading measure;
-- spacing rhythm;
-- responsive breakpoints;
-- component hierarchy;
-- decorative presentation;
-- interactive states;
-- page-shell accessibility behavior;
-- premium/WOW design consistency.
+# Core rule: content is not layout, and execution is not strategy
 
-## Strategic-page rendering
+Two separations are mandatory.
 
-The following surfaces should use Theme-owned rendering by default when the SEO/GEO Theme is active:
+## Content vs layout
+
+External orchestration and Manager work with **semantic content/models and WordPress resources**.
+
+Theme converts those accepted models/resources into public presentation.
+
+Manager does not need to know CSS grids, `alignwide`, `contentSize`, Gutenberg Group nesting, preset-specific classes or visual breakpoints.
+
+## Strategy vs execution
+
+External orchestration decides **what should change and why**.
+
+Manager decides only **whether/how that requested change can be executed safely in the current WordPress stack**.
+
+For example:
+
+- external orchestration decides that a new Barcelona automation landing is strategically useful;
+- external orchestration creates the content, link plan, metadata intent and media brief;
+- Manager validates current state, collisions, permissions and output authority;
+- Manager previews/persists the accepted model/resource;
+- Theme renders the page;
+- Manager verifies the result;
+- external orchestration evaluates performance and decides the next action.
+
+---
+
+# Strategic-page rendering
+
+When SEO/GEO Theme is active, these surfaces should use Theme-owned rendering by default:
 
 - Home;
 - service pages;
@@ -104,44 +136,42 @@ The following surfaces should use Theme-owned rendering by default when the SEO/
 - SEO landing pages;
 - GEO/location pages;
 - campaign pages;
-- commercial hub/cluster pages;
+- commercial hubs/clusters;
 - conversion-focused contact/demo pages where the preset provides the surface;
-- preset-owned archive/hub surfaces where a custom presentation is part of the product.
+- preset-owned archive/hub surfaces where custom presentation is part of the product.
 
-These resources remain normal WordPress entities. The architecture does **not** create a disconnected external CMS.
+These remain normal WordPress resources with:
 
-A strategic resource should retain normal WordPress identity such as:
-
-- stable post/page/CPT ID;
+- stable ID;
 - slug/path;
 - status;
 - author/owner where relevant;
 - created/modified dates;
-- revisions or Manager change-set references;
+- revisions/change-set references;
 - permissions/capabilities;
-- taxonomy relationships where applicable;
+- taxonomy relationships;
 - REST/admin visibility according to policy.
 
-The presentation contract is stored separately from arbitrary Gutenberg layout markup.
+The presentation contract is separate from arbitrary Gutenberg layout markup.
 
-A conceptual strategic-page record may include:
+Conceptual record:
 
 ```text
 _seo_geo_model = corporate-landing-v1
 _seo_geo_renderer = corporate
-_seo_geo_content = versioned structured content
+_seo_geo_content = versioned semantic content
 _seo_geo_schema = validated entity/schema intent
 _seo_geo_internal_links = validated link plan
 _seo_geo_publication = provenance/publication metadata
 ```
 
-Exact persistence details are implementation work; this document defines the ownership boundary, not the final storage schema.
+---
 
-## Versioned content models
+# Versioned semantic models
 
-Theme-owned pages use versioned models so Manager and Theme can evolve independently without silently changing old content.
+Theme-owned pages use versioned models so external orchestration, Manager and Theme can evolve independently.
 
-Initial model families may include:
+Examples:
 
 ```text
 corporate-home-v1
@@ -155,7 +185,9 @@ publisher-home-v1
 ecommerce-home-v1
 ```
 
-A model defines semantic slots rather than layout instructions. Example:
+A model defines semantic slots, not layout instructions.
+
+Example:
 
 ```text
 corporate-home-v1
@@ -166,214 +198,233 @@ corporate-home-v1
 +-- final_cta
 ```
 
-The model may carry headings, body copy, CTAs, references, media IDs, verified facts, entities, FAQs and link targets. It must not require the publisher to know CSS or block-layout implementation details.
+A model may carry:
 
-## Gutenberg boundary
+- headings;
+- body copy;
+- CTAs;
+- references;
+- media IDs;
+- verified facts;
+- entities;
+- FAQs;
+- internal-link targets;
+- SEO/GEO intent fields accepted by the authority contract.
 
-Gutenberg remains a supported and useful editor, but its authority is bounded.
+It must not require the external publisher to understand the renderer's CSS implementation.
 
-### Gutenberg is appropriate for
+---
+
+# Gutenberg boundary
+
+Gutenberg remains supported and useful.
+
+## Gutenberg is appropriate for
 
 - client-authored blog posts;
 - editorial articles;
-- manual edits to Manager-created blog entries;
+- manual edits to Manager-created blog posts;
 - legal notice;
 - privacy policy;
 - cookie policy;
-- terms and similar compliance pages;
+- terms/compliance pages;
 - simple informational pages where premium preset composition is not required.
 
-### Gutenberg is not the layout authority for
+## Gutenberg is not the layout authority for
 
 - preset Home pages;
-- Manager-generated commercial landings;
-- service/location/campaign pages managed by the structured renderer;
-- other strategic surfaces explicitly assigned to a Theme renderer.
+- externally orchestrated commercial landings rendered by Theme;
+- service/location/campaign pages assigned to a Theme renderer;
+- other strategic surfaces explicitly owned by Theme.
 
-The Theme may still provide `theme.json`, editor tokens and block styles so Gutenberg content looks coherent in both the editor and public frontend. `theme.json` remains useful for colors, typography tokens, spacing tokens and ordinary editorial blocks; its generic constrained-layout settings must not override Theme-owned strategic renderers.
+Theme may still provide `theme.json`, editor tokens and block styles so normal editorial content remains coherent.
 
-## SEO/GEO Manager: automated landing creation
+---
 
-Landing Engine creates and maintains strategic pages through structured models rather than generated Gutenberg layout trees.
+# Strategic landing workflow
 
-Typical automated flow:
+The intelligence/creation step is external.
 
 ```text
-keyword / intent / market / GEO research
+keyword / market / intent / GEO research
         |
         v
-content brief
-        |
-        v
-structured landing model
-        |
-        +-- facts/evidence validation
+external orchestration
+        +-- content brief
+        +-- factual/source validation
         +-- duplicate-intent check
         +-- internal-link plan
         +-- SEO metadata intent
         +-- Schema/entity intent
-        +-- canonical/indexability policy
+        +-- canonical/indexability intent
+        +-- media plan
         |
         v
-WordPress draft
+semantic landing model
         |
         v
-SEO/GEO Theme preview renderer
+SEO/GEO Manager
+        +-- inspect current target/state
+        +-- validate capabilities/collisions
+        +-- preview exact change
+        +-- persist approved model/resource
+        +-- record operation
         |
         v
-approval / schedule / publish
+SEO/GEO Theme renderer
         |
         v
-public verification + rollback reference
+semantic server-rendered frontend
+        |
+        v
+SEO/GEO Manager verification
+        |
+        v
+external orchestration measurement/iteration
 ```
 
-Manager does not generate visual Gutenberg layout markup for Theme-owned landings. The same content model may render differently under Corporate, SaaS, Local Pro, Publisher or Ecommerce when the model/preset contract permits it.
+Manager does not invent the market strategy or visual Gutenberg layout tree.
 
-## SEO/GEO Manager: automated blog creation
+---
 
-Automated blog creation is a **first-class Manager capability**, not a future incidental extension.
+# Blog/editorial workflow
 
-Blog Engine must be able to research/receive a brief, create a complete article draft, optimize it, schedule/publish it and later refresh it while preserving normal WordPress editorial ownership.
-
-The preferred model is:
+Automated blog creation remains a first-class capability of the **overall operating system**, but the research/generation intelligence is external to Manager.
 
 ```text
-topic / keyword / cluster / source brief
+topic / keyword / cluster / search signals
         |
         v
-structured article model
-        +-- title
-        +-- excerpt
-        +-- outline
-        +-- headings
-        +-- article body
+external orchestration
+        +-- research
+        +-- title/excerpt
+        +-- outline/headings/body
         +-- sources/references
         +-- author binding
-        +-- media references
+        +-- media plan
         +-- categories/tags under policy
         +-- internal links
         +-- related landing/service links
         +-- SEO metadata intent
-        +-- Article/BlogPosting entity intent
+        +-- Article/BlogPosting intent
         |
         v
-SEO/GEO Manager validation
+SEO/GEO Manager
+        +-- validate current WordPress state
+        +-- preview
+        +-- create normal WordPress draft
+        +-- schedule/publish/update
+        +-- verify
+        +-- record/rollback reference
+        |
+        +--> optional human/client edit in Gutenberg
         |
         v
-normal WordPress post draft
-        |
-        v
-optional human/client edit in Gutenberg
-        |
-        v
-approval / schedule / publish
-        |
-        v
-public verification + future refresh cycle
+SEO/GEO Theme article shell when active
 ```
 
-### Blog interoperability rule
+Manager-created articles remain normal WordPress posts.
 
-Manager-created articles must remain normal WordPress posts and remain editable by authorized users in Gutenberg.
+Gutenberg may own article-body editing.
 
-Manager may internally use a structured article model for generation, validation and future refresh. When materializing the editable article body, it should use a **minimal stable editorial representation** compatible with WordPress/Gutenberg rather than preset-specific layout blocks.
+Theme owns the public article shell, including:
 
-Gutenberg may own the article **body editing experience**, but the SEO/GEO Theme owns the public article shell:
-
-- maximum reading width;
+- reading width;
 - header/hero treatment;
-- article typography;
+- typography;
 - table-of-contents presentation where enabled;
 - author/date/provenance presentation;
-- related-content surfaces;
-- CTA surfaces;
+- related content;
+- CTAs;
 - Schema/public metadata integration;
 - responsive behavior;
 - accessibility;
 - performance.
 
-This preserves client autonomy without making automated publishing dependent on Gutenberg as a page builder.
+---
 
-## Automated blog lifecycle
+# Optimization workflow
 
-Blog Engine must support more than one-off post creation.
+Optimization is external reasoning plus Manager execution.
 
-Required lifecycle capabilities include:
+```text
+Manager inspection + Search Console/Bing/analytics signals
+        |
+        v
+external orchestration
+        +-- intent/entity/content analysis
+        +-- cannibalization/thin/stale analysis
+        +-- internal-link strategy
+        +-- metadata/content/Schema recommendations
+        +-- priority decision
+        |
+        v
+bounded change set
+        |
+        v
+Manager preview -> apply -> verify -> record
+```
 
-- topic/keyword/intent assignment;
-- content-cluster relationship;
-- source/reference provenance;
-- author binding;
-- draft-first generation;
-- preview;
-- explicit or policy-authorized scheduling/publication;
-- category/tag policy to prevent taxonomy sprawl;
-- internal-link insertion based on real targets;
-- related landing/service link opportunities;
-- featured-media references;
-- multilingual sibling relationships when explicitly created;
-- update/refresh operations with expected-revision protection;
-- stale-content detection inputs when analytics/search data is connected;
-- change-set and rollback;
-- verification after publication.
+The plugin may calculate deterministic diagnostics such as broken targets, missing values, conflicts or capability state, but it does not become the full strategic optimizer.
 
-Direct autonomous publication may be offered as a privileged policy mode later, but the baseline remains auditable and reversible. Draft-first must remain available at all times.
+---
 
-## Manager growth loop
+# Growth loop
 
 The intended long-term loop is:
 
 ```text
-Search Console / Bing / analytics / site signals
+Search Console / Bing / analytics / market signals
         |
         v
-opportunity detection
+external opportunity detection and prioritization
         |
-        +-- new landing opportunity
-        +-- new blog topic
+        +-- new landing
+        +-- new article
         +-- content refresh
         +-- internal-link improvement
+        +-- cluster expansion
         +-- GEO/local opportunity
         |
         v
-SEO/GEO Manager
+content/change intent
         |
         v
-validated content/change set
+Manager preview/apply/publish/verify
         |
         v
-Theme renderer or editorial-post materialization
+Theme/local WordPress rendering
         |
         v
-preview / approval / publish
+measurement
         |
-        v
-public verification
-        |
-        v
-measurement -> next iteration
+        +----> next external iteration
 ```
 
-The Manager is therefore the ongoing growth/control plane, not merely a publishing form.
+This keeps strategic intelligence easy to improve without releasing a new WordPress plugin every time our research/creation process improves.
 
-## Client autonomy model
+---
 
-The product must not lock normal WordPress users out of their site.
+# Client autonomy model
+
+The architecture must not lock normal WordPress users out.
 
 A client can continue to:
 
-- write a new post manually in Gutenberg;
-- edit a Manager-created blog post in Gutenberg subject to revision/fingerprint rules;
-- create a simple ordinary page when no strategic renderer is required;
+- write posts manually in Gutenberg;
+- edit Manager-created blog posts subject to revision/fingerprint rules;
+- create simple ordinary pages when no strategic renderer is required;
 - maintain legal/compliance pages;
 - upload media;
-- manage approved taxonomies and editorial metadata according to role/capability.
+- manage approved taxonomies and metadata according to role/capability.
 
-For a strategic new landing, service page, location page or campaign, the preferred product path is SEO/GEO Manager because that path provides model validation, SEO/GEO authority resolution, internal linking, rollback and Theme-owned presentation.
+External orchestration must always read current revision/fingerprint before updating content that a human may have edited.
 
-## Five-preset contract
+---
 
-The Theme-owned rendering rule applies consistently across the five product presets:
+# Five-preset contract
+
+Theme-owned strategic rendering applies across:
 
 - Corporate;
 - SaaS / Digital Product;
@@ -381,95 +432,118 @@ The Theme-owned rendering rule applies consistently across the five product pres
 - Publisher / Editorial;
 - Ecommerce.
 
-The amount of Gutenberg-authored content may vary by preset. Publisher naturally gives Gutenberg a larger role in article bodies, while Ecommerce may delegate product/checkout business data to WooCommerce or another accepted commerce authority. These integrations do not transfer master frontend ownership away from the Theme unless an explicit adapter contract says so.
+The amount of Gutenberg-authored content varies by preset, but master strategic rendering remains Theme-owned unless an explicit adapter contract says otherwise.
 
-## SEO/GEO ownership
+---
 
-The architectural split does not create a second SEO authority.
+# SEO/GEO ownership
+
+The architecture must never create duplicate public-output authorities.
 
 When Theme + Manager are active:
 
-- Manager creates/updates content and SEO/GEO intent;
-- Output Authority Resolver determines the accepted owner for each public signal;
+- external orchestration provides content/SEO/GEO intent;
+- Manager resolves whether/how the intent may be persisted;
 - Theme emits Theme-owned baseline output;
 - supported external providers receive writes only through accepted adapters;
 - duplicate canonical, robots, hreflang, Schema, Open Graph or sitemap output is forbidden.
 
-Visible content and structured data must remain consistent.
+Visible content and structured output must remain consistent.
 
-## Performance and runtime rule
+---
 
-Normal frontend rendering must be local to WordPress and must not require a live remote Manager/controller request.
+# Performance/runtime rule
 
-Strategic pages should render server-side from local accepted models. Manager automation is a control-plane operation. Remote generation/research services, when used, produce a bounded change set that is persisted locally before public rendering.
+Normal frontend rendering must be local to WordPress.
 
-Theme-owned renderers should reduce rather than increase runtime complexity:
+Public HTML must not require a live request to ChatGPT, a remote Manager controller or another orchestration service.
 
-- no page-builder JavaScript dependency;
-- no requirement for Elementor/Divi/Gutenberg layout CSS on strategic pages beyond unavoidable WordPress baseline assets;
+External orchestration creates a bounded operation that is persisted locally before public rendering.
+
+Theme-owned renderers should minimize runtime complexity:
+
+- no page-builder JavaScript dependency for strategic pages;
 - deterministic component CSS;
 - explicit Core Web Vitals budgets;
 - bounded DOM;
 - no remote visual dependency required to render the page.
 
-## Migration/Rebuild interaction
+---
 
-Migration Bridge remains the accepted migration/reset implementation until those capabilities move into Manager.
+# Migration/rebuild interaction
 
-During a redesign:
+SEO/GEO Migration Bridge remains the separate migration product.
 
-1. rescue content, URLs, SEO signals, useful media, verified facts and required behavior;
-2. discard legacy presentation/runtime debt;
-3. map rescued content into versioned SEO/GEO content models;
-4. let the Theme render the new site from those models;
-5. use Manager after launch for ongoing landing/blog creation, optimization and refresh.
+During redesign:
 
-A legacy builder tree must not become the canonical content model of the new site.
+1. Bridge rescues content, URLs, SEO signals, useful media, verified facts and required behavior;
+2. Bridge/reset workflow discards legacy presentation/runtime debt;
+3. rescued content is mapped into versioned semantic models/resources;
+4. Theme renders the rebuilt site;
+5. Manager becomes the ongoing safe control bridge;
+6. external orchestration finishes, optimizes and grows the site.
 
-## Corporate v5 architectural checkpoint
+A legacy Elementor/Divi/Gutenberg layout tree must not become the canonical strategic model of the rebuilt site.
 
-Corporate v4.x is retained as valuable real-site evidence: it established the premium/WOW art direction, cache-safe asset versioning and the failure mode caused by allowing Gutenberg constrained-layout behavior into master composition.
+---
 
-The next Corporate architecture is **Corporate v5 — Theme-owned frontend**.
+# EMMAKE reference implementation
 
-Before additional pixel-level Corporate work or rollout to the other four presets, v5 should prove:
+EMMAKE `/nuevaweb/` is the first real field implementation of this architecture.
 
-- the Home can render from `corporate-home-v1` without Gutenberg being its layout authority;
-- no `wp-block-post-content`/`is-layout-constrained`/`contentSize` dependency controls master composition;
-- the existing hydrated content can be reused without re-running migration/reset merely to change renderer architecture;
-- semantic headings, links and SEO/GEO output remain correct;
-- the renderer is server-side and accessible;
-- the premium/WOW design is stable at `1440 / 1024 / 768 / 390`;
-- performance stays inside enforced budgets;
-- a future Manager can create a new Corporate landing using the same model/renderer boundary.
+Correct interpretation:
 
-## Roadmap consequence
+```text
+old EMMAKE
+ -> Migration Bridge
+ -> clean /nuevaweb/ rebuild workspace
+ -> Corporate Theme-owned frontend
+ -> Manager installed as control bridge
+ -> external orchestration from here
+ -> finish
+ -> optimize
+ -> grow
+```
 
-Do not continue visual rollout of SaaS, Local Pro, Publisher or Ecommerce until the Theme-owned rendering architecture is proven with Corporate v5.
+EMMAKE-specific permalink/slug edge cases are valuable field evidence but must not redefine Manager as a migration/permalink product.
 
-Recommended order:
+---
 
-1. freeze/document the Theme/Manager/Gutenberg ownership boundary;
-2. implement a model repository/reader for Theme-owned surfaces;
-3. implement Corporate v5 server renderer using the existing `corporate-home-v1` semantic content;
-4. prove field rendering on `/nuevaweb/` without regeneration/reset;
-5. generalize the renderer contract;
-6. migrate the remaining four preset master surfaces to the same architecture;
-7. implement Manager Landing Engine against the structured model contract;
-8. implement Manager Blog Engine with automated draft/schedule/publish plus Gutenberg editorial interoperability;
-9. add search/analytics-driven refresh and growth loops;
-10. absorb Migration Bridge capabilities into Manager only after the publishing/optimization core is stable.
+# Roadmap consequence
 
-## Non-goals
+Development order from this architecture is:
 
-This architecture does **not** mean:
+1. freeze this four-responsibility boundary;
+2. close Corporate Theme field acceptance and generalize semantic renderer contracts;
+3. complete the three-product packaging/release boundaries;
+4. finish Manager Site Intelligence and authenticated remote-control primitives;
+5. finish generic Preview -> Apply -> Verify -> Rollback operations;
+6. finish Theme semantic-model and normal WordPress post/page publication primitives;
+7. prove remote Build/Finish workflow from external orchestration;
+8. prove remote optimization workflow;
+9. prove remote landing/blog publication workflows;
+10. connect Search Console/Bing/analytics into external orchestration and prove the growth loop;
+11. complete remaining Theme preset renderers and product acceptance without coupling them to Manager intelligence.
 
-- removing Gutenberg from WordPress;
-- preventing clients from creating posts/pages;
+Do not expand Manager into a large autonomous strategy engine merely because a workflow is called "Optimizer", "Landing", "Blog" or "Growth".
+
+Those names describe orchestration use cases; Manager supplies the safe local capabilities.
+
+---
+
+# Non-goals
+
+This architecture does not mean:
+
+- removing Gutenberg;
+- preventing client editorial work;
 - replacing WordPress with an external CMS;
-- requiring SEO/GEO Manager to run the public frontend;
-- requiring the Theme for every Manager-supported WordPress site;
-- generating unreviewed doorway pages at scale;
-- giving automation permission to fabricate business facts, authors, reviews, sources or local claims.
+- requiring Manager to render the frontend;
+- requiring Theme for every Manager-supported site;
+- requiring Migration Bridge for every client;
+- moving all content/research intelligence into WordPress;
+- exposing unrestricted server control through Manager;
+- generating unreviewed doorway pages;
+- fabricating business facts, authors, reviews, sources or local claims.
 
-It defines a clean ownership boundary so automation, editorial autonomy and premium frontend design can coexist without fighting each other.
+It defines a reusable boundary where migration, premium rendering, safe WordPress control and external intelligence can evolve independently.

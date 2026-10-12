@@ -1,0 +1,96 @@
+name: SEO GEO Manager Release CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/build-seo-geo-manager-release.py'
+      - 'scripts/ci/seo-geo-manager-release-acceptance.py'
+      - 'scripts/ci/seo-geo-manager-featured-media-contract.php'
+      - 'scripts/ci/seo-geo-manager-package-identity-contract.php'
+      - '.github/workflows/seo-geo-manager-release.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-manager/**'
+      - 'scripts/build-seo-geo-manager-release.py'
+      - 'scripts/ci/seo-geo-manager-release-acceptance.py'
+      - 'scripts/ci/seo-geo-manager-featured-media-contract.php'
+      - 'scripts/ci/seo-geo-manager-package-identity-contract.php'
+      - '.github/workflows/seo-geo-manager-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-geo-manager-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Deterministic installable Manager ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          python3 --version
+          php --version | head -n 1
+
+      - name: Validate scripts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m py_compile scripts/build-seo-geo-manager-release.py scripts/ci/seo-geo-manager-release-acceptance.py
+          php -l scripts/ci/seo-geo-manager-featured-media-contract.php
+          php scripts/ci/seo-geo-manager-featured-media-contract.php
+          php -l scripts/ci/seo-geo-manager-package-identity-contract.php
+
+      - name: PHP syntax
+        run: |
+          find packages/seo-geo-manager -type f -name '*.php' -print0 | sort -z | xargs -0 -n1 php -l
+
+      - name: Reproducibility and package acceptance
+        run: python3 scripts/ci/seo-geo-manager-release-acceptance.py
+
+      - name: Build installable candidate
+        run: python3 scripts/build-seo-geo-manager-release.py --output dist-seo-geo-manager/seo-geo-manager.zip
+
+      - name: Runtime package identity parity
+        run: |
+          php scripts/ci/seo-geo-manager-package-identity-contract.php packages/seo-geo-manager > dist-seo-geo-manager/runtime-tree.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          runtime = json.loads(Path('dist-seo-geo-manager/runtime-tree.json').read_text(encoding='utf-8'))
+          sidecar = Path('dist-seo-geo-manager/seo-geo-manager.zip.tree-sha256').read_text(encoding='utf-8').split()
+          if len(sidecar) < 4:
+              raise SystemExit('Manager runtime tree sidecar is malformed')
+          expected_sha, algorithm, file_count = sidecar[0], sidecar[1], int(sidecar[2])
+          if runtime['fingerprint'] != expected_sha:
+              raise SystemExit(f"Runtime/build tree mismatch: runtime={runtime['fingerprint']} builder={expected_sha}")
+          if runtime['algorithm'] != algorithm:
+              raise SystemExit(f"Runtime/build algorithm mismatch: runtime={runtime['algorithm']} builder={algorithm}")
+          if int(runtime['file_count']) != file_count:
+              raise SystemExit(f"Runtime/build file-count mismatch: runtime={runtime['file_count']} builder={file_count}")
+          print(f"Manager runtime tree parity OK: {algorithm} {expected_sha}, files={file_count}")
+          PY
+
+      - name: Preserve installable candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-geo-manager-release
+          path: |
+            dist-seo-geo-manager/seo-geo-manager.zip
+            dist-seo-geo-manager/seo-geo-manager.zip.sha256
+            dist-seo-geo-manager/seo-geo-manager.zip.tree-sha256
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0

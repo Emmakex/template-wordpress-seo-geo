@@ -1,0 +1,68 @@
+name: SEO GEO Manager C9 Contract
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-manager/src/Field/C9FieldPreflight.php'
+      - 'packages/seo-geo-manager/src/Rest/C9FieldPreflightController.php'
+      - 'packages/seo-geo-manager/src/Support/PackageIdentity.php'
+      - 'packages/seo-geo-manager/src/Plugin.php'
+      - 'scripts/field/seo-geo-manager-c9-field-acceptance.py'
+      - 'scripts/ci/seo-geo-manager-c9-preflight-contract.php'
+      - 'scripts/ci/seo-geo-manager-c9-field-harness-contract.py'
+      - '.github/workflows/seo-geo-manager-c9-contract.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/seo-geo-manager/src/Field/C9FieldPreflight.php'
+      - 'packages/seo-geo-manager/src/Rest/C9FieldPreflightController.php'
+      - 'packages/seo-geo-manager/src/Support/PackageIdentity.php'
+      - 'packages/seo-geo-manager/src/Plugin.php'
+      - 'scripts/field/seo-geo-manager-c9-field-acceptance.py'
+      - 'scripts/ci/seo-geo-manager-c9-preflight-contract.php'
+      - 'scripts/ci/seo-geo-manager-c9-field-harness-contract.py'
+      - '.github/workflows/seo-geo-manager-c9-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-geo-manager-c9-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  c9-contract:
+    name: C9 preflight and field harness contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Runtime versions
+        run: |
+          php --version | head -n 1
+          python3 --version
+
+      - name: Syntax
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          php -l packages/seo-geo-manager/src/Field/C9FieldPreflight.php
+          php -l packages/seo-geo-manager/src/Rest/C9FieldPreflightController.php
+          php -l packages/seo-geo-manager/src/Support/PackageIdentity.php
+          php -l scripts/ci/seo-geo-manager-c9-preflight-contract.php
+          python3 -m py_compile \
+            scripts/field/seo-geo-manager-c9-field-acceptance.py \
+            scripts/ci/seo-geo-manager-c9-field-harness-contract.py
+
+      - name: C9 preflight contract
+        run: php scripts/ci/seo-geo-manager-c9-preflight-contract.php
+
+      - name: C9 field harness contract
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 scripts/ci/seo-geo-manager-c9-field-harness-contract.py
