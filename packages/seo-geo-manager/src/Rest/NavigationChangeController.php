@@ -109,16 +109,13 @@ final class NavigationChangeController {
 		return current_user_can( 'edit_theme_options' );
 	}
 
-	/** @return WP_REST_Response|WP_Error */
+	/** @return WP_REST_Response */
 	public static function index() {
 		$menus     = wp_get_nav_menus();
 		$locations = get_nav_menu_locations();
 		$items     = array();
 
-		foreach ( is_array( $menus ) ? $menus : array() as $menu ) {
-			if ( ! is_object( $menu ) || ! isset( $menu->term_id, $menu->name ) ) {
-				continue;
-			}
+		foreach ( $menus as $menu ) {
 			$menu_id        = (int) $menu->term_id;
 			$menu_locations = array();
 			foreach ( is_array( $locations ) ? $locations : array() as $location => $term_id ) {
@@ -130,7 +127,7 @@ final class NavigationChangeController {
 			$items[]    = array(
 				'id'         => $menu_id,
 				'name'       => (string) $menu->name,
-				'slug'       => (string) ( $menu->slug ?? '' ),
+				'slug'       => (string) $menu->slug,
 				'item_count' => is_array( $menu_items ) ? count( $menu_items ) : 0,
 				'locations'  => $menu_locations,
 			);
@@ -306,7 +303,10 @@ final class NavigationChangeController {
 		return $payload;
 	}
 
-	/** @param array<string, mixed> $payload */
+	/**
+	 * @param array<string, mixed> $payload Target-resolution payload.
+	 * @return array<string, mixed>
+	 */
 	private static function target_summary( array $payload ): array {
 		$target = isset( $payload['target_resource_id'] ) ? absint( $payload['target_resource_id'] ) : 0;
 		if ( 1 > $target ) {
