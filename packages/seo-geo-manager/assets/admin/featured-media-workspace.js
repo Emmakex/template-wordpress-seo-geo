@@ -109,15 +109,20 @@
 		statusBox.appendChild( el( 'p', '', message ) );
 	}
 
+	function mutationLocked() {
+		if ( ! state.operation ) return false;
+		setStatus( `La operación ${ state.operation.id } sigue aplicada. Ejecuta rollback o conserva el cambio antes de iniciar otra modificación de imagen destacada.`, 'warning' );
+		return true;
+	}
+
 	function resetMutation() {
 		state.preview = null;
-		state.operation = null;
-		previewButton.disabled = ! state.resource || ( 'replace' === state.action && ! state.selected ) || ( 'remove' === state.action && ! Number( object( state.current?.resource ).featured_media_id || 0 ) );
+		previewButton.disabled = Boolean( state.operation ) || ! state.resource || ( 'replace' === state.action && ! state.selected ) || ( 'remove' === state.action && ! Number( object( state.current?.resource ).featured_media_id || 0 ) );
 		applyButton.disabled = true;
-		rollbackButton.hidden = true;
+		rollbackButton.hidden = ! state.operation;
 		allowPublished.checked = false;
 		clear( previewBox );
-		previewBox.appendChild( el( 'p', 'description', 'La mutación queda bloqueada hasta generar una vista previa.' ) );
+		previewBox.appendChild( el( 'p', 'description', state.operation ? `La operación ${ state.operation.id } está aplicada y conserva disponible el rollback seguro.` : 'La mutación queda bloqueada hasta generar una vista previa.' ) );
 	}
 
 	function imageNode( media ) {
@@ -152,7 +157,7 @@
 			currentBox.appendChild( el( 'strong', '', `${ media.title || '(Sin título)' } · #${ media.id }` ) );
 			currentBox.appendChild( el( 'span', '', `ALT: ${ media.alt || '(vacío)' }` ) );
 			currentBox.appendChild( el( 'code', '', String( media.fingerprint || '' ) ) );
-			removeButton.disabled = false;
+			removeButton.disabled = Boolean( state.operation );
 		}
 		if ( resource.fingerprint ) currentBox.appendChild( el( 'small', '', `Fingerprint de relación: ${ resource.fingerprint }` ) );
 	}
@@ -165,7 +170,7 @@
 			return;
 		}
 		if ( ! state.selected ) {
-			selectionBox.appendChild( el( 'p', 'description', 'Selecciona una imagen existente o elige quitar la imagen destacada.' ) );
+			selectionBox.appendChild( el( 'p', 'description', state.operation ? `Operación ${ state.operation.id } aplicada. Resuélvela antes de elegir otra imagen.` : 'Selecciona una imagen existente o elige quitar la imagen destacada.' ) );
 			return;
 		}
 		selectionBox.appendChild( el( 'strong', '', `${ state.selected.title || '(Sin título)' } · #${ state.selected.id }` ) );
@@ -196,9 +201,11 @@
 			card.appendChild( el( 'small', '', `#${ media.id } · ALT: ${ media.alt || '(vacío)' }` ) );
 			const dimensions = object( media.dimensions );
 			card.appendChild( el( 'small', '', `${ dimensions.width || 0 }×${ dimensions.height || 0 }` ) );
-			const choose = el( 'button', 'button button-small', 'Usar como destacada' );
+			const choose = el( 'button', 'button button-small', state.operation ? 'Rollback pendiente' : 'Usar como destacada' );
 			choose.type = 'button';
+			choose.disabled = Boolean( state.operation );
 			choose.addEventListener( 'click', () => {
+				if ( mutationLocked() ) return;
 				state.action = 'replace';
 				state.selected = media;
 				resetMutation();
@@ -222,16 +229,22 @@
 
 	async function inspectCurrent() {
 		if ( ! state.resource?.id ) return;
+		if ( state.operation ) {
+			mutationLocked();
+			return;
+		}
 		setStatus( `Inspeccionando imagen destacada del recurso #${ state.resource.id }…` );
 		try {
 			const result = await window.wp.apiFetch( { path: `${ contentPath() }/${ Number( state.resource.id ) }/featured-media` } );
 			state.current = object( result );
 			state.selected = null;
 			state.action = 'replace';
+			state.operation = null;
 			resetMutation();
 			renderSummary();
 			renderCurrent();
 			renderSelection();
+			renderMedia();
 			layout.hidden = false;
 			refreshButton.disabled = false;
 			approvalWrap.hidden = 'publish' !== String( object( state.current.resource ).status || state.resource.status || '' );
@@ -269,7 +282,7 @@
 	}
 
 	async function preview() {
-		if ( ! state.resource || ( 'replace' === state.action && ! state.selected ) ) return;
+		if ( state.operation || ! state.resource || ( 'replace' === state.action && ! state.selected ) ) return;
 		previewButton.disabled = true;
 		setStatus( 'Generando vista previa de la relación de imagen destacada…' );
 		try {
@@ -292,7 +305,7 @@
 	}
 
 	async function apply() {
-		if ( ! state.preview ) return;
+		if ( state.operation || ! state.preview ) return;
 		if ( ! approvalWrap.hidden && ! allowPublished.checked ) {
 			setStatus( 'Confirma el cambio sobre el recurso publicado después de revisar la vista previa.', 'info' );
 			return;
@@ -319,10 +332,22 @@
 				before_fingerprint: String( result.before_fingerprint || '' ),
 				before_media_id: Number( result.before_media_id || 0 ),
 			};
+			const current = object( state.current );
+			const resource = object( current.resource );
+			resource.featured_media_id = Number( verified.featured_media_id || 0 );
+			resource.fingerprint = String( verified.current_fingerprint || resource.fingerprint || '' );
+			current.resource = resource;
+			current.media = 'replace' === state.action ? object( state.selected ) : null;
+			state.current = current;
+			refreshButton.disabled = true;
 			rollbackButton.hidden = false;
+			previewButton.disabled = true;
+			removeButton.disabled = true;
+			renderCurrent();
+			renderMedia();
 			clear( previewBox );
 			previewBox.appendChild( el( 'strong', '', `Aplicado y verificado · Operación ${ operationId }` ) );
-			previewBox.appendChild( el( 'p', 'description', `Imagen destacada verificada: #${ Number( verified.featured_media_id || 0 ) || 'ninguna' }` ) );
+			previewBox.appendChild( el( 'p', 'description', `Imagen destacada verificada: ${ Number( verified.featured_media_id || 0 ) ? `#${ Number( verified.featured_media_id ) }` : 'ninguna' }` ) );
 			setStatus( `Imagen destacada aplicada y verificada. Operación ${ operationId }. El rollback seguro permanece disponible.`, 'success' );
 		} catch ( error ) {
 			setStatus( error?.message || 'El Manager rechazó el cambio de imagen destacada.', 'error' );
@@ -349,9 +374,10 @@
 			}
 			state.current = object( readback );
 			state.operation = null;
-			rollbackButton.hidden = true;
 			state.selected = null;
 			state.action = 'replace';
+			refreshButton.disabled = false;
+			rollbackButton.hidden = true;
 			resetMutation();
 			renderCurrent();
 			renderSelection();
@@ -367,12 +393,20 @@
 	root.addEventListener( 'seo-geo-manager:content-selected', ( event ) => {
 		const resource = object( event.detail ).resource;
 		if ( ! resource?.id ) return;
+		if ( state.operation ) {
+			mutationLocked();
+			return;
+		}
 		state.resource = resource;
 		inspectCurrent();
 	} );
-	refreshButton.addEventListener( 'click', inspectCurrent );
+	refreshButton.addEventListener( 'click', () => {
+		if ( mutationLocked() ) return;
+		inspectCurrent();
+	} );
 	searchInput.addEventListener( 'input', renderMedia );
 	removeButton.addEventListener( 'click', () => {
+		if ( mutationLocked() ) return;
 		state.action = 'remove';
 		state.selected = null;
 		resetMutation();
