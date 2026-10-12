@@ -1,6 +1,6 @@
 <?php
 /**
- * Static contract for Manager 0.3.62 Navigation Workspace.
+ * Static contract for Manager Navigation Workspace (introduced in 0.3.62).
  *
  * @package SeoGeoManager
  */
@@ -40,9 +40,21 @@ $controller = $read( $files['controller'] );
 $adapter    = $read( $files['adapter'] );
 $javascript = $read( $files['javascript'] );
 
+if ( 1 !== preg_match( '/Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/', $plugin, $version_match ) ) {
+	fwrite( STDERR, "Navigation Workspace contract could not read the Manager package version.\n" );
+	exit( 1 );
+}
+$package_version = $version_match[1];
+if ( version_compare( $package_version, '0.3.62', '<' ) ) {
+	fwrite( STDERR, "Navigation Workspace requires Manager >= 0.3.62; received {$package_version}.\n" );
+	exit( 1 );
+}
+if ( false === strpos( $plugin, "SEO_GEO_MANAGER_VERSION', '{$package_version}'" ) ) {
+	fwrite( STDERR, "Navigation Workspace contract found a header/runtime version mismatch for {$package_version}.\n" );
+	exit( 1 );
+}
+
 $required = array(
-	'0.3.62 version'                           => array( $plugin, 'Version: 0.3.62' ),
-	'0.3.62 constant'                          => array( $plugin, "SEO_GEO_MANAGER_VERSION', '0.3.62" ),
 	'NavigationWorkspace bootstrap import'      => array( $bootstrap, 'Admin\\NavigationWorkspace' ),
 	'NavigationWorkspace registration'          => array( $bootstrap, 'NavigationWorkspace::register()' ),
 	'navigation asset handle'                   => array( $workspace, 'seo-geo-manager-navigation-workspace' ),
@@ -99,4 +111,4 @@ if ( false !== strpos( $apply_body, 'await inspectMenu()' ) ) {
 	exit( 1 );
 }
 
-fwrite( STDOUT, "SEO/GEO Manager 0.3.62 Navigation Workspace contract OK.\n" );
+fwrite( STDOUT, "SEO/GEO Manager Navigation Workspace contract OK: package={$package_version}, introduced=0.3.62.\n" );
