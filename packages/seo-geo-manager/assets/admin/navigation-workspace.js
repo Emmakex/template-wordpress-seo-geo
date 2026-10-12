@@ -20,7 +20,6 @@
 		targets: [],
 		preview: null,
 		operation: null,
-		beforeFingerprint: '',
 	};
 
 	function el( tag, className, text ) {
@@ -207,7 +206,6 @@
 		try {
 			const result = await window.wp.apiFetch( { path: `${ navigationPath() }/${ menuId }` } );
 			state.menu = object( result );
-			state.beforeFingerprint = String( state.menu.fingerprint || '' );
 			renderSummary();
 			renderItems();
 			layout.hidden = false;
@@ -332,11 +330,12 @@
 			if ( ! operationId ) throw new Error( 'Apply no devolvió operation_id.' );
 			const verified = await window.wp.apiFetch( { path: `${ navigationPath() }/changes/${ operationId }/verify` } );
 			if ( true !== verified.verified ) throw new Error( 'La verificación de navegación no confirmó el cambio.' );
+			if ( state.menu && verified.current_fingerprint ) {
+				state.menu.fingerprint = String( verified.current_fingerprint );
+				renderSummary();
+			}
 			rollbackButton.hidden = false;
-			setStatus( `Navegación aplicada y verificada. Operación ${ operationId }.`, 'success' );
-			await inspectMenu();
-			state.operation = object( result );
-			rollbackButton.hidden = false;
+			setStatus( `Navegación aplicada y verificada. Operación ${ operationId }. El rollback seguro permanece disponible.`, 'success' );
 		} catch ( error ) {
 			setStatus( error?.message || 'No se pudo aplicar/verificar el cambio de navegación.', 'error' );
 		}
@@ -353,8 +352,10 @@
 		try {
 			const result = await window.wp.apiFetch( { path: `${ navigationPath() }/changes/${ operationId }/rollback`, method: 'POST', data } );
 			if ( 'rolled-back' !== result.status ) throw new Error( 'El rollback no devolvió estado rolled-back.' );
+			const expectedBeforeFingerprint = String( result.before_fingerprint || '' );
+			if ( ! expectedBeforeFingerprint ) throw new Error( 'El rollback no devolvió el fingerprint original.' );
 			await inspectMenu();
-			if ( state.beforeFingerprint && state.menu?.fingerprint !== state.beforeFingerprint ) {
+			if ( state.menu?.fingerprint !== expectedBeforeFingerprint ) {
 				throw new Error( 'El rollback finalizó pero el fingerprint original no fue restaurado.' );
 			}
 			state.operation = null;
