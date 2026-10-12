@@ -56,6 +56,9 @@ $required = array(
 	'idempotency key'                            => array( $javascript, 'idempotency_key' ),
 	'post-apply verify call'                     => array( $javascript, '/verify' ),
 	'rollback action'                            => array( $javascript, '/rollback' ),
+	'rollback response fingerprint authority'    => array( $javascript, "result.before_fingerprint || ''" ),
+	'rollback exact fingerprint readback'         => array( $javascript, 'state.menu?.fingerprint !== expectedBeforeFingerprint' ),
+	'rollback remains available after Apply'      => array( $javascript, 'El rollback seguro permanece disponible.' ),
 	'custom-link adapter boundary'               => array( $adapter, "'custom' !==" ),
 	'stale rollback boundary'                    => array( $adapter, 'navigation_rollback_stale' ),
 );
@@ -76,6 +79,23 @@ if ( false !== strpos( $javascript, 'suggested_url' ) ) {
 
 if ( false !== strpos( $javascript, '<input type="url"' ) ) {
 	fwrite( STDERR, "Navigation Workspace UI must not expose arbitrary URL input.\n" );
+	exit( 1 );
+}
+
+if ( false !== strpos( $javascript, 'state.beforeFingerprint' ) ) {
+	fwrite( STDERR, "Navigation Workspace must verify rollback against the stored operation fingerprint, not mutable UI inspection state.\n" );
+	exit( 1 );
+}
+
+$apply_start    = strpos( $javascript, 'async function apply()' );
+$rollback_start = strpos( $javascript, 'async function rollback()' );
+if ( false === $apply_start || false === $rollback_start || $rollback_start <= $apply_start ) {
+	fwrite( STDERR, "Navigation Workspace apply/rollback functions are unavailable for contract inspection.\n" );
+	exit( 1 );
+}
+$apply_body = substr( $javascript, $apply_start, $rollback_start - $apply_start );
+if ( false !== strpos( $apply_body, 'await inspectMenu()' ) ) {
+	fwrite( STDERR, "Navigation Workspace Apply must keep the verified operation editor and rollback action visible until the operator chooses the next step.\n" );
 	exit( 1 );
 }
 
