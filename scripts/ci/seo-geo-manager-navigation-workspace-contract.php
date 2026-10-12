@@ -4,7 +4,6 @@
  *
  * @package SeoGeoManager
  */
-
 declare(strict_types=1);
 
 $root = dirname( __DIR__, 2 );
@@ -42,26 +41,28 @@ $adapter    = $read( $files['adapter'] );
 $javascript = $read( $files['javascript'] );
 
 $required = array(
-	'0.3.62 version'                          => array( $plugin, "Version: 0.3.62" ),
-	'0.3.62 constant'                         => array( $plugin, "SEO_GEO_MANAGER_VERSION', '0.3.62" ),
-	'NavigationWorkspace bootstrap import'     => array( $bootstrap, 'Admin\\NavigationWorkspace' ),
-	'NavigationWorkspace registration'         => array( $bootstrap, 'NavigationWorkspace::register()' ),
-	'navigation asset handle'                  => array( $workspace, 'seo-geo-manager-navigation-workspace' ),
-	'menu inventory route'                     => array( $controller, "'/navigation'" ),
-	'menu inspection route'                    => array( $controller, "'/navigation/(?P<menu_id>\\d+)'" ),
-	'operation verification route'             => array( $controller, "'/verify'" ),
-	'published resource resolver'               => array( $controller, 'prepare_target_resource' ),
-	'published-only target policy'              => array( $controller, "'publish' !== $post->post_status" ),
-	'target resource id in workspace'           => array( $javascript, 'target_resource_id' ),
-	'explicit public-navigation acknowledgement'=> array( $javascript, 'allow_public_navigation' ),
-	'idempotency key'                           => array( $javascript, 'idempotency_key' ),
-	'post-apply verify call'                    => array( $javascript, '/verify' ),
-	'rollback action'                           => array( $javascript, '/rollback' ),
-	'custom-link adapter boundary'              => array( $adapter, "'custom' !==" ),
-	'stale rollback boundary'                   => array( $adapter, 'navigation_rollback_stale' ),
+	'0.3.62 version'                           => array( $plugin, 'Version: 0.3.62' ),
+	'0.3.62 constant'                          => array( $plugin, "SEO_GEO_MANAGER_VERSION', '0.3.62" ),
+	'NavigationWorkspace bootstrap import'      => array( $bootstrap, 'Admin\\NavigationWorkspace' ),
+	'NavigationWorkspace registration'          => array( $bootstrap, 'NavigationWorkspace::register()' ),
+	'navigation asset handle'                   => array( $workspace, 'seo-geo-manager-navigation-workspace' ),
+	'menu inventory route'                      => array( $controller, "'/navigation'" ),
+	'menu inspection route'                     => array( $controller, "'/navigation/(?P<menu_id>\\d+)'" ),
+	'operation verification route'              => array( $controller, "'/verify'" ),
+	'published resource resolver'                => array( $controller, 'prepare_target_resource' ),
+	'published-only target policy'               => array( $controller, "'publish' !== \$post->post_status" ),
+	'target resource id in workspace'            => array( $javascript, 'target_resource_id' ),
+	'explicit public-navigation acknowledgement' => array( $javascript, 'allow_public_navigation' ),
+	'idempotency key'                            => array( $javascript, 'idempotency_key' ),
+	'post-apply verify call'                     => array( $javascript, '/verify' ),
+	'rollback action'                            => array( $javascript, '/rollback' ),
+	'custom-link adapter boundary'               => array( $adapter, "'custom' !==" ),
+	'stale rollback boundary'                    => array( $adapter, 'navigation_rollback_stale' ),
 );
 
-foreach ( $required as $label => array( $haystack, $needle ) ) {
+foreach ( $required as $label => $contract ) {
+	$haystack = $contract[0];
+	$needle   = $contract[1];
 	if ( false === strpos( $haystack, $needle ) ) {
 		fwrite( STDERR, "Navigation Workspace contract missing {$label}: {$needle}\n" );
 		exit( 1 );
