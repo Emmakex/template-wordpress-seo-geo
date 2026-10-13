@@ -236,7 +236,7 @@ final class CorporateHomeRenderer {
 				continue;
 			}
 			$permalink = get_permalink( $article );
-			if ( ! is_string( $permalink ) || '' === $permalink ) {
+			if ( '' === $permalink ) {
 				continue;
 			}
 
@@ -389,8 +389,7 @@ final class CorporateHomeRenderer {
 			$attributes['fetchpriority'] = 'high';
 		}
 
-		$image = wp_get_attachment_image( $media_id, $size, false, $attributes );
-		return is_string( $image ) ? $image : '';
+		return wp_get_attachment_image( $media_id, $size, false, $attributes );
 	}
 
 	/**
