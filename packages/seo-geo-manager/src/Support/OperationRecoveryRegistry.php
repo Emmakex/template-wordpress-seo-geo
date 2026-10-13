@@ -67,6 +67,9 @@ final class OperationRecoveryRegistry {
 		if ( 'media-alt-change' === $operation_type && 'media-alt' === $adapter ) {
 			return '/seo-geo-manager/v1/media/alt/changes/';
 		}
+		if ( 'theme-strategic-media-change' === $operation_type && 'theme-strategic-media' === $adapter ) {
+			return '/seo-geo-manager/v1/theme/media-bindings/changes/';
+		}
 
 		return null;
 	}
