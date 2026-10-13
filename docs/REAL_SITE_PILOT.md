@@ -15,11 +15,11 @@ Frozen Corporate v5 A3.2 field identity:
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.2`;
 - release channel: `prestable`;
-- frozen product/field-pack source commit: `e620e8b581cd761ef1ae0145482b8017e13b4cfb`;
-- Theme ZIP SHA-256: `2227e1936d7d9bdd238184f122fd6b79c1070d802defd844cdc1fa3a3f243382`;
+- frozen product/field-pack source commit: `10c80cebddfe9b5956b9f51f38de53318d8b6053`;
+- Theme ZIP SHA-256: `111cfbe772387471b4388e432d3258ae5b5dd26e7a0b5b9d411dc36750d5ab3e`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `a2ae6742a0c7e4c8db084ea995ba62b988698cd509c48d858e861e8f544f4524`;
+- deterministic field-pilot pack SHA-256: `3bd5b14f0c4c094abf60baba97f3aa6d515c5921f7b3cc58b54e2859b74999b2`;
 - SEO/GEO Manager target: `0.3.73`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
@@ -113,8 +113,8 @@ The destructive/reset portion must **not** be repeated unless a real state failu
 1. Keep the existing `/nuevaweb/` clone and existing rescue/hydration evidence.
 2. Keep Migration Bridge `0.8.60` unchanged.
 3. Preserve the current clean semantic Home/content state.
-4. Verify the Theme ZIP SHA-256 is exactly `2227e1936d7d9bdd238184f122fd6b79c1070d802defd844cdc1fa3a3f243382`.
-5. Verify the complete Field Pilot Pack SHA-256 is exactly `a2ae6742a0c7e4c8db084ea995ba62b988698cd509c48d858e861e8f544f4524`.
+4. Verify the Theme ZIP SHA-256 is exactly `111cfbe772387471b4388e432d3258ae5b5dd26e7a0b5b9d411dc36750d5ab3e`.
+5. Verify the complete Field Pilot Pack SHA-256 is exactly `3bd5b14f0c4c094abf60baba97f3aa6d515c5921f7b3cc58b54e2859b74999b2`.
 6. Install that exact Theme `0.1.2` candidate only on `/nuevaweb/`.
 7. Install the accepted Manager `0.3.73` candidate when its deterministic release identity is recorded.
 8. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
