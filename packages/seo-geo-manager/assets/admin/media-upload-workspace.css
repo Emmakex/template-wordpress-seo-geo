@@ -1,0 +1,114 @@
+.seo-geo-manager-media-upload-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+	gap: 20px;
+	align-items: start;
+}
+
+.seo-geo-manager-media-upload-form,
+.seo-geo-manager-media-upload-preview {
+	display: grid;
+	gap: 14px;
+}
+
+.seo-geo-manager-media-upload-form > label {
+	display: grid;
+	gap: 6px;
+	font-weight: 600;
+}
+
+.seo-geo-manager-media-upload-form input[type="text"],
+.seo-geo-manager-media-upload-form input[type="number"],
+.seo-geo-manager-media-upload-form textarea {
+	width: 100%;
+}
+
+.seo-geo-manager-media-upload-local-preview {
+	display: grid;
+	grid-template-columns: 140px minmax(0, 1fr);
+	gap: 14px;
+	align-items: center;
+	padding: 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	background: #f6f7f7;
+}
+
+.seo-geo-manager-media-upload-local-preview img {
+	width: 140px;
+	max-height: 105px;
+	object-fit: cover;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.seo-geo-manager-media-upload-local-preview strong,
+.seo-geo-manager-media-upload-local-preview span {
+	display: block;
+}
+
+.seo-geo-manager-media-upload-local-preview span {
+	margin-top: 5px;
+	color: #646970;
+}
+
+.seo-geo-manager-media-upload-approval {
+	display: flex !important;
+	grid-template-columns: none !important;
+	align-items: flex-start;
+	gap: 8px !important;
+	padding: 12px 14px;
+	border: 1px solid #dba617;
+	border-radius: 8px;
+	background: #fcf9e8;
+}
+
+.seo-geo-manager-media-upload-preview {
+	padding: 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	background: #fff;
+	min-height: 260px;
+}
+
+.seo-geo-manager-media-upload-preview__facts {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	gap: 7px 14px;
+	margin: 0;
+}
+
+.seo-geo-manager-media-upload-preview__facts dt {
+	font-weight: 600;
+}
+
+.seo-geo-manager-media-upload-preview__facts dd {
+	margin: 0;
+	word-break: break-word;
+}
+
+.seo-geo-manager-media-upload-created-image {
+	width: 100%;
+	max-height: 320px;
+	object-fit: contain;
+	border-radius: 10px;
+	background: #f0f0f1;
+}
+
+@media (max-width: 900px) {
+	.seo-geo-manager-media-upload-layout {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 600px) {
+	.seo-geo-manager-media-upload-local-preview {
+		grid-template-columns: 1fr;
+	}
+
+	.seo-geo-manager-media-upload-local-preview img {
+		width: 100%;
+		max-height: none;
+		aspect-ratio: 16 / 9;
+	}
+}
