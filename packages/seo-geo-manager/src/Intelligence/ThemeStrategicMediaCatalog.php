@@ -23,7 +23,8 @@ final class ThemeStrategicMediaCatalog {
 	 * @return array<string, mixed>|WP_Error
 	 */
 	public static function list_models() {
-		if ( ! function_exists( 'seo_geo_theme_strategic_media_contract' ) ) {
+		$contract_callback = 'seo_geo_theme_strategic_media_contract';
+		if ( ! is_callable( $contract_callback ) ) {
 			return new WP_Error(
 				'seo_geo_manager_theme_media_catalog_unsupported',
 				'The active Theme does not expose the strategic-media contract required by Manager.',
@@ -56,7 +57,7 @@ final class ThemeStrategicMediaCatalog {
 				continue;
 			}
 
-			$declared = call_user_func( 'seo_geo_theme_strategic_media_contract', $model_id );
+			$declared = call_user_func( $contract_callback, $model_id );
 			if ( ! is_array( $declared ) || array() === $declared ) {
 				continue;
 			}
