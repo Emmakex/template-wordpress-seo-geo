@@ -116,24 +116,24 @@
 	}
 
 	function bindingPath() {
-		const resource = object( state.model?.mapping?.resource );
-		const model = object( state.model?.model );
+		const resource = object( state.model?.resource );
 		const slot = object( state.slot );
-		return `${ api.bindingBase || '/seo-geo-manager/v1/theme/media-bindings' }/${ Number( resource.id || 0 ) }/${ encodeURIComponent( String( model.model_id || '' ) ) }/${ encodeURIComponent( String( slot.id || '' ) ) }`;
+		return `${ api.bindingBase || '/seo-geo-manager/v1/theme/media-bindings' }/${ Number( resource.id || 0 ) }/${ encodeURIComponent( String( state.model?.model_id || '' ) ) }/${ encodeURIComponent( String( slot.id || '' ) ) }`;
 	}
 
 	function renderModels() {
 		clear( modelsBox );
-		const mapped = state.models.filter( ( model ) => true === model.mapped && Number( object( model.resource ).id || 0 ) > 0 );
-		if ( ! mapped.length ) {
-			modelsBox.appendChild( el( 'p', 'description', 'No hay modelos Theme mapeados a páginas editables.' ) );
+		if ( ! state.models.length ) {
+			modelsBox.appendChild( el( 'p', 'description', 'El Theme activo no declara modelos estratégicos de imagen editables.' ) );
 			return;
 		}
-		mapped.forEach( ( model ) => {
+
+		state.models.forEach( ( model ) => {
 			const button = el( 'button', 'seo-geo-manager-theme-media-model' );
 			button.type = 'button';
 			button.appendChild( el( 'strong', '', model.page_key || model.model_id || 'Modelo' ) );
 			button.appendChild( el( 'span', '', object( model.resource ).title || `#${ object( model.resource ).id || '—' }` ) );
+			button.appendChild( el( 'small', '', `${ array( model.slots ).length } slot(s) de imagen` ) );
 			button.addEventListener( 'click', () => loadModel( model.model_id ) );
 			modelsBox.appendChild( button );
 		} );
@@ -141,12 +141,13 @@
 
 	function renderSlots() {
 		clear( slotsBox );
-		const slots = array( state.model?.slots ).filter( ( slot ) => 'media' === slot.type );
+		const slots = array( state.model?.slots ).filter( ( slot ) => 'media' === slot.type && 'image' === slot.accept );
 		if ( ! slots.length ) {
 			slotsBox.appendChild( el( 'p', 'description', 'Este modelo no declara slots estratégicos de imagen.' ) );
 			editor.hidden = true;
 			return;
 		}
+
 		slotsBox.appendChild( el( 'h4', '', 'Slots de imagen' ) );
 		slots.forEach( ( slot ) => {
 			const button = el( 'button', 'seo-geo-manager-theme-media-slot' );
@@ -196,6 +197,7 @@
 			remove.addEventListener( 'click', () => selectMedia( 0 ) );
 			grid.appendChild( remove );
 		}
+
 		items.forEach( ( media ) => {
 			const card = el( 'button', 'seo-geo-manager-theme-media-card' );
 			card.type = 'button';
@@ -222,38 +224,38 @@
 
 	async function loadModels() {
 		if ( locked() ) return;
-		setStatus( 'Cargando modelos Theme e imágenes…' );
+		setStatus( 'Cargando contrato de medios estratégicos e imágenes…' );
 		editor.hidden = true;
 		clear( slotsBox );
 		try {
-			const [ models ] = await Promise.all( [
-				window.wp.apiFetch( { path: api.themeModelsPath || '/seo-geo-manager/v1/theme/models' } ),
+			const [ catalog ] = await Promise.all( [
+				window.wp.apiFetch( { path: api.catalogPath || '/seo-geo-manager/v1/theme/media-bindings' } ),
 				loadMedia(),
 			] );
-			state.models = array( models.models );
+			state.models = array( catalog.models );
 			state.model = null;
 			state.slot = null;
 			state.binding = null;
 			renderModels();
-			setStatus( `${ state.models.length } modelo(s) Theme · ${ state.media.length } imagen(es) disponibles.`, 'success' );
+			setStatus( `${ state.models.length } modelo(s) con medios estratégicos · ${ state.media.length } imagen(es) disponibles.`, 'success' );
 		} catch ( error ) {
 			setStatus( error?.message || 'No se pudieron cargar los medios estratégicos del Theme.', 'error' );
 		}
 	}
 
-	async function loadModel( modelId ) {
+	function loadModel( modelId ) {
 		if ( locked() || ! modelId ) return;
-		setStatus( `Cargando modelo ${ modelId }…` );
-		try {
-			state.model = await window.wp.apiFetch( { path: `${ api.themeModelsPath || '/seo-geo-manager/v1/theme/models' }/${ encodeURIComponent( modelId ) }` } );
-			state.slot = null;
-			state.binding = null;
-			editor.hidden = true;
-			renderSlots();
-			setStatus( 'Modelo cargado. Selecciona un slot de imagen.', 'success' );
-		} catch ( error ) {
-			setStatus( error?.message || 'No se pudo cargar el modelo Theme.', 'error' );
+		const model = state.models.find( ( item ) => String( item.model_id || '' ) === String( modelId ) );
+		if ( ! model ) {
+			setStatus( 'El modelo estratégico seleccionado ya no está disponible.', 'error' );
+			return;
 		}
+		state.model = object( model );
+		state.slot = null;
+		state.binding = null;
+		editor.hidden = true;
+		renderSlots();
+		setStatus( 'Modelo cargado. Selecciona un slot de imagen.', 'success' );
 	}
 
 	async function inspectSlot( slot, preserveOperation = false ) {
