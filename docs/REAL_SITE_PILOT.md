@@ -40,7 +40,7 @@ The technical Reset & Rebuild path has already reached the browser-QA boundary o
 
 Do **not** rerun Reset, recreate the clone, regenerate the Home or rehydrate content merely because Theme or Manager presentation/control-plane binaries changed. Migration Bridge `0.8.60` remains frozen unless a concrete migration defect is demonstrated.
 
-## Current Corporate implementation
+## Corporate v5 — Theme-owned frontend
 
 Corporate v5 keeps the Theme as sole strategic rendering authority. Gutenberg remains the editorial/CMS surface rather than the master layout engine.
 
