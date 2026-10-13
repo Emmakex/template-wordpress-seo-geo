@@ -114,6 +114,8 @@ The prior A3.1 repository baseline remains useful historical performance evidenc
 
 ## Product boundary
 
+SEO/GEO Manager is a separate plugin product.
+
 SEO/GEO Manager is not a mandatory dependency for Theme stable runtime. Migration Bridge is not a permanent site dependency. The standalone Core wrapper remains `deprecated-retained-nondistributed`; the self-contained Theme bundles the runtime it needs.
 
 The exact 0.1.2 release boundary is enforced by `release/version.json`, `release/stable-release-decision.json`, `release/emmake-phase10e-candidate.json`, the deterministic package builders and CI acceptance contracts.
