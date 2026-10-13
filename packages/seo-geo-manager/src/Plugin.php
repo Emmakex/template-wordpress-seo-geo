@@ -18,6 +18,7 @@ use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\MediaAltWorkspace;
 use SeoGeo\Manager\Admin\NavigationWorkspace;
 use SeoGeo\Manager\Admin\OperationHistory;
+use SeoGeo\Manager\Admin\OptimizationQueue;
 use SeoGeo\Manager\Admin\PermalinkActions;
 use SeoGeo\Manager\Admin\RemoteAccess;
 use SeoGeo\Manager\Admin\SeoAuthorityWorkspace;
@@ -76,6 +77,7 @@ final class Plugin {
 			NavigationWorkspace::register();
 			FeaturedMediaWorkspace::register();
 			MediaAltWorkspace::register();
+			OptimizationQueue::register();
 			RemoteAccess::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
