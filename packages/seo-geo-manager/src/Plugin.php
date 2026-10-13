@@ -22,6 +22,7 @@ use SeoGeo\Manager\Admin\NavigationWorkspace;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\OptimizationQueue;
 use SeoGeo\Manager\Admin\PermalinkActions;
+use SeoGeo\Manager\Admin\PublicationWorkspace;
 use SeoGeo\Manager\Admin\RemoteAccess;
 use SeoGeo\Manager\Admin\SeoAuthorityWorkspace;
 use SeoGeo\Manager\Admin\ThemeStrategicMediaWorkspace;
@@ -75,6 +76,7 @@ final class Plugin {
 		if ( is_admin() ) {
 			WorkspaceDashboard::register();
 			ContentWorkspace::register();
+			PublicationWorkspace::register();
 			SeoAuthorityWorkspace::register();
 			ContextualLinksWorkspace::register();
 			NavigationWorkspace::register();
