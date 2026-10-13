@@ -12,20 +12,33 @@ namespace SeoGeo\Theme\Strategic;
 use WP_Post;
 
 /**
- * Selects server-rendered strategic surfaces without using Gutenberg as the
+ * Select server-rendered strategic surfaces without using Gutenberg as the
  * public master-layout authority.
  */
 final class StrategicSurfaceRuntime {
+	/** Active strategic page for the current request. */
 	private ?WP_Post $active_post = null;
 
+	/**
+	 * Create the strategic runtime.
+	 *
+	 * @param CorporateHomeRenderer $corporate_home_renderer Corporate Home renderer.
+	 */
 	public function __construct( private readonly CorporateHomeRenderer $corporate_home_renderer ) {}
 
+	/** Register strategic Theme hooks. */
 	public function register(): void {
 		add_filter( 'template_include', array( $this, 'filter_template' ), 99 );
 		add_filter( 'body_class', array( $this, 'body_classes' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'replace_legacy_layout_runtime' ), 30 );
 	}
 
+	/**
+	 * Select the Theme-owned Corporate Home template when its semantic model is available.
+	 *
+	 * @param string $template Template selected by WordPress.
+	 * @return string Strategic template or the original template.
+	 */
 	public function filter_template( string $template ): string {
 		$this->active_post = null;
 
@@ -47,10 +60,12 @@ final class StrategicSurfaceRuntime {
 		return $strategic_template;
 	}
 
+	/** Return whether a strategic surface owns the current request. */
 	public function is_active(): bool {
 		return $this->active_post instanceof WP_Post;
 	}
 
+	/** Return rendered HTML for the active strategic surface. */
 	public function render_current(): string {
 		if ( ! $this->active_post instanceof WP_Post ) {
 			return '';
@@ -59,9 +74,10 @@ final class StrategicSurfaceRuntime {
 	}
 
 	/**
-	 * Replace the legacy Corporate presentation layers with the v5 strategic
-	 * runtime. Development installs load the runtime plus bounded closure files;
-	 * installable releases collapse foundation + runtime + closures into one CSS
+	 * Replace legacy Corporate presentation layers with the v5 strategic runtime.
+	 *
+	 * Development installs load the runtime plus bounded closure files.
+	 * Installable releases collapse foundation, runtime and closures into one CSS
 	 * request and write the bundle marker.
 	 */
 	public function replace_legacy_layout_runtime(): void {
@@ -121,6 +137,8 @@ final class StrategicSurfaceRuntime {
 	}
 
 	/**
+	 * Add body classes for the active Corporate strategic surface.
+	 *
 	 * @param array $classes Existing body classes.
 	 * @phpstan-param list<string> $classes
 	 * @return list<string>
