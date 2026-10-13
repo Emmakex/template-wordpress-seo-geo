@@ -13,20 +13,34 @@ use WP_Post;
 use WP_Query;
 
 /**
- * Renders the strategic Corporate Home from corporate-home-v1 data.
+ * Render the strategic Corporate Home from corporate-home-v1 data.
  *
  * Gutenberg remains an editorial source for semantic values only. The Theme
  * owns the public hierarchy, layout and strategic-media placement.
  */
 final class CorporateHomeRenderer {
+	/**
+	 * Create the Corporate Home renderer.
+	 *
+	 * @param CorporateHomeModelResolver $resolver Corporate Home model resolver.
+	 */
 	public function __construct( private readonly CorporateHomeModelResolver $resolver ) {}
 
+	/**
+	 * Check whether the supplied page supports Theme-owned Corporate rendering.
+	 *
+	 * @param WP_Post $post Source WordPress page.
+	 * @return bool Whether the page is supported.
+	 */
 	public function supports( WP_Post $post ): bool {
 		return $this->resolver->supports( $post );
 	}
 
 	/**
-	 * @return string Trusted Theme HTML with authored values escaped here.
+	 * Render trusted Theme HTML with authored values escaped at composition time.
+	 *
+	 * @param WP_Post $post Source WordPress page.
+	 * @return string Rendered Corporate Home HTML.
 	 */
 	public function render( WP_Post $post ): string {
 		$model = $this->resolver->resolve( $post );
@@ -47,7 +61,12 @@ final class CorporateHomeRenderer {
 			. '</main>';
 	}
 
-	/** @param array<string,mixed> $slots */
+	/**
+	 * Render the Corporate hero.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @return string Hero HTML.
+	 */
 	private function render_hero( array $slots ): string {
 		$eyebrow   = $this->text( $slots, 'hero-eyebrow' );
 		$lead      = $this->text( $slots, 'hero-lead' );
@@ -77,7 +96,12 @@ final class CorporateHomeRenderer {
 			. '</div></section>';
 	}
 
-	/** @param array<string,mixed> $slots @return array{html:string,decorative:bool} */
+	/**
+	 * Resolve either the bound hero image or the local decorative fallback.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @return array{html:string,decorative:bool} Hero visual state.
+	 */
 	private function hero_visual( array $slots ): array {
 		$image = $this->bound_image(
 			$this->media( $slots, 'hero-media' ),
@@ -88,7 +112,10 @@ final class CorporateHomeRenderer {
 			true
 		);
 		if ( '' !== $image ) {
-			return array( 'html' => $image, 'decorative' => false );
+			return array(
+				'html'       => $image,
+				'decorative' => false,
+			);
 		}
 
 		return array(
@@ -97,7 +124,13 @@ final class CorporateHomeRenderer {
 		);
 	}
 
-	/** @param array<string,mixed> $slots */
+	/**
+	 * Render the three Corporate capability cards.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @param bool                 $is_es Whether the active locale is Spanish.
+	 * @return string Capabilities section HTML.
+	 */
 	private function render_capabilities( array $slots, bool $is_es ): string {
 		$cards = '';
 		for ( $index = 1; $index <= 3; ++$index ) {
@@ -116,8 +149,9 @@ final class CorporateHomeRenderer {
 				'(max-width: 820px) calc(100vw - 2rem), 31vw'
 			);
 			$media_html = '' !== $media ? '<div class="seo-geo-corporate-card__media">' . $media . '</div>' : '';
+			$media_class = '' !== $media ? ' has-media' : '';
 
-			$cards .= '<article class="seo-geo-corporate-card seo-geo-corporate-card--' . $index . '">'
+			$cards .= '<article class="seo-geo-corporate-card seo-geo-corporate-card--' . $index . $media_class . '">'
 				. $media_html
 				. '<div class="seo-geo-corporate-card__body">'
 				. '<p class="seo-geo-corporate-card__index">0' . $index . '</p>'
@@ -138,7 +172,13 @@ final class CorporateHomeRenderer {
 			. '</section>';
 	}
 
-	/** @param array<string,mixed> $slots */
+	/**
+	 * Render the Corporate method and process section.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @param bool                 $is_es Whether the active locale is Spanish.
+	 * @return string Process section HTML.
+	 */
 	private function render_process( array $slots, bool $is_es ): string {
 		$steps = '';
 		for ( $index = 1; $index <= 3; ++$index ) {
@@ -155,14 +195,14 @@ final class CorporateHomeRenderer {
 			$this->text( $slots, 'process-heading' ),
 			$this->text( $slots, 'process-intro' )
 		);
-		$media = $this->bound_image(
+		$media   = $this->bound_image(
 			$this->media( $slots, 'process-media' ),
 			'large',
 			'seo-geo-corporate-process-visual__image',
 			true,
 			'(max-width: 820px) calc(100vw - 2rem), 42vw'
 		);
-		$intro = '' !== $media
+		$intro   = '' !== $media
 			? '<div class="seo-geo-corporate-process-intro-grid">' . $heading . '<figure class="seo-geo-corporate-process-visual">' . $media . '</figure></div>'
 			: $heading;
 
@@ -172,7 +212,12 @@ final class CorporateHomeRenderer {
 			. '</section>';
 	}
 
-	/** @param array<string,mixed> $slots */
+	/**
+	 * Render the latest Corporate Insights cards.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @return string Insights section HTML.
+	 */
 	private function render_insights( array $slots ): string {
 		$query = new WP_Query(
 			array(
@@ -196,11 +241,12 @@ final class CorporateHomeRenderer {
 			}
 
 			++$position;
-			$excerpt = trim( wp_strip_all_tags( get_the_excerpt( $article ), true ) );
-			$excerpt = wp_trim_words( $excerpt, 30, '…' );
-			$media   = $this->insight_media( $article, $position, $slots );
+			$excerpt     = trim( wp_strip_all_tags( get_the_excerpt( $article ), true ) );
+			$excerpt     = wp_trim_words( $excerpt, 30, '…' );
+			$media       = $this->insight_media( $article, $position, $slots );
+			$media_class = '' !== $media ? ' has-media' : '';
 
-			$items .= '<li><article class="seo-geo-corporate-insight-card seo-geo-corporate-insight-card--' . $position . '">'
+			$items .= '<li><article class="seo-geo-corporate-insight-card seo-geo-corporate-insight-card--' . $position . $media_class . '">'
 				. $media
 				. '<div class="seo-geo-corporate-insight-card__content">'
 				. '<time class="wp-block-post-date" datetime="' . esc_attr( get_the_date( DATE_W3C, $article ) ) . '">' . esc_html( get_the_date( '', $article ) ) . '</time>'
@@ -221,7 +267,17 @@ final class CorporateHomeRenderer {
 			. '</section>';
 	}
 
-	/** @param array<string,mixed> $slots */
+	/**
+	 * Resolve the visual for one Insight card.
+	 *
+	 * Featured Image remains authoritative. Strategic media acts as a safe
+	 * fallback, followed by the existing local decorative asset for card one.
+	 *
+	 * @param WP_Post              $article Article being rendered.
+	 * @param int                  $position One-based card position.
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @return string Insight media HTML.
+	 */
 	private function insight_media( WP_Post $article, int $position, array $slots ): string {
 		if ( has_post_thumbnail( $article ) ) {
 			$image = get_the_post_thumbnail(
@@ -259,14 +315,19 @@ final class CorporateHomeRenderer {
 			. '</div>';
 	}
 
-	/** @param array<string,mixed> $slots */
+	/**
+	 * Render the final Corporate call to action.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @return string CTA section HTML.
+	 */
 	private function render_final_cta( array $slots ): string {
 		$link = $this->link( $slots, 'final-cta-button' );
 		if ( null === $link ) {
 			return '';
 		}
 
-		$copy = '<div class="seo-geo-final-cta__copy">'
+		$copy  = '<div class="seo-geo-final-cta__copy">'
 			. '<h2 id="seo-geo-final-cta-title">' . esc_html( $this->text( $slots, 'final-cta-heading' ) ) . '</h2>'
 			. '<p>' . esc_html( $this->text( $slots, 'final-cta-body' ) ) . '</p>'
 			. '<p><a class="wp-element-button" href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['label'] ) . '</a></p>'
@@ -285,6 +346,15 @@ final class CorporateHomeRenderer {
 			. '</section>';
 	}
 
+	/**
+	 * Render a shared section heading.
+	 *
+	 * @param string $eyebrow Eyebrow label.
+	 * @param string $id Heading element ID.
+	 * @param string $heading Section heading.
+	 * @param string $intro Section introduction.
+	 * @return string Section heading HTML.
+	 */
 	private function section_heading( string $eyebrow, string $id, string $heading, string $intro ): string {
 		return '<header class="seo-geo-corporate-section-heading">'
 			. '<p class="seo-geo-corporate-eyebrow">' . esc_html( $eyebrow ) . '</p>'
@@ -293,6 +363,17 @@ final class CorporateHomeRenderer {
 			. '</header>';
 	}
 
+	/**
+	 * Render one Theme-bound image attachment.
+	 *
+	 * @param int    $media_id Attachment ID.
+	 * @param string $size WordPress image size.
+	 * @param string $css_class CSS class for the image.
+	 * @param bool   $lazy Whether lazy loading is enabled.
+	 * @param string $sizes Responsive image sizes expression.
+	 * @param bool   $priority Whether the image receives high fetch priority.
+	 * @return string Image HTML or an empty string.
+	 */
 	private function bound_image( int $media_id, string $size, string $css_class, bool $lazy, string $sizes, bool $priority = false ): string {
 		if ( 1 > $media_id || ! wp_attachment_is_image( $media_id ) ) {
 			return '';
@@ -312,39 +393,82 @@ final class CorporateHomeRenderer {
 		return is_string( $image ) ? $image : '';
 	}
 
+	/**
+	 * Render one local decorative image.
+	 *
+	 * @param string $filename Relative asset filename.
+	 * @param string $css_class CSS class for the image.
+	 * @param int    $width Intrinsic image width.
+	 * @param int    $height Intrinsic image height.
+	 * @param bool   $lazy Whether lazy loading is enabled.
+	 * @return string Decorative image HTML.
+	 */
 	private function decorative_image( string $filename, string $css_class, int $width, int $height, bool $lazy = true ): string {
 		$loading = $lazy ? ' loading="lazy"' : '';
 		return '<img class="' . esc_attr( $css_class ) . '" src="' . esc_url( $this->asset_uri( $filename ) ) . '" alt="" width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '" decoding="async"' . $loading . '>';
 	}
 
+	/**
+	 * Return the public URI for one Corporate v5 asset.
+	 *
+	 * @param string $filename Relative asset filename.
+	 * @return string Asset URI.
+	 */
 	private function asset_uri( string $filename ): string {
 		return trailingslashit( get_template_directory_uri() ) . 'assets/images/presets/corporate/v5/' . ltrim( $filename, '/' );
 	}
 
-	/** @param array{label:string,url:string} $link */
+	/**
+	 * Render one CTA button.
+	 *
+	 * @param array{label:string,url:string} $link Link definition.
+	 * @param bool                           $outline Whether to use the outline style.
+	 * @return string Button HTML.
+	 */
 	private function button( array $link, bool $outline ): string {
 		$class = $outline ? 'wp-block-button is-style-outline' : 'wp-block-button';
 		return '<div class="' . esc_attr( $class ) . '"><a class="wp-block-button__link wp-element-button" href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['label'] ) . '</a></div>';
 	}
 
-	/** @param array<string,mixed> $slots */
+	/**
+	 * Read one text slot.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @param string               $id Slot ID.
+	 * @return string Slot value.
+	 */
 	private function text( array $slots, string $id ): string {
 		$value = $slots[ $id ] ?? '';
 		return is_string( $value ) ? $value : '';
 	}
 
-	/** @param array<string,mixed> $slots */
+	/**
+	 * Read one media attachment slot.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @param string               $id Slot ID.
+	 * @return int Attachment ID or zero.
+	 */
 	private function media( array $slots, string $id ): int {
 		$value = $slots[ $id ] ?? 0;
 		return is_int( $value ) && 0 < $value ? $value : 0;
 	}
 
-	/** @param array<string,mixed> $slots @return array{label:string,url:string}|null */
+	/**
+	 * Read one link slot.
+	 *
+	 * @param array<string, mixed> $slots Resolved semantic and media slots.
+	 * @param string               $id Slot ID.
+	 * @return array{label:string,url:string}|null Normalized link or null.
+	 */
 	private function link( array $slots, string $id ): ?array {
 		$value = $slots[ $id ] ?? null;
 		if ( ! is_array( $value ) || ! isset( $value['label'], $value['url'] ) || ! is_string( $value['label'] ) || ! is_string( $value['url'] ) ) {
 			return null;
 		}
-		return array( 'label' => $value['label'], 'url' => $value['url'] );
+		return array(
+			'label' => $value['label'],
+			'url'   => $value['url'],
+		);
 	}
 }
