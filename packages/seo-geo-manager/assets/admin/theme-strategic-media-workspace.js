@@ -323,12 +323,14 @@
 
 	async function apply() {
 		if ( ! state.preview || state.operation ) return;
+		const intendedMediaId = Number( state.selectedMediaId || 0 );
 		applyButton.disabled = true;
 		previewButton.disabled = true;
 		setStatus( 'Aplicando imagen estratégica y comprobando readback…' );
 		try {
 			const data = {
 				...payload(),
+				attachment_id: intendedMediaId,
 				idempotency_key: idempotencyKey(),
 				environment_fingerprint: String( object( state.preview.environment ).fingerprint || '' ),
 			};
@@ -339,7 +341,8 @@
 			rollbackButton.hidden = false;
 			await inspectSlot( state.slot, true );
 			const appliedId = Number( object( state.binding.binding ).attachment_id || 0 );
-			if ( appliedId !== Number( state.selectedMediaId || 0 ) ) throw new Error( 'El readback no coincide con la imagen aplicada.' );
+			if ( appliedId !== intendedMediaId ) throw new Error( 'El readback no coincide con la imagen aplicada.' );
+			state.selectedMediaId = intendedMediaId;
 			state.operation = { id: operationId, environment: object( result.environment ) };
 			rollbackButton.hidden = false;
 			clear( previewBox );
