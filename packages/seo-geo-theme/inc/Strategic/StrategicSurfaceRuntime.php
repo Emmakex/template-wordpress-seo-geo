@@ -4,6 +4,7 @@
  *
  * @package SeoGeoTheme
  */
+
 declare(strict_types=1);
 
 namespace SeoGeo\Theme\Strategic;
@@ -15,7 +16,11 @@ use WP_Post;
  * public master-layout authority.
  */
 final class StrategicSurfaceRuntime {
-	/** @var WP_Post|null Active strategic page for the current request. */
+	/**
+	 * Active strategic page for the current request.
+	 *
+	 * @var WP_Post|null
+	 */
 	private ?WP_Post $active_post = null;
 
 	/**
