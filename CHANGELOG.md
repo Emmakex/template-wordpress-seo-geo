@@ -2,7 +2,9 @@
 
 All notable changes to the installable self-contained SEO/GEO theme are recorded here.
 
-## [Unreleased] — target 0.1.1
+## [Unreleased] — target 0.1.2
+
+- Theme 0.1.2 completes the **EMMAKE Corporate v5 A3.2 visual closure**: Theme-owned strategic media now covers hero, three capabilities, process, three Insights fallbacks and the final CTA; Featured Images remain authoritative for Insights, source installs layer A3.1/A3.2 over the strategic runtime, and installable releases collapse foundation + runtime + both closure layers into the existing single Corporate v5 CSS request.
 
 - Migration Bridge 0.8.60 adds the **automatic Home quality pass** discovered by the real EMMAKE `/nuevaweb/` browser pilot: structural pages such as `Nuestras Marcas` no longer become capabilities, semantic fallbacks are ranked from rescued evidence, process copy is selected more deliberately, the generated draft receives a descriptive H1, and detected capability titles are visible before mutation.
 
@@ -79,4 +81,4 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 - `release/version.json` is the authoritative target version source.
 - The WordPress `style.css` theme header must match that version exactly.
 - This entry remains Unreleased until the stable-release decision in the final Phase 10 gate.
-- Current Phase 10E decision is **NO-GO**: `0.1.1` remains `prestable` until a selected real site completes sandbox + production acceptance.
+- Current Phase 10E decision is **NO-GO**: `0.1.2` remains `prestable` until a selected real site completes sandbox + production acceptance.

@@ -58,9 +58,10 @@ STRATEGIC_MEDIA_PAGE_ID="$(wp_cli post create \
   || fail_smoke "strategic-media-page" "Could not create strategic media page fixture" "numeric page ID" "$STRATEGIC_MEDIA_PAGE_ID"
 
 STRATEGIC_MEDIA_CONTRACT="$(wp_cli eval 'echo wp_json_encode( seo_geo_theme_strategic_media_contract( "corporate-home-v1" ) );' 2>"${TMP_DIR}/strategic-media-contract.stderr" | tr -d '\r\n')" \
-  || fail_smoke "strategic-media-contract-eval" "Could not inspect strategic media contract" "hero-media contract" "wp eval failed"
-[[ "$STRATEGIC_MEDIA_CONTRACT" == '{"hero-media":{"type":"media","required":false,"accept":"image"}}' ]] \
-  || fail_smoke "strategic-media-contract" "Corporate strategic media contract drifted" '{"hero-media":{"type":"media","required":false,"accept":"image"}}' "$STRATEGIC_MEDIA_CONTRACT"
+  || fail_smoke "strategic-media-contract-eval" "Could not inspect strategic media contract" "A3.2 strategic media contract" "wp eval failed"
+STRATEGIC_MEDIA_EXPECTED_CONTRACT='{"hero-media":{"type":"media","required":false,"accept":"image"},"capability-1-media":{"type":"media","required":false,"accept":"image"},"capability-2-media":{"type":"media","required":false,"accept":"image"},"capability-3-media":{"type":"media","required":false,"accept":"image"},"process-media":{"type":"media","required":false,"accept":"image"},"insights-1-media":{"type":"media","required":false,"accept":"image"},"insights-2-media":{"type":"media","required":false,"accept":"image"},"insights-3-media":{"type":"media","required":false,"accept":"image"},"final-cta-media":{"type":"media","required":false,"accept":"image"}}'
+[[ "$STRATEGIC_MEDIA_CONTRACT" == "$STRATEGIC_MEDIA_EXPECTED_CONTRACT" ]] \
+  || fail_smoke "strategic-media-contract" "Corporate strategic media contract drifted" "$STRATEGIC_MEDIA_EXPECTED_CONTRACT" "$STRATEGIC_MEDIA_CONTRACT"
 
 STRATEGIC_MEDIA_CONTENT_HASH_BEFORE="$(wp_cli eval "echo hash( 'sha256', (string) get_post( ${STRATEGIC_MEDIA_PAGE_ID} )->post_content );" | tr -d '\r\n')"
 STRATEGIC_MEDIA_FP_BEFORE="$(wp_cli eval "echo seo_geo_theme_strategic_media_fingerprint( ${STRATEGIC_MEDIA_PAGE_ID}, 'corporate-home-v1', 'hero-media' );" | tr -d '\r\n')"

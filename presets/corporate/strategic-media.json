@@ -9,6 +9,54 @@
           "type": "media",
           "required": false,
           "accept": "image"
+        },
+        {
+          "id": "capability-1-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
+        },
+        {
+          "id": "capability-2-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
+        },
+        {
+          "id": "capability-3-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
+        },
+        {
+          "id": "process-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
+        },
+        {
+          "id": "insights-1-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
+        },
+        {
+          "id": "insights-2-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
+        },
+        {
+          "id": "insights-3-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
+        },
+        {
+          "id": "final-cta-media",
+          "type": "media",
+          "required": false,
+          "accept": "image"
         }
       ]
     }

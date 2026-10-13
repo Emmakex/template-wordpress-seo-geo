@@ -12,7 +12,7 @@ namespace SeoGeo\Theme\Strategic;
 use WP_Post;
 
 /**
- * Selects server-rendered strategic surfaces without using Gutenberg as the
+ * Select server-rendered strategic surfaces without using Gutenberg as the
  * public master-layout authority.
  */
 final class StrategicSurfaceRuntime {
@@ -24,13 +24,13 @@ final class StrategicSurfaceRuntime {
 	private ?WP_Post $active_post = null;
 
 	/**
-	 * Build the strategic runtime.
+	 * Create the strategic runtime.
 	 *
 	 * @param CorporateHomeRenderer $corporate_home_renderer Corporate Home renderer.
 	 */
 	public function __construct( private readonly CorporateHomeRenderer $corporate_home_renderer ) {}
 
-	/** Register the strategic-template selector. */
+	/** Register strategic Theme hooks. */
 	public function register(): void {
 		add_filter( 'template_include', array( $this, 'filter_template' ), 99 );
 		add_filter( 'body_class', array( $this, 'body_classes' ) );
@@ -38,10 +38,10 @@ final class StrategicSurfaceRuntime {
 	}
 
 	/**
-	 * Replace the normal block-template canvas only for an accepted strategic
-	 * surface. Ordinary pages, posts and Gutenberg-managed content are untouched.
+	 * Select the Theme-owned Corporate Home template when its semantic model is available.
 	 *
-	 * @param string $template WordPress-resolved template path.
+	 * @param string $template Template selected by WordPress.
+	 * @return string Strategic template or the original template.
 	 */
 	public function filter_template( string $template ): string {
 		$this->active_post = null;
@@ -61,33 +61,28 @@ final class StrategicSurfaceRuntime {
 		}
 
 		$this->active_post = $post;
-
 		return $strategic_template;
 	}
 
-	/** Whether the current request has been claimed by a strategic renderer. */
+	/** Return whether a strategic surface owns the current request. */
 	public function is_active(): bool {
 		return $this->active_post instanceof WP_Post;
 	}
 
-	/** Render the current accepted strategic surface. */
+	/** Return rendered HTML for the active strategic surface. */
 	public function render_current(): string {
 		if ( ! $this->active_post instanceof WP_Post ) {
 			return '';
 		}
-
 		return $this->corporate_home_renderer->render( $this->active_post );
 	}
 
 	/**
-	 * Replace all legacy Corporate presentation layers with the v5 strategic
-	 * runtime. Corporate v5 intentionally does not carry the previous Gutenberg
-	 * visual stylesheet: the strategic renderer and its CSS are a clean product
-	 * boundary rather than another override layer.
+	 * Replace legacy Corporate presentation layers with the v5 strategic runtime.
 	 *
-	 * The installable release prepends the neutral Theme foundation and A3.1
-	 * closure to the v5 runtime and writes a marker. Source installs keep those
-	 * files separate for development while client packages emit one CSS request.
+	 * Development installs load the runtime plus bounded closure files.
+	 * Installable releases collapse foundation, runtime and closures into one CSS
+	 * request and write the bundle marker.
 	 */
 	public function replace_legacy_layout_runtime(): void {
 		if ( ! $this->is_active() ) {
@@ -98,7 +93,8 @@ final class StrategicSurfaceRuntime {
 		wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' );
 
 		$path          = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-runtime.css';
-		$closure_path  = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
+		$a31_path      = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-1.css';
+		$a32_path      = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-a3-2.css';
 		$bundle_marker = get_stylesheet_directory() . '/assets/css/presets/corporate-v5-bundled.marker';
 		if ( ! is_readable( $path ) ) {
 			return;
@@ -111,11 +107,7 @@ final class StrategicSurfaceRuntime {
 			$dependencies = array();
 		}
 
-		$version = '0.1.1';
-		if ( function_exists( 'seo_geo_theme_asset_version' ) ) {
-			$version = seo_geo_theme_asset_version( $path );
-		}
-
+		$version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $path ) : '0.1.2';
 		wp_enqueue_style(
 			'seo-geo-theme-preset-corporate-v5-runtime',
 			get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-runtime.css',
@@ -123,19 +115,33 @@ final class StrategicSurfaceRuntime {
 			$version
 		);
 
-		if ( ! $is_bundled && is_readable( $closure_path ) ) {
-			$closure_version = function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $closure_path ) : '0.1.1';
+		if ( $is_bundled ) {
+			return;
+		}
+
+		$parent = 'seo-geo-theme-preset-corporate-v5-runtime';
+		if ( is_readable( $a31_path ) ) {
 			wp_enqueue_style(
 				'seo-geo-theme-preset-corporate-v5-a3-1',
 				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-a3-1.css',
-				array( 'seo-geo-theme-preset-corporate-v5-runtime' ),
-				$closure_version
+				array( $parent ),
+				function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $a31_path ) : '0.1.2'
+			);
+			$parent = 'seo-geo-theme-preset-corporate-v5-a3-1';
+		}
+
+		if ( is_readable( $a32_path ) ) {
+			wp_enqueue_style(
+				'seo-geo-theme-preset-corporate-v5-a3-2',
+				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-v5-a3-2.css',
+				array( $parent ),
+				function_exists( 'seo_geo_theme_asset_version' ) ? seo_geo_theme_asset_version( $a32_path ) : '0.1.2'
 			);
 		}
 	}
 
 	/**
-	 * Add stable diagnostic/product classes only when v5 owns the public layout.
+	 * Add body classes for the active Corporate strategic surface.
 	 *
 	 * @param array $classes Existing body classes.
 	 * @phpstan-param list<string> $classes
@@ -145,8 +151,8 @@ final class StrategicSurfaceRuntime {
 		if ( $this->is_active() ) {
 			$classes[] = 'seo-geo-strategic-surface';
 			$classes[] = 'seo-geo-corporate-home-v5';
+			$classes[] = 'seo-geo-corporate-home-a3-2';
 		}
-
 		return array_values( array_unique( $classes ) );
 	}
 }

@@ -11,6 +11,7 @@ namespace SeoGeo\Manager\Rest;
 
 use SeoGeo\Manager\Changes\OperationStore;
 use SeoGeo\Manager\Changes\ThemeStrategicMediaChangeAdapter;
+use SeoGeo\Manager\Intelligence\ThemeStrategicMediaCatalog;
 use SeoGeo\Manager\Intelligence\ThemeStrategicMediaReader;
 use SeoGeo\Manager\Support\EnvironmentPolicy;
 use WP_Error;
@@ -30,6 +31,15 @@ final class ThemeStrategicMediaController {
 			'slot_id'     => array( 'sanitize_callback' => 'sanitize_key' ),
 		);
 
+		register_rest_route(
+			self::NAMESPACE,
+			'/theme/media-bindings',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( self::class, 'index' ),
+				'permission_callback' => array( self::class, 'can_read' ),
+			)
+		);
 		register_rest_route(
 			self::NAMESPACE,
 			self::BASE_PATH,
@@ -62,6 +72,18 @@ final class ThemeStrategicMediaController {
 		);
 		register_rest_route(
 			self::NAMESPACE,
+			'/theme/media-bindings/changes/(?P<operation_id>[a-f0-9\-]{36})/verify',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( self::class, 'verify' ),
+				'permission_callback' => array( self::class, 'can_write' ),
+				'args'                => array(
+					'operation_id' => array( 'sanitize_callback' => 'sanitize_text_field' ),
+				),
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
 			'/theme/media-bindings/changes/(?P<operation_id>[a-f0-9\-]{36})/rollback',
 			array(
 				'methods'             => 'POST',
@@ -80,6 +102,16 @@ final class ThemeStrategicMediaController {
 
 	public static function can_write(): bool {
 		return self::can_read();
+	}
+
+	/** @return WP_REST_Response|WP_Error */
+	public static function index() {
+		$result = ThemeStrategicMediaCatalog::list_models();
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response( $result, 200 );
 	}
 
 	/** @return WP_REST_Response|WP_Error */
@@ -132,6 +164,64 @@ final class ThemeStrategicMediaController {
 		$result['environment'] = $result['environment'] ?? EnvironmentPolicy::snapshot();
 
 		return new WP_REST_Response( $result, 200 );
+	}
+
+	/** @return WP_REST_Response|WP_Error */
+	public static function verify( WP_REST_Request $request ) {
+		$operation_id = (string) $request->get_param( 'operation_id' );
+		$operation    = OperationStore::get( $operation_id );
+		if ( ! is_array( $operation ) || self::ADAPTER !== ( $operation['adapter'] ?? '' ) ) {
+			return new WP_Error( 'seo_geo_manager_theme_media_operation_not_found', 'Theme media operation not found.', array( 'status' => 404 ) );
+		}
+		if ( 'applied' !== ( $operation['status'] ?? '' ) ) {
+			return new WP_Error( 'seo_geo_manager_theme_media_verify_unavailable', 'Only applied Theme media operations can be verified.', array( 'status' => 409 ) );
+		}
+
+		$operation_guard = EnvironmentPolicy::validate_operation_environment( $operation );
+		if ( is_wp_error( $operation_guard ) ) {
+			return $operation_guard;
+		}
+
+		$resource_id           = isset( $operation['resource_id'] ) ? absint( $operation['resource_id'] ) : 0;
+		$model_id              = isset( $operation['model_id'] ) && is_string( $operation['model_id'] ) ? sanitize_key( $operation['model_id'] ) : '';
+		$slot_id               = isset( $operation['slot_id'] ) && is_string( $operation['slot_id'] ) ? sanitize_key( $operation['slot_id'] ) : '';
+		$current               = ThemeStrategicMediaReader::read( $resource_id, $model_id, $slot_id );
+		$expected_attachment_id = isset( $operation['after_attachment_id'] ) ? absint( $operation['after_attachment_id'] ) : 0;
+		$expected_fingerprint   = isset( $operation['after_fingerprint'] ) && is_string( $operation['after_fingerprint'] ) ? $operation['after_fingerprint'] : '';
+		if ( is_wp_error( $current ) ) {
+			return $current;
+		}
+
+		$binding               = isset( $current['binding'] ) && is_array( $current['binding'] ) ? $current['binding'] : array();
+		$current_attachment_id = isset( $binding['attachment_id'] ) ? absint( $binding['attachment_id'] ) : 0;
+		$current_fingerprint   = isset( $binding['fingerprint'] ) && is_string( $binding['fingerprint'] ) ? $binding['fingerprint'] : '';
+
+		if (
+			$current_attachment_id !== $expected_attachment_id
+			|| '' === $expected_fingerprint
+			|| '' === $current_fingerprint
+			|| ! hash_equals( $expected_fingerprint, $current_fingerprint )
+		) {
+			return new WP_Error(
+				'seo_geo_manager_theme_media_verification_stale',
+				'Strategic Theme media no longer matches the applied operation.',
+				array( 'status' => 409 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'verified'            => true,
+				'operation_id'        => $operation_id,
+				'resource_id'         => $resource_id,
+				'model_id'            => $model_id,
+				'slot_id'             => $slot_id,
+				'attachment_id'       => $current_attachment_id,
+				'current_fingerprint' => $current_fingerprint,
+				'environment'         => EnvironmentPolicy::snapshot(),
+			),
+			200
+		);
 	}
 
 	/** @return WP_REST_Response|WP_Error */
