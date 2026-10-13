@@ -40,10 +40,10 @@ final class ThemeStrategicMediaWorkspace {
 			'seo-geo-manager-theme-media-workspace',
 			'window.SeoGeoManagerThemeMediaWorkspace = ' . wp_json_encode(
 				array(
-					'themeModelsPath' => '/seo-geo-manager/v1/theme/models',
-					'bindingBase'     => '/seo-geo-manager/v1/theme/media-bindings',
-					'mediaPath'       => '/seo-geo-manager/v1/media',
-					'version'         => SEO_GEO_MANAGER_VERSION,
+					'catalogPath' => '/seo-geo-manager/v1/theme/media-bindings',
+					'bindingBase' => '/seo-geo-manager/v1/theme/media-bindings',
+					'mediaPath'   => '/seo-geo-manager/v1/media',
+					'version'     => SEO_GEO_MANAGER_VERSION,
 				)
 			) . ';',
 			'before'
