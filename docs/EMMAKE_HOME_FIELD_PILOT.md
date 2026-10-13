@@ -157,4 +157,6 @@ Passing machine readiness plus the five browser QA checks makes the rebuilt Home
 
 It does not automatically replace or modify the production Home.
 
+Production cutover requires a separate explicit decision.
+
 Production entry requires a separate explicit decision after the evidence is reviewed, the premium/WOW visual gate is accepted, SEO/GEO regression checks are clear and rollback boundaries remain available.
