@@ -23,6 +23,7 @@ use SeoGeo\Manager\Admin\OptimizationQueue;
 use SeoGeo\Manager\Admin\PermalinkActions;
 use SeoGeo\Manager\Admin\RemoteAccess;
 use SeoGeo\Manager\Admin\SeoAuthorityWorkspace;
+use SeoGeo\Manager\Admin\ThemeStrategicMediaWorkspace;
 use SeoGeo\Manager\Admin\WorkspaceDashboard;
 use SeoGeo\Manager\Intelligence\PresetPageResolver;
 use SeoGeo\Manager\Rest\AuthorBindingController;
@@ -80,6 +81,7 @@ final class Plugin {
 			MediaAltWorkspace::register();
 			OptimizationQueue::register();
 			GrowWorkspace::register();
+			ThemeStrategicMediaWorkspace::register();
 			RemoteAccess::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
