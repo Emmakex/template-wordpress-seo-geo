@@ -15,11 +15,11 @@ Frozen Corporate v5 A3.2 field identity:
 - sandbox origin: `https://emmake.com/nuevaweb/`;
 - target Theme release: `0.1.2`;
 - release channel: `prestable`;
-- frozen product implementation source commit: `7e3dc2e19fca03a59690bcc2aefc88602d1819b4`;
+- frozen product/field-pack source commit: `e620e8b581cd761ef1ae0145482b8017e13b4cfb`;
 - Theme ZIP SHA-256: `2227e1936d7d9bdd238184f122fd6b79c1070d802defd844cdc1fa3a3f243382`;
 - Migration Bridge version: `0.8.60`;
 - Migration Bridge ZIP SHA-256: `f51a3123218c2ba92521c3a4c41bd65e52b27dbd6aa697715e9cad36f5ff2183`;
-- deterministic field-pilot pack SHA-256: `b2dbc6e64a0d7534d8579d5a73dcfa58675be9478c95cebb8a0180593ec78001`;
+- deterministic field-pilot pack SHA-256: `a2ae6742a0c7e4c8db084ea995ba62b988698cd509c48d858e861e8f544f4524`;
 - SEO/GEO Manager target: `0.3.73`;
 - stable decision: `no-go`;
 - real-site acceptance: `pending`.
@@ -44,15 +44,7 @@ Do **not** rerun Reset, recreate the clone, regenerate the Home or rehydrate con
 
 Corporate v5 keeps the Theme as sole strategic rendering authority. Gutenberg remains the editorial/CMS surface rather than the master layout engine.
 
-The A3.2 Home supports Theme-declared strategic image bindings for:
-
-- hero;
-- capability 1;
-- capability 2;
-- capability 3;
-- process / method;
-- three Insights fallbacks;
-- final CTA.
+The A3.2 Home supports Theme-declared strategic image bindings for hero, three capabilities, process/method, three Insights fallbacks and the final CTA.
 
 Featured Images remain authoritative for Insights. A strategic image is used only when the corresponding article has no Featured Image. Safe local Theme fallbacks remain available when no valid strategic image is bound.
 
@@ -122,42 +114,46 @@ The destructive/reset portion must **not** be repeated unless a real state failu
 2. Keep Migration Bridge `0.8.60` unchanged.
 3. Preserve the current clean semantic Home/content state.
 4. Verify the Theme ZIP SHA-256 is exactly `2227e1936d7d9bdd238184f122fd6b79c1070d802defd844cdc1fa3a3f243382`.
-5. Install that exact Theme `0.1.2` candidate only on `/nuevaweb/`.
-6. Install the accepted Manager `0.3.73` candidate when its deterministic release identity is recorded.
-7. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
-8. Open the existing logical Home through the Theme-owned renderer.
-9. Use Manager Theme Media to confirm `corporate-home-v1` and its nine image slots are discoverable.
-10. Upload/assign the prepared EMMAKE corporate imagery only through the guarded Manager media workflows.
-11. Review the full desktop composition before narrower viewports.
-12. Run field QA at `1440 / 1024 / 768 / 390`; retain `320` as an additional compact stress case.
-13. Do not advance to production-entry review until the Home receives explicit product-quality approval.
+5. Verify the complete Field Pilot Pack SHA-256 is exactly `a2ae6742a0c7e4c8db084ea995ba62b988698cd509c48d858e861e8f544f4524`.
+6. Install that exact Theme `0.1.2` candidate only on `/nuevaweb/`.
+7. Install the accepted Manager `0.3.73` candidate when its deterministic release identity is recorded.
+8. Clear only relevant WordPress/Hostinger/browser caches; do not reset or rehydrate.
+9. Open the existing logical Home through the Theme-owned renderer.
+10. Use Manager Theme Media to confirm `corporate-home-v1` and its nine image slots are discoverable.
+11. Upload/assign the prepared EMMAKE corporate imagery only through the guarded Manager media workflows.
+12. Review the full desktop composition before narrower viewports.
+13. Run field QA at `1440 / 1024 / 768 / 390`; retain `320` as an additional compact stress case.
+14. Do not advance to production-entry review until the Home receives explicit product-quality approval.
 
 If semantic content, URL identity, SEO/GEO ownership or machine readiness has drifted, stop and diagnose the drift instead of recreating evidence casually.
 
+## Corporate v5 A3.2 field checks
+
+Before recording the five formal QA results, confirm:
+
+- the Home is rendered by the Theme-owned Corporate strategic renderer;
+- the strategic header/footer are singular and no legacy builder chrome reappears;
+- `corporate-home-v1` remains the semantic Home model;
+- hero, capability, process, Insights fallback and final CTA imagery can be rendered through the declared Theme strategic-media contract;
+- WordPress Featured Images remain authoritative for Insights when present;
+- missing optional strategic media falls back safely rather than breaking layout;
+- no project page-builder JavaScript or third-party visual dependency becomes required.
+
 ## Browser QA acceptance — premium/WOW gate
 
-Record these five field checks:
+Complete all five checks in the field evidence:
 
-1. `visual-layout` — premium hierarchy, intentional rhythm, coherent section variety, useful imagery and decisive CTAs;
-2. `responsive-behavior` — no overflow, pathological wrapping, squeezed desktop layout or weak mobile recomposition;
-3. `accessibility` — correct landmarks/headings, keyboard/focus behavior, meaningful image alternatives/links and sufficient contrast;
-4. `seo-geo-rendered-output` — title, description, canonical, robots, Schema/discovery output and important internal links remain correct;
-5. `performance` — no material asset/runtime regression and acceptable measured sandbox performance.
+1. `visual-layout` — desktop/mobile composition, premium hierarchy, spacing, image balance, CTAs and content order.
+2. `responsive-behavior` — no overflow, broken controls, squeezed desktop layout or unusable mobile recomposition.
+3. `accessibility` — headings, landmarks, keyboard/focus, contrast, meaningful links and appropriate image alternatives.
+4. `seo-geo-rendered-output` — title, description, canonical, robots, Schema/discovery output and important internal links.
+5. `performance` — no material asset/runtime regression and acceptable measured performance for the sandbox.
+
+Run the field pass at `1440 / 1024 / 768 / 390`; keep `320` as an additional compact stress case.
 
 A technically valid result that still fails the premium/WOW standard remains a blocker.
 
-For the A3.2 Home specifically verify:
-
-- one coherent strategic header and no duplicate legacy chrome;
-- hero copy/actions remain readable and visible in the practical desktop first viewport;
-- hero media balances rather than dominates the copy;
-- three capability cards remain legible with and without bound media;
-- Method/process retains clear continuity and responsive order;
-- Insights use Featured Images first and strategic fallbacks only when needed;
-- final CTA remains clear and actionable with or without media;
-- mobile menu, CTA alignment and close/outside-click behavior remain correct;
-- footer hierarchy/navigation remain usable;
-- no forced wrapping, horizontal overflow or inaccessible focus state.
+For the A3.2 Home specifically verify one coherent strategic header, hero actions in the practical desktop first viewport, balanced hero media, readable capability cards, a clear Method/process hierarchy, correct Insights Featured Image/fallback behavior, an actionable final CTA, correct mobile menu/close/outside-click behavior, usable footer navigation, no horizontal overflow and visible keyboard focus.
 
 ## Representative SEO/GEO regression set
 
