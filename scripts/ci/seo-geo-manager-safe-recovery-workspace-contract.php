@@ -1,6 +1,6 @@
 <?php
 /**
- * Static contract for Manager 0.3.66 Safe Recovery / Readback integration.
+ * Static contract for Manager Safe Recovery / Readback integration.
  */
 declare(strict_types=1);
 
@@ -27,11 +27,22 @@ foreach ( $paths as $label => $path ) {
 	$sources[ $label ] = (string) file_get_contents( $path );
 }
 
+if ( 1 !== preg_match( '/^ \* Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/m', $sources['main'], $header_match ) ) {
+	fwrite( STDERR, "Safe Recovery Workspace could not resolve the Manager plugin header version.\n" );
+	exit( 1 );
+}
+if ( 1 !== preg_match( "/SEO_GEO_MANAGER_VERSION',\\s*'([0-9]+\\.[0-9]+\\.[0-9]+)'/", $sources['main'], $constant_match ) ) {
+	fwrite( STDERR, "Safe Recovery Workspace could not resolve SEO_GEO_MANAGER_VERSION.\n" );
+	exit( 1 );
+}
+
+$manager_version = $header_match[1];
+if ( $manager_version !== $constant_match[1] || version_compare( $manager_version, '0.3.66', '<' ) ) {
+	fwrite( STDERR, "Safe Recovery Workspace requires matching Manager versions at or above 0.3.66.\n" );
+	exit( 1 );
+}
+
 $requirements = array(
-	'main' => array(
-		'Version: 0.3.66',
-		"SEO_GEO_MANAGER_VERSION', '0.3.66'",
-	),
 	'bootstrap' => array(
 		'operation-recovery.css',
 		'operation-recovery.js',
@@ -55,6 +66,7 @@ $requirements = array(
 		"'navigation-change' === \$operation_type && 'navigation-menu' === \$adapter",
 		"'featured-media-change' === \$operation_type && 'featured-media' === \$adapter",
 		"'media-alt-change' === \$operation_type && 'media-alt' === \$adapter",
+		"'theme-strategic-media-change' === \$operation_type && 'theme-strategic-media' === \$adapter",
 	),
 	'evidence' => array(
 		'Evidencia de operaciones',
@@ -93,12 +105,12 @@ foreach ( $requirements as $scope => $needles ) {
 }
 
 $registry_contracts = array(
-	"/'method'\\s*=>\\s*'GET'/"                                  => 'type-specific Verify method GET',
-	"/'method'\\s*=>\\s*'POST'/"                                 => 'type-specific rollback method POST',
-	"/'requires_environment_fingerprint'\\s*=>\\s*true/"         => 'environment fingerprint requirement',
-	"/'generic_mutation_endpoint'\\s*=>\\s*false/"               => 'generic mutation disabled',
-	"/'generic_rollback_endpoint'\\s*=>\\s*false/"               => 'generic rollback disabled',
-	"/'private_operation_payload_returned'\\s*=>\\s*false/"      => 'private operation payload excluded',
+	"/'method'\\s*=>\\s*'GET'/"                              => 'type-specific Verify method GET',
+	"/'method'\\s*=>\\s*'POST'/"                             => 'type-specific rollback method POST',
+	"/'requires_environment_fingerprint'\\s*=>\\s*true/"     => 'environment fingerprint requirement',
+	"/'generic_mutation_endpoint'\\s*=>\\s*false/"           => 'generic mutation disabled',
+	"/'generic_rollback_endpoint'\\s*=>\\s*false/"           => 'generic rollback disabled',
+	"/'private_operation_payload_returned'\\s*=>\\s*false/"  => 'private operation payload excluded',
 );
 foreach ( $registry_contracts as $pattern => $label ) {
 	if ( 1 !== preg_match( $pattern, $sources['registry'] ) ) {
@@ -139,20 +151,26 @@ foreach ( array( 'shell_exec(', 'exec(', 'system(', 'passthru(', 'eval(' ) as $f
 	}
 }
 
-foreach ( array( '/content/seo/authority/changes/', '/links/contextual/changes/', '/navigation/changes/', '/content/featured-media/changes/', '/media/alt/changes/' ) as $allowed_route ) {
+$allowed_routes = array(
+	'/content/seo/authority/changes/',
+	'/links/contextual/changes/',
+	'/navigation/changes/',
+	'/content/featured-media/changes/',
+	'/media/alt/changes/',
+	'/theme/media-bindings/changes/',
+);
+foreach ( $allowed_routes as $allowed_route ) {
 	if ( false === strpos( $sources['registry'], $allowed_route ) ) {
 		fwrite( STDERR, "Safe Recovery allowlist is missing type-specific route family: {$allowed_route}\n" );
 		exit( 1 );
 	}
 }
 
-if ( false !== strpos( $sources['recovery'], '/content/seo/authority/changes/' ) ||
-	false !== strpos( $sources['recovery'], '/links/contextual/changes/' ) ||
-	false !== strpos( $sources['recovery'], '/navigation/changes/' ) ||
-	false !== strpos( $sources['recovery'], '/content/featured-media/changes/' ) ||
-	false !== strpos( $sources['recovery'], '/media/alt/changes/' ) ) {
-	fwrite( STDERR, "Recovery UI must consume server-provided allowlisted paths instead of hardcoding mutation routes.\n" );
-	exit( 1 );
+foreach ( $allowed_routes as $hardcoded_route ) {
+	if ( false !== strpos( $sources['recovery'], $hardcoded_route ) ) {
+		fwrite( STDERR, "Recovery UI must consume server-provided allowlisted paths instead of hardcoding mutation routes.\n" );
+		exit( 1 );
+	}
 }
 
 if ( false === strpos( $sources['recovery'], 'path: String( descriptor.path )' ) ) {
@@ -170,9 +188,9 @@ fwrite(
 	json_encode(
 		array(
 			'ok'                           => true,
-			'version'                      => '0.3.66',
+			'version'                      => $manager_version,
 			'manifest_get_only'            => true,
-			'allowlisted_families'          => 5,
+			'allowlisted_families'          => count( $allowed_routes ),
 			'type_specific_verify'          => true,
 			'type_specific_rollback'        => true,
 			'generic_operation_mutation'    => false,
