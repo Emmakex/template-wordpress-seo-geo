@@ -4,7 +4,6 @@
  *
  * @package SeoGeoTheme
  */
-
 declare(strict_types=1);
 
 namespace SeoGeo\Theme\Strategic;
@@ -141,14 +140,14 @@ final class CorporateHomeRenderer {
 				continue;
 			}
 
-			$media = $this->bound_image(
+			$media       = $this->bound_image(
 				$this->media( $slots, 'capability-' . $index . '-media' ),
 				'medium_large',
 				'seo-geo-corporate-card__image',
 				true,
 				'(max-width: 820px) calc(100vw - 2rem), 31vw'
 			);
-			$media_html = '' !== $media ? '<div class="seo-geo-corporate-card__media">' . $media . '</div>' : '';
+			$media_html  = '' !== $media ? '<div class="seo-geo-corporate-card__media">' . $media . '</div>' : '';
 			$media_class = '' !== $media ? ' has-media' : '';
 
 			$cards .= '<article class="seo-geo-corporate-card seo-geo-corporate-card--' . $index . $media_class . '">'
