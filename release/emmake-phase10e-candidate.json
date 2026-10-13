@@ -8,7 +8,7 @@
   },
   "target_version": "0.1.2",
   "release_channel": "prestable",
-  "source_commit": "10c80cebddfe9b5956b9f51f38de53318d8b6053",
+  "source_commit": "5907c17db1b54709b54ceddf0b3c04504d475fd5",
   "theme": {
     "version": "0.1.2",
     "file": "seo-geo-theme.zip",
@@ -21,7 +21,7 @@
   },
   "field_pilot_pack": {
     "file": "emmake-home-field-pilot-pack.zip",
-    "sha256": "3bd5b14f0c4c094abf60baba97f3aa6d515c5921f7b3cc58b54e2859b74999b2"
+    "sha256": "7dd3f974bb554d27a0a907c54c7313172aad529ef4c291598d82e1efc4c0520d"
   },
   "stable_decision": "no-go",
   "acceptance_status": "pending",
