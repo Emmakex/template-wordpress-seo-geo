@@ -90,11 +90,6 @@ def main() -> int:
         pack_sha256 = sha256(first)
         if candidate["field_pilot_pack"]["file"] != "emmake-home-field-pilot-pack.zip":
             raise RuntimeError("Canonical field-pilot pack filename is invalid")
-        if candidate["field_pilot_pack"]["sha256"] != pack_sha256:
-            raise RuntimeError(
-                "Built field-pilot pack does not match canonical Phase 10E SHA-256: "
-                f"expected={candidate['field_pilot_pack']['sha256']} received={pack_sha256}"
-            )
 
         with zipfile.ZipFile(first_path) as archive:
             names = set(archive.namelist())
@@ -107,6 +102,14 @@ def main() -> int:
             runbook = archive.read(f"{ZIP_ROOT}/EMMAKE_HOME_FIELD_PILOT.md").decode("utf-8")
             plugin_bytes = archive.read(f"{ZIP_ROOT}/seo-geo-migration-bridge.zip")
             theme_bytes = archive.read(f"{ZIP_ROOT}/seo-geo-theme.zip")
+
+        theme_sha256 = sha256(theme_bytes)
+        if candidate["field_pilot_pack"]["sha256"] != pack_sha256:
+            raise RuntimeError(
+                "Built field-pilot pack does not match canonical Phase 10E SHA-256: "
+                f"expected={candidate['field_pilot_pack']['sha256']} received={pack_sha256} "
+                f"theme_sha256={theme_sha256}"
+            )
 
         if manifest["mode"] != "emmake-home-field-pilot-pack":
             raise RuntimeError("Pilot manifest mode is invalid")
@@ -136,7 +139,7 @@ def main() -> int:
             raise RuntimeError("Theme filename drifted from canonical Phase 10E candidate")
         if manifest["theme"]["sha256"] != theme["sha256"]:
             raise RuntimeError("Theme manifest SHA-256 drifted from canonical Phase 10E candidate")
-        if theme["sha256"] != sha256(theme_bytes):
+        if theme["sha256"] != theme_sha256:
             raise RuntimeError("Theme built ZIP does not match canonical Phase 10E SHA-256")
         if theme["version"] != candidate["target_version"]:
             raise RuntimeError("Canonical Theme version must match Phase 10E target version")
