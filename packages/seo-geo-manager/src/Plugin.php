@@ -17,6 +17,7 @@ use SeoGeo\Manager\Admin\FieldGate;
 use SeoGeo\Manager\Admin\GrowWorkspace;
 use SeoGeo\Manager\Admin\JsonExportActions;
 use SeoGeo\Manager\Admin\MediaAltWorkspace;
+use SeoGeo\Manager\Admin\MediaUploadWorkspace;
 use SeoGeo\Manager\Admin\NavigationWorkspace;
 use SeoGeo\Manager\Admin\OperationHistory;
 use SeoGeo\Manager\Admin\OptimizationQueue;
@@ -82,6 +83,7 @@ final class Plugin {
 			OptimizationQueue::register();
 			GrowWorkspace::register();
 			ThemeStrategicMediaWorkspace::register();
+			MediaUploadWorkspace::register();
 			RemoteAccess::register();
 			JsonExportActions::register();
 			CorrectionActions::register();
