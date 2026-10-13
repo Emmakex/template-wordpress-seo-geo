@@ -37,6 +37,10 @@ parameters:
       count: 1
     -
       message: '#Call to function is_callable\(\) with .* will always evaluate to false\.#'
+      path: packages/seo-geo-manager/src/Intelligence/ThemeStrategicMediaCatalog.php
+      count: 1
+    -
+      message: '#Call to function is_callable\(\) with .* will always evaluate to false\.#'
       path: packages/seo-geo-manager/src/Changes/ThemeStructuredContentAdapter.php
       count: 1
     -
