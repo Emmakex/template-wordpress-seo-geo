@@ -1,6 +1,6 @@
 <?php
 /**
- * Static contract for Manager 0.3.65 Operation Evidence Workspace.
+ * Static contract for Manager Operation Evidence Workspace introduced in 0.3.65.
  */
 declare(strict_types=1);
 
@@ -27,10 +27,6 @@ foreach ( $paths as $label => $path ) {
 }
 
 $requirements = array(
-	'main' => array(
-		'Version: 0.3.65',
-		"SEO_GEO_MANAGER_VERSION', '0.3.65'",
-	),
 	'bootstrap' => array(
 		'operation-evidence.css',
 		'operation-history.js',
@@ -89,6 +85,20 @@ foreach ( $requirements as $scope => $needles ) {
 	}
 }
 
+if ( 1 !== preg_match( '/Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/', $sources['main'], $version_match ) ) {
+	fwrite( STDERR, "Operation Evidence Workspace contract could not read the Manager package version.\n" );
+	exit( 1 );
+}
+$package_version = $version_match[1];
+if ( version_compare( $package_version, '0.3.65', '<' ) ) {
+	fwrite( STDERR, "Operation Evidence Workspace requires Manager >= 0.3.65; received {$package_version}.\n" );
+	exit( 1 );
+}
+if ( false === strpos( $sources['main'], "SEO_GEO_MANAGER_VERSION', '{$package_version}'" ) ) {
+	fwrite( STDERR, "Operation Evidence Workspace contract found a header/runtime version mismatch for {$package_version}.\n" );
+	exit( 1 );
+}
+
 if ( false !== strpos( $sources['script'], '.seo-geo-manager-admin__technical-body' ) ) {
 	fwrite( STDERR, "Operation Evidence Workspace must not remain hidden inside technical details.\n" );
 	exit( 1 );
@@ -130,7 +140,8 @@ fwrite(
 	json_encode(
 		array(
 			'ok'                              => true,
-			'version'                         => '0.3.65',
+			'package_version'                 => $package_version,
+			'minimum_version'                 => '0.3.65',
 			'max_visible_rows'                => 50,
 			'private_history_limit'           => 100,
 			'main_workflow_surface'           => true,

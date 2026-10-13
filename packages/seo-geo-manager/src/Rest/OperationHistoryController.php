@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace SeoGeo\Manager\Rest;
 
 use SeoGeo\Manager\Changes\OperationStore;
+use SeoGeo\Manager\Support\OperationRecoveryRegistry;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -30,6 +32,19 @@ final class OperationHistoryController {
 						'sanitize_callback' => 'absint',
 						'validate_callback' => static fn ( $value ): bool => 1 <= (int) $value && 50 >= (int) $value,
 					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/operations/(?P<operation_id>[a-f0-9\-]{36})/recovery',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( self::class, 'recovery' ),
+				'permission_callback' => array( self::class, 'can_read' ),
+				'args'                => array(
+					'operation_id' => array( 'sanitize_callback' => 'sanitize_text_field' ),
 				),
 			)
 		);
@@ -72,6 +87,54 @@ final class OperationHistoryController {
 		);
 	}
 
+	/** @return WP_REST_Response|WP_Error */
+	public static function recovery( WP_REST_Request $request ) {
+		$operation_id = (string) $request->get_param( 'operation_id' );
+		$row          = self::visible_row( $operation_id );
+		if ( null === $row ) {
+			return new WP_Error(
+				'seo_geo_manager_operation_recovery_not_found',
+				'Operation recovery evidence is unavailable or not visible to this user.',
+				array( 'status' => 404 )
+			);
+		}
+
+		$operation = OperationStore::get( $operation_id );
+		if ( ! is_array( $operation ) ) {
+			return new WP_Error(
+				'seo_geo_manager_operation_recovery_missing',
+				'The private operation record is no longer available.',
+				array( 'status' => 404 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'mode'         => 'operation-recovery-manifest',
+				'privacy_safe' => true,
+				'operation'    => array(
+					'operation_id'   => $operation_id,
+					'operation_type' => (string) ( $row['operation_type'] ?? '' ),
+					'status'         => (string) ( $row['status'] ?? '' ),
+					'target_id'      => (int) ( $row['target_id'] ?? 0 ),
+					'target_type'    => (string) ( $row['target_type'] ?? '' ),
+					'rollback_state' => (string) ( $row['rollback_state'] ?? 'unavailable' ),
+				),
+				'recovery'     => OperationRecoveryRegistry::describe( $operation ),
+				'policy'       => array(
+					'visible_history_only'             => true,
+					'type_specific_endpoints_only'     => true,
+					'generic_mutation_endpoint'        => false,
+					'generic_rollback_endpoint'        => false,
+					'full_operation_payload_excluded'  => true,
+					'private_fingerprints_excluded'    => true,
+					'environment_fingerprint_excluded' => true,
+				),
+			),
+			200
+		);
+	}
+
 	/**
 	 * Site-wide operations require manage_options. Content-scoped operations may
 	 * be seen by users who can still edit the target resource.
@@ -86,5 +149,18 @@ final class OperationHistoryController {
 		$target_id = isset( $row['target_id'] ) ? absint( $row['target_id'] ) : 0;
 
 		return 0 < $target_id && current_user_can( 'edit_post', $target_id );
+	}
+
+	/** @return array<string, mixed>|null */
+	private static function visible_row( string $operation_id ): ?array {
+		foreach ( OperationStore::recent_summaries( 100 ) as $row ) {
+			if ( ( $row['operation_id'] ?? '' ) !== $operation_id || ! self::can_view_row( $row ) ) {
+				continue;
+			}
+
+			return $row;
+		}
+
+		return null;
 	}
 }

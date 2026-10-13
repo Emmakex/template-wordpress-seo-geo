@@ -1,6 +1,6 @@
 <?php
 /**
- * Runtime acceptance for the privacy-bounded Manager operation history.
+ * Runtime acceptance for privacy-bounded Manager operation evidence and recovery.
  */
 
 use SeoGeo\Manager\Changes\OperationStore;
@@ -102,11 +102,95 @@ $site_operation = EnvironmentPolicy::bind_operation(
 );
 seo_geo_manager_history_accept( OperationStore::save( $site_operation_id, $site_operation ), 'Could not persist site-wide history fixture.' );
 
+$media_id = wp_insert_attachment(
+	array(
+		'post_title'     => 'Recovery manifest image',
+		'post_status'    => 'inherit',
+		'post_mime_type' => 'image/png',
+		'guid'           => home_url( '/wp-content/uploads/recovery-manifest-image.png' ),
+	),
+	false,
+	0,
+	true
+);
+seo_geo_manager_history_accept( ! is_wp_error( $media_id ) && 0 < (int) $media_id, 'Could not create recovery image fixture.' );
+$media_id = (int) $media_id;
+wp_update_attachment_metadata(
+	$media_id,
+	array(
+		'width'  => 800,
+		'height' => 600,
+		'file'   => 'recovery-manifest-image.png',
+	)
+);
+delete_post_meta( $media_id, '_wp_attachment_image_alt' );
+
+$media_read = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/media/' . $media_id );
+seo_geo_manager_history_accept( 200 === $media_read['status'] && is_array( $media_read['data'] ), 'Could not inspect recovery image fixture.' );
+$media_fingerprint = (string) ( $media_read['data']['media']['fingerprint'] ?? '' );
+seo_geo_manager_history_accept( '' !== $media_fingerprint, 'Recovery image fingerprint missing.' );
+
+$media_apply = seo_geo_manager_history_request(
+	'POST',
+	'/seo-geo-manager/v1/media/' . $media_id . '/alt/changes/apply',
+	array(
+		'schema_version'          => 1,
+		'expected_fingerprint'    => $media_fingerprint,
+		'alt'                     => 'Recovery manifest ALT',
+		'allow_public_media'      => true,
+		'environment_fingerprint' => $environment_fingerprint,
+		'idempotency_key'         => 'operation-history-recovery-media-alt',
+	)
+);
+seo_geo_manager_history_accept( 200 === $media_apply['status'] && is_array( $media_apply['data'] ), 'Could not create supported recovery operation.' );
+$media_operation_id = (string) ( $media_apply['data']['operation_id'] ?? '' );
+seo_geo_manager_history_accept( 36 === strlen( $media_operation_id ), 'Supported recovery operation ID missing.' );
+
+$manifest = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations/' . $media_operation_id . '/recovery' );
+seo_geo_manager_history_accept( 200 === $manifest['status'] && is_array( $manifest['data'] ), 'Recovery manifest request failed.' );
+seo_geo_manager_history_accept( true === ( $manifest['data']['privacy_safe'] ?? false ), 'Recovery manifest did not declare privacy-safe mode.' );
+seo_geo_manager_history_accept( 'operation-recovery-manifest' === ( $manifest['data']['mode'] ?? '' ), 'Unexpected recovery manifest mode.' );
+seo_geo_manager_history_accept( true === ( $manifest['data']['recovery']['supported'] ?? false ), 'Media ALT operation was not allowlisted for recovery.' );
+seo_geo_manager_history_accept( true === ( $manifest['data']['recovery']['verify']['available'] ?? false ), 'Recovery Verify is unavailable for an applied Media ALT operation.' );
+seo_geo_manager_history_accept( 'GET' === ( $manifest['data']['recovery']['verify']['method'] ?? '' ), 'Recovery Verify did not remain GET-only.' );
+seo_geo_manager_history_accept( '/seo-geo-manager/v1/media/alt/changes/' . $media_operation_id . '/verify' === ( $manifest['data']['recovery']['verify']['path'] ?? '' ), 'Recovery Verify path is not the type-specific Media ALT route.' );
+seo_geo_manager_history_accept( true === ( $manifest['data']['recovery']['rollback']['available'] ?? false ), 'Recovery rollback is unavailable for an applied Media ALT operation.' );
+seo_geo_manager_history_accept( 'POST' === ( $manifest['data']['recovery']['rollback']['method'] ?? '' ), 'Recovery rollback method mismatch.' );
+seo_geo_manager_history_accept( '/seo-geo-manager/v1/media/alt/changes/' . $media_operation_id . '/rollback' === ( $manifest['data']['recovery']['rollback']['path'] ?? '' ), 'Recovery rollback path is not the type-specific Media ALT route.' );
+seo_geo_manager_history_accept( false === ( $manifest['data']['policy']['generic_rollback_endpoint'] ?? true ), 'Recovery manifest exposed a generic rollback endpoint.' );
+seo_geo_manager_history_accept( false === ( $manifest['data']['policy']['generic_mutation_endpoint'] ?? true ), 'Recovery manifest exposed a generic mutation endpoint.' );
+seo_geo_manager_history_accept( ! isset( $manifest['data']['operation']['before_fingerprint'], $manifest['data']['operation']['after_fingerprint'], $manifest['data']['operation']['environment_fingerprint'] ), 'Recovery manifest exposed private fingerprints.' );
+
+$verify_path = (string) ( $manifest['data']['recovery']['verify']['path'] ?? '' );
+$verify = seo_geo_manager_history_request( 'GET', $verify_path );
+seo_geo_manager_history_accept( 200 === $verify['status'] && true === ( $verify['data']['verified'] ?? false ), 'Recovery manifest Verify route did not verify the applied operation.' );
+
+$rollback_path = (string) ( $manifest['data']['recovery']['rollback']['path'] ?? '' );
+$media_rollback = seo_geo_manager_history_request(
+	'POST',
+	$rollback_path,
+	array( 'environment_fingerprint' => $environment_fingerprint )
+);
+seo_geo_manager_history_accept( 200 === $media_rollback['status'] && 'rolled-back' === ( $media_rollback['data']['status'] ?? '' ), 'Recovery manifest rollback route did not restore the operation.' );
+seo_geo_manager_history_accept( false === metadata_exists( 'post', $media_id, '_wp_attachment_image_alt' ), 'Recovery rollback did not restore the exact missing-ALT state.' );
+
+$rolled_back_manifest = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations/' . $media_operation_id . '/recovery' );
+seo_geo_manager_history_accept( 200 === $rolled_back_manifest['status'] && is_array( $rolled_back_manifest['data'] ), 'Rolled-back recovery manifest request failed.' );
+seo_geo_manager_history_accept( true === ( $rolled_back_manifest['data']['recovery']['supported'] ?? false ), 'Rolled-back operation lost its supported recovery family.' );
+seo_geo_manager_history_accept( false === ( $rolled_back_manifest['data']['recovery']['verify']['available'] ?? true ), 'Rolled-back operation still exposes Verify as available.' );
+seo_geo_manager_history_accept( false === ( $rolled_back_manifest['data']['recovery']['rollback']['available'] ?? true ), 'Rolled-back operation still exposes rollback as available.' );
+
+$unsupported_manifest = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations/' . $site_operation_id . '/recovery' );
+seo_geo_manager_history_accept( 200 === $unsupported_manifest['status'] && is_array( $unsupported_manifest['data'] ), 'Unsupported operation recovery manifest failed.' );
+seo_geo_manager_history_accept( false === ( $unsupported_manifest['data']['recovery']['supported'] ?? true ), 'Unsupported site-wide operation was incorrectly mapped to recovery endpoints.' );
+seo_geo_manager_history_accept( null === ( $unsupported_manifest['data']['recovery']['verify']['path'] ?? null ), 'Unsupported operation exposed a Verify route.' );
+seo_geo_manager_history_accept( null === ( $unsupported_manifest['data']['recovery']['rollback']['path'] ?? null ), 'Unsupported operation exposed a rollback route.' );
+
 $admin_history = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations' );
 seo_geo_manager_history_accept( 200 === $admin_history['status'] && is_array( $admin_history['data'] ), 'Administrator operation history request failed.' );
 seo_geo_manager_history_accept( true === ( $admin_history['data']['privacy_safe'] ?? false ), 'Operation history did not declare privacy-safe mode.' );
 $admin_items = isset( $admin_history['data']['items'] ) && is_array( $admin_history['data']['items'] ) ? $admin_history['data']['items'] : array();
-seo_geo_manager_history_accept( 2 <= count( $admin_items ), 'Administrator history did not expose indexed operations.' );
+seo_geo_manager_history_accept( 3 <= count( $admin_items ), 'Administrator history did not expose indexed operations.' );
 
 $allowed_keys = array(
 	'operation_id',
@@ -163,18 +247,27 @@ $editor_ids   = array_values( array_filter( array_map( static fn ( $row ): strin
 seo_geo_manager_history_accept( in_array( $content_operation_id, $editor_ids, true ), 'Editor could not see permitted content operation.' );
 seo_geo_manager_history_accept( ! in_array( $site_operation_id, $editor_ids, true ), 'Editor could see a site-wide operation without manage_options.' );
 
+$editor_site_recovery = seo_geo_manager_history_request( 'GET', '/seo-geo-manager/v1/operations/' . $site_operation_id . '/recovery' );
+seo_geo_manager_history_accept( 404 === $editor_site_recovery['status'], 'Editor could inspect recovery for a hidden site-wide operation.' );
+
 wp_set_current_user( 1 );
 wp_delete_user( (int) $editor_id );
 wp_delete_post( (int) $post_id, true );
+wp_delete_post( $media_id, true );
 
 echo wp_json_encode(
 	array(
-		'ok'                      => true,
-		'bounded_history'         => true,
-		'privacy_safe'            => true,
-		'rollback_status_refresh' => true,
-		'editor_scope_filter'     => true,
-		'sitewide_admin_only'     => true,
+		'ok'                         => true,
+		'bounded_history'            => true,
+		'privacy_safe'               => true,
+		'rollback_status_refresh'    => true,
+		'editor_scope_filter'        => true,
+		'sitewide_admin_only'        => true,
+		'recovery_manifest_bounded'  => true,
+		'type_specific_verify'       => true,
+		'type_specific_rollback'     => true,
+		'unsupported_not_routed'     => true,
+		'recovery_private_data_safe' => true,
 	),
 	JSON_UNESCAPED_SLASHES
 ) . PHP_EOL;
