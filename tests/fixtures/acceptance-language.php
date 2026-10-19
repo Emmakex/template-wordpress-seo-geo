@@ -19,6 +19,16 @@ if ( ! defined( 'SEO_GEO_ACCEPTANCE_FIXTURE' ) || true !== SEO_GEO_ACCEPTANCE_FI
 	return;
 }
 
+if ( isset( $_GET['fixture_media'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Disposable browser fixture selector.
+	$fixture_media = sanitize_key( wp_unslash( (string) $_GET['fixture_media'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Disposable browser fixture selector.
+	if ( 'atlas' === $fixture_media ) {
+		$atlas_path = WP_CONTENT_DIR . '/themes/seo-geo-theme/assets/images/presets/corporate/v5/mf08-media-atlas.webp';
+		if ( is_dir( dirname( $atlas_path ) ) && ! is_file( $atlas_path ) ) {
+			touch( $atlas_path );
+		}
+	}
+}
+
 /**
  * Resolve an acceptance-only locale from the fixture query parameter.
  *

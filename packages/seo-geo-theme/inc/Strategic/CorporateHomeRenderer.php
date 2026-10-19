@@ -47,11 +47,14 @@ final class CorporateHomeRenderer {
 			return '';
 		}
 
-		$slots  = $model['slots'];
-		$locale = function_exists( 'seo_geo_theme_preset_locale' ) ? seo_geo_theme_preset_locale() : 'en_US';
-		$is_es  = 'es_ES' === $locale;
+		$slots      = $model['slots'];
+		$locale     = function_exists( 'seo_geo_theme_preset_locale' ) ? seo_geo_theme_preset_locale() : 'en_US';
+		$is_es      = 'es_ES' === $locale;
+		$has_atlas  = $this->has_media_atlas();
+		$main_class = 'seo-geo-corporate-v5-home' . ( $has_atlas ? ' seo-geo-corporate-v5-home--media-atlas' : '' );
+		$main_style = $has_atlas ? ' style="--seo-geo-media-atlas:url(' . esc_url( $this->asset_uri( 'mf08-media-atlas.webp' ) ) . ')"' : '';
 
-		return '<main id="seo-geo-main" class="seo-geo-corporate-v5-home" tabindex="-1">'
+		return '<main id="seo-geo-main" class="' . esc_attr( $main_class ) . '" tabindex="-1"' . $main_style . '>'
 			. $this->render_hero( $slots )
 			. $this->render_capabilities( $slots, $is_es )
 			. $this->render_process( $slots, $is_es )
@@ -81,7 +84,9 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
-		$visual = $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false );
+		$visual = $this->has_media_atlas()
+			? $this->atlas_media( 'hero', 'seo-geo-corporate-hero-visual__image' )
+			: $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false );
 
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'
@@ -187,7 +192,7 @@ final class CorporateHomeRenderer {
 			++$position;
 			$excerpt = trim( wp_strip_all_tags( get_the_excerpt( $article ), true ) );
 			$excerpt = wp_trim_words( $excerpt, 30, '…' );
-			$media   = 1 === $position ? $this->insight_media( $article ) : '';
+			$media   = ( 1 === $position || $this->has_media_atlas() ) ? $this->insight_media( $article, $position ) : '';
 
 			$items .= '<li><article class="seo-geo-corporate-insight-card">'
 				. $media
@@ -214,9 +219,10 @@ final class CorporateHomeRenderer {
 	/**
 	 * Render featured editorial media, preferring WordPress-authored media.
 	 *
-	 * @param WP_Post $article Article resource.
+	 * @param WP_Post $article  Article resource.
+	 * @param int     $position Editorial position in the Insights grid.
 	 */
-	private function insight_media( WP_Post $article ): string {
+	private function insight_media( WP_Post $article, int $position ): string {
 		if ( has_post_thumbnail( $article ) ) {
 			$image = get_the_post_thumbnail(
 				$article,
@@ -233,9 +239,45 @@ final class CorporateHomeRenderer {
 			}
 		}
 
+		if ( ! $this->has_media_atlas() ) {
+			return 1 === $position
+				? '<div class="seo-geo-corporate-insight-card__media seo-geo-corporate-insight-card__media--fallback" aria-hidden="true">'
+					. $this->decorative_image( 'insights-featured.svg', 'seo-geo-corporate-insight-card__image', 720, 420 )
+					. '</div>'
+				: '';
+		}
+
+		$variant = match ( $position ) {
+			2       => 'insight-ai',
+			3       => 'insight-content',
+			default => 'insight-featured',
+		};
+
 		return '<div class="seo-geo-corporate-insight-card__media seo-geo-corporate-insight-card__media--fallback" aria-hidden="true">'
-			. $this->decorative_image( 'insights-featured.svg', 'seo-geo-corporate-insight-card__image', 720, 420 )
+			. $this->atlas_media( $variant, 'seo-geo-corporate-insight-card__image' )
 			. '</div>';
+	}
+
+	/**
+	 * Check whether a client field-media atlas is present in this Theme build.
+	 */
+	private function has_media_atlas(): bool {
+		return is_readable( get_template_directory() . '/assets/images/presets/corporate/v5/mf08-media-atlas.webp' );
+	}
+
+	/**
+	 * Render one decorative viewport into the shared Corporate media atlas.
+	 *
+	 * @param string $variant   Atlas viewport identifier.
+	 * @param string $css_class Additional presentation class.
+	 */
+	private function atlas_media( string $variant, string $css_class ): string {
+		$allowed = array( 'hero', 'insight-featured', 'insight-ai', 'insight-content' );
+		if ( ! in_array( $variant, $allowed, true ) ) {
+			return '';
+		}
+
+		return '<span class="seo-geo-atlas-media seo-geo-atlas-media--' . esc_attr( $variant ) . ' ' . esc_attr( $css_class ) . '" aria-hidden="true"></span>';
 	}
 
 	/**
