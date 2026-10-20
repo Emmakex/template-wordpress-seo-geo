@@ -269,7 +269,15 @@ final class SetupExecutor {
 		$language_config = is_array( $preset_language['languages'] ?? null ) ? $preset_language['languages'] : array();
 		$entity_type     = is_string( $entity['site_entity_type'] ?? null ) ? $entity['site_entity_type'] : '';
 		$local_business  = is_array( $entity['local_business'] ?? null ) ? $entity['local_business'] : array();
+		$person          = is_array( $entity['person'] ?? null ) ? $entity['person'] : array();
 		$crawler_policy  = is_array( $geo['crawler_policy']['value'] ?? null ) ? $geo['crawler_policy']['value'] : array();
+
+		$identity_configuration = array(
+			'site_entity_type' => $entity_type,
+		);
+		if ( SchemaIdentityResolver::SITE_ENTITY_PERSON === $entity_type ) {
+			$identity_configuration['person'] = $person;
+		}
 
 		$llms     = $this->enabled_configuration(
 			LlmsTxtResolver::OPTION_NAME,
@@ -283,9 +291,7 @@ final class SetupExecutor {
 		return array(
 			'seo_geo_active_preset'                  => is_string( $preset_language['preset'] ?? null ) ? $preset_language['preset'] : '',
 			NativeLanguageConfiguration::OPTION_NAME => $language_config,
-			SchemaIdentityResolver::OPTION_NAME      => array(
-				'site_entity_type' => $entity_type,
-			),
+			SchemaIdentityResolver::OPTION_NAME      => $identity_configuration,
 			SchemaLocalBusinessResolver::OPTION_NAME => SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS === $entity_type
 				? $local_business
 				: array(),
@@ -341,6 +347,7 @@ final class SetupExecutor {
 			'site_entity'          => array(
 				'type'                      => is_string( $entity['site_entity_type'] ?? null ) ? $entity['site_entity_type'] : null,
 				'local_business_configured' => is_array( $entity['local_business'] ?? null ),
+				'person_configured'         => is_array( $entity['person'] ?? null ),
 			),
 			'geo'                  => array(
 				'crawler_policy_sha256'       => $this->fingerprint( $crawler ),
@@ -396,6 +403,7 @@ final class SetupExecutor {
 			'entity'               => array(
 				'type'                       => is_string( $entity['site_entity_type'] ?? null ) ? $entity['site_entity_type'] : null,
 				'local_business_configured'  => is_array( $entity['local_business'] ?? null ),
+				'person_configured'          => is_array( $entity['person'] ?? null ),
 				'visible_fact_gate_required' => true === ( $entity['visible_fact_gate_required'] ?? false ),
 			),
 			'geo'                  => array(
@@ -420,6 +428,7 @@ final class SetupExecutor {
 				'external_credentials_saved'     => false,
 				'private_content_exported'       => false,
 				'local_business_facts_in_report' => false,
+				'person_facts_in_report'         => false,
 				'migration_bridge_loaded'        => false,
 			),
 		);

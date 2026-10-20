@@ -19,18 +19,18 @@ use SeoGeo\Core\Schema\SchemaNodeIds;
 use SeoGeo\Core\Schema\SchemaVisibleContentResolver;
 
 /**
- * Validates explicit Phase 9C choices without persisting or inventing facts.
+ * Validates explicit site identity and GEO choices without inventing facts.
  */
 final class EntityGeoValidator {
 	/**
-	 * Crawler policy authority.
+	 * Crawler-policy authority.
 	 *
 	 * @var CrawlerPolicyResolver
 	 */
 	private CrawlerPolicyResolver $crawler_policy;
 
 	/**
-	 * LocalBusiness runtime authority.
+	 * LocalBusiness authority.
 	 *
 	 * @var SchemaLocalBusinessResolver
 	 */
@@ -39,7 +39,7 @@ final class EntityGeoValidator {
 	/**
 	 * Construct the validator.
 	 *
-	 * @param CrawlerPolicyResolver|null       $crawler_policy Optional crawler-policy authority.
+	 * @param CrawlerPolicyResolver|null       $crawler_policy Optional crawler authority.
 	 * @param SchemaLocalBusinessResolver|null $local_business Optional LocalBusiness authority.
 	 */
 	public function __construct(
@@ -81,22 +81,18 @@ final class EntityGeoValidator {
 			$errors[] = 'site-title-required-for-entity';
 		}
 
-		$preset = isset( $input['preset'] ) && is_string( $input['preset'] )
+		$preset          = isset( $input['preset'] ) && is_string( $input['preset'] )
 			? sanitize_key( $input['preset'] )
 			: '';
-
 		$preset_document = '' !== $preset ? \seo_geo_theme_preset_document( $preset, 'preset.json' ) : null;
+
 		if ( '' !== $preset && ! is_array( $preset_document ) ) {
 			$errors[] = 'unsupported-preset';
 		}
 
 		if ( null !== $entity_type && is_array( $preset_document ) ) {
-			$preset_schema = isset( $preset_document['schema'] ) && is_array( $preset_document['schema'] )
-				? $preset_document['schema']
-				: array();
-			$recommended   = isset( $preset_schema['site_identity'] ) && is_string( $preset_schema['site_identity'] )
-				? $preset_schema['site_identity']
-				: null;
+			$preset_schema = is_array( $preset_document['schema'] ?? null ) ? $preset_document['schema'] : array();
+			$recommended   = is_string( $preset_schema['site_identity'] ?? null ) ? $preset_schema['site_identity'] : null;
 
 			if ( null !== $recommended && $recommended !== $entity_type ) {
 				$warnings[] = 'preset-site-identity-differs:' . $recommended;
@@ -104,18 +100,21 @@ final class EntityGeoValidator {
 		}
 
 		$local_business = null;
+		$person         = null;
+
 		if ( SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS === $entity_type ) {
 			$local_business = $this->validate_local_business( $input['local_business'] ?? null, $errors );
-		} elseif (
-			isset( $input['local_business'] )
-			&& is_array( $input['local_business'] )
-			&& array() !== $input['local_business']
-		) {
+		} elseif ( isset( $input['local_business'] ) && is_array( $input['local_business'] ) && array() !== $input['local_business'] ) {
 			$errors[] = 'local-business-fields-require-local-business-identity';
 		}
 
-		$crawler_policy = $this->validate_crawler_policy( $input['crawler_policy'] ?? array(), $errors );
+		if ( SchemaIdentityResolver::SITE_ENTITY_PERSON === $entity_type ) {
+			$person = $this->validate_person( $input['person'] ?? null, $errors );
+		} elseif ( isset( $input['person'] ) && is_array( $input['person'] ) && array() !== $input['person'] ) {
+			$errors[] = 'person-fields-require-person-identity';
+		}
 
+		$crawler_policy   = $this->validate_crawler_policy( $input['crawler_policy'] ?? array(), $errors );
 		$llms_enabled     = $this->boolean_value( $input, 'llms_txt_enabled', $errors );
 		$markdown_enabled = $this->boolean_value( $input, 'markdown_alternates_enabled', $errors );
 
@@ -134,6 +133,10 @@ final class EntityGeoValidator {
 		$warnings = array_values( array_unique( $warnings ) );
 		$valid    = array() === $errors && null !== $entity_type;
 
+		$name_source = SchemaIdentityResolver::SITE_ENTITY_PERSON === $entity_type
+			? 'explicit-person-name'
+			: 'wordpress-site-title';
+
 		return array(
 			'schema_version' => 1,
 			'mode'           => 'entity-geo-validation',
@@ -146,14 +149,19 @@ final class EntityGeoValidator {
 						'option_name'                => SchemaIdentityResolver::OPTION_NAME,
 						'site_entity_type'           => $entity_type,
 						'confirmed'                  => true,
-						'name_source'                => 'wordpress-site-title',
+						'name_source'                => $name_source,
 						'url_source'                 => 'wordpress-home-url',
 						'local_business_option_name' => SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS === $entity_type
 							? SchemaLocalBusinessResolver::OPTION_NAME
 							: null,
 						'local_business'             => $local_business,
-						'visible_fact_gate_required' => SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS === $entity_type,
-						'schema_output_ready'        => false,
+						'person'                     => $person,
+						'visible_fact_gate_required' => in_array(
+							$entity_type,
+							array( SchemaIdentityResolver::SITE_ENTITY_LOCAL_BUSINESS, SchemaIdentityResolver::SITE_ENTITY_PERSON ),
+							true
+						),
+						'schema_output_ready'        => SchemaIdentityResolver::SITE_ENTITY_PERSON === $entity_type && is_array( $person ),
 					),
 					'geo'    => array(
 						'crawler_policy' => array(
@@ -189,11 +197,103 @@ final class EntityGeoValidator {
 				'address_inferred'         => false,
 				'coordinates_inferred'     => false,
 				'ratings_reviews_inferred' => false,
+				'credentials_inferred'     => false,
+				'affiliation_inferred'     => false,
 				'content_selected'         => false,
 				'crawler_guarantees_made'  => false,
 				'plugins_mutated'          => false,
 			),
 		);
+	}
+
+	/**
+	 * Validate explicit public Person identity values.
+	 *
+	 * @param mixed $value  Candidate Person map.
+	 * @param array $errors Validation errors.
+	 * @phpstan-param list<string> $errors
+	 * @return array{name:string,description:string,same_as:list<string>}|null
+	 */
+	private function validate_person( mixed $value, array &$errors ): ?array {
+		$error_count = count( $errors );
+
+		if ( ! is_array( $value ) ) {
+			$errors[] = 'person-configuration-required';
+			return null;
+		}
+
+		$allowed = array( 'name', 'description', 'same_as' );
+		foreach ( array_keys( $value ) as $key ) {
+			if ( ! is_string( $key ) || ! in_array( $key, $allowed, true ) ) {
+				$errors[] = 'unsupported-person-field:' . ( is_string( $key ) ? $key : 'non-string' );
+			}
+		}
+
+		$name = $this->text_value( $value['name'] ?? null );
+		if ( null === $name ) {
+			$errors[] = 'person-name-required';
+			return null;
+		}
+
+		if ( 160 < strlen( $name ) ) {
+			$errors[] = 'person-name-too-long';
+		}
+
+		$description = $this->text_value( $value['description'] ?? null ) ?? '';
+		if ( 1000 < strlen( $description ) ) {
+			$errors[] = 'person-description-too-long';
+		}
+
+		$same_as = $this->validate_person_urls( $value['same_as'] ?? array(), $errors );
+
+		if ( count( $errors ) > $error_count ) {
+			return null;
+		}
+
+		return array(
+			'name'        => $name,
+			'description' => $description,
+			'same_as'     => $same_as,
+		);
+	}
+
+	/**
+	 * Validate explicit public identity URLs without outbound requests.
+	 *
+	 * @param mixed $value  Candidate URL list.
+	 * @param array $errors Validation errors.
+	 * @phpstan-param list<string> $errors
+	 * @return list<string>
+	 */
+	private function validate_person_urls( mixed $value, array &$errors ): array {
+		if ( ! is_array( $value ) ) {
+			$errors[] = 'person-same-as-must-be-list';
+			return array();
+		}
+
+		if ( 20 < count( $value ) ) {
+			$errors[] = 'person-same-as-limit-exceeded';
+		}
+
+		$urls = array();
+		foreach ( array_slice( $value, 0, 20 ) as $candidate ) {
+			if ( ! is_string( $candidate ) ) {
+				$errors[] = 'person-same-as-invalid';
+				continue;
+			}
+
+			$url    = esc_url_raw( trim( $candidate ), array( 'http', 'https' ) );
+			$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+			$host   = wp_parse_url( $url, PHP_URL_HOST );
+			if ( '' === $url || ! in_array( $scheme, array( 'http', 'https' ), true ) || ! is_string( $host ) || '' === $host ) {
+				$errors[] = 'person-same-as-invalid';
+				continue;
+			}
+
+			$urls[] = $url;
+		}
+
+		return array_values( array_unique( $urls ) );
 	}
 
 	/**
@@ -348,7 +448,6 @@ final class EntityGeoValidator {
 		}
 
 		$value = trim( wp_strip_all_tags( $value, true ) );
-
 		return '' !== $value ? $value : null;
 	}
 

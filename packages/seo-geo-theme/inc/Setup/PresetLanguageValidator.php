@@ -13,7 +13,7 @@ use SeoGeo\Core\Integrations\RuntimeIntegrationDetector;
 use SeoGeo\Core\Language\NativeLanguageConfiguration;
 
 /**
- * Validates explicit Phase 9B choices without persisting them.
+ * Validates explicit preset/language choices without persisting them.
  */
 final class PresetLanguageValidator {
 	/**
@@ -49,6 +49,11 @@ final class PresetLanguageValidator {
 			$errors[] = 'unsupported-preset';
 		}
 
+		$preset_document = '' !== $preset ? \seo_geo_theme_preset_document( $preset, 'preset.json' ) : null;
+		if ( is_array( $preset_document ) && false === ( $preset_document['setup_ready'] ?? true ) ) {
+			$errors[] = 'preset-setup-not-ready';
+		}
+
 		$language_candidate = array(
 			'default'   => $input['default_language'] ?? null,
 			'languages' => $input['languages'] ?? null,
@@ -66,7 +71,6 @@ final class PresetLanguageValidator {
 			$errors[] = 'prefix-routing-requires-multiple-languages';
 		}
 
-		$preset_document     = '' !== $preset ? \seo_geo_theme_preset_document( $preset, 'preset.json' ) : null;
 		$preset_multilingual = is_array( $preset_document['multilingual'] ?? null )
 			? $preset_document['multilingual']
 			: array();
@@ -78,10 +82,7 @@ final class PresetLanguageValidator {
 				: array();
 
 			foreach ( $configured_locales as $configured_locale ) {
-				if (
-					array() !== $baseline_locales
-					&& ! in_array( $configured_locale, $baseline_locales, true )
-				) {
+				if ( array() !== $baseline_locales && ! in_array( $configured_locale, $baseline_locales, true ) ) {
 					$warnings[] = 'configured-locale-outside-preset-baseline:' . $configured_locale;
 				}
 			}
@@ -101,8 +102,7 @@ final class PresetLanguageValidator {
 
 		$errors   = array_values( array_unique( $errors ) );
 		$warnings = array_values( array_unique( $warnings ) );
-
-		$valid = array() === $errors && null !== $language_configuration && is_array( $preset_document );
+		$valid    = array() === $errors && null !== $language_configuration && is_array( $preset_document );
 
 		return array(
 			'schema_version'     => 1,
