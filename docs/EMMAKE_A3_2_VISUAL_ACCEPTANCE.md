@@ -21,11 +21,11 @@ The source of authority remains `packages/seo-geo-theme/assets/css/presets/corpo
 - Dark mobile menu summary with a visible white label, 44px minimum target and focus-visible outline.
 - Compact mobile H1 scale, full-width copy, more reasonable eyebrow tracking and wide tap targets so buttons appear sooner.
 - No arbitrary body/content edits, new JS or plugin, change to SEO, Gutenberg source or Site Manager model.
-- Theme version increments `0.1.1 → 0.1.2`, with content-hash CSS versioning already native.
+- The official target remains **0.1.1 prestable** (stable release remains `no-go`). Distribute this as a checksum-distinct **A3.2 hotfix** using the official deterministic builder and integrity manifest. Native content-hash CSS asset versioning ensures cache invalidation even when the WordPress theme header stays at 0.1.1.
 
 ## Acceptance after installation
 
-1. Install the official WordPress Theme 0.1.2 over existing Theme on the **staging site only**.
+1. Replace the existing Theme with the official **0.1.1 A3.2 hotfix** ZIP on the **staging site only**.
 2. Run Site Manager `site.overview`, `site.theme_model` and `site.diagnostics` to confirm unchanged site/model/noindex.
 3. Repeat public HTTP acceptance and Chromium screenshots for desktop/mobile. Check **computed** heading text/background contrast, secondary CTA legibility, visibly labelled mobile `Menu` trigger and CTA placement within first viewport; manual screenshot review still mandatory.
 4. Confirm no navigation/permalink regressions. Keep staging noindex until explicit domain cutover acceptance.
