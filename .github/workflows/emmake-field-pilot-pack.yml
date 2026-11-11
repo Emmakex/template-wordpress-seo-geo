@@ -49,15 +49,41 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout
+      # This legacy Phase 10E candidate was frozen before subsequent Theme edits.
+      # Its byte-level contract must be checked at the exact historical commit,
+      # not compared to new installable Theme code under active development.
+      - name: Checkout current PR for frozen-candidate immutability
         uses: actions/checkout@v7
+        with:
+          path: current
+
+      - name: Checkout immutable EMMAKE pilot snapshot
+        uses: actions/checkout@v7
+        with:
+          ref: 08be115f6841ae2f59ac7dcd47f7977b8cb829b0
+          path: frozen
+          persist-credentials: false
+
+      - name: Prove old candidate metadata has not been rewritten
+        run: |
+          cmp current/release/emmake-phase10e-candidate.json frozen/release/emmake-phase10e-candidate.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from hashlib import sha256
+          record = json.loads(Path('frozen/release/emmake-phase10e-candidate.json').read_text())
+          assert record['source_commit'] == 'c2396b0aa0a17f2ba8b6cfc4d8c7435ff884fa00'
+          assert record['field_pilot_pack']['sha256'] == '1736d8b6dfb9aeec8cc8132a4ee1c42d5d9e4a3afb4510934edfd0cecd5a9fe2'
+          print('Historical EMMAKE candidate identity preserved')
+          PY
 
       - name: Runtime versions
         run: |
           python3 --version
           php --version | head -n 1
 
-      - name: Validate pilot pack scripts
+      - name: Validate frozen pilot pack scripts
+        working-directory: frozen
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
@@ -65,21 +91,23 @@ jobs:
             scripts/build-emmake-field-pilot-pack.py \
             scripts/ci/emmake-field-pilot-pack-acceptance.py
 
-      - name: Field-pilot pack acceptance
+      - name: Historical field-pilot pack SHA-256 acceptance
+        working-directory: frozen
         run: python3 scripts/ci/emmake-field-pilot-pack-acceptance.py
 
-      - name: Build field-pilot pack
+      - name: Rebuild frozen field-pilot pack without changing candidate
+        working-directory: frozen
         run: |
           python3 scripts/build-emmake-field-pilot-pack.py \
             --output dist-field-pilot/emmake-home-field-pilot-pack.zip
 
-      - name: Preserve field-pilot pack
+      - name: Preserve immutable historical field-pilot pack
         uses: actions/upload-artifact@v4
         with:
-          name: emmake-home-field-pilot-pack
+          name: emmake-home-field-pilot-pack-frozen-phase10e
           path: |
-            dist-field-pilot/emmake-home-field-pilot-pack.zip
-            dist-field-pilot/emmake-home-field-pilot-pack.zip.sha256
+            frozen/dist-field-pilot/emmake-home-field-pilot-pack.zip
+            frozen/dist-field-pilot/emmake-home-field-pilot-pack.zip.sha256
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
