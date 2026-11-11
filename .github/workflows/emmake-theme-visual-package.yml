@@ -1,0 +1,51 @@
+name: Emmake Corporate v5 Visual Theme Package
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/style.css'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-v5-a3-1.css'
+      - 'scripts/build-theme-package.sh'
+      - '.github/workflows/emmake-theme-visual-package.yml'
+      - 'docs/EMMAKE_A3_2_VISUAL_ACCEPTANCE.md'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble standalone WordPress Theme, no new plugin
+        run: bash scripts/build-theme-package.sh dist/seo-geo-theme
+      - name: Verify contrast selectors are in client bundle and version is 0.1.2
+        run: |
+          set -euo pipefail
+          css='dist/seo-geo-theme/assets/css/presets/corporate-v5-runtime.css'
+          grep -Fq 'Version: 0.1.2' dist/seo-geo-theme/style.css
+          grep -Fq 'Emmake A3.2 contrast + mobile first-screen acceptance' "$css"
+          grep -Fq 'color: #f7fffc !important;' "$css"
+          grep -Fq 'background: #0d3940 !important;' "$css"
+          grep -Fq 'font-size: clamp(2rem, 8.2vw, 2.65rem) !important;' "$css"
+          grep -Fq 'css-bundle-v3-a3-1' dist/seo-geo-theme/assets/css/presets/corporate-v5-bundled.marker
+          test -f dist/seo-geo-theme/inc/seo-geo-core/src/Runtime.php
+          test -f dist/seo-geo-theme/strategic-templates/corporate-home.php
+          test -f dist/seo-geo-theme/functions.php
+      - name: ZIP with WordPress-installable root and verify integrity
+        run: |
+          set -euo pipefail
+          (
+            cd dist
+            zip -qr seo-geo-theme-0.1.2.zip seo-geo-theme
+            unzip -t seo-geo-theme-0.1.2.zip | tail -n 2
+            sha256sum seo-geo-theme-0.1.2.zip > seo-geo-theme-0.1.2.sha256
+          )
+      - name: Upload standalone Theme 0.1.2
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-geo-theme-0.1.2-emmake
+          path: |
+            dist/seo-geo-theme-0.1.2.zip
+            dist/seo-geo-theme-0.1.2.sha256
+          retention-days: 14
