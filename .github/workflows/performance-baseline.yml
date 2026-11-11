@@ -76,7 +76,7 @@ jobs:
         run: npm ls --depth=0 --omit=optional
 
       - name: Install Chromium runtime
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: WordPress Lighthouse baseline and budgets
         run: bash scripts/ci/performance-baseline.sh
