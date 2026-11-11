@@ -19,11 +19,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Assemble standalone WordPress Theme, no new plugin
         run: bash scripts/build-theme-package.sh dist/seo-geo-theme
-      - name: Verify contrast selectors are in client bundle and version is 0.1.2
+      - name: Verify contrast selectors are in client bundle and governed version is 0.1.1
         run: |
           set -euo pipefail
           css='dist/seo-geo-theme/assets/css/presets/corporate-v5-runtime.css'
-          grep -Fq 'Version: 0.1.2' dist/seo-geo-theme/style.css
+          grep -Fq 'Version: 0.1.1' dist/seo-geo-theme/style.css
           grep -Fq 'Emmake A3.2 contrast + mobile first-screen acceptance' "$css"
           grep -Fq 'color: #f7fffc !important;' "$css"
           grep -Fq 'background: #0d3940 !important;' "$css"
@@ -32,20 +32,18 @@ jobs:
           test -f dist/seo-geo-theme/inc/seo-geo-core/src/Runtime.php
           test -f dist/seo-geo-theme/strategic-templates/corporate-home.php
           test -f dist/seo-geo-theme/functions.php
-      - name: ZIP with WordPress-installable root and verify integrity
+      - name: Build official deterministic release with integrity manifest
         run: |
           set -euo pipefail
-          (
-            cd dist
-            zip -qr seo-geo-theme-0.1.2.zip seo-geo-theme
-            unzip -t seo-geo-theme-0.1.2.zip | tail -n 2
-            sha256sum seo-geo-theme-0.1.2.zip > seo-geo-theme-0.1.2.sha256
-          )
-      - name: Upload standalone Theme 0.1.2
+          python3 scripts/ci/release-version-acceptance.py
+          python3 scripts/build-theme-release.py --output dist/seo-geo-theme-0.1.1-emmake-a3.2.zip
+          unzip -t dist/seo-geo-theme-0.1.1-emmake-a3.2.zip | tail -n 2
+          unzip -p dist/seo-geo-theme-0.1.1-emmake-a3.2.zip seo-geo-theme/assets/css/presets/corporate-v5-runtime.css | grep -Fq 'Emmake A3.2 contrast + mobile first-screen acceptance'
+      - name: Upload standalone Theme 0.1.1 A3.2 hotfix
         uses: actions/upload-artifact@v4
         with:
-          name: seo-geo-theme-0.1.2-emmake
+          name: seo-geo-theme-0.1.1-emmake-a3.2
           path: |
-            dist/seo-geo-theme-0.1.2.zip
-            dist/seo-geo-theme-0.1.2.sha256
+            dist/seo-geo-theme-0.1.1-emmake-a3.2.zip
+            dist/seo-geo-theme-0.1.1-emmake-a3.2.zip.sha256
           retention-days: 14
