@@ -449,3 +449,34 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+
+/*
+ * Contrast-safe native Gutenberg CTAs on Corporate inner pages.
+ * 2026-11-12 field QA found dark inherited link text on a saturated teal pill
+ * in Nuestras Marcas. The semantic block and its destination stay WordPress-owned.
+ * White (#fff) on #087d67 has WCAG contrast 5.07:1 (AA normal text).
+ */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content .wp-block-button > a,
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content a.wp-block-button__link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 44px;
+	padding: .8rem 1.35rem;
+	border: 1px solid #087d67 !important;
+	border-radius: 999px;
+	background-color: #087d67 !important;
+	color: #fff !important;
+	font-weight: 750;
+	text-decoration: none;
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content .wp-block-button > a:is(:hover,:focus-visible),
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content a.wp-block-button__link:is(:hover,:focus-visible) {
+	background-color: #075845 !important;
+	border-color: #075845 !important;
+	color: #fff !important;
+}

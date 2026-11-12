@@ -77,6 +77,9 @@ jobs:
       - name: Validate migrated Corporate inner-card layout selectors
         run: php scripts/ci/validate-corporate-legacy-inner-cards.php
 
+      - name: Validate Corporate inner CTA color contrast
+        run: php scripts/ci/validate-corporate-inner-cta-contrast.php
+
       - name: Validate Corporate final system surfaces
         run: php scripts/ci/validate-corporate-system-surfaces.php
 
