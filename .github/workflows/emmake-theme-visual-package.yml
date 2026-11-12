@@ -5,11 +5,14 @@ on:
     paths:
       - 'packages/seo-geo-theme/style.css'
       - 'packages/seo-geo-theme/assets/css/presets/corporate-v5-a3-1.css'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-inner-v1.css'
+      - 'packages/seo-geo-theme/functions.php'
       - 'scripts/build-theme-package.sh'
       - '.github/workflows/emmake-theme-visual-package.yml'
       - 'docs/EMMAKE_A3_2_VISUAL_ACCEPTANCE.md'
       - 'docs/EMMAKE_A3_3_LAYOUT_ACCEPTANCE.md'
       - 'docs/EMMAKE_A3_4_METHOD_CARD_ACCEPTANCE.md'
+      - 'docs/EMMAKE_INNER_SURFACES_V1.md'
 
 permissions:
   contents: read
@@ -44,18 +47,25 @@ jobs:
           test -f dist/seo-geo-theme/inc/seo-geo-core/src/Runtime.php
           test -f dist/seo-geo-theme/strategic-templates/corporate-home.php
           test -f dist/seo-geo-theme/functions.php
+          inner='dist/seo-geo-theme/assets/css/presets/corporate-inner-v1.css'
+          test -s "$inner"
+          grep -Fq 'Corporate inner surfaces v1' "$inner"
+          grep -Fq '.seo-geo-insights-shell' "$inner"
+          grep -Fq '.seo-geo-inner-service-grid' "$inner"
+          grep -Fq '.seo-geo-site-header' "$inner"
+          grep -Fq "seo-geo-theme-preset-corporate-inner" dist/seo-geo-theme/functions.php
       - name: Build official deterministic release with integrity manifest
         run: |
           set -euo pipefail
           python3 scripts/ci/release-version-acceptance.py
-          python3 scripts/build-theme-release.py --output dist/seo-geo-theme-0.1.1-emmake-a3.4.zip
-          unzip -t dist/seo-geo-theme-0.1.1-emmake-a3.4.zip | tail -n 2
-          unzip -p dist/seo-geo-theme-0.1.1-emmake-a3.4.zip seo-geo-theme/assets/css/presets/corporate-v5-runtime.css | grep -Fq 'Emmake A3.2 contrast + mobile first-screen acceptance'
-      - name: Upload standalone Theme 0.1.1 A3.4 hotfix
+          python3 scripts/build-theme-release.py --output dist/seo-geo-theme-0.1.1-emmake-inner-v1.zip
+          unzip -t dist/seo-geo-theme-0.1.1-emmake-inner-v1.zip | tail -n 2
+          unzip -p dist/seo-geo-theme-0.1.1-emmake-inner-v1.zip seo-geo-theme/assets/css/presets/corporate-v5-runtime.css | grep -Fq 'Emmake A3.2 contrast + mobile first-screen acceptance'
+      - name: Upload standalone Theme 0.1.1 inner pages v1
         uses: actions/upload-artifact@v4
         with:
-          name: seo-geo-theme-0.1.1-emmake-a3.4
+          name: seo-geo-theme-0.1.1-emmake-inner-v1
           path: |
-            dist/seo-geo-theme-0.1.1-emmake-a3.4.zip
-            dist/seo-geo-theme-0.1.1-emmake-a3.4.zip.sha256
+            dist/seo-geo-theme-0.1.1-emmake-inner-v1.zip
+            dist/seo-geo-theme-0.1.1-emmake-inner-v1.zip.sha256
           retention-days: 14
