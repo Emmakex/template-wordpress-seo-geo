@@ -21,6 +21,7 @@ require_once get_template_directory() . '/inc/LocalBusiness/FinalInnerPatterns.p
 require_once get_template_directory() . '/inc/Navigation/PresetNavigationRuntime.php';
 require_once get_template_directory() . '/inc/Publisher/FinalHomePattern.php';
 require_once get_template_directory() . '/inc/Templates/PresetTemplateRuntime.php';
+require_once get_template_directory() . '/inc/Templates/InnerPageOutline.php';
 
 /**
  * Load project-owned translations.
@@ -299,6 +300,7 @@ function seo_geo_theme_preset_template_runtime(): \SeoGeo\Theme\Templates\Preset
 }
 
 seo_geo_theme_preset_template_runtime()->register();
+\SeoGeo\Theme\Templates\InnerPageOutline::register();
 
 /**
  * Normalize bounded legacy migration placeholders before they reach visitors
@@ -334,7 +336,7 @@ add_filter( 'seo_geo_normalize_authored_text', 'seo_geo_theme_normalize_migrated
  * @param array<string, mixed> $block         Parsed block data.
  */
 function seo_geo_theme_guard_singular_content_h1( string $block_content, array $block ): string {
-	if ( is_admin() || ! is_singular() || 1 !== (int) ( $block['attrs']['level'] ?? 2 ) ) {
+	if ( is_admin() || ! is_singular() || ( is_singular( 'page' ) && ! is_front_page() ) || 1 !== (int) ( $block['attrs']['level'] ?? 2 ) ) {
 		return $block_content;
 	}
 
