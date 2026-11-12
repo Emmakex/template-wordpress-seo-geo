@@ -74,6 +74,9 @@ jobs:
       - name: Verify legacy inner-page H1 render safety
         run: php scripts/ci/validate-corporate-inner-page-outline.php
 
+      - name: Validate migrated Corporate inner-card layout selectors
+        run: php scripts/ci/validate-corporate-legacy-inner-cards.php
+
       - name: Validate Corporate final system surfaces
         run: php scripts/ci/validate-corporate-system-surfaces.php
 

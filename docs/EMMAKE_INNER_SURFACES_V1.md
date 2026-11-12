@@ -33,6 +33,27 @@ Read-only Site Manager content-target inventory from 12 November 2026:
 
 Also 40 published blog posts; no wholesale deletion or copy rewriting in this visual cut.
 
+## Measured migrated-blurb remediation — 12 Nov 2026
+
+Read-only public DOM metrics show that the 10,393px-tall Nuestras Marcas
+page contains ten native `sgmb-divi-blurb` groups, several with source images
+rendering 900–1,210px tall. They are **not** spacer blocks. Instead of deleting
+logos or altering the native Gutenberg source, the Theme now groups sequential
+legacy blurbs into a 3/2/1 responsive card grid and caps the *rendered image*
+height to 184px using `object-fit: contain` (no cropping). Headings, links,
+images and text remain in WordPress.
+
+The 7,558px Blog Transformación Digital page also contains multiple native
+Latest Posts lists: lists of only one or two results now span an appropriate
+reading width rather than leaving orphan narrow cards. Deduplicating or
+consolidating multiple author-created lists is a separate governed editorial
+operation, not a CSS side effect.
+
+All changes are generic to the native migration block classes and restricted
+to Corporate inner pages. Home and root production domain are untouched.
+Only real post-install browser screenshots and numeric layout evidence may
+certify visual readiness.
+
 ## Visual acceptance
 
 - Non-front Corporate pages share the header/footer's v5 dark teal/mint,
