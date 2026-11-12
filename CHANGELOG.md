@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.1
 
+- EMMAKE Corporate inner CTA contrast: normalize native Gutenberg button text to white on #087d67 (5.07:1 WCAG AA), maintain 44px minimum tap target, and preserve authored destinations, page content, Home and SEO/GEO ownership.
+
 - Corporate migrated inner-page presentation: responsive 3/2/1 cards for native rescued Divi blurbs, contain giant brand images without cropping, and allow 1–2-item Gutenberg latest-posts blocks to fill their reading width. No Gutenberg content, URL, SEO/GEO authority or Home changes.
 
 - EMMAKE Corporate inner-page outline hotfix: normalize only rendered duplicate H1s from legacy/native content (keep the template H1 or the first actual content H1), preserve all WordPress page bodies and Gutenberg source, and improve responsive typography for migrated content-owned headings. Same frozen 0.1.1 prestable line; repackage with its exact new SHA-256 for field verification.
