@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.1
 
+- EMMAKE Corporate v5 A3.3: full-bleed Hero background with preserved centered inner content; Method background stays full-width while its heading and cards receive consistent responsive horizontal gutters. Scoped CSS-only hotfix; no changes to WordPress content, semantic model, version identity, SEO or stable-release decision.
+
 - EMMAKE Corporate v5 A3.2 visual hotfix: assert high-contrast Hero H1 and secondary CTA, visible dark mobile Menu pill, compact mobile heading and full-width accessible first-screen CTAs. No content or SEO/GEO change; stays in 0.1.1 prestable line pending production acceptance.
 
 - Migration Bridge 0.8.60 adds the **automatic Home quality pass** discovered by the real EMMAKE `/nuevaweb/` browser pilot: structural pages such as `Nuestras Marcas` no longer become capabilities, semantic fallbacks are ranked from rescued evidence, process copy is selected more deliberately, the generated draft receives a descriptive H1, and detected capability titles are visible before mutation.

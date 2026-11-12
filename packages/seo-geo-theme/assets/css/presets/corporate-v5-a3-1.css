@@ -444,3 +444,51 @@ body.seo-geo-corporate-home-v5 .seo-geo-strategic-header .seo-geo-preset-navigat
 		font-size: .94rem;
 	}
 }
+
+/*
+ * Emmake A3.3 layout gutters: full-bleed Hero and breathing room in Method.
+ *
+ * The public Corporate v5 template renders Hero directly inside main, with
+ * content aligned by its inner --v5-shell grid. Do not inset its background
+ * inside a WordPress/theme content max-width or introduce horizontal scrolling.
+ *
+ * Method remains edge-to-edge by background, but its heading and three cards
+ * share a centered and safely padded content width at every breakpoint.
+ */
+body.seo-geo-corporate-home-v5 main.seo-geo-corporate-v5-home > .seo-geo-corporate-native-hero {
+	inline-size: 100vw !important;
+	max-inline-size: none !important;
+	margin-inline: calc(50% - 50vw) !important;
+}
+
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-process {
+	padding-inline: clamp(1.5rem, 5vw, 5rem);
+}
+
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-process .seo-geo-corporate-section-heading,
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-process .seo-geo-corporate-process-grid {
+	box-sizing: border-box;
+	inline-size: 100%;
+	max-inline-size: 1400px;
+	margin-inline: auto;
+}
+
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-process .seo-geo-corporate-process-grid {
+	gap: clamp(1rem, 1.8vw, 1.5rem);
+}
+
+@media (max-width: 820px) {
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-process {
+		padding-inline: clamp(1.25rem, 5vw, 2.5rem);
+	}
+
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-process .seo-geo-corporate-process-grid {
+		gap: 1.125rem;
+	}
+}
+
+@media (max-width: 520px) {
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-process {
+		padding-inline: clamp(1.25rem, 5.5vw, 1.5rem);
+	}
+}

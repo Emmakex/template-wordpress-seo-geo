@@ -8,6 +8,7 @@ on:
       - 'scripts/build-theme-package.sh'
       - '.github/workflows/emmake-theme-visual-package.yml'
       - 'docs/EMMAKE_A3_2_VISUAL_ACCEPTANCE.md'
+      - 'docs/EMMAKE_A3_3_LAYOUT_ACCEPTANCE.md'
 
 permissions:
   contents: read
@@ -28,6 +29,11 @@ jobs:
           grep -Fq 'color: #f7fffc !important;' "$css"
           grep -Fq 'background: #0d3940 !important;' "$css"
           grep -Fq 'font-size: clamp(2rem, 8.2vw, 2.65rem) !important;' "$css"
+          grep -Fq 'Emmake A3.3 layout gutters: full-bleed Hero and breathing room in Method' "$css"
+          grep -Fq 'inline-size: 100vw !important;' "$css"
+          grep -Fq 'margin-inline: calc(50% - 50vw) !important;' "$css"
+          grep -Fq 'padding-inline: clamp(1.5rem, 5vw, 5rem);' "$css"
+          grep -Fq 'padding-inline: clamp(1.25rem, 5.5vw, 1.5rem);' "$css"
           grep -Fq 'css-bundle-v3-a3-1' dist/seo-geo-theme/assets/css/presets/corporate-v5-bundled.marker
           test -f dist/seo-geo-theme/inc/seo-geo-core/src/Runtime.php
           test -f dist/seo-geo-theme/strategic-templates/corporate-home.php
@@ -36,14 +42,14 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/ci/release-version-acceptance.py
-          python3 scripts/build-theme-release.py --output dist/seo-geo-theme-0.1.1-emmake-a3.2.zip
-          unzip -t dist/seo-geo-theme-0.1.1-emmake-a3.2.zip | tail -n 2
-          unzip -p dist/seo-geo-theme-0.1.1-emmake-a3.2.zip seo-geo-theme/assets/css/presets/corporate-v5-runtime.css | grep -Fq 'Emmake A3.2 contrast + mobile first-screen acceptance'
-      - name: Upload standalone Theme 0.1.1 A3.2 hotfix
+          python3 scripts/build-theme-release.py --output dist/seo-geo-theme-0.1.1-emmake-a3.3.zip
+          unzip -t dist/seo-geo-theme-0.1.1-emmake-a3.3.zip | tail -n 2
+          unzip -p dist/seo-geo-theme-0.1.1-emmake-a3.3.zip seo-geo-theme/assets/css/presets/corporate-v5-runtime.css | grep -Fq 'Emmake A3.2 contrast + mobile first-screen acceptance'
+      - name: Upload standalone Theme 0.1.1 A3.3 hotfix
         uses: actions/upload-artifact@v4
         with:
-          name: seo-geo-theme-0.1.1-emmake-a3.2
+          name: seo-geo-theme-0.1.1-emmake-a3.3
           path: |
-            dist/seo-geo-theme-0.1.1-emmake-a3.2.zip
-            dist/seo-geo-theme-0.1.1-emmake-a3.2.zip.sha256
+            dist/seo-geo-theme-0.1.1-emmake-a3.3.zip
+            dist/seo-geo-theme-0.1.1-emmake-a3.3.zip.sha256
           retention-days: 14
