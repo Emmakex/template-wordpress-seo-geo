@@ -172,6 +172,20 @@ function seo_geo_theme_enqueue_styles(): void {
 		$preset_dependencies,
 		seo_geo_theme_asset_version( $preset_stylesheet )
 	);
+
+	// Corporate inner pages have their own lightweight v5 visual contract.
+	// Never layer it on the strategic homepage; content remains Gutenberg-owned.
+	if ( 'corporate' === $preset_id && ! is_front_page() ) {
+		$inner_stylesheet = get_stylesheet_directory() . '/assets/css/presets/corporate-inner-v1.css';
+		if ( is_readable( $inner_stylesheet ) ) {
+			wp_enqueue_style(
+				'seo-geo-theme-preset-corporate-inner',
+				get_stylesheet_directory_uri() . '/assets/css/presets/corporate-inner-v1.css',
+				array( $preset_handle ),
+				seo_geo_theme_asset_version( $inner_stylesheet )
+			);
+		}
+	}
 }
 add_action( 'wp_enqueue_scripts', 'seo_geo_theme_enqueue_styles' );
 
