@@ -12,10 +12,18 @@ declare(strict_types=1);
 
 namespace SeoGeo\Theme\Templates;
 
+/**
+ * Render-only heading normalization for singular inner WordPress pages.
+ */
 final class InnerPageOutline {
-	/** @var array<int, true> */
+	/**
+	 * Page IDs whose native title already rendered H1.
+	 *
+	 * @var array<int, true>
+	 */
 	private static array $rendered_template_titles = array();
 
+	/** Register the bounded WordPress block render filters. */
 	public static function register(): void {
 		add_filter( 'render_block_core/post-title', array( self::class, 'record_template_title' ), 20, 3 );
 		add_filter( 'render_block_core/post-content', array( self::class, 'normalize_content_heading' ), 20, 3 );
@@ -60,6 +68,8 @@ final class InnerPageOutline {
 	}
 
 	/**
+	 * Resolve only the current main WordPress page, never a nested query post.
+	 *
 	 * @param object|null $instance Core block context, not an editable ID.
 	 */
 	private static function document_page_id( ?object $instance ): int {
@@ -81,14 +91,17 @@ final class InnerPageOutline {
 
 	/**
 	 * Change tag names only; preserve inner HTML, classes, attributes and URLs.
+	 *
+	 * @param string $html Rendered page content.
+	 * @param int    $retain Number of content H1s to retain.
 	 */
 	private static function demote_extra_headings( string $html, int $retain ): string {
 		$opened = 0;
 		$stack  = array();
 		$result = preg_replace_callback(
 			'~</?h1(?=[\\s>])[^>]*>~i',
-			static function ( array $match ) use ( &$opened, &$stack, $retain ): string {
-				$tag     = $match[0];
+			static function ( array $matches ) use ( &$opened, &$stack, $retain ): string {
+				$tag     = $matches[0];
 				$closing = 1 === preg_match( '~^</~', $tag );
 				if ( $closing ) {
 					$demote = array_pop( $stack );
