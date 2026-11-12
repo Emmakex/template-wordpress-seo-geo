@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.1
 
+- EMMAKE Corporate v5 A3.4: enforce symmetric inner padding in all three Method cards, increase spacing below numbered badges, and separate titles from descriptions across desktop, tablet and mobile. CSS-only change; preserves A3.3 section gutters, content, model, SEO/GEO and official 0.1.1 prestable version.
+
 - EMMAKE Corporate v5 A3.3: full-bleed Hero background with preserved centered inner content; Method background stays full-width while its heading and cards receive consistent responsive horizontal gutters. Scoped CSS-only hotfix; no changes to WordPress content, semantic model, version identity, SEO or stable-release decision.
 
 - EMMAKE Corporate v5 A3.2 visual hotfix: assert high-contrast Hero H1 and secondary CTA, visible dark mobile Menu pill, compact mobile heading and full-width accessible first-screen CTAs. No content or SEO/GEO change; stays in 0.1.1 prestable line pending production acceptance.
