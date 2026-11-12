@@ -1,285 +1,285 @@
 /*
- * Corporate inner surfaces v1: shared premium editorial presentation.
- *
- * This CSS is deliberately loaded only for non-front Corporate pages/posts.
- * WordPress/Gutenberg own content and SEO; no site-specific copy or fake
- * testimonials are inserted by the Theme.
- */
+	* Corporate inner surfaces v1: shared premium editorial presentation.
+	*
+	* This CSS is deliberately loaded only for non-front Corporate pages/posts.
+	* WordPress/Gutenberg own content and SEO; no site-specific copy or fake
+	* testimonials are inserted by the Theme.
+	*/
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) {
-  --corp-ink: #173a3d;
-  --corp-ink-soft: #526d70;
-  --corp-bg: #f5faf8;
-  --corp-surface: #ffffff;
-  --corp-surface-strong: #e8f7f1;
-  --corp-line: #cfdfdb;
-  --corp-accent: #087d67;
-  --corp-accent-strong: #075845;
-  --corp-reading: min(760px, calc(100vw - 3rem));
-  --corp-shell: min(1280px, calc(100vw - 4rem));
-  --corp-radius-md: 1.125rem;
-  --corp-radius-lg: 1.8rem;
-  --corp-shadow-md: 0 28px 70px rgb(14 57 61 / 10%);
-  background: var(--corp-bg);
-  color: var(--corp-ink);
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--corp-ink: #173a3d;
+	--corp-ink-soft: #526d70;
+	--corp-bg: #f5faf8;
+	--corp-surface: #ffffff;
+	--corp-surface-strong: #e8f7f1;
+	--corp-line: #cfdfdb;
+	--corp-accent: #087d67;
+	--corp-accent-strong: #075845;
+	--corp-reading: min(760px, calc(100vw - 3rem));
+	--corp-shell: min(1280px, calc(100vw - 4rem));
+	--corp-radius-md: 1.125rem;
+	--corp-radius-lg: 1.8rem;
+	--corp-shadow-md: 0 28px 70px rgb(14 57 61 / 10%);
+	background: var(--corp-bg);
+	color: var(--corp-ink);
+	font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) *,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) *::before,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) *::after {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(h1,h2,h3,h4) {
-  overflow-wrap: normal;
-  hyphens: none;
-  text-wrap: balance;
+	overflow-wrap: normal;
+	hyphens: none;
+	text-wrap: balance;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header {
-  background: linear-gradient(95deg, #0b3034, #12484c);
-  border-bottom: 1px solid rgb(255 255 255 / 14%);
-  color: #ffffff;
-  box-shadow: none;
+	background: linear-gradient(95deg, #0b3034, #12484c);
+	border-bottom: 1px solid rgb(255 255 255 / 14%);
+	color: #ffffff;
+	box-shadow: none;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header__inner {
-  width: var(--corp-shell);
-  min-height: 80px;
+	width: var(--corp-shell);
+	min-height: 80px;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header :is(
-  .wp-block-site-title, .wp-block-site-title a, .seo-geo-preset-navigation__item a
+	.wp-block-site-title, .wp-block-site-title a, .seo-geo-preset-navigation__item a
 ) {
-  color: #f7fffc;
+	color: #f7fffc;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
 .seo-geo-preset-navigation__item a:hover,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
 .seo-geo-preset-navigation__item a[aria-current="page"] {
-  color: #78e8c8;
+	color: #78e8c8;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-page-shell,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-insights-shell,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-index-shell,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-single-shell,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-archive-shell {
-  box-sizing: border-box;
-  width: var(--corp-shell);
-  max-width: 100%;
-  margin-inline: auto;
-  padding-block: clamp(3.25rem, 7vw, 7.5rem);
+	box-sizing: border-box;
+	width: var(--corp-shell);
+	max-width: 100%;
+	margin-inline: auto;
+	padding-block: clamp(3.25rem, 7vw, 7.5rem);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-  .seo-geo-page-title,
-  .seo-geo-insights-title,
-  .seo-geo-single-title,
-  .seo-geo-archive-title
+	.seo-geo-page-title,
+	.seo-geo-insights-title,
+	.seo-geo-single-title,
+	.seo-geo-archive-title
 ) {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 0 clamp(2.25rem, 4vw, 4.5rem);
-  color: #173a3d;
-  font-size: clamp(2.9rem, 5.8vw, 6.25rem);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -.055em;
-  text-wrap: balance;
+	width: 100%;
+	max-width: 1100px;
+	margin: 0 0 clamp(2.25rem, 4vw, 4.5rem);
+	color: #173a3d;
+	font-size: clamp(2.9rem, 5.8vw, 6.25rem);
+	font-weight: 800;
+	line-height: 1.02;
+	letter-spacing: -.055em;
+	text-wrap: balance;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-page-shell > .wp-block-post-featured-image {
-  margin-block: 0 clamp(2rem, 4vw, 4rem);
+	margin-block: 0 clamp(2rem, 4vw, 4rem);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .wp-block-post-featured-image img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-  border-radius: 1.35rem;
-  object-fit: cover;
+	display: block;
+	width: 100%;
+	height: auto;
+	max-width: 100%;
+	border-radius: 1.35rem;
+	object-fit: cover;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(.seo-geo-page-shell,.seo-geo-single-shell) .wp-block-post-content {
-  max-width: 100%;
-  color: var(--corp-ink);
-  font-size: clamp(1.025rem, 1.1vw, 1.16rem);
-  line-height: 1.78;
+	max-width: 100%;
+	color: var(--corp-ink);
+	font-size: clamp(1.025rem, 1.1vw, 1.16rem);
+	line-height: 1.78;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .wp-block-post-content :is(h2,h3,h4) {
-  color: #173a3d;
-  line-height: 1.15;
-  letter-spacing: -.03em;
+	color: #173a3d;
+	line-height: 1.15;
+	letter-spacing: -.03em;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .wp-block-post-content h2 {
-  font-size: clamp(1.75rem, 3.2vw, 3.1rem);
+	font-size: clamp(1.75rem, 3.2vw, 3.1rem);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .wp-block-post-content :where(p,li) {
-  color: #49666a;
-  line-height: 1.8;
+	color: #49666a;
+	line-height: 1.8;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .wp-block-post-content a {
-  color: #066b5c;
-  text-underline-offset: .2em;
+	color: #066b5c;
+	text-underline-offset: .2em;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .wp-block-post-content :is(
-  .wp-block-columns,.wp-block-group.is-style-card,.seo-geo-inner-service-grid
+	.wp-block-columns,.wp-block-group.is-style-card,.seo-geo-inner-service-grid
 ) {
-  max-width: var(--corp-shell);
+	max-width: var(--corp-shell);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 .wp-block-post-content .seo-geo-inner-service-grid {
-  display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: clamp(1rem,2vw,1.5rem);
-  margin-block: clamp(2rem,4vw,3.75rem);
+	display: grid;
+	grid-template-columns: repeat(3,minmax(0,1fr));
+	gap: clamp(1rem,2vw,1.5rem);
+	margin-block: clamp(2rem,4vw,3.75rem);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 .wp-block-post-content .seo-geo-inner-service-card {
-  min-width: 0;
-  margin: 0;
-  border: 1px solid var(--corp-line);
-  border-radius: 1.5rem;
-  background: #fff;
-  padding: clamp(1.5rem,2.4vw,2.35rem);
-  box-shadow: 0 20px 55px rgb(16 62 62 / 7%);
+	min-width: 0;
+	margin: 0;
+	border: 1px solid var(--corp-line);
+	border-radius: 1.5rem;
+	background: #fff;
+	padding: clamp(1.5rem,2.4vw,2.35rem);
+	box-shadow: 0 20px 55px rgb(16 62 62 / 7%);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 .wp-block-post-content .seo-geo-inner-service-card h3 {
-  font-size: clamp(1.35rem,1.9vw,1.85rem);
-  line-height: 1.18;
+	font-size: clamp(1.35rem,1.9vw,1.85rem);
+	line-height: 1.18;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 .wp-block-post-content .seo-geo-inner-cta {
-  padding: clamp(1.65rem,4vw,3rem);
-  margin-block: clamp(2.5rem,5vw,4.5rem);
-  border: 1px solid #bfe9db;
-  border-radius: 1.75rem;
-  background: linear-gradient(120deg,#e6f7f1,#d4efe5);
+	padding: clamp(1.65rem,4vw,3rem);
+	margin-block: clamp(2.5rem,5vw,4.5rem);
+	border: 1px solid #bfe9db;
+	border-radius: 1.75rem;
+	background: linear-gradient(120deg,#e6f7f1,#d4efe5);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-  .seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
+	.seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
 ) .wp-block-post-template {
-  display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: clamp(1rem,2vw,1.6rem);
-  padding: 0;
-  margin: 0;
-  list-style: none;
+	display: grid;
+	grid-template-columns: repeat(3,minmax(0,1fr));
+	gap: clamp(1rem,2vw,1.6rem);
+	padding: 0;
+	margin: 0;
+	list-style: none;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-  .seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
+	.seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
 ) .wp-block-post-template > li {
-  min-width: 0;
-  margin: 0;
-  border: 1px solid var(--corp-line);
-  border-radius: 1.6rem;
-  background: #fff;
-  padding: clamp(1.35rem,2vw,2rem);
-  overflow: hidden;
-  box-shadow: 0 16px 50px rgb(14 57 61 / 8%);
+	min-width: 0;
+	margin: 0;
+	border: 1px solid var(--corp-line);
+	border-radius: 1.6rem;
+	background: #fff;
+	padding: clamp(1.35rem,2vw,2rem);
+	overflow: hidden;
+	box-shadow: 0 16px 50px rgb(14 57 61 / 8%);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-  .seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
+	.seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
 ) .wp-block-post-title {
-  font-size: clamp(1.3rem,1.8vw,1.85rem);
-  line-height: 1.22;
-  letter-spacing: -.025em;
+	font-size: clamp(1.3rem,1.8vw,1.85rem);
+	line-height: 1.22;
+	letter-spacing: -.025em;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-  .seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
+	.seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
 ) .wp-block-post-title a {
-  color: var(--corp-ink);
-  text-decoration: none;
+	color: var(--corp-ink);
+	text-decoration: none;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-  .seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
+	.seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
 ) .wp-block-post-title a:hover {
-  color: #087d67;
+	color: #087d67;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-  .seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
+	.seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
 ) :is(.wp-block-post-date,.wp-block-post-excerpt) {
-  color: #526d70;
-  font-size: .95rem;
-  line-height: 1.65;
+	color: #526d70;
+	font-size: .95rem;
+	line-height: 1.65;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .wp-block-query-pagination {
-  margin-block-start: clamp(2rem,4vw,4rem);
-  gap: .75rem;
+	margin-block-start: clamp(2rem,4vw,4rem);
+	gap: .75rem;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .wp-block-query-pagination a {
-  color: #087d67;
-  text-decoration: none;
-  font-weight: 700;
+	color: #087d67;
+	text-decoration: none;
+	font-weight: 700;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-corporate-system-surface {
-  max-width: var(--corp-shell);
-  margin-inline: auto;
-  padding-block: clamp(2rem,5vw,4rem);
+	max-width: var(--corp-shell);
+	margin-inline: auto;
+	padding-block: clamp(2rem,5vw,4rem);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-corporate-system-surface
 .seo-geo-corporate-native-process {
-  border-radius: 1.75rem;
-  padding: clamp(2rem,4vw,4rem);
+	border-radius: 1.75rem;
+	padding: clamp(2rem,4vw,4rem);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-corporate-system-surface
 .wp-block-post-content {
-  max-width: var(--corp-reading);
-  margin-inline: auto;
+	max-width: var(--corp-reading);
+	margin-inline: auto;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-footer {
-  margin-top: clamp(3rem,6vw,6rem);
-  background: #0b3034;
-  color: #f7fffc;
+	margin-top: clamp(3rem,6vw,6rem);
+	background: #0b3034;
+	color: #f7fffc;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-footer__inner {
-  width: var(--corp-shell);
+	width: var(--corp-shell);
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-footer :is(a,.wp-block-site-title) {
-  color: #f7fffc;
+	color: #f7fffc;
 }
 @media(max-width: 1000px) {
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-    .seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
-  ) .wp-block-post-template {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-  }
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
-  .wp-block-post-content .seo-geo-inner-service-grid {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-  }
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
+	.seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
+	) .wp-block-post-template {
+	grid-template-columns: repeat(2,minmax(0,1fr));
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.wp-block-post-content .seo-geo-inner-service-grid {
+	grid-template-columns: repeat(2,minmax(0,1fr));
+	}
 }
 @media(max-width: 900px) {
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
-  .seo-geo-site-header .seo-geo-preset-navigation__mobile > summary {
-    min-height: 44px;
-    background: #0d3940;
-    border: 1px solid #78e8c8;
-    color: #fff;
-    font-weight: 800;
-  }
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
-  .seo-geo-site-header .seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item a {
-    color: #173a3d;
-  }
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-site-header .seo-geo-preset-navigation__mobile > summary {
+	min-height: 44px;
+	background: #0d3940;
+	border: 1px solid #78e8c8;
+	color: #fff;
+	font-weight: 800;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-site-header .seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item a {
+	color: #173a3d;
+	}
 }
 @media(max-width: 650px) {
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) {
-    --corp-shell: min(100% - 2.5rem,1280px);
-    --corp-reading: min(100% - 2.5rem,760px);
-  }
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-    .seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
-  ) .wp-block-post-template,
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
-  .wp-block-post-content .seo-geo-inner-service-grid {
-    grid-template-columns: minmax(0,1fr);
-  }
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
-    .seo-geo-page-title,.seo-geo-insights-title,.seo-geo-single-title,.seo-geo-archive-title
-  ) {
-    font-size: clamp(2.65rem,11vw,3.75rem);
-  }
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
-  .seo-geo-site-header__inner {
-    min-height: 68px;
-  }
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) {
+	--corp-shell: min(100% - 2.5rem,1280px);
+	--corp-reading: min(100% - 2.5rem,760px);
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
+	.seo-geo-insights-shell,.seo-geo-index-shell,.seo-geo-archive-shell
+	) .wp-block-post-template,
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.wp-block-post-content .seo-geo-inner-service-grid {
+	grid-template-columns: minmax(0,1fr);
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) :is(
+	.seo-geo-page-title,.seo-geo-insights-title,.seo-geo-single-title,.seo-geo-archive-title
+	) {
+	font-size: clamp(2.65rem,11vw,3.75rem);
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-site-header__inner {
+	min-height: 68px;
+	}
 }
 @media(prefers-reduced-motion:reduce) {
-  body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) * {
-    scroll-behavior: auto;
-  }
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) * {
+	scroll-behavior: auto;
+	}
 }
