@@ -347,3 +347,16 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-foot
 	scroll-behavior: auto;
 	}
 }
+
+/* Migrated pages may own their only H1 inside native post content. */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.seo-geo-page-shell .wp-block-post-content h1 {
+	max-width: 1100px;
+	margin: 0 0 clamp(2.25rem, 4vw, 4.5rem);
+	color: var(--corp-ink);
+	font-size: clamp(2.9rem, 5.8vw, 6.25rem);
+	font-weight: 800;
+	line-height: 1.02;
+	letter-spacing: -.055em;
+	text-wrap: balance;
+}
