@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.1
 
+- Corporate migrated inner-page presentation: responsive 3/2/1 cards for native rescued Divi blurbs, contain giant brand images without cropping, and allow 1–2-item Gutenberg latest-posts blocks to fill their reading width. No Gutenberg content, URL, SEO/GEO authority or Home changes.
+
 - EMMAKE Corporate inner-page outline hotfix: normalize only rendered duplicate H1s from legacy/native content (keep the template H1 or the first actual content H1), preserve all WordPress page bodies and Gutenberg source, and improve responsive typography for migrated content-owned headings. Same frozen 0.1.1 prestable line; repackage with its exact new SHA-256 for field verification.
 
 - Corporate inner surfaces v1: shared premium typography, dark/mint navigation, readable content, responsive blog/article cards, form and service-block geometry for existing native WordPress interior pages; preserves v5 strategic Home, Gutenberg copy, SEO/GEO authority and current 0.1.1 prestable release identity.
