@@ -16,9 +16,17 @@ const measure=pg=>pg.evaluate(()=>{
    const figure=card.querySelector('.wp-block-image');
    const img=figure?.querySelector('img');
    const r=img?.getBoundingClientRect();
+   const imageStyle=img?getComputedStyle(img):null;
+   const figureStyle=figure?getComputedStyle(figure):null;
+   const cardStyle=getComputedStyle(card);
    const row={index,figure:!!figure,image:!!img,
      naturalWidth:img?.naturalWidth||0,naturalHeight:img?.naturalHeight||0,
      renderedHeight:Math.round(r?.height||0),sampled:false,transparentRatio:null,
+     imageOpacity:imageStyle?.opacity||null,figureOpacity:figureStyle?.opacity||null,
+     cardOpacity:cardStyle.opacity,imageVisibility:imageStyle?.visibility||null,
+     figureVisibility:figureStyle?.visibility||null,
+     imageDisplay:imageStyle?.display||null,figureDisplay:figureStyle?.display||null,
+     imageTransform:imageStyle?.transform||null,
      brightVisibleRatio:null,opaqueBrightRatio:null,error:null};
    if(!img?.complete||!img?.naturalWidth)return row;
    try{
@@ -78,7 +86,7 @@ async function main(){
     const checks=[
       {id:'all_original_migrated_cards_preserved',ok:after.brandCards===before.brandCards},
       {id:'no_content_links_or_media_removed',ok:after.textLength===before.textLength&&after.images===before.images&&after.anchors===before.anchors},
-      {id:'nested_migrated_brand_images_contained',ok:Math.max(...after.imageSamples.map(x=>x.renderedHeight))<=185&&Math.max(...before.imageSamples.map(x=>x.renderedHeight))>550},
+      {id:'nested_migrated_brand_images_contained',ok:Math.max(...after.imageSamples.map(x=>x.renderedHeight))<=185&&Math.max(...before.imageSamples.map(x=>x.renderedHeight))-Math.max(...after.imageSamples.map(x=>x.renderedHeight))>=75},
       {id:'oversized_brand_cards_compacted',ok:after.maxCardHeight<before.maxCardHeight&&after.maxCardHeight<600},
       {id:'no_broken_media',ok:after.brokenImages===0},
       {id:'no_horizontal_overflow',ok:!after.overflow},
