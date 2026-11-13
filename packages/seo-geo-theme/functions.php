@@ -190,6 +190,21 @@ function seo_geo_theme_enqueue_styles(): void {
 		// Optional, tiny DOM-only enhancer for migrated About-style Gutenberg
 		// pages. No requests, analytics, edits or impact on the homepage.
 		if ( is_page() ) {
+			$blog_layout_script = get_stylesheet_directory() . '/assets/js/corporate-blog-digital-v1.js';
+			if ( is_readable( $blog_layout_script ) ) {
+				wp_enqueue_script(
+					'seo-geo-theme-corporate-blog-digital',
+					get_stylesheet_directory_uri() . '/assets/js/corporate-blog-digital-v1.js',
+					array(),
+					seo_geo_theme_asset_version( $blog_layout_script ),
+					array(
+						'in_footer' => true,
+						'strategy'  => 'defer',
+					)
+				);
+			}
+		}
+		if ( is_page() ) {
 			$about_layout_script = get_stylesheet_directory() . '/assets/js/corporate-about-v1.js';
 			if ( is_readable( $about_layout_script ) ) {
 				wp_enqueue_script(

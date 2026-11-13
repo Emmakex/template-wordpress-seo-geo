@@ -1,0 +1,41 @@
+name: Emmake Blog Digital Live Preview
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-inner-v1.css'
+      - 'packages/seo-geo-theme/assets/js/corporate-blog-digital-v1.js'
+      - 'scripts/ci/emmake-blog-digital-live-preview.cjs'
+      - '.github/workflows/emmake-blog-digital-live-preview.yml'
+permissions:
+  contents: read
+jobs:
+  preview-blog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check fixed read-only preview target
+        run: |
+          node --check scripts/ci/emmake-blog-digital-live-preview.cjs
+          node --check packages/seo-geo-theme/assets/js/corporate-blog-digital-v1.js
+          grep -Fq "const ORIGIN='https://emmake.com/nuevaweb/'" scripts/ci/emmake-blog-digital-live-preview.cjs
+          grep -Fq "wordpress_mutations:0" scripts/ci/emmake-blog-digital-live-preview.cjs
+      - name: Install ephemeral pinned Chromium
+        run: |
+          npm install --prefix .qa-deps --ignore-scripts --no-audit --no-fund --no-save playwright@1.65.0
+          .qa-deps/node_modules/.bin/playwright install chromium
+      - name: Preview actual published Gutenberg with updated CSS + JS
+        env:
+          NODE_PATH: ${{ github.workspace }}/.qa-deps/node_modules
+        run: node scripts/ci/emmake-blog-digital-live-preview.cjs
+      - name: Upload short-lived screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emmake-blog-digital-live-design-preview
+          path: artifacts/emmake-blog-digital-premium/
+          retention-days: 2
+          if-no-files-found: warn
