@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-/* Public, fixed-origin read-only visual proof for migrated Brand logos.
+/* Public, fixed-origin read-only visual proof for contained migrated Brand images.
    Script injects only checked-out CSS/JS in an ephemeral browser; zero WP writes. */
 const fs=require('node:fs'),path=require('node:path');
 const ORIGIN='https://emmake.com/nuevaweb/';
@@ -56,8 +56,8 @@ const measure=pg=>pg.evaluate(()=>{
 async function main(){
  const {chromium}=require('playwright');
  const css=fs.readFileSync(CSS,'utf8'),js=fs.readFileSync(JS,'utf8');
- assert(css.includes('seo-geo-legacy-blurb-light-art'),'missing CSS');
- assert(js.includes('makeBlurbLogosLegible'),'missing JS');
+ assert(css.includes('Corporate grouped blurb media fallback'),'missing grouped blurb CSS');
+ assert(js.includes('seo-geo-legacy-about-enhanced'),'missing original About enhancer JS');
  fs.mkdirSync(OUT,{recursive:true});
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  const rows=[];
@@ -78,7 +78,8 @@ async function main(){
     const checks=[
       {id:'all_original_migrated_cards_preserved',ok:after.brandCards===before.brandCards},
       {id:'no_content_links_or_media_removed',ok:after.textLength===before.textLength&&after.images===before.images&&after.anchors===before.anchors},
-      {id:'at_least_one_invisible_logo_slot_recovered',ok:after.darkened+after.blankMedia>before.darkened+before.blankMedia},
+      {id:'nested_migrated_brand_images_contained',ok:Math.max(...after.imageSamples.map(x=>x.renderedHeight))<=185&&Math.max(...before.imageSamples.map(x=>x.renderedHeight))>550},
+      {id:'oversized_brand_cards_compacted',ok:after.maxCardHeight<before.maxCardHeight&&after.maxCardHeight<600},
       {id:'no_broken_media',ok:after.brokenImages===0},
       {id:'no_horizontal_overflow',ok:!after.overflow},
       {id:'staging_indexability_unchanged',ok:after.noindex&&after.oneH1}
@@ -94,8 +95,9 @@ async function main(){
     status:rows.every(r=>r.checks.every(c=>c.ok))?'passed':'failed',rows};
  fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify(report,null,2)+'\n');
  console.log(JSON.stringify({status:report.status,summary:rows.map(r=>({
-    device:r.device,brandCards:r.after.brandCards,contrastRecovered:r.after.darkened,
-    emptyMediaHidden:r.after.blankMedia,failures:r.checks.filter(c=>!c.ok).map(c=>c.id)
+    device:r.device,brandCards:r.after.brandCards,maxImageBefore:Math.max(...r.before.imageSamples.map(x=>x.renderedHeight)),
+    maxImageAfter:Math.max(...r.after.imageSamples.map(x=>x.renderedHeight)),
+    maxCardBefore:r.before.maxCardHeight,maxCardAfter:r.after.maxCardHeight,failures:r.checks.filter(c=>!c.ok).map(c=>c.id)
  }))}));
  if(report.status!=='passed')process.exitCode=1;
 }
