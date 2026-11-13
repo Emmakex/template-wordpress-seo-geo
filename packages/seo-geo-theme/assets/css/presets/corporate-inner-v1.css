@@ -974,3 +974,61 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
+
+/* No featured picture in this migration: make typography, not a fake image,
+ * the hero. Layout remains compatible with featured-image cards. */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content.seo-geo-blog-digital-enhanced .seo-geo-blog-digital-feature
+ul.wp-block-latest-posts > li:not(:has(.wp-block-latest-posts__featured-image)) {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	gap: .8rem;
+	min-height: 350px;
+	padding: clamp(2rem, 4vw, 4rem);
+	background:
+		radial-gradient(circle at 90% 20%, rgb(109 213 187 / 15%) 0, transparent 36%),
+		radial-gradient(circle at 70% 85%, rgb(109 213 187 / 10%) 0, transparent 35%),
+		linear-gradient(125deg, #0d353a, #15575a);
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content.seo-geo-blog-digital-enhanced .seo-geo-blog-digital-feature
+ul.wp-block-latest-posts > li:not(:has(.wp-block-latest-posts__featured-image))::before {
+	content: "Artículo destacado";
+	display: block;
+	order: -2;
+	color: #9debd6;
+	font-size: .8rem;
+	font-weight: 750;
+	letter-spacing: .11em;
+	text-transform: uppercase;
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content.seo-geo-blog-digital-enhanced .seo-geo-blog-digital-feature
+ul.wp-block-latest-posts > li:not(:has(.wp-block-latest-posts__featured-image))
+.wp-block-latest-posts__post-date {
+	order: -1;
+	font-size: .92rem;
+	color: #c9ede0;
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content.seo-geo-blog-digital-enhanced .seo-geo-blog-digital-feature
+ul.wp-block-latest-posts > li:not(:has(.wp-block-latest-posts__featured-image))
+.wp-block-latest-posts__post-title {
+	display: block;
+	max-width: 860px;
+	margin: 0;
+	font-size: clamp(2.15rem, 3.4vw, 3.4rem);
+	line-height: 1.07;
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content.seo-geo-blog-digital-enhanced .seo-geo-blog-digital-feature
+ul.wp-block-latest-posts > li:not(:has(.wp-block-latest-posts__featured-image))
+.wp-block-latest-posts__post-excerpt {
+	max-width: 740px;
+	margin-top: .55rem;
+	font-size: clamp(1.02rem, 1.25vw, 1.16rem);
+	line-height: 1.7;
+	color: #d8ede7;
+}
