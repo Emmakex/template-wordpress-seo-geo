@@ -1032,3 +1032,23 @@ ul.wp-block-latest-posts > li:not(:has(.wp-block-latest-posts__featured-image))
 	line-height: 1.7;
 	color: #d8ede7;
 }
+
+/* No signup promise without a real newsletter form: preserve source markup,
+ * display only usable contact/social cards until WordPress is configured. */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content.seo-geo-blog-digital-enhanced
+.seo-geo-blog-digital-conversion-card.seo-geo-blog-digital-newsletter-unavailable {
+	display: none;
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.wp-block-post-content.seo-geo-blog-digital-enhanced
+.seo-geo-blog-digital-conversion-grid:has(> .seo-geo-blog-digital-newsletter-unavailable) {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 650px) {
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.wp-block-post-content.seo-geo-blog-digital-enhanced
+	.seo-geo-blog-digital-conversion-grid:has(> .seo-geo-blog-digital-newsletter-unavailable) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
