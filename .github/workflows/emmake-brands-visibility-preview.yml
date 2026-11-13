@@ -1,0 +1,41 @@
+name: Emmake Brand Image Containment Preview
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/assets/js/corporate-about-v1.js'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-inner-v1.css'
+      - 'scripts/ci/emmake-brands-visibility-preview.cjs'
+      - '.github/workflows/emmake-brands-visibility-preview.yml'
+permissions:
+  contents: read
+jobs:
+  public-read-only-brand-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify bounded public QA script
+        run: |
+          node --check scripts/ci/emmake-brands-visibility-preview.cjs
+          node --check packages/seo-geo-theme/assets/js/corporate-about-v1.js
+          grep -Fq "const ORIGIN='https://emmake.com/nuevaweb/'" scripts/ci/emmake-brands-visibility-preview.cjs
+          grep -Fq "wordpress_mutations:0" scripts/ci/emmake-brands-visibility-preview.cjs
+      - name: Install disposable headless Chromium
+        run: |
+          npm install --prefix .qa-deps --no-save --ignore-scripts --no-audit --no-fund playwright@1.65.0
+          .qa-deps/node_modules/.bin/playwright install chromium
+      - name: Preview nested migrated brand image containment without WordPress writes
+        env:
+          NODE_PATH: ${{ github.workspace }}/.qa-deps/node_modules
+        run: node scripts/ci/emmake-brands-visibility-preview.cjs
+      - name: Retain screenshots for visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emmake-brands-visibility-preview
+          path: artifacts/emmake-brands-visibility/
+          retention-days: 2
+          if-no-files-found: warn

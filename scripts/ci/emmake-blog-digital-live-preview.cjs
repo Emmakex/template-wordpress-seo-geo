@@ -78,7 +78,9 @@ async function main(){
     const response=await pg.goto(ORIGIN+SLUG,{waitUntil:'domcontentloaded',timeout:30000});
     assert(response&&response.status()===200&&pg.url()===ORIGIN+SLUG,'unexpected route');
     await pg.waitForTimeout(400);const before=await metrics(pg);
-    assert(before.cards===13&&before.unique===5&&before.postLists===5,'source Gutenberg changed unexpectedly');
+    const legacyBaseline=before.cards===13&&before.unique===5&&before.postLists===5&&!before.enhanced;
+    const installedBaseline=before.cards===5&&before.unique===5&&before.postLists===2&&before.enhanced&&before.featured===1&&before.archive===4;
+    assert(legacyBaseline||installedBaseline,'unsupported or drifted Gutenberg blog layout');
     await pg.addStyleTag({content:css});
     await pg.addScriptTag({content:script});
     await pg.waitForTimeout(450);
@@ -97,10 +99,10 @@ async function main(){
       {id:'responsive_archive_and_topic_grids',ok:after.archiveCols===(mobile?1:2)&&after.topicCols===(mobile?1:3)},
       {id:'responsive_conversion_grid',ok:after.conversionCols===(mobile?1:2)},
       {id:'no_horizontal_overflow',ok:!after.overflow},
-      {id:'page_shorter',ok:after.height<before.height*.8}
+      {id:'page_geometry_stable_or_improved',ok:legacyBaseline?after.height<before.height*.8:after.height<=before.height*1.05}
     ];
     await pg.screenshot({path:path.join(OUT,device+'-blog-redesign.png'),fullPage:true,animations:'disabled',timeout:45000});
-    rows.push({device,before,after,checks:check});
+    rows.push({device,baseline:legacyBaseline?'legacy':'installed',before,after,checks:check});
     await pg.close();
    }finally{await context.close()}
   }
