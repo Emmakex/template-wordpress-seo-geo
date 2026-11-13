@@ -1,4 +1,4 @@
-name: Emmake Brand Logo Visibility Preview
+name: Emmake Brand Image Containment Preview
 on:
   pull_request:
     paths:
@@ -27,7 +27,7 @@ jobs:
         run: |
           npm install --prefix .qa-deps --no-save --ignore-scripts --no-audit --no-fund playwright@1.65.0
           .qa-deps/node_modules/.bin/playwright install chromium
-      - name: Preview white-logo recovery on published Brand page without WordPress writes
+      - name: Preview nested migrated brand image containment without WordPress writes
         env:
           NODE_PATH: ${{ github.workspace }}/.qa-deps/node_modules
         run: node scripts/ci/emmake-brands-visibility-preview.cjs
