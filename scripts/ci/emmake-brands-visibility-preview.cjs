@@ -12,7 +12,34 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
 const measure=pg=>pg.evaluate(()=>{
  const root=document.querySelector('main .wp-block-post-content');if(!root)return null;
  const cards=[...root.querySelectorAll('.sgmb-divi-blurb')];
+ const imageSamples=cards.map((card,index)=>{
+   const figure=card.querySelector('.wp-block-image');
+   const img=figure?.querySelector('img');
+   const r=img?.getBoundingClientRect();
+   const row={index,figure:!!figure,image:!!img,
+     naturalWidth:img?.naturalWidth||0,naturalHeight:img?.naturalHeight||0,
+     renderedHeight:Math.round(r?.height||0),sampled:false,transparentRatio:null,
+     brightVisibleRatio:null,opaqueBrightRatio:null,error:null};
+   if(!img?.complete||!img?.naturalWidth)return row;
+   try{
+     const cv=document.createElement('canvas');cv.width=cv.height=36;
+     const ctx=cv.getContext('2d',{willReadFrequently:true});
+     ctx.drawImage(img,0,0,36,36);
+     const px=ctx.getImageData(0,0,36,36).data;
+     let trans=0,visible=0,bright=0;
+     for(let i=0;i<px.length;i+=4){
+       if(px[i+3]<40){trans++;continue}
+       visible++;
+       if(px[i]>225&&px[i+1]>225&&px[i+2]>225)bright++;
+     }
+     row.sampled=true;row.transparentRatio=Math.round(trans/1296*1000)/1000;
+     row.brightVisibleRatio=visible?Math.round(bright/visible*1000)/1000:null;
+     row.opaqueBrightRatio=Math.round(bright/1296*1000)/1000;
+   }catch(e){row.error=String(e?.name||'unreadable').slice(0,50)}
+   return row;
+ });
  return {
+   imageSamples,
    brandCards:cards.length,
    images:root.querySelectorAll('img').length,
    anchors:root.querySelectorAll('a[href]').length,
