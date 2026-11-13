@@ -95,7 +95,7 @@ async function main(){
       {id:'no_broken_images',ok:after.brokenImages===before.brokenImages&&after.brokenImages===0},
       {id:'one_h1_noindex_preserved',ok:after.oneH1&&after.noindex},
       {id:'responsive_archive_and_topic_grids',ok:after.archiveCols===(mobile?1:2)&&after.topicCols===(mobile?1:3)},
-      {id:'responsive_conversion_grid',ok:after.conversionCols===(mobile?1:3)},
+      {id:'responsive_conversion_grid',ok:after.conversionCols===(mobile?1:2)},
       {id:'no_horizontal_overflow',ok:!after.overflow},
       {id:'page_shorter',ok:after.height<before.height*.8}
     ];
