@@ -30,6 +30,7 @@ async function measure(page){
    maxLogoImageHeight:Math.round(Math.max(0,...logos.flatMap(x=>[...x.querySelectorAll('img')]).map(x=>rect(x)?.height||0))),
    logoWidths:logos.slice(0,8).map(x=>Math.round(rect(x)?.width||0)),
    tigerHeight:Math.round(rect(tiger)?.height||0),blurbCount:blurbs.length,
+   lightLogoCards:root.querySelectorAll(':scope > .seo-geo-legacy-about-brand-grid > figure.seo-geo-legacy-about-light-logo').length,
    enhancedCardGroups:root.querySelectorAll(':scope > .seo-geo-legacy-about-card-grid').length,
    enhancedBrandGroups:root.querySelectorAll(':scope > .seo-geo-legacy-about-brand-grid').length,
    cardGridColumns:[...root.querySelectorAll(':scope > .seo-geo-legacy-about-card-grid')].map(x=>getComputedStyle(x).gridTemplateColumns.trim().split(/\s+/).filter(Boolean).length),
