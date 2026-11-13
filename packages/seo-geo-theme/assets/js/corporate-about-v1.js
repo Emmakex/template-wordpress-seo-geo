@@ -4,55 +4,8 @@
   function isElement(node, selector) {
     return node && node.nodeType === 1 && node.matches(selector);
   }
-  // Restore contrast for pale transparent logos imported into native blurb
-  // cards. The decision is based on local image pixels, never a client name,
-  // filename, post ID or remote request. WordPress images are never altered.
-  function makeBlurbLogosLegible(root) {
-    const cards = root.querySelectorAll('.sgmb-divi-blurb');
-    if (cards.length < 3) return;
-    for (const card of cards) {
-      const figure = card.querySelector('.wp-block-image');
-      if (!figure) continue;
-      const img = figure.querySelector('img');
-      if (!img) {
-        if (!figure.textContent.trim()) card.classList.add('seo-geo-legacy-blurb-blank-art');
-        continue;
-      }
-      const inspect = () => {
-        if (!img.complete || !img.naturalWidth || !img.naturalHeight) return;
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = canvas.height = 36;
-          const ctx = canvas.getContext('2d', { willReadFrequently: true });
-          if (!ctx) return;
-          ctx.drawImage(img, 0, 0, 36, 36);
-          const data = ctx.getImageData(0, 0, 36, 36).data;
-          let transparent = 0, visible = 0, bright = 0;
-          for (let i = 0; i < data.length; i += 4) {
-            if (data[i + 3] < 40) { transparent++; continue; }
-            visible++;
-            if (data[i] > 225 && data[i + 1] > 225 && data[i + 2] > 225) bright++;
-          }
-          const sample = 36 * 36;
-          if (transparent / sample > .2 && visible > 16 && bright / visible > .75) {
-            card.classList.add('seo-geo-legacy-blurb-light-art');
-          } else if (transparent / sample > .997 && visible < 3) {
-            // An entirely transparent media slot is not a useful graphic.
-            // Hide only the slot, retaining the authored heading/link/copy.
-            card.classList.add('seo-geo-legacy-blurb-blank-art');
-          }
-        } catch {
-          // Cross-origin or unsupported canvas: keep the original asset.
-        }
-      };
-      if (img.complete) inspect();
-      else img.addEventListener('load', inspect, { once: true });
-    }
-  }
-
   function enhance() {
     const root = document.querySelector('main .wp-block-post-content');
-    if (root) makeBlurbLogosLegible(root);
     if (!root || root.classList.contains('seo-geo-legacy-about-enhanced') ||
         !root.querySelector(':scope > .sgmb-divi-fullwidth-header') ||
         !root.querySelector(':scope > .seo-geo-contact-form-wrap')) {
