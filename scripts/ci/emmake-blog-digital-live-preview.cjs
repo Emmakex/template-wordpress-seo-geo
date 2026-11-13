@@ -17,6 +17,22 @@ async function metrics(pg){
    catch{return null}
   }).filter(Boolean);
   const pic=root.querySelector('.seo-geo-blog-digital-archive + figure.wp-block-image');
+  const image=pic?.querySelector('img');
+  const imageSrc=(()=>{try{return new URL(image?.currentSrc||'').pathname}catch{return null}})();
+  let imagePaleRatio=null,imageSampleError=null;
+  if(image?.complete&&image?.naturalWidth){
+   try {
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=32;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    if(ctx){
+     ctx.drawImage(image,0,0,32,32);
+     const px=ctx.getImageData(0,0,32,32).data;let pale=0;
+     for(let i=0;i<px.length;i+=4)if(px[i+3]<16||(px[i]>230&&px[i+1]>230&&px[i+2]>230))pale++;
+     imagePaleRatio=Math.round(pale/1024*1000)/1000;
+    }
+   }catch(err){imageSampleError=String(err?.name||'error').slice(0,60)}
+  }
+
   const extra=root.querySelector('.seo-geo-blog-digital-topic-grid');
   const tax=root.querySelector('.seo-geo-blog-digital-category-grid');
   const conversion=root.querySelector('.seo-geo-blog-digital-conversion-grid');
@@ -34,6 +50,8 @@ async function metrics(pg){
    topicCount:extra?.children.length||0,categoryCount:tax?.children.length||0,
    conversionCards:conversion?.querySelectorAll(':scope > section').length||0,
    paleFigureHidden:!!pic?.classList.contains('seo-geo-blog-digital-blank-legacy'),
+   blankImagePath:imageSrc,blankImageAlt:image?.alt?.slice(0,120)||'',imagePaleRatio,imageSampleError,
+
    postLists:root.querySelectorAll('.wp-block-latest-posts').length,
    archiveCols:root.querySelector('.seo-geo-blog-digital-archive')?
      getComputedStyle(root.querySelector('.seo-geo-blog-digital-archive')).gridTemplateColumns.trim().split(/\s+/).length:0,
