@@ -282,9 +282,13 @@ final class CorporateHomeRenderer {
 	 * @param bool   $lazy      Whether to lazy-load the asset.
 	 */
 	private function decorative_image( string $filename, string $css_class, int $width, int $height, bool $lazy = true ): string {
-		$loading = $lazy ? ' loading="lazy"' : '';
+		// Above-the-fold, local hero art should participate in LCP immediately.
+		// Other decorative assets remain lazy and asynchronously decoded.
+		$loading = $lazy
+			? ' loading="lazy" decoding="async"'
+			: ' loading="eager" fetchpriority="high" decoding="sync"';
 
-		return '<img class="' . esc_attr( $css_class ) . '" src="' . esc_url( $this->asset_uri( $filename ) ) . '" alt="" width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '" decoding="async"' . $loading . '>';
+		return '<img class="' . esc_attr( $css_class ) . '" src="' . esc_url( $this->asset_uri( $filename ) ) . '" alt="" width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '"' . $loading . '>';
 	}
 
 	/**
