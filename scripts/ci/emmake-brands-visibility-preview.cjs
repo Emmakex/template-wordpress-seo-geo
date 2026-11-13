@@ -27,6 +27,10 @@ const measure=pg=>pg.evaluate(()=>{
      figureVisibility:figureStyle?.visibility||null,
      imageDisplay:imageStyle?.display||null,figureDisplay:figureStyle?.display||null,
      imageTransform:imageStyle?.transform||null,
+     imageFilter:imageStyle?.filter||null,figureFilter:figureStyle?.filter||null,
+     imageMixBlend:imageStyle?.mixBlendMode||null,
+     imageObjectFit:imageStyle?.objectFit||null,
+     imageObjectPosition:imageStyle?.objectPosition||null,
      brightVisibleRatio:null,opaqueBrightRatio:null,error:null};
    if(!img?.complete||!img?.naturalWidth)return row;
    try{
