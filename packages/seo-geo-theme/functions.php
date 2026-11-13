@@ -186,6 +186,24 @@ function seo_geo_theme_enqueue_styles(): void {
 				seo_geo_theme_asset_version( $inner_stylesheet )
 			);
 		}
+
+		// Optional, tiny DOM-only enhancer for migrated About-style Gutenberg
+		// pages. No requests, analytics, edits or impact on the homepage.
+		if ( is_page() ) {
+			$about_layout_script = get_stylesheet_directory() . '/assets/js/corporate-about-v1.js';
+			if ( is_readable( $about_layout_script ) ) {
+				wp_enqueue_script(
+					'seo-geo-theme-corporate-about',
+					get_stylesheet_directory_uri() . '/assets/js/corporate-about-v1.js',
+					array(),
+					seo_geo_theme_asset_version( $about_layout_script ),
+					array(
+						'in_footer' => true,
+						'strategy' => 'defer',
+					)
+				);
+			}
+		}
 	}
 }
 add_action( 'wp_enqueue_scripts', 'seo_geo_theme_enqueue_styles' );

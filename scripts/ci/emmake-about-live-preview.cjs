@@ -14,9 +14,11 @@ async function measure(page){
  return page.evaluate(()=>{
   const root=document.querySelector('main .wp-block-post-content');
   if(!root)return null;
-  const logos=[...root.querySelectorAll(':scope > h2 ~ figure.wp-block-image')];
+  const enhancedLogos=[...root.querySelectorAll(':scope > .seo-geo-legacy-about-brand-grid > figure.wp-block-image')];
+  const logos=enhancedLogos.length?enhancedLogos:[...root.querySelectorAll(':scope > h2 ~ figure.wp-block-image')];
   const tiger=root.querySelector(':scope > .sgmb-divi-fullwidth-header + figure.wp-block-image');
-  const blurbs=[...root.querySelectorAll(':scope > .sgmb-divi-blurb')];
+  const enhancedBlurbs=[...root.querySelectorAll(':scope > .seo-geo-legacy-about-card-grid > .sgmb-divi-blurb')];
+  const blurbs=enhancedBlurbs.length?enhancedBlurbs:[...root.querySelectorAll(':scope > .sgmb-divi-blurb')];
   const headings=[...root.querySelectorAll('h2,h3')];
   const imgs=[...root.querySelectorAll('img')];
   const anchors=[...root.querySelectorAll('a')];
@@ -28,6 +30,10 @@ async function measure(page){
    maxLogoImageHeight:Math.round(Math.max(0,...logos.flatMap(x=>[...x.querySelectorAll('img')]).map(x=>rect(x)?.height||0))),
    logoWidths:logos.slice(0,8).map(x=>Math.round(rect(x)?.width||0)),
    tigerHeight:Math.round(rect(tiger)?.height||0),blurbCount:blurbs.length,
+   enhancedCardGroups:root.querySelectorAll(':scope > .seo-geo-legacy-about-card-grid').length,
+   enhancedBrandGroups:root.querySelectorAll(':scope > .seo-geo-legacy-about-brand-grid').length,
+   cardGridColumns:[...root.querySelectorAll(':scope > .seo-geo-legacy-about-card-grid')].map(x=>getComputedStyle(x).gridTemplateColumns.trim().split(/\\s+/).filter(Boolean).length),
+   brandGridColumns:[...root.querySelectorAll(':scope > .seo-geo-legacy-about-brand-grid')].map(x=>getComputedStyle(x).gridTemplateColumns.trim().split(/\\s+/).filter(Boolean).length),
    blurbWidths:blurbs.slice(0,8).map(x=>Math.round(rect(x)?.width||0)),
    headings:headings.length,images:imgs.length,anchors:anchors.length,
    rootTextLength:root.textContent?.length||0,formReady:!!form,required:form?.querySelectorAll('[required]').length||0,
@@ -51,7 +57,8 @@ async function main(){
     const before=await measure(pg);
     assert(before&&before.logoCount===8&&before.blurbCount===8,'unexpected source block structure');
     await pg.addStyleTag({content:stylesheet});
-    await pg.waitForTimeout(400);
+    await pg.addScriptTag({content:fs.readFileSync('packages/seo-geo-theme/assets/js/corporate-about-v1.js','utf8')});
+    await pg.waitForTimeout(550);
     const after=await measure(pg);
     await pg.screenshot({path:path.join(OUT,device+'_about_proposal.png'),fullPage:true,animations:'disabled',timeout:45000});
     const checks=[
@@ -59,6 +66,9 @@ async function main(){
       {id:'logos_preserved_and_contained',ok:after.logoCount===8&&after.maxLogoHeight<=180&&after.maxLogoImageHeight<=140},
       {id:'decorative_image_contained',ok:after.tigerHeight<=350},
       {id:'blurb_cards_preserved',ok:after.blurbCount===8},
+      {id:'semantic_section_grouping',ok:after.enhancedCardGroups===2&&after.enhancedBrandGroups===1},
+      {id:'actual_responsive_grids',ok:after.cardGridColumns.every(c=>c===(device==='desktop'?2:1))&&
+        after.brandGridColumns.every(c=>c===(device==='desktop'?4:2))},
       {id:'readable_flow',ok:after.rootDisplay==='block'},
       {id:'no_overflow',ok:after.scrollWidth<=after.viewport+4},
       {id:'h1_and_noindex_preserved',ok:after.h1Count===1&&after.noindex},
