@@ -199,7 +199,7 @@ function seo_geo_theme_enqueue_styles(): void {
 					seo_geo_theme_asset_version( $about_layout_script ),
 					array(
 						'in_footer' => true,
-						'strategy' => 'defer',
+						'strategy'  => 'defer',
 					)
 				);
 			}
