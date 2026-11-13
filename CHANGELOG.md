@@ -4,6 +4,8 @@ All notable changes to the installable self-contained SEO/GEO theme are recorded
 
 ## [Unreleased] — target 0.1.1
 
+- Corporate migrated About-style pages: correct unwrapped legacy text flow, contain oversized decorative hero imagery, render eight authored brand logos in responsive 4/2-column cards, and render service/method blurbs in balanced 2/1-column cards. No WordPress content/media/form data rewritten; homepage remains untouched. A tiny deferred progressive enhancer groups only contiguous legacy DOM siblings into semantic presentation wrappers; no WP post_content mutation or dependence for readable fallback.
+
 - EMMAKE Corporate inner CTA contrast: normalize native Gutenberg button text to white on #087d67 (5.07:1 WCAG AA), maintain 44px minimum tap target, and preserve authored destinations, page content, Home and SEO/GEO ownership.
 
 - Corporate migrated inner-page presentation: responsive 3/2/1 cards for native rescued Divi blurbs, contain giant brand images without cropping, and allow 1–2-item Gutenberg latest-posts blocks to fill their reading width. No Gutenberg content, URL, SEO/GEO authority or Home changes.

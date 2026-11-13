@@ -1,0 +1,39 @@
+name: Emmake About Live CSS Preview
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-inner-v1.css'
+      - 'scripts/ci/emmake-about-live-preview.cjs'
+      - '.github/workflows/emmake-about-live-preview.yml'
+permissions:
+  contents: read
+jobs:
+  preview-about:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify fixed-origin read-only preview
+        run: |
+          node --check scripts/ci/emmake-about-live-preview.cjs
+          grep -Fq "const ORIGIN='https://emmake.com/nuevaweb/'" scripts/ci/emmake-about-live-preview.cjs
+          grep -Fq "wordpress_mutations:0" scripts/ci/emmake-about-live-preview.cjs
+      - name: Install disposable Chromium
+        run: |
+          npm install --prefix .qa-deps --no-audit --no-fund --ignore-scripts --no-save playwright@1.65.0
+          .qa-deps/node_modules/.bin/playwright install chromium
+      - name: Preview checked-out CSS against published About page
+        env:
+          NODE_PATH: ${{ github.workspace }}/.qa-deps/node_modules
+        run: node scripts/ci/emmake-about-live-preview.cjs
+      - name: Upload 48-hour screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emmake-about-design-preview
+          path: artifacts/emmake-about-design-preview/
+          retention-days: 2
+          if-no-files-found: warn
