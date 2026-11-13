@@ -410,30 +410,34 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 	object-position: left center;
 }
 /*
- * Imported blurb logos may be white on a transparent image. A tiny local
- * sample adds these classes only when the pixel evidence is decisive.
- * Unreadable/cross-origin images are untouched. Original titles/links remain.
+ * Corporate grouped blurb media fallback:
+ * Progressive enhancement may wrap native migrated blurbs inside a
+ * .seo-geo-legacy-about-card-grid, invalidating the original direct-child
+ * image sizing selectors. Keep the authored image, alt and links while
+ * applying the same non-cropping 184px containment to grouped cards.
  */
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
-.seo-geo-page-shell .wp-block-post-content .sgmb-divi-blurb.seo-geo-legacy-blurb-light-art .wp-block-image {
+.seo-geo-page-shell .wp-block-post-content.seo-geo-legacy-about-enhanced
+> .seo-geo-legacy-about-card-grid > .sgmb-divi-blurb .wp-block-image {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
 	width: 100%;
-	min-height: 9rem;
+	max-width: 100%;
 	max-height: 11.5rem;
-	padding: 1rem;
-	box-sizing: border-box;
-	border: 1px solid #286c69;
-	border-radius: 1rem;
-	background: linear-gradient(135deg, #103a3f, #226263);
+	margin: 0 0 1.25rem;
+	overflow: hidden;
 }
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
-.seo-geo-page-shell .wp-block-post-content .sgmb-divi-blurb.seo-geo-legacy-blurb-blank-art .wp-block-image {
-	display: none;
-}
-@media (max-width: 650px) {
-	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
-	.seo-geo-page-shell .wp-block-post-content .sgmb-divi-blurb.seo-geo-legacy-blurb-light-art .wp-block-image {
-		min-height: 7rem;
-	}
+.seo-geo-page-shell .wp-block-post-content.seo-geo-legacy-about-enhanced
+> .seo-geo-legacy-about-card-grid > .sgmb-divi-blurb .wp-block-image img {
+	display: block;
+	width: auto;
+	height: auto;
+	max-width: 100%;
+	max-height: 11.5rem;
+	object-fit: contain;
+	object-position: left center;
 }
 
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
