@@ -409,6 +409,33 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 	object-fit: contain;
 	object-position: left center;
 }
+/*
+ * Imported blurb logos may be white on a transparent image. A tiny local
+ * sample adds these classes only when the pixel evidence is decisive.
+ * Unreadable/cross-origin images are untouched. Original titles/links remain.
+ */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.seo-geo-page-shell .wp-block-post-content .sgmb-divi-blurb.seo-geo-legacy-blurb-light-art .wp-block-image {
+	width: 100%;
+	min-height: 9rem;
+	max-height: 11.5rem;
+	padding: 1rem;
+	box-sizing: border-box;
+	border: 1px solid #286c69;
+	border-radius: 1rem;
+	background: linear-gradient(135deg, #103a3f, #226263);
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.seo-geo-page-shell .wp-block-post-content .sgmb-divi-blurb.seo-geo-legacy-blurb-blank-art .wp-block-image {
+	display: none;
+}
+@media (max-width: 650px) {
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-page-shell .wp-block-post-content .sgmb-divi-blurb.seo-geo-legacy-blurb-light-art .wp-block-image {
+		min-height: 7rem;
+	}
+}
+
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 .seo-geo-page-shell .wp-block-post-content > .sgmb-divi-blurb :is(h2,h3,h4) {
 	font-size: clamp(1.2rem, 1.8vw, 1.55rem);
