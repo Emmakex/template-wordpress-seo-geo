@@ -12,6 +12,8 @@
   <file>packages/seo-geo-migration-bridge</file>
 
   <exclude-pattern>*/vendor/*</exclude-pattern>
+  <!-- Native JavaScript is syntax-checked by the dedicated Node/browser QA, not PHP WPCS. -->
+  <exclude-pattern>packages/seo-geo-theme/assets/js/*</exclude-pattern>
   <!-- Corporate visual CSS is intentionally compact and protected by dedicated Design System / browser gates. -->
   <exclude-pattern>packages/seo-geo-theme/assets/css/presets/corporate-v2.css</exclude-pattern>
   <exclude-pattern>packages/seo-geo-theme/assets/css/presets/corporate-v3-runtime.css</exclude-pattern>
