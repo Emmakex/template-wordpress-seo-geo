@@ -164,7 +164,7 @@
 				const filenameOnly = filename.length > 15 &&
 					image.getAttribute('alt')?.trim() === filename &&
 					url.pathname.startsWith('/wp-content/uploads/') &&
-					blankFigure.getBoundingClientRect().height > 450;
+					image.naturalWidth >= 900 && image.naturalHeight >= 450;
 				if (pale / (32 * 32) > .995 || filenameOnly) {
 					blankFigure.classList.add('seo-geo-blog-digital-blank-legacy');
 				}
