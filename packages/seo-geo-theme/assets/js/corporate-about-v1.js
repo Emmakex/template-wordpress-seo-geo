@@ -49,6 +49,40 @@
         node = next;
       }
     }
+    // Imported assets may be white logotypes on a transparent background.
+    // Sample only 48x48 image pixels locally; no URL or pixel data is sent.
+    // Light transparent logos receive a dark contrast-safe card backdrop.
+    const brandGallery = root.querySelector(':scope > .seo-geo-legacy-about-brand-grid');
+    if (brandGallery) {
+      for (const img of brandGallery.querySelectorAll('figure img')) {
+        const inspect = () => {
+          if (!img.naturalWidth || !img.naturalHeight) return;
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 48;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            if (!ctx) return;
+            ctx.drawImage(img, 0, 0, 48, 48);
+            const pixels = ctx.getImageData(0, 0, 48, 48).data;
+            let transparent = 0, visible = 0, white = 0;
+            for (let i = 0; i < pixels.length; i += 4) {
+              const a = pixels[i + 3];
+              if (a < 40) { transparent++; continue; }
+              visible++;
+              if (pixels[i] > 225 && pixels[i + 1] > 225 && pixels[i + 2] > 225) white++;
+            }
+            const total = 48 * 48;
+            if (transparent > total * .12 && visible > 15 && white / visible > .72) {
+              img.closest('figure')?.classList.add('seo-geo-legacy-about-light-logo');
+            }
+          } catch {
+            // Cross-origin or unsupported canvas: leave the authored image untouched.
+          }
+        };
+        if (img.complete) inspect();
+        else img.addEventListener('load', inspect, { once: true });
+      }
+    }
     root.classList.add('seo-geo-legacy-about-enhanced');
   }
   if (document.readyState === 'loading') {
