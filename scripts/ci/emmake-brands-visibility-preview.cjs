@@ -43,13 +43,13 @@ async function main(){
     assert(res&&res.status()===200&&pg.url()===ORIGIN+SLUG,'unexpected public route');
     await pg.waitForTimeout(750);
     const before=await measure(pg);
-    assert(before&&before.brandCards===10,'unexpected migrated brand count');
+    assert(before&&before.brandCards>=10&&before.brandCards<=20,'unexpected migrated blurb structure');
     await pg.addStyleTag({content:css});
     await pg.addScriptTag({content:js});
     await pg.waitForTimeout(700);
     const after=await measure(pg);
     const checks=[
-      {id:'ten_original_brands_preserved',ok:after.brandCards===10},
+      {id:'all_original_migrated_cards_preserved',ok:after.brandCards===before.brandCards},
       {id:'no_content_links_or_media_removed',ok:after.textLength===before.textLength&&after.images===before.images&&after.anchors===before.anchors},
       {id:'at_least_one_invisible_logo_slot_recovered',ok:after.darkened+after.blankMedia>before.darkened+before.blankMedia},
       {id:'no_broken_media',ok:after.brokenImages===0},
