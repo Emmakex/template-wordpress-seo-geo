@@ -688,6 +688,14 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 	object-fit: contain;
 	filter: drop-shadow(0 1px 3px rgb(14 57 61 / 25%));
 }
+
+/* Contrast fallback is decided from local image pixels, never filenames or client IDs. */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.seo-geo-page-shell .wp-block-post-content.seo-geo-legacy-about-enhanced
+> .seo-geo-legacy-about-brand-grid > figure.seo-geo-legacy-about-light-logo {
+	border-color: #245d62;
+	background: linear-gradient(140deg, #103f43, #1c6264);
+}
 @media (max-width: 850px) {
 	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 	.seo-geo-page-shell .wp-block-post-content.seo-geo-legacy-about-enhanced > .seo-geo-legacy-about-brand-grid {
