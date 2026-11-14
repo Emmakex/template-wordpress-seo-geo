@@ -539,3 +539,120 @@ body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-process .seo-geo-corpor
 		margin-block-end: 2.5rem;
 	}
 }
+/*
+ * Emmake: optimized editorial photography in the approved Corporate v5 Home.
+ * The heading, CTAs, semantic content and full-bleed Hero gutters stay intact.
+ * All assets are first-party WebP, with no external CDN or tracking dependency.
+ */
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__visual-column {
+	padding: 0;
+	overflow: hidden;
+}
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__visual-column::before,
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__visual-column::after {
+	display: none;
+}
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-hero-visual__image {
+	width: 100%;
+	max-width: none;
+	height: clamp(390px, 35vw, 510px);
+	min-height: 0;
+	object-fit: cover;
+	object-position: 77% 50%;
+	border-radius: 36px;
+	filter: none;
+}
+
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-card--1::before {
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	border-radius: inherit;
+	box-shadow: none;
+	opacity: 1;
+	background:
+		linear-gradient(180deg, rgb(5 35 42 / 16%) 0%, rgb(5 35 42 / 46%) 41%, rgb(5 35 42 / 96%) 78%),
+		url("../../images/presets/corporate/v5/capabilities-soluciones-digitales.webp") 50% 34% / cover no-repeat;
+}
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-card--1 h3,
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-card--1 .seo-geo-corporate-card__link a {
+	color: #fff;
+}
+
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-insights-visual {
+	width: min(100%, 940px);
+	margin: -1rem 0 clamp(2rem, 3.5vw, 3.5rem) auto;
+	overflow: hidden;
+	border-radius: 26px;
+	background: #12494f;
+	box-shadow: 0 20px 48px rgb(23 58 61 / 10%);
+}
+body.seo-geo-corporate-home-v5 .seo-geo-corporate-insights-visual__image {
+	display: block;
+	width: 100%;
+	height: clamp(280px, 37vw, 440px);
+	object-fit: cover;
+	object-position: 50% 47%;
+}
+
+body.seo-geo-corporate-home-v5 .seo-geo-final-cta__visual {
+	grid-column: 2;
+	grid-row: 1 / 4;
+	align-self: center;
+	min-width: 0;
+	overflow: hidden;
+	border-radius: 28px;
+	box-shadow: 0 22px 52px rgb(12 67 72 / 15%);
+}
+body.seo-geo-corporate-home-v5 .seo-geo-final-cta__image {
+	display: block;
+	width: 100%;
+	height: clamp(320px, 30vw, 460px);
+	object-fit: cover;
+	object-position: 55% center;
+}
+
+@media (max-width: 820px) {
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__grid > .seo-geo-corporate-native-hero__visual-column {
+		min-height: 0 !important;
+	}
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-hero-visual__image {
+		height: clamp(235px, 55vw, 350px);
+		object-position: 74% center;
+		border-radius: 24px;
+	}
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-insights-visual {
+		width: 100%;
+		margin: 0 0 2rem;
+		border-radius: 20px;
+	}
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-insights-visual__image {
+		height: clamp(210px, 54vw, 340px);
+	}
+	body.seo-geo-corporate-home-v5 .seo-geo-final-cta__visual {
+		margin-top: 2rem;
+		border-radius: 20px;
+	}
+	body.seo-geo-corporate-home-v5 .seo-geo-final-cta__image {
+		height: auto;
+		aspect-ratio: 4 / 3;
+	}
+}
+/* The 1100px two-column refinement must not override the mobile single-column hero. */
+@media (max-width: 820px) {
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__grid {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 1.5rem;
+	}
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__grid > .wp-block-column {
+		min-width: 0;
+		width: 100%;
+	}
+	/* Prioritize real H1 and two CTAs on phone. The 4 original photos remain in
+	 * the desktop homepage; the capabilities, analytics and CTA visuals remain
+	 * available when mobile readers scroll to those sections. */
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__grid > .seo-geo-corporate-native-hero__visual-column {
+		display: none;
+	}
+}
