@@ -15,8 +15,10 @@ no es representativo de una portada fotográfica de cuatro secciones.
   9 KiB de CSS, 12 peticiones y 130 nodos. Es un límite, no un objetivo de gasto.
 - **No se relaja el LCP**, que sigue en máximo **1.200 ms** en todas las páginas.
   CLS <= 0,05; TBT <= 100 ms y Lighthouse Performance >= 95 se mantienen.
-- La imagen principal se precarga solo para escritorio (media min-width 821px).
-  En móvil, el H1 y las acciones se priorizan y la imagen es lazy con decode async.
+- La imagen principal (visible también en la primera pantalla móvil) se precarga
+  en ambos tamaños con prioridad alta y `decoding=async`, nunca `loading=lazy`.
+  El H1 conserva su columna móvil completa y las tres fotos secundarias
+  se mantienen diferidas para no bloquear el contenido.
   Las fotos secundarias son diferidas y los cuatro archivos locales se verifican por SHA-256.
 
 ## Evidencia previa a la publicación
