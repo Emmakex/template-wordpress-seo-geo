@@ -1,37 +1,36 @@
 # Emmake: presupuesto medido de portada fotográfica (14-11-2026)
 
-## Alcance y motivo
-La Home Corporate v5 incorpora cuatro imágenes WebP locales aprobadas por el propietario:
-57.612 + 72.422 + 60.992 + 55.726 = **246.752 bytes** de recursos visuales.
-El presupuesto anterior de 40 KiB se creó para una Home prácticamente sin fotografías.
-La publicación mantiene 0 solicitudes de terceros y 0 JavaScript de proyecto.
+## Recursos y ámbito
+Cuatro imágenes WebP locales aprobadas por el propietario:
+57.612 + 72.422 + 60.992 + 55.726 = **246.752 bytes**.
+Sin CDN, terceros ni JavaScript añadido.
 
-## Presupuestos de CI
-- **EN/ES y migración:** intactos. LCP máximo 1.200 ms, 26 KiB de transferencia,
-  y sus límites previos de CSS, peticiones y nodos.
-- **Corporate Home fotográfica únicamente:** LCP máximo **1.800 ms**,
-  transferencia total máxima **300 KiB**, CSS máximo 9 KiB, 12 solicitudes,
-  130 nodos. Son límites exigidos, no objetivos de consumo.
-- **Todas las páginas:** CLS máximo 0,05, TBT máximo 100 ms, puntuación
-  Lighthouse Performance mínima 95, terceros 0 y JS propio 0.
+## Contrato del producto
+El contrato invariante SEO/GEO-first exige **LCP máximo 1.200 ms**
+para EN, ES, migración **y Corporate**. No se rebaja este límite.
+CLS <= 0,05, TBT <= 100 ms, Lighthouse Performance >= 95,
+terceros 0 y JavaScript propio 0. Los límites de las páginas
+ligeras siguen intactos.
 
-## Justificación empírica del LCP Corporate
-El informe anterior a la modificación midió **Lighthouse Performance 100/100**,
-CLS 0, TBT 0 y LCP móvil alrededor de **1.504 ms**. El candidato LCP era el
-H1 de la portada (no un script de terceros). Una versión con la foto visible
-en el primer pantallazo obtenía un LCP cercano a 1.20–1.43 s, más inestable.
-La decisión editorial y responsive es reservar la foto principal para escritorio,
-priorizar H1 y CTAs en teléfonos, y mantener imágenes de capacidades, resultados
-y consulta visibles en las secciones siguientes.
+Se acota únicamente el presupuesto de bytes de la Home Corporate
+fotográfica a 300 KiB, CSS 9 KiB, 12 solicitudes y 130 nodos,
+conservando los límites antiguos de 26 KiB de EN/ES y migración.
 
-En lugar de prolongar ajustes que disminuyen la calidad visual sin mejoras
-consistentes, se adopta un presupuesto **solo para Corporate** de 1,8 s,
-dejando margen de ejecución para CI y **sin modificar los límites más estrictos
-de las páginas ligeras**. Se documenta el cambio para que no pase por un éxito
-sin cambios de contrato. Las fotos se entregan desde el dominio propio,
-con SHA-256 registrado y carga diferida cuando están fuera del primer pantallazo.
+## Política de carga
+El hero mantiene la foto en escritorio con preload de prioridad
+alta y media query min-width 821px. En teléfonos el hero muestra
+primero H1 y CTAs; la columna fotográfica queda oculta y su imagen
+tiene loading=lazy para evitar descargarla cuando está oculta.
+Las imágenes locales de capacidades, resultados y consulta siguen
+en las secciones inferiores con carga diferida.
 
-## Puerta de publicación
-Exigir CI completa en verde, paquete oficial, **Site Manager Plan → Apply → Verify**,
-rollback disponible y auditoría de navegador real en escritorio y móvil.
-No modificar el dominio raíz `emmake.com` durante este corte de `/nuevaweb/`.
+## Evidencia y publicación
+Las primeras iteraciones con fotografías marcaron Lighthouse
+100/100, CLS 0 y LCP móvil entre 1,20 y 1,50 s; por tanto **no
+autorizan publicación**. La propuesta de ampliar Corporate a
+1.800 ms fue explícitamente **rechazada por Foundation CI**,
+que exige 1.200 ms como contrato invariable; se ha revertido.
+Es obligatorio demostrar las métricas del último commit,
+superar todas las CI y después Site Manager Plan → Apply → Verify
+con rollback antes de tocar el staging. Nunca el dominio raíz
+durante esta fase.
