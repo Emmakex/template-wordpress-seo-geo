@@ -67,9 +67,11 @@ async function main(){
   http200:r.http===200,
   correctNine:r.after.navTopLevel===9,
   shortenedLabels:r.after.items.some(x=>x.title==='Asistentes de voz')&&r.after.items.some(x=>x.title==='Blog digital'),
+  homepageLabel:r.after.items[0]?.title==='Inicio'&&r.after.items[0]?.href==='https://emmake.com/nuevaweb/',
   noOldLongLabels:!r.after.items.some(x=>x.title.startsWith('Descubre Los Mejores Asistentes')||x.title==='BLOG TRANSFORMACIÓN DIGITAL'),
   desktopOneRow:r.device==='mobile'||r.after.desktopRows===1,
-  mobileVisible:r.device==='desktop'||r.after.mobileDisplay==='block'
+  mobileVisible:r.device==='desktop'||r.after.mobileDisplay==='block',
+  noHorizontalOverflow:r.after.scrollWidth<=r.after.viewport+4
  }));
  fs.writeFileSync(path.join(OUT,'acceptance.json'),JSON.stringify(checks,null,2)+'\n');
  console.log('NAV_ACCEPTANCE',JSON.stringify(checks));
