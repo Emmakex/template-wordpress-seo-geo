@@ -34,7 +34,7 @@ renderer = (ROOT / "inc/Strategic/CorporateHomeRenderer.php").read_text()
 css = (ROOT / "assets/css/presets/corporate-v5-a3-1.css").read_text()
 for name in ("hero-consultoria-digital.webp", "insights-resultados-analitica.webp", "contact-consultoria-estrategica.webp"):
     assert renderer.count(name) == 1, name
-assert "'hero-consultoria-digital.webp', 'seo-geo-corporate-hero-visual__image', 1439, 810 )" in renderer
+assert "'hero-consultoria-digital.webp', 'seo-geo-corporate-hero-visual__image', 1439, 810, false )" in renderer
 assert 'loading="lazy" decoding="async"' in renderer
 assert 'aria-hidden="true"' in renderer
 for name in ("capabilities-soluciones-digitales.webp",):
