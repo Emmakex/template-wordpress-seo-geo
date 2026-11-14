@@ -1,0 +1,70 @@
+/*
+ * Emmake staging interior imagery v1 — nine dedicated, first-party WebP assets.
+ * Visual only: headings, Gutenberg blocks, forms, URLs and SEO remain untouched.
+ */
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-servicios {
+	--emmake-inner-image: url("../../images/emmake/inner/servicios.webp");
+	--emmake-inner-position: 50% 48%;
+}
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-sobre-nosotros {
+	--emmake-inner-image: url("../../images/emmake/inner/sobre-nosotros.webp");
+	--emmake-inner-position: 50% 43%;
+}
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-contacto {
+	--emmake-inner-image: url("../../images/emmake/inner/contacto.webp");
+	--emmake-inner-position: 50% 48%;
+}
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-nuestras-marcas {
+	--emmake-inner-image: url("../../images/emmake/inner/nuestras-marcas.webp");
+	--emmake-inner-position: 50% 51%;
+}
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-blog {
+	--emmake-inner-image: url("../../images/emmake/inner/blog.webp");
+	--emmake-inner-position: 50% 47%;
+}
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-blog-transformacion-digital {
+	--emmake-inner-image: url("../../images/emmake/inner/blog-transformacion-digital.webp");
+	--emmake-inner-position: 50% 48%;
+}
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-politica-de-privacidad {
+	--emmake-inner-image: url("../../images/emmake/inner/politica-de-privacidad.webp");
+	--emmake-inner-position: 50% 49%;
+	--emmake-inner-height: clamp(145px, 18vw, 225px);
+}
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-trabaja-con-nosotros {
+	--emmake-inner-image: url("../../images/emmake/inner/trabaja-con-nosotros.webp");
+	--emmake-inner-position: 50% 49%;
+}
+body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-asistentes-virtuales-de-voz {
+	--emmake-inner-image: url("../../images/emmake/inner/asistentes-virtuales-de-voz.webp");
+	--emmake-inner-position: 50% 50%;
+}
+
+body.seo-geo-preset-corporate[class*="seo-geo-emmake-inner-visual-"] main::before {
+	content: "";
+	display: block;
+	width: 100%;
+	height: var(--emmake-inner-height, clamp(235px, 29vw, 370px));
+	min-height: 0;
+	margin: 0 0 clamp(2rem, 3.5vw, 3.75rem);
+	border: 1px solid rgb(17 83 83 / 12%);
+	border-radius: clamp(18px, 2.4vw, 32px);
+	background-color: #0e4149;
+	background-image:
+		linear-gradient(95deg, rgb(5 38 46 / 18%) 0%, transparent 68%),
+		var(--emmake-inner-image);
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: center, var(--emmake-inner-position, center);
+	box-shadow: 0 24px 58px rgb(20 62 63 / 12%);
+}
+@media (max-width: 650px) {
+	body.seo-geo-preset-corporate[class*="seo-geo-emmake-inner-visual-"] main::before {
+		height: 205px;
+		margin-bottom: 1.85rem;
+		border-radius: 18px;
+	}
+	body.seo-geo-preset-corporate.seo-geo-emmake-inner-visual-politica-de-privacidad main::before {
+		height: 150px;
+	}
+}

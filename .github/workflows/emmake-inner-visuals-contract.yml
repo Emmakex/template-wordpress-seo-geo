@@ -1,0 +1,36 @@
+name: Emmake Interior Visuals Contract
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/assets/images/emmake/inner/**'
+      - 'packages/seo-geo-theme/assets/css/presets/emmake-inner-art-v1.css'
+      - 'packages/seo-geo-theme/inc/Emmake/InnerVisualRuntime.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'assets/manifests/emmake-inner-art.json'
+      - 'scripts/ci/test-emmake-inner-art.py'
+      - '.github/workflows/emmake-inner-visuals-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/seo-geo-theme/assets/images/emmake/inner/**'
+      - 'packages/seo-geo-theme/assets/css/presets/emmake-inner-art-v1.css'
+      - 'packages/seo-geo-theme/inc/Emmake/InnerVisualRuntime.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'assets/manifests/emmake-inner-art.json'
+      - 'scripts/ci/test-emmake-inner-art.py'
+      - '.github/workflows/emmake-inner-visuals-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  image-integrity-and-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify nine page-specific assets, integrity and no content writes
+        run: |
+          python3 scripts/ci/test-emmake-inner-art.py
+          php -l packages/seo-geo-theme/inc/Emmake/InnerVisualRuntime.php
+          php -l packages/seo-geo-theme/functions.php
