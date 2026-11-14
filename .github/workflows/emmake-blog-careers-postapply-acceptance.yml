@@ -1,0 +1,42 @@
+name: Emmake Blog and Careers Post-Apply Browser Acceptance
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/ci/emmake-careers-blog-postapply-acceptance.cjs'
+      - '.github/workflows/emmake-blog-careers-postapply-acceptance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  emmake-public-acceptance:
+    name: Verify actual governed content (Blog pages 1/2, Careers)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify strictly fixed staging origin and read-only scope
+        run: |
+          set -euo pipefail
+          node --check scripts/ci/emmake-careers-blog-postapply-acceptance.cjs
+          grep -Fq "const ROOT='https://emmake.com/nuevaweb/'" scripts/ci/emmake-careers-blog-postapply-acceptance.cjs
+          grep -Fq "wordpress_mutations:0" scripts/ci/emmake-careers-blog-postapply-acceptance.cjs
+          grep -Fq "form_submissions:0" scripts/ci/emmake-careers-blog-postapply-acceptance.cjs
+      - name: Install ephemeral Playwright Chromium
+        run: |
+          npm install --prefix .qa-deps --ignore-scripts --no-audit --no-fund --no-save playwright@1.65.0
+          .qa-deps/node_modules/.bin/playwright install chromium
+      - name: Read actual public pages in desktop and mobile
+        run: NODE_PATH="$GITHUB_WORKSPACE/.qa-deps/node_modules" node scripts/ci/emmake-careers-blog-postapply-acceptance.cjs
+      - name: Preserve public screenshots and JSON evidence for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emmake-blog-careers-postapply-evidence
+          path: artifacts/emmake-blog-careers-live-acceptance/
+          retention-days: 5
+          if-no-files-found: warn
