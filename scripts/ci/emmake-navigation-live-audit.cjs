@@ -7,7 +7,7 @@ const BASE='https://emmake.com/nuevaweb/';
 const OUT='artifacts/emmake-navigation-qa';
 async function capture(pg){
  return pg.evaluate(()=>{
-  const header=document.querySelector('.seo-geo-site-header');
+  const header=document.querySelector('.seo-geo-site-header, .seo-geo-strategic-header');
   const menu=header?.querySelector('.seo-geo-preset-navigation--primary');
   const desktop=menu?.querySelector('.seo-geo-preset-navigation__desktop');
   const mobile=menu?.querySelector('.seo-geo-preset-navigation__mobile');
@@ -22,6 +22,7 @@ async function capture(pg){
      current:a.getAttribute('aria-current'),box:box(a),
      depth:a.closest('li')?.className||'',submenus:a.closest('li')?.querySelectorAll('ul').length||0})),
    navTopLevel:desktop?.querySelectorAll(':scope > ul > li').length||0,
+   desktopRows:new Set(anchors.filter(a=>getComputedStyle(a).display!=='none').map(a=>Math.round(a.getBoundingClientRect().top))).size,
    navSubmenus:desktop?.querySelectorAll('ul ul').length||0,
    mobileAnchorCount:mobile?.querySelectorAll('a[href]').length||0,
    footerMenu:[...(document.querySelectorAll('.seo-geo-preset-navigation--footer a[href]')||[])].map(x=>x.textContent.trim()),
@@ -42,7 +43,7 @@ async function main(){
      const resp=await pg.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
      await pg.waitForTimeout(350);
      const before=await capture(pg);
-     const open=pg.locator('.seo-geo-site-header .seo-geo-preset-navigation__mobile > summary');
+     const open=pg.locator('header .seo-geo-preset-navigation__mobile > summary').first();
      if(mob&&await open.isVisible()){
       await open.click();
       await pg.waitForTimeout(100);
@@ -51,7 +52,7 @@ async function main(){
      rows.push({device,page:label,http:resp?.status(),before,after});
      await pg.screenshot({path:path.join(OUT,device+'-'+label+'-header.png'),fullPage:false,animations:'disabled'});
      console.log('NAV',JSON.stringify({page:label,device,http:resp?.status(),header:after.header,
-      scrollWidth:after.scrollWidth,topLevel:after.navTopLevel,submenus:after.navSubmenus,
+      scrollWidth:after.scrollWidth,topLevel:after.navTopLevel,submenus:after.navSubmenus,desktopRows:after.desktopRows,
       desktop:after.desktopDisplay,mobile:after.mobileDisplay,open:after.open,
       items:after.items.map(x=>({title:x.title,href:x.href,box:x.box})),footer:after.footerMenu}));
      await pg.close();
@@ -61,6 +62,17 @@ async function main(){
  } finally {await browser.close()}
  fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify({site:'emmake-nuevaweb',scope:'public-read-only',
   wordpress_mutations:0,form_submissions:0,rows},null,2)+'\n');
- if(rows.some(r=>r.http!==200))process.exitCode=1;
+ const checks=rows.map(r=>({
+  page:r.page,device:r.device,
+  http200:r.http===200,
+  correctNine:r.after.navTopLevel===9,
+  shortenedLabels:r.after.items.some(x=>x.title==='Asistentes de voz')&&r.after.items.some(x=>x.title==='Blog digital'),
+  noOldLongLabels:!r.after.items.some(x=>x.title.startsWith('Descubre Los Mejores Asistentes')||x.title==='BLOG TRANSFORMACIÓN DIGITAL'),
+  desktopOneRow:r.device==='mobile'||r.after.desktopRows===1,
+  mobileVisible:r.device==='desktop'||r.after.mobileDisplay==='block'
+ }));
+ fs.writeFileSync(path.join(OUT,'acceptance.json'),JSON.stringify(checks,null,2)+'\n');
+ console.log('NAV_ACCEPTANCE',JSON.stringify(checks));
+ if(checks.some(r=>Object.entries(r).some(([k,v])=>!['page','device'].includes(k)&&!v)))process.exitCode=1;
 }
 main().catch(e=>{console.error('NAV_QA_FAILED',e.message);process.exitCode=1});
