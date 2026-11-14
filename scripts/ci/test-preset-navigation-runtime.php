@@ -137,10 +137,10 @@ function get_privacy_policy_url(): string {
 }
 
 function get_page_by_path( string $path, string $type = 'OBJECT', string $post_type = 'page' ): ?WP_Post {
-	if ( 'contacto' !== $path ) {
+	if ( ! in_array( $path, array( 'contacto', 'aviso-legal' ), true ) ) {
 		return null;
 	}
-	$item              = menu_fixture( 77, 'Contacto', 'contacto/' );
+	$item              = menu_fixture( 77, 'contacto' === $path ? 'Contacto' : 'Aviso legal', $path . '/' );
 	$item->post_status = 'publish';
 	return $item;
 }
