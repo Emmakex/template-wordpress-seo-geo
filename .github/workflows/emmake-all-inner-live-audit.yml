@@ -1,0 +1,44 @@
+name: Emmake Inner Pages Live Read-only Audit
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/ci/emmake-all-inner-live-audit.cjs'
+      - '.github/workflows/emmake-all-inner-live-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  published-pages:
+    name: Inspect nine published inner pages (desktop/mobile)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate strictly bounded public read-only audit
+        run: |
+          set -euo pipefail
+          node --check scripts/ci/emmake-all-inner-live-audit.cjs
+          grep -Fq "const ORIGIN='https://emmake.com/nuevaweb/'" scripts/ci/emmake-all-inner-live-audit.cjs
+          grep -Fq "wordpress_mutations:0" scripts/ci/emmake-all-inner-live-audit.cjs
+          grep -Fq "form_submissions:0" scripts/ci/emmake-all-inner-live-audit.cjs
+      - name: Install disposable Playwright Chromium
+        run: |
+          npm install --prefix .qa-deps --no-audit --no-fund --ignore-scripts --no-save playwright@1.65.0
+          .qa-deps/node_modules/.bin/playwright install chromium
+      - name: Audit published WordPress DOM and take mobile/desktop screenshots
+        run: |
+          NODE_PATH="$GITHUB_WORKSPACE/.qa-deps/node_modules" node scripts/ci/emmake-all-inner-live-audit.cjs
+      - name: Upload short-lived visual proof and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emmake-inner-pages-live-audit-20261114
+          path: artifacts/emmake-all-inner-audit/
+          retention-days: 3
+          if-no-files-found: warn
