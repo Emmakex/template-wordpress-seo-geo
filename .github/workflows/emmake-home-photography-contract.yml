@@ -1,0 +1,32 @@
+name: Emmake Homepage Photography Contract
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/inc/Strategic/CorporateHomeRenderer.php'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-v5-a3-1.css'
+      - 'packages/seo-geo-theme/assets/images/presets/corporate/v5/*.webp'
+      - 'scripts/ci/test-emmake-home-photography.py'
+      - '.github/workflows/emmake-home-photography-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/seo-geo-theme/assets/images/presets/corporate/v5/*.webp'
+      - 'scripts/ci/test-emmake-home-photography.py'
+      - '.github/workflows/emmake-home-photography-contract.yml'
+permissions:
+  contents: read
+jobs:
+  images-and-markup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify immutable images, content safety and responsive selectors
+        run: |
+          python3 scripts/ci/test-emmake-home-photography.py
+          php -l packages/seo-geo-theme/inc/Strategic/CorporateHomeRenderer.php
+      - name: Assert theme release packaging includes optimized images
+        run: |
+          test -f packages/seo-geo-theme/assets/images/presets/corporate/v5/hero-consultoria-digital.webp
+          test -f packages/seo-geo-theme/assets/images/presets/corporate/v5/capabilities-soluciones-digitales.webp
+          test -f packages/seo-geo-theme/assets/images/presets/corporate/v5/insights-resultados-analitica.webp
+          test -f packages/seo-geo-theme/assets/images/presets/corporate/v5/contact-consultoria-estrategica.webp
