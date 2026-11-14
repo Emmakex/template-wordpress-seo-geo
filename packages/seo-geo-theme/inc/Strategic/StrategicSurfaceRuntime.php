@@ -52,7 +52,7 @@ final class StrategicSurfaceRuntime {
 
 		echo '<link rel="preload" as="image" type="image/webp" href="'
 			. esc_url( $src )
-			. '" fetchpriority="high">' . "\n";
+			. '" media="(min-width: 821px)" fetchpriority="high">' . "\n";
 	}
 
 	/**
