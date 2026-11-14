@@ -34,7 +34,7 @@ renderer = (ROOT / "inc/Strategic/CorporateHomeRenderer.php").read_text()
 css = (ROOT / "assets/css/presets/corporate-v5-a3-1.css").read_text()
 for name in ("hero-consultoria-digital.webp", "insights-resultados-analitica.webp", "contact-consultoria-estrategica.webp"):
     assert renderer.count(name) == 1, name
-assert 'loading="eager" fetchpriority="high"' in renderer
+assert 'loading="eager" fetchpriority="high" decoding="async"' in renderer
 assert 'loading="lazy" decoding="async"' in renderer
 assert 'aria-hidden="true"' in renderer
 for name in ("capabilities-soluciones-digitales.webp",):
