@@ -81,7 +81,7 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
-		$visual = $this->decorative_image( 'hero-consultoria-digital.webp', 'seo-geo-corporate-hero-visual__image', 1439, 810 );
+		$visual = $this->decorative_image( 'hero-consultoria-digital.webp', 'seo-geo-corporate-hero-visual__image', 1439, 810, false );
 
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'
