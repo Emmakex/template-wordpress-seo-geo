@@ -104,8 +104,8 @@ final class PresetNavigationRuntime {
 	private function render_list( array $items ): string {
 		$entries = array();
 		foreach ( $items as $index => $item ) {
-			$url   = isset( $item['url'] ) ? trim( (string) $item['url'] ) : '';
-			$label = isset( $item['label'] ) ? trim( (string) $item['label'] ) : '';
+			$url   = trim( $item['url'] );
+			$label = trim( $item['label'] );
 			if ( '' === $url || '' === $label ) {
 				continue;
 			}
@@ -149,10 +149,10 @@ final class PresetNavigationRuntime {
 	/**
 	 * Render one hierarchy level.
 	 *
-	 * @param array $entries Normalized entries.
-	 * @param array $children Child map indexed by parent ID.
-	 * @param int   $parent_id Parent menu item ID.
-	 * @param bool  $nested Whether a submenu.
+	 * @param array<int,array{url:string,label:string,parent:int}> $entries Menu index.
+	 * @param array<int,list<int>>                                 $children Child map.
+	 * @param int                                                  $parent_id Parent item ID.
+	 * @param bool                                                 $nested Whether a submenu.
 	 */
 	private function render_branch( array $entries, array $children, int $parent_id, bool $nested ): string {
 		if ( empty( $children[ $parent_id ] ) ) {
@@ -308,7 +308,7 @@ final class PresetNavigationRuntime {
 
 			$items[] = array(
 				'id'     => (int) $item->ID,
-				'parent' => (int) $item->menu_item_parent,
+				'parent' => isset( $item_data['menu_item_parent'] ) ? (int) $item_data['menu_item_parent'] : 0,
 				'label'  => $label,
 				'url'    => $url,
 			);
