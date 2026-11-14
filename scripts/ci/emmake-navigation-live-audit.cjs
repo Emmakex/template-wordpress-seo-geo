@@ -22,7 +22,7 @@ async function capture(pg){
      current:a.getAttribute('aria-current'),box:box(a),
      depth:a.closest('li')?.className||'',submenus:a.closest('li')?.querySelectorAll('ul').length||0})),
    navTopLevel:desktop?.querySelectorAll(':scope > ul > li').length||0,
-   desktopRows:new Set(anchors.filter(a=>getComputedStyle(a).display!=='none').map(a=>Math.round(a.getBoundingClientRect().top))).size,
+   desktopRows:new Set(anchors.filter(a=>getComputedStyle(a).display!=='none').map(a=>{const r=a.getBoundingClientRect();return Math.round(r.top+r.height/2)})).size,
    navSubmenus:desktop?.querySelectorAll('ul ul').length||0,
    mobileAnchorCount:mobile?.querySelectorAll('a[href]').length||0,
    footerMenu:[...(document.querySelectorAll('.seo-geo-preset-navigation--footer a[href]')||[])].map(x=>x.textContent.trim()),
