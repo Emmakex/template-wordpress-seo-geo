@@ -9,7 +9,45 @@
 	'use strict';
 
 	const root = document.querySelector('main .wp-block-post-content');
-	if ( ! root || root.classList.contains('seo-geo-blog-digital-enhanced') ) {
+	if ( ! root ) {
+		return;
+	}
+	/**
+	 * A migrated social card has an anchor labelled "Linkedin" that targets
+	 * Instagram. Never advertise a wrong destination or guess a new LinkedIn
+	 * profile. When a genuine Instagram anchor is already present in the same
+	 * card, suppress only this provably mislabeled duplicate in the rendered DOM.
+	 * The original Gutenberg content remains unchanged and editable in WP.
+	 */
+	function removeMislabelledSocialLink() {
+		const social = [...root.querySelectorAll('.seo-geo-blog-digital-conversion-card')]
+			.find(card => /^s[ií]guenos$/i.test(card.querySelector('h3')?.textContent.trim() || ''));
+		if ( ! social ) {
+			return;
+		}
+		const links = [...social.querySelectorAll('a[href]')];
+		const name = anchor => anchor.textContent.trim().toLowerCase();
+		const target = anchor => {
+			try {
+				return new URL(anchor.href, location.href).hostname.toLowerCase();
+			} catch {
+				return '';
+			}
+		};
+		const instagram = links.some(anchor => name(anchor) === 'instagram'
+			&& /(^|\.)instagram\.com$/.test(target(anchor)));
+		if ( ! instagram ) {
+			return; // No verified fallback: avoid modifying unknown author markup.
+		}
+		for (const anchor of links) {
+			if (name(anchor) === 'linkedin'
+				&& /(^|\.)instagram\.com$/.test(target(anchor))) {
+				anchor.remove(); // Never rewrite URL, fabricate a profile or affect saved content.
+			}
+		}
+	}
+	if (root.classList.contains('seo-geo-blog-digital-enhanced')) {
+		removeMislabelledSocialLink();
 		return;
 	}
 	const slider = root.querySelector(':scope > .sgmb-divi-post-slider');
@@ -187,5 +225,6 @@
 	if (newsletter && ! newsletter.querySelector('form,input[type="email"]')) {
 		newsletter.classList.add('seo-geo-blog-digital-newsletter-unavailable');
 	}
+	removeMislabelledSocialLink();
 	root.classList.add('seo-geo-blog-digital-enhanced');
 }());
