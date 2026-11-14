@@ -35,13 +35,13 @@
 			}
 		};
 		const instagram = links.some(anchor => name(anchor) === 'instagram'
-			&& /(^|\\.)instagram\\.com$/.test(target(anchor)));
+			&& /(^|\.)instagram\.com$/.test(target(anchor)));
 		if ( ! instagram ) {
 			return; // No verified fallback: avoid modifying unknown author markup.
 		}
 		for (const anchor of links) {
 			if (name(anchor) === 'linkedin'
-				&& /(^|\\.)instagram\\.com$/.test(target(anchor))) {
+				&& /(^|\.)instagram\.com$/.test(target(anchor))) {
 				anchor.remove(); // Never rewrite URL, fabricate a profile or affect saved content.
 			}
 		}
