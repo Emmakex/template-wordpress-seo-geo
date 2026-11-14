@@ -50,6 +50,8 @@ assert 'rel="preload" as="image" type="image/webp"' in runtime
 assert "hero-consultoria-digital.webp" in runtime
 assert "body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__grid {" in css
 assert "grid-template-columns: minmax(0, 1fr);" in css
-assert "media=\"(min-width: 821px)\"" in runtime
+assert '" fetchpriority="high">' in runtime
+assert 'media="(min-width: 821px)"' not in runtime
+assert 'loading="eager" fetchpriority="high" decoding="async"' in renderer
 assert "noindex" not in css  # no SEO/indexation mutation
 print("PASS: 4 original optimized WebP assets, valid RIFF, hashes, rendering, CSS, responsive, lazy/eager")
