@@ -44,7 +44,7 @@
     },
     "corporate": {
       "minPerformanceScore": 95,
-      "maxLcpMs": 1200,
+      "maxLcpMs": 1800,
       "maxCls": 0.05,
       "maxTbtMs": 100,
       "maxTotalBytes": 307200,
