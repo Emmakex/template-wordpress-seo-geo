@@ -80,18 +80,10 @@ final class PresetNavigationRuntime {
 			: __( 'Primary navigation', 'seo-geo-theme' );
 		$class = 'seo-geo-preset-navigation seo-geo-preset-navigation--' . $location;
 
-		$list = '<ul class="seo-geo-preset-navigation__list">';
-		foreach ( $items as $item ) {
-			$url  = $item['url'];
-			$text = $item['label'];
-			if ( '' === $url || '' === $text ) {
-				continue;
-			}
-
-			$current = $this->is_current_url( $url ) ? ' aria-current="page"' : '';
-			$list   .= '<li class="seo-geo-preset-navigation__item"><a href="' . esc_url( $url ) . '"' . $current . '>' . esc_html( $text ) . '</a></li>';
+		$list = $this->render_list( $items );
+		if ( '' === $list ) {
+			return '';
 		}
-		$list .= '</ul>';
 
 		if ( 'primary' === $location ) {
 			$mobile = '<details class="seo-geo-preset-navigation__mobile"><summary>' . esc_html__( 'Menu', 'seo-geo-theme' ) . '</summary>' . $list . '</details>';
@@ -102,13 +94,112 @@ final class PresetNavigationRuntime {
 	}
 
 	/**
+	 * Render an accessible nested list, preserving WordPress parent IDs.
+	 *
+	 * Missing parents and cycles become safe root links. Preset items, which
+	 * have no menu IDs, remain flat. All links remain in server-rendered HTML.
+	 *
+	 * @param list<array{label:string,url:string,id?:int,parent?:int}> $items Menu items.
+	 */
+	private function render_list( array $items ): string {
+		$entries = array();
+		foreach ( $items as $index => $item ) {
+			$url   = trim( $item['url'] );
+			$label = trim( $item['label'] );
+			if ( '' === $url || '' === $label ) {
+				continue;
+			}
+
+			$id = ! empty( $item['id'] ) ? (int) $item['id'] : -1 - $index;
+
+			$entries[ $id ] = array(
+				'url'    => $url,
+				'label'  => $label,
+				'parent' => isset( $item['parent'] ) ? (int) $item['parent'] : 0,
+			);
+		}
+
+		if ( array() === $entries ) {
+			return '';
+		}
+
+		$children = array();
+		foreach ( $entries as $id => $item ) {
+			$parent = $item['parent'];
+			$seen   = array( $id => true );
+			$next   = $parent;
+			while ( 0 !== $next && isset( $entries[ $next ] ) ) {
+				if ( isset( $seen[ $next ] ) ) {
+					$parent = 0;
+					break;
+				}
+				$seen[ $next ] = true;
+
+				$next = $entries[ $next ]['parent'];
+			}
+			if ( ! isset( $entries[ $parent ] ) ) {
+				$parent = 0;
+			}
+			$children[ $parent ][] = $id;
+		}
+
+		return $this->render_branch( $entries, $children, 0, false );
+	}
+
+	/**
+	 * Render one hierarchy level.
+	 *
+	 * @param array<int,array{url:string,label:string,parent:int}> $entries Menu index.
+	 * @param array<int,list<int>>                                 $children Child map.
+	 * @param int                                                  $parent_id Parent item ID.
+	 * @param bool                                                 $nested Whether a submenu.
+	 */
+	private function render_branch( array $entries, array $children, int $parent_id, bool $nested ): string {
+		if ( empty( $children[ $parent_id ] ) ) {
+			return '';
+		}
+
+		$list_class = $nested ? 'seo-geo-preset-navigation__sublist' : 'seo-geo-preset-navigation__list';
+		$html       = '<ul class="' . $list_class . '">';
+		foreach ( $children[ $parent_id ] as $id ) {
+			$item     = $entries[ $id ];
+			$sublist  = $this->render_branch( $entries, $children, $id, true );
+			$current  = $this->is_current_url( $item['url'] ) ? ' aria-current="page"' : '';
+			$li_class = 'seo-geo-preset-navigation__item' . ( '' !== $sublist ? ' seo-geo-preset-navigation__item--has-children' : '' );
+			$html    .= '<li class="' . $li_class . '"><a href="' . esc_url( $item['url'] ) . '"' . $current . '>' . esc_html( $item['label'] ) . '</a>' . $sublist . '</li>';
+		}
+
+		return $html . '</ul>';
+	}
+
+	/**
 	 * Resolve menu items from explicit theme location, a bounded legacy-menu
 	 * heuristic, or the active preset navigation contract.
 	 *
 	 * @param string $location Navigation location.
-	 * @return list<array{label:string,url:string}>
+	 * @return list<array{label:string,url:string,id?:int,parent?:int}>
 	 */
 	private function resolved_items( string $location ): array {
+		// If WordPress assigns one classic menu to both regions, render the
+		// preset's focused legal/contact footer instead of duplicating the
+		// complete site navigation. The WordPress assignment remains intact.
+		if ( 'footer' === $location ) {
+			$locations = get_nav_menu_locations();
+			if (
+				isset( $locations['primary'], $locations['footer'] )
+				&& 0 < (int) $locations['primary']
+				&& (int) $locations['primary'] === (int) $locations['footer']
+			) {
+				$footer = $this->preset_items( 'footer' );
+				if ( array() !== $footer ) {
+					return $footer;
+				}
+
+				$primary = $this->assigned_menu_items( 'primary' );
+				return array() !== $primary ? array_slice( $primary, -1 ) : array();
+			}
+		}
+
 		$assigned = $this->assigned_menu_items( $location );
 		if ( array() !== $assigned ) {
 			return $assigned;
@@ -128,7 +219,7 @@ final class PresetNavigationRuntime {
 	 * Resolve a menu explicitly assigned to the current theme location.
 	 *
 	 * @param string $location Navigation location.
-	 * @return list<array{label:string,url:string}>
+	 * @return list<array{label:string,url:string,id?:int,parent?:int}>
 	 */
 	private function assigned_menu_items( string $location ): array {
 		$locations = get_nav_menu_locations();
@@ -146,7 +237,7 @@ final class PresetNavigationRuntime {
 	 * Named primary/header/main menus are preferred; otherwise the smallest
 	 * suitable menu is selected.
 	 *
-	 * @return list<array{label:string,url:string}>
+	 * @return list<array{label:string,url:string,id?:int,parent?:int}>
 	 */
 	private function legacy_primary_menu_items(): array {
 		$menus = wp_get_nav_menus();
@@ -194,7 +285,7 @@ final class PresetNavigationRuntime {
 	 * Convert classic menu items into the public render shape.
 	 *
 	 * @param int $term_id Menu term ID.
-	 * @return list<array{label:string,url:string}>
+	 * @return list<array{label:string,url:string,id?:int,parent?:int}>
 	 */
 	private function menu_items_from_term_id( int $term_id ): array {
 		$raw = wp_get_nav_menu_items( $term_id );
@@ -216,8 +307,10 @@ final class PresetNavigationRuntime {
 			}
 
 			$items[] = array(
-				'label' => $label,
-				'url'   => $url,
+				'id'     => (int) $item->ID,
+				'parent' => isset( $item_data['menu_item_parent'] ) ? (int) $item_data['menu_item_parent'] : 0,
+				'label'  => $label,
+				'url'    => $url,
 			);
 		}
 
@@ -228,7 +321,7 @@ final class PresetNavigationRuntime {
 	 * Resolve the active preset navigation map against existing site content.
 	 *
 	 * @param string $location Navigation location.
-	 * @return list<array{label:string,url:string}>
+	 * @return list<array{label:string,url:string,id?:int,parent?:int}>
 	 */
 	private function preset_items( string $location ): array {
 		if ( ! function_exists( 'seo_geo_theme_active_preset_id' ) || ! function_exists( 'seo_geo_theme_preset_document' ) ) {

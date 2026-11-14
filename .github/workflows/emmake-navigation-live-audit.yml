@@ -7,6 +7,7 @@ on:
       - 'packages/seo-geo-theme/inc/Navigation/PresetNavigationRuntime.php'
       - 'packages/seo-geo-theme/assets/css/presets/corporate.css'
       - 'packages/seo-geo-theme/assets/css/presets/corporate-v5-runtime.css'
+      - 'scripts/ci/test-preset-navigation-runtime.php'
 permissions:
   contents: read
 jobs:
@@ -23,6 +24,11 @@ jobs:
           node --check scripts/ci/emmake-navigation-live-audit.cjs
           grep -Fq "const BASE='https://emmake.com/nuevaweb/'" scripts/ci/emmake-navigation-live-audit.cjs
           grep -Fq "wordpress_mutations:0" scripts/ci/emmake-navigation-live-audit.cjs
+      - name: Verify nested classic menus and independent footer in PHP
+        run: |
+          php -l packages/seo-geo-theme/inc/Navigation/PresetNavigationRuntime.php
+          php -l scripts/ci/test-preset-navigation-runtime.php
+          php scripts/ci/test-preset-navigation-runtime.php
       - name: Install disposable Chromium
         run: |
           npm install --prefix .qa-deps --ignore-scripts --no-audit --no-fund --no-save playwright@1.65.0
