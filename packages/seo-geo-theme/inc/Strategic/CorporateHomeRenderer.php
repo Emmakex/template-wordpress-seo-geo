@@ -292,7 +292,7 @@ final class CorporateHomeRenderer {
 		// Other decorative assets remain lazy and asynchronously decoded.
 		$loading = $lazy
 			? ' loading="lazy" decoding="async"'
-			: ' loading="eager" fetchpriority="high" decoding="sync"';
+			: ' loading="eager" fetchpriority="high" decoding="async"';
 
 		return '<img class="' . esc_attr( $css_class ) . '" src="' . esc_url( $this->asset_uri( $filename ) ) . '" alt="" width="' . esc_attr( (string) $width ) . '" height="' . esc_attr( (string) $height ) . '"' . $loading . '>';
 	}
