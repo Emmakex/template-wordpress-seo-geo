@@ -25,6 +25,7 @@ async function snapshot(pg){
    cards:cards.length,links:urls,unique:new Set(urls).size,
    gridColumns:grid?getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).filter(Boolean).length:0,
    next:next?.href||null,hasPagination:!!pagination,
+   paginationLinks:[...(pagination?.querySelectorAll('a[href]')||[])].map(a=>a.href),
    overflow:document.documentElement.scrollWidth>innerWidth+4,
    privacy:!!main?.querySelector('a[href*="politica-de-privacidad"]'),
    careerCards:main?.querySelectorAll('.seo-geo-inner-service-card').length||0,
@@ -82,6 +83,34 @@ async function main(){
      };
      rows.push({device,page:'blog-page-2',data:page2,checks:check});
      await pg.screenshot({path:path.join(OUTPUT,device+'-blog-page-2.png'),fullPage:true,animations:'disabled'});
+     const third=ROOT+'blog/?query-7-page=3';
+     const hasPage3=page2.paginationLinks.some(url=>new URL(url).searchParams.get('query-7-page')==='3');
+     rows.push({device,page:'page-2-next-navigation',data:{paginationLinks:page2.paginationLinks},
+       checks:{linksToPage3:hasPage3}});
+     const d3=await pg.goto(third,{waitUntil:'domcontentloaded',timeout:30000});
+     const page3=await snapshot(pg);
+     rows.push({device,page:'blog-page-3',data:page3,
+       checks:{status:d3?.status()===200,thirdPage12:page3.cards===12,
+        distinctFromPrevious:page3.links.every(url=>!blog.links.includes(url)&&!page2.links.includes(url)),
+        noOverflow:!page3.overflow,noindex:page3.robots.includes('noindex')}});
+     const deep=ROOT+'blog/?query-7-page=100';
+     let d100=await pg.goto(deep,{waitUntil:'domcontentloaded',timeout:30000});
+     const statusAttempts=[d100?.status()||0];
+     // A public hosting WAF may sporadically return 429/503 on repeated
+     // browser navigation. Retry only these transient responses; never
+     // downgrade the 200 + twelve-real-posts acceptance gate.
+     for(let attempt=1;attempt<=2 && [429,503].includes(d100?.status());attempt++){
+      await pg.waitForTimeout(1600*attempt);
+      d100=await pg.goto(deep,{waitUntil:'domcontentloaded',timeout:30000});
+      statusAttempts.push(d100?.status()||0);
+     }
+     const page100=await snapshot(pg);
+     page100.httpStatus=d100?.status()||0;
+     page100.httpStatusAttempts=statusAttempts;
+     rows.push({device,page:'blog-page-100',data:page100,
+       checks:{status:d100?.status()===200,deepPage12:page100.cards===12,
+        deepPageUnique:page100.unique===12,
+        noOverflow:!page100.overflow,noindex:page100.robots.includes('noindex')}});
     }
     await pg.close();
    }finally{await ctx.close()}
@@ -93,7 +122,7 @@ async function main(){
  fs.writeFileSync(path.join(OUTPUT,'report.json'),JSON.stringify(report,null,2)+'\n');
  console.log('EMMAKE_ACCEPTANCE',JSON.stringify({passed:report.passed,failed,
   pages:rows.map(x=>({device:x.device,page:x.page,cards:x.data.cards,
-   gridColumns:x.data.gridColumns,linkCount:x.data.links.length,next:x.data.next,
+   gridColumns:x.data.gridColumns,linkCount:x.data.links?.length||0,next:x.data.next,
    noOverflow:!x.data.overflow}))}));
  if(!report.passed)process.exitCode=1;
 }
