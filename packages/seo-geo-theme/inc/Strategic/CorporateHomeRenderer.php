@@ -81,7 +81,7 @@ final class CorporateHomeRenderer {
 		}
 		$actions .= '</div>';
 
-		$visual = $this->decorative_image( 'hero-intelligence.svg', 'seo-geo-corporate-hero-visual__image', 720, 620, false );
+		$visual = $this->decorative_image( 'hero-consultoria-digital.webp', 'seo-geo-corporate-hero-visual__image', 1439, 810, false );
 
 		return '<section class="seo-geo-corporate-native-hero" aria-labelledby="seo-geo-corporate-v5-title">'
 			. '<div class="wp-block-columns seo-geo-corporate-native-hero__grid">'
@@ -207,6 +207,9 @@ final class CorporateHomeRenderer {
 				$this->text( $slots, 'insights-heading' ),
 				$this->text( $slots, 'insights-intro' )
 			)
+			. '<div class="seo-geo-corporate-insights-visual" aria-hidden="true">'
+			. $this->decorative_image( 'insights-resultados-analitica.webp', 'seo-geo-corporate-insights-visual__image', 1000, 750 )
+			. '</div>'
 			. ( '' === $items ? '' : '<ul class="wp-block-post-template">' . $items . '</ul>' )
 			. '</section>';
 	}
@@ -253,6 +256,9 @@ final class CorporateHomeRenderer {
 			. '<h2 id="seo-geo-final-cta-title">' . esc_html( $this->text( $slots, 'final-cta-heading' ) ) . '</h2>'
 			. '<p>' . esc_html( $this->text( $slots, 'final-cta-body' ) ) . '</p>'
 			. '<p><a class="wp-element-button" href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['label'] ) . '</a></p>'
+			. '<div class="seo-geo-final-cta__visual" aria-hidden="true">'
+			. $this->decorative_image( 'contact-consultoria-estrategica.webp', 'seo-geo-final-cta__image', 1000, 750 )
+			. '</div>'
 			. '</section>';
 	}
 
