@@ -70,8 +70,10 @@ final class InnerVisualRuntime {
 	/**
 	 * Scope image selection to one public page without altering its content.
 	 *
-	 * @param list<string> $classes WordPress body classes.
-	 * @return list<string>
+	 * @param array $classes WordPress body classes.
+	 * @phpstan-param list<string> $classes
+	 * @return array
+	 * @phpstan-return list<string>
 	 */
 	public static function add_body_class( array $classes ): array {
 		$slug = self::current_slug();
