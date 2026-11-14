@@ -126,7 +126,7 @@ final class ContactFormRuntime {
 		 * when the site administrator has not configured a policy page.
 		 */
 		$privacy_url = function_exists( 'get_privacy_policy_url' ) ? get_privacy_policy_url() : '';
-		if ( is_string( $privacy_url ) && '' !== trim( $privacy_url ) ) {
+		if ( '' !== trim( $privacy_url ) ) {
 			$locale     = function_exists( 'get_locale' ) ? strtolower( (string) get_locale() ) : '';
 			$is_spanish = str_starts_with( $locale, 'es_' ) || 'es' === $locale;
 			$prefix     = $is_spanish
