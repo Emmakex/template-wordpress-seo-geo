@@ -65,7 +65,7 @@ async function main(){
  const checks=rows.map(r=>({
   page:r.page,device:r.device,
   http200:r.http===200,
-  correctNine:r.after.navTopLevel===9,
+  correctNine:r.after.items.length===9,
   shortenedLabels:r.after.items.some(x=>x.title==='Asistentes de voz')&&r.after.items.some(x=>x.title==='Blog digital'),
   homepageLabel:r.after.items[0]?.title==='Inicio'&&r.after.items[0]?.href==='https://emmake.com/nuevaweb/',
   noOldLongLabels:!r.after.items.some(x=>x.title.startsWith('Descubre Los Mejores Asistentes')||x.title==='BLOG TRANSFORMACIÓN DIGITAL'),
