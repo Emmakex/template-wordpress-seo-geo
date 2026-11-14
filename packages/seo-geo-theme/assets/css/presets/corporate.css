@@ -137,8 +137,9 @@ body.seo-geo-preset-corporate :where(a, button, input, textarea, select, summary
 	display: none;
 }
 
-/* Classic WordPress menu hierarchy: a single desktop row with keyboard-
-   reachable nested lists, plus visible indented children on touch layouts. */
+/* Classic WordPress menu hierarchy: one row with keyboard-accessible dropdowns.
+ * Touch layouts show nested links indented beneath their parent.
+ */
 .seo-geo-preset-corporate .seo-geo-preset-navigation__desktop > .seo-geo-preset-navigation__list {
 	flex-wrap: nowrap;
 }
