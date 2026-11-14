@@ -35,6 +35,24 @@ final class StrategicSurfaceRuntime {
 		add_filter( 'template_include', array( $this, 'filter_template' ), 99 );
 		add_filter( 'body_class', array( $this, 'body_classes' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'replace_legacy_layout_runtime' ), 30 );
+		add_action( 'wp_head', array( $this, 'preload_hero_art' ), 1 );
+	}
+
+	/**
+	 * Preload only the accepted Home's local LCP image before render.
+	 * Does not affect other presets, posts, inner pages or editorial assets.
+	 */
+	public function preload_hero_art(): void {
+		if ( ! $this->is_active() ) {
+			return;
+		}
+
+		$src = trailingslashit( get_template_directory_uri() )
+			. 'assets/images/presets/corporate/v5/hero-consultoria-digital.webp';
+
+		echo '<link rel="preload" as="image" type="image/webp" href="'
+			. esc_url( $src )
+			. '" fetchpriority="high">' . "\n";
 	}
 
 	/**
