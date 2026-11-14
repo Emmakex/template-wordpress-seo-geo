@@ -83,6 +83,10 @@ function wp_strip_all_tags( string $value ): string {
 	return strip_tags( $value );
 }
 
+function sanitize_title( string $value ): string {
+	return strtolower( preg_replace( '/[^a-z0-9-]/', '-', $value ) ?? '' );
+}
+
 function sanitize_key( string $value ): string {
 	return preg_replace( '/[^a-z0-9_-]/', '', strtolower( $value ) ) ?? '';
 }
