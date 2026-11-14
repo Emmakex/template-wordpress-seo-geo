@@ -48,5 +48,8 @@ assert "add_action( 'wp_head', array( $this, 'preload_hero_art' ), 1 )" in runti
 assert "if ( ! $this->is_active() )" in runtime
 assert 'rel="preload" as="image" type="image/webp"' in runtime
 assert "hero-consultoria-digital.webp" in runtime
+assert "body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__grid {" in css
+assert "grid-template-columns: minmax(0, 1fr);" in css
+assert "media=\"(min-width: 821px)\"" in runtime
 assert "noindex" not in css  # no SEO/indexation mutation
 print("PASS: 4 original optimized WebP assets, valid RIFF, hashes, rendering, CSS, responsive, lazy/eager")
