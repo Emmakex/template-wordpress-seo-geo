@@ -8,6 +8,10 @@ declare(strict_types=1);
 
 use SeoGeo\Theme\Navigation\PresetNavigationRuntime;
 
+if ( ! defined( 'OBJECT' ) ) {
+	define( 'OBJECT', 'OBJECT' );
+}
+
 class WP_Post {
 	public int $ID = 0;
 	public string $post_status = 'publish';
@@ -155,7 +159,7 @@ $renderer = new PresetNavigationRuntime();
 
 $primary = $renderer->render( array( 'location' => 'primary' ) );
 assert_nav( 18 === substr_count( $primary, 'class="seo-geo-preset-navigation__item' ), 'Expected nine links in each of desktop and mobile.' );
-assert_nav( 2 === substr_count( $primary, 'class="seo-geo-preset-navigation__sublist"' ) * 0 + 4, 'Nested submenu markup missing.' );
+assert_nav( 4 === substr_count( $primary, 'class="seo-geo-preset-navigation__sublist"' ), 'Nested submenu markup missing.' );
 assert_nav( str_contains( $primary, 'Servicios</a><ul class="seo-geo-preset-navigation__sublist"' ), 'Service child was flattened.' );
 assert_nav( str_contains( $primary, 'Blog</a><ul class="seo-geo-preset-navigation__sublist"' ), 'Blog child was flattened.' );
 assert_nav( str_contains( $primary, 'aria-current="page"' ), 'Current page was not marked.' );
