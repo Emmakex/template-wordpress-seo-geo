@@ -649,8 +649,10 @@ body.seo-geo-corporate-home-v5 .seo-geo-final-cta__image {
 		min-width: 0;
 		width: 100%;
 	}
+	/* Prioritize real H1 and two CTAs on phone. The 4 original photos remain in
+	 * the desktop homepage; the capabilities, analytics and CTA visuals remain
+	 * available when mobile readers scroll to those sections. */
 	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__grid > .seo-geo-corporate-native-hero__visual-column {
-		display: grid;
-		margin-top: 1.5rem;
+		display: none;
 	}
 }
