@@ -111,6 +111,7 @@ final class PresetNavigationRuntime {
 			}
 
 			$id = ! empty( $item['id'] ) ? (int) $item['id'] : -1 - $index;
+
 			$entries[ $id ] = array(
 				'url'    => $url,
 				'label'  => $label,
@@ -133,7 +134,8 @@ final class PresetNavigationRuntime {
 					break;
 				}
 				$seen[ $next ] = true;
-				$next         = $entries[ $next ]['parent'];
+
+				$next = $entries[ $next ]['parent'];
 			}
 			if ( ! isset( $entries[ $parent ] ) ) {
 				$parent = 0;
@@ -145,19 +147,21 @@ final class PresetNavigationRuntime {
 	}
 
 	/**
-	 * @param array<int,array{url:string,label:string,parent:int}> $entries Menu index.
-	 * @param array<int,list<int>>                               $children Child map.
-	 * @param int                                                $parent Parent ID.
-	 * @param bool                                               $nested Whether a submenu.
+	 * Render one hierarchy level.
+	 *
+	 * @param array $entries Normalized entries.
+	 * @param array $children Child map indexed by parent ID.
+	 * @param int   $parent_id Parent menu item ID.
+	 * @param bool  $nested Whether a submenu.
 	 */
-	private function render_branch( array $entries, array $children, int $parent, bool $nested ): string {
-		if ( empty( $children[ $parent ] ) ) {
+	private function render_branch( array $entries, array $children, int $parent_id, bool $nested ): string {
+		if ( empty( $children[ $parent_id ] ) ) {
 			return '';
 		}
 
 		$list_class = $nested ? 'seo-geo-preset-navigation__sublist' : 'seo-geo-preset-navigation__list';
 		$html       = '<ul class="' . $list_class . '">';
-		foreach ( $children[ $parent ] as $id ) {
+		foreach ( $children[ $parent_id ] as $id ) {
 			$item     = $entries[ $id ];
 			$sublist  = $this->render_branch( $entries, $children, $id, true );
 			$current  = $this->is_current_url( $item['url'] ) ? ' aria-current="page"' : '';
