@@ -1084,3 +1084,67 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+
+
+/*
+ * Corporate editorial index reading-width rescue (measured 14 Nov 2026).
+ * Native Gutenberg pages with a long direct Latest Posts list render 3 tiny
+ * cards inside a 760px reading column. Expand ONLY long lists (9+ items)
+ * into the existing 1280px corporate shell, without altering WP content,
+ * order, rendered text, links, article single pages, or Digital Blog cards.
+ * The first-party archive remains usable at 390/768/1440px.
+ */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.seo-geo-page-shell .wp-block-post-content:not(.seo-geo-blog-digital-enhanced)
+> ul.wp-block-latest-posts:has(> li:nth-child(9)) {
+	position: relative;
+	left: 50%;
+	transform: translateX(-50%);
+	width: min(1160px, calc(100vw - 4rem));
+	max-width: none;
+	margin: clamp(1.6rem, 3vw, 2.5rem) 0 clamp(2.25rem, 4vw, 4rem);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: clamp(1rem, 1.8vw, 1.5rem);
+}
+@media (max-width: 1020px) {
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-page-shell .wp-block-post-content:not(.seo-geo-blog-digital-enhanced)
+	> ul.wp-block-latest-posts:has(> li:nth-child(9)) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+@media (max-width: 650px) {
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-page-shell .wp-block-post-content:not(.seo-geo-blog-digital-enhanced)
+	> ul.wp-block-latest-posts:has(> li:nth-child(9)) {
+		grid-template-columns: minmax(0, 1fr);
+		width: calc(100vw - 2.5rem);
+	}
+}
+
+/*
+ * Native migrated contact forms: the configured WordPress privacy-policy
+ * link belongs with the input controls, and is kept visible on mobile.
+ * No legal claims, consent checkbox, URL or sender addresses are invented.
+ */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.seo-geo-contact-form .seo-geo-contact-form-privacy {
+	margin: clamp(.6rem, 1.5vw, 1rem) 0 .5rem;
+	font-size: .9rem;
+	line-height: 1.55;
+	color: #3e5e62;
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.seo-geo-contact-form .seo-geo-contact-form-privacy a {
+	color: #075845;
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: .16em;
+	font-weight: 700;
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+.seo-geo-contact-form .seo-geo-contact-form-privacy a:focus-visible {
+	outline: 3px solid #087d67;
+	outline-offset: 4px;
+	border-radius: .15rem;
+}

@@ -1,0 +1,42 @@
+name: Emmake Corporate Blog Reading Width Live Preview
+
+on:
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-inner-v1.css'
+      - 'scripts/ci/emmake-blog-reading-width-preview.cjs'
+      - '.github/workflows/emmake-blog-reading-width-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  live-width:
+    name: Real Blog 1440/768/390 CSS preview (no WordPress changes)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify bounded read-only browser and syntax
+        run: |
+          node --check scripts/ci/emmake-blog-reading-width-preview.cjs
+          grep -Fq "const ORIGIN='https://emmake.com/nuevaweb/'" scripts/ci/emmake-blog-reading-width-preview.cjs
+          grep -Fq "wordpress_mutations:0" scripts/ci/emmake-blog-reading-width-preview.cjs
+          grep -Fq "form_submissions:0" scripts/ci/emmake-blog-reading-width-preview.cjs
+      - name: Install disposable headless Chromium
+        run: |
+          npm install --prefix .qa-deps --no-save --ignore-scripts --no-audit --no-fund playwright@1.65.0
+          .qa-deps/node_modules/.bin/playwright install chromium
+      - name: Preview current WordPress source with proposed CSS
+        run: NODE_PATH="$GITHUB_WORKSPACE/.qa-deps/node_modules" node scripts/ci/emmake-blog-reading-width-preview.cjs
+      - name: Upload short-lived desktop/mobile reading evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emmake-blog-reading-width-preview
+          path: artifacts/emmake-blog-width-preview/
+          retention-days: 3
+          if-no-files-found: warn

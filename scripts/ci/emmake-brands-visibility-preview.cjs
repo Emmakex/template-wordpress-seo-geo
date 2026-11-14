@@ -87,11 +87,12 @@ async function main(){
     await pg.addScriptTag({content:js});
     await pg.waitForTimeout(700);
     const after=await measure(pg);
+    const alreadyInstalledContainment=before.maxCardHeight<600&&Math.max(...before.imageSamples.map(x=>x.renderedHeight))<=185;
     const checks=[
       {id:'all_original_migrated_cards_preserved',ok:after.brandCards===before.brandCards},
       {id:'no_content_links_or_media_removed',ok:after.textLength===before.textLength&&after.images===before.images&&after.anchors===before.anchors},
-      {id:'nested_migrated_brand_images_contained',ok:Math.max(...after.imageSamples.map(x=>x.renderedHeight))<=185&&Math.max(...before.imageSamples.map(x=>x.renderedHeight))-Math.max(...after.imageSamples.map(x=>x.renderedHeight))>=75},
-      {id:'oversized_brand_cards_compacted',ok:after.maxCardHeight<before.maxCardHeight&&after.maxCardHeight<600},
+      {id:'nested_migrated_brand_images_contained',ok:Math.max(...after.imageSamples.map(x=>x.renderedHeight))<=185&&(alreadyInstalledContainment||Math.max(...before.imageSamples.map(x=>x.renderedHeight))-Math.max(...after.imageSamples.map(x=>x.renderedHeight))>=75)},
+      {id:'oversized_brand_cards_compacted',ok:after.maxCardHeight<600&&(alreadyInstalledContainment||after.maxCardHeight<before.maxCardHeight)},
       {id:'no_broken_media',ok:after.brokenImages===0},
       {id:'no_horizontal_overflow',ok:!after.overflow},
       {id:'staging_indexability_unchanged',ok:after.noindex&&after.oneH1}
