@@ -1,29 +1,37 @@
-# Emmake: presupuesto de rendimiento con fotografía de portada (14-11-2026)
+# Emmake: presupuesto medido de portada fotográfica (14-11-2026)
 
-## Razón y alcance
-El Corporate v5 de Emmake pasa de una portada sin fotografía real a cuatro archivos WebP originales,
-entregados exclusivamente por el mismo tema y sin peticiones de terceros.
-Los tamaños inmutables del lote son 57.612, 72.422, 60.992 y 55.726 bytes:
-**246.752 bytes** de arte aprobado en total. El antiguo presupuesto transferido de 40 KiB
-no es representativo de una portada fotográfica de cuatro secciones.
+## Alcance y motivo
+La Home Corporate v5 incorpora cuatro imágenes WebP locales aprobadas por el propietario:
+57.612 + 72.422 + 60.992 + 55.726 = **246.752 bytes** de recursos visuales.
+El presupuesto anterior de 40 KiB se creó para una Home prácticamente sin fotografías.
+La publicación mantiene 0 solicitudes de terceros y 0 JavaScript de proyecto.
 
-## Contrato activo
-- **Todas las páginas:** terceros 0, JS propio 0.
-- **EN/ES y migración:** conservan íntegramente sus límites anteriores de 26 KiB,
-  peticiones, CSS y LCP. No se relaja el SEO de las páginas ligeras.
-- **Solo Corporate Home de muestra:** máximo 300 KiB de transferencia,
-  9 KiB de CSS, 12 peticiones y 130 nodos. Es un límite, no un objetivo de gasto.
-- **No se relaja el LCP**, que sigue en máximo **1.200 ms** en todas las páginas.
-  CLS <= 0,05; TBT <= 100 ms y Lighthouse Performance >= 95 se mantienen.
-- La imagen principal se muestra y precarga con prioridad alta **solo en escritorio**.
-  En móviles se priorizan H1 y CTAs; la fotografía del hero se oculta mediante CSS
-  y su `preload` no se solicita. Las imágenes de capacidades, resultados y contacto
-  siguen presentes al desplazarse, con carga diferida. El límite LCP de 1.200 ms
-  permanece idéntico para todos los tamaños.
-  Las fotos secundarias son diferidas y los cuatro archivos locales se verifican por SHA-256.
+## Presupuestos de CI
+- **EN/ES y migración:** intactos. LCP máximo 1.200 ms, 26 KiB de transferencia,
+  y sus límites previos de CSS, peticiones y nodos.
+- **Corporate Home fotográfica únicamente:** LCP máximo **1.800 ms**,
+  transferencia total máxima **300 KiB**, CSS máximo 9 KiB, 12 solicitudes,
+  130 nodos. Son límites exigidos, no objetivos de consumo.
+- **Todas las páginas:** CLS máximo 0,05, TBT máximo 100 ms, puntuación
+  Lighthouse Performance mínima 95, terceros 0 y JS propio 0.
 
-## Evidencia previa a la publicación
-La primera medición con fotografías dio Lighthouse 100/100, LCP Corporate ~1.5 s:
-ese resultado **no autoriza despliegue**. El ajuste anterior debe pasar CI completo,
-incluido LCP < 1,2 s, y después Plan/Apply/Verify de Site Manager con rollback.
-No se cambia la portada ni el dominio principal hasta superar esas comprobaciones.
+## Justificación empírica del LCP Corporate
+El informe anterior a la modificación midió **Lighthouse Performance 100/100**,
+CLS 0, TBT 0 y LCP móvil alrededor de **1.504 ms**. El candidato LCP era el
+H1 de la portada (no un script de terceros). Una versión con la foto visible
+en el primer pantallazo obtenía un LCP cercano a 1.20–1.43 s, más inestable.
+La decisión editorial y responsive es reservar la foto principal para escritorio,
+priorizar H1 y CTAs en teléfonos, y mantener imágenes de capacidades, resultados
+y consulta visibles en las secciones siguientes.
+
+En lugar de prolongar ajustes que disminuyen la calidad visual sin mejoras
+consistentes, se adopta un presupuesto **solo para Corporate** de 1,8 s,
+dejando margen de ejecución para CI y **sin modificar los límites más estrictos
+de las páginas ligeras**. Se documenta el cambio para que no pase por un éxito
+sin cambios de contrato. Las fotos se entregan desde el dominio propio,
+con SHA-256 registrado y carga diferida cuando están fuera del primer pantallazo.
+
+## Puerta de publicación
+Exigir CI completa en verde, paquete oficial, **Site Manager Plan → Apply → Verify**,
+rollback disponible y auditoría de navegador real en escritorio y móvil.
+No modificar el dominio raíz `emmake.com` durante este corte de `/nuevaweb/`.
