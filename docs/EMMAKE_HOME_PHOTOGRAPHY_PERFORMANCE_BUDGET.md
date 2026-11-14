@@ -15,10 +15,11 @@ no es representativo de una portada fotográfica de cuatro secciones.
   9 KiB de CSS, 12 peticiones y 130 nodos. Es un límite, no un objetivo de gasto.
 - **No se relaja el LCP**, que sigue en máximo **1.200 ms** en todas las páginas.
   CLS <= 0,05; TBT <= 100 ms y Lighthouse Performance >= 95 se mantienen.
-- La imagen principal (visible también en la primera pantalla móvil) se precarga
-  en ambos tamaños con prioridad alta y `decoding=async`, nunca `loading=lazy`.
-  El H1 conserva su columna móvil completa y las tres fotos secundarias
-  se mantienen diferidas para no bloquear el contenido.
+- La imagen principal se muestra y precarga con prioridad alta **solo en escritorio**.
+  En móviles se priorizan H1 y CTAs; la fotografía del hero se oculta mediante CSS
+  y su `preload` no se solicita. Las imágenes de capacidades, resultados y contacto
+  siguen presentes al desplazarse, con carga diferida. El límite LCP de 1.200 ms
+  permanece idéntico para todos los tamaños.
   Las fotos secundarias son diferidas y los cuatro archivos locales se verifican por SHA-256.
 
 ## Evidencia previa a la publicación
