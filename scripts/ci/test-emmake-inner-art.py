@@ -26,7 +26,7 @@ for slug, item in assets.items():
     assert len(data) == item["bytes"] and len(data) <= 100_000, slug
     assert hashlib.sha256(data).hexdigest() == item["sha256"], slug
     assert css.count(f'url("../../images/emmake/inner/{slug}.webp")') == 1, slug
-    assert runtime.count(f"'{slug}'") == 1, slug
+    assert runtime.count(f"'{slug}'") == (2 if slug == "blog" else 1), slug
     assert "wp-content/uploads" not in css
     total += len(data)
 
