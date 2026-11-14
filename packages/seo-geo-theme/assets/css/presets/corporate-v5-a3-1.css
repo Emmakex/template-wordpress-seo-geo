@@ -649,4 +649,8 @@ body.seo-geo-corporate-home-v5 .seo-geo-final-cta__image {
 		min-width: 0;
 		width: 100%;
 	}
+	body.seo-geo-corporate-home-v5 .seo-geo-corporate-native-hero__grid > .seo-geo-corporate-native-hero__visual-column {
+		display: grid;
+		margin-top: 1.5rem;
+	}
 }
