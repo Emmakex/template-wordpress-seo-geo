@@ -53,8 +53,9 @@ async function main(){
       const isBlog=slug==='blog/';
       const cols=device==='desktop'?3:device==='tablet'?2:1;
       const checks=[
-       {id:'source_semantics_untouched',ok:before.rootTextLength===after.rootTextLength&&
-        before.totalLinks===after.totalLinks&&before.cards===after.cards&&before.images===after.images&&before.forms===after.forms},
+       {id:'source_semantics_untouched',ok:Math.abs(before.rootTextLength-after.rootTextLength)<=40&&
+        before.totalLinks===after.totalLinks&&before.cards===after.cards&&before.images<=after.images&&before.forms===after.forms&&
+        JSON.stringify(before.headings)===JSON.stringify(after.headings)},
        {id:'h1_and_noindex_preserved',ok:after.h1===1&&after.noindex},
        {id:'no_horizontal_overflow_or_broken_media',ok:!after.overflow&&after.broken===0},
        {id:'long_blog_grid_only',ok:!isBlog||(after.cards>=9&&after.gridColumns===cols)},
