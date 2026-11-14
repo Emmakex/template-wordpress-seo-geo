@@ -43,5 +43,10 @@ for marker in ("seo-geo-corporate-native-hero__visual-column", "seo-geo-corporat
                "seo-geo-corporate-insights-visual__image", "seo-geo-final-cta__image",
                "@media (max-width: 820px)"):
     assert marker in css, marker
+runtime = (ROOT / "inc/Strategic/StrategicSurfaceRuntime.php").read_text()
+assert "add_action( 'wp_head', array( $this, 'preload_hero_art' ), 1 )" in runtime
+assert "if ( ! $this->is_active() )" in runtime
+assert 'rel="preload" as="image" type="image/webp"' in runtime
+assert "hero-consultoria-digital.webp" in runtime
 assert "noindex" not in css  # no SEO/indexation mutation
 print("PASS: 4 original optimized WebP assets, valid RIFF, hashes, rendering, CSS, responsive, lazy/eager")
