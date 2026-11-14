@@ -1,0 +1,39 @@
+name: Emmake Navigation Live Read-only Audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/ci/emmake-navigation-live-audit.cjs'
+      - '.github/workflows/emmake-navigation-live-audit.yml'
+      - 'packages/seo-geo-theme/inc/Navigation/PresetNavigationRuntime.php'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate.css'
+      - 'packages/seo-geo-theme/assets/css/presets/corporate-v5-runtime.css'
+permissions:
+  contents: read
+jobs:
+  public-menu-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify fixed origin and read-only operation
+        run: |
+          node --check scripts/ci/emmake-navigation-live-audit.cjs
+          grep -Fq "const BASE='https://emmake.com/nuevaweb/'" scripts/ci/emmake-navigation-live-audit.cjs
+          grep -Fq "wordpress_mutations:0" scripts/ci/emmake-navigation-live-audit.cjs
+      - name: Install disposable Chromium
+        run: |
+          npm install --prefix .qa-deps --ignore-scripts --no-audit --no-fund --no-save playwright@1.65.0
+          .qa-deps/node_modules/.bin/playwright install chromium
+      - name: Capture actual published menu on home and interior pages
+        run: NODE_PATH="$GITHUB_WORKSPACE/.qa-deps/node_modules" node scripts/ci/emmake-navigation-live-audit.cjs
+      - name: Preserve screenshots and public menu diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emmake-navigation-real-browser
+          path: artifacts/emmake-navigation-qa/
+          retention-days: 3
+          if-no-files-found: warn
