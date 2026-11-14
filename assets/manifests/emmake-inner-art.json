@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "site": "emmake-nuevaweb",
+  "type": "decorative-render-only",
+  "assets": {
+    "servicios": {
+      "bytes": 71668,
+      "sha256": "2515b03302e0b664b82a22d77a01bd3c7d462e6dcbc4ad688c57024802e331b6",
+      "width": 1280,
+      "height": 720
+    },
+    "sobre-nosotros": {
+      "bytes": 79288,
+      "sha256": "5f146a9e8f6889b59841f44ca15eda4c366c27f97fd3fd9031db0e3b93b1eec9",
+      "width": 1280,
+      "height": 720
+    },
+    "contacto": {
+      "bytes": 65042,
+      "sha256": "a3f827b0661d3c0c092a7826ee1ff3199b9be3c6b1e21e596149e712964fba61",
+      "width": 1280,
+      "height": 720
+    },
+    "nuestras-marcas": {
+      "bytes": 41304,
+      "sha256": "134e83e055d52f902ee86c3b010f191f212157a630e8d769fa9a52b7f2c5c40d",
+      "width": 900,
+      "height": 560
+    },
+    "blog": {
+      "bytes": 62308,
+      "sha256": "fda764da618d28202f4984a7cf03834d0ca551f3285a11fb20aaac0d58bf8f4a",
+      "width": 1280,
+      "height": 720
+    },
+    "blog-transformacion-digital": {
+      "bytes": 61180,
+      "sha256": "c664f22564b3eea23eaa2cd4d5ec279bfe3d5eea851ff8a4ecd58c1b2a7eaabd",
+      "width": 1280,
+      "height": 720
+    },
+    "politica-de-privacidad": {
+      "bytes": 31908,
+      "sha256": "aba90431efd5ce25a67a82ff0af91acbcbcfab913ad71e2f7fc5c08fdb1cabd9",
+      "width": 900,
+      "height": 560
+    },
+    "trabaja-con-nosotros": {
+      "bytes": 35756,
+      "sha256": "edb1db633a60053bb123d603e8abef07c0c201cd02d576e0b6cc3f89c2d7c5ea",
+      "width": 900,
+      "height": 560
+    },
+    "asistentes-virtuales-de-voz": {
+      "bytes": 19022,
+      "sha256": "a41662f071364cd86e5420d2a21bf978d90b68a55053c3ba2bd9137b00569deb",
+      "width": 900,
+      "height": 560
+    }
+  }
+}
