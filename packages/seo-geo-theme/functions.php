@@ -292,7 +292,7 @@ function seo_geo_theme_empty_inner_brand_fallback( string $block_content, array 
 		return $block_content;
 	}
 	$class_names = (string) ( $block['attrs']['className'] ?? '' );
-	$classes = preg_split( '/\\s+/', trim( $class_names ) );
+	$classes     = preg_split( '/\\s+/', trim( $class_names ) );
 	if ( ! is_array( $classes ) || ! in_array( 'seo-geo-site-brand', $classes, true ) ) {
 		return $block_content;
 	}
