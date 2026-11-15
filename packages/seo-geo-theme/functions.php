@@ -276,6 +276,43 @@ function seo_geo_theme_focusable_main_landmark( string $block_content, array $bl
 add_filter( 'render_block_core/group', 'seo_geo_theme_focusable_main_landmark', 10, 2 );
 
 /**
+ * Restore a site-name link when a migrated Corporate interior header has an
+ * empty brand group. The fallback uses WordPress site identity, never a
+ * hard-coded client name, and leaves a rendered logo/title untouched.
+ *
+ * @param string               $block_content Rendered Group block.
+ * @param array<string, mixed> $block         Parsed WordPress block.
+ */
+function seo_geo_theme_empty_inner_brand_fallback( string $block_content, array $block ): string {
+	if ( is_admin() || is_front_page() || 'corporate' !== seo_geo_theme_active_preset_id() ) {
+		return $block_content;
+	}
+	if ( 'core/group' !== ( $block['blockName'] ?? '' ) ) {
+		return $block_content;
+	}
+	$class_names = (string) ( $block['attrs']['className'] ?? '' );
+	if ( ! in_array( 'seo-geo-site-brand', preg_split( '/\\s+/', trim( $class_names ) ) ?: array(), true ) ) {
+		return $block_content;
+	}
+	// Do not substitute for an author-owned logo/link/title or other branding.
+	if ( '' !== trim( wp_strip_all_tags( $block_content ) ) ||
+		preg_match( '/<(?:img|svg|a)\\b/i', $block_content ) ) {
+		return $block_content;
+	}
+	$name  = trim( (string) get_bloginfo( 'name' ) );
+	$close = strripos( $block_content, '</div>' );
+	if ( '' === $name || false === $close ) {
+		return $block_content;
+	}
+	$link = '<a class="seo-geo-site-brand__fallback" href="' . esc_url( home_url( '/' ) ) .
+		'" rel="home">' . esc_html( $name ) . '</a>';
+
+	return substr_replace( $block_content, $link, $close, 0 );
+}
+add_filter( 'render_block_core/group', 'seo_geo_theme_empty_inner_brand_fallback', 20, 2 );
+
+
+/**
  * Register the Theme-owned native contact-form runtime used by migrated pages.
  */
 function seo_geo_theme_contact_form_runtime(): \SeoGeo\Theme\Forms\ContactFormRuntime {
