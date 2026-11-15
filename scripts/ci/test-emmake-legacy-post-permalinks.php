@@ -87,7 +87,8 @@ $cases = array(
 	array( 51663, 'ventajas-y-desventajas-de-los-relojes-de-tiempo-basados-en-la-web', '/blog/ventajas-y-desventajas-de-los-relojes-de-tiempo-basados-en-la-web/' ),
 	array( 52690, 'estrategias-de-marketing%e2%81%a2-digital-impulsando-el-exito-en-la-era-digital', '/blog/estrategias-de-marketing%e2%81%a2-digital-impulsando-el-exito-en-la-era-digital/' ),
 );
-foreach ( $cases as array( $id, $slug, $expected_path ) ) {
+foreach ( $cases as $case ) {
+	list( $id, $slug, $expected_path ) = $case;
 	$link = $runtime->historical_post_link( 'https://emmake.com/nuevaweb/' . $slug . '/', new WP_Post( $id, $slug ), false );
 	if ( 'https://emmake.com/nuevaweb' . $expected_path !== $link ) {
 		throw new RuntimeException( 'Post permalink mismatch for ' . $id . ': ' . $link );
