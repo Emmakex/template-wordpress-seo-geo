@@ -1,0 +1,29 @@
+name: Emmake Legacy URL Preservation Acceptance
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/seo-geo-theme/inc/Emmake/LegacyPostPermalinks.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/test-emmake-legacy-post-permalinks.php'
+      - '.github/workflows/emmake-legacy-post-urls.yml'
+  pull_request:
+    paths:
+      - 'packages/seo-geo-theme/inc/Emmake/LegacyPostPermalinks.php'
+      - 'packages/seo-geo-theme/functions.php'
+      - 'scripts/ci/test-emmake-legacy-post-permalinks.php'
+      - '.github/workflows/emmake-legacy-post-urls.yml'
+permissions:
+  contents: read
+jobs:
+  url-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PHP source and deterministic post URL mapping
+        run: |
+          php -l packages/seo-geo-theme/inc/Emmake/LegacyPostPermalinks.php
+          php -l packages/seo-geo-theme/functions.php
+          php -l scripts/ci/test-emmake-legacy-post-permalinks.php
+          php scripts/ci/test-emmake-legacy-post-permalinks.php
