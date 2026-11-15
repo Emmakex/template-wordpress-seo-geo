@@ -292,7 +292,8 @@ function seo_geo_theme_empty_inner_brand_fallback( string $block_content, array 
 		return $block_content;
 	}
 	$class_names = (string) ( $block['attrs']['className'] ?? '' );
-	if ( ! in_array( 'seo-geo-site-brand', preg_split( '/\\s+/', trim( $class_names ) ) ?: array(), true ) ) {
+	$classes = preg_split( '/\\s+/', trim( $class_names ) );
+	if ( ! is_array( $classes ) || ! in_array( 'seo-geo-site-brand', $classes, true ) ) {
 		return $block_content;
 	}
 	// Do not substitute for an author-owned logo/link/title or other branding.
