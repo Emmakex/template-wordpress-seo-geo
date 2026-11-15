@@ -107,7 +107,7 @@ final class LegacyPostPermalinks {
 	 */
 	public function maybe_flush_rewrites(): void {
 		$signature = hash( 'sha256', (string) wp_json_encode( array( 'blog/%postname%', self::CATEGORY_PATHS ) ) );
-		if ( $signature === get_option( self::REWRITE_OPTION, '' ) ) {
+		if ( get_option( self::REWRITE_OPTION, '' ) === $signature ) {
 			return;
 		}
 
@@ -120,7 +120,7 @@ final class LegacyPostPermalinks {
 		if ( ! isset( $_SERVER['REQUEST_URI'] ) || ! is_string( $_SERVER['REQUEST_URI'] ) ) {
 			return;
 		}
-		$uri = wp_unslash( $_SERVER['REQUEST_URI'] );
+		$uri  = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
 		$path = wp_parse_url( $uri, PHP_URL_PATH );
 		if ( ! is_string( $path ) ) {
 			return;
@@ -135,7 +135,7 @@ final class LegacyPostPermalinks {
 		}
 
 		$requested = strtolower( rtrim( rawurldecode( $path ), '/' ) );
-		$old = strtolower( rtrim( rawurldecode( self::INVISIBLE_SLUG_OLD_PATH ), '/' ) );
+		$old       = strtolower( rtrim( rawurldecode( self::INVISIBLE_SLUG_OLD_PATH ), '/' ) );
 		if ( $requested !== $old ) {
 			return;
 		}
