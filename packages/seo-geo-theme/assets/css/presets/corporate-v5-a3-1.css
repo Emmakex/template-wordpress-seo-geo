@@ -803,3 +803,22 @@ body.seo-geo-corporate-home-v5 .seo-geo-final-cta__image {
     -webkit-text-fill-color: #a4f7dc;
   }
 }
+
+
+/* Keep every mobile root item left-aligned and full width; the v5 shared
+ * navigation flex alignment must not shrink a grid column to max-content. */
+@media (max-width: 1280px) {
+  body.seo-geo-corporate-home-v5 .seo-geo-strategic-header
+  .seo-geo-preset-navigation__mobile[open] > .seo-geo-preset-navigation__list {
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    justify-items: stretch;
+    align-items: stretch;
+    text-align: left;
+  }
+  body.seo-geo-corporate-home-v5 .seo-geo-strategic-header
+  .seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item > a {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
