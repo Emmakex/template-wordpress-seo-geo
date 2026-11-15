@@ -421,3 +421,30 @@ function seo_geo_theme_guard_singular_content_h1( string $block_content, array $
 	return is_string( $block_content ) ? $block_content : '';
 }
 add_filter( 'render_block_core/heading', 'seo_geo_theme_guard_singular_content_h1', 20, 2 );
+
+
+/**
+ * Keep Emmake's homepage HTML title concise without changing its page title,
+ * H1, visible copy, site description, or SEO titles of any other client.
+ *
+ * The legacy WordPress tagline is long and otherwise gets appended to the
+ * site's name in the home document title. Limit this only to Emmake's two
+ * approved installation bases during the controlled cutover.
+ *
+ * @param string $title Existing WordPress title short-circuit value.
+ */
+function seo_geo_theme_emmake_home_document_title( string $title ): string {
+	if ( ! is_front_page() ) {
+		return $title;
+	}
+
+	$host = strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
+	$base = rtrim( (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH ), '/' );
+
+	if ( 'emmake.com' !== $host || ! in_array( $base, array( '', '/nuevaweb' ), true ) ) {
+		return $title;
+	}
+
+	return 'EMMAKE | Estrategia digital, tecnología e inteligencia artificial';
+}
+add_filter( 'pre_get_document_title', 'seo_geo_theme_emmake_home_document_title', 30 );
