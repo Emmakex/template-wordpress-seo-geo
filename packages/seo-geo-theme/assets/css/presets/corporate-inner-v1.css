@@ -1418,3 +1418,36 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-head
 	color: #a4f7dc;
 	-webkit-text-fill-color: #a4f7dc;
 }
+
+
+/* The WordPress Site Title block already contains the brand, but a legacy
+ * header rule hides its <p> on interiors. Restore the authored link in mobile
+ * without changing WordPress content or introducing a second brand. */
+@media (max-width: 1280px) {
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-site-header .seo-geo-site-brand .wp-block-site-title {
+		display: flex !important;
+		align-items: center;
+		visibility: visible !important;
+		opacity: 1 !important;
+		min-height: 44px;
+		min-width: 0;
+		margin: 0;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-site-header .seo-geo-site-brand .wp-block-site-title a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		color: #f7fffc !important;
+		-webkit-text-fill-color: #f7fffc;
+		font-weight: 850;
+		letter-spacing: .11em;
+		text-decoration: none;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-site-header .seo-geo-site-brand .wp-block-site-title a:is(:hover,:focus-visible) {
+		color: #a4f7dc !important;
+		-webkit-text-fill-color: #a4f7dc;
+	}
+}
