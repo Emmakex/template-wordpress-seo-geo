@@ -1377,3 +1377,21 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 		-webkit-text-fill-color: #a4f7dc;
 	}
 }
+
+
+/* The WordPress header's brand slot can be empty on migrated interiors.
+ * Reserve an actual first row, or the expanded panel starts under Menu. */
+@media (max-width: 1280px) {
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-site-header .seo-geo-site-brand {
+		min-height: 48px;
+		align-items: center;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
+	.seo-geo-site-header__inner:has(.seo-geo-preset-navigation__mobile[open])
+	.seo-geo-site-brand {
+		flex: 0 1 calc(100% - 122px);
+		max-width: calc(100% - 122px);
+		margin-right: auto;
+	}
+}
