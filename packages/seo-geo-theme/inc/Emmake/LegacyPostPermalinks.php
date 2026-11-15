@@ -146,7 +146,7 @@ final class LegacyPostPermalinks {
 		}
 
 		$target = get_permalink( $post );
-		if ( is_string( $target ) && '' !== $target ) {
+		if ( '' !== $target ) {
 			wp_safe_redirect( $target, 301, 'Emmake Legacy Permalink' );
 			exit;
 		}
