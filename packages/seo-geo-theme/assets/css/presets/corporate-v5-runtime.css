@@ -116,7 +116,7 @@ body.seo-geo-corporate-home-v5 :where(a,summary):focus-visible{outline:3px solid
 }
 
 .seo-geo-corporate-home-v5 .seo-geo-strategic-header .seo-geo-preset-navigation__desktop .seo-geo-preset-navigation__item:hover > .seo-geo-preset-navigation__sublist,.seo-geo-corporate-home-v5 .seo-geo-strategic-header .seo-geo-preset-navigation__desktop .seo-geo-preset-navigation__item:focus-within > .seo-geo-preset-navigation__sublist{display:grid;gap:.2rem}
-.seo-geo-corporate-home-v5 .seo-geo-strategic-header .seo-geo-preset-navigation__desktop .seo-geo-preset-navigation__sublist a{display:block;padding:.65rem .85rem;white-space:nowrap}
+.seo-geo-corporate-home-v5 .seo-geo-strategic-header .seo-geo-preset-navigation__desktop .seo-geo-preset-navigation__sublist a{display:flex;align-items:center;min-height:44px;padding:.65rem .85rem;white-space:nowrap}
 .seo-geo-corporate-home-v5 .seo-geo-strategic-header .seo-geo-preset-navigation__mobile .seo-geo-preset-navigation__sublist{display:grid;gap:.2rem;margin:.25rem 0 .4rem .6rem;border-left:2px solid rgb(120 232 200/.42);padding:0 0 0 .5rem;list-style:none}
 
 @media(max-width:1280px){
