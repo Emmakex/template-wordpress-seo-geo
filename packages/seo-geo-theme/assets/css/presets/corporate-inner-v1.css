@@ -1395,3 +1395,26 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 		margin-right: auto;
 	}
 }
+
+
+/* Site identity is dynamic: provide contrast only for the fallback link that
+ * WordPress renders when a migrated interior header has an empty brand slot. */
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+.seo-geo-site-brand .seo-geo-site-brand__fallback {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	max-width: 100%;
+	color: #f7fffc;
+	-webkit-text-fill-color: #f7fffc;
+	font-size: .9rem;
+	font-weight: 850;
+	letter-spacing: .12em;
+	text-decoration: none;
+	overflow-wrap: anywhere;
+}
+body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+.seo-geo-site-brand .seo-geo-site-brand__fallback:is(:hover, :focus-visible) {
+	color: #a4f7dc;
+	-webkit-text-fill-color: #a4f7dc;
+}
