@@ -54,6 +54,74 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-head
 .seo-geo-preset-navigation__item a[aria-current="page"] {
 	color: #78e8c8;
 }
+/*
+ * Inner-page navigation contrast + viewport-safe dropdown alignment.
+ * The inner dark header must not inherit its white link color onto the
+ * light Corporate fallback submenu. Scope to the inner presentation only;
+ * keep the home header and the WordPress-authored menu hierarchy untouched.
+ */
+@media (min-width: 1281px) {
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__desktop .seo-geo-preset-navigation__sublist {
+		width: max-content;
+		min-width: min(15rem, calc(100vw - 2rem));
+		max-width: min(21rem, calc(100vw - 2rem));
+		border-color: rgb(120 232 200 / 35%);
+		background: #123e42;
+		box-shadow: 0 24px 50px rgb(4 28 32 / 28%);
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__desktop .seo-geo-preset-navigation__sublist a {
+		display: flex;
+		align-items: center;
+		min-height: 44px;
+		color: #f7fffc;
+		white-space: normal;
+		overflow-wrap: anywhere;
+		line-height: 1.35;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__desktop .seo-geo-preset-navigation__sublist a:is(:hover, :focus-visible),
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__desktop .seo-geo-preset-navigation__sublist a[aria-current="page"] {
+		background: #215b5a;
+		color: #d7fff1;
+	}
+	/* Blog and Contact sit at the right edge; open inward instead of offscreen. */
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__desktop > .seo-geo-preset-navigation__list >
+	.seo-geo-preset-navigation__item:nth-last-child(-n + 2) > .seo-geo-preset-navigation__sublist {
+		left: auto;
+		right: 0;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__desktop > .seo-geo-preset-navigation__list >
+	.seo-geo-preset-navigation__item:nth-last-child(-n + 2) .seo-geo-preset-navigation__sublist
+	.seo-geo-preset-navigation__sublist {
+		left: auto;
+		right: 100%;
+	}
+}
+@media (max-width: 1280px) {
+	/* The compact navigation uses a white panel: its links must be dark. */
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] > .seo-geo-preset-navigation__list {
+		background: #ffffff;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item a {
+		color: #173a3d;
+		white-space: normal;
+		overflow-wrap: anywhere;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item a:is(:hover, :focus-visible),
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item a[aria-current="page"] {
+		background: #e8f7f1;
+		color: #075845;
+	}
+}
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-page-shell,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-insights-shell,
 body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-index-shell,
