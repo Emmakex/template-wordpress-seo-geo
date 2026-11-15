@@ -17,6 +17,7 @@ require_once get_template_directory() . '/inc/setup.php';
 require_once get_template_directory() . '/inc/Ecommerce/FinalHomePattern.php';
 require_once get_template_directory() . '/inc/Forms/ContactFormRuntime.php';
 require_once get_template_directory() . '/inc/Emmake/InnerVisualRuntime.php';
+require_once get_template_directory() . '/inc/Emmake/LegacyPostPermalinks.php';
 require_once get_template_directory() . '/inc/Insights/InsightsIndexRuntime.php';
 require_once get_template_directory() . '/inc/LocalBusiness/FinalInnerPatterns.php';
 require_once get_template_directory() . '/inc/Navigation/PresetNavigationRuntime.php';
@@ -327,6 +328,7 @@ function seo_geo_theme_contact_form_runtime(): \SeoGeo\Theme\Forms\ContactFormRu
 
 seo_geo_theme_contact_form_runtime()->register();
 \SeoGeo\Theme\Emmake\InnerVisualRuntime::register();
+( new \SeoGeo\Theme\Emmake\LegacyPostPermalinks() )->register();
 
 /**
  * Register the native dynamic Insights/posts-index runtime.
