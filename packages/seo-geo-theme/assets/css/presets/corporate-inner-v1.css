@@ -1216,3 +1216,164 @@ body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5)
 	outline-offset: 4px;
 	border-radius: .15rem;
 }
+
+
+/*
+ * Emmake interior navigation — parity with the approved homepage mobile header.
+ * The old 340px absolutely positioned panel overlaid Services/About content;
+ * keep the brand and Menu trigger on one line and move the open list in-flow.
+ * Only this Corporate inner-page skin is affected, never the homepage.
+ */
+@media (max-width: 1280px) {
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header__inner {
+		position: relative;
+		display: flex;
+		flex-wrap: wrap !important;
+		align-items: center;
+		justify-content: space-between;
+		width: var(--corp-shell);
+		gap: .25rem 0;
+		padding-block: .8rem;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header .seo-geo-site-brand {
+		display: flex;
+		flex: 1 1 0;
+		min-width: 0;
+		margin-right: .75rem;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header .seo-geo-site-brand .wp-block-site-title {
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header .seo-geo-preset-navigation--primary {
+		display: block;
+		flex: 0 0 auto;
+		width: auto;
+		min-width: 0;
+		margin-left: auto;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header .seo-geo-preset-navigation__mobile {
+		position: static;
+		display: block;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header .seo-geo-preset-navigation__mobile > summary {
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 106px;
+		min-height: 46px;
+		margin-left: auto;
+		padding: .65rem 1.25rem;
+		border: 1px solid #78e8c8;
+		border-radius: 999px;
+		background: #0d3940;
+		color: #ffffff;
+		-webkit-text-fill-color: #ffffff;
+		box-shadow: none;
+		text-align: center;
+		cursor: pointer;
+		list-style: none;
+	}
+	/* The trigger stays upper-right while the expanded navigation gets its
+	 * own full-width row, increasing header height instead of covering main. */
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header__inner:has(.seo-geo-preset-navigation__mobile[open])
+	.seo-geo-preset-navigation--primary {
+		flex: 0 0 100%;
+		width: 100%;
+		margin-left: 0;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header__inner:has(.seo-geo-preset-navigation__mobile[open])
+	.seo-geo-preset-navigation__mobile > summary {
+		position: absolute;
+		top: .8rem;
+		right: 0;
+		z-index: 2;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] > .seo-geo-preset-navigation__list {
+		position: static !important;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		justify-content: stretch;
+		justify-items: stretch;
+		align-items: stretch;
+		width: 100%;
+		max-width: none;
+		max-height: calc(100dvh - 110px);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		gap: .15rem;
+		margin: 1.05rem 0 0;
+		padding: .8rem;
+		border: 1px solid rgb(120 232 200 / 30%);
+		border-radius: 18px;
+		background: #123f43;
+		box-shadow: 0 12px 30px rgb(0 20 24 / 16%);
+		list-style: none;
+		text-align: left;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item {
+		width: 100%;
+		min-width: 0;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item > a {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		width: 100%;
+		min-height: 46px;
+		padding: .7rem .85rem;
+		border: 1px solid transparent;
+		border-radius: 10px;
+		background: transparent;
+		color: #f7fffc;
+		-webkit-text-fill-color: #f7fffc;
+		font-size: .95rem;
+		font-weight: 700;
+		line-height: 1.35;
+		white-space: normal;
+		overflow-wrap: anywhere;
+		text-align: left;
+		text-decoration: none;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item > a:is(:hover, :focus-visible),
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__item > a[aria-current="page"] {
+		background: rgb(120 232 200 / 13%);
+		color: #a4f7dc;
+		-webkit-text-fill-color: #a4f7dc;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__sublist {
+		position: static !important;
+		display: grid;
+		gap: .1rem;
+		margin: .1rem 0 .4rem .75rem;
+		padding: 0 0 0 .7rem;
+		border: 0;
+		border-left: 2px solid rgb(120 232 200 / 40%);
+		background: transparent;
+		box-shadow: none;
+		list-style: none;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] .seo-geo-preset-navigation__sublist a {
+		min-height: 44px;
+		padding: .55rem .75rem;
+		color: #d7efea;
+		-webkit-text-fill-color: #d7efea;
+		font-size: .9rem;
+		font-weight: 600;
+	}
+	body.seo-geo-preset-corporate:not(.seo-geo-corporate-home-v5) .seo-geo-site-header
+	.seo-geo-preset-navigation__mobile[open] > .seo-geo-preset-navigation__list > .seo-geo-preset-navigation__item:last-child > a {
+		margin-top: .25rem;
+		border: 1px solid rgb(120 232 200 / 55%);
+		color: #a4f7dc;
+		-webkit-text-fill-color: #a4f7dc;
+	}
+}
