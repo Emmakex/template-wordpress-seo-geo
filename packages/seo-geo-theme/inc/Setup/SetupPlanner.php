@@ -107,7 +107,11 @@ final class SetupPlanner {
 	}
 
 	/**
-	 * Return allowlisted preset metadata.
+	 * Return setup-ready preset metadata.
+	 *
+	 * Presets may be bundled in the Theme before their setup contract is ready.
+	 * This keeps an in-development preset out of the public wizard without
+	 * weakening the runtime allowlist or hiding its CI coverage.
 	 *
 	 * @return list<array<string,mixed>>
 	 */
@@ -116,7 +120,7 @@ final class SetupPlanner {
 
 		foreach ( \seo_geo_theme_preset_ids() as $preset_id ) {
 			$document = \seo_geo_theme_preset_document( $preset_id, 'preset.json' );
-			if ( ! is_array( $document ) ) {
+			if ( ! is_array( $document ) || false === ( $document['setup_ready'] ?? true ) ) {
 				continue;
 			}
 

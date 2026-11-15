@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "preset": "research",
+  "version": "0.1.0",
+  "rules": {
+    "storage": "post-meta",
+    "meta_key": "_seo_geo_theme_page_model",
+    "fallback_hydration": "page-content-markers",
+    "manager_can_hydrate": true,
+    "manager_can_read_meta": true,
+    "theme_owns_layout": true,
+    "gutenberg_layout_authority": false
+  },
+  "models": {
+    "home": {
+      "model_id": "research-home-v1",
+      "required": [
+        "hero-eyebrow",
+        "researcher-name",
+        "researcher-headline",
+        "hero-lead",
+        "hero-primary-cta",
+        "research-lines-heading",
+        "research-lines-intro",
+        "selected-outputs-heading",
+        "selected-outputs-intro",
+        "academic-identifiers-heading",
+        "latest-insights-heading",
+        "final-cta-heading",
+        "final-cta-body",
+        "final-cta-button"
+      ],
+      "required_any": [],
+      "evidence_required": {
+        "academic-identifiers": ["academic-identifiers-heading"]
+      }
+    },
+    "about": {
+      "model_id": "research-about-v1",
+      "required": [
+        "profile-heading",
+        "profile-summary",
+        "research-positioning-heading",
+        "research-positioning-body",
+        "professional-background-heading",
+        "professional-background-body",
+        "education-heading",
+        "education-body",
+        "methods-heading",
+        "methods-body",
+        "cv-cta"
+      ],
+      "required_any": [],
+      "evidence_required": {
+        "academic-background": ["education-body"],
+        "professional-background": ["professional-background-body"]
+      }
+    },
+    "research": {
+      "model_id": "research-hub-v1",
+      "required": [
+        "research-heading",
+        "research-intro",
+        "research-agenda-heading",
+        "research-agenda-body",
+        "research-lines-heading",
+        "research-questions-heading",
+        "methods-heading",
+        "methods-body",
+        "related-outputs-heading"
+      ],
+      "required_any": [],
+      "evidence_required": {}
+    },
+    "publications": {
+      "model_id": "research-publications-v1",
+      "required": [
+        "publications-heading",
+        "publications-intro",
+        "status-legend-heading",
+        "status-legend-body",
+        "publication-list-heading",
+        "citation-guidance-heading",
+        "citation-guidance-body"
+      ],
+      "required_any": [],
+      "evidence_required": {}
+    },
+    "projects": {
+      "model_id": "research-projects-v1",
+      "required": [
+        "projects-heading",
+        "projects-intro",
+        "project-list-heading",
+        "project-output-links-heading"
+      ],
+      "required_any": [],
+      "evidence_required": {}
+    },
+    "software": {
+      "model_id": "research-software-v1",
+      "required": [
+        "software-heading",
+        "software-intro",
+        "software-list-heading",
+        "software-citation-heading",
+        "software-citation-body"
+      ],
+      "required_any": [],
+      "evidence_required": {}
+    },
+    "datasets": {
+      "model_id": "research-datasets-v1",
+      "required": [
+        "datasets-heading",
+        "datasets-intro",
+        "dataset-list-heading",
+        "dataset-access-heading",
+        "dataset-access-body"
+      ],
+      "required_any": [],
+      "evidence_required": {}
+    },
+    "cv": {
+      "model_id": "research-cv-v1",
+      "required": [
+        "cv-heading",
+        "cv-summary",
+        "education-heading",
+        "research-experience-heading",
+        "professional-experience-heading",
+        "research-outputs-heading",
+        "academic-identifiers-heading",
+        "cv-download-label"
+      ],
+      "required_any": [],
+      "evidence_required": {
+        "cv-credentials": ["education-heading", "research-experience-heading", "professional-experience-heading"],
+        "academic-identifiers": ["academic-identifiers-heading"]
+      }
+    },
+    "contact": {
+      "model_id": "research-contact-v1",
+      "required": [
+        "contact-heading",
+        "contact-intro",
+        "academic-profile-links-heading"
+      ],
+      "required_any": [
+        ["contact-email", "contact-url"]
+      ],
+      "evidence_required": {}
+    },
+    "insights": {
+      "model_id": "research-insights-v1",
+      "required": [
+        "insights-heading",
+        "insights-intro",
+        "insights-list-heading",
+        "research-context-heading"
+      ],
+      "required_any": [],
+      "evidence_required": {}
+    }
+  }
+}

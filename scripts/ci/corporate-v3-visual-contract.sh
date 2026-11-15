@@ -37,7 +37,7 @@ require_text "$MODEL" "'source'   => 'hydrated-semantic-blocks'" 'transition sou
 printf '[corporate-v5] Checking Theme-owned renderer and chrome boundary.\n'
 require_text "$SURFACE_RUNTIME" "add_filter( 'template_include'" 'strategic template selector missing'
 require_text "$SURFACE_RUNTIME" "strategic-templates/corporate-home.php" 'Corporate strategic document template missing from selector'
-require_text "$SURFACE_RUNTIME" "'corporate' !== seo_geo_theme_active_preset_id()" 'Corporate preset guard missing'
+require_text "$SURFACE_RUNTIME" "'corporate' === \$preset_id" 'Corporate preset dispatch guard missing'
 require_text "$SURFACE_RUNTIME" "wp_dequeue_style( 'seo-geo-theme-preset-corporate-v2' )" 'v5 must remove legacy Corporate visual CSS'
 require_text "$SURFACE_RUNTIME" "wp_dequeue_style( 'seo-geo-theme-preset-corporate-v3-runtime' )" 'v5 must remove legacy Gutenberg escape CSS'
 require_text "$RENDERER" 'seo-geo-corporate-v5-home' 'v5 root renderer marker missing'

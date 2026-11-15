@@ -33,18 +33,18 @@ final class ContentProvenanceResolver {
 	private CanonicalResolver $canonical;
 
 	/**
-	 * Identity authority.
+	 * Schema identity authority.
 	 *
 	 * @var SchemaIdentityResolver
 	 */
 	private SchemaIdentityResolver $identity;
 
 	/**
-	 * Create the resolver.
+	 * Construct the provenance resolver.
 	 *
 	 * @param IndexabilityResolver   $indexability Indexability authority.
 	 * @param CanonicalResolver      $canonical    Canonical URL authority.
-	 * @param SchemaIdentityResolver $identity     Identity authority.
+	 * @param SchemaIdentityResolver $identity     Schema identity authority.
 	 */
 	public function __construct(
 		IndexabilityResolver $indexability,
@@ -62,7 +62,7 @@ final class ContentProvenanceResolver {
 	 * @return array{
 	 *     source_url:string,
 	 *     author:array{id:string,name:string,url:string,description:string}|null,
-	 *     publisher:array{id:string,name:string,url:string}|null,
+	 *     publisher:array<string,mixed>|null,
 	 *     date_published:string,
 	 *     date_modified:string
 	 * }|null
@@ -84,7 +84,6 @@ final class ContentProvenanceResolver {
 
 		$post_id = get_queried_object_id();
 		$data    = $this->for_post( $post_id );
-
 		if ( null === $data ) {
 			return null;
 		}
@@ -104,7 +103,7 @@ final class ContentProvenanceResolver {
 	 * @param int $post_id WordPress post ID.
 	 * @return array{
 	 *     author:array{id:string,name:string,url:string,description:string}|null,
-	 *     publisher:array{id:string,name:string,url:string}|null,
+	 *     publisher:array<string,mixed>|null,
 	 *     date_published:string,
 	 *     date_modified:string
 	 * }|null
@@ -123,14 +122,13 @@ final class ContentProvenanceResolver {
 
 		$published = get_post_datetime( $post, 'date' );
 		$modified  = get_post_datetime( $post, 'modified' );
-
 		if ( false === $published || false === $modified ) {
 			return null;
 		}
 
 		return array(
 			'author'         => $this->identity->author( (int) $post->post_author ),
-			'publisher'      => $this->identity->organization(),
+			'publisher'      => $this->identity->organization() ?? $this->identity->site_person(),
 			'date_published' => $published->format( DATE_W3C ),
 			'date_modified'  => $modified->format( DATE_W3C ),
 		);

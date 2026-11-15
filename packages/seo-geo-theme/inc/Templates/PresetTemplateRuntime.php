@@ -36,6 +36,7 @@ final class PresetTemplateRuntime {
 		'ecommerce'            => 'ecommerce',
 		'local-business'       => 'local-business',
 		'publisher'            => 'publisher',
+		'research'             => 'research',
 		'saas-digital-product' => 'saas-digital-product',
 	);
 
