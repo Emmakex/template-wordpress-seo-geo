@@ -24,8 +24,10 @@ final class AdminMigrationWizard {
 	 * Render the simple operator view from persisted, normalized evidence.
 	 *
 	 * @param array<string,mixed> $operator_status Read-only operator snapshot.
+	 * @param OperatorCopy|null   $copy            EN/ES operator copy for this view.
 	 */
-	public static function render( array $operator_status ): void {
+	public static function render( array $operator_status, ?OperatorCopy $copy = null ): void {
+		$copy = $copy ?? new OperatorCopy();
 		$jobs = array_values( ( new CloneJobStore() )->all() );
 		usort(
 			$jobs,
@@ -69,24 +71,24 @@ final class AdminMigrationWizard {
 		}
 		$steps = array(
 			array(
-				'title' => __( '1. Analyze', 'seo-geo-migration-bridge' ),
+				'title' => $copy->text( 'wizard_step_analyze' ),
 				'state' => $is_import_only ? 'external' : ( $analyzed ? 'complete' : 'pending' ),
-				'note'  => __( 'Public baseline or completed source inventory.', 'seo-geo-migration-bridge' ),
+				'note'  => $copy->text( 'wizard_analyze_note' ),
 			),
 			array(
-				'title' => __( '2. Export', 'seo-geo-migration-bridge' ),
+				'title' => $copy->text( 'wizard_step_export' ),
 				'state' => $is_import_only ? 'external' : ( $exported ? 'complete' : 'pending' ),
-				'note'  => __( 'Database, files and verified package; resumable by job.', 'seo-geo-migration-bridge' ),
+				'note'  => $copy->text( 'wizard_export_note' ),
 			),
 			array(
-				'title' => __( '3. Import', 'seo-geo-migration-bridge' ),
+				'title' => $copy->text( 'wizard_step_import' ),
 				'state' => 'export' === $operation ? 'external' : ( $imported ? 'complete' : 'pending' ),
-				'note'  => __( 'Destination checks, restoration and safe activation.', 'seo-geo-migration-bridge' ),
+				'note'  => $copy->text( 'wizard_import_note' ),
 			),
 			array(
-				'title' => __( '4. Verify', 'seo-geo-migration-bridge' ),
+				'title' => $copy->text( 'wizard_step_verify' ),
 				'state' => 'export' === $operation ? 'external' : ( $verified ? 'complete' : 'pending' ),
-				'note'  => __( 'Final handoff, URL/SEO checks and recovery evidence.', 'seo-geo-migration-bridge' ),
+				'note'  => $copy->text( 'wizard_verify_note' ),
 			),
 		);
 
@@ -103,12 +105,12 @@ final class AdminMigrationWizard {
 		$advanced_url   = $advanced_url . $anchor;
 		?>
 		<section class="seo-geo-migration-simple" aria-labelledby="seo-geo-simple-heading" style="margin:20px 0;padding:20px;background:#fff;border:1px solid #c3c4c7;">
-			<h2 id="seo-geo-simple-heading" style="margin-top:0;"><?php echo esc_html__( 'WordPress migration: simple view', 'seo-geo-migration-bridge' ); ?></h2>
-			<p><?php echo esc_html__( 'Four guided stages. Existing migration checks and confirmations remain mandatory. Opening a job never changes the website.', 'seo-geo-migration-bridge' ); ?></p>
+			<h2 id="seo-geo-simple-heading" style="margin-top:0;"><?php echo esc_html$copy->text( 'wizard_title' ); ?></h2>
+			<p><?php echo esc_html$copy->text( 'wizard_intro' ); ?></p>
 			<?php if ( 0 < count( $jobs ) ) : ?>
 				<form method="get" action="<?php echo esc_url( admin_url( 'tools.php' ) ); ?>" style="margin:16px 0;">
 					<input type="hidden" name="page" value="<?php echo esc_attr( AdminOperatorScreen::PAGE_SLUG ); ?>">
-					<label for="seo-geo-simple-job"><strong><?php echo esc_html__( 'Saved migration', 'seo-geo-migration-bridge' ); ?></strong></label>
+					<label for="seo-geo-simple-job"><strong><?php echo esc_html$copy->text( 'wizard_saved' ); ?></strong></label>
 					<select id="seo-geo-simple-job" name="clone_job_id">
 						<?php foreach ( $jobs as $saved ) : ?>
 							<?php
@@ -118,25 +120,25 @@ final class AdminMigrationWizard {
 							<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $id, $job_id ); ?>><?php echo esc_html( $label ); ?></option>
 						<?php endforeach; ?>
 					</select>
-					<button class="button" type="submit"><?php echo esc_html__( 'View', 'seo-geo-migration-bridge' ); ?></button>
+					<button class="button" type="submit"><?php echo esc_html$copy->text( 'wizard_view' ); ?></button>
 				</form>
 				<?php
 				$counters = is_array( $job['counters'] ?? null ) ? $job['counters'] : array();
 				$done     = (int) ( $counters['completed'] ?? 0 );
 				$total    = $counters['total'] ?? null;
 				?>
-				<p><strong><?php echo esc_html__( 'Recorded job stage:', 'seo-geo-migration-bridge' ); ?></strong>
+				<p><strong><?php echo esc_html$copy->text( 'wizard_phase' ); ?></strong>
 					<code><?php echo esc_html( (string) ( $job['phase'] ?? '' ) ); ?></code>
-					· <strong><?php echo esc_html__( 'Status:', 'seo-geo-migration-bridge' ); ?></strong>
+					· <strong><?php echo esc_html$copy->text( 'wizard_status' ); ?></strong>
 					<code><?php echo esc_html( (string) ( $job['status'] ?? '' ) ); ?></code>
-					· <strong><?php echo esc_html__( 'Batch progress:', 'seo-geo-migration-bridge' ); ?></strong>
+					· <strong><?php echo esc_html$copy->text( 'wizard_batch' ); ?></strong>
 					<?php echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total ); ?>
 				</p>
 				<?php if ( in_array( $job['status'] ?? '', array( 'failed-retryable', 'failed-terminal', 'paused' ), true ) ) : ?>
-					<p class="notice notice-warning inline"><?php echo esc_html__( 'This job needs operator attention; no automatic retry is performed.', 'seo-geo-migration-bridge' ); ?></p>
+					<p class="notice notice-warning inline"><?php echo esc_html$copy->text( 'wizard_attention' ); ?></p>
 				<?php endif; ?>
 			<?php else : ?>
-				<p><?php echo esc_html__( 'No saved migration yet. Open the actions below to capture a baseline and create a job.', 'seo-geo-migration-bridge' ); ?></p>
+				<p><?php echo esc_html$copy->text( 'wizard_empty' ); ?></p>
 			<?php endif; ?>
 			<ol style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding-left:0;list-style:none;">
 				<?php foreach ( $steps as $step ) : ?>
@@ -146,9 +148,9 @@ final class AdminMigrationWizard {
 							<?php
 							echo esc_html(
 								match ( $step['state'] ) {
-									'complete' => __( 'Verified stage evidence', 'seo-geo-migration-bridge' ),
-									'external' => __( 'Handled in a separate job', 'seo-geo-migration-bridge' ),
-									default    => __( 'Not yet verified', 'seo-geo-migration-bridge' ),
+									'complete' => $copy->text( 'wizard_verified' ),
+									'external' => $copy->text( 'wizard_external' ),
+									default    => $copy->text( 'wizard_pending' ),
 								}
 							);
 							?>
@@ -159,24 +161,24 @@ final class AdminMigrationWizard {
 			</ol>
 			<?php if ( is_array( $checkpoint ) ) : ?>
 				<div role="status" style="padding:12px;margin:12px 0;border-left:4px solid #2271b1;background:#f6f7f7;">
-					<strong><?php echo esc_html__( 'Next checkpoint:', 'seo-geo-migration-bridge' ); ?></strong>
-					<?php echo esc_html( $checkpoint['label'] ); ?>
+					<strong><?php echo esc_html$copy->text( 'wizard_next' ); ?></strong>
+					<?php echo esc_html( $copy->text( $checkpoint['label_key'] ) ); ?>
 					<p style="margin:4px 0 0;">
 						<?php
 						// translators: 1: Number of completed checkpoints, 2: Total checkpoint count.
-						echo esc_html( sprintf( __( '%1$d of %2$d technical checkpoints confirmed.', 'seo-geo-migration-bridge' ), $checkpoint['completed'], $checkpoint['total'] ) );
+						echo esc_html( sprintf( $copy->text( 'wizard_progress' ), $checkpoint['completed'], $checkpoint['total'] ) );
 						?>
 						<?php if ( $checkpoint['blocked'] ) : ?>
-							<?php echo esc_html__( 'Inspect the blocker; no retry will start automatically.', 'seo-geo-migration-bridge' ); ?>
+							<?php echo esc_html$copy->text( 'wizard_blocked_note' ); ?>
 						<?php endif; ?>
 					</p>
 				</div>
 			<?php endif; ?>
 			<p>
-				<a class="button button-primary" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( '' === $job_id ? __( 'Start with guided actions', 'seo-geo-migration-bridge' ) : ( true === ( $checkpoint['done'] ?? false ) ? __( 'Review completed migration', 'seo-geo-migration-bridge' ) : ( true === ( $checkpoint['blocked'] ?? false ) ? __( 'Review blocked checkpoint', 'seo-geo-migration-bridge' ) : __( 'Open next checkpoint', 'seo-geo-migration-bridge' ) ) ) ); ?></a>
-				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html__( 'Rescue for redesign', 'seo-geo-migration-bridge' ); ?></a>
+				<a class="button button-primary" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( '' === $job_id ? $copy->text( 'wizard_start' ) : ( true === ( $checkpoint['done'] ?? false ) ? $copy->text( 'wizard_review_done' ) : ( true === ( $checkpoint['blocked'] ?? false ) ? $copy->text( 'wizard_review_blocked' ) : $copy->text( 'wizard_open_next' ) ) ) ); ?></a>
+				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html$copy->text( 'wizard_rescue' ); ?></a>
 			</p>
-			<p class="description"><?php echo esc_html__( 'A clone or import does not publish a new domain. Production cutover and any destructive action require separate safeguards and approval.', 'seo-geo-migration-bridge' ); ?></p>
+			<p class="description"><?php echo esc_html$copy->text( 'wizard_cutover_notice' ); ?></p>
 		</section>
 		<?php
 	}
