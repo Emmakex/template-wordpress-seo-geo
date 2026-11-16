@@ -19,6 +19,7 @@
 		const status = panel.querySelector('[data-auto-status]');
 		const processed = panel.querySelector('[data-auto-processed]');
 		const label = panel.querySelector('[data-auto-label]');
+		const download = panel.querySelector('[data-auto-download]');
 		let state;
 		try {
 			state = JSON.parse(panel.getAttribute('data-initial-progress') || '{}');
@@ -60,6 +61,7 @@
 			const units = next.unit === 'rows' ? (panel.getAttribute('data-msg-rows') || '') : (panel.getAttribute('data-msg-files') || '');
 			processed.textContent = String(next.processed || 0)
 				+ ((Number(next.total) > 0) ? ' / ' + String(next.total) : '') + ' ' + units;
+			download.hidden = !finished;
 			run.disabled = running || !allowed;
 			pause.disabled = !running;
 			if (finished) {
