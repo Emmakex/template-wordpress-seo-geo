@@ -22,6 +22,7 @@ use SeoGeo\MigrationBridge\Operator\AdminBaselineCaptureController;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
 use SeoGeo\MigrationBridge\Operator\AdminSandboxHandoffController;
 use SeoGeo\MigrationBridge\Operator\OperatorCopy;
+use SeoGeo\MigrationBridge\Operator\MigrationWizardNavigator;
 use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Plugin;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
@@ -66,6 +67,18 @@ $fingerprint = static function ( array $state ): string {
 };
 
 $before = $fingerprint( $protected_state() );
+
+// Empty synthetic jobs exercise navigation without altering stored state.
+$guide_jobs = array();
+foreach ( array( 'local-clone', 'export', 'import' ) as $operation ) {
+	$guide_jobs[ $operation ] = MigrationWizardNavigator::next(
+		array(
+			'job_id'    => 'clone-wizard-fixture-000001',
+			'operation' => $operation,
+			'status'    => 'active',
+		)
+	);
+}
 
 $status = $status_service->snapshot();
 
@@ -125,6 +138,7 @@ $after = $fingerprint( $protected_state() );
 echo wp_json_encode(
 	array(
 		'registered'        => $registered,
+		'guide_jobs'        => $guide_jobs,
 		'baseline_action_registered' => $baseline_action_registered,
 		'handoff_action_registered'  => $handoff_action_registered,
 		'review_action_registered'   => $review_action_registered,
@@ -182,6 +196,13 @@ assert payload["catalog_keys"]["en"] == payload["catalog_keys"]["es"]
 assert len(payload["catalog_keys"]["en"]) >= 35
 assert payload["catalog_empty"] == {"en": [], "es": []}
 assert payload["state_fingerprint"]["before"] == payload["state_fingerprint"]["after"]
+for operation, expected in (("local-clone", "clone_inventory"), ("export", "clone_inventory"), ("import", "clone_import")):
+    step = payload["guide_jobs"][operation]
+    assert step["anchor"] == "seo-geo-guide-" + expected
+    assert step["done"] is False
+    assert step["completed"] == 0
+    assert step["total"] >= 5
+    assert step["blocked"] is False
 
 status = payload["status"]
 assert status["schema_version"] == 1
@@ -249,6 +270,12 @@ for required in (
     "<h2>Seguridad y privacidad</h2>",
 ):
     assert required in es
+
+assert 'id="seo-geo-simple-heading"' in en
+assert 'id="seo-geo-advanced-controls"' in en
+assert 'Advanced migration controls and technical details' in en
+assert 'id="seo-geo-simple-heading"' in es
+assert 'id="seo-geo-advanced-controls"' in es
 
 assert 'value="seo_geo_migration_sandbox_handoff"' in en
 assert 'value="seo_geo_migration_sandbox_handoff"' in es
