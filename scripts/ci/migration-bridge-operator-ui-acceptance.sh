@@ -265,7 +265,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 
 assert payload["registered"] is True
 assert payload["tools_hidden"] is True
-assert payload["legacy_registered"] is True
+assert payload["legacy_registered"] is False  # The old URL is handled by admin_init, not a duplicate page.
 assert payload["baseline_action_registered"] is True
 assert payload["handoff_action_registered"] is True
 assert payload["review_action_registered"] is True
