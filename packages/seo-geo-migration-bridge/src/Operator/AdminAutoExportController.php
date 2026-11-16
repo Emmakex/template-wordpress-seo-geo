@@ -197,16 +197,16 @@ final class AdminAutoExportController {
 		}
 
 		return array(
-			'status'       => $status,
-			'phase'        => $phase,
-			'label'        => ( new OperatorCopy() )->text( $checkpoint['label_key'] ),
-			'completed'    => $completed,
-			'steps'        => $steps,
-			'processed'    => $processed,
-			'unit'         => 'database' === $phase ? 'rows' : 'files',
-			'total'        => $total,
-			'percent'      => round( min( 100.0, $percent ), 1 ),
-			'updated_at'   => (string) ( $job['updated_at'] ?? '' ),
+			'status'     => $status,
+			'phase'      => $phase,
+			'label'      => ( new OperatorCopy() )->text( $checkpoint['label_key'] ),
+			'completed'  => $completed,
+			'steps'      => $steps,
+			'processed'  => $processed,
+			'unit'       => 'database' === $phase ? 'rows' : 'files',
+			'total'      => $total,
+			'percent'    => round( min( 100.0, $percent ), 1 ),
+			'updated_at' => (string) ( $job['updated_at'] ?? '' ),
 		);
 	}
 
