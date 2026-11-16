@@ -5,6 +5,8 @@
 # handoff report. Rendering must remain capability-gated and strictly read-only.
 
 printf '[smoke] Checking Phase 8I EN/ES operator UI.\n'
+node --check packages/seo-geo-migration-bridge/assets/auto-export.js \
+  || fail_smoke "operator-auto-export-script" "Browser export controller has a JavaScript syntax error" "valid JS" "node --check failed"
 
 # Phase 8G restores production posture before this acceptance. Re-enable the
 # explicit sandbox posture only for the sandbox-readiness UI fixture, then
