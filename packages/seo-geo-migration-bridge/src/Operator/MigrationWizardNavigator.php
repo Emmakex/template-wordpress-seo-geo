@@ -164,13 +164,12 @@ final class MigrationWizardNavigator {
 	 */
 	private static function stage( string $store, string $accepted, string $anchor, int $group, string $code, array $also = array() ): array {
 		return array(
-			'store'    => $store,
-			'accepted' => array_merge( array( $accepted ), $also ),
-			'anchor'   => 'seo-geo-guide-' . str_replace( '_heading', '', $anchor ),
+			'store'     => $store,
+			'accepted'  => array_merge( array( $accepted ), $also ),
+			'anchor'    => 'seo-geo-guide-' . str_replace( '_heading', '', $anchor ),
 			'label_key' => $anchor,
-			'group'    => $group,
-			'code'     => $code,
+			'group'     => $group,
+			'code'      => $code,
 		);
 	}
-
 }
