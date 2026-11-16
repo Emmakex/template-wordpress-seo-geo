@@ -95,9 +95,10 @@ final class AdminMigrationWizard {
 			$advanced_url = add_query_arg( array( 'clone_job_id' => $job_id ), $advanced_url );
 		}
 		$baseline_ready = true === ( $operator_status['baseline']['available'] ?? false );
+		$checkpoint     = '' !== $job_id ? MigrationWizardNavigator::next( $job ) : null;
 		$anchor         = ! $baseline_ready
 			? '#seo-geo-baseline-capture-form'
-			: ( '' !== $job_id ? '#seo-geo-clone-selected' : '#seo-geo-clone-workflow' );
+			: ( is_array( $checkpoint ) ? '#' . $checkpoint['anchor'] : '#seo-geo-clone-workflow' );
 		$advanced_url   = $advanced_url . $anchor;
 		?>
 		<section class="seo-geo-migration-simple" aria-labelledby="seo-geo-simple-heading" style="margin:20px 0;padding:20px;background:#fff;border:1px solid #c3c4c7;">
@@ -155,8 +156,20 @@ final class AdminMigrationWizard {
 					</li>
 				<?php endforeach; ?>
 			</ol>
+			<?php if ( is_array( $checkpoint ) ) : ?>
+				<div role="status" style="padding:12px;margin:12px 0;border-left:4px solid #2271b1;background:#f6f7f7;">
+					<strong><?php echo esc_html__( 'Next checkpoint:', 'seo-geo-migration-bridge' ); ?></strong>
+					<?php echo esc_html( $checkpoint['label'] ); ?>
+					<p style="margin:4px 0 0;">
+						<?php echo esc_html( sprintf( __( '%1$d of %2$d technical checkpoints confirmed.', 'seo-geo-migration-bridge' ), $checkpoint['completed'], $checkpoint['total'] ) ); ?>
+						<?php if ( $checkpoint['blocked'] ) : ?>
+							<?php echo esc_html__( 'Inspect the blocker; no retry will start automatically.', 'seo-geo-migration-bridge' ); ?>
+						<?php endif; ?>
+					</p>
+				</div>
+			<?php endif; ?>
 			<p>
-				<a class="button button-primary" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( '' === $job_id ? __( 'Start with guided actions', 'seo-geo-migration-bridge' ) : __( 'Continue this migration', 'seo-geo-migration-bridge' ) ); ?></a>
+				<a class="button button-primary" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( '' === $job_id ? __( 'Start with guided actions', 'seo-geo-migration-bridge' ) : ( true === ( $checkpoint['done'] ?? false ) ? __( 'Review completed migration', 'seo-geo-migration-bridge' ) : ( true === ( $checkpoint['blocked'] ?? false ) ? __( 'Review blocked checkpoint', 'seo-geo-migration-bridge' ) : __( 'Open next checkpoint', 'seo-geo-migration-bridge' ) ) ) ); ?></a>
 				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html__( 'Rescue for redesign', 'seo-geo-migration-bridge' ); ?></a>
 			</p>
 			<p class="description"><?php echo esc_html__( 'A clone or import does not publish a new domain. Production cutover and any destructive action require separate safeguards and approval.', 'seo-geo-migration-bridge' ); ?></p>
