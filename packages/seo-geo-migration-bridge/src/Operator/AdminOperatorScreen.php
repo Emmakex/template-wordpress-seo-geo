@@ -207,7 +207,7 @@ final class AdminOperatorScreen {
 			return $location;
 		}
 		parse_str( $query, $params );
-		if ( ! is_array( $params ) || self::PAGE_SLUG !== ( $params['page'] ?? null ) ) {
+		if ( self::PAGE_SLUG !== ( $params['page'] ?? null ) ) {
 			return $location;
 		}
 		return add_query_arg( self::legacy_query_args( $params ), admin_url( 'admin.php' ) );
