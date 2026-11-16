@@ -218,6 +218,14 @@ final class AdminOperatorScreen {
 			<details id="seo-geo-advanced-controls" <?php echo AdminMigrationWizard::advanced_open() ? 'open' : ''; ?>>
 				<summary style="cursor:pointer;font-weight:600;margin:16px 0;"><?php echo esc_html( $this->copy->text( 'wizard_advanced_controls' ) ); ?></summary>
 				<div class="seo-geo-migration-advanced">
+			<h2><?php echo esc_html( $this->copy->text( 'wizard_related_tools' ) ); ?></h2>
+			<p>
+				<a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-native-replatform' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_replatform' ) ); ?></a>
+				 · <a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_reset' ) ); ?></a>
+				 · <a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-page-pipeline' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_pages' ) ); ?></a>
+				 · <a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-insights' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_insights' ) ); ?></a>
+				 · <a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-site-readiness' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_readiness' ) ); ?></a>
+			</p>
 			<div class="notice notice-info inline">
 				<p><strong><?php echo esc_html__( 'Full redesign / existing clone?', 'seo-geo-migration-bridge' ); ?></strong></p>
 				<p><?php echo esc_html__( 'Use Reset & Rebuild to rescue only content, URLs, SEO, links and useful media, then remove the legacy theme/builder/plugin baggage. Remaining UNKNOWN dependencies do not block this path unless their business function is explicitly required.', 'seo-geo-migration-bridge' ); ?></p>
