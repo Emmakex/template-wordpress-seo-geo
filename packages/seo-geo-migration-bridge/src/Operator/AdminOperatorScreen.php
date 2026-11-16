@@ -126,6 +126,8 @@ final class AdminOperatorScreen {
 	 * Register WordPress administration hooks.
 	 */
 	public function register(): void {
+		( new AdminAutoExportController() )->register();
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_auto_export' ) );
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_menu', array( $this, 'simplify_tools_menu' ), 999 );
 		add_action( 'init', array( $this, 'redirect_legacy_tools_url' ) );
@@ -144,6 +146,24 @@ final class AdminOperatorScreen {
 			array( $this, 'render_page' ),
 			'dashicons-migrate',
 			58
+		);
+	}
+
+	/**
+	 * Load the small browser-driven export script only on this plugin's dashboard.
+	 *
+	 * @param string $hook WordPress admin screen hook.
+	 */
+	public function enqueue_auto_export( string $hook ): void {
+		if ( 'toplevel_page_' . self::DASHBOARD_SLUG !== $hook ) {
+			return;
+		}
+		wp_enqueue_script(
+			'seo-geo-migration-auto-export',
+			plugins_url( 'assets/auto-export.js', SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' ),
+			array(),
+			SEO_GEO_MIGRATION_BRIDGE_VERSION,
+			true
 		);
 	}
 
