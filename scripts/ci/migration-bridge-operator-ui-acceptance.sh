@@ -21,6 +21,7 @@ cat >"$OPERATOR_RUNNER" <<'PHP'
 use SeoGeo\MigrationBridge\Operator\AdminBaselineCaptureController;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
 use SeoGeo\MigrationBridge\Operator\AdminMigrationWizard;
+use SeoGeo\MigrationBridge\Operator\AdminAutoExportController;
 use SeoGeo\MigrationBridge\Operator\AdminSandboxHandoffController;
 use SeoGeo\MigrationBridge\Operator\OperatorCopy;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
@@ -181,17 +182,20 @@ $_GET['clone_job_id'] = $fixture_id;
 ob_start();
 $english_screen->render_page();
 $wizard_export_html = (string) ob_get_clean();
+$auto_export_state = AdminAutoExportController::snapshot( ( new CloneJobStore() )->get( $fixture_id ) );
 
 $fixture_mode = 'import';
 ob_start();
 $english_screen->render_page();
 $wizard_import_html = (string) ob_get_clean();
+$auto_import_state = AdminAutoExportController::snapshot( ( new CloneJobStore() )->get( $fixture_id ) );
 
 $fixture_mode   = 'export';
 $fixture_status = 'paused';
 ob_start();
 $english_screen->render_page();
 $wizard_paused_html = (string) ob_get_clean();
+$auto_paused_state = AdminAutoExportController::snapshot( ( new CloneJobStore() )->get( $fixture_id ) );
 
 remove_filter( 'pre_option_' . CloneJobStore::OPTION_NAME, $fixture_jobs );
 unset( $_GET['clone_job_id'] );
@@ -230,6 +234,12 @@ echo wp_json_encode(
 		'tools_hidden'      => $tools_hidden,
 		'legacy_registered' => $legacy_registered,
 		'guide_jobs'        => $guide_jobs,
+		'auto_export'       => array(
+			'export' => $auto_export_state,
+			'import' => $auto_import_state,
+			'paused' => $auto_paused_state,
+			'registered' => false !== has_action( 'wp_ajax_' . AdminAutoExportController::ACTION ),
+		),
 		'guide_safe_actions' => $guide_safe_actions,
 		'baseline_action_registered' => $baseline_action_registered,
 		'handoff_action_registered'  => $handoff_action_registered,
@@ -334,14 +344,25 @@ fixture = payload["wizard_fixture"]
 export_ui = simple_section(fixture["export"])
 import_ui = simple_section(fixture["import"])
 paused_ui = simple_section(fixture["paused"])
-assert 'name="action" value="seo_geo_migration_clone_inventory"' in export_ui
-assert 'name="clone_job_id" value="clone-wizard-fixture-000001"' in export_ui
-assert "Continue one safe batch" in export_ui
-assert 'name="_wpnonce"' in export_ui
-assert "Continue one safe batch" not in import_ui
-assert 'name="action" value="seo_geo_migration_clone_inventory"' not in import_ui
-assert "Continue one safe batch" not in paused_ui
-assert 'name="action" value="seo_geo_migration_clone_inventory"' not in paused_ui
+auto = payload["auto_export"]
+assert auto["registered"] is True
+assert auto["export"]["phase"] == "inventory"
+assert auto["export"]["status"] == "running"
+assert auto["export"]["completed"] == 0
+assert auto["import"]["status"] != "running"
+assert auto["paused"]["status"] != "running"
+assert 'data-seo-geo-auto-export' in export_ui
+assert 'data-job-id="clone-wizard-fixture-000001"' in export_ui
+assert 'data-action="seo_geo_migration_auto_export_batch"' in export_ui
+assert 'data-endpoint="' in export_ui and 'admin-ajax.php' in export_ui
+assert 'data-nonce="' in export_ui
+assert 'data-auto-progress' in export_ui
+assert 'data-auto-pause disabled' in export_ui
+assert "Start / resume automatic export" in export_ui
+assert 'data-seo-geo-auto-export' not in import_ui
+assert 'data-seo-geo-auto-export' in paused_ui
+assert 'data-auto-run disabled' in paused_ui
+assert 'name="action" value="seo_geo_migration_clone_inventory"' not in export_ui
 
 status = payload["status"]
 assert status["schema_version"] == 1
