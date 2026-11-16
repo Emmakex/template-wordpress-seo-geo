@@ -96,14 +96,14 @@ final class AdminMigrationWizard {
 			),
 		);
 
-		$base_url     = admin_url( 'tools.php?page=' . AdminOperatorScreen::PAGE_SLUG );
+		$base_url     = admin_url( 'admin.php?page=' . AdminOperatorScreen::DASHBOARD_SLUG );
 		$advanced_url = add_query_arg( array( 'advanced' => '1' ), $base_url );
 		if ( '' !== $job_id ) {
 			$advanced_url = add_query_arg( array( 'clone_job_id' => $job_id ), $advanced_url );
 		}
 		$baseline_ready = true === ( $operator_status['baseline']['available'] ?? false );
 		$checkpoint     = '' !== $job_id ? MigrationWizardNavigator::next( $job ) : null;
-		$anchor         = ! $baseline_ready
+		$anchor         = '' === $job_id && ! $baseline_ready
 			? '#seo-geo-baseline-capture-form'
 			: ( is_array( $checkpoint ) ? '#' . $checkpoint['anchor'] : '#seo-geo-clone-workflow' );
 		$advanced_url   = $advanced_url . $anchor;
@@ -118,7 +118,7 @@ final class AdminMigrationWizard {
 			} else {
 				$button_text = $copy->text( 'wizard_open_next' );
 			}
-			if ( $baseline_ready && 'active' === ( $job['status'] ?? '' ) && ! $checkpoint['blocked'] && ! $checkpoint['done'] ) {
+			if ( 'active' === ( $job['status'] ?? '' ) && ! $checkpoint['blocked'] && ! $checkpoint['done'] ) {
 				$batch = self::safe_batch_action( $checkpoint );
 			}
 		}
@@ -126,24 +126,26 @@ final class AdminMigrationWizard {
 		<section class="seo-geo-migration-simple" aria-labelledby="seo-geo-simple-heading" style="margin:20px 0;padding:20px;background:#fff;border:1px solid #c3c4c7;">
 			<h2 id="seo-geo-simple-heading" style="margin-top:0;"><?php echo esc_html( $copy->text( 'wizard_title' ) ); ?></h2>
 			<p><?php echo esc_html( $copy->text( 'wizard_intro' ) ); ?></p>
-			<?php if ( $baseline_ready ) : ?>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
 					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneController::ACTION ); ?>">
 					<?php wp_nonce_field( AdminCloneController::NONCE_ACTION ); ?>
 					<button class="button" type="submit" name="clone_operation" value="export"><?php echo esc_html( $copy->text( 'clone_export_button' ) ); ?></button>
 					<button class="button" type="submit" name="clone_operation" value="local-clone"><?php echo esc_html( $copy->text( 'clone_local_button' ) ); ?></button>
 					<button class="button" type="submit" name="clone_operation" value="import"><?php echo esc_html( $copy->text( 'clone_import_button' ) ); ?></button>
-				</form>
-			<?php endif; ?>
+			</form>
 			<?php if ( 0 < count( $jobs ) ) : ?>
 				<form method="get" action="<?php echo esc_url( admin_url( 'tools.php' ) ); ?>" style="margin:16px 0;">
 					<input type="hidden" name="page" value="<?php echo esc_attr( AdminOperatorScreen::PAGE_SLUG ); ?>">
 					<label for="seo-geo-simple-job"><strong><?php echo esc_html( $copy->text( 'wizard_saved' ) ); ?></strong></label>
-					<select id="seo-geo-simple-job" name="clone_job_id">
+					<select id="seo-geo-simple-job" name="clone_job_id" style="max-width:100%;width:460px;">
 						<?php foreach ( $jobs as $saved ) : ?>
 							<?php
 							$id    = (string) $saved['job_id'];
-							$label = sprintf( '%s · %s · %s', $id, (string) $saved['operation'], (string) $saved['status'] );
+							$kind  = $copy->text( 'wizard_job_' . str_replace( '-', '_', (string) $saved['operation'] ) );
+							$state = $copy->text( 'wizard_state_' . str_replace( '-', '_', (string) $saved['status'] ) );
+							$stamp = strtotime( (string) ( $saved['updated_at'] ?? '' ) );
+							$when  = false !== $stamp ? wp_date( 'd/m H:i', $stamp ) : '';
+							$label = sprintf( '%s · %s · %s · #%s', $kind, $state, $when, substr( $id, -8 ) );
 							?>
 							<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $id, $job_id ); ?>><?php echo esc_html( $label ); ?></option>
 						<?php endforeach; ?>
@@ -155,10 +157,9 @@ final class AdminMigrationWizard {
 				$done     = (int) ( $counters['completed'] ?? 0 );
 				$total    = $counters['total'] ?? null;
 				?>
-				<p><strong><?php echo esc_html( $copy->text( 'wizard_phase' ) ); ?></strong>
-					<code><?php echo esc_html( (string) ( $job['phase'] ?? '' ) ); ?></code>
-					· <strong><?php echo esc_html( $copy->text( 'wizard_status' ) ); ?></strong>
-					<code><?php echo esc_html( (string) ( $job['status'] ?? '' ) ); ?></code>
+				<p><strong><?php echo esc_html( $copy->text( 'wizard_current_job' ) ); ?></strong>
+					<?php echo esc_html( $copy->text( 'wizard_job_' . str_replace( '-', '_', $operation ) ) ); ?>
+					· <?php echo esc_html( $copy->text( 'wizard_state_' . str_replace( '-', '_', (string) ( $job['status'] ?? '' ) ) ) ); ?>
 					· <strong><?php echo esc_html( $copy->text( 'wizard_batch' ) ); ?></strong>
 					<?php echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total ); ?>
 				</p>
