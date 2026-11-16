@@ -137,7 +137,7 @@ final class MigrationWizardNavigator {
 
 		if ( 'import' === $operation ) {
 			return array(
-				self::stage( ImportStateStore::class, 'preflight-ready', 'clone_import_heading', 3, 'preflight' , array( 'payload-verified' ) ),
+				self::stage( ImportStateStore::class, 'preflight-ready', 'clone_import_heading', 3, 'preflight', array( 'payload-verified' ) ),
 				self::stage( ImportPayloadStateStore::class, 'complete', 'clone_import_payload_heading', 3, 'payload' ),
 				self::stage( ImportDatabaseStateStore::class, 'complete', 'clone_import_database_heading', 3, 'restore-db' ),
 				self::stage( ImportFileStateStore::class, 'complete', 'clone_import_file_heading', 3, 'restore-files' ),
@@ -152,12 +152,14 @@ final class MigrationWizardNavigator {
 	}
 
 	/**
+	 * Describe a persisted migration checkpoint.
+	 *
 	 * @param class-string $store       Normalized state store.
 	 * @param string       $accepted    Required success status.
 	 * @param string       $anchor      OperatorCopy heading key.
 	 * @param int          $group       One of the four overview stages.
 	 * @param string       $code        Specific extra evidence contract.
-	 * @param list<string> $also        Additional success statuses.
+	 * @param array $also        Additional success statuses.
 	 * @return array{store:class-string,accepted:list<string>,anchor:string,label:string,group:int,code:string}
 	 */
 	private static function stage( string $store, string $accepted, string $anchor, int $group, string $code, array $also = array() ): array {
@@ -172,6 +174,8 @@ final class MigrationWizardNavigator {
 	}
 
 	/**
+	 * Translate a checkpoint into actionable operator wording.
+	 *
 	 * @param string $code Step identifier, without client data.
 	 */
 	private static function label( string $code ): string {
