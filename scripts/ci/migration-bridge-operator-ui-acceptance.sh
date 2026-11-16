@@ -20,8 +20,11 @@ cat >"$OPERATOR_RUNNER" <<'PHP'
 
 use SeoGeo\MigrationBridge\Operator\AdminBaselineCaptureController;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
+use SeoGeo\MigrationBridge\Operator\AdminMigrationWizard;
 use SeoGeo\MigrationBridge\Operator\AdminSandboxHandoffController;
 use SeoGeo\MigrationBridge\Operator\OperatorCopy;
+use SeoGeo\MigrationBridge\Clone\CloneJobStore;
+use SeoGeo\MigrationBridge\Operator\MigrationWizardNavigator;
 use SeoGeo\MigrationBridge\Operator\OperatorStatus;
 use SeoGeo\MigrationBridge\Plugin;
 use SeoGeo\MigrationBridge\Review\AdminDependencyReviewController;
@@ -67,6 +70,26 @@ $fingerprint = static function ( array $state ): string {
 
 $before = $fingerprint( $protected_state() );
 
+// Empty synthetic jobs exercise navigation without altering stored state.
+$guide_jobs = array();
+foreach ( array( 'local-clone', 'export', 'import' ) as $operation ) {
+	$guide_jobs[ $operation ] = MigrationWizardNavigator::next(
+		array(
+			'job_id'    => 'clone-wizard-fixture-000001',
+			'operation' => $operation,
+			'status'    => 'active',
+		)
+	);
+}
+
+$guide_safe_actions = array(
+	'inventory' => AdminMigrationWizard::safe_batch_action( $guide_jobs['export'] ),
+	'import'    => AdminMigrationWizard::safe_batch_action( $guide_jobs['import'] ),
+	'database'  => AdminMigrationWizard::safe_batch_action( array( 'anchor' => 'seo-geo-guide-clone_database_export' ) ),
+	'files'     => AdminMigrationWizard::safe_batch_action( array( 'anchor' => 'seo-geo-guide-clone_file_export' ) ),
+	'activate'  => AdminMigrationWizard::safe_batch_action( array( 'anchor' => 'seo-geo-guide-clone_database_activation' ) ),
+);
+
 $status = $status_service->snapshot();
 
 do_action( 'admin_menu' );
@@ -94,6 +117,47 @@ $spanish_screen = new AdminOperatorScreen( $status_service, new OperatorCopy( 'e
 ob_start();
 $spanish_screen->render_page();
 $spanish_html = (string) ob_get_clean();
+
+// Inject a normalized job only into reads: no migration state is persisted.
+$fixture_id     = 'clone-wizard-fixture-000001';
+$fixture_mode   = 'export';
+$fixture_status = 'active';
+$fixture_jobs   = static function ( $pre ) use ( $fixture_id, &$fixture_mode, &$fixture_status ): array {
+	return array(
+		$fixture_id => array(
+			'schema_version' => CloneJobStore::SCHEMA_VERSION,
+			'job_id'         => $fixture_id,
+			'operation'      => $fixture_mode,
+			'phase'          => 'created',
+			'status'         => $fixture_status,
+			'cursor'         => null,
+			'counters'       => array( 'completed' => 0, 'total' => null ),
+			'error_code'     => null,
+			'created_at'     => gmdate( DATE_ATOM ),
+			'updated_at'     => gmdate( DATE_ATOM ),
+		),
+	);
+};
+add_filter( 'pre_option_' . CloneJobStore::OPTION_NAME, $fixture_jobs );
+$_GET['clone_job_id'] = $fixture_id;
+
+ob_start();
+$english_screen->render_page();
+$wizard_export_html = (string) ob_get_clean();
+
+$fixture_mode = 'import';
+ob_start();
+$english_screen->render_page();
+$wizard_import_html = (string) ob_get_clean();
+
+$fixture_mode   = 'export';
+$fixture_status = 'paused';
+ob_start();
+$english_screen->render_page();
+$wizard_paused_html = (string) ob_get_clean();
+
+remove_filter( 'pre_option_' . CloneJobStore::OPTION_NAME, $fixture_jobs );
+unset( $_GET['clone_job_id'] );
 
 $baseline_action_registered = false !== has_action(
 	'admin_post_' . AdminBaselineCaptureController::ACTION
@@ -125,6 +189,8 @@ $after = $fingerprint( $protected_state() );
 echo wp_json_encode(
 	array(
 		'registered'        => $registered,
+		'guide_jobs'        => $guide_jobs,
+		'guide_safe_actions' => $guide_safe_actions,
 		'baseline_action_registered' => $baseline_action_registered,
 		'handoff_action_registered'  => $handoff_action_registered,
 		'review_action_registered'   => $review_action_registered,
@@ -138,6 +204,11 @@ echo wp_json_encode(
 		),
 		'status'            => $status,
 		'english_html'      => $english_html,
+		'wizard_fixture'    => array(
+			'export' => $wizard_export_html,
+			'import' => $wizard_import_html,
+			'paused' => $wizard_paused_html,
+		),
 		'spanish_html'      => $spanish_html,
 		'missing_spanish_html' => $missing_spanish_html,
 		'state_fingerprint' => array(
@@ -182,6 +253,41 @@ assert payload["catalog_keys"]["en"] == payload["catalog_keys"]["es"]
 assert len(payload["catalog_keys"]["en"]) >= 35
 assert payload["catalog_empty"] == {"en": [], "es": []}
 assert payload["state_fingerprint"]["before"] == payload["state_fingerprint"]["after"]
+for operation, expected in (("local-clone", "clone_inventory"), ("export", "clone_inventory"), ("import", "clone_import")):
+    step = payload["guide_jobs"][operation]
+    assert step["anchor"] == "seo-geo-guide-" + expected
+    assert step["done"] is False
+    assert step["completed"] == 0
+    assert step["total"] >= 5
+    assert step["blocked"] is False
+
+safe = payload["guide_safe_actions"]
+assert safe["inventory"]["action"] == "seo_geo_migration_clone_inventory"
+assert safe["inventory"]["nonce"] == "seo_geo_migration_clone_inventory"
+assert safe["inventory"]["fields"] == {"inventory_batch_size": 100}
+assert safe["database"]["action"] == "seo_geo_migration_clone_database_export"
+assert safe["database"]["fields"] == {"database_batch_rows": 100}
+assert safe["files"]["action"] == "seo_geo_migration_clone_file_export"
+assert safe["files"]["fields"] == {"file_batch_size": 25, "file_batch_megabytes": 8}
+assert safe["import"] is None
+assert safe["activate"] is None
+
+# The simple view must wire its POST form only for an active source job.
+def simple_section(html):
+    return html.split('<section class="seo-geo-migration-simple"', 1)[1].split("</section>", 1)[0]
+
+fixture = payload["wizard_fixture"]
+export_ui = simple_section(fixture["export"])
+import_ui = simple_section(fixture["import"])
+paused_ui = simple_section(fixture["paused"])
+assert 'name="action" value="seo_geo_migration_clone_inventory"' in export_ui
+assert 'name="clone_job_id" value="clone-wizard-fixture-000001"' in export_ui
+assert "Continue one safe batch" in export_ui
+assert 'name="_wpnonce"' in export_ui
+assert "Continue one safe batch" not in import_ui
+assert 'name="action" value="seo_geo_migration_clone_inventory"' not in import_ui
+assert "Continue one safe batch" not in paused_ui
+assert 'name="action" value="seo_geo_migration_clone_inventory"' not in paused_ui
 
 status = payload["status"]
 assert status["schema_version"] == 1
@@ -249,6 +355,20 @@ for required in (
     "<h2>Seguridad y privacidad</h2>",
 ):
     assert required in es
+
+assert 'name="clone_operation" value="export"' in en
+assert 'name="clone_operation" value="local-clone"' in en
+assert 'name="clone_operation" value="import"' in en
+assert 'name="clone_operation" value="export"' in es
+assert 'name="clone_operation" value="export"' not in payload["missing_spanish_html"]
+assert 'id="seo-geo-simple-heading"' in en
+assert "WordPress migration: simple view" in en
+assert 'id="seo-geo-advanced-controls"' in en
+assert 'Advanced migration controls and technical details' in en
+assert 'id="seo-geo-simple-heading"' in es
+assert "Migración WordPress: vista sencilla" in es
+assert 'id="seo-geo-advanced-controls"' in es
+assert "Controles avanzados y detalles técnicos de migración" in es
 
 assert 'value="seo_geo_migration_sandbox_handoff"' in en
 assert 'value="seo_geo_migration_sandbox_handoff"' in es

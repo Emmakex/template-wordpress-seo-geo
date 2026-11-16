@@ -154,6 +154,10 @@ final class AdminOperatorScreen {
 		<div class="wrap seo-geo-migration-operator">
 			<h1><?php echo esc_html( $this->copy->text( 'page_title' ) ); ?></h1>
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
+			<?php AdminMigrationWizard::render( $status, $this->copy ); ?>
+			<details id="seo-geo-advanced-controls" <?php echo AdminMigrationWizard::advanced_open() ? 'open' : ''; ?>>
+				<summary style="cursor:pointer;font-weight:600;margin:16px 0;"><?php echo esc_html( $this->copy->text( 'wizard_advanced_controls' ) ); ?></summary>
+				<div class="seo-geo-migration-advanced">
 			<div class="notice notice-info inline">
 				<p><strong><?php echo esc_html__( 'Full redesign / existing clone?', 'seo-geo-migration-bridge' ); ?></strong></p>
 				<p><?php echo esc_html__( 'Use Reset & Rebuild to rescue only content, URLs, SEO, links and useful media, then remove the legacy theme/builder/plugin baggage. Remaining UNKNOWN dependencies do not block this path unless their business function is explicitly required.', 'seo-geo-migration-bridge' ); ?></p>
@@ -322,6 +326,8 @@ final class AdminOperatorScreen {
 
 			<h2><?php echo esc_html( $this->copy->text( 'privacy_heading' ) ); ?></h2>
 			<p><?php echo esc_html( $this->copy->text( 'privacy_text' ) ); ?></p>
+				</div>
+			</details>
 		</div>
 		<?php
 	}
@@ -437,7 +443,7 @@ final class AdminOperatorScreen {
 		}
 
 		?>
-		<h2><?php echo esc_html( $this->copy->text( 'clone_heading' ) ); ?></h2>
+		<h2 id="seo-geo-clone-workflow"><?php echo esc_html( $this->copy->text( 'clone_heading' ) ); ?></h2>
 		<p><?php echo esc_html( $this->copy->text( 'clone_help' ) ); ?></p>
 		<div style="display:flex;gap:8px;flex-wrap:wrap">
 			<?php $this->render_clone_job_form( 'local-clone', 'clone_local_button' ); ?>
@@ -478,7 +484,7 @@ final class AdminOperatorScreen {
 		<?php endif; ?>
 
 		<?php if ( is_array( $selected ) ) : ?>
-			<h3><?php echo esc_html( $this->copy->text( 'clone_selected_heading' ) ); ?></h3>
+			<h3 id="seo-geo-clone-selected"><?php echo esc_html( $this->copy->text( 'clone_selected_heading' ) ); ?></h3>
 			<table class="widefat striped" role="presentation">
 				<tbody>
 					<tr>
@@ -564,7 +570,7 @@ final class AdminOperatorScreen {
 			return;
 		}
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_inventory_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_inventory"><?php echo esc_html( $this->copy->text( 'clone_inventory_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_inventory_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -677,7 +683,7 @@ final class AdminOperatorScreen {
 		$status = is_array( $export ) ? (string) ( $export['status'] ?? 'pending' ) : 'pending';
 		$button = 'pending' === $status ? 'clone_database_export_start' : 'clone_database_export_continue';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_database_export_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_database_export"><?php echo esc_html( $this->copy->text( 'clone_database_export_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_database_export_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -855,7 +861,7 @@ final class AdminOperatorScreen {
 			&& $auto_cycle < AdminCloneFileExportController::MAX_AUTO_CYCLES
 		);
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_file_export_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_file_export"><?php echo esc_html( $this->copy->text( 'clone_file_export_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_file_export_help' ) ); ?></p>
 
 		<div style="margin:14px 0 18px;padding:16px;border:1px solid #c3c4c7;background:#fff;">
@@ -1082,7 +1088,7 @@ final class AdminOperatorScreen {
 			? (int) ( $package['verify_byte_count'] ?? 0 )
 			: (int) ( $package['payload_byte_count'] ?? 0 );
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_package_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_package"><?php echo esc_html( $this->copy->text( 'clone_package_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_package_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -1195,7 +1201,7 @@ final class AdminOperatorScreen {
 		$target_url     = is_array( $state ) && '' !== (string) ( $state['target_url'] ?? '' ) ? (string) $state['target_url'] : $default_url;
 		$target_prefix  = is_array( $state ) && '' !== (string) ( $state['target_table_prefix'] ?? '' ) ? (string) $state['target_table_prefix'] : $default_prefix;
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_plan_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_plan"><?php echo esc_html( $this->copy->text( 'clone_local_plan_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_plan_help' ) ); ?></p>
 		<?php if ( is_array( $state ) ) : ?>
 			<table class="widefat striped" role="presentation">
@@ -1275,7 +1281,7 @@ final class AdminOperatorScreen {
 		$state  = ( new LocalCloneBootstrapStateStore() )->get( $job_id );
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_bootstrap"><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_bootstrap_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -1360,7 +1366,7 @@ final class AdminOperatorScreen {
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_runtime_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_runtime"><?php echo esc_html( $this->copy->text( 'clone_local_runtime_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_runtime_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -1455,7 +1461,7 @@ final class AdminOperatorScreen {
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_sandbox_runtime_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_sandbox_runtime"><?php echo esc_html( $this->copy->text( 'clone_local_sandbox_runtime_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_sandbox_runtime_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -1604,7 +1610,7 @@ final class AdminOperatorScreen {
 			&& $auto_cycle < AdminCloneLocalPackageHandoffController::MAX_AUTO_CYCLES
 		);
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_handoff_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_handoff"><?php echo esc_html( $this->copy->text( 'clone_local_handoff_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_handoff_help' ) ); ?></p>
 
 		<?php if ( is_array( $delivery ) && 'building' === $status ) : ?>
@@ -1751,7 +1757,7 @@ final class AdminOperatorScreen {
 		$state  = ( new LocalCloneTargetPreflightStateStore() )->get( $job_id );
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_target_preflight"><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_target_preflight_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -1832,7 +1838,7 @@ final class AdminOperatorScreen {
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_payload_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_payload"><?php echo esc_html( $this->copy->text( 'clone_local_payload_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_payload_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -1929,7 +1935,7 @@ final class AdminOperatorScreen {
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_database_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_database"><?php echo esc_html( $this->copy->text( 'clone_local_database_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_database_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -2020,7 +2026,7 @@ final class AdminOperatorScreen {
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_files_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_files"><?php echo esc_html( $this->copy->text( 'clone_local_files_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_files_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -2117,7 +2123,7 @@ final class AdminOperatorScreen {
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_rewrite"><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_rewrite_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -2213,7 +2219,7 @@ final class AdminOperatorScreen {
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		$stage  = is_array( $state ) ? (string) ( $state['stage'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_finalization_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_finalization"><?php echo esc_html( $this->copy->text( 'clone_local_finalization_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_finalization_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -2319,7 +2325,7 @@ final class AdminOperatorScreen {
 		$state  = ( new LocalCloneDatabaseActivationStateStore() )->get( $job_id );
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_database_activation"><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_database_activation_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -2428,7 +2434,7 @@ final class AdminOperatorScreen {
 		$state  = ( new LocalCloneFilePromotionStateStore() )->get( $job_id );
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_file_promotion"><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_file_promotion_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -2543,7 +2549,7 @@ final class AdminOperatorScreen {
 		$state  = ( new LocalCloneHandoffReportStateStore() )->get( $job_id );
 		$status = is_array( $state ) ? (string) ( $state['status'] ?? 'pending' ) : 'pending';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_local_final_handoff_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_local_final_handoff"><?php echo esc_html( $this->copy->text( 'clone_local_final_handoff_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_local_final_handoff_help' ) ); ?></p>
 
 		<?php if ( is_array( $state ) ) : ?>
@@ -2628,7 +2634,7 @@ final class AdminOperatorScreen {
 		$button   = 'pending' === $status ? 'clone_delivery_start' : 'clone_delivery_continue';
 		$expires  = is_array( $delivery ) ? (int) ( $delivery['expires_at'] ?? 0 ) : 0;
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_delivery_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_delivery"><?php echo esc_html( $this->copy->text( 'clone_delivery_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_delivery_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -2766,7 +2772,7 @@ final class AdminOperatorScreen {
 		$has_archive = is_array( $state ) && 0 < (int) ( $state['archive_bytes'] ?? 0 );
 		$button      = $has_archive ? 'clone_import_revalidate' : 'clone_import_validate';
 		?>
-		<h3><?php echo esc_html( $this->copy->text( 'clone_import_heading' ) ); ?></h3>
+		<h3 id="seo-geo-guide-clone_import"><?php echo esc_html( $this->copy->text( 'clone_import_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -2896,7 +2902,7 @@ final class AdminOperatorScreen {
 		$blockers       = is_array( $payload['blockers'] ?? null ) ? array_values( array_filter( $payload['blockers'], 'is_string' ) ) : array();
 		$button         = 'pending' === $status ? 'clone_import_payload_start' : 'clone_import_payload_continue';
 		?>
-		<h4><?php echo esc_html( $this->copy->text( 'clone_import_payload_heading' ) ); ?></h4>
+		<h4 id="seo-geo-guide-clone_import_payload"><?php echo esc_html( $this->copy->text( 'clone_import_payload_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_payload_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -3001,7 +3007,7 @@ final class AdminOperatorScreen {
 		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
 		$button   = 'pending' === $status ? 'clone_import_database_start' : 'clone_import_database_continue';
 		?>
-		<h4><?php echo esc_html( $this->copy->text( 'clone_import_database_heading' ) ); ?></h4>
+		<h4 id="seo-geo-guide-clone_import_database"><?php echo esc_html( $this->copy->text( 'clone_import_database_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_database_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -3079,7 +3085,7 @@ final class AdminOperatorScreen {
 		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
 		$button   = 'pending' === $status ? 'clone_import_file_start' : 'clone_import_file_continue';
 		?>
-		<h4><?php echo esc_html( $this->copy->text( 'clone_import_file_heading' ) ); ?></h4>
+		<h4 id="seo-geo-guide-clone_import_file"><?php echo esc_html( $this->copy->text( 'clone_import_file_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_file_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -3164,7 +3170,7 @@ final class AdminOperatorScreen {
 		$advisories = is_array( $state['advisories'] ?? null ) ? array_values( array_filter( $state['advisories'], 'is_string' ) ) : array();
 		$button     = 'pending' === $status ? 'clone_import_rewrite_start' : 'clone_import_rewrite_continue';
 		?>
-		<h4><?php echo esc_html( $this->copy->text( 'clone_import_rewrite_heading' ) ); ?></h4>
+		<h4 id="seo-geo-guide-clone_import_rewrite"><?php echo esc_html( $this->copy->text( 'clone_import_rewrite_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_rewrite_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -3252,7 +3258,7 @@ final class AdminOperatorScreen {
 		$advisories = is_array( $state['advisories'] ?? null ) ? array_values( array_filter( $state['advisories'], 'is_string' ) ) : array();
 		$button     = 'pending' === $status ? 'clone_import_finalize_start' : 'clone_import_finalize_continue';
 		?>
-		<h4><?php echo esc_html( $this->copy->text( 'clone_import_finalize_heading' ) ); ?></h4>
+		<h4 id="seo-geo-guide-clone_import_finalize"><?php echo esc_html( $this->copy->text( 'clone_import_finalize_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_finalize_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -3358,7 +3364,7 @@ final class AdminOperatorScreen {
 			true
 		);
 		?>
-		<h4><?php echo esc_html( $this->copy->text( 'clone_database_activation_heading' ) ); ?></h4>
+		<h4 id="seo-geo-guide-clone_database_activation"><?php echo esc_html( $this->copy->text( 'clone_database_activation_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_database_activation_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
@@ -3455,7 +3461,7 @@ final class AdminOperatorScreen {
 		$roots    = is_array( $state['roots'] ?? null ) ? $state['roots'] : array();
 		$blockers = is_array( $state['blockers'] ?? null ) ? array_values( array_filter( $state['blockers'], 'is_string' ) ) : array();
 		?>
-		<h4><?php echo esc_html( $this->copy->text( 'clone_file_promotion_heading' ) ); ?></h4>
+		<h4 id="seo-geo-guide-clone_file_promotion"><?php echo esc_html( $this->copy->text( 'clone_file_promotion_heading' ) ); ?></h4>
 		<p><?php echo esc_html( $this->copy->text( 'clone_file_promotion_help' ) ); ?></p>
 		<table class="widefat striped" role="presentation">
 			<tbody>
