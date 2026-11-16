@@ -217,7 +217,7 @@ final class AdminOperatorScreen {
 	/**
 	 * Retain only bounded, read-only result selectors when changing the page URL.
 	 *
-	 * @param array<string,mixed> $params Original URL query parameters.
+	 * @param array<array-key,mixed> $params Original URL query parameters.
 	 * @return array<string,string>
 	 */
 	private static function legacy_query_args( array $params ): array {
