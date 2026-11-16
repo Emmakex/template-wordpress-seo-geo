@@ -221,10 +221,10 @@ final class AdminOperatorScreen {
 			<h2><?php echo esc_html( $this->copy->text( 'wizard_related_tools' ) ); ?></h2>
 			<p>
 				<a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-native-replatform' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_replatform' ) ); ?></a>
-				 · <a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_reset' ) ); ?></a>
-				 · <a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-page-pipeline' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_pages' ) ); ?></a>
-				 · <a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-insights' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_insights' ) ); ?></a>
-				 · <a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-site-readiness' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_readiness' ) ); ?></a>
+				<span aria-hidden="true"> · </span><a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_reset' ) ); ?></a>
+				<span aria-hidden="true"> · </span><a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-page-pipeline' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_pages' ) ); ?></a>
+				<span aria-hidden="true"> · </span><a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-insights' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_insights' ) ); ?></a>
+				<span aria-hidden="true"> · </span><a href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-corporate-site-readiness' ) ); ?>"><?php echo esc_html( $this->copy->text( 'wizard_related_readiness' ) ); ?></a>
 			</p>
 			<div class="notice notice-info inline">
 				<p><strong><?php echo esc_html__( 'Full redesign / existing clone?', 'seo-geo-migration-bridge' ); ?></strong></p>
