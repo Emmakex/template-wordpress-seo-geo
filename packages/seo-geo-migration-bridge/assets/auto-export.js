@@ -45,8 +45,16 @@
 			const finished = next.status === 'ready';
 			const allowed = next.status === 'running';
 			const percent = Math.max(0, Math.min(100, Number(next.percent) || 0));
-			progress.value = percent;
-			progress.setAttribute('aria-valuenow', String(Math.round(percent)));
+			if (allowed && !(Number(next.total) > 0)) {
+				// The inventory/database total is unknown; show visible activity, not a fake percentage.
+				progress.removeAttribute('value');
+				progress.removeAttribute('aria-valuenow');
+				progress.setAttribute('aria-valuetext', String(next.completed || 0) + ' / ' + String(next.steps || 5));
+			} else {
+				progress.value = percent;
+				progress.setAttribute('aria-valuenow', String(Math.round(percent)));
+				progress.removeAttribute('aria-valuetext');
+			}
 			label.textContent = next.label || '';
 			stage.textContent = String(next.completed || 0) + ' / ' + String(next.steps || 5);
 			const units = next.unit === 'rows' ? (panel.getAttribute('data-msg-rows') || '') : (panel.getAttribute('data-msg-files') || '');
