@@ -94,7 +94,10 @@ final class AdminMigrationWizard {
 		if ( '' !== $job_id ) {
 			$advanced_url = add_query_arg( array( 'clone_job_id' => $job_id ), $advanced_url );
 		}
-		$advanced_url .= '#seo-geo-advanced-controls';
+		$anchor = '' !== $job_id
+			? '#seo-geo-clone-selected'
+			: ( $analyzed ? '#seo-geo-clone-workflow' : '#seo-geo-baseline-capture-form' );
+		$advanced_url .= $anchor;
 		?>
 		<section class="seo-geo-migration-simple" aria-labelledby="seo-geo-simple-heading" style="margin:20px 0;padding:20px;background:#fff;border:1px solid #c3c4c7;">
 			<h2 id="seo-geo-simple-heading" style="margin-top:0;"><?php echo esc_html__( 'WordPress migration: simple view', 'seo-geo-migration-bridge' ); ?></h2>
