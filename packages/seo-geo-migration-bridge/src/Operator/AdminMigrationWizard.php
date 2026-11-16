@@ -118,7 +118,7 @@ final class AdminMigrationWizard {
 			} else {
 				$button_text = $copy->text( 'wizard_open_next' );
 			}
-			if ( $baseline_ready && is_array( $job ) && 'active' === ( $job['status'] ?? '' ) && ! $checkpoint['blocked'] && ! $checkpoint['done'] ) {
+			if ( $baseline_ready && 'active' === ( $job['status'] ?? '' ) && ! $checkpoint['blocked'] && ! $checkpoint['done'] ) {
 				$batch = self::safe_batch_action( $checkpoint );
 			}
 		}
