@@ -2848,15 +2848,18 @@ foreach (
 $operator_screen = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php' );
 foreach (
 	array(
-		'add_management_page(',
+		'add_menu_page(',
 		"current_user_can( 'manage_options' )",
 		"public const PAGE_SLUG = 'seo-geo-migration-bridge';",
+		"public const DASHBOARD_SLUG = 'seo-geo-migration-dashboard';",
+		"remove_submenu_page( 'tools.php', \$slug );",
+		'function redirect_legacy_tools_url()',
 	) as $operator_screen_guard
 ) {
 	if ( ! str_contains( $operator_screen, $operator_screen_guard ) ) {
 		fail_migration_bridge(
 			'operator-screen-contract',
-			'Phase 8I operator screen is missing its Tools registration or capability guard.',
+			'Phase 8I operator screen is missing its dedicated menu, legacy-route redirect or capability guard.',
 			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
 			$operator_screen_guard,
 			'missing'
