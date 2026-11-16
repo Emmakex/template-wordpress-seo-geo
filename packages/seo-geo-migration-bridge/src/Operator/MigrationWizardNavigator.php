@@ -160,6 +160,7 @@ final class MigrationWizardNavigator {
 	 * @param int          $group       One of the four overview stages.
 	 * @param string       $code        Specific extra evidence contract.
 	 * @param array        $also        Additional success statuses.
+	 * @phpstan-param list<string> $also
 	 * @return array{store:class-string,accepted:list<string>,anchor:string,label_key:string,group:int,code:string}
 	 */
 	private static function stage( string $store, string $accepted, string $anchor, int $group, string $code, array $also = array() ): array {
