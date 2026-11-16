@@ -93,20 +93,36 @@ $guide_safe_actions = array(
 $status = $status_service->snapshot();
 
 do_action( 'admin_menu' );
-global $submenu;
-$tools_rows = isset( $submenu['tools.php'] ) && is_array( $submenu['tools.php'] ) ? $submenu['tools.php'] : array();
+global $menu, $submenu, $_registered_pages;
 $registered = false;
-foreach ( $tools_rows as $row ) {
+foreach ( $menu as $row ) {
 	if (
 		is_array( $row )
 		&& isset( $row[1], $row[2] )
 		&& 'manage_options' === $row[1]
-		&& AdminOperatorScreen::PAGE_SLUG === $row[2]
+		&& AdminOperatorScreen::DASHBOARD_SLUG === $row[2]
 	) {
 		$registered = true;
 		break;
 	}
 }
+$tools_rows = isset( $submenu['tools.php'] ) && is_array( $submenu['tools.php'] ) ? $submenu['tools.php'] : array();
+$legacy_slugs = array(
+	AdminOperatorScreen::PAGE_SLUG,
+	'seo-geo-native-replatform',
+	'seo-geo-reset-rebuild',
+	'seo-geo-corporate-page-pipeline',
+	'seo-geo-corporate-insights',
+	'seo-geo-corporate-site-readiness',
+);
+$tools_hidden = true;
+foreach ( $tools_rows as $row ) {
+	if ( is_array( $row ) && isset( $row[2] ) && in_array( $row[2], $legacy_slugs, true ) ) {
+		$tools_hidden = false;
+		break;
+	}
+}
+$legacy_registered = isset( $_registered_pages[ 'tools_page_' . AdminOperatorScreen::PAGE_SLUG ] );
 
 $english_screen = new AdminOperatorScreen( $status_service, new OperatorCopy( 'en_US' ) );
 ob_start();
@@ -189,6 +205,8 @@ $after = $fingerprint( $protected_state() );
 echo wp_json_encode(
 	array(
 		'registered'        => $registered,
+		'tools_hidden'      => $tools_hidden,
+		'legacy_registered' => $legacy_registered,
 		'guide_jobs'        => $guide_jobs,
 		'guide_safe_actions' => $guide_safe_actions,
 		'baseline_action_registered' => $baseline_action_registered,
@@ -246,6 +264,8 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
 assert payload["registered"] is True
+assert payload["tools_hidden"] is True
+assert payload["legacy_registered"] is False  # The old URL is handled by admin_init, not a duplicate page.
 assert payload["baseline_action_registered"] is True
 assert payload["handoff_action_registered"] is True
 assert payload["review_action_registered"] is True
@@ -360,7 +380,15 @@ assert 'name="clone_operation" value="export"' in en
 assert 'name="clone_operation" value="local-clone"' in en
 assert 'name="clone_operation" value="import"' in en
 assert 'name="clone_operation" value="export"' in es
-assert 'name="clone_operation" value="export"' not in payload["missing_spanish_html"]
+assert 'name="clone_operation" value="export"' in payload["missing_spanish_html"]
+assert "Specialist tools (advanced)" in en
+assert "Herramientas especializadas (avanzado)" in es
+assert 'tools.php?page=seo-geo-reset-rebuild' in en
+assert 'tools.php?page=seo-geo-native-replatform' in en
+assert 'admin.php?page=seo-geo-migration-dashboard' in export_ui
+assert 'clone-wizard-fixture-000001' in export_ui
+assert 'value="clone-wizard-fixture-000001"' in export_ui
+assert "Export" in export_ui
 assert 'id="seo-geo-simple-heading"' in en
 assert "WordPress migration: simple view" in en
 assert 'id="seo-geo-advanced-controls"' in en
