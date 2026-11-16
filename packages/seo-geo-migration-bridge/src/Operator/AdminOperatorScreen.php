@@ -154,9 +154,9 @@ final class AdminOperatorScreen {
 		<div class="wrap seo-geo-migration-operator">
 			<h1><?php echo esc_html( $this->copy->text( 'page_title' ) ); ?></h1>
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
-			<?php AdminMigrationWizard::render( $status ); ?>
+			<?php AdminMigrationWizard::render( $status, $this->copy ); ?>
 			<details id="seo-geo-advanced-controls" <?php echo AdminMigrationWizard::advanced_open() ? 'open' : ''; ?>>
-				<summary style="cursor:pointer;font-weight:600;margin:16px 0;"><?php echo esc_html__( 'Advanced migration controls and technical details', 'seo-geo-migration-bridge' ); ?></summary>
+				<summary style="cursor:pointer;font-weight:600;margin:16px 0;"><?php echo esc_html( $this->copy->text( 'wizard_advanced_controls' ) ); ?></summary>
 				<div class="seo-geo-migration-advanced">
 			<div class="notice notice-info inline">
 				<p><strong><?php echo esc_html__( 'Full redesign / existing clone?', 'seo-geo-migration-bridge' ); ?></strong></p>
