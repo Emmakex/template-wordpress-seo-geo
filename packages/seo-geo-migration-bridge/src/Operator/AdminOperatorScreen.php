@@ -176,15 +176,16 @@ final class AdminOperatorScreen {
 			return;
 		}
 		$script = isset( $_SERVER['SCRIPT_NAME'] ) && is_string( $_SERVER['SCRIPT_NAME'] )
-			? wp_unslash( $_SERVER['SCRIPT_NAME'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['SCRIPT_NAME'] ) )
 			: '';
 		if ( 'tools.php' !== basename( $script ) ) {
 			return;
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only, no mutation.
-		if ( ! isset( $_GET['page'] ) || ! is_string( $_GET['page'] ) || self::PAGE_SLUG !== wp_unslash( $_GET['page'] ) ) {
+		if ( ! isset( $_GET['page'] ) || ! is_string( $_GET['page'] ) || self::PAGE_SLUG !== sanitize_text_field( wp_unslash( $_GET['page'] ) ) ) {
 			return;
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only URL selectors, not a write.
 		$args = self::legacy_query_args( $_GET );
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 		exit;
