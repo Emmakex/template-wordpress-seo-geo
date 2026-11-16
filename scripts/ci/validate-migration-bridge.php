@@ -453,6 +453,11 @@ $read_only_files = array_merge(
 );
 
 foreach ( $read_only_files as $path ) {
+	// This explicit AJAX export controller is authenticated and may hold an
+	// expiring mutex; it is not part of the read-only analyzer surface.
+	if ( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php' === $path ) {
+		continue;
+	}
 	$source = (string) file_get_contents( $path );
 
 	foreach ( array( 'add_option', 'update_option', 'delete_option' ) as $function_name ) {
