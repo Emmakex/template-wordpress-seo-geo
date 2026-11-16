@@ -229,8 +229,8 @@ final class AdminMigrationWizard {
 					<progress max="100" value="<?php echo esc_attr( (string) $auto['percent'] ); ?>" data-auto-progress style="width:100%;height:18px;" aria-label="<?php echo esc_attr( $copy->text( 'wizard_auto_heading' ) ); ?>"></progress>
 					<p>
 						<span data-auto-label><?php echo esc_html( $auto['label'] ); ?></span>
-						 · <span data-auto-stage><?php echo esc_html( (string) $auto['completed'] . ' / ' . (string) $auto['steps'] ); ?></span>
-						 · <span data-auto-processed><?php echo esc_html( (string) $auto['processed'] ); ?></span>
+						<span aria-hidden="true"> · </span><span data-auto-stage><?php echo esc_html( (string) $auto['completed'] . ' / ' . (string) $auto['steps'] ); ?></span>
+						<span aria-hidden="true"> · </span><span data-auto-processed><?php echo esc_html( (string) $auto['processed'] ); ?></span>
 					</p>
 					<p role="status" aria-live="polite" data-auto-status><?php echo esc_html( $copy->text( 'wizard_auto_start_note' ) ); ?></p>
 					<p>
