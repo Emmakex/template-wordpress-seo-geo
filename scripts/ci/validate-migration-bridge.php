@@ -258,7 +258,24 @@ $authorized_mutation_calls = array(
 		'wp_update_post',
 		'update_post_meta',
 	),
+	// The browser auto-export releases only its namespaced, expiring mutex option.
+	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php' => array( 'delete_option' ),
 );
+
+$auto_export_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php' );
+if (
+	! str_contains( $auto_export_source, "'seo_geo_export_auto_' . md5( \$job_id )" )
+	|| 2 !== preg_match_all( '/\\bdelete_option\\s*\\(\\s*\\$lock_key\\s*\\)/', $auto_export_source )
+	|| 2 !== preg_match_all( '/\\bdelete_option\\s*\\(/', $auto_export_source )
+) {
+	fail_migration_bridge(
+		'auto-export-lock-scope',
+		'Only the namespaced auto-export lock may be removed by the AJAX controller.',
+		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php',
+		'two bounded lock-key deletions and no other delete_option calls',
+		'changed'
+	);
+}
 
 foreach ( $php_files as $path ) {
 	$source = (string) file_get_contents( $path );
