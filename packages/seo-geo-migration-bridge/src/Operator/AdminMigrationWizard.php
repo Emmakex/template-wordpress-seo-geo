@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneDeliveryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
@@ -236,6 +237,12 @@ final class AdminMigrationWizard {
 						<button type="button" class="button button-primary" data-auto-run <?php disabled( 'running' !== $auto['status'] ); ?>><?php echo esc_html( $copy->text( 'wizard_auto_start' ) ); ?></button>
 						<button type="button" class="button" data-auto-pause disabled><?php echo esc_html( $copy->text( 'wizard_auto_pause' ) ); ?></button>
 					</p>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-auto-download <?php echo 'ready' === $auto['status'] ? '' : 'hidden'; ?>>
+						<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneDeliveryController::DOWNLOAD_ACTION ); ?>">
+						<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+						<?php wp_nonce_field( AdminCloneDeliveryController::NONCE_ACTION . ':download:' . $job_id ); ?>
+						<button class="button button-primary" type="submit"><?php echo esc_html( $copy->text( 'wizard_auto_download' ) ); ?></button>
+					</form>
 				</div>
 			<?php elseif ( is_array( $batch ) ) : ?>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:12px 0;">
