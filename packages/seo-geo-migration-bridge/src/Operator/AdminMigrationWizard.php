@@ -162,7 +162,10 @@ final class AdminMigrationWizard {
 					<strong><?php echo esc_html__( 'Next checkpoint:', 'seo-geo-migration-bridge' ); ?></strong>
 					<?php echo esc_html( $checkpoint['label'] ); ?>
 					<p style="margin:4px 0 0;">
-						<?php echo esc_html( sprintf( __( '%1$d of %2$d technical checkpoints confirmed.', 'seo-geo-migration-bridge' ), $checkpoint['completed'], $checkpoint['total'] ) ); ?>
+						<?php
+						// translators: 1: Number of completed checkpoints, 2: Total checkpoint count.
+						echo esc_html( sprintf( __( '%1$d of %2$d technical checkpoints confirmed.', 'seo-geo-migration-bridge' ), $checkpoint['completed'], $checkpoint['total'] ) );
+						?>
 						<?php if ( $checkpoint['blocked'] ) : ?>
 							<?php echo esc_html__( 'Inspect the blocker; no retry will start automatically.', 'seo-geo-migration-bridge' ); ?>
 						<?php endif; ?>
