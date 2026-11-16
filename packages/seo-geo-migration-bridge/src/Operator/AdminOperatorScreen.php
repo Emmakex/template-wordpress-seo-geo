@@ -443,7 +443,7 @@ final class AdminOperatorScreen {
 		}
 
 		?>
-		<h2><?php echo esc_html( $this->copy->text( 'clone_heading' ) ); ?></h2>
+		<h2 id="seo-geo-clone-workflow"><?php echo esc_html( $this->copy->text( 'clone_heading' ) ); ?></h2>
 		<p><?php echo esc_html( $this->copy->text( 'clone_help' ) ); ?></p>
 		<div style="display:flex;gap:8px;flex-wrap:wrap">
 			<?php $this->render_clone_job_form( 'local-clone', 'clone_local_button' ); ?>
@@ -484,7 +484,7 @@ final class AdminOperatorScreen {
 		<?php endif; ?>
 
 		<?php if ( is_array( $selected ) ) : ?>
-			<h3><?php echo esc_html( $this->copy->text( 'clone_selected_heading' ) ); ?></h3>
+			<h3 id="seo-geo-clone-selected"><?php echo esc_html( $this->copy->text( 'clone_selected_heading' ) ); ?></h3>
 			<table class="widefat striped" role="presentation">
 				<tbody>
 					<tr>
