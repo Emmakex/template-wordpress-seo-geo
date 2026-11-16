@@ -88,9 +88,14 @@ use SeoGeo\MigrationBridge\Review\DependencyReviewStore;
  */
 final class AdminOperatorScreen {
 	/**
-	 * WordPress Tools page slug.
+	 * Historic Tools page slug retained for links, actions and redirects.
 	 */
 	public const PAGE_SLUG = 'seo-geo-migration-bridge';
+
+	/**
+	 * Visible, dedicated WordPress admin menu page.
+	 */
+	public const DASHBOARD_SLUG = 'seo-geo-migration-dashboard';
 
 	/**
 	 * Read-only status source.
@@ -122,10 +127,12 @@ final class AdminOperatorScreen {
 	 */
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
+		add_action( 'admin_menu', array( $this, 'simplify_tools_menu' ), 999 );
+		add_action( 'admin_init', array( $this, 'redirect_legacy_tools_url' ) );
 	}
 
 	/**
-	 * Register the read-only Tools screen.
+	 * Expose one primary menu, retaining the historical Tools route for redirects.
 	 */
 	public function register_page(): void {
 		add_management_page(
@@ -135,6 +142,59 @@ final class AdminOperatorScreen {
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
 		);
+		add_menu_page(
+			$this->copy->text( 'page_title' ),
+			$this->copy->text( 'menu_title' ),
+			'manage_options',
+			self::DASHBOARD_SLUG,
+			array( $this, 'render_page' ),
+			'dashicons-migrate',
+			58
+		);
+	}
+
+	/**
+	 * Hide only this plugin's legacy Tools items; routes remain registered.
+	 */
+	public function simplify_tools_menu(): void {
+		foreach (
+			array(
+				self::PAGE_SLUG,
+				'seo-geo-native-replatform',
+				'seo-geo-reset-rebuild',
+				'seo-geo-corporate-page-pipeline',
+				'seo-geo-corporate-insights',
+				'seo-geo-corporate-site-readiness',
+			) as $slug
+		) {
+			remove_submenu_page( 'tools.php', $slug );
+		}
+	}
+
+	/**
+	 * Keep old admin-post return URLs working while presenting the dedicated menu.
+	 */
+	public function redirect_legacy_tools_url(): void {
+		global $pagenow;
+		if ( 'tools.php' !== $pagenow || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only legacy navigation.
+		if ( ! isset( $_GET['page'] ) || self::PAGE_SLUG !== $_GET['page'] ) {
+			return;
+		}
+		$args = array( 'page' => self::DASHBOARD_SLUG );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Preserve read-only job/results selectors.
+		foreach ( $_GET as $key => $value ) {
+			if ( ! is_string( $key ) || ! is_string( $value ) || 'page' === $key ) {
+				continue;
+			}
+			if ( 'advanced' === $key || 'clone_job_id' === $key || 0 === strpos( $key, 'seo_geo_' ) ) {
+				$args[ sanitize_key( $key ) ] = sanitize_text_field( wp_unslash( $value ) );
+			}
+		}
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/**
