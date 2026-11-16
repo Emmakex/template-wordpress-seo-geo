@@ -9,6 +9,10 @@ declare(strict_types=1);
 
 namespace SeoGeo\MigrationBridge\Operator;
 
+use SeoGeo\MigrationBridge\Clone\AdminCloneController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\ImportFilePromotionStateStore;
@@ -103,10 +107,34 @@ final class AdminMigrationWizard {
 			? '#seo-geo-baseline-capture-form'
 			: ( is_array( $checkpoint ) ? '#' . $checkpoint['anchor'] : '#seo-geo-clone-workflow' );
 		$advanced_url   = $advanced_url . $anchor;
+		$button_text    = $copy->text( 'wizard_start' );
+		$batch          = null;
+
+		if ( is_array( $checkpoint ) ) {
+			if ( $checkpoint['done'] ) {
+				$button_text = $copy->text( 'wizard_review_done' );
+			} elseif ( $checkpoint['blocked'] ) {
+				$button_text = $copy->text( 'wizard_review_blocked' );
+			} else {
+				$button_text = $copy->text( 'wizard_open_next' );
+			}
+			if ( $baseline_ready && is_array( $job ) && 'active' === ( $job['status'] ?? '' ) && ! $checkpoint['blocked'] && ! $checkpoint['done'] ) {
+				$batch = self::safe_batch_action( $checkpoint );
+			}
+		}
 		?>
 		<section class="seo-geo-migration-simple" aria-labelledby="seo-geo-simple-heading" style="margin:20px 0;padding:20px;background:#fff;border:1px solid #c3c4c7;">
 			<h2 id="seo-geo-simple-heading" style="margin-top:0;"><?php echo esc_html( $copy->text( 'wizard_title' ) ); ?></h2>
 			<p><?php echo esc_html( $copy->text( 'wizard_intro' ) ); ?></p>
+			<?php if ( $baseline_ready ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
+					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneController::ACTION ); ?>">
+					<?php wp_nonce_field( AdminCloneController::NONCE_ACTION ); ?>
+					<button class="button" type="submit" name="clone_operation" value="export"><?php echo esc_html( $copy->text( 'clone_export_button' ) ); ?></button>
+					<button class="button" type="submit" name="clone_operation" value="local-clone"><?php echo esc_html( $copy->text( 'clone_local_button' ) ); ?></button>
+					<button class="button" type="submit" name="clone_operation" value="import"><?php echo esc_html( $copy->text( 'clone_import_button' ) ); ?></button>
+				</form>
+			<?php endif; ?>
 			<?php if ( 0 < count( $jobs ) ) : ?>
 				<form method="get" action="<?php echo esc_url( admin_url( 'tools.php' ) ); ?>" style="margin:16px 0;">
 					<input type="hidden" name="page" value="<?php echo esc_attr( AdminOperatorScreen::PAGE_SLUG ); ?>">
@@ -174,13 +202,54 @@ final class AdminMigrationWizard {
 					</p>
 				</div>
 			<?php endif; ?>
+			<?php if ( is_array( $batch ) ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:12px 0;">
+					<input type="hidden" name="action" value="<?php echo esc_attr( $batch['action'] ); ?>">
+					<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+					<?php wp_nonce_field( $batch['nonce'] . ':' . $job_id ); ?>
+					<?php foreach ( $batch['fields'] as $field => $value ) : ?>
+						<input type="hidden" name="<?php echo esc_attr( $field ); ?>" value="<?php echo esc_attr( (string) $value ); ?>">
+					<?php endforeach; ?>
+					<button type="submit" class="button button-primary"><?php echo esc_html( $copy->text( 'wizard_safe_batch' ) ); ?></button>
+				</form>
+			<?php endif; ?>
 			<p>
-				<a class="button button-primary" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( '' === $job_id ? $copy->text( 'wizard_start' ) : ( true === ( $checkpoint['done'] ?? false ) ? $copy->text( 'wizard_review_done' ) : ( true === ( $checkpoint['blocked'] ?? false ) ? $copy->text( 'wizard_review_blocked' ) : $copy->text( 'wizard_open_next' ) ) ) ); ?></a>
+				<a class="button" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( $button_text ); ?></a>
 				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html( $copy->text( 'wizard_rescue' ) ); ?></a>
 			</p>
 			<p class="description"><?php echo esc_html( $copy->text( 'wizard_cutover_notice' ) ); ?></p>
 		</section>
 		<?php
+	}
+
+	/**
+	 * Return the existing controller route for one explicitly requested safe batch.
+	 *
+	 * @param array<string,mixed> $checkpoint Navigation checkpoint.
+	 * @return array{action:string,nonce:string,fields:array<string,int>}|null
+	 */
+	public static function safe_batch_action( array $checkpoint ): ?array {
+		return match ( $checkpoint['anchor'] ?? '' ) {
+			'seo-geo-guide-clone_inventory' => array(
+				'action' => AdminCloneInventoryController::ACTION,
+				'nonce'  => AdminCloneInventoryController::NONCE_ACTION,
+				'fields' => array( 'inventory_batch_size' => 100 ),
+			),
+			'seo-geo-guide-clone_database_export' => array(
+				'action' => AdminCloneDatabaseExportController::ACTION,
+				'nonce'  => AdminCloneDatabaseExportController::NONCE_ACTION,
+				'fields' => array( 'database_batch_rows' => 100 ),
+			),
+			'seo-geo-guide-clone_file_export' => array(
+				'action' => AdminCloneFileExportController::ACTION,
+				'nonce'  => AdminCloneFileExportController::NONCE_ACTION,
+				'fields' => array(
+					'file_batch_size'      => 25,
+					'file_batch_megabytes' => 8,
+				),
+			),
+			default => null,
+		};
 	}
 
 	/**
