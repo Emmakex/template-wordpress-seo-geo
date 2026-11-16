@@ -57,19 +57,20 @@ final class AdminMigrationWizard {
 			? ( new LocalCloneFilePromotionStateStore() )->get( $job_id )
 			: ( 'import' === $operation ? ( new ImportFilePromotionStateStore() )->get( $job_id ) : null );
 
-		$analyzed       = true === ( $operator_status['baseline']['available'] ?? false )
-			|| 'complete' === ( $inventory['status'] ?? '' );
-		$exported       = 'complete' === ( $package['status'] ?? '' ) && 'complete' === ( $package['stage'] ?? '' );
-		$imported       = 'verified' === ( $promotion['status'] ?? '' )
-			&& true === ( $promotion['handoff_ready'] ?? false );
+		$is_import_only = 'import' === $operation;
+		$analyzed       = 'complete' === ( $inventory['status'] ?? '' );
+		$exported       = 'complete' === ( $package['status'] ?? '' )
+			&& 'complete' === ( $package['stage'] ?? '' );
+		$imported       = 'verified' === ( $promotion['status'] ?? '' );
 		$verified       = 'ready' === ( $handoff['status'] ?? '' )
 			&& true === ( $handoff['handoff_ready'] ?? false );
-		$is_import_only = 'import' === $operation;
-
+		if ( $is_import_only ) {
+			$verified = $imported && true === ( $promotion['handoff_ready'] ?? false );
+		}
 		$steps = array(
 			array(
 				'title' => __( '1. Analyze', 'seo-geo-migration-bridge' ),
-				'state' => $analyzed ? 'complete' : 'pending',
+				'state' => $is_import_only ? 'external' : ( $analyzed ? 'complete' : 'pending' ),
 				'note'  => __( 'Public baseline or completed source inventory.', 'seo-geo-migration-bridge' ),
 			),
 			array(
@@ -84,7 +85,7 @@ final class AdminMigrationWizard {
 			),
 			array(
 				'title' => __( '4. Verify', 'seo-geo-migration-bridge' ),
-				'state' => $verified ? 'complete' : 'pending',
+				'state' => 'export' === $operation ? 'external' : ( $verified ? 'complete' : 'pending' ),
 				'note'  => __( 'Final handoff, URL/SEO checks and recovery evidence.', 'seo-geo-migration-bridge' ),
 			),
 		);
