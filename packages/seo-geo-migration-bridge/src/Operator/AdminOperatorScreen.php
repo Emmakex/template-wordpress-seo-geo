@@ -160,7 +160,7 @@ final class AdminOperatorScreen {
 		}
 		wp_enqueue_script(
 			'seo-geo-migration-auto-export',
-			plugins_url( 'assets/auto-export.js', SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' ),
+			plugins_url( 'assets/auto-export.js', dirname( __DIR__, 2 ) . '/seo-geo-migration-bridge.php' ),
 			array(),
 			SEO_GEO_MIGRATION_BRIDGE_VERSION,
 			true
