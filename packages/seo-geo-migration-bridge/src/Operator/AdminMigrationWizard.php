@@ -204,7 +204,7 @@ final class AdminMigrationWizard {
 					</p>
 				</div>
 			<?php endif; ?>
-			<?php if ( 'export' === $operation && is_array( $job ) ) : ?>
+			<?php if ( 'export' === $operation ) : ?>
 				<?php $auto = AdminAutoExportController::snapshot( $job ); ?>
 				<div
 					data-seo-geo-auto-export
