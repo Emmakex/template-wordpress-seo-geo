@@ -86,7 +86,7 @@ final class OperatorCopy {
 				'wizard_advanced_controls'                 => 'Advanced migration controls and technical details',
 				'page_title'                               => 'SEO/GEO Migration Bridge',
 				'menu_title'                               => 'SEO/GEO Migration',
-				'intro'                                    => 'Follow your migration from one dashboard. Viewing this page is read-only; explicitly submitted forms may prepare jobs or advance bounded export batches. No production cutover or destructive operation runs automatically.'
+				'intro'                                    => 'Follow your migration from one dashboard. Viewing this page is read-only; explicitly submitted forms may prepare jobs or advance bounded export batches. No production cutover or destructive operation runs automatically.',
 				'forbidden'                                => 'You do not have permission to view Migration Bridge status.',
 				'overview_heading'                         => 'Migration status',
 				'review_heading'                           => 'Review status',
@@ -800,7 +800,7 @@ final class OperatorCopy {
 				'wizard_advanced_controls'                 => 'Controles avanzados y detalles técnicos de migración',
 				'page_title'                               => 'Puente de migración SEO/GEO',
 				'menu_title'                               => 'Migración SEO/GEO',
-				'intro'                                    => 'Gestiona la migración desde un único panel. Consultar esta página es de solo lectura; los formularios que confirmes permiten preparar trabajos o avanzar lotes acotados de exportación. Ningún cambio a producción ni operación destructiva se ejecuta automáticamente.'
+				'intro'                                    => 'Gestiona la migración desde un único panel. Consultar esta página es de solo lectura; los formularios que confirmes permiten preparar trabajos o avanzar lotes acotados de exportación. Ningún cambio a producción ni operación destructiva se ejecuta automáticamente.',
 				'forbidden'                                => 'No tienes permisos para consultar el estado del Puente de migración.',
 				'overview_heading'                         => 'Estado de la migración',
 				'review_heading'                           => 'Estado de revisión',
