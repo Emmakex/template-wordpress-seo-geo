@@ -88,7 +88,7 @@ final class AdminCloneController {
 				'seo_geo_clone_job' => 'created',
 				'clone_job_id'      => (string) $job['job_id'],
 			),
-			admin_url( 'tools.php?page=' . AdminOperatorScreen::PAGE_SLUG )
+			admin_url( 'admin.php?page=' . AdminOperatorScreen::DASHBOARD_SLUG )
 		);
 
 		wp_safe_redirect( $redirect );

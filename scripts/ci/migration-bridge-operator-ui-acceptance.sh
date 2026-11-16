@@ -125,6 +125,27 @@ foreach ( $tools_rows as $row ) {
 $legacy_registered = isset( $_registered_pages[ 'tools_page_' . AdminOperatorScreen::PAGE_SLUG ] );
 
 $english_screen = new AdminOperatorScreen( $status_service, new OperatorCopy( 'en_US' ) );
+$legacy_created = add_query_arg(
+	array(
+		'page'              => AdminOperatorScreen::PAGE_SLUG,
+		'seo_geo_clone_job' => 'created',
+		'clone_job_id'      => 'clone-existing-fixture-00001',
+	),
+	admin_url( 'tools.php' )
+);
+$legacy_unrelated = add_query_arg( array( 'page' => 'other-plugin' ), admin_url( 'tools.php' ) );
+$legacy_external  = 'https://example.invalid/wp-admin/tools.php?page=seo-geo-migration-bridge';
+$legacy_broken    = add_query_arg( array( 'page' => AdminOperatorScreen::PAGE_SLUG, 'hack' => 'no' ), admin_url( 'tools.php' ) );
+$redirect_probe = array(
+	'created'          => $english_screen->rewrite_legacy_redirect( $legacy_created ),
+	'other_plugin'     => $english_screen->rewrite_legacy_redirect( $legacy_unrelated ),
+	'external'         => $english_screen->rewrite_legacy_redirect( $legacy_external ),
+	'bounded_params'   => $english_screen->rewrite_legacy_redirect( $legacy_broken ),
+	'original_other'   => $legacy_unrelated,
+	'original_external'=> $legacy_external,
+	'init_hook'        => false !== has_action( 'init' ),
+	'redirect_hook'    => false !== has_filter( 'wp_redirect' ),
+);
 ob_start();
 $english_screen->render_page();
 $english_html = (string) ob_get_clean();
@@ -205,6 +226,7 @@ $after = $fingerprint( $protected_state() );
 echo wp_json_encode(
 	array(
 		'registered'        => $registered,
+		'legacy_redirects'  => $redirect_probe,
 		'tools_hidden'      => $tools_hidden,
 		'legacy_registered' => $legacy_registered,
 		'guide_jobs'        => $guide_jobs,
@@ -262,6 +284,18 @@ import sys
 
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
     payload = json.load(handle)
+
+redirects = payload["legacy_redirects"]
+assert redirects["created"].startswith("http")
+assert "/wp-admin/admin.php?" in redirects["created"]
+assert "page=seo-geo-migration-dashboard" in redirects["created"]
+assert "seo_geo_clone_job=created" in redirects["created"]
+assert "clone_job_id=clone-existing-fixture-00001" in redirects["created"]
+assert redirects["other_plugin"] == redirects["original_other"]
+assert redirects["external"] == redirects["original_external"]
+assert "hack=" not in redirects["bounded_params"]
+assert redirects["init_hook"] is True
+assert redirects["redirect_hook"] is True
 
 assert payload["registered"] is True
 assert payload["tools_hidden"] is True

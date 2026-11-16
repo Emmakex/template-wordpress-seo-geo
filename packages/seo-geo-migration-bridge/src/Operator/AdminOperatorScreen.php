@@ -128,7 +128,8 @@ final class AdminOperatorScreen {
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_menu', array( $this, 'simplify_tools_menu' ), 999 );
-		add_action( 'admin_init', array( $this, 'redirect_legacy_tools_url' ) );
+		add_action( 'init', array( $this, 'redirect_legacy_tools_url' ) );
+		add_filter( 'wp_redirect', array( $this, 'rewrite_legacy_redirect' ) );
 	}
 
 	/**
@@ -165,20 +166,63 @@ final class AdminOperatorScreen {
 	}
 
 	/**
-	 * Keep old admin-post return URLs working while presenting the dedicated menu.
+	 * Redirect an old bookmarked Tools URL before WordPress denies an unregistered page.
+	 *
+	 * The admin_init hook is too late for an unregistered Tools page: WordPress can
+	 * reject that page while resolving permissions. The init hook runs earlier.
 	 */
 	public function redirect_legacy_tools_url(): void {
-		global $pagenow;
-		if ( 'tools.php' !== $pagenow || ! current_user_can( 'manage_options' ) ) {
+		if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only legacy navigation.
-		if ( ! isset( $_GET['page'] ) || self::PAGE_SLUG !== $_GET['page'] ) {
+		$script = isset( $_SERVER['SCRIPT_NAME'] ) && is_string( $_SERVER['SCRIPT_NAME'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['SCRIPT_NAME'] ) )
+			: '';
+		if ( 'tools.php' !== basename( $script ) ) {
 			return;
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only, no mutation.
+		if ( ! isset( $_GET['page'] ) || ! is_string( $_GET['page'] ) || self::PAGE_SLUG !== sanitize_text_field( wp_unslash( $_GET['page'] ) ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only URL selectors, not a write.
+		$args = self::legacy_query_args( $_GET );
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/**
+	 * Upgrade existing admin-post redirects before they reach the browser.
+	 *
+	 * @param string $location Candidate WordPress redirect URL.
+	 * @return string Safe dashboard URL, or the unchanged unrelated URL.
+	 */
+	public function rewrite_legacy_redirect( string $location ): string {
+		$old_url = admin_url( 'tools.php' );
+		if ( ! str_starts_with( $location, $old_url . '?' ) ) {
+			return $location;
+		}
+
+		$query = wp_parse_url( $location, PHP_URL_QUERY );
+		if ( ! is_string( $query ) ) {
+			return $location;
+		}
+		parse_str( $query, $params );
+		if ( self::PAGE_SLUG !== ( $params['page'] ?? null ) ) {
+			return $location;
+		}
+		return add_query_arg( self::legacy_query_args( $params ), admin_url( 'admin.php' ) );
+	}
+
+	/**
+	 * Retain only bounded, read-only result selectors when changing the page URL.
+	 *
+	 * @param array<array-key,mixed> $params Original URL query parameters.
+	 * @return array<string,string>
+	 */
+	private static function legacy_query_args( array $params ): array {
 		$args = array( 'page' => self::DASHBOARD_SLUG );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Preserve read-only job/results selectors.
-		foreach ( $_GET as $key => $value ) {
+		foreach ( $params as $key => $value ) {
 			if ( ! is_string( $key ) || ! is_string( $value ) || 'page' === $key ) {
 				continue;
 			}
@@ -186,8 +230,7 @@ final class AdminOperatorScreen {
 				$args[ sanitize_key( $key ) ] = sanitize_text_field( wp_unslash( $value ) );
 			}
 		}
-		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
-		exit;
+		return $args;
 	}
 
 	/**
