@@ -176,7 +176,7 @@ final class AdminAutoExportController {
 				$processed = (int) ( $state['archive_file_count'] ?? 0 );
 				break;
 		}
-		$blocked = true === ( $checkpoint['blocked'] ?? false )
+		$blocked = true === $checkpoint['blocked']
 			|| 'blocked' === ( $state['status'] ?? '' );
 		$active  = 'active' === ( $job['status'] ?? '' ) && 'export' === ( $job['operation'] ?? '' );
 
