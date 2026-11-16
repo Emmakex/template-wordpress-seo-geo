@@ -45,7 +45,7 @@ final class MigrationWizardNavigator {
 	 * Return the first step without persisted completion evidence.
 	 *
 	 * @param array<string,mixed> $job Normalized existing job.
-	 * @return array{anchor:string,label:string,group:int,blocked:bool,done:bool,completed:int,total:int}
+	 * @return array{anchor:string,label_key:string,group:int,blocked:bool,done:bool,completed:int,total:int}
 	 */
 	public static function next( array $job ): array {
 		$job_id    = is_string( $job['job_id'] ?? null ) ? $job['job_id'] : '';
@@ -74,7 +74,7 @@ final class MigrationWizardNavigator {
 
 			return array(
 				'anchor'    => $step['anchor'],
-				'label'     => $step['label'],
+				'label_key' => $step['label_key'],
 				'group'     => $step['group'],
 				'blocked'   => 'blocked' === $status || in_array( $job['status'] ?? '', array( 'failed-terminal', 'cancelled' ), true ),
 				'done'      => false,
@@ -85,7 +85,7 @@ final class MigrationWizardNavigator {
 
 		return array(
 			'anchor'    => 'seo-geo-clone-selected',
-			'label'     => __( 'Review the completed migration', 'seo-geo-migration-bridge' ),
+			'label_key' => 'clone_selected_heading',
 			'group'     => 4,
 			'blocked'   => false,
 			'done'      => true,
@@ -98,7 +98,7 @@ final class MigrationWizardNavigator {
 	 * Declare exact store evidence and DOM destinations in chronological order.
 	 *
 	 * @param string $operation CloneJobStore operation.
-	 * @return list<array{store:class-string,accepted:list<string>,anchor:string,label:string,group:int,code:string}>
+	 * @return list<array{store:class-string,accepted:list<string>,anchor:string,label_key:string,group:int,code:string}>
 	 */
 	private static function steps( string $operation ): array {
 		$source = array(
@@ -160,46 +160,17 @@ final class MigrationWizardNavigator {
 	 * @param int          $group       One of the four overview stages.
 	 * @param string       $code        Specific extra evidence contract.
 	 * @param array $also        Additional success statuses.
-	 * @return array{store:class-string,accepted:list<string>,anchor:string,label:string,group:int,code:string}
+	 * @return array{store:class-string,accepted:list<string>,anchor:string,label_key:string,group:int,code:string}
 	 */
 	private static function stage( string $store, string $accepted, string $anchor, int $group, string $code, array $also = array() ): array {
 		return array(
 			'store'    => $store,
 			'accepted' => array_merge( array( $accepted ), $also ),
 			'anchor'   => 'seo-geo-guide-' . str_replace( '_heading', '', $anchor ),
-			'label'    => self::label( $code ),
+			'label_key' => $anchor,
 			'group'    => $group,
 			'code'     => $code,
 		);
 	}
 
-	/**
-	 * Translate a checkpoint into actionable operator wording.
-	 *
-	 * @param string $code Step identifier, without client data.
-	 */
-	private static function label( string $code ): string {
-		return match ( $code ) {
-			'inventory'        => __( 'Analyze source inventory', 'seo-geo-migration-bridge' ),
-			'database'         => __( 'Export database', 'seo-geo-migration-bridge' ),
-			'files'            => __( 'Export files', 'seo-geo-migration-bridge' ),
-			'package'          => __( 'Verify export package', 'seo-geo-migration-bridge' ),
-			'delivery'         => __( 'Prepare package delivery', 'seo-geo-migration-bridge' ),
-			'plan'             => __( 'Confirm destination plan', 'seo-geo-migration-bridge' ),
-			'claim'            => __( 'Confirm destination ownership', 'seo-geo-migration-bridge' ),
-			'runtime'          => __( 'Prepare destination WordPress', 'seo-geo-migration-bridge' ),
-			'sandbox-runtime'  => __( 'Prepare protected sandbox', 'seo-geo-migration-bridge' ),
-			'package-handoff'  => __( 'Transfer verified package', 'seo-geo-migration-bridge' ),
-			'preflight'        => __( 'Verify destination safety', 'seo-geo-migration-bridge' ),
-			'payload'          => __( 'Verify imported payload', 'seo-geo-migration-bridge' ),
-			'restore-db'       => __( 'Restore database', 'seo-geo-migration-bridge' ),
-			'restore-files'    => __( 'Restore files', 'seo-geo-migration-bridge' ),
-			'rewrite'          => __( 'Adapt destination URLs', 'seo-geo-migration-bridge' ),
-			'finalize'         => __( 'Verify restoration integrity', 'seo-geo-migration-bridge' ),
-			'activate-db'      => __( 'Review database activation', 'seo-geo-migration-bridge' ),
-			'promote-files'    => __( 'Review file promotion', 'seo-geo-migration-bridge' ),
-			'handoff'          => __( 'Verify final handoff', 'seo-geo-migration-bridge' ),
-			default            => __( 'Review migration status', 'seo-geo-migration-bridge' ),
-		};
-	}
 }
