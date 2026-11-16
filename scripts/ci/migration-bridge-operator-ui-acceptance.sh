@@ -20,6 +20,7 @@ cat >"$OPERATOR_RUNNER" <<'PHP'
 
 use SeoGeo\MigrationBridge\Operator\AdminBaselineCaptureController;
 use SeoGeo\MigrationBridge\Operator\AdminOperatorScreen;
+use SeoGeo\MigrationBridge\Operator\AdminMigrationWizard;
 use SeoGeo\MigrationBridge\Operator\AdminSandboxHandoffController;
 use SeoGeo\MigrationBridge\Operator\OperatorCopy;
 use SeoGeo\MigrationBridge\Operator\MigrationWizardNavigator;
@@ -80,6 +81,14 @@ foreach ( array( 'local-clone', 'export', 'import' ) as $operation ) {
 	);
 }
 
+$guide_safe_actions = array(
+	'inventory' => AdminMigrationWizard::safe_batch_action( $guide_jobs['export'] ),
+	'import'    => AdminMigrationWizard::safe_batch_action( $guide_jobs['import'] ),
+	'database'  => AdminMigrationWizard::safe_batch_action( array( 'anchor' => 'seo-geo-guide-clone_database_export' ) ),
+	'files'     => AdminMigrationWizard::safe_batch_action( array( 'anchor' => 'seo-geo-guide-clone_file_export' ) ),
+	'activate'  => AdminMigrationWizard::safe_batch_action( array( 'anchor' => 'seo-geo-guide-clone_database_activation' ) ),
+);
+
 $status = $status_service->snapshot();
 
 do_action( 'admin_menu' );
@@ -139,6 +148,7 @@ echo wp_json_encode(
 	array(
 		'registered'        => $registered,
 		'guide_jobs'        => $guide_jobs,
+		'guide_safe_actions' => $guide_safe_actions,
 		'baseline_action_registered' => $baseline_action_registered,
 		'handoff_action_registered'  => $handoff_action_registered,
 		'review_action_registered'   => $review_action_registered,
@@ -203,6 +213,17 @@ for operation, expected in (("local-clone", "clone_inventory"), ("export", "clon
     assert step["completed"] == 0
     assert step["total"] >= 5
     assert step["blocked"] is False
+
+safe = payload["guide_safe_actions"]
+assert safe["inventory"]["action"] == "seo_geo_migration_clone_inventory"
+assert safe["inventory"]["nonce"] == "seo_geo_migration_clone_inventory"
+assert safe["inventory"]["fields"] == {"inventory_batch_size": 100}
+assert safe["database"]["action"] == "seo_geo_migration_clone_database_export"
+assert safe["database"]["fields"] == {"database_batch_rows": 100}
+assert safe["files"]["action"] == "seo_geo_migration_clone_file_export"
+assert safe["files"]["fields"] == {"file_batch_size": 25, "file_batch_megabytes": 8}
+assert safe["import"] is None
+assert safe["activate"] is None
 
 status = payload["status"]
 assert status["schema_version"] == 1
@@ -271,6 +292,11 @@ for required in (
 ):
     assert required in es
 
+assert 'name="clone_operation" value="export"' in en
+assert 'name="clone_operation" value="local-clone"' in en
+assert 'name="clone_operation" value="import"' in en
+assert 'name="clone_operation" value="export"' in es
+assert 'name="clone_operation" value="export"' not in payload["missing_spanish_html"]
 assert 'id="seo-geo-simple-heading"' in en
 assert "WordPress migration: simple view" in en
 assert 'id="seo-geo-advanced-controls"' in en
