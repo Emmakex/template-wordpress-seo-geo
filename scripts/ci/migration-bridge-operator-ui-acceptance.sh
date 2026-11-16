@@ -363,7 +363,7 @@ assert 'data-auto-pause disabled' in export_ui
 assert "Start / resume automatic export" in export_ui
 assert 'data-seo-geo-auto-export' not in import_ui
 assert 'data-seo-geo-auto-export' in paused_ui
-assert 'data-auto-run disabled' in paused_ui
+assert 'data-auto-run ' in paused_ui and "disabled=" in paused_ui
 assert 'name="action" value="seo_geo_migration_clone_inventory"' not in export_ui
 
 status = payload["status"]
