@@ -57,12 +57,12 @@ final class AdminMigrationWizard {
 			? ( new LocalCloneFilePromotionStateStore() )->get( $job_id )
 			: ( 'import' === $operation ? ( new ImportFilePromotionStateStore() )->get( $job_id ) : null );
 
-		$analyzed = true === ( $operator_status['baseline']['available'] ?? false )
+		$analyzed       = true === ( $operator_status['baseline']['available'] ?? false )
 			|| 'complete' === ( $inventory['status'] ?? '' );
-		$exported = 'complete' === ( $package['status'] ?? '' ) && 'complete' === ( $package['stage'] ?? '' );
-		$imported = 'verified' === ( $promotion['status'] ?? '' )
+		$exported       = 'complete' === ( $package['status'] ?? '' ) && 'complete' === ( $package['stage'] ?? '' );
+		$imported       = 'verified' === ( $promotion['status'] ?? '' )
 			&& true === ( $promotion['handoff_ready'] ?? false );
-		$verified = 'ready' === ( $handoff['status'] ?? '' )
+		$verified       = 'ready' === ( $handoff['status'] ?? '' )
 			&& true === ( $handoff['handoff_ready'] ?? false );
 		$is_import_only = 'import' === $operation;
 
