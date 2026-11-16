@@ -132,16 +132,9 @@ final class AdminOperatorScreen {
 	}
 
 	/**
-	 * Expose one primary menu, retaining the historical Tools route for redirects.
+	 * Expose only the primary menu. Historical Tools links redirect in admin_init.
 	 */
 	public function register_page(): void {
-		add_management_page(
-			$this->copy->text( 'page_title' ),
-			$this->copy->text( 'menu_title' ),
-			'manage_options',
-			self::PAGE_SLUG,
-			array( $this, 'render_page' )
-		);
 		add_menu_page(
 			$this->copy->text( 'page_title' ),
 			$this->copy->text( 'menu_title' ),
