@@ -72,12 +72,28 @@ final class AdminAutoExportController {
 
 		$lock_key = 'seo_geo_export_auto_' . md5( $job_id );
 		$token    = wp_generate_uuid4();
-		$locked   = add_option( $lock_key, array( 'expires' => time() + 180, 'token' => $token ), '', false );
+		$locked   = add_option(
+			$lock_key,
+			array(
+				'expires' => time() + 180,
+				'token'   => $token,
+			),
+			'',
+			false
+		);
 		if ( ! $locked ) {
 			$old = get_option( $lock_key );
 			if ( is_array( $old ) && (int) ( $old['expires'] ?? 0 ) < time() ) {
 				delete_option( $lock_key );
-				$locked = add_option( $lock_key, array( 'expires' => time() + 180, 'token' => $token ), '', false );
+				$locked = add_option(
+					$lock_key,
+					array(
+						'expires' => time() + 180,
+						'token'   => $token,
+					),
+					'',
+					false
+				);
 			}
 		}
 		if ( ! $locked ) {
@@ -96,9 +112,9 @@ final class AdminAutoExportController {
 				'delivery'  => ( new PackageDelivery() )->advance( $job_id, 25, 8 * 1024 * 1024 ),
 				default     => null,
 			};
-			$failed    = ! is_array( $result );
-			$fresh     = ( new CloneJobStore() )->get( $job_id );
-			$after     = is_array( $fresh ) ? self::snapshot( $fresh ) : $before;
+			$failed = ! is_array( $result );
+			$fresh  = ( new CloneJobStore() )->get( $job_id );
+			$after  = is_array( $fresh ) ? self::snapshot( $fresh ) : $before;
 			if ( ! $failed && 'running' === $after['status'] && $before['phase'] === $after['phase'] ) {
 				$new_state = self::phase_state( $job_id, $after['phase'] );
 				$failed    = $old_state === $new_state;
@@ -107,7 +123,7 @@ final class AdminAutoExportController {
 			$failed = true;
 		} finally {
 			$current_lock = get_option( $lock_key );
-			if ( is_array( $current_lock ) && $token === ( $current_lock['token'] ?? null ) ) {
+			if ( is_array( $current_lock ) && ( $current_lock['token'] ?? null ) === $token ) {
 				delete_option( $lock_key );
 			}
 		}
@@ -137,9 +153,9 @@ final class AdminAutoExportController {
 			default                                => '',
 		};
 
-		$state = self::phase_state( $job_id, $phase );
+		$state     = self::phase_state( $job_id, $phase );
 		$processed = 0;
-		$total = null;
+		$total     = null;
 		switch ( $phase ) {
 			case 'inventory':
 				$processed = (int) ( $state['file_count'] ?? 0 );
@@ -149,7 +165,7 @@ final class AdminAutoExportController {
 				break;
 			case 'files':
 				$processed = (int) ( $state['file_count'] ?? 0 );
-				$total = (int) ( $state['inventory_file_count'] ?? 0 );
+				$total     = (int) ( $state['inventory_file_count'] ?? 0 );
 				break;
 			case 'package':
 				$processed = 'verify' === ( $state['stage'] ?? '' )
@@ -162,7 +178,7 @@ final class AdminAutoExportController {
 		}
 		$blocked = true === ( $checkpoint['blocked'] ?? false )
 			|| 'blocked' === ( $state['status'] ?? '' );
-		$active = 'active' === ( $job['status'] ?? '' ) && 'export' === ( $job['operation'] ?? '' );
+		$active  = 'active' === ( $job['status'] ?? '' ) && 'export' === ( $job['operation'] ?? '' );
 
 		$status = 'running';
 		if ( true === $checkpoint['done'] ) {
@@ -206,7 +222,7 @@ final class AdminAutoExportController {
 			'inventory' => ( new CloneInventoryStore() )->get( $job_id ),
 			'database'  => ( new ExportStateStore() )->get( $job_id ),
 			'files'     => ( new FileExportStateStore() )->get( $job_id ),
-			'package'   => ( new \SeoGeo\MigrationBridge\Clone\PackageStateStore() )->get( $job_id ),
+			'package'   => ( new PackageStateStore() )->get( $job_id ),
 			'delivery'  => ( new DeliveryStateStore() )->get( $job_id ),
 			default     => null,
 		};
