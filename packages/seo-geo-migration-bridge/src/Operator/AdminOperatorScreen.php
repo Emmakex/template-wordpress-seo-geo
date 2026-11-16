@@ -154,6 +154,10 @@ final class AdminOperatorScreen {
 		<div class="wrap seo-geo-migration-operator">
 			<h1><?php echo esc_html( $this->copy->text( 'page_title' ) ); ?></h1>
 			<p><?php echo esc_html( $this->copy->text( 'intro' ) ); ?></p>
+			<?php AdminMigrationWizard::render( $status ); ?>
+			<details id="seo-geo-advanced-controls" <?php echo AdminMigrationWizard::advanced_open() ? 'open' : ''; ?>>
+				<summary style="cursor:pointer;font-weight:600;margin:16px 0;"><?php echo esc_html__( 'Advanced migration controls and technical details', 'seo-geo-migration-bridge' ); ?></summary>
+				<div class="seo-geo-migration-advanced">
 			<div class="notice notice-info inline">
 				<p><strong><?php echo esc_html__( 'Full redesign / existing clone?', 'seo-geo-migration-bridge' ); ?></strong></p>
 				<p><?php echo esc_html__( 'Use Reset & Rebuild to rescue only content, URLs, SEO, links and useful media, then remove the legacy theme/builder/plugin baggage. Remaining UNKNOWN dependencies do not block this path unless their business function is explicitly required.', 'seo-geo-migration-bridge' ); ?></p>
@@ -322,6 +326,8 @@ final class AdminOperatorScreen {
 
 			<h2><?php echo esc_html( $this->copy->text( 'privacy_heading' ) ); ?></h2>
 			<p><?php echo esc_html( $this->copy->text( 'privacy_text' ) ); ?></p>
+				</div>
+			</details>
 		</div>
 		<?php
 	}
