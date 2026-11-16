@@ -272,10 +272,13 @@ for required in (
     assert required in es
 
 assert 'id="seo-geo-simple-heading"' in en
+assert "WordPress migration: simple view" in en
 assert 'id="seo-geo-advanced-controls"' in en
 assert 'Advanced migration controls and technical details' in en
 assert 'id="seo-geo-simple-heading"' in es
+assert "Migración WordPress: vista sencilla" in es
 assert 'id="seo-geo-advanced-controls"' in es
+assert "Controles avanzados y detalles técnicos de migración" in es
 
 assert 'value="seo_geo_migration_sandbox_handoff"' in en
 assert 'value="seo_geo_migration_sandbox_handoff"' in es
