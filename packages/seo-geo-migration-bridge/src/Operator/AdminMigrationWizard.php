@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SeoGeo\MigrationBridge\Operator;
 
 use SeoGeo\MigrationBridge\Clone\AdminCloneController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneDeliveryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
@@ -203,7 +204,47 @@ final class AdminMigrationWizard {
 					</p>
 				</div>
 			<?php endif; ?>
-			<?php if ( is_array( $batch ) ) : ?>
+			<?php if ( 'export' === $operation ) : ?>
+				<?php $auto = AdminAutoExportController::snapshot( $job ); ?>
+				<div
+					data-seo-geo-auto-export
+					data-job-id="<?php echo esc_attr( $job_id ); ?>"
+					data-action="<?php echo esc_attr( AdminAutoExportController::ACTION ); ?>"
+					data-nonce="<?php echo esc_attr( wp_create_nonce( AdminAutoExportController::NONCE_ACTION . ':' . $job_id ) ); ?>"
+					data-endpoint="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+					data-initial-progress="<?php echo esc_attr( (string) wp_json_encode( $auto ) ); ?>"
+					data-msg-start="<?php echo esc_attr( $copy->text( 'wizard_auto_start_note' ) ); ?>"
+					data-msg-running="<?php echo esc_attr( $copy->text( 'wizard_auto_running' ) ); ?>"
+					data-msg-pausing="<?php echo esc_attr( $copy->text( 'wizard_auto_pausing' ) ); ?>"
+					data-msg-paused="<?php echo esc_attr( $copy->text( 'wizard_auto_paused' ) ); ?>"
+					data-msg-ready="<?php echo esc_attr( $copy->text( 'wizard_auto_ready' ) ); ?>"
+					data-msg-blocked="<?php echo esc_attr( $copy->text( 'wizard_auto_blocked' ) ); ?>"
+					data-msg-network="<?php echo esc_attr( $copy->text( 'wizard_auto_network' ) ); ?>"
+					data-msg-limit="<?php echo esc_attr( $copy->text( 'wizard_auto_limit' ) ); ?>"
+					data-msg-files="<?php echo esc_attr( $copy->text( 'wizard_auto_files' ) ); ?>"
+					data-msg-rows="<?php echo esc_attr( $copy->text( 'wizard_auto_rows' ) ); ?>"
+					style="margin:16px 0;padding:16px;border:1px solid #c3c4c7;border-radius:4px;"
+				>
+					<p><strong><?php echo esc_html( $copy->text( 'wizard_auto_heading' ) ); ?></strong></p>
+					<progress max="100" value="<?php echo esc_attr( (string) $auto['percent'] ); ?>" data-auto-progress style="width:100%;height:18px;" aria-label="<?php echo esc_attr( $copy->text( 'wizard_auto_heading' ) ); ?>"></progress>
+					<p>
+						<span data-auto-label><?php echo esc_html( $auto['label'] ); ?></span>
+						<span aria-hidden="true"> · </span><span data-auto-stage><?php echo esc_html( (string) $auto['completed'] . ' / ' . (string) $auto['steps'] ); ?></span>
+						<span aria-hidden="true"> · </span><span data-auto-processed><?php echo esc_html( (string) $auto['processed'] ); ?></span>
+					</p>
+					<p role="status" aria-live="polite" data-auto-status><?php echo esc_html( $copy->text( 'wizard_auto_start_note' ) ); ?></p>
+					<p>
+						<button type="button" class="button button-primary" data-auto-run <?php disabled( 'running' !== $auto['status'] ); ?>><?php echo esc_html( $copy->text( 'wizard_auto_start' ) ); ?></button>
+						<button type="button" class="button" data-auto-pause disabled><?php echo esc_html( $copy->text( 'wizard_auto_pause' ) ); ?></button>
+					</p>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-auto-download <?php echo 'ready' === $auto['status'] ? '' : 'hidden'; ?>>
+						<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneDeliveryController::DOWNLOAD_ACTION ); ?>">
+						<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+						<?php wp_nonce_field( AdminCloneDeliveryController::NONCE_ACTION . ':download:' . $job_id ); ?>
+						<button class="button button-primary" type="submit"><?php echo esc_html( $copy->text( 'wizard_auto_download' ) ); ?></button>
+					</form>
+				</div>
+			<?php elseif ( is_array( $batch ) ) : ?>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:12px 0;">
 					<input type="hidden" name="action" value="<?php echo esc_attr( $batch['action'] ); ?>">
 					<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
