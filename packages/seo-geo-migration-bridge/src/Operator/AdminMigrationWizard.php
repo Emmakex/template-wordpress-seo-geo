@@ -105,12 +105,12 @@ final class AdminMigrationWizard {
 		$advanced_url   = $advanced_url . $anchor;
 		?>
 		<section class="seo-geo-migration-simple" aria-labelledby="seo-geo-simple-heading" style="margin:20px 0;padding:20px;background:#fff;border:1px solid #c3c4c7;">
-			<h2 id="seo-geo-simple-heading" style="margin-top:0;"><?php echo esc_html$copy->text( 'wizard_title' ); ?></h2>
-			<p><?php echo esc_html$copy->text( 'wizard_intro' ); ?></p>
+			<h2 id="seo-geo-simple-heading" style="margin-top:0;"><?php echo esc_html( $copy->text( 'wizard_title' ) ); ?></h2>
+			<p><?php echo esc_html( $copy->text( 'wizard_intro' ) ); ?></p>
 			<?php if ( 0 < count( $jobs ) ) : ?>
 				<form method="get" action="<?php echo esc_url( admin_url( 'tools.php' ) ); ?>" style="margin:16px 0;">
 					<input type="hidden" name="page" value="<?php echo esc_attr( AdminOperatorScreen::PAGE_SLUG ); ?>">
-					<label for="seo-geo-simple-job"><strong><?php echo esc_html$copy->text( 'wizard_saved' ); ?></strong></label>
+					<label for="seo-geo-simple-job"><strong><?php echo esc_html( $copy->text( 'wizard_saved' ) ); ?></strong></label>
 					<select id="seo-geo-simple-job" name="clone_job_id">
 						<?php foreach ( $jobs as $saved ) : ?>
 							<?php
@@ -120,25 +120,25 @@ final class AdminMigrationWizard {
 							<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $id, $job_id ); ?>><?php echo esc_html( $label ); ?></option>
 						<?php endforeach; ?>
 					</select>
-					<button class="button" type="submit"><?php echo esc_html$copy->text( 'wizard_view' ); ?></button>
+					<button class="button" type="submit"><?php echo esc_html( $copy->text( 'wizard_view' ) ); ?></button>
 				</form>
 				<?php
 				$counters = is_array( $job['counters'] ?? null ) ? $job['counters'] : array();
 				$done     = (int) ( $counters['completed'] ?? 0 );
 				$total    = $counters['total'] ?? null;
 				?>
-				<p><strong><?php echo esc_html$copy->text( 'wizard_phase' ); ?></strong>
+				<p><strong><?php echo esc_html( $copy->text( 'wizard_phase' ) ); ?></strong>
 					<code><?php echo esc_html( (string) ( $job['phase'] ?? '' ) ); ?></code>
-					· <strong><?php echo esc_html$copy->text( 'wizard_status' ); ?></strong>
+					· <strong><?php echo esc_html( $copy->text( 'wizard_status' ) ); ?></strong>
 					<code><?php echo esc_html( (string) ( $job['status'] ?? '' ) ); ?></code>
-					· <strong><?php echo esc_html$copy->text( 'wizard_batch' ); ?></strong>
+					· <strong><?php echo esc_html( $copy->text( 'wizard_batch' ) ); ?></strong>
 					<?php echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total ); ?>
 				</p>
 				<?php if ( in_array( $job['status'] ?? '', array( 'failed-retryable', 'failed-terminal', 'paused' ), true ) ) : ?>
-					<p class="notice notice-warning inline"><?php echo esc_html$copy->text( 'wizard_attention' ); ?></p>
+					<p class="notice notice-warning inline"><?php echo esc_html( $copy->text( 'wizard_attention' ) ); ?></p>
 				<?php endif; ?>
 			<?php else : ?>
-				<p><?php echo esc_html$copy->text( 'wizard_empty' ); ?></p>
+				<p><?php echo esc_html( $copy->text( 'wizard_empty' ) ); ?></p>
 			<?php endif; ?>
 			<ol style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding-left:0;list-style:none;">
 				<?php foreach ( $steps as $step ) : ?>
@@ -161,7 +161,7 @@ final class AdminMigrationWizard {
 			</ol>
 			<?php if ( is_array( $checkpoint ) ) : ?>
 				<div role="status" style="padding:12px;margin:12px 0;border-left:4px solid #2271b1;background:#f6f7f7;">
-					<strong><?php echo esc_html$copy->text( 'wizard_next' ); ?></strong>
+					<strong><?php echo esc_html( $copy->text( 'wizard_next' ) ); ?></strong>
 					<?php echo esc_html( $copy->text( $checkpoint['label_key'] ) ); ?>
 					<p style="margin:4px 0 0;">
 						<?php
@@ -169,16 +169,16 @@ final class AdminMigrationWizard {
 						echo esc_html( sprintf( $copy->text( 'wizard_progress' ), $checkpoint['completed'], $checkpoint['total'] ) );
 						?>
 						<?php if ( $checkpoint['blocked'] ) : ?>
-							<?php echo esc_html$copy->text( 'wizard_blocked_note' ); ?>
+							<?php echo esc_html( $copy->text( 'wizard_blocked_note' ) ); ?>
 						<?php endif; ?>
 					</p>
 				</div>
 			<?php endif; ?>
 			<p>
 				<a class="button button-primary" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( '' === $job_id ? $copy->text( 'wizard_start' ) : ( true === ( $checkpoint['done'] ?? false ) ? $copy->text( 'wizard_review_done' ) : ( true === ( $checkpoint['blocked'] ?? false ) ? $copy->text( 'wizard_review_blocked' ) : $copy->text( 'wizard_open_next' ) ) ) ); ?></a>
-				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html$copy->text( 'wizard_rescue' ); ?></a>
+				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html( $copy->text( 'wizard_rescue' ) ); ?></a>
 			</p>
-			<p class="description"><?php echo esc_html$copy->text( 'wizard_cutover_notice' ); ?></p>
+			<p class="description"><?php echo esc_html( $copy->text( 'wizard_cutover_notice' ) ); ?></p>
 		</section>
 		<?php
 	}
