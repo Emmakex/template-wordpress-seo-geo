@@ -77,7 +77,7 @@ final class ImportProductionAdminKeeper {
 			$wpdb->prefix . 'user_level',
 			'session_tokens',
 		);
-		$meta = array();
+		$meta            = array();
 		// phpcs:disable WordPress.DB.SlowDBQuery -- This verified staging operation touches only one user_id and three exact metadata keys.
 		foreach ( $admin_meta_keys as $key ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the current authenticated user before replacing only staging tables.
