@@ -57,15 +57,15 @@ final class ImportDestinationPlan {
 		}
 
 		return array(
-			'status'                => $status,
-			'scenario'              => $scenario,
-			'source_home'           => $source_home,
-			'target_home'           => $target_home,
-			'source_site'           => $source_site,
-			'target_site'           => $target_site,
+			'status'                       => $status,
+			'scenario'                     => $scenario,
+			'source_home'                  => $source_home,
+			'target_home'                  => $target_home,
+			'source_site'                  => $source_site,
+			'target_site'                  => $target_site,
 			'show_external_backup_warning' => true,
-			'requires_confirmation' => true,
-			'restore_authorized'    => false,
+			'requires_confirmation'        => true,
+			'restore_authorized'           => false,
 		);
 	}
 
