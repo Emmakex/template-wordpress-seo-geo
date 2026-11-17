@@ -667,7 +667,7 @@ final class ImportDatabaseActivator {
 
 		$blog_public = $this->option_row( $options, 'blog_public', $columns );
 		$plugins     = $this->option_row( $options, 'active_plugins', $columns );
-		$production = $this->import_state->get( (string) ( $state['job_id'] ?? '' ) );
+		$production    = $this->import_state->get( (string) ( $state['job_id'] ?? '' ) );
 		$is_production = is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' );
 		if ( null === $blog_public || ( ! $is_production && '0' !== $blog_public['option_value'] ) || null === $plugins ) {
 			return false;
