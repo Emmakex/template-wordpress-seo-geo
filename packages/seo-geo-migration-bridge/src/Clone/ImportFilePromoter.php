@@ -279,7 +279,7 @@ final class ImportFilePromoter {
 
 		$import = $this->import_state->get( $job_id );
 		if (
-			'candidate-ready' === ( $state['status'] ?? '' )
+			'candidate-ready' === $state['status']
 			&& is_array( $import )
 			&& 'replace-production' === ( $import['destination_policy'] ?? '' )
 			&& ! $this->preserve_current_bridge( $state )
