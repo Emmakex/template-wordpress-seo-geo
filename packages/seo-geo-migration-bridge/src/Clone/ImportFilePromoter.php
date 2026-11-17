@@ -687,6 +687,11 @@ final class ImportFilePromoter {
 			return false;
 		}
 
+		$production = $this->import_state->get( $job_id );
+		if ( is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' ) ) {
+			return ImportProductionGate::ready( $job_id, $production ) && $this->options_runtime_schema_ready();
+		}
+
 		$import = $this->private_same_server_import( $job_id );
 		if ( is_array( $import ) ) {
 			$options = $this->private_same_server_options_table( $import );
