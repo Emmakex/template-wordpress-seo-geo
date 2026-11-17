@@ -193,4 +193,5 @@ final class ImportProductionAdminKeeper {
 	private function table_name_valid( string $name ): bool {
 		return '' !== $name && 1 === preg_match( '/^[A-Za-z0-9_]+$/', $name );
 	}
+	// phpcs:ignore PSR2.Classes.ClassDeclaration.CloseBraceAfterBody -- Final WordPress migration guard class boundary is explicit.
 }
