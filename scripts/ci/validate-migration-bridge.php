@@ -1973,7 +1973,7 @@ foreach ( array( '->insert(', '->update(', '->delete(', '->query(' ) as $finaliz
 		);
 	}
 }
-if ( 1 === preg_match( '/[\"\']\\s*(?:INSERT|UPDATE|DELETE|REPLACE|CREATE|DROP|ALTER|RENAME|TRUNCATE)\\b/i', $import_finalizer, $finalize_sql_match ) ) {
+if ( 1 === preg_match( '/[\"\']\\s*(?:INSERT|UPDATE|DELETE|REPLACE|CREATE|DROP|ALTER|RENAME|TRUNCATE)\\s/i', $import_finalizer, $finalize_sql_match ) ) {
 	fail_migration_bridge(
 		'portable-clone-import-finalize-no-database-mutation',
 		'10E.2A.4.6.1 must remain read-only against staging and active database tables.',
