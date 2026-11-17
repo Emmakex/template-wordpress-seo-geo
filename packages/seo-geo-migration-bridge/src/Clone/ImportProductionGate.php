@@ -52,8 +52,7 @@ final class ImportProductionGate {
 			return true;
 		}
 
-		return
-			hash_equals(
+		return hash_equals(
 				(string) ( $import['archive_sha256'] ?? '' ),
 				(string) ( $import['production_confirmed_archive_sha256'] ?? '' )
 			)
