@@ -50,10 +50,10 @@ final class ImportProductionAdminKeeper {
 			if ( ! isset( $table['target_table'], $table['staging_table'] ) ) {
 				return false;
 			}
-			if ( (string) ( $table['target_table'] ?? '' ) === $target_users ) {
-				$staged_users = (string) ( $table['staging_table'] ?? '' );
-			} elseif ( (string) ( $table['target_table'] ?? '' ) === $target_usermeta ) {
-				$staged_usermeta = (string) ( $table['staging_table'] ?? '' );
+			if ( (string) $table['target_table'] === $target_users ) {
+				$staged_users = (string) $table['staging_table'];
+			} elseif ( (string) $table['target_table'] === $target_usermeta ) {
+				$staged_usermeta = (string) $table['staging_table'];
 			}
 		}
 
