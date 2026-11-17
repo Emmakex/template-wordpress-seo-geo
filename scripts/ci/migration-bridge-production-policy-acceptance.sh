@@ -60,7 +60,7 @@ assert p["target_authorized"] is False
 assert "import-sandbox-marker-missing" not in p["blockers"]
 assert "import-search-visibility-not-disabled" not in p["blockers"]
 assert "import-target-authorization-missing" not in p["blockers"]
-assert "import-production-replacement-engine-not-yet-enabled" in p["advisories"]
+assert "import-production-final-confirmation-required" in p["advisories"]
 assert s["mode"] != "replace-production"
 assert "import-sandbox-marker-missing" in s["blockers"]
 assert "import-target-authorization-missing" in s["blockers"]
