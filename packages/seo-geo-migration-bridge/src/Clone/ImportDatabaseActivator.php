@@ -1003,6 +1003,11 @@ final class ImportDatabaseActivator {
 			return false;
 		}
 
+		$production = $this->import_state->get( $job_id );
+		if ( is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' ) ) {
+			return ImportProductionGate::ready( $job_id, $production );
+		}
+
 		$import = $this->private_same_server_import( $job_id );
 		if ( is_array( $import ) ) {
 			$root   = $this->private_same_server_root( $import );
