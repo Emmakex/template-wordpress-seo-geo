@@ -64,7 +64,10 @@ $payload = array( 'cases' => $cases, 'unchanged' => $before === $after );
 echo wp_json_encode( $payload, JSON_UNESCAPED_SLASHES );
 PHP
 
-if ! PRODUCTION_TARGET_JSON="$(wp_cli eval-file "$PRODUCTION_TARGET_RUNNER")"; then
+docker cp "$PRODUCTION_TARGET_RUNNER" "$WP_CONTAINER":/var/www/html/wp-content/migration-production-target-runner.php \
+  || fail_smoke "production_target-copy" "Could not copy production import test runner" "runner accessible inside WordPress" "docker cp failed"
+
+if ! PRODUCTION_TARGET_JSON="$(wp_cli eval-file /var/www/html/wp-content/migration-production-target-runner.php)"; then
   fail_smoke "production-target-runner" "Could not classify production import destination" "read-only class loading" "wp-cli error"
 fi
 
