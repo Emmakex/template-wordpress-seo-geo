@@ -47,7 +47,7 @@ final class ImportProductionAdminKeeper {
 		$staged_users    = '';
 		$staged_usermeta = '';
 		foreach ( $tables as $table ) {
-			if ( ! is_array( $table ) ) {
+			if ( ! isset( $table['target_table'], $table['staging_table'] ) ) {
 				return false;
 			}
 			if ( (string) ( $table['target_table'] ?? '' ) === $target_users ) {
@@ -68,7 +68,7 @@ final class ImportProductionAdminKeeper {
 
 		$user_id = get_current_user_id();
 		$user    = get_userdata( $user_id );
-		if ( ! $user || ! is_string( $user->user_login ) || '' === $user->user_login ) {
+		if ( ! $user || '' === $user->user_login ) {
 			return false;
 		}
 
@@ -89,7 +89,7 @@ final class ImportProductionAdminKeeper {
 					$key
 				)
 			);
-			if ( ! is_array( $records ) || array() === $records ) {
+			if ( array() === $records || null === $records[0] ) {
 				return false;
 			}
 			$meta[ $key ] = (string) $records[0];
@@ -194,12 +194,4 @@ final class ImportProductionAdminKeeper {
 		return '' !== $name && 1 === preg_match( '/^[A-Za-z0-9_]+$/', $name );
 	}
 
-	/**
-	 * Quote a verified SQL identifier.
-	 *
-	 * @param string $name Table name.
-	 */
-	private function quoted( string $name ): string {
-		return chr( 96 ) . $name . chr( 96 );
-	}
 }
