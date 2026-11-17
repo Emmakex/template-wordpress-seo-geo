@@ -81,7 +81,7 @@ assert cases["same_site"]["status"] == "same-site-replacement-not-automatic"
 assert cases["different_siteurl_only"]["status"] == "same-home-different-siteurl-review"
 assert cases["invalid_url"]["status"] == "invalid-site-identity"
 for plan in cases.values():
-    assert plan["requires_backup"] is True
+    assert plan["show_external_backup_warning"] is True
     assert plan["requires_confirmation"] is True
     assert plan["restore_authorized"] is False
 print("ok")
