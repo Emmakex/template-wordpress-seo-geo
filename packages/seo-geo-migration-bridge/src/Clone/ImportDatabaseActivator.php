@@ -448,7 +448,7 @@ final class ImportDatabaseActivator {
 				$row['autoload']
 			);
 		}
-		if ( ! $is_production ) {
+		if ( 'replace-production' !== (string) ( $production['destination_policy'] ?? '' ) ) {
 			$ok = $ok && $this->upsert_option( $staging, $staging_columns, 'blog_public', '0', 'no' );
 		}
 
