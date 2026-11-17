@@ -2920,6 +2920,8 @@ final class AdminOperatorScreen {
 				<?php if ( $has_archive ) : ?>
 					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_destination_policy' ) ); ?></th><td><code><?php echo esc_html( $policy ); ?></code></td></tr>
 					<?php if ( 'replace-production' === $policy ) : ?>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_source_url' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['source_home_url'] ?? '' ) ); ?></code></td></tr>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_target_url' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['destination_home_url'] ?? '' ) ); ?></code></td></tr>
 						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_destination_scenario' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['destination_scenario'] ?? '' ) ); ?></code></td></tr>
 					<?php endif; ?>
 					<tr>
