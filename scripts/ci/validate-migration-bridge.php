@@ -260,6 +260,8 @@ $authorized_mutation_calls = array(
 	),
 	// The browser auto-export releases only its namespaced, expiring mutex option.
 	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php' => array( 'delete_option' ),
+	// The automatic import controller deletes only its namespaced single-job mutex.
+	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php' => array( 'delete_option' ),
 );
 
 $auto_export_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php' );
@@ -273,6 +275,21 @@ if (
 		'Only the namespaced auto-export lock may be removed by the AJAX controller.',
 		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php',
 		'two bounded lock-key deletions and no other delete_option calls',
+		'changed'
+	);
+}
+
+$auto_import_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php' );
+if (
+	! str_contains( $auto_import_source, "private const LOCK_OPTION = 'seo_geo_migration_import_process_lock'" )
+	|| 2 !== preg_match_all( '/\\bdelete_option\\s*\\(\\s*self::LOCK_OPTION\\s*\\)/', $auto_import_source )
+	|| 2 !== preg_match_all( '/\\bdelete_option\\s*\\(/', $auto_import_source )
+) {
+	fail_migration_bridge(
+		'auto-import-lock-scope',
+		'Only the namespaced auto-import lock may be removed by the AJAX controller.',
+		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php',
+		'two scoped lock deletions',
 		'changed'
 	);
 }
