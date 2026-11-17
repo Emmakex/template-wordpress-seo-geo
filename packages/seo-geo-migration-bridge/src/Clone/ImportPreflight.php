@@ -440,11 +440,11 @@ final class ImportPreflight {
 			$advisories[] = 'restore-runtime-guard-required';
 		}
 
-		// ZIP verification never unlocks production replacement.
-		// The separate restore engine and final replacement confirmation are not implemented yet.
+		// Full payload verification authorizes isolated staging only.
+		// Active production tables and file roots require a separate explicit approval.
 		$state['status']                = $payload_valid ? 'payload-verified' : ( array() === $blockers ? 'preflight-ready' : 'blocked' );
 		$state['full_payload_verified'] = $payload_valid;
-		$state['restore_allowed']       = $payload_valid && 'replace-production' !== $policy;
+		$state['restore_allowed']       = $payload_valid;
 		$state['blockers']              = $blockers;
 		$state['advisories']            = array_values( array_unique( $advisories ) );
 		$state['validated_at']          = $now;
@@ -776,7 +776,7 @@ final class ImportPreflight {
 			} elseif ( 'same-home-different-siteurl-review' === ( $plan['status'] ?? '' ) ) {
 				$blockers[] = 'import-production-siteurl-ambiguous';
 			}
-			$advisories[] = 'import-production-replacement-engine-not-yet-enabled';
+			$advisories[] = 'import-production-final-confirmation-required';
 		}
 
 		$source_prefix = is_string( $db_source['table_prefix'] ?? null ) ? $db_source['table_prefix'] : '';
