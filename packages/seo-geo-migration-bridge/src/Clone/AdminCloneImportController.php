@@ -63,7 +63,14 @@ final class AdminCloneImportController {
 				wp_die( esc_html__( 'Invalid destination policy.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
 			}
 			$source = $this->validated_upload_path();
-			if ( null === $source || null === $this->preflight->stage( $job_id, $source, $policy ) ) {
+			// Keep the legacy sandbox intake exactly as before; production is an explicit opt-in.
+			$staged = null;
+			if ( null !== $source ) {
+				$staged = 'sandbox' === $policy
+					? $this->preflight->stage( $job_id, $source )
+					: $this->preflight->stage( $job_id, $source, $policy );
+			}
+			if ( null === $staged ) {
 				wp_die(
 					esc_html__( 'The Portable Clone ZIP could not be staged safely.', 'seo-geo-migration-bridge' ),
 					'',
