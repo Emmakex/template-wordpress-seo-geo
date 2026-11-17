@@ -2895,6 +2895,8 @@ final class AdminOperatorScreen {
 		$advisories  = is_array( $state['advisories'] ?? null ) ? array_values( array_filter( $state['advisories'], 'is_string' ) ) : array();
 		$has_archive = is_array( $state ) && 0 < (int) ( $state['archive_bytes'] ?? 0 );
 		$button      = $has_archive ? 'clone_import_revalidate' : 'clone_import_validate';
+		$policy      = is_array( $state ) && 'replace-production' === ( $state['destination_policy'] ?? '' )
+			? 'replace-production' : 'sandbox';
 		?>
 		<h3 id="seo-geo-guide-clone_import"><?php echo esc_html( $this->copy->text( 'clone_import_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_help' ) ); ?></p>
@@ -2905,6 +2907,10 @@ final class AdminOperatorScreen {
 					<td><code><?php echo esc_html( $status ); ?></code></td>
 				</tr>
 				<?php if ( $has_archive ) : ?>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_destination_policy' ) ); ?></th><td><code><?php echo esc_html( $policy ); ?></code></td></tr>
+					<?php if ( 'replace-production' === $policy ) : ?>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_destination_scenario' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['destination_scenario'] ?? '' ) ); ?></code></td></tr>
+					<?php endif; ?>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_archive_bytes' ) ); ?></th>
 						<td><?php echo esc_html( size_format( (int) ( $state['archive_bytes'] ?? 0 ) ) ); ?></td>
@@ -2963,6 +2969,18 @@ final class AdminOperatorScreen {
 					>
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_upload_help' ) ); ?></p>
+				<?php if ( ! $has_archive ) : ?>
+					<fieldset>
+						<legend><strong><?php echo esc_html( $this->copy->text( 'clone_import_destination_policy' ) ); ?></strong></legend>
+						<label><input type="radio" name="import_destination_policy" value="replace-production" checked> <?php echo esc_html( $this->copy->text( 'clone_import_policy_production' ) ); ?></label><br>
+						<label><input type="radio" name="import_destination_policy" value="sandbox"> <?php echo esc_html( $this->copy->text( 'clone_import_policy_sandbox' ) ); ?></label>
+					</fieldset>
+				<?php else : ?>
+					<p><strong><?php echo esc_html( $this->copy->text( 'clone_import_destination_policy' ) ); ?>:</strong> <code><?php echo esc_html( $policy ); ?></code></p>
+				<?php endif; ?>
+				<?php if ( 'replace-production' === $policy ) : ?>
+					<p class="notice notice-warning inline"><?php echo esc_html( $this->copy->text( 'clone_import_production_not_activated' ) ); ?></p>
+				<?php endif; ?>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
