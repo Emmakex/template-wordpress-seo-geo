@@ -76,6 +76,7 @@ final class ImportPreflight {
 	 *
 	 * @param string $job_id Clone job identifier.
 	 * @param string $source Absolute readable source ZIP path.
+	 * @param string $policy Explicit destination policy (sandbox or production, read-only).
 	 * @return array<string,mixed>|null
 	 */
 	public function stage( string $job_id, string $source, string $policy = 'sandbox' ): ?array {
@@ -439,10 +440,10 @@ final class ImportPreflight {
 			$advisories[] = 'restore-runtime-guard-required';
 		}
 
-		$state['status']                = $payload_valid ? 'payload-verified' : ( array() === $blockers ? 'preflight-ready' : 'blocked' );
-		$state['full_payload_verified'] = $payload_valid;
 		// Production replacement is NEVER unlocked by ZIP validation alone.
 		// A separately attested recovery journal and final user approval are still missing.
+		$state['status']                = $payload_valid ? 'payload-verified' : ( array() === $blockers ? 'preflight-ready' : 'blocked' );
+		$state['full_payload_verified'] = $payload_valid;
 		$state['restore_allowed']       = $payload_valid && 'replace-production' !== $policy;
 		$state['blockers']              = $blockers;
 		$state['advisories']            = array_values( array_unique( $advisories ) );
@@ -674,6 +675,7 @@ final class ImportPreflight {
 	 * @param array<string,mixed>      $database        Database manifest.
 	 * @param int                      $archive_bytes   Staged ZIP bytes.
 	 * @param array<string,mixed>|null $trusted_context Verified private same-server destination context.
+	 * @param string                   $policy          Explicit target policy (never a restore grant).
 	 * @return array<string,mixed>
 	 */
 	private function destination_report( array $package, array $database, int $archive_bytes, ?array $trusted_context = null, string $policy = 'sandbox' ): array {
@@ -734,8 +736,9 @@ final class ImportPreflight {
 			$blockers[] = 'import-destination-free-space-insufficient';
 		}
 
-		if ( ! $production &&
-			'' !== $source_home
+		if (
+			! $production
+			&& '' !== $source_home
 			&& untrailingslashit( $source_home ) === untrailingslashit( $home_url )
 		) {
 			$blockers[] = 'import-destination-home-is-source';
