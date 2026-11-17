@@ -72,6 +72,7 @@ final class ImportDestinationPlan {
 	/**
 	 * Canonicalize only ordinary web URLs, without userinfo or query data.
 	 *
+	 * @param string $url Absolute source or destination URL.
 	 * @return array{url:string,origin:string}|null
 	 */
 	private static function normalize( string $url ): ?array {
@@ -91,10 +92,10 @@ final class ImportDestinationPlan {
 			return null;
 		}
 
-		$port  = isset( $parts['port'] ) ? (int) $parts['port'] : null;
-		$path  = (string) ( $parts['path'] ?? '/' );
-		$path  = '/' . trim( $path, '/' );
-		$path  = '/' === $path ? '/' : rtrim( $path, '/' );
+		$port = isset( $parts['port'] ) ? (int) $parts['port'] : null;
+		$path = (string) ( $parts['path'] ?? '/' );
+		$path = '/' . trim( $path, '/' );
+		$path = '/' === $path ? '/' : rtrim( $path, '/' );
 		if ( str_contains( $path, '/../' ) || str_contains( $path, '/./' ) || str_contains( $path, '\\' ) ) {
 			return null;
 		}
