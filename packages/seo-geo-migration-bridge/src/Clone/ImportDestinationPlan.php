@@ -13,7 +13,7 @@ namespace SeoGeo\MigrationBridge\Clone;
  * Distinguish an intentional website replacement from a sandbox clone.
  *
  * This planner never authorizes a restore or alters WordPress runtime state.
- * Production replacement requires its own verified backup and rollback journal.
+ * Backups are handled externally. This planner only classifies the destination and requires a clear warning and explicit replacement confirmation.
  */
 final class ImportDestinationPlan {
 	/**
@@ -23,7 +23,7 @@ final class ImportDestinationPlan {
 	 * @param string $source_site Source WordPress siteurl from verified manifest.
 	 * @param string $target_home Current destination home URL.
 	 * @param string $target_site Current destination siteurl.
-	 * @return array{status:string,scenario:string,source_home:string,target_home:string,source_site:string,target_site:string,requires_backup:bool,requires_confirmation:bool,restore_authorized:bool}
+	 * @return array{status:string,scenario:string,source_home:string,target_home:string,source_site:string,target_site:string,show_external_backup_warning:bool,requires_confirmation:bool,restore_authorized:bool}
 	 */
 	public static function inspect( string $source_home, string $source_site, string $target_home, string $target_site ): array {
 		$source_home_url = self::normalize( $source_home );
@@ -63,7 +63,7 @@ final class ImportDestinationPlan {
 			'target_home'           => $target_home,
 			'source_site'           => $source_site,
 			'target_site'           => $target_site,
-			'requires_backup'       => true,
+			'show_external_backup_warning' => true,
 			'requires_confirmation' => true,
 			'restore_authorized'    => false,
 		);
