@@ -78,11 +78,13 @@ final class ImportProductionAdminKeeper {
 			'session_tokens',
 		);
 		$meta = array();
+		// phpcs:disable WordPress.DB.SlowDBQuery -- This verified staging operation touches only one user_id and three exact metadata keys.
 		foreach ( $admin_meta_keys as $key ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the current authenticated user before replacing only staging tables.
 			$records = $wpdb->get_col(
 				$wpdb->prepare(
-					'SELECT meta_value FROM ' . $this->quoted( $target_usermeta ) . ' WHERE user_id = %d AND meta_key = %s',
+					'SELECT meta_value FROM %i WHERE user_id = %d AND meta_key = %s',
+					$target_usermeta,
 					$user_id,
 					$key
 				)
@@ -96,14 +98,15 @@ final class ImportProductionAdminKeeper {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Looks up the imported staging login; active tables remain untouched.
 		$existing_id = $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT ID FROM ' . $this->quoted( $staged_users ) . ' WHERE user_login = %s',
+				'SELECT ID FROM %i WHERE user_login = %s',
+				$staged_users,
 				$user->user_login
 			)
 		);
 
 		if ( null === $existing_id ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Determines an unused ID in the staging users table.
-			$maximum = (int) $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $this->quoted( $staged_users ) );
+			$maximum = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(ID) FROM %i', $staged_users ) );
 			$new_id  = $maximum + 1;
 		} else {
 			$new_id = (int) $existing_id;
@@ -140,7 +143,13 @@ final class ImportProductionAdminKeeper {
 		if ( $ok ) {
 			foreach ( $meta as $key => $value ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Deletes only session/capability entries for the imported staging user.
-				$ok = false !== $wpdb->delete( $staged_usermeta, array( 'user_id' => $new_id, 'meta_key' => $key ) );
+				$ok = false !== $wpdb->delete(
+					$staged_usermeta,
+					array(
+						'user_id'  => $new_id,
+						'meta_key' => $key,
+					)
+				);
 				if ( ! $ok ) {
 					break;
 				}
@@ -172,6 +181,7 @@ final class ImportProductionAdminKeeper {
 			return false;
 		}
 
+		// phpcs:enable WordPress.DB.SlowDBQuery
 		return true;
 	}
 
