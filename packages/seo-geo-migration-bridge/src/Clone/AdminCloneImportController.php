@@ -57,8 +57,13 @@ final class AdminCloneImportController {
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
 		if ( $this->has_upload() ) {
+			$policy = isset( $_POST['import_destination_policy'] )
+				? sanitize_key( wp_unslash( $_POST['import_destination_policy'] ) ) : 'sandbox';
+			if ( ! in_array( $policy, array( 'sandbox', 'replace-production' ), true ) ) {
+				wp_die( esc_html__( 'Invalid destination policy.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+			}
 			$source = $this->validated_upload_path();
-			if ( null === $source || null === $this->preflight->stage( $job_id, $source ) ) {
+			if ( null === $source || null === $this->preflight->stage( $job_id, $source, $policy ) ) {
 				wp_die(
 					esc_html__( 'The Portable Clone ZIP could not be staged safely.', 'seo-geo-migration-bridge' ),
 					'',
