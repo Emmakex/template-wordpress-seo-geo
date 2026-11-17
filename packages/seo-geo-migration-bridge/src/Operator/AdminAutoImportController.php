@@ -120,7 +120,7 @@ final class AdminAutoImportController {
 			$result = null;
 			if ( 'review' === $phase ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- AJAX nonce verified above.
-				$confirmed = isset( $_POST['confirm_override'] ) && '1' === (string) wp_unslash( $_POST['confirm_override'] );
+				$confirmed = isset( $_POST['confirm_override'] ) && '1' === sanitize_text_field( wp_unslash( (string) $_POST['confirm_override'] ) );
 				if ( $confirmed ) {
 					$result = ImportProductionGate::approve( $job_id ) ? array( 'status' => 'complete' ) : null;
 				}
@@ -219,11 +219,11 @@ final class AdminAutoImportController {
 			}
 		}
 
-		$index = array_search( $phase, $sequence, true );
-		$index = false === $index ? count( $sequence ) : $index;
-		$current = $stores[ $phase ] ?? ( in_array( $phase, array( 'promote', 'verify' ), true ) ? $stores['candidates'] : null );
-		$processed = is_array( $current ) ? (int) ( $current['file_count'] ?? $current['rows_restored'] ?? $current['verify_file_count'] ?? 0 ) : 0;
-		$total     = is_array( $current ) ? (int) ( $current['expected_file_count'] ?? $current['table_count'] ?? 0 ) : 0;
+		$index      = array_search( $phase, $sequence, true );
+		$index      = false === $index ? count( $sequence ) : $index;
+		$current    = $stores[ $phase ] ?? ( in_array( $phase, array( 'promote', 'verify' ), true ) ? $stores['candidates'] : null );
+		$processed  = is_array( $current ) ? (int) ( $current['file_count'] ?? $current['rows_restored'] ?? $current['verify_file_count'] ?? 0 ) : 0;
+		$total      = is_array( $current ) ? (int) ( $current['expected_file_count'] ?? $current['table_count'] ?? 0 ) : 0;
 		$checkpoint = hash(
 			'sha256',
 			wp_json_encode(
