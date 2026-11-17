@@ -78,7 +78,10 @@ final class ImportPreflight {
 	 * @param string $source Absolute readable source ZIP path.
 	 * @return array<string,mixed>|null
 	 */
-	public function stage( string $job_id, string $source ): ?array {
+	public function stage( string $job_id, string $source, string $policy = 'sandbox' ): ?array {
+		if ( ! in_array( $policy, array( 'sandbox', 'replace-production' ), true ) ) {
+			return null;
+		}
 		$job = $this->jobs->get( $job_id );
 		if ( is_array( ( new ImportPayloadStateStore() )->get( $job_id ) ) ) {
 			return null;
@@ -118,6 +121,9 @@ final class ImportPreflight {
 			'destination_site_url'         => site_url( '/' ),
 			'destination_table_prefix'     => '',
 			'destination_mode'             => '',
+			'destination_policy'           => $policy,
+			'destination_scenario'         => '',
+			'destination_plan_status'      => '',
 			'destination_storage_isolated' => false,
 			'search_visibility_disabled'   => false,
 			'outbound_safe'                => false,
@@ -226,6 +232,9 @@ final class ImportPreflight {
 			'destination_site_url'             => (string) $context['target_url'],
 			'destination_table_prefix'         => (string) $context['target_table_prefix'],
 			'destination_mode'                 => 'subdirectory',
+			'destination_policy'               => 'sandbox',
+			'destination_scenario'             => '',
+			'destination_plan_status'          => '',
 			'destination_storage_isolated'     => true,
 			'search_visibility_disabled'       => true,
 			'outbound_safe'                    => true,
@@ -275,6 +284,8 @@ final class ImportPreflight {
 		$job           = $this->jobs->get( $job_id );
 		$state         = $this->store->get( $job_id );
 		$local_handoff = is_array( $state ) && 'private-same-server' === ( $state['transport'] ?? null );
+		$policy        = ! $local_handoff && 'replace-production' === ( $state['destination_policy'] ?? null )
+			? 'replace-production' : 'sandbox';
 		if (
 			! is_array( $job )
 			|| 'import' !== ( $job['operation'] ?? null )
@@ -359,7 +370,8 @@ final class ImportPreflight {
 			$package,
 			$database,
 			(int) $archive_info['bytes'],
-			$local_handoff ? $this->local_destination_context( $state ) : null
+			$local_handoff ? $this->local_destination_context( $state ) : null,
+			$policy
 		);
 
 		$blockers   = array_merge( $blockers, $destination['blockers'] );
@@ -387,6 +399,8 @@ final class ImportPreflight {
 		$state['destination_site_url']         = (string) $destination['site_url'];
 		$state['destination_table_prefix']     = (string) $destination['table_prefix'];
 		$state['destination_mode']             = (string) $destination['mode'];
+		$state['destination_scenario']         = (string) $destination['scenario'];
+		$state['destination_plan_status']      = (string) $destination['plan_status'];
 		$state['destination_storage_isolated'] = true === $destination['storage_isolated'];
 		$state['search_visibility_disabled']   = true === $destination['search_visibility_disabled'];
 		$state['outbound_safe']                = true === $destination['outbound_safe'];
@@ -427,7 +441,9 @@ final class ImportPreflight {
 
 		$state['status']                = $payload_valid ? 'payload-verified' : ( array() === $blockers ? 'preflight-ready' : 'blocked' );
 		$state['full_payload_verified'] = $payload_valid;
-		$state['restore_allowed']       = $payload_valid;
+		// Production replacement is NEVER unlocked by ZIP validation alone.
+		// A separately attested recovery journal and final user approval are still missing.
+		$state['restore_allowed']       = $payload_valid && 'replace-production' !== $policy;
 		$state['blockers']              = $blockers;
 		$state['advisories']            = array_values( array_unique( $advisories ) );
 		$state['validated_at']          = $now;
@@ -660,7 +676,7 @@ final class ImportPreflight {
 	 * @param array<string,mixed>|null $trusted_context Verified private same-server destination context.
 	 * @return array<string,mixed>
 	 */
-	private function destination_report( array $package, array $database, int $archive_bytes, ?array $trusted_context = null ): array {
+	private function destination_report( array $package, array $database, int $archive_bytes, ?array $trusted_context = null, string $policy = 'sandbox' ): array {
 		global $wpdb;
 
 		$source        = is_array( $package['source'] ?? null ) ? $package['source'] : array();
@@ -683,23 +699,27 @@ final class ImportPreflight {
 		$blockers      = array();
 		$advisories    = array();
 		$sandbox_ready = $trusted ? true === ( $trusted_context['sandbox_enabled'] ?? false ) : SandboxGuard::enabled();
+		$production    = ! $trusted && 'replace-production' === $policy;
+		$source_home   = is_string( $source['home_url'] ?? null ) ? $source['home_url'] : '';
+		$source_site   = is_string( $source['site_url'] ?? null ) ? $source['site_url'] : '';
+		$plan          = $production ? ImportDestinationPlan::inspect( $source_home, $source_site, $home_url, $site_url ) : null;
 
-		if ( ! $sandbox_ready ) {
+		if ( ! $production && ! $sandbox_ready ) {
 			$blockers[] = 'import-sandbox-marker-missing';
 		}
-		if ( 'invalid' === $mode ) {
+		if ( ! $production && 'invalid' === $mode ) {
 			$blockers[] = 'import-sandbox-mode-invalid';
 		}
-		if ( ! $search_safe ) {
+		if ( ! $production && ! $search_safe ) {
 			$blockers[] = 'import-search-visibility-not-disabled';
 		}
-		if ( ! $outbound_safe ) {
+		if ( ! $production && ! $outbound_safe ) {
 			$blockers[] = 'import-outbound-safety-not-confirmed';
 		}
-		if ( ! $backups_ready ) {
+		if ( ! $production && ! $backups_ready ) {
 			$blockers[] = 'import-backups-not-confirmed';
 		}
-		if ( ! $authorized ) {
+		if ( ! $production && ! $authorized ) {
 			$blockers[] = 'import-target-authorization-missing';
 		}
 		if ( ! $this->valid_http_url( $home_url ) || ! $this->valid_http_url( $site_url ) ) {
@@ -714,16 +734,15 @@ final class ImportPreflight {
 			$blockers[] = 'import-destination-free-space-insufficient';
 		}
 
-		$source_home = is_string( $source['home_url'] ?? null ) ? $source['home_url'] : '';
-		$source_site = is_string( $source['site_url'] ?? null ) ? $source['site_url'] : '';
-		if (
+		if ( ! $production &&
 			'' !== $source_home
 			&& untrailingslashit( $source_home ) === untrailingslashit( $home_url )
 		) {
 			$blockers[] = 'import-destination-home-is-source';
 		}
 		if (
-			'' !== $source_site
+			! $production
+			&& '' !== $source_site
 			&& untrailingslashit( $source_site ) === untrailingslashit( $site_url )
 		) {
 			$blockers[] = 'import-destination-site-is-source';
@@ -731,10 +750,10 @@ final class ImportPreflight {
 
 		$source_origin      = $this->origin_key( $source_home );
 		$destination_origin = $this->origin_key( $home_url );
-		if ( 'origin' === $mode && '' !== $source_origin && $source_origin === $destination_origin ) {
+		if ( ! $production && 'origin' === $mode && '' !== $source_origin && $source_origin === $destination_origin ) {
 			$blockers[] = 'import-destination-origin-not-isolated';
 		}
-		if ( 'subdirectory' === $mode ) {
+		if ( ! $production && 'subdirectory' === $mode ) {
 			if ( '' === $source_origin || $source_origin !== $destination_origin ) {
 				$blockers[] = 'import-subdirectory-origin-mismatch';
 			}
@@ -744,6 +763,18 @@ final class ImportPreflight {
 			if ( ! $storage ) {
 				$blockers[] = 'import-storage-isolation-not-confirmed';
 			}
+		}
+
+		if ( $production ) {
+			if ( 'invalid-site-identity' === ( $plan['status'] ?? '' ) ) {
+				$blockers[] = 'import-production-site-identity-invalid';
+			} elseif ( 'same-site-replacement-not-automatic' === ( $plan['status'] ?? '' ) ) {
+				$blockers[] = 'import-production-source-and-target-identical';
+			} elseif ( 'same-home-different-siteurl-review' === ( $plan['status'] ?? '' ) ) {
+				$blockers[] = 'import-production-siteurl-ambiguous';
+			}
+			$advisories[] = 'import-production-restore-not-available-until-recovery-journal';
+			$advisories[] = 'import-production-backup-space-not-yet-measured';
 		}
 
 		$source_prefix = is_string( $db_source['table_prefix'] ?? null ) ? $db_source['table_prefix'] : '';
@@ -759,12 +790,14 @@ final class ImportPreflight {
 			'home_url'                   => $home_url,
 			'site_url'                   => $site_url,
 			'table_prefix'               => $table_prefix,
-			'mode'                       => $mode,
+			'mode'                       => $production ? 'replace-production' : $mode,
+			'scenario'                   => is_array( $plan ) ? (string) $plan['scenario'] : '',
+			'plan_status'                => is_array( $plan ) ? (string) $plan['status'] : '',
 			'storage_isolated'           => $storage,
 			'search_visibility_disabled' => $search_safe,
 			'outbound_safe'              => $outbound_safe,
-			'backups_ready'              => $backups_ready,
-			'target_authorized'          => $authorized,
+			'backups_ready'              => $production ? false : $backups_ready,
+			'target_authorized'          => $production ? false : $authorized,
 			'disk_free_bytes'            => false === $free ? null : (int) $free,
 			'disk_required_bytes'        => $required,
 			'blockers'                   => array_values( array_unique( $blockers ) ),
