@@ -667,6 +667,81 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Mirror trusted installed Bridge files into a candidate root only.
+	 *
+	 * @param string $source Installed plugin directory.
+	 * @param string $target Candidate plugin directory.
+	 */
+	public function replace_promotion_candidate_bridge( string $source, string $target ): bool {
+		if (
+			! is_dir( $source )
+			|| is_link( $source )
+			|| is_link( $target )
+			|| 'seo-geo-migration-bridge' !== basename( $source )
+			|| 'seo-geo-migration-bridge' !== basename( $target )
+			|| ! str_contains( wp_normalize_path( dirname( $target ) ), '-candidate-' )
+			|| ! is_dir( dirname( $target ) )
+		) {
+			return false;
+		}
+
+		if ( is_dir( $target ) ) {
+			$existing = new \RecursiveIteratorIterator(
+				new \RecursiveDirectoryIterator( $target, \FilesystemIterator::SKIP_DOTS ),
+				\RecursiveIteratorIterator::CHILD_FIRST
+			);
+			foreach ( $existing as $item ) {
+				if ( $item->isLink() ) {
+					return false;
+				}
+				$path = $item->getPathname();
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir,WordPress.WP.AlternativeFunctions.unlink_unlink,WordPress.WP.AlternativeFunctions.file_system_operations_unlink -- Candidate-only directory reset.
+				if ( $item->isDir() ? ! rmdir( $path ) : ! unlink( $path ) ) {
+					return false;
+				}
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Candidate-only directory reset.
+			if ( ! rmdir( $target ) ) {
+				return false;
+			}
+		}
+
+		if ( ! wp_mkdir_p( $target ) ) {
+			return false;
+		}
+
+		$source = untrailingslashit( $source );
+		$items  = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator( $source, \FilesystemIterator::SKIP_DOTS ),
+			\RecursiveIteratorIterator::SELF_FIRST
+		);
+		foreach ( $items as $item ) {
+			if ( $item->isLink() ) {
+				return false;
+			}
+			$relative = substr( $item->getPathname(), strlen( $source ) + 1 );
+			$dest     = $this->join_path( $target, $relative );
+			if ( $item->isDir() ) {
+				if ( ! wp_mkdir_p( $dest ) ) {
+					return false;
+				}
+				continue;
+			}
+			if (
+				! $item->isFile()
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_copy -- Verified copy into a candidate-only plugin tree.
+				|| ! copy( $item->getPathname(), $dest )
+				|| hash_file( 'sha256', $item->getPathname() ) !== hash_file( 'sha256', $dest )
+			) {
+				return false;
+			}
+		}
+
+		return is_file( $this->join_path( $target, 'seo-geo-migration-bridge.php' ) );
+	}
+
+
+	/**
 	 * Rename one deterministic same-filesystem promotion path.
 	 *
 	 * @param string $from Existing source path.
