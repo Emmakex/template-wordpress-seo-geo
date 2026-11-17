@@ -39,7 +39,10 @@ echo wp_json_encode(array(
 ), JSON_UNESCAPED_SLASHES);
 PHP
 
-if ! PRODUCTION_POLICY_JSON="$(wp_cli eval-file "$PRODUCTION_POLICY_RUNNER")"; then
+docker cp "$PRODUCTION_POLICY_RUNNER" "$WP_CONTAINER":/var/www/html/wp-content/migration-production-policy-runner.php \
+  || fail_smoke "production_policy-copy" "Could not copy production import test runner" "runner accessible inside WordPress" "docker cp failed"
+
+if ! PRODUCTION_POLICY_JSON="$(wp_cli eval-file /var/www/html/wp-content/migration-production-policy-runner.php)"; then
   fail_smoke "production-policy-runner" "Could not execute production preflight policy" "read-only policy response" "wp-cli error"
 fi
 if ! PRODUCTION_POLICY_JSON="$PRODUCTION_POLICY_JSON" python3 - <<'PY'
