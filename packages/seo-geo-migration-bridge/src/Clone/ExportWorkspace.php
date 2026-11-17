@@ -720,7 +720,7 @@ final class ExportWorkspace {
 				return false;
 			}
 			$relative = substr( $item->getPathname(), strlen( $source ) + 1 );
-			$dest     = $this->join_path( $target, $relative );
+			$dest     = wp_normalize_path( untrailingslashit( $target ) . '/' . ltrim( $relative, '/' ) );
 			if ( $item->isDir() ) {
 				if ( ! wp_mkdir_p( $dest ) ) {
 					return false;
@@ -737,7 +737,7 @@ final class ExportWorkspace {
 			}
 		}
 
-		return is_file( $this->join_path( $target, 'seo-geo-migration-bridge.php' ) );
+		return is_file( wp_normalize_path( untrailingslashit( $target ) . '/seo-geo-migration-bridge.php' ) );
 	}
 
 
