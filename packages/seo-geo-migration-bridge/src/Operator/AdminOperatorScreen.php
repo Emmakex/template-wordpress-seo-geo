@@ -2900,6 +2900,9 @@ final class AdminOperatorScreen {
 		?>
 		<h3 id="seo-geo-guide-clone_import"><?php echo esc_html( $this->copy->text( 'clone_import_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_help' ) ); ?></p>
+		<div class="notice notice-warning inline" role="alert">
+			<p><strong><?php echo esc_html( $this->copy->text( 'clone_import_external_backup_warning' ) ); ?></strong></p>
+		</div>
 		<table class="widefat striped" role="presentation">
 			<tbody>
 				<tr>
