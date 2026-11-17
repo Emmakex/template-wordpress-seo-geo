@@ -422,7 +422,7 @@ final class ImportFilePromoter {
 					continue;
 				}
 				++$operations;
-				$relative = '' === $current_dir ? $entry : $current_dir . '/' . $entry;
+				$relative  = '' === $current_dir ? $entry : $current_dir . '/' . $entry;
 				$active    = $this->join_path( (string) $root['active_path'], $relative );
 				$staging   = $this->join_path( (string) $root['staging_path'], $relative );
 				$protected = $plugins_stage && ( 'seo-geo-migration-bridge' === $relative || str_starts_with( $relative, 'seo-geo-migration-bridge/' ) );
@@ -565,7 +565,7 @@ final class ImportFilePromoter {
 			$expected_bytes += (int) $root['byte_count'];
 		}
 
-		$import = $this->import_state->get( $job_id );
+		$import        = $this->import_state->get( $job_id );
 		$bridge_intact = ! is_array( $import )
 			|| 'replace-production' !== ( $import['destination_policy'] ?? '' )
 			|| $this->production_bridge_intact( $state );
@@ -875,10 +875,12 @@ final class ImportFilePromoter {
 					return false;
 				}
 				$path = $item->getPathname();
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir,WordPress.WP.AlternativeFunctions.unlink_unlink,WordPress.WP.AlternativeFunctions.file_system_operations_unlink -- Removes only previously created private candidate directory, not active WordPress data.
 				if ( $item->isDir() ? ! rmdir( $path ) : ! unlink( $path ) ) {
 					return false;
 				}
 			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Removes only the verified candidate plugin directory before replacing with the currently installed Bridge.
 			if ( ! rmdir( $target ) ) {
 				return false;
 			}
