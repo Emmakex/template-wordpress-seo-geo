@@ -1145,19 +1145,37 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Return the protected private archive path without hashing it again.
+	 *
+	 * ImportPayloadVerifier verifies the full archive SHA-256 before each
+	 * extraction batch; subsequent list/extract calls in that same request use
+	 * this filesystem-safe path to avoid repeating the full digest.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function import_archive_path( string $job_id ): ?string {
+		$path = $this->absolute_path( $job_id, 'import/package.zip', false );
+		return null !== $path && is_file( $path ) && is_readable( $path ) && ! is_link( $path )
+			? $path
+			: null;
+	}
+
+	/**
 	 * Return bounded archive-entry metadata for the staged Portable Clone ZIP.
 	 *
 	 * @param string $job_id Clone job identifier.
 	 * @return list<array{name:string,size:int,folder:bool}>
 	 */
 	public function import_archive_entries( string $job_id ): array {
-		$info = $this->import_archive_info( $job_id );
-		if ( null === $info || ! $this->load_pclzip() ) {
+		$path = $this->import_archive_path( $job_id );
+		if ( null === $path || ! $this->load_pclzip() ) {
 			return array();
 		}
 
+		// Hash of the full ZIP is checked by the verifier before each batch.
+		// Listing the same ZIP does not need an additional 60 MB SHA-256 read.
 		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip is loaded explicitly above.
-		$archive = new \PclZip( $info['path'] );
+		$archive = new \PclZip( $path );
 		$list    = $archive->listContent();
 		if ( ! is_array( $list ) ) {
 			return array();
@@ -1231,9 +1249,9 @@ final class ExportWorkspace {
 			$relatives[]       = $relative;
 		}
 
-		$archive = $this->import_archive_info( $job_id );
-		$root    = $this->import_extraction_root( $job_id );
-		if ( null === $archive || null === $root || ! $this->load_pclzip() ) {
+		$archive_path = $this->import_archive_path( $job_id );
+		$root         = $this->import_extraction_root( $job_id );
+		if ( null === $archive_path || null === $root || ! $this->load_pclzip() ) {
 			return null;
 		}
 
@@ -1246,7 +1264,7 @@ final class ExportWorkspace {
 		// PclZip accepts an array of selected names. One archive scan now
 		// handles the whole bounded batch, including nested file paths.
 		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip loaded above.
-		$zip = new \PclZip( $archive['path'] );
+		$zip = new \PclZip( $archive_path );
 		// WordPress Core PclZip uses variadic options absent from the static stub.
 		$extracted = $zip->extract( $by_name, $names, $path, untrailingslashit( $root ) ); // @phpstan-ignore arguments.count
 		if ( ! is_array( $extracted ) || array() === $extracted ) {
