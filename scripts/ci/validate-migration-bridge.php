@@ -2906,6 +2906,46 @@ foreach (
 	}
 }
 
+// The production ZIP importer belongs in the simple wizard, not only hidden
+// under the advanced controls. Do not render duplicate AJAX panels for one job.
+$wizard_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminMigrationWizard.php' );
+foreach (
+	array(
+		"new ImportStateStore()",
+		"'replace-production' === ( \$import_state['destination_policy'] ?? '' )",
+		"AdminOperatorScreen::render_auto_import_panel( \$job_id );",
+		"if ( ! \$auto_import )",
+	) as $simple_import_guard
+) {
+	if ( ! str_contains( $wizard_source, $simple_import_guard ) ) {
+		fail_migration_bridge(
+			'migration-simple-import-progress',
+			'Production import must display its automatic progress in the primary wizard and avoid a misleading checkpoint link.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminMigrationWizard.php',
+			$simple_import_guard,
+			'missing'
+		);
+	}
+}
+
+foreach (
+	array(
+		'public static function render_auto_import_panel( string $job_id ): void',
+		'id="seo-geo-auto-import"',
+		"if ( 'sandbox' === \$policy )",
+	) as $single_import_panel_guard
+) {
+	if ( ! str_contains( $operator_screen, $single_import_panel_guard ) ) {
+		fail_migration_bridge(
+			'migration-single-import-panel',
+			'Only one production import AJAX panel must be rendered; legacy sandbox import remains available.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+			$single_import_panel_guard,
+			'missing'
+		);
+	}
+}
+
 foreach (
 	array(
 		"submit_button( \$this->copy->text( 'clone_file_export_auto_start' ), 'primary', 'seo_geo_auto_export', false )",
