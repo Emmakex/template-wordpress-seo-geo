@@ -1186,23 +1186,54 @@ final class ExportWorkspace {
 	}
 
 	/**
-	 * Extract one already-preflighted archive file into the private import root.
+	 * Extract one already-preflighted archive file into private import storage.
+	 *
+	 * Retains the single-file API for saved sandbox jobs while delegating to the
+	 * same batch engine used by the automatic production importer.
 	 *
 	 * @param string $job_id Clone job identifier.
 	 * @param string $name   Exact archive-relative file path.
 	 * @return array{path:string,bytes:int,sha256:string}|null
 	 */
 	public function extract_import_archive_entry( string $job_id, string $name ): ?array {
-		$relative = $this->normalize_archive_relative( $name );
-		$archive  = $this->import_archive_info( $job_id );
-		$root     = $this->import_extraction_root( $job_id );
-		if (
-			'' === $relative
-			|| str_ends_with( $relative, '/' )
-			|| null === $archive
-			|| null === $root
-			|| ! $this->load_pclzip()
-		) {
+		$results = $this->extract_import_archive_entries( $job_id, array( $name ) );
+		return is_array( $results ) ? ( $results[0] ?? null ) : null;
+	}
+
+	/**
+	 * Extract a bounded set of validated archive entries in ONE PclZip pass.
+	 *
+	 * Previous behavior opened and scanned the full ZIP separately for every
+	 * entry, potentially thousands of times. The original preflight and
+	 * archive-identity checks remain in ImportPayloadVerifier. This method only
+	 * writes to the same protected, job-owned private extraction root.
+	 *
+	 * @param string       $job_id Clone job identifier.
+	 * @param list<string> $names  Exact, preflighted ZIP entry names; files only.
+	 * @return list<array{path:string,bytes:int,sha256:string}>|null
+	 */
+	public function extract_import_archive_entries( string $job_id, array $names ): ?array {
+		if ( array() === $names || 500 < count( $names ) ) {
+			return null;
+		}
+
+		$seen      = array();
+		$relatives = array();
+		foreach ( $names as $name ) {
+			if ( ! is_string( $name ) ) {
+				return null;
+			}
+			$relative = $this->normalize_archive_relative( $name );
+			if ( '' === $relative || str_ends_with( $relative, '/' ) || isset( $seen[ $relative ] ) ) {
+				return null;
+			}
+			$seen[ $relative ] = true;
+			$relatives[]       = $relative;
+		}
+
+		$archive = $this->import_archive_info( $job_id );
+		$root    = $this->import_extraction_root( $job_id );
+		if ( null === $archive || null === $root || ! $this->load_pclzip() ) {
 			return null;
 		}
 
@@ -1212,39 +1243,45 @@ final class ExportWorkspace {
 			return null;
 		}
 
-		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip is loaded explicitly above.
+		// PclZip accepts an array of selected names. One archive scan now
+		// handles the whole bounded batch, including nested file paths.
+		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip loaded above.
 		$zip = new \PclZip( $archive['path'] );
-		// WordPress Core PclZip exposes variadic extraction options not represented by the static stub.
-		$result = $zip->extract( $by_name, $name, $path, untrailingslashit( $root ) ); // @phpstan-ignore arguments.count
-		if ( ! is_array( $result ) || array() === $result ) {
+		// WordPress Core PclZip uses variadic options absent from the static stub.
+		$extracted = $zip->extract( $by_name, $names, $path, untrailingslashit( $root ) ); // @phpstan-ignore arguments.count
+		if ( ! is_array( $extracted ) || array() === $extracted ) {
 			return null;
 		}
 
-		$absolute = trailingslashit( $root ) . $relative;
-		$absolute = wp_normalize_path( $absolute );
-		if (
-			! str_starts_with( $absolute, trailingslashit( wp_normalize_path( $root ) ) )
-			|| ! is_file( $absolute )
-			|| ! is_readable( $absolute )
-			|| is_link( $absolute )
-		) {
-			return null;
+		$results = array();
+		$prefix  = trailingslashit( wp_normalize_path( $root ) );
+		foreach ( $relatives as $relative ) {
+			$absolute = wp_normalize_path( $prefix . $relative );
+			if (
+				! str_starts_with( $absolute, $prefix )
+				|| ! is_file( $absolute )
+				|| ! is_readable( $absolute )
+				|| is_link( $absolute )
+			) {
+				return null;
+			}
+
+			$bytes = filesize( $absolute );
+			$hash  = hash_file( 'sha256', $absolute );
+			if ( false === $bytes || false === $hash ) {
+				return null;
+			}
+
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Job-owned private payload.
+			@chmod( $absolute, 0600 );
+			$results[] = array(
+				'path'   => $relative,
+				'bytes'  => (int) $bytes,
+				'sha256' => $hash,
+			);
 		}
 
-		$bytes = filesize( $absolute );
-		$hash  = hash_file( 'sha256', $absolute );
-		if ( false === $bytes || false === $hash ) {
-			return null;
-		}
-
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive extracted payload permissions.
-		@chmod( $absolute, 0600 );
-
-		return array(
-			'path'   => $relative,
-			'bytes'  => (int) $bytes,
-			'sha256' => $hash,
-		);
+		return $results;
 	}
 
 	/**
