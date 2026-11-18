@@ -222,8 +222,25 @@ final class AdminAutoImportController {
 		$index      = array_search( $phase, $sequence, true );
 		$index      = false === $index ? count( $sequence ) : $index;
 		$current    = $stores[ $phase ] ?? ( in_array( $phase, array( 'promote', 'verify' ), true ) ? $stores['candidates'] : null );
-		$processed  = is_array( $current ) ? (int) ( $current['file_count'] ?? $current['rows_restored'] ?? $current['verify_file_count'] ?? 0 ) : 0;
-		$total      = is_array( $current ) ? (int) ( $current['expected_file_count'] ?? $current['table_count'] ?? 0 ) : 0;
+		$processed       = is_array( $current ) ? (int) ( $current['file_count'] ?? $current['rows_restored'] ?? $current['verify_file_count'] ?? 0 ) : 0;
+		$total           = is_array( $current ) ? (int) ( $current['expected_file_count'] ?? $current['table_count'] ?? 0 ) : 0;
+		$phase_progress  = 0.0;
+		$payload_stage   = 'extract';
+		if ( 'payload' === $phase && is_array( $current ) ) {
+			$payload_stage = 'verify' === ( $current['stage'] ?? '' ) ? 'verify' : 'extract';
+			$total         = max( 0, (int) ( $current['expected_file_count'] ?? 0 ) );
+			if ( 'extract' === $payload_stage ) {
+				// Extraction and checksum verification have independent persisted counters.
+				// Never show verification=0 while the ZIP is actively being extracted.
+				$processed      = max( 0, (int) ( $current['extract_file_count'] ?? 0 ) );
+				$archive_total  = max( 0, (int) ( $current['archive_entry_count'] ?? 0 ) );
+				$archive_cursor = max( 0, (int) ( $current['archive_cursor'] ?? 0 ) );
+				$phase_progress = 0 < $archive_total ? 0.5 * min( 1.0, $archive_cursor / $archive_total ) : 0.0;
+			} else {
+				$processed      = max( 0, (int) ( $current['verify_file_count'] ?? 0 ) );
+				$phase_progress = 0 < $total ? 0.5 + 0.5 * min( 1.0, $processed / $total ) : 0.5;
+			}
+		}
 		$checkpoint = hash(
 			'sha256',
 			wp_json_encode(
@@ -237,12 +254,14 @@ final class AdminAutoImportController {
 		);
 
 		$copy = new OperatorCopy();
-		$key  = 'auto_import_phase_' . str_replace( '-', '_', $phase );
+		$key  = 'payload' === $phase
+			? 'auto_import_phase_payload_' . $payload_stage
+			: 'auto_import_phase_' . str_replace( '-', '_', $phase );
 		return array(
 			'status'     => $status,
 			'phase'      => $phase,
 			'label'      => $copy->text( $key ),
-			'percent'    => 'ready' === $status ? 100.0 : round( 100.0 * $index / count( $sequence ), 1 ),
+			'percent'    => 'ready' === $status ? 100.0 : round( 100.0 * ( $index + $phase_progress ) / count( $sequence ), 1 ),
 			'processed'  => $processed,
 			'total'      => $total,
 			'checkpoint' => $checkpoint,
