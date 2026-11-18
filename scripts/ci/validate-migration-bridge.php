@@ -294,6 +294,42 @@ if (
 	);
 }
 
+// During extraction, use the persisted extraction counter, not the checksum
+// verification counter. Both remain separate even when a job changes phases.
+foreach (
+	array(
+		"'extract' === \$payload_stage",
+		"\$current['extract_file_count'] ?? 0",
+		"\$current['verify_file_count'] ?? 0",
+		"\$current['archive_cursor'] ?? 0",
+		"'auto_import_phase_payload_' . \$payload_stage",
+		"\$index + \$phase_progress",
+	) as $import_progress_guard
+) {
+	if ( ! str_contains( $auto_import_source, $import_progress_guard ) ) {
+		fail_migration_bridge(
+			'auto-import-extraction-progress',
+			'The import view must show a truthful extraction counter and separate SHA-256 verification progress.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php',
+			$import_progress_guard,
+			'missing'
+		);
+	}
+}
+
+$auto_import_copy = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' );
+foreach ( array( 'auto_import_phase_payload_extract', 'auto_import_phase_payload_verify' ) as $import_copy_key ) {
+	if ( 2 !== substr_count( $auto_import_copy, "'" . $import_copy_key . "'" ) ) {
+		fail_migration_bridge(
+			'auto-import-extraction-copy',
+			'Extraction and verification must each have EN/ES progress labels.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php',
+			$import_copy_key . ' in both locales',
+			'missing'
+		);
+	}
+}
+
 foreach ( $php_files as $path ) {
 	$source = (string) file_get_contents( $path );
 
