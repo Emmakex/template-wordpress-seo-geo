@@ -1463,7 +1463,7 @@ foreach (
 		"'seo-geo-portable-clone-package-v1'",
 		'$this->workspace->prepare_import_extraction( $job_id )',
 		'$this->workspace->extract_import_archive_entries( $job_id, $names )',
-		'count( $extracted ) !== count( $batch_entries )',
+		'count( $batch_entries ) !== count( $extracted )',
 		"'import-payload-archive-identity-changed'",
 		"'import-payload-checksum-mismatch'",
 		'$this->preflight->validate( $job_id )',
