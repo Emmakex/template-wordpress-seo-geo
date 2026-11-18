@@ -1226,8 +1226,8 @@ final class ExportWorkspace {
 	 * archive-identity checks remain in ImportPayloadVerifier. This method only
 	 * writes to the same protected, job-owned private extraction root.
 	 *
-	 * @param string       $job_id Clone job identifier.
-	 * @param array $names  Exact, preflighted ZIP entry names; files only.
+	 * @param string $job_id Clone job identifier.
+	 * @param array  $names  Exact, preflighted ZIP entry names; files only.
 	 * @phpstan-param list<string> $names
 	 * @return list<array{path:string,bytes:int,sha256:string}>|null
 	 */
