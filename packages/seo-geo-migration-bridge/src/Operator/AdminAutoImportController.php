@@ -126,7 +126,7 @@ final class AdminAutoImportController {
 				}
 			} else {
 				$result = match ( $phase ) {
-					'payload'     => ( new ImportPayloadVerifier() )->advance( $job_id, 30, 16 * 1024 * 1024 ),
+					'payload'     => ( new ImportPayloadVerifier() )->advance( $job_id, 100, 16 * 1024 * 1024 ),
 					'database'    => ( new ImportDatabaseRestorer() )->advance( $job_id, 200 ),
 					'files'       => ( new ImportFileRestorer() )->advance( $job_id, 30, 16 * 1024 * 1024 ),
 					'rewrite'     => ( new ImportEnvironmentRewriter() )->advance( $job_id, 200 ),
