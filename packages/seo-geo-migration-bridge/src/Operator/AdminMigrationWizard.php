@@ -17,6 +17,7 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\ImportFilePromotionStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneHandoffReportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromotionStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -104,6 +105,11 @@ final class AdminMigrationWizard {
 		}
 		$baseline_ready = true === ( $operator_status['baseline']['available'] ?? false );
 		$checkpoint     = '' !== $job_id ? MigrationWizardNavigator::next( $job ) : null;
+		$import_state   = 'import' === $operation && '' !== $job_id ? ( new ImportStateStore() )->get( $job_id ) : null;
+		$auto_import    = is_array( $import_state )
+			&& 'replace-production' === ( $import_state['destination_policy'] ?? '' )
+			&& 0 < (int) ( $import_state['archive_bytes'] ?? 0 )
+			&& in_array( (string) ( $import_state['status'] ?? '' ), array( 'preflight-ready', 'payload-verified' ), true );
 		$anchor         = '' === $job_id && ! $baseline_ready
 			? '#seo-geo-baseline-capture-form'
 			: ( is_array( $checkpoint ) ? '#' . $checkpoint['anchor'] : '#seo-geo-clone-workflow' );
@@ -204,7 +210,9 @@ final class AdminMigrationWizard {
 					</p>
 				</div>
 			<?php endif; ?>
-			<?php if ( 'export' === $operation ) : ?>
+			<?php if ( $auto_import ) : ?>
+				<?php AdminOperatorScreen::render_auto_import_panel( $job_id ); ?>
+			<?php elseif ( 'export' === $operation ) : ?>
 				<?php $auto = AdminAutoExportController::snapshot( $job ); ?>
 				<div
 					data-seo-geo-auto-export
@@ -256,7 +264,9 @@ final class AdminMigrationWizard {
 				</form>
 			<?php endif; ?>
 			<p>
-				<a class="button" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( $button_text ); ?></a>
+				<?php if ( ! $auto_import ) : ?>
+					<a class="button" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( $button_text ); ?></a>
+				<?php endif; ?>
 				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html( $copy->text( 'wizard_rescue' ) ); ?></a>
 			</p>
 			<p class="description"><?php echo esc_html( $copy->text( 'wizard_cutover_notice' ) ); ?></p>
