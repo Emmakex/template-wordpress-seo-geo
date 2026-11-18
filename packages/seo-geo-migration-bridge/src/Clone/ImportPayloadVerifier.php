@@ -267,7 +267,7 @@ final class ImportPayloadVerifier {
 			}
 
 			foreach ( $batch_entries as $index => $entry ) {
-				$file = $extracted[ $index ] ?? null;
+				$file           = $extracted[ $index ] ?? null;
 				$expected_bytes = (int) $entry['bytes'];
 				$actual_bytes   = is_array( $file ) ? (int) ( $file['bytes'] ?? -1 ) : -1;
 				if ( ! is_array( $file ) || $expected_bytes !== $actual_bytes ) {
