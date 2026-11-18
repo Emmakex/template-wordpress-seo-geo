@@ -229,11 +229,12 @@ final class ImportPayloadVerifier {
 		$entry_count     = count( $entries );
 		$processed_files = 0;
 		$processed_bytes = 0;
+		$selected_files  = 0;
 		$batch_entries   = array();
 
 		// First collect one bounded selection. Directory entries advance the
 		// cursor but are not part of the extracted file count.
-		while ( $cursor < $entry_count && count( $batch_entries ) < $batch_files ) {
+		while ( $cursor < $entry_count && $selected_files < $batch_files ) {
 			$entry = $entries[ $cursor ];
 			$name  = (string) $entry['name'];
 
@@ -247,10 +248,11 @@ final class ImportPayloadVerifier {
 				break;
 			}
 
-			$batch_entries[] = array(
+			$batch_entries[]  = array(
 				'name'  => $name,
 				'bytes' => $declared_bytes,
 			);
+			++$selected_files;
 			$processed_bytes += $declared_bytes;
 			++$cursor;
 		}
@@ -260,7 +262,7 @@ final class ImportPayloadVerifier {
 		if ( array() !== $batch_entries ) {
 			$names     = array_column( $batch_entries, 'name' );
 			$extracted = $this->workspace->extract_import_archive_entries( $job_id, $names );
-			if ( ! is_array( $extracted ) || count( $extracted ) !== count( $batch_entries ) ) {
+			if ( ! is_array( $extracted ) || count( $batch_entries ) !== count( $extracted ) ) {
 				return $this->block( $job_id, $state, 'import-payload-extract-failed', true );
 			}
 
