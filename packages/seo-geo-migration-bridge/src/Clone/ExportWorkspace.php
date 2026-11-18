@@ -1228,7 +1228,7 @@ final class ExportWorkspace {
 	 *
 	 * @param string $job_id Clone job identifier.
 	 * @param array  $names  Exact, preflighted ZIP entry names; files only.
-	 * @phpstan-param list<string> $names
+	 * @phpstan-param list<mixed> $names
 	 * @return list<array{path:string,bytes:int,sha256:string}>|null
 	 */
 	public function extract_import_archive_entries( string $job_id, array $names ): ?array {
