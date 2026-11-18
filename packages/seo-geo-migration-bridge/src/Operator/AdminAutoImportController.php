@@ -219,13 +219,13 @@ final class AdminAutoImportController {
 			}
 		}
 
-		$index      = array_search( $phase, $sequence, true );
-		$index      = false === $index ? count( $sequence ) : $index;
-		$current    = $stores[ $phase ] ?? ( in_array( $phase, array( 'promote', 'verify' ), true ) ? $stores['candidates'] : null );
-		$processed       = is_array( $current ) ? (int) ( $current['file_count'] ?? $current['rows_restored'] ?? $current['verify_file_count'] ?? 0 ) : 0;
-		$total           = is_array( $current ) ? (int) ( $current['expected_file_count'] ?? $current['table_count'] ?? 0 ) : 0;
-		$phase_progress  = 0.0;
-		$payload_stage   = 'extract';
+		$index          = array_search( $phase, $sequence, true );
+		$index          = false === $index ? count( $sequence ) : $index;
+		$current        = $stores[ $phase ] ?? ( in_array( $phase, array( 'promote', 'verify' ), true ) ? $stores['candidates'] : null );
+		$processed      = is_array( $current ) ? (int) ( $current['file_count'] ?? $current['rows_restored'] ?? $current['verify_file_count'] ?? 0 ) : 0;
+		$total          = is_array( $current ) ? (int) ( $current['expected_file_count'] ?? $current['table_count'] ?? 0 ) : 0;
+		$phase_progress = 0.0;
+		$payload_stage  = 'extract';
 		if ( 'payload' === $phase && is_array( $current ) ) {
 			$payload_stage = 'verify' === ( $current['stage'] ?? '' ) ? 'verify' : 'extract';
 			$total         = max( 0, (int) ( $current['expected_file_count'] ?? 0 ) );
