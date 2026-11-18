@@ -2998,9 +2998,7 @@ final class AdminOperatorScreen {
 			</form>
 		<?php endif; ?>
 
-		<?php if ( 'replace-production' === $policy && $has_archive && in_array( $status, array( 'preflight-ready', 'payload-verified' ), true ) ) : ?>
-			<?php $this->render_auto_import_panel( $job_id ); ?>
-		<?php elseif ( 'sandbox' === $policy ) : ?>
+		<?php if ( 'sandbox' === $policy ) : ?>
 			<?php if ( in_array( $status, array( 'preflight-ready', 'payload-verified' ), true ) || is_array( $payload ) ) : ?>
 				<?php $this->render_clone_import_payload_section( $job_id, $state, $payload ); ?>
 			<?php endif; ?>
@@ -3016,12 +3014,14 @@ final class AdminOperatorScreen {
 	 *
 	 * @param string $job_id Portable import job.
 	 */
-	private function render_auto_import_panel( string $job_id ): void {
+	public static function render_auto_import_panel( string $job_id ): void {
+		$copy    = new OperatorCopy();
 		$state   = AdminAutoImportController::snapshot( $job_id );
 		$initial = wp_json_encode( $state );
 		$nonce   = wp_create_nonce( AdminAutoImportController::NONCE_ACTION . ':' . $job_id );
 		?>
 		<div
+			id="seo-geo-auto-import"
 			class="card"
 			data-seo-geo-auto-import
 			data-endpoint="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
@@ -3029,31 +3029,31 @@ final class AdminOperatorScreen {
 			data-nonce="<?php echo esc_attr( $nonce ); ?>"
 			data-job-id="<?php echo esc_attr( $job_id ); ?>"
 			data-initial-progress="<?php echo esc_attr( is_string( $initial ) ? $initial : '{}' ); ?>"
-			data-msg-start="<?php echo esc_attr( $this->copy->text( 'auto_import_start' ) ); ?>"
-			data-msg-running="<?php echo esc_attr( $this->copy->text( 'auto_import_running' ) ); ?>"
-			data-msg-review="<?php echo esc_attr( $this->copy->text( 'auto_import_review' ) ); ?>"
-			data-msg-complete="<?php echo esc_attr( $this->copy->text( 'auto_import_completed' ) ); ?>"
-			data-msg-paused="<?php echo esc_attr( $this->copy->text( 'auto_import_paused' ) ); ?>"
-			data-msg-error="<?php echo esc_attr( $this->copy->text( 'auto_import_error' ) ); ?>"
-			data-msg-limit="<?php echo esc_attr( $this->copy->text( 'auto_import_limit' ) ); ?>"
+			data-msg-start="<?php echo esc_attr( $copy->text( 'auto_import_start' ) ); ?>"
+			data-msg-running="<?php echo esc_attr( $copy->text( 'auto_import_running' ) ); ?>"
+			data-msg-review="<?php echo esc_attr( $copy->text( 'auto_import_review' ) ); ?>"
+			data-msg-complete="<?php echo esc_attr( $copy->text( 'auto_import_completed' ) ); ?>"
+			data-msg-paused="<?php echo esc_attr( $copy->text( 'auto_import_paused' ) ); ?>"
+			data-msg-error="<?php echo esc_attr( $copy->text( 'auto_import_error' ) ); ?>"
+			data-msg-limit="<?php echo esc_attr( $copy->text( 'auto_import_limit' ) ); ?>"
 		>
-			<h4><?php echo esc_html( $this->copy->text( 'auto_import_heading' ) ); ?></h4>
+			<h4><?php echo esc_html( $copy->text( 'auto_import_heading' ) ); ?></h4>
 			<p><strong data-import-label><?php echo esc_html( $state['label'] ); ?></strong> <span data-import-count></span></p>
 			<progress data-import-progress max="100" value="<?php echo esc_attr( (string) $state['percent'] ); ?>" style="width:100%;min-height:18px;">
 				<?php echo esc_html( (string) $state['percent'] ); ?>%
 			</progress>
 			<p data-import-status role="status" aria-live="polite"></p>
 			<p>
-				<button type="button" class="button button-primary" data-import-run><?php echo esc_html( $this->copy->text( 'auto_import_start' ) ); ?></button>
-				<button type="button" class="button" data-import-pause disabled><?php echo esc_html( $this->copy->text( 'auto_import_pause' ) ); ?></button>
+				<button type="button" class="button button-primary" data-import-run><?php echo esc_html( $copy->text( 'auto_import_start' ) ); ?></button>
+				<button type="button" class="button" data-import-pause disabled><?php echo esc_html( $copy->text( 'auto_import_pause' ) ); ?></button>
 			</p>
 			<div data-import-review <?php echo 'review' === $state['status'] ? '' : 'hidden'; ?>>
-				<p class="notice notice-warning inline"><strong><?php echo esc_html( $this->copy->text( 'auto_import_review' ) ); ?></strong></p>
+				<p class="notice notice-warning inline"><strong><?php echo esc_html( $copy->text( 'auto_import_review' ) ); ?></strong></p>
 				<p><label>
 					<input type="checkbox" data-import-ack>
-					<?php echo esc_html( $this->copy->text( 'auto_import_acknowledge' ) ); ?>
+					<?php echo esc_html( $copy->text( 'auto_import_acknowledge' ) ); ?>
 				</label></p>
-				<p><button type="button" class="button button-primary" data-import-confirm disabled><?php echo esc_html( $this->copy->text( 'auto_import_confirm' ) ); ?></button></p>
+				<p><button type="button" class="button button-primary" data-import-confirm disabled><?php echo esc_html( $copy->text( 'auto_import_confirm' ) ); ?></button></p>
 			</div>
 		</div>
 		<?php
