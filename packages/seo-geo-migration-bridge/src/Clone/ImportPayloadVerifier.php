@@ -248,7 +248,7 @@ final class ImportPayloadVerifier {
 				break;
 			}
 
-			$batch_entries[]  = array(
+			$batch_entries[] = array(
 				'name'  => $name,
 				'bytes' => $declared_bytes,
 			);
@@ -268,7 +268,9 @@ final class ImportPayloadVerifier {
 
 			foreach ( $batch_entries as $index => $entry ) {
 				$file = $extracted[ $index ] ?? null;
-				if ( ! is_array( $file ) || (int) $entry['bytes'] !== (int) ( $file['bytes'] ?? -1 ) ) {
+				$expected_bytes = (int) $entry['bytes'];
+				$actual_bytes   = is_array( $file ) ? (int) ( $file['bytes'] ?? -1 ) : -1;
+				if ( ! is_array( $file ) || $expected_bytes !== $actual_bytes ) {
 					return $this->block( $job_id, $state, 'import-payload-extract-failed', true );
 				}
 
