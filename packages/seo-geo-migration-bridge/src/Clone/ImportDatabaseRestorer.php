@@ -602,7 +602,7 @@ final class ImportDatabaseRestorer {
 			$bytes += $row_bytes;
 		}
 
-		return array() !== $groups && $this->flush_grouped_insert( $wpdb, $prefix, $groups, $params );
+		return $this->flush_grouped_insert( $wpdb, $prefix, $groups, $params );
 	}
 
 	/**
