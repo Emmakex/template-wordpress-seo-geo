@@ -241,6 +241,17 @@ final class AdminAutoImportController {
 				$phase_progress = 0 < $total ? 0.5 + 0.5 * min( 1.0, $processed / $total ) : 0.5;
 			}
 		}
+		if ( 'database' === $phase && is_array( $current ) ) {
+			// Show tables / tables; never compare restored rows against table count.
+			// Use verified chunks for smoother progress through large source tables.
+			$processed      = max( 0, (int) ( $current['tables_completed'] ?? 0 ) );
+			$total          = max( 0, (int) ( $current['table_count'] ?? 0 ) );
+			$chunks_done    = max( 0, (int) ( $current['chunks_completed'] ?? 0 ) );
+			$chunks_total   = max( 0, (int) ( $current['chunk_count'] ?? 0 ) );
+			$phase_progress = 0 < $chunks_total
+				? min( 1.0, $chunks_done / $chunks_total )
+				: ( 0 < $total ? min( 1.0, $processed / $total ) : 0.0 );
+		}
 		$checkpoint = hash(
 			'sha256',
 			wp_json_encode(
@@ -253,14 +264,21 @@ final class AdminAutoImportController {
 			)
 		);
 
-		$copy = new OperatorCopy();
-		$key  = 'payload' === $phase
+		$copy  = new OperatorCopy();
+		$key   = 'payload' === $phase
 			? 'auto_import_phase_payload_' . $payload_stage
 			: 'auto_import_phase_' . str_replace( '-', '_', $phase );
+		$label = $copy->text( $key );
+		if ( 'database' === $phase && is_array( $current ) ) {
+			$label = sprintf(
+				$copy->text( 'auto_import_phase_database_rows' ),
+				number_format_i18n( max( 0, (int) ( $current['rows_restored'] ?? 0 ) ) )
+			);
+		}
 		return array(
 			'status'     => $status,
 			'phase'      => $phase,
-			'label'      => $copy->text( $key ),
+			'label'      => $label,
 			'percent'    => 'ready' === $status ? 100.0 : round( 100.0 * ( $index + $phase_progress ) / count( $sequence ), 1 ),
 			'processed'  => $processed,
 			'total'      => $total,
