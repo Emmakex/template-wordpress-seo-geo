@@ -19,7 +19,9 @@ final class ImportDatabaseRestorer {
 	public const MAX_BATCH_ROWS     = 500;
 	public const DEFAULT_BATCH_ROWS = 100;
 
-	private const MAX_TABLES = 1000;
+	private const MAX_TABLES          = 1000;
+	private const MAX_SQL_BATCH_ROWS  = 100;
+	private const MAX_SQL_BATCH_BYTES = 524288;
 
 	/**
 	 * Database restore state.
@@ -477,15 +479,13 @@ final class ImportDatabaseRestorer {
 			return $this->block( $job_id, $state, 'import-database-transaction-start-failed', true );
 		}
 
-		foreach ( $decoded as $row ) {
-			$formats = array_fill( 0, count( $row ), '%s' );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Writes only to deterministic job-owned staging table; target tables remain untouched.
-			if ( false === $wpdb->insert( $staging_table, $row, $formats ) ) {
-				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-				wp_cache_delete( ImportDatabaseStateStore::OPTION_NAME, 'options' );
+		// Submit bounded multi-row INSERTs instead of one SQL round trip per row.
+		// All writes remain inside the existing staging-only transaction.
+		if ( ! $this->insert_rows_grouped( $wpdb, $staging_table, $columns, $decoded ) ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			wp_cache_delete( ImportDatabaseStateStore::OPTION_NAME, 'options' );
 
-				return $this->block( $job_id, $state, 'import-database-row-insert-failed', true );
-			}
+			return $this->block( $job_id, $state, 'import-database-row-insert-failed', true );
 		}
 
 		$inserted                    = count( $decoded );
@@ -527,6 +527,104 @@ final class ImportDatabaseRestorer {
 		);
 
 		return $this->store->get( $job_id );
+	}
+
+	/**
+	 * Restore decoded source rows with bounded prepared, multi-value INSERTs.
+	 *
+	 * Keep the existing transaction and resume checkpoint as the only commit
+	 * authority. This method never writes to an active production table.
+	 *
+	 * @param wpdb   $wpdb          WordPress database connection.
+	 * @param string $staging_table Verified job-owned table name.
+	 * @param array  $columns       Source column names in package order.
+	 * @param array  $rows          Binary-safe decoded rows.
+	 * @phpstan-param list<string> $columns
+	 * @phpstan-param list<array<string,mixed>> $rows
+	 */
+	private function insert_rows_grouped( wpdb $wpdb, string $staging_table, array $columns, array $rows ): bool {
+		if ( ! $this->valid_staging_table( $staging_table ) || array() === $columns || array() === $rows ) {
+			return false;
+		}
+
+		$quoted_columns = array();
+		foreach ( $columns as $column ) {
+			if ( '' === $column || 64 < strlen( $column ) || 1 === preg_match( '/[\\x00-\\x1F\\x7F]/', $column ) ) {
+				return false;
+			}
+			$quoted_columns[] = $this->quote_identifier( $column );
+		}
+
+		$prefix = 'INSERT INTO ' . $this->quote_identifier( $staging_table )
+			. ' (' . implode( ', ', $quoted_columns ) . ') VALUES ';
+		$groups = array();
+		$params = array();
+		$bytes  = 0;
+
+		foreach ( $rows as $row ) {
+			$values     = array();
+			$row_params = array();
+			$row_bytes  = 0;
+			foreach ( $columns as $column ) {
+				if ( ! array_key_exists( $column, $row ) ) {
+					return false;
+				}
+				$value = $row[ $column ];
+				if ( null === $value ) {
+					$values[] = 'NULL';
+				} elseif ( is_string( $value ) ) {
+					$values[]     = '%s';
+					$row_params[] = $value;
+					$row_bytes   += strlen( $value );
+				} else {
+					return false;
+				}
+			}
+
+			// Limit SQL statement size and placeholder count on shared hosting.
+			// One oversized source row is still handled by its own prepared INSERT.
+			if (
+				array() !== $groups
+				&& ( self::MAX_SQL_BATCH_ROWS <= count( $groups ) || self::MAX_SQL_BATCH_BYTES < $bytes + $row_bytes )
+			) {
+				if ( ! $this->flush_grouped_insert( $wpdb, $prefix, $groups, $params ) ) {
+					return false;
+				}
+				$groups = array();
+				$params = array();
+				$bytes  = 0;
+			}
+
+			$groups[] = '(' . implode( ', ', $values ) . ')';
+			foreach ( $row_params as $value ) {
+				$params[] = $value;
+			}
+			$bytes += $row_bytes;
+		}
+
+		return array() !== $groups && $this->flush_grouped_insert( $wpdb, $prefix, $groups, $params );
+	}
+
+	/**
+	 * Execute one parameterized INSERT while the caller's transaction is active.
+	 *
+	 * @param wpdb   $wpdb   WordPress database connection.
+	 * @param string $prefix Verified staging table and quoted column identifiers.
+	 * @param array  $groups SQL value-placeholder groups.
+	 * @param array  $params Raw non-null source values.
+	 * @phpstan-param list<string> $groups
+	 * @phpstan-param list<string> $params
+	 */
+	private function flush_grouped_insert( wpdb $wpdb, string $prefix, array $groups, array $params ): bool {
+		$sql      = $prefix . implode( ', ', $groups );
+		$prepared = array() === $params ? $sql : $wpdb->prepare( $sql, $params );
+		if ( ! is_string( $prepared ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Parameterized INSERT into validated job-owned staging table only, inside a bounded InnoDB transaction.
+		$inserted = $wpdb->query( $prepared );
+		return false !== $inserted && count( $groups ) === $inserted;
 	}
 
 	/**
