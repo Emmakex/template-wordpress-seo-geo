@@ -48,8 +48,8 @@ final class OperatorCopy {
 				'wizard_title'                             => 'WordPress migration: Export / Import',
 				'wizard_primary_export'                    => 'Export full website to ZIP',
 				'wizard_primary_import'                    => 'Import website from ZIP',
-				'wizard_technical_details'                 => 'Technical stages and checkpoints'
-				'wizard_intro'                             => 'Start an export or an import. Technical verification runs inside the job; final production replacement still requires explicit approval.'
+				'wizard_technical_details'                 => 'Technical stages and checkpoints',
+				'wizard_intro'                             => 'Start an export or an import. Technical verification runs inside the job; final production replacement still requires explicit approval.',
 				'wizard_saved'                             => 'Saved migration',
 				'wizard_view'                              => 'View',
 				'wizard_phase'                             => 'Recorded job stage:',
@@ -812,8 +812,8 @@ final class OperatorCopy {
 				'wizard_title'                             => 'Migración WordPress: Exportar / Importar',
 				'wizard_primary_export'                    => 'Exportar web completa a ZIP',
 				'wizard_primary_import'                    => 'Importar web desde ZIP',
-				'wizard_technical_details'                 => 'Etapas y comprobaciones técnicas'
-				'wizard_intro'                             => 'Inicia una exportación o importación. Las verificaciones se realizan dentro del trabajo; la sustitución de producción requiere autorización expresa.'
+				'wizard_technical_details'                 => 'Etapas y comprobaciones técnicas',
+				'wizard_intro'                             => 'Inicia una exportación o importación. Las verificaciones se realizan dentro del trabajo; la sustitución de producción requiere autorización expresa.',
 				'wizard_saved'                             => 'Migración guardada',
 				'wizard_view'                              => 'Ver',
 				'wizard_phase'                             => 'Fase registrada:',
