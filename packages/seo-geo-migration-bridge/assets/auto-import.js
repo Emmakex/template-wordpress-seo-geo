@@ -52,7 +52,10 @@
 			} else if (isReview) {
 				status.textContent = panel.getAttribute('data-msg-review') || '';
 			} else if (next.status === 'blocked') {
-				status.textContent = panel.getAttribute('data-msg-error') || '';
+				const message = panel.getAttribute('data-msg-error') || '';
+				// Show a bounded normalized server blocker, not generic disabled buttons.
+				const blocker = typeof next.error_code === 'string' ? next.error_code : '';
+				status.textContent = blocker ? message + ' (' + blocker + ')' : message;
 			} else if (!running) {
 				status.textContent = panel.getAttribute('data-msg-start') || '';
 			}
