@@ -165,9 +165,10 @@ $build_archive = static function ( string $source_job_id, string $engine = 'Inno
 	$workspace_checksum,
 	$encode_row,
 	$source_prefix,
-	$fixture_table
+	$source_table
 ): array {
-	$fixture_table = 'MEMORY' === $engine ? $source_prefix . 'wfls_role_counts' : $source_table;
+	$fixture_table = 'MEMORY' === $engine && str_contains( $source_job_id, '-source-memory-' )
+		? $source_prefix . 'wfls_role_counts' : $source_table;
 	$workspace->cleanup( $source_job_id );
 	$workspace->delete_delivery_archive( $source_job_id );
 
@@ -529,7 +530,7 @@ $memory_rows = $wpdb->get_results( "SELECT id, title FROM {$memory_quoted} ORDER
 $memory_second_resume_denied = null === $restorer->resume_wordfence_memory_schema( $memory_job );
 
 // A non-Wordfence MEMORY table remains unsupported: no generic engine bypass.
-$generic_memory_archive = $build_archive( 'clone-import-db-source-generic-memory-0001', 'MEMORY_NOT_WORDFENCE' );
+$generic_memory_archive = $build_archive( 'clone-import-db-source-generic-memory-0001', 'MEMORY' );
 $prepare_import( 'clone-import-db-generic-memory-0001', $generic_memory_archive );
 $generic_memory = $restorer->advance( 'clone-import-db-generic-memory-0001', 1 );
 
