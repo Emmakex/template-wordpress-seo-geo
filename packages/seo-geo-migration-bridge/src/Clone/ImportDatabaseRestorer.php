@@ -616,7 +616,7 @@ final class ImportDatabaseRestorer {
 	 * @phpstan-param list<string> $params
 	 */
 	private function flush_grouped_insert( wpdb $wpdb, string $prefix, array $groups, array $params ): bool {
-		$sql      = $prefix . implode( ', ', $groups );
+		$sql = $prefix . implode( ', ', $groups );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Every value placeholder receives a prepared argument; SQL identifier fragments are quoted and restricted to isolated staging tables.
 		$prepared = array() === $params ? $sql : $wpdb->prepare( $sql, $params );
 		if ( ! is_string( $prepared ) ) {
