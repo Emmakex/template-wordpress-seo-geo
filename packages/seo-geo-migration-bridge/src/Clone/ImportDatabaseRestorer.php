@@ -317,8 +317,8 @@ final class ImportDatabaseRestorer {
 			'' === $prefix
 			|| ! is_array( $meta )
 			|| ! $this->table_manifest_valid( $meta, $prefix )
-			|| $table !== ( $meta['name'] ?? '' )
-			|| $table !== ( $state['current_source_table'] ?? '' )
+			|| ( $meta['name'] ?? '' ) !== $table
+			|| ( $state['current_source_table'] ?? '' ) !== $table
 			|| $this->target_table( $table, $prefix, (string) $state['destination_prefix'] ) !== ( $state['current_target_table'] ?? '' )
 		) {
 			return null;
@@ -327,7 +327,7 @@ final class ImportDatabaseRestorer {
 		$staging = $this->staging_table( (string) $state['staging_namespace'], $table );
 		if (
 			'' === $staging
-			|| $staging !== ( $state['current_staging_table'] ?? '' )
+			|| ( $state['current_staging_table'] ?? '' ) !== $staging
 			|| $this->table_exists( $staging )
 		) {
 			return null;
