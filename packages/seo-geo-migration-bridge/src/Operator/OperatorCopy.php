@@ -45,8 +45,11 @@ final class OperatorCopy {
 				'wizard_import_note'                       => 'Destination checks, restoration and safe activation.',
 				'wizard_step_verify'                       => '4. Verify',
 				'wizard_verify_note'                       => 'Final handoff, URL/SEO checks and recovery evidence.',
-				'wizard_title'                             => 'WordPress migration: simple view',
-				'wizard_intro'                             => 'Four guided stages. Existing migration checks and confirmations remain mandatory. Opening a job never changes the website.',
+				'wizard_title'                             => 'WordPress migration: Export / Import',
+				'wizard_primary_export'                    => 'Export full website to ZIP',
+				'wizard_primary_import'                    => 'Import website from ZIP',
+				'wizard_technical_details'                 => 'Technical stages and checkpoints'
+				'wizard_intro'                             => 'Start an export or an import. Technical verification runs inside the job; final production replacement still requires explicit approval.'
 				'wizard_saved'                             => 'Saved migration',
 				'wizard_view'                              => 'View',
 				'wizard_phase'                             => 'Recorded job stage:',
@@ -806,8 +809,11 @@ final class OperatorCopy {
 				'wizard_import_note'                       => 'Comprobación del destino, restauración y activación segura.',
 				'wizard_step_verify'                       => '4. Verificar',
 				'wizard_verify_note'                       => 'Entrega final, comprobaciones de URL/SEO y evidencia de recuperación.',
-				'wizard_title'                             => 'Migración WordPress: vista sencilla',
-				'wizard_intro'                             => 'Cuatro etapas guiadas. Las comprobaciones y confirmaciones de seguridad siguen siendo obligatorias. Abrir un trabajo nunca modifica la web.',
+				'wizard_title'                             => 'Migración WordPress: Exportar / Importar',
+				'wizard_primary_export'                    => 'Exportar web completa a ZIP',
+				'wizard_primary_import'                    => 'Importar web desde ZIP',
+				'wizard_technical_details'                 => 'Etapas y comprobaciones técnicas'
+				'wizard_intro'                             => 'Inicia una exportación o importación. Las verificaciones se realizan dentro del trabajo; la sustitución de producción requiere autorización expresa.'
 				'wizard_saved'                             => 'Migración guardada',
 				'wizard_view'                              => 'Ver',
 				'wizard_phase'                             => 'Fase registrada:',
