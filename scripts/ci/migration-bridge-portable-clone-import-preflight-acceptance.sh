@@ -254,6 +254,15 @@ $autoload = $wpdb->get_var(
 	)
 );
 
+$upload_controller   = new AdminCloneImportController( $preflight );
+$upload_reflection   = new ReflectionMethod( $upload_controller, 'has_upload' );
+$previous_files      = $_FILES;
+$_FILES               = array( 'clone_package' => array( 'error' => UPLOAD_ERR_NO_FILE ) );
+$empty_file_reuses_zip = false === $upload_reflection->invoke( $upload_controller );
+$_FILES               = array( 'clone_package' => array( 'error' => UPLOAD_ERR_PARTIAL ) );
+$partial_upload_detected = true === $upload_reflection->invoke( $upload_controller );
+$_FILES               = $previous_files;
+
 $staged_info = $workspace->import_archive_info( 'clone-import-good-0001' );
 $good_root   = $workspace->root_path( 'clone-import-good-0001' );
 
@@ -267,6 +276,8 @@ echo wp_json_encode(
 			&& is_string( $good_root )
 			&& str_starts_with( wp_normalize_path( $staged_info['path'] ), trailingslashit( wp_normalize_path( $good_root ) ) ),
 		'import_state_autoload' => $autoload,
+		'empty_file_reuses_zip' => $empty_file_reuses_zip,
+		'partial_upload_detected' => $partial_upload_detected,
 		'controller_registered' => false !== has_action( 'admin_post_' . AdminCloneImportController::ACTION ),
 		'public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportController::ACTION ),
 	),
@@ -344,6 +355,8 @@ assert payload["staged_private"] is True
 assert payload["staged_info"]["bytes"] == good["archive_bytes"]
 assert payload["staged_info"]["sha256"] == good["archive_sha256"]
 assert payload["import_state_autoload"] in ("off", "no", "auto-off")
+assert payload["empty_file_reuses_zip"] is True
+assert payload["partial_upload_detected"] is True
 assert payload["controller_registered"] is True
 assert payload["public_controller_absent"] is True
 print("ok")
