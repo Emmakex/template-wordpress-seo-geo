@@ -127,6 +127,7 @@ final class AdminOperatorScreen {
 	 */
 	public function register(): void {
 		( new AdminAutoExportController() )->register();
+		( new AdminAutoImportController() )->register();
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_auto_export' ) );
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_menu', array( $this, 'simplify_tools_menu' ), 999 );
@@ -161,6 +162,13 @@ final class AdminOperatorScreen {
 		wp_enqueue_script(
 			'seo-geo-migration-auto-export',
 			plugins_url( 'assets/auto-export.js', dirname( __DIR__, 2 ) . '/seo-geo-migration-bridge.php' ),
+			array(),
+			SEO_GEO_MIGRATION_BRIDGE_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'seo-geo-migration-auto-import',
+			plugins_url( 'assets/auto-import.js', dirname( __DIR__, 2 ) . '/seo-geo-migration-bridge.php' ),
 			array(),
 			SEO_GEO_MIGRATION_BRIDGE_VERSION,
 			true
@@ -2895,9 +2903,14 @@ final class AdminOperatorScreen {
 		$advisories  = is_array( $state['advisories'] ?? null ) ? array_values( array_filter( $state['advisories'], 'is_string' ) ) : array();
 		$has_archive = is_array( $state ) && 0 < (int) ( $state['archive_bytes'] ?? 0 );
 		$button      = $has_archive ? 'clone_import_revalidate' : 'clone_import_validate';
+		$policy      = is_array( $state ) && 'replace-production' === ( $state['destination_policy'] ?? '' )
+			? 'replace-production' : 'sandbox';
 		?>
 		<h3 id="seo-geo-guide-clone_import"><?php echo esc_html( $this->copy->text( 'clone_import_heading' ) ); ?></h3>
 		<p><?php echo esc_html( $this->copy->text( 'clone_import_help' ) ); ?></p>
+		<div class="notice notice-warning inline" role="alert">
+			<p><strong><?php echo esc_html( $this->copy->text( 'clone_import_external_backup_warning' ) ); ?></strong></p>
+		</div>
 		<table class="widefat striped" role="presentation">
 			<tbody>
 				<tr>
@@ -2905,6 +2918,12 @@ final class AdminOperatorScreen {
 					<td><code><?php echo esc_html( $status ); ?></code></td>
 				</tr>
 				<?php if ( $has_archive ) : ?>
+					<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_destination_policy' ) ); ?></th><td><code><?php echo esc_html( $policy ); ?></code></td></tr>
+					<?php if ( 'replace-production' === $policy ) : ?>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_source_url' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['source_home_url'] ?? '' ) ); ?></code></td></tr>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_target_url' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['destination_home_url'] ?? '' ) ); ?></code></td></tr>
+						<tr><th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_destination_scenario' ) ); ?></th><td><code><?php echo esc_html( (string) ( $state['destination_scenario'] ?? '' ) ); ?></code></td></tr>
+					<?php endif; ?>
 					<tr>
 						<th scope="row"><?php echo esc_html( $this->copy->text( 'clone_import_archive_bytes' ) ); ?></th>
 						<td><?php echo esc_html( size_format( (int) ( $state['archive_bytes'] ?? 0 ) ) ); ?></td>
@@ -2963,16 +2982,80 @@ final class AdminOperatorScreen {
 					>
 				</p>
 				<p class="description"><?php echo esc_html( $this->copy->text( 'clone_import_upload_help' ) ); ?></p>
+				<?php if ( ! $has_archive ) : ?>
+					<fieldset>
+						<legend><strong><?php echo esc_html( $this->copy->text( 'clone_import_destination_policy' ) ); ?></strong></legend>
+						<label><input type="radio" name="import_destination_policy" value="replace-production" checked> <?php echo esc_html( $this->copy->text( 'clone_import_policy_production' ) ); ?></label><br>
+						<label><input type="radio" name="import_destination_policy" value="sandbox"> <?php echo esc_html( $this->copy->text( 'clone_import_policy_sandbox' ) ); ?></label>
+					</fieldset>
+				<?php else : ?>
+					<p><strong><?php echo esc_html( $this->copy->text( 'clone_import_destination_policy' ) ); ?>:</strong> <code><?php echo esc_html( $policy ); ?></code></p>
+				<?php endif; ?>
+				<?php if ( 'replace-production' === $policy ) : ?>
+					<p class="notice notice-warning inline"><?php echo esc_html( $this->copy->text( 'clone_import_production_not_activated' ) ); ?></p>
+				<?php endif; ?>
 				<?php submit_button( $this->copy->text( $button ), 'secondary', 'submit', false ); ?>
 			</form>
 		<?php endif; ?>
 
-		<?php if ( in_array( $status, array( 'preflight-ready', 'payload-verified' ), true ) || is_array( $payload ) ) : ?>
-			<?php $this->render_clone_import_payload_section( $job_id, $state, $payload ); ?>
+		<?php if ( 'sandbox' === $policy ) : ?>
+			<?php if ( in_array( $status, array( 'preflight-ready', 'payload-verified' ), true ) || is_array( $payload ) ) : ?>
+				<?php $this->render_clone_import_payload_section( $job_id, $state, $payload ); ?>
+			<?php endif; ?>
+			<?php if ( is_array( $payload ) && 'complete' === ( $payload['status'] ?? null ) && true === ( $state['restore_allowed'] ?? false ) ) : ?>
+				<?php $this->render_clone_import_database_section( $job_id ); ?>
+			<?php endif; ?>
 		<?php endif; ?>
-		<?php if ( is_array( $payload ) && 'complete' === ( $payload['status'] ?? null ) && true === ( $state['restore_allowed'] ?? false ) ) : ?>
-			<?php $this->render_clone_import_database_section( $job_id ); ?>
-		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render one automatic import workflow with a visible final replacement gate.
+	 *
+	 * @param string $job_id Portable import job.
+	 */
+	public static function render_auto_import_panel( string $job_id ): void {
+		$copy    = new OperatorCopy();
+		$state   = AdminAutoImportController::snapshot( $job_id );
+		$initial = wp_json_encode( $state );
+		$nonce   = wp_create_nonce( AdminAutoImportController::NONCE_ACTION . ':' . $job_id );
+		?>
+		<div
+			id="seo-geo-auto-import"
+			class="card"
+			data-seo-geo-auto-import
+			data-endpoint="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+			data-action="<?php echo esc_attr( AdminAutoImportController::ACTION ); ?>"
+			data-nonce="<?php echo esc_attr( $nonce ); ?>"
+			data-job-id="<?php echo esc_attr( $job_id ); ?>"
+			data-initial-progress="<?php echo esc_attr( is_string( $initial ) ? $initial : '{}' ); ?>"
+			data-msg-start="<?php echo esc_attr( $copy->text( 'auto_import_start' ) ); ?>"
+			data-msg-running="<?php echo esc_attr( $copy->text( 'auto_import_running' ) ); ?>"
+			data-msg-review="<?php echo esc_attr( $copy->text( 'auto_import_review' ) ); ?>"
+			data-msg-complete="<?php echo esc_attr( $copy->text( 'auto_import_completed' ) ); ?>"
+			data-msg-paused="<?php echo esc_attr( $copy->text( 'auto_import_paused' ) ); ?>"
+			data-msg-error="<?php echo esc_attr( $copy->text( 'auto_import_error' ) ); ?>"
+			data-msg-limit="<?php echo esc_attr( $copy->text( 'auto_import_limit' ) ); ?>"
+		>
+			<h4><?php echo esc_html( $copy->text( 'auto_import_heading' ) ); ?></h4>
+			<p><strong data-import-label><?php echo esc_html( $state['label'] ); ?></strong> <span data-import-count></span></p>
+			<progress data-import-progress max="100" value="<?php echo esc_attr( (string) $state['percent'] ); ?>" style="width:100%;min-height:18px;">
+				<?php echo esc_html( (string) $state['percent'] ); ?>%
+			</progress>
+			<p data-import-status role="status" aria-live="polite"></p>
+			<p>
+				<button type="button" class="button button-primary" data-import-run><?php echo esc_html( $copy->text( 'auto_import_start' ) ); ?></button>
+				<button type="button" class="button" data-import-pause disabled><?php echo esc_html( $copy->text( 'auto_import_pause' ) ); ?></button>
+			</p>
+			<div data-import-review <?php echo 'review' === $state['status'] ? '' : 'hidden'; ?>>
+				<p class="notice notice-warning inline"><strong><?php echo esc_html( $copy->text( 'auto_import_review' ) ); ?></strong></p>
+				<p><label>
+					<input type="checkbox" data-import-ack>
+					<?php echo esc_html( $copy->text( 'auto_import_acknowledge' ) ); ?>
+				</label></p>
+				<p><button type="button" class="button button-primary" data-import-confirm disabled><?php echo esc_html( $copy->text( 'auto_import_confirm' ) ); ?></button></p>
+			</div>
+		</div>
 		<?php
 	}
 

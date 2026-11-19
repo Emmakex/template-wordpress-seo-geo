@@ -283,6 +283,15 @@ final class ImportDatabaseActivator {
 			return $this->block( $job_id, $state, 'database-activation-options-overlay-failed', false );
 		}
 
+		$production = $this->import_state->get( $job_id );
+		if (
+			is_array( $production )
+			&& 'replace-production' === ( $production['destination_policy'] ?? '' )
+			&& ! ( new ImportProductionAdminKeeper() )->apply( $job_id, (array) $state['tables'] )
+		) {
+			return $this->block( $job_id, $state, 'database-activation-admin-session-restore-failed', false );
+		}
+
 		$tables = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
 		foreach ( $tables as $index => $table ) {
 			if ( ! is_array( $table ) ) {
@@ -371,6 +380,8 @@ final class ImportDatabaseActivator {
 			return null;
 		}
 
+		$production    = $this->import_state->get( $job_id );
+		$is_production = is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' );
 		$control_names = array(
 			CloneJobStore::OPTION_NAME,
 			ImportStateStore::OPTION_NAME,
@@ -386,9 +397,12 @@ final class ImportDatabaseActivator {
 			'stylesheet',
 		);
 
-		$preserved = array();
-		$total     = 0;
-		foreach ( array_merge( $control_names, $runtime_names ) as $name ) {
+		$preserved       = array();
+		$total           = 0;
+		$protected_names = $is_production
+			? array_merge( $control_names, $runtime_names, array( 'blog_public' ) )
+			: array_merge( $control_names, $runtime_names );
+		foreach ( $protected_names as $name ) {
 			$row = $this->option_row( $active, $name, $active_columns );
 			if ( null === $row ) {
 				return null;
@@ -434,7 +448,9 @@ final class ImportDatabaseActivator {
 				$row['autoload']
 			);
 		}
-		$ok = $ok && $this->upsert_option( $staging, $staging_columns, 'blog_public', '0', 'no' );
+		if ( 'replace-production' !== (string) ( $production['destination_policy'] ?? '' ) ) {
+			$ok = $ok && $this->upsert_option( $staging, $staging_columns, 'blog_public', '0', 'no' );
+		}
 
 		if ( ! $ok ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Rolls back only the staging-options overlay transaction.
@@ -649,9 +665,11 @@ final class ImportDatabaseActivator {
 			}
 		}
 
-		$blog_public = $this->option_row( $options, 'blog_public', $columns );
-		$plugins     = $this->option_row( $options, 'active_plugins', $columns );
-		if ( null === $blog_public || '0' !== $blog_public['option_value'] || null === $plugins ) {
+		$blog_public   = $this->option_row( $options, 'blog_public', $columns );
+		$plugins       = $this->option_row( $options, 'active_plugins', $columns );
+		$production    = $this->import_state->get( (string) ( $state['job_id'] ?? '' ) );
+		$is_production = is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' );
+		if ( null === $blog_public || ( ! $is_production && '0' !== $blog_public['option_value'] ) || null === $plugins ) {
 			return false;
 		}
 
@@ -1001,6 +1019,11 @@ final class ImportDatabaseActivator {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb ) {
 			return false;
+		}
+
+		$production = $this->import_state->get( $job_id );
+		if ( is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' ) ) {
+			return ImportProductionGate::ready( $job_id, $production );
 		}
 
 		$import = $this->private_same_server_import( $job_id );

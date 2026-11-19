@@ -57,8 +57,20 @@ final class AdminCloneImportController {
 		check_admin_referer( self::NONCE_ACTION . ':' . $job_id );
 
 		if ( $this->has_upload() ) {
+			$policy = isset( $_POST['import_destination_policy'] )
+				? sanitize_key( wp_unslash( $_POST['import_destination_policy'] ) ) : 'sandbox';
+			if ( ! in_array( $policy, array( 'sandbox', 'replace-production' ), true ) ) {
+				wp_die( esc_html__( 'Invalid destination policy.', 'seo-geo-migration-bridge' ), '', array( 'response' => 400 ) );
+			}
 			$source = $this->validated_upload_path();
-			if ( null === $source || null === $this->preflight->stage( $job_id, $source ) ) {
+			// Keep the legacy sandbox intake exactly as before; production is an explicit opt-in.
+			$staged = null;
+			if ( null !== $source ) {
+				$staged = 'sandbox' === $policy
+					? $this->preflight->stage( $job_id, $source )
+					: $this->preflight->stage( $job_id, $source, $policy );
+			}
+			if ( null === $staged ) {
 				wp_die(
 					esc_html__( 'The Portable Clone ZIP could not be staged safely.', 'seo-geo-migration-bridge' ),
 					'',
@@ -91,7 +103,16 @@ final class AdminCloneImportController {
 	 */
 	private function has_upload(): bool {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Caller validates the job-scoped nonce before this helper is invoked.
-		return isset( $_FILES['clone_package'] ) && is_array( $_FILES['clone_package'] );
+		// A file input is submitted even when the operator selected no file.
+		// In that case revalidate the already-staged ZIP instead of rejecting it
+		// as a failed upload. Other PHP upload errors still fail validation.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The authenticated handler verified this job-scoped nonce; raw PHP upload metadata is only checked for UPLOAD_ERR_NO_FILE here.
+		$upload = isset( $_FILES['clone_package'] ) && is_array( $_FILES['clone_package'] )
+			? $_FILES['clone_package']
+			: null;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		return is_array( $upload )
+			&& UPLOAD_ERR_NO_FILE !== (int) ( $upload['error'] ?? UPLOAD_ERR_NO_FILE );
 	}
 
 	/**

@@ -545,6 +545,11 @@ final class ImportFilePromotionPlanner {
 	 * @param string $job_id Child import job identifier.
 	 */
 	private function sandbox_ready( string $job_id ): bool {
+		$production = $this->import_state->get( $job_id );
+		if ( is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' ) ) {
+			return ImportProductionGate::ready( $job_id, $production );
+		}
+
 		$import = $this->private_same_server_import( $job_id );
 		if ( is_array( $import ) ) {
 			$root = $this->private_same_server_root( $import );

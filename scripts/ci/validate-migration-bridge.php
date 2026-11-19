@@ -260,6 +260,8 @@ $authorized_mutation_calls = array(
 	),
 	// The browser auto-export releases only its namespaced, expiring mutex option.
 	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php' => array( 'delete_option' ),
+	// The automatic import controller deletes only its namespaced single-job mutex.
+	MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php' => array( 'delete_option' ),
 );
 
 $auto_export_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php' );
@@ -275,6 +277,115 @@ if (
 		'two bounded lock-key deletions and no other delete_option calls',
 		'changed'
 	);
+}
+
+$auto_import_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php' );
+if (
+	! str_contains( $auto_import_source, "private const LOCK_OPTION = 'seo_geo_migration_import_process_lock'" )
+	|| 2 !== preg_match_all( '/\\bdelete_option\\s*\\(\\s*self::LOCK_OPTION\\s*\\)/', $auto_import_source )
+	|| 2 !== preg_match_all( '/\\bdelete_option\\s*\\(/', $auto_import_source )
+) {
+	fail_migration_bridge(
+		'auto-import-lock-scope',
+		'Only the namespaced auto-import lock may be removed by the AJAX controller.',
+		MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php',
+		'two scoped lock deletions',
+		'changed'
+	);
+}
+
+// During extraction, use the persisted extraction counter, not the checksum
+// verification counter. Both remain separate even when a job changes phases.
+foreach (
+	array(
+		"'extract' === \$payload_stage",
+		"\$current['extract_file_count'] ?? 0",
+		"\$current['verify_file_count'] ?? 0",
+		"\$current['archive_cursor'] ?? 0",
+		"'auto_import_phase_payload_' . \$payload_stage",
+		"\$index + \$phase_progress",
+	) as $import_progress_guard
+) {
+	if ( ! str_contains( $auto_import_source, $import_progress_guard ) ) {
+		fail_migration_bridge(
+			'auto-import-extraction-progress',
+			'The import view must show a truthful extraction counter and separate SHA-256 verification progress.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php',
+			$import_progress_guard,
+			'missing'
+		);
+	}
+}
+
+// Staging rows and staging tables are different units. The operator panel
+// must never show tens of thousands of rows against dozens of tables.
+foreach (
+	array(
+		"'database' === \$phase && is_array( \$current )",
+		"\$current['tables_completed'] ?? 0",
+		"\$current['table_count'] ?? 0",
+		"\$current['chunks_completed'] ?? 0",
+		"\$current['chunk_count'] ?? 0",
+		"\$current['rows_restored'] ?? 0",
+		"'auto_import_phase_database_rows'",
+	) as $database_progress_guard
+) {
+	if ( ! str_contains( $auto_import_source, $database_progress_guard ) ) {
+		fail_migration_bridge(
+			'auto-import-database-count-units',
+			'Staging database UI must show coherent table counts and separate restored rows, without changing persisted job state.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php',
+			$database_progress_guard,
+			'missing'
+		);
+	}
+}
+
+// Production ZIP restore performance must stay bounded, resumable and
+// binary-safe: never regress to one database round trip per imported row.
+$database_restore_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php' );
+foreach (
+	array(
+		'private const MAX_SQL_BATCH_ROWS  = 100;',
+		'private const MAX_SQL_BATCH_BYTES = 524288;',
+		'insert_rows_grouped( $wpdb, $staging_table, $columns, $decoded )',
+		'flush_grouped_insert( $wpdb, $prefix, $groups, $params )',
+		"'NULL'",
+		'array_key_exists( $column, $row )',
+		"\$wpdb->prepare( \$sql, \$params )",
+	) as $grouped_import_guard
+) {
+	if ( ! str_contains( $database_restore_source, $grouped_import_guard ) ) {
+		fail_migration_bridge(
+			'migration-grouped-rows',
+			'Import must use bounded prepared multi-row INSERTs without changing transaction checkpoints or SQL NULL semantics.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
+			$grouped_import_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $database_restore_source, '$wpdb->insert( $staging_table, $row,' ) ) {
+	fail_migration_bridge(
+		'migration-per-row-sql-regression',
+		'Never restore a ZIP by calling a separate INSERT for every source row.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
+		'grouped prepared insert only',
+		'per-row insert'
+	);
+}
+
+$auto_import_copy = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' );
+foreach ( array( 'auto_import_phase_payload_extract', 'auto_import_phase_payload_verify', 'auto_import_phase_database_rows' ) as $import_copy_key ) {
+	if ( 2 !== substr_count( $auto_import_copy, "'" . $import_copy_key . "'" ) ) {
+		fail_migration_bridge(
+			'auto-import-extraction-copy',
+			'Extraction and verification must each have EN/ES progress labels.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php',
+			$import_copy_key . ' in both locales',
+			'missing'
+		);
+	}
 }
 
 foreach ( $php_files as $path ) {
@@ -455,7 +566,7 @@ $read_only_files = array_merge(
 foreach ( $read_only_files as $path ) {
 	// This explicit AJAX export controller is authenticated and may hold an
 	// expiring mutex; it is not part of the read-only analyzer surface.
-	if ( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php' === $path ) {
+	if ( in_array( $path, array( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoExportController.php', MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php' ), true ) ) {
 		continue;
 	}
 	$source = (string) file_get_contents( $path );
@@ -1409,7 +1520,8 @@ foreach (
 		'public const DEFAULT_BATCH_BYTES = 8388608;',
 		"'seo-geo-portable-clone-package-v1'",
 		'$this->workspace->prepare_import_extraction( $job_id )',
-		'$this->workspace->extract_import_archive_entry( $job_id, $name )',
+		'$this->workspace->extract_import_archive_entries( $job_id, $names )',
+		'count( $batch_entries ) !== count( $extracted )',
 		"'import-payload-archive-identity-changed'",
 		"'import-payload-checksum-mismatch'",
 		'$this->preflight->validate( $job_id )',
@@ -1489,6 +1601,7 @@ foreach (
 		'import_extraction_root( string $job_id )',
 		'import_archive_entries( string $job_id )',
 		'extract_import_archive_entry( string $job_id, string $name )',
+		'extract_import_archive_entries( string $job_id, array $names )',
 		'import_extracted_file_info( string $job_id, string $relative )',
 		'read_import_extracted_file( string $job_id, string $relative )',
 		'prepare_import_file_staging( string $job_id )',
@@ -1542,7 +1655,7 @@ foreach (
 		"'START TRANSACTION'",
 		"'COMMIT'",
 		"'ROLLBACK'",
-		'$wpdb->insert( $staging_table, $row, $formats )',
+		'$this->insert_rows_grouped( $wpdb, $staging_table, $columns, $decoded )',
 		"'restore-database'",
 		"'active_tables_untouched'",
 		"'import-database-staging-engine-not-transactional'",
@@ -1956,7 +2069,7 @@ foreach ( array( '->insert(', '->update(', '->delete(', '->query(' ) as $finaliz
 		);
 	}
 }
-if ( 1 === preg_match( '/[\"\']\\s*(?:INSERT|UPDATE|DELETE|REPLACE|CREATE|DROP|ALTER|RENAME|TRUNCATE)\\b/i', $import_finalizer, $finalize_sql_match ) ) {
+if ( 1 === preg_match( '/[\"\']\\s*(?:INSERT|UPDATE|DELETE|REPLACE|CREATE|DROP|ALTER|RENAME|TRUNCATE)\\s/i', $import_finalizer, $finalize_sql_match ) ) {
 	fail_migration_bridge(
 		'portable-clone-import-finalize-no-database-mutation',
 		'10E.2A.4.6.1 must remain read-only against staging and active database tables.',
@@ -2884,6 +2997,46 @@ foreach (
 			'Phase 8I operator screen is missing its dedicated menu, legacy-route redirect or capability guard.',
 			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
 			$operator_screen_guard,
+			'missing'
+		);
+	}
+}
+
+// The production ZIP importer belongs in the simple wizard, not only hidden
+// under the advanced controls. Do not render duplicate AJAX panels for one job.
+$wizard_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/AdminMigrationWizard.php' );
+foreach (
+	array(
+		"new ImportStateStore()",
+		"'replace-production' === ( \$import_state['destination_policy'] ?? '' )",
+		"AdminOperatorScreen::render_auto_import_panel( \$job_id );",
+		"if ( ! \$auto_import )",
+	) as $simple_import_guard
+) {
+	if ( ! str_contains( $wizard_source, $simple_import_guard ) ) {
+		fail_migration_bridge(
+			'migration-simple-import-progress',
+			'Production import must display its automatic progress in the primary wizard and avoid a misleading checkpoint link.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminMigrationWizard.php',
+			$simple_import_guard,
+			'missing'
+		);
+	}
+}
+
+foreach (
+	array(
+		'public static function render_auto_import_panel( string $job_id ): void',
+		'id="seo-geo-auto-import"',
+		"if ( 'sandbox' === \$policy )",
+	) as $single_import_panel_guard
+) {
+	if ( ! str_contains( $operator_screen, $single_import_panel_guard ) ) {
+		fail_migration_bridge(
+			'migration-single-import-panel',
+			'Only one production import AJAX panel must be rendered; legacy sandbox import remains available.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminOperatorScreen.php',
+			$single_import_panel_guard,
 			'missing'
 		);
 	}

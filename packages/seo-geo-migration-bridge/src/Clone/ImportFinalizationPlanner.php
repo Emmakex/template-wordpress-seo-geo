@@ -696,6 +696,10 @@ final class ImportFinalizationPlanner {
 			return false;
 		}
 
+		if ( 'replace-production' === ( $import['destination_policy'] ?? '' ) ) {
+			return ImportProductionGate::ready( (string) ( $import['job_id'] ?? '' ), $import, false );
+		}
+
 		if ( $this->private_same_server_import( $import ) ) {
 			$root      = $this->private_same_server_root( $import );
 			$prefix    = is_string( $import['destination_table_prefix'] ?? null )

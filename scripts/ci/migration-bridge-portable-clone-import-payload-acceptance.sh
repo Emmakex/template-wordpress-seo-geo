@@ -303,6 +303,39 @@ $good_preflight = $preflight->validate( 'clone-import-payload-good-0001' );
 if ( ! is_array( $good_preflight ) || 'preflight-ready' !== ( $good_preflight['status'] ?? null ) ) {
 	throw new RuntimeException( 'Positive payload fixture did not pass preflight.' );
 }
+// Exercise the optimized PclZip multi-file extraction against a real,
+// preflighted ZIP, without advancing the persisted cursor. Existing resumable
+// verification must still complete correctly after these private writes.
+$good_started = $verifier->start( 'clone-import-payload-good-0001' );
+$good_archive_entries = $workspace->import_archive_entries( 'clone-import-payload-good-0001' );
+$good_batch_candidates = array_values(
+	array_filter(
+		$good_archive_entries,
+		static fn ( array $entry ): bool => ! $entry['folder']
+	)
+);
+$good_batch_candidates = array_slice( $good_batch_candidates, 0, 3 );
+$good_group_names = array_column( $good_batch_candidates, 'name' );
+$good_group = is_array( $good_started )
+	? $workspace->extract_import_archive_entries( 'clone-import-payload-good-0001', $good_group_names )
+	: null;
+$good_group_valid = is_array( $good_group ) && count( $good_group ) === count( $good_group_names );
+foreach ( $good_batch_candidates as $i => $entry ) {
+	$file = is_array( $good_group ) ? ( $good_group[ $i ] ?? null ) : null;
+	if (
+		! is_array( $file )
+		|| (int) $file['bytes'] !== (int) $entry['size']
+		|| ! is_string( $file['sha256'] ?? null )
+		|| 1 !== preg_match( '/^[a-f0-9]{64}$/', $file['sha256'] )
+	) {
+		$good_group_valid = false;
+	}
+}
+$bad_group_rejected = null === $workspace->extract_import_archive_entries(
+	'clone-import-payload-good-0001',
+	array( '../not-allowed.php' )
+);
+
 $good_mid = $verifier->advance( 'clone-import-payload-good-0001', 1, 1048576 );
 $good_payload = $run_until_terminal( 'clone-import-payload-good-0001' );
 $good_import = ( new ImportStateStore() )->get( 'clone-import-payload-good-0001' );
@@ -353,6 +386,9 @@ $good_file = $workspace->import_extracted_file_info( 'clone-import-payload-good-
 echo wp_json_encode(
 	array(
 		'good_mid'                  => $good_mid,
+		'good_group_count'          => count( $good_group_names ),
+		'good_group_valid'          => $good_group_valid,
+		'bad_group_rejected'        => $bad_group_rejected,
 		'good_payload'              => $good_payload,
 		'good_import'               => $good_import,
 		'good_checksum'             => $good_archive['checksum'],
@@ -404,6 +440,10 @@ import sys
 
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
     payload = json.load(handle)
+
+assert payload["good_group_count"] >= 2
+assert payload["good_group_valid"] is True
+assert payload["bad_group_rejected"] is True
 
 mid = payload["good_mid"]
 assert mid["status"] == "running"

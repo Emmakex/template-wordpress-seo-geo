@@ -229,8 +229,12 @@ final class ImportPayloadVerifier {
 		$entry_count     = count( $entries );
 		$processed_files = 0;
 		$processed_bytes = 0;
+		$selected_files  = 0;
+		$batch_entries   = array();
 
-		while ( $cursor < $entry_count && $processed_files < $batch_files ) {
+		// First collect one bounded selection. Directory entries advance the
+		// cursor but are not part of the extracted file count.
+		while ( $cursor < $entry_count && $selected_files < $batch_files ) {
 			$entry = $entries[ $cursor ];
 			$name  = (string) $entry['name'];
 
@@ -240,27 +244,51 @@ final class ImportPayloadVerifier {
 			}
 
 			$declared_bytes = max( 0, (int) $entry['size'] );
-			if ( 0 < $processed_files && $processed_bytes + $declared_bytes > $batch_bytes ) {
+			if ( array() !== $batch_entries && $processed_bytes + $declared_bytes > $batch_bytes ) {
 				break;
 			}
 
-			$extracted = $this->workspace->extract_import_archive_entry( $job_id, $name );
-			if ( ! is_array( $extracted ) || $declared_bytes !== (int) $extracted['bytes'] ) {
+			$batch_entries[] = array(
+				'name'  => $name,
+				'bytes' => $declared_bytes,
+			);
+			++$selected_files;
+			$processed_bytes += $declared_bytes;
+			++$cursor;
+		}
+
+		// One PclZip archive pass per batch, not one pass per file. The workspace
+		// still verifies that every selected private file is readable and hashed.
+		if ( array() !== $batch_entries ) {
+			$names     = array_column( $batch_entries, 'name' );
+			$extracted = $this->workspace->extract_import_archive_entries( $job_id, $names );
+			if ( ! is_array( $extracted ) || count( $batch_entries ) !== count( $extracted ) ) {
 				return $this->block( $job_id, $state, 'import-payload-extract-failed', true );
 			}
 
-			if (
-				'package/manifest.json' === rtrim( $name, '/' )
-				&& ! $this->same_hash( $state['package_manifest_sha256'] ?? '', $extracted['sha256'] )
-			) {
-				return $this->block( $job_id, $state, 'import-payload-package-manifest-changed', false );
-			}
+			foreach ( $batch_entries as $index => $entry ) {
+				$file = $extracted[ $index ] ?? null;
+				if ( ! is_array( $file ) ) {
+					return $this->block( $job_id, $state, 'import-payload-extract-failed', true );
+				}
 
-			++$cursor;
-			++$processed_files;
-			$processed_bytes            += (int) $extracted['bytes'];
-			$state['extract_file_count'] = (int) ( $state['extract_file_count'] ?? 0 ) + 1;
-			$state['extract_byte_count'] = (int) ( $state['extract_byte_count'] ?? 0 ) + (int) $extracted['bytes'];
+				$expected_bytes = (int) $entry['bytes'];
+				$actual_bytes   = (int) $file['bytes'];
+				if ( $expected_bytes !== $actual_bytes ) {
+					return $this->block( $job_id, $state, 'import-payload-extract-failed', true );
+				}
+
+				if (
+					'package/manifest.json' === rtrim( (string) $entry['name'], '/' )
+					&& ! $this->same_hash( $state['package_manifest_sha256'] ?? '', $file['sha256'] )
+				) {
+					return $this->block( $job_id, $state, 'import-payload-package-manifest-changed', false );
+				}
+
+				++$processed_files;
+				$state['extract_file_count'] = (int) ( $state['extract_file_count'] ?? 0 ) + 1;
+				$state['extract_byte_count'] = (int) ( $state['extract_byte_count'] ?? 0 ) + (int) $file['bytes'];
+			}
 		}
 
 		$state['archive_cursor'] = $cursor;
