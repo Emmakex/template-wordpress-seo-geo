@@ -256,7 +256,7 @@ $autoload = $wpdb->get_var(
 
 $upload_controller   = new AdminCloneImportController( $preflight );
 $upload_reflection   = new ReflectionMethod( $upload_controller, 'has_upload' );
-$previous_files      = $_FILES;
+$previous_files      = $_FILES ?? array();
 $_FILES               = array( 'clone_package' => array( 'error' => UPLOAD_ERR_NO_FILE ) );
 $empty_file_reuses_zip = false === $upload_reflection->invoke( $upload_controller );
 $_FILES               = array( 'clone_package' => array( 'error' => UPLOAD_ERR_PARTIAL ) );
