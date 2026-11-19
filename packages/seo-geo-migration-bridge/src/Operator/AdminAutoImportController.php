@@ -195,7 +195,7 @@ final class AdminAutoImportController {
 	 * Return safe progress without database rows, file paths or credentials.
 	 *
 	 * @param string $job_id Import job.
-	 * @return array{status:string,phase:string,label:string,percent:float,processed:int,total:int,checkpoint:string}
+	 * @return array{status:string,phase:string,label:string,percent:float,processed:int,total:int,checkpoint:string,error_code:string}
 	 */
 	public static function snapshot( string $job_id ): array {
 		$import = ( new ImportStateStore() )->get( $job_id );
@@ -296,6 +296,18 @@ final class AdminAutoImportController {
 			)
 		);
 
+		// Expose only normalized blocker codes, never database paths, SQL or
+		// credentials. A blocked job must be diagnosable from the simple view.
+		$error_codes = is_array( $current ) && is_array( $current['blockers'] ?? null )
+			? $current['blockers']
+			: array();
+		if ( array() === $error_codes && is_array( $import['blockers'] ?? null ) ) {
+			$error_codes = $import['blockers'];
+		}
+		$error_code = 'blocked' === $status && array() !== $error_codes && is_string( end( $error_codes ) )
+			? sanitize_key( (string) end( $error_codes ) )
+			: '';
+
 		$copy  = new OperatorCopy();
 		$key   = 'payload' === $phase
 			? 'auto_import_phase_payload_' . $payload_stage
@@ -315,6 +327,7 @@ final class AdminAutoImportController {
 			'processed'  => $processed,
 			'total'      => $total,
 			'checkpoint' => $checkpoint,
+			'error_code' => $error_code,
 		);
 	}
 }
