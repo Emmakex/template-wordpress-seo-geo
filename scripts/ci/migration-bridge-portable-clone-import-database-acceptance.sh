@@ -456,7 +456,20 @@ $good_archive = $build_archive( 'clone-import-db-source-good-0001', 'InnoDB' );
 $prepare_import( 'clone-import-db-good-0001', $good_archive );
 // Exercise two prepared values rows in a single bounded INSERT, followed by
 // a separate chunk and its independent checkpoint.
+$grouped_sql_seen = false;
+$observe_query = static function ( string $query ) use ( &$grouped_sql_seen ): string {
+	if (
+		str_starts_with( $query, 'INSERT INTO ' )
+		&& str_contains( $query, ') VALUES (' )
+		&& str_contains( $query, '), (' )
+	) {
+		$grouped_sql_seen = true;
+	}
+	return $query;
+};
+add_filter( 'query', $observe_query );
 $good = $run_database( 'clone-import-db-good-0001', 2 );
+remove_filter( 'query', $observe_query );
 
 $good_namespace = (string) ( $good['staging_namespace'] ?? '' );
 $good_staging   = $good_namespace . substr( hash( 'sha256', $source_table ), 0, 16 );
@@ -494,6 +507,7 @@ $autoload = $wpdb->get_var(
 echo wp_json_encode(
 	array(
 		'good'                     => $good,
+		'grouped_sql_seen'         => $grouped_sql_seen,
 		'good_staging_table'       => $good_staging,
 		'staging_rows'             => $staging_rows,
 		'active_before'            => $active_before,
@@ -573,6 +587,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
 good = payload["good"]
+assert payload["grouped_sql_seen"] is True
 assert good["status"] == "complete"
 assert good["stage"] == "complete"
 assert good["table_count"] == 1
