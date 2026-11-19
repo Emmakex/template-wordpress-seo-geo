@@ -362,6 +362,12 @@ assert 'data-auto-progress' in export_ui
 assert 'data-auto-pause disabled' in export_ui
 assert "Start / resume automatic export" in export_ui
 assert 'data-seo-geo-auto-export' not in import_ui
+assert 'id="seo-geo-simple-import-heading"' in import_ui
+assert 'name="clone_package"' in import_ui
+assert 'name="import_destination_policy" value="replace-production"' in import_ui
+assert 'value="seo_geo_migration_clone_import_preflight"' in import_ui
+assert 'enctype="multipart/form-data"' in import_ui
+assert 'name="clone_package"' not in export_ui
 assert 'data-seo-geo-auto-export' in paused_ui
 assert 'data-auto-run ' in paused_ui and "disabled=" in paused_ui
 assert 'name="action" value="seo_geo_migration_clone_inventory"' not in export_ui
