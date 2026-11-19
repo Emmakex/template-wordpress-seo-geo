@@ -127,14 +127,14 @@ final class AdminAutoImportController {
 			} else {
 				$result = match ( $phase ) {
 					'payload'     => ( new ImportPayloadVerifier() )->advance( $job_id, 100, 16 * 1024 * 1024 ),
-					'database'    => ( new ImportDatabaseRestorer() )->advance( $job_id, 200 ),
-					'files'       => ( new ImportFileRestorer() )->advance( $job_id, 30, 16 * 1024 * 1024 ),
+					'database'    => ( new ImportDatabaseRestorer() )->advance( $job_id, 500 ),
+					'files'       => ( new ImportFileRestorer() )->advance( $job_id, 75, 16 * 1024 * 1024 ),
 					'rewrite'     => ( new ImportEnvironmentRewriter() )->advance( $job_id, 200 ),
-					'finalize'    => ( new ImportFinalizationPlanner() )->advance( $job_id, 200, 30, 16 * 1024 * 1024 ),
+					'finalize'    => ( new ImportFinalizationPlanner() )->advance( $job_id, 200, 75, 16 * 1024 * 1024 ),
 					'db-activate' => ( new ImportDatabaseActivator() )->activate( $job_id ),
-					'candidates'  => ( new ImportFilePromoter() )->advance_candidates( $job_id, 30, 16 * 1024 * 1024 ),
+					'candidates'  => ( new ImportFilePromoter() )->advance_candidates( $job_id, 75, 16 * 1024 * 1024 ),
 					'promote'     => ( new ImportFilePromoter() )->promote( $job_id ),
-					'verify'      => ( new ImportFilePromoter() )->advance_verification( $job_id, 30, 16 * 1024 * 1024 ),
+					'verify'      => ( new ImportFilePromoter() )->advance_verification( $job_id, 75, 16 * 1024 * 1024 ),
 					default       => null,
 				};
 			}
