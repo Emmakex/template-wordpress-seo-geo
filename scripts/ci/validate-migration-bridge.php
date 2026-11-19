@@ -341,6 +341,40 @@ foreach (
 	}
 }
 
+// Production ZIP restore performance must stay bounded, resumable and
+// binary-safe: never regress to one database round trip per imported row.
+$database_restore_source = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php' );
+foreach (
+	array(
+		'private const MAX_SQL_BATCH_ROWS  = 100;',
+		'private const MAX_SQL_BATCH_BYTES = 524288;',
+		'insert_rows_grouped( $wpdb, $staging_table, $columns, $decoded )',
+		'flush_grouped_insert( $wpdb, $prefix, $groups, $params )',
+		"'NULL'",
+		'array_key_exists( $column, $row )',
+		"\$wpdb->prepare( \$sql, \$params )",
+	) as $grouped_import_guard
+) {
+	if ( ! str_contains( $database_restore_source, $grouped_import_guard ) ) {
+		fail_migration_bridge(
+			'migration-grouped-rows',
+			'Import must use bounded prepared multi-row INSERTs without changing transaction checkpoints or SQL NULL semantics.',
+			MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
+			$grouped_import_guard,
+			'missing'
+		);
+	}
+}
+if ( str_contains( $database_restore_source, '\$wpdb->insert( $staging_table, $row,' ) ) {
+	fail_migration_bridge(
+		'migration-per-row-sql-regression',
+		'Never restore a ZIP by calling a separate INSERT for every source row.',
+		MIGRATION_BRIDGE_DIR . '/src/Clone/ImportDatabaseRestorer.php',
+		'grouped prepared insert only',
+		'per-row insert'
+	);
+}
+
 $auto_import_copy = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' );
 foreach ( array( 'auto_import_phase_payload_extract', 'auto_import_phase_payload_verify', 'auto_import_phase_database_rows' ) as $import_copy_key ) {
 	if ( 2 !== substr_count( $auto_import_copy, "'" . $import_copy_key . "'" ) ) {
