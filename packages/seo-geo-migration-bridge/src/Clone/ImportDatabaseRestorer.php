@@ -376,7 +376,7 @@ final class ImportDatabaseRestorer {
 			return $this->block( $job_id, $state, 'import-database-schema-integrity-failed', false );
 		}
 
-		$create_sql = $this->staging_create_sql( $sql, $staging_table );
+		$create_sql = $this->staging_create_sql( $sql, $staging_table, $source_table, (string) $state['source_prefix'] );
 		if ( null === $create_sql ) {
 			return $this->block( $job_id, $state, 'import-database-schema-unsupported', false );
 		}
@@ -993,17 +993,43 @@ final class ImportDatabaseRestorer {
 	/**
 	 * Build a safe CREATE TABLE statement for the job-owned staging table.
 	 *
-	 * @param string $source_sql   Extracted SHOW CREATE TABLE statement.
+	 * @param string $source_sql    Extracted SHOW CREATE TABLE statement.
 	 * @param string $staging_table Job-owned staging table.
+	 * @param string $source_table  Exact table from the verified package manifest.
+	 * @param string $source_prefix Verified source WordPress prefix.
 	 */
-	private function staging_create_sql( string $source_sql, string $staging_table ): ?string {
+	private function staging_create_sql(
+		string $source_sql,
+		string $staging_table,
+		string $source_table,
+		string $source_prefix
+	): ?string {
 		$sql = trim( $source_sql );
 		if (
 			! $this->valid_staging_table( $staging_table )
 			|| 1 !== preg_match( '/^CREATE\s+TABLE\s+/i', $sql )
 			|| 1 === preg_match( '/\b(?:FOREIGN\s+KEY|REFERENCES)\b/i', $sql )
-			|| 1 !== preg_match( '/\bENGINE\s*=\s*InnoDB\b/i', $sql )
 		) {
+			return null;
+		}
+
+		// Wordfence's transient role-count cache uses MEMORY. Its documented
+		// InnoDB fallback is safe for transactional staging and keeps all rows.
+		// Never enable generic nontransactional schemas or HASH-only indexes.
+		if (
+			$source_table === $source_prefix . 'wfls_role_counts'
+			&& '' !== $source_prefix
+			&& 1 === preg_match( '/\bENGINE\s*=\s*MEMORY\b/i', $sql )
+			&& 0 === preg_match( '/\bUSING\s+HASH\b/i', $sql )
+		) {
+			$normalized = preg_replace( '/\bENGINE\s*=\s*MEMORY\b/i', 'ENGINE=InnoDB', $sql, 1 );
+			if ( ! is_string( $normalized ) ) {
+				return null;
+			}
+			$sql = $normalized;
+		}
+
+		if ( 1 !== preg_match( '/\bENGINE\s*=\s*InnoDB\b/i', $sql ) ) {
 			return null;
 		}
 
