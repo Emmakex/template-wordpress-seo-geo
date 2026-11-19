@@ -136,9 +136,8 @@ final class AdminMigrationWizard {
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
 					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneController::ACTION ); ?>">
 					<?php wp_nonce_field( AdminCloneController::NONCE_ACTION ); ?>
-					<button class="button" type="submit" name="clone_operation" value="export"><?php echo esc_html( $copy->text( 'clone_export_button' ) ); ?></button>
-					<button class="button" type="submit" name="clone_operation" value="local-clone"><?php echo esc_html( $copy->text( 'clone_local_button' ) ); ?></button>
-					<button class="button" type="submit" name="clone_operation" value="import"><?php echo esc_html( $copy->text( 'clone_import_button' ) ); ?></button>
+					<button class="button button-primary button-hero" type="submit" name="clone_operation" value="export"><?php echo esc_html( $copy->text( 'wizard_primary_export' ) ); ?></button>
+					<button class="button button-primary button-hero" type="submit" name="clone_operation" value="import"><?php echo esc_html( $copy->text( 'wizard_primary_import' ) ); ?></button>
 			</form>
 			<?php if ( 0 < count( $jobs ) ) : ?>
 				<form method="get" action="<?php echo esc_url( admin_url( 'tools.php' ) ); ?>" style="margin:16px 0;">
@@ -176,6 +175,8 @@ final class AdminMigrationWizard {
 			<?php else : ?>
 				<p><?php echo esc_html( $copy->text( 'wizard_empty' ) ); ?></p>
 			<?php endif; ?>
+			<details style="margin:12px 0;">
+				<summary style="cursor:pointer;font-weight:600;"><?php echo esc_html( $copy->text( 'wizard_technical_details' ) ); ?></summary>
 			<ol style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding-left:0;list-style:none;">
 				<?php foreach ( $steps as $step ) : ?>
 					<li style="padding:14px;border:1px solid #c3c4c7;border-radius:4px;">
@@ -210,6 +211,7 @@ final class AdminMigrationWizard {
 					</p>
 				</div>
 			<?php endif; ?>
+			</details>
 			<?php if ( $auto_import ) : ?>
 				<?php AdminOperatorScreen::render_auto_import_panel( $job_id ); ?>
 			<?php elseif ( 'export' === $operation ) : ?>
