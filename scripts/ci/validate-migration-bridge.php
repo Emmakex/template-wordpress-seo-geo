@@ -365,7 +365,7 @@ foreach (
 		);
 	}
 }
-if ( str_contains( $database_restore_source, '\$wpdb->insert( $staging_table, $row,' ) ) {
+if ( str_contains( $database_restore_source, '$wpdb->insert( $staging_table, $row,' ) ) {
 	fail_migration_bridge(
 		'migration-per-row-sql-regression',
 		'Never restore a ZIP by calling a separate INSERT for every source row.',
@@ -1655,7 +1655,7 @@ foreach (
 		"'START TRANSACTION'",
 		"'COMMIT'",
 		"'ROLLBACK'",
-		'$wpdb->insert( $staging_table, $row, $formats )',
+		'$this->insert_rows_grouped( $wpdb, $staging_table, $columns, $decoded )',
 		"'restore-database'",
 		"'active_tables_untouched'",
 		"'import-database-staging-engine-not-transactional'",
