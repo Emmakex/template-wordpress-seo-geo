@@ -103,7 +103,12 @@ final class AdminCloneImportController {
 	 */
 	private function has_upload(): bool {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Caller validates the job-scoped nonce before this helper is invoked.
-		return isset( $_FILES['clone_package'] ) && is_array( $_FILES['clone_package'] );
+		// A file input is submitted even when the operator selected no file.
+		// In that case revalidate the already-staged ZIP instead of rejecting it
+		// as a failed upload. Other PHP upload errors still fail validation.
+		return isset( $_FILES['clone_package'] )
+			&& is_array( $_FILES['clone_package'] )
+			&& UPLOAD_ERR_NO_FILE !== (int) ( $_FILES['clone_package']['error'] ?? UPLOAD_ERR_NO_FILE );
 	}
 
 	/**
