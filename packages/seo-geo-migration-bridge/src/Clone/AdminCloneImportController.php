@@ -106,9 +106,13 @@ final class AdminCloneImportController {
 		// A file input is submitted even when the operator selected no file.
 		// In that case revalidate the already-staged ZIP instead of rejecting it
 		// as a failed upload. Other PHP upload errors still fail validation.
-		return isset( $_FILES['clone_package'] )
-			&& is_array( $_FILES['clone_package'] )
-			&& UPLOAD_ERR_NO_FILE !== (int) ( $_FILES['clone_package']['error'] ?? UPLOAD_ERR_NO_FILE );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The authenticated handler verified this job-scoped nonce; raw PHP upload metadata is only checked for UPLOAD_ERR_NO_FILE here.
+		$upload = isset( $_FILES['clone_package'] ) && is_array( $_FILES['clone_package'] )
+			? $_FILES['clone_package']
+			: null;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		return is_array( $upload )
+			&& UPLOAD_ERR_NO_FILE !== (int) ( $upload['error'] ?? UPLOAD_ERR_NO_FILE );
 	}
 
 	/**
