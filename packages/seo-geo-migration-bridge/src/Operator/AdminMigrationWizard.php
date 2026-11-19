@@ -172,8 +172,10 @@ final class AdminMigrationWizard {
 				<p><strong><?php echo esc_html( $copy->text( 'wizard_current_job' ) ); ?></strong>
 					<?php echo esc_html( $copy->text( 'wizard_job_' . str_replace( '-', '_', $operation ) ) ); ?>
 					· <?php echo esc_html( $copy->text( 'wizard_state_' . str_replace( '-', '_', (string) ( $job['status'] ?? '' ) ) ) ); ?>
-					· <strong><?php echo esc_html( $copy->text( 'wizard_batch' ) ); ?></strong>
-					<?php echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total ); ?>
+					<?php if ( 'local-clone' === $operation ) : ?>
+						· <strong><?php echo esc_html( $copy->text( 'wizard_batch' ) ); ?></strong>
+						<?php echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total ); ?>
+					<?php endif; ?>
 				</p>
 				<?php if ( in_array( $job['status'] ?? '', array( 'failed-retryable', 'failed-terminal', 'paused' ), true ) ) : ?>
 					<p class="notice notice-warning inline"><?php echo esc_html( $copy->text( 'wizard_attention' ) ); ?></p>
@@ -293,7 +295,6 @@ final class AdminMigrationWizard {
 				<?php if ( ! $auto_import ) : ?>
 					<a class="button" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( $button_text ); ?></a>
 				<?php endif; ?>
-				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html( $copy->text( 'wizard_rescue' ) ); ?></a>
 			</p>
 			<p class="description"><?php echo esc_html( $copy->text( 'wizard_cutover_notice' ) ); ?></p>
 		</section>
