@@ -110,7 +110,9 @@
 					return;
 				}
 				status.textContent = panel.getAttribute('data-msg-running') || '';
-				await new Promise(function (resolve) { window.setTimeout(resolve, 250); });
+				// Sequential requests already apply backpressure; avoid idle time
+				// between verified checkpoints on low-latency hosts.
+				await new Promise(function (resolve) { window.setTimeout(resolve, 40); });
 			}
 			stop(panel.getAttribute('data-msg-paused') || '');
 		}
