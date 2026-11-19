@@ -317,8 +317,32 @@ foreach (
 	}
 }
 
+// Staging rows and staging tables are different units. The operator panel
+// must never show tens of thousands of rows against dozens of tables.
+foreach (
+	array(
+		"'database' === \$phase && is_array( \$current )",
+		"\$current['tables_completed'] ?? 0",
+		"\$current['table_count'] ?? 0",
+		"\$current['chunks_completed'] ?? 0",
+		"\$current['chunk_count'] ?? 0",
+		"\$current['rows_restored'] ?? 0",
+		"'auto_import_phase_database_rows'",
+	) as $database_progress_guard
+) {
+	if ( ! str_contains( $auto_import_source, $database_progress_guard ) ) {
+		fail_migration_bridge(
+			'auto-import-database-count-units',
+			'Staging database UI must show coherent table counts and separate restored rows, without changing persisted job state.',
+			MIGRATION_BRIDGE_DIR . '/src/Operator/AdminAutoImportController.php',
+			$database_progress_guard,
+			'missing'
+		);
+	}
+}
+
 $auto_import_copy = (string) file_get_contents( MIGRATION_BRIDGE_DIR . '/src/Operator/OperatorCopy.php' );
-foreach ( array( 'auto_import_phase_payload_extract', 'auto_import_phase_payload_verify' ) as $import_copy_key ) {
+foreach ( array( 'auto_import_phase_payload_extract', 'auto_import_phase_payload_verify', 'auto_import_phase_database_rows' ) as $import_copy_key ) {
 	if ( 2 !== substr_count( $auto_import_copy, "'" . $import_copy_key . "'" ) ) {
 		fail_migration_bridge(
 			'auto-import-extraction-copy',
