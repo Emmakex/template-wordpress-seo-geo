@@ -127,7 +127,7 @@ final class AdminAutoImportController {
 			} else {
 				$result = match ( $phase ) {
 					'payload'     => ( new ImportPayloadVerifier() )->advance( $job_id, 100, 16 * 1024 * 1024 ),
-					'database'    => ( new ImportDatabaseRestorer() )->advance( $job_id, 500 ),
+					'database'    => self::advance_database_burst( $job_id ),
 					'files'       => ( new ImportFileRestorer() )->advance( $job_id, 75, 16 * 1024 * 1024 ),
 					'rewrite'     => ( new ImportEnvironmentRewriter() )->advance( $job_id, 200 ),
 					'finalize'    => ( new ImportFinalizationPlanner() )->advance( $job_id, 200, 75, 16 * 1024 * 1024 ),
@@ -157,6 +157,38 @@ final class AdminAutoImportController {
 			wp_send_json_error( array( 'code' => 'import-batch-stalled' ), 409 );
 		}
 		wp_send_json_success( $after );
+	}
+
+	/**
+	 * Advance several committed database checkpoints within a short AJAX budget.
+	 *
+	 * Each call still verifies runtime guards, writes only isolated staging
+	 * tables and persists its transaction before starting the next chunk.
+	 * This saves hundreds of WordPress bootstrap/network round trips without
+	 * introducing a background worker or concurrent database mutations.
+	 *
+	 * @param string $job_id Current authorized import job.
+	 * @return array<string,mixed>|null
+	 */
+	private static function advance_database_burst( string $job_id ): ?array {
+		$worker   = new ImportDatabaseRestorer();
+		$deadline = microtime( true ) + 2.0;
+		$result   = null;
+		for ( $cycle = 0; $cycle < 6; ++$cycle ) {
+			$previous = $result;
+			$result   = $worker->advance( $job_id, 500 );
+			if ( ! is_array( $result ) || in_array( $result['status'] ?? '', array( 'complete', 'blocked' ), true ) ) {
+				break;
+			}
+			if ( is_array( $previous ) && $previous === $result ) {
+				break;
+			}
+			if ( microtime( true ) >= $deadline ) {
+				break;
+			}
+		}
+
+		return $result;
 	}
 
 	/**
