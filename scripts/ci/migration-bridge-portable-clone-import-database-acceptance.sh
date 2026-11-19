@@ -173,20 +173,21 @@ $build_archive = static function ( string $source_job_id, string $engine = 'Inno
 	$table_dir = 'database/tables/' . substr( hash( 'sha256', $source_table ), 0, 20 );
 	$schema_sql = 'CREATE TABLE `' . $source_table . '` ('
 		. '`id` bigint unsigned NOT NULL, '
-		. '`title` varchar(190) NOT NULL, '
+		. '`title` varchar(190) NULL, '
 		. 'PRIMARY KEY (`id`)) ENGINE=' . $engine . ' DEFAULT CHARSET=utf8mb4;' . "\n";
 	$schema = $workspace->write( $source_job_id, $table_dir . '/schema.sql', $schema_sql );
 	if ( ! is_array( $schema ) ) {
 		throw new RuntimeException( 'Could not write database schema fixture.' );
 	}
 
+	$mixed_values = str_contains( $source_job_id, '-source-good-' );
 	$chunk_rows = array(
 		array(
 			$encode_row( array( '1', 'alpha' ) ),
-			$encode_row( array( '2', 'beta' ) ),
+			$encode_row( array( '2', $mixed_values ? null : 'beta' ) ),
 		),
 		array(
-			$encode_row( array( '3', 'gamma' ) ),
+			$encode_row( array( '3', $mixed_values ? "O'Reilly 100% test" : 'gamma' ) ),
 		),
 	);
 	$chunks = array();
@@ -453,7 +454,9 @@ $run_database = static function ( string $job_id, int $batch_rows = 1 ) use ( $r
 
 $good_archive = $build_archive( 'clone-import-db-source-good-0001', 'InnoDB' );
 $prepare_import( 'clone-import-db-good-0001', $good_archive );
-$good = $run_database( 'clone-import-db-good-0001', 1 );
+// Exercise two prepared values rows in a single bounded INSERT, followed by
+// a separate chunk and its independent checkpoint.
+$good = $run_database( 'clone-import-db-good-0001', 2 );
 
 $good_namespace = (string) ( $good['staging_namespace'] ?? '' );
 $good_staging   = $good_namespace . substr( hash( 'sha256', $source_table ), 0, 16 );
@@ -582,8 +585,8 @@ assert re.fullmatch(r"[A-Za-z0-9_]{1,64}", payload["good_staging_table"])
 
 assert payload["staging_rows"] == [
     {"id": "1", "title": "alpha"},
-    {"id": "2", "title": "beta"},
-    {"id": "3", "title": "gamma"},
+    {"id": "2", "title": None},
+    {"id": "3", "title": "O'Reilly 100% test"},
 ]
 expected_active = [{"id": "999", "title": "active-sentinel"}]
 assert payload["active_before"] == expected_active
