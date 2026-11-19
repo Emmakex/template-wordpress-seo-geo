@@ -112,10 +112,10 @@ final class AdminMigrationWizard {
 			&& 'replace-production' === ( $import_state['destination_policy'] ?? '' )
 			&& 0 < (int) ( $import_state['archive_bytes'] ?? 0 )
 			&& in_array( (string) ( $import_state['status'] ?? '' ), array( 'preflight-ready', 'payload-verified' ), true );
-		$payload_state = 'import' === $operation && '' !== $job_id ? ( new ImportPayloadStateStore() )->get( $job_id ) : null;
-		$show_upload  = 'import' === $operation && '' !== $job_id && ! is_array( $payload_state )
+		$payload_state  = 'import' === $operation && '' !== $job_id ? ( new ImportPayloadStateStore() )->get( $job_id ) : null;
+		$show_upload    = 'import' === $operation && '' !== $job_id && ! is_array( $payload_state )
 			&& ! in_array( (string) ( $job['status'] ?? '' ), array( 'failed-terminal', 'cancelled' ), true );
-		$has_archive = is_array( $import_state ) && 0 < (int) ( $import_state['archive_bytes'] ?? 0 );
+		$has_archive    = is_array( $import_state ) && 0 < (int) ( $import_state['archive_bytes'] ?? 0 );
 		$anchor         = '' === $job_id && ! $baseline_ready
 			? '#seo-geo-baseline-capture-form'
 			: ( is_array( $checkpoint ) ? '#' . $checkpoint['anchor'] : '#seo-geo-clone-workflow' );
