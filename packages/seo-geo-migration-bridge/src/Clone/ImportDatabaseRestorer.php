@@ -270,6 +270,109 @@ final class ImportDatabaseRestorer {
 	}
 
 	/**
+	 * Recover only a verified Wordfence MEMORY-schema terminal rejection.
+	 *
+	 * No source payload, completed staging table or production table is changed.
+	 * Requires a fresh preflight and a missing current staging table before
+	 * clearing the one precisely matched terminal blocker.
+	 *
+	 * @param string $job_id Existing blocked import job ID.
+	 * @return array<string,mixed>|null Resumed state, or null if unsafe.
+	 */
+	public function resume_wordfence_memory_schema( string $job_id ): ?array {
+		$job   = $this->jobs->get( $job_id );
+		$state = $this->store->get( $job_id );
+		if (
+			! is_array( $job )
+			|| ! is_array( $state )
+			|| 'import' !== ( $job['operation'] ?? '' )
+			|| 'failed-terminal' !== ( $job['status'] ?? '' )
+			|| 'import-database-schema-unsupported' !== ( $job['error_code'] ?? '' )
+			|| 'blocked' !== ( $state['status'] ?? '' )
+			|| 'schema' !== ( $state['stage'] ?? '' )
+			|| array( 'import-database-schema-unsupported' ) !== ( $state['blockers'] ?? null )
+			|| true !== ( $state['active_tables_untouched'] ?? false )
+			|| (int) ( $state['table_index'] ?? -1 ) !== (int) ( $state['tables_completed'] ?? -2 )
+			|| 0 !== (int) ( $state['chunk_index'] ?? -1 )
+			|| 0 !== (int) ( $state['chunk_row_offset'] ?? -1 )
+			|| 0 !== (int) ( $state['table_rows_restored'] ?? -1 )
+		) {
+			return null;
+		}
+
+		$bundle = $this->database_manifest( $job_id );
+		if (
+			null === $bundle
+			|| ! $this->same_hash( $bundle['sha256'], $state['database_manifest_sha256'] ?? '' )
+		) {
+			return null;
+		}
+
+		$tables = is_array( $bundle['manifest']['tables'] ?? null ) ? array_values( $bundle['manifest']['tables'] ) : array();
+		$index  = (int) $state['table_index'];
+		$meta   = $tables[ $index ] ?? null;
+		$prefix = (string) ( $state['source_prefix'] ?? '' );
+		$table  = $prefix . 'wfls_role_counts';
+		if (
+			'' === $prefix
+			|| ! is_array( $meta )
+			|| ! $this->table_manifest_valid( $meta, $prefix )
+			|| $table !== ( $meta['name'] ?? '' )
+			|| $table !== ( $state['current_source_table'] ?? '' )
+			|| $this->target_table( $table, $prefix, (string) $state['destination_prefix'] ) !== ( $state['current_target_table'] ?? '' )
+		) {
+			return null;
+		}
+
+		$staging = $this->staging_table( (string) $state['staging_namespace'], $table );
+		if (
+			'' === $staging
+			|| $staging !== ( $state['current_staging_table'] ?? '' )
+			|| $this->table_exists( $staging )
+		) {
+			return null;
+		}
+
+		$schema = is_array( $meta['schema'] ?? null ) ? $meta['schema'] : array();
+		$path   = is_string( $schema['path'] ?? null ) ? $schema['path'] : '';
+		$info   = $this->workspace->import_extracted_file_info( $job_id, $path );
+		$sql    = $this->workspace->read_import_extracted_file( $job_id, $path );
+		if (
+			'' === $path
+			|| ! is_array( $info )
+			|| ! is_string( $sql )
+			|| (int) ( $schema['bytes'] ?? -1 ) !== (int) $info['bytes']
+			|| ! $this->same_hash( $schema['sha256'] ?? '', $info['sha256'] )
+			|| 1 !== preg_match( '/\\bENGINE\\s*=\\s*MEMORY\\b/i', $sql )
+			|| null === $this->staging_create_sql( $sql, $staging, $table, $prefix )
+			|| null === $this->runtime_guard( $job_id, $state )
+		) {
+			return null;
+		}
+
+		$next               = $state;
+		$next['status']     = 'running';
+		$next['blockers']   = array();
+		$next['updated_at'] = gmdate( DATE_ATOM );
+		if ( ! $this->store->save( $job_id, $next ) ) {
+			return null;
+		}
+
+		$transition = $this->jobs->transition( $job_id, 'active' );
+		$confirmed  = $this->jobs->get( $job_id );
+		if (
+			! is_array( $transition )
+			|| ! is_array( $confirmed )
+			|| 'active' !== ( $confirmed['status'] ?? '' )
+		) {
+			$this->store->save( $job_id, $state );
+			return null;
+		}
+
+		return $this->store->get( $job_id );
+	}
+
+	/**
 	 * Advance one bounded database staging-restore batch.
 	 *
 	 * @param string $job_id    Clone job identifier.
