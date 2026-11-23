@@ -333,10 +333,10 @@ final class AdminAutoImportController {
 		if ( 'rewrite' === $phase && is_array( $current ) ) {
 			$tables_done  = max( 0, (int) ( $current['table_index'] ?? 0 ) );
 			$tables_total = max( 0, (int) ( $current['table_count'] ?? 0 ) );
-			$stage_key = 'verify' === ( $current['stage'] ?? '' )
+			$stage_key    = 'verify' === ( $current['stage'] ?? '' )
 				? 'auto_import_phase_rewrite_verifying'
 				: 'auto_import_phase_rewrite_scanning';
-			$label     = sprintf(
+			$label        = sprintf(
 				$copy->text( $stage_key ),
 				min( $tables_total, $tables_done + 1 ),
 				$tables_total,
