@@ -284,6 +284,17 @@ final class AdminAutoImportController {
 				? min( 1.0, $chunks_done / $chunks_total )
 				: ( 0 < $total ? min( 1.0, $processed / $total ) : 0.0 );
 		}
+		if ( 'rewrite' === $phase && is_array( $current ) ) {
+			// A rewrite may scan thousands of rows before completing a table.
+			// Display its real row cursor, plus separate rewrite/verify phases.
+			$rewrite_stage  = 'verify' === ( $current['stage'] ?? '' ) ? 'verify' : 'rewrite';
+			$tables_done    = max( 0, (int) ( $current['table_index'] ?? 0 ) );
+			$tables_total   = max( 0, (int) ( $current['table_count'] ?? 0 ) );
+			$processed      = max( 0, (int) ( 'verify' === $rewrite_stage ? ( $current['verify_rows_scanned'] ?? 0 ) : ( $current['rows_scanned'] ?? 0 ) ) );
+			$total          = 0;
+			$phase_progress = ( 'verify' === $rewrite_stage ? 0.5 : 0.0 )
+				+ ( 0 < $tables_total ? 0.5 * min( 1.0, $tables_done / $tables_total ) : 0.0 );
+		}
 		$checkpoint = hash(
 			'sha256',
 			wp_json_encode(
@@ -317,6 +328,17 @@ final class AdminAutoImportController {
 			$label = sprintf(
 				$copy->text( 'auto_import_phase_database_rows' ),
 				number_format_i18n( max( 0, (int) ( $current['rows_restored'] ?? 0 ) ) )
+			);
+		}
+		if ( 'rewrite' === $phase && is_array( $current ) ) {
+			$stage_key = 'verify' === ( $current['stage'] ?? '' )
+				? 'auto_import_phase_rewrite_verifying'
+				: 'auto_import_phase_rewrite_scanning';
+			$label     = sprintf(
+				$copy->text( $stage_key ),
+				min( $tables_total, $tables_done + 1 ),
+				$tables_total,
+				number_format_i18n( $processed )
 			);
 		}
 		return array(
