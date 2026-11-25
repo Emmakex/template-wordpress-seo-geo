@@ -350,6 +350,94 @@ final class ImportDatabaseActivator {
 	}
 
 	/**
+	 * Reconcile one previously blocked journal after a reverse table swap.
+	 *
+	 * This operation changes only the private recovery journal. It requires
+	 * the *entire* original table layout to have returned, all controls to
+	 * match, and the only staging drift to be bounded extra options rows.
+	 * It deliberately keeps a blocker: a drifted candidate is NOT reusable.
+	 *
+	 * @param string $job_id Blocked production import job.
+	 * @return array<string,mixed>|null Journal after reconciliation or null.
+	 */
+	public function reconcile_verified_rollback( string $job_id ): ?array {
+		$state = $this->store->get( $job_id );
+		$import = $this->import_state->get( $job_id );
+		if (
+			! is_array( $state )
+			|| ! is_array( $import )
+			|| 'replace-production' !== ( $import['destination_policy'] ?? '' )
+			|| 'blocked' !== ( $state['status'] ?? '' )
+			|| true !== ( $state['database_swapped'] ?? false )
+			|| array( 'database-rollback-verification-failed' ) !== ( $state['blockers'] ?? null )
+			|| 'prepared' !== $this->layout( $state )
+		) {
+			return null;
+		}
+
+		$expected_options = (string) ( $state['options_staging'] ?? '' );
+		if ( '' === $expected_options ) {
+			return null;
+		}
+
+		$option_drift = 0;
+		$tables = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
+		if ( array() === $tables ) {
+			return null;
+		}
+
+		foreach ( $tables as $table ) {
+			if ( ! is_array( $table ) ) {
+				return null;
+			}
+			$staging = (string) ( $table['staging_table'] ?? '' );
+			$count = $this->row_count( $staging );
+			$expected = (int) ( $table['row_count'] ?? -1 );
+			if ( null === $count ) {
+				return null;
+			}
+			if ( $count !== $expected ) {
+				if ( $staging !== $expected_options || $count <= $expected || $count - $expected > 16 || 0 !== $option_drift ) {
+					return null;
+				}
+				$option_drift = $count - $expected;
+			}
+		}
+
+		if ( 0 === $option_drift ) {
+			return null;
+		}
+
+		$columns = $this->table_columns( $expected_options );
+		if ( array() === $columns || array() === ( $state['control_options'] ?? array() ) ) {
+			return null;
+		}
+		foreach ( $state['control_options'] as $control ) {
+			if ( ! is_array( $control ) || ! is_string( $control['name'] ?? null ) ) {
+				return null;
+			}
+			$row = $this->option_row( $expected_options, $control['name'], $columns );
+			if (
+				null === $row
+				|| (int) ( $control['byte_count'] ?? -1 ) !== strlen( $row['option_value'] )
+				|| ! hash_equals( (string) ( $control['sha256'] ?? '' ), hash( 'sha256', $row['option_value'] ) )
+			) {
+				return null;
+			}
+		}
+
+		$now = gmdate( DATE_ATOM );
+		$state['status'] = 'rolled-back';
+		$state['database_swapped'] = false;
+		$state['rollback_available'] = false;
+		$state['blockers'] = array( 'database-activation-verification-failed', 'database-rollback-staging-row-count-drift' );
+		$state['rolled_back_at'] = $now;
+		$state['updated_at'] = $now;
+
+		return $this->store->save( $job_id, $state ) ? $this->store->get( $job_id ) : null;
+	}
+
+	/**
 	 * Apply the wp_options control-plane overlay transactionally to staging.
 	 *
 	 * @param string $job_id  Child import job identifier.
@@ -614,9 +702,15 @@ final class ImportDatabaseActivator {
 			return $this->block( $job_id, $state, 'database-rollback-atomic-rename-failed', true );
 		}
 
-		if ( 'prepared' !== $this->layout( $state ) || ! $this->staging_counts_match( $state ) ) {
+		// Physical layout and staging content are different recovery contracts.
+		// WordPress may append options while the candidate database is active.
+		// Once reverse rename succeeds, never report the imported DB as active
+		// merely because the *staging* row count drifted. Retain a blocker so
+		// this candidate cannot be silently activated a second time.
+		if ( 'prepared' !== $this->layout( $state ) ) {
 			return $this->block( $job_id, $state, 'database-rollback-verification-failed', true );
 		}
+		$staging_drift = ! $this->staging_counts_match( $state );
 
 		$now                             = gmdate( DATE_ATOM );
 		$state['status']                 = 'rolled-back';
@@ -624,7 +718,9 @@ final class ImportDatabaseActivator {
 		$state['rollback_available']     = false;
 		$state['active_files_untouched'] = true;
 		$state['handoff_ready']          = false;
-		$state['blockers']               = array( $reason );
+		$state['blockers']               = $staging_drift
+			? array( $reason, 'database-rollback-staging-row-count-drift' )
+			: array( $reason );
 		$state['rolled_back_at']         = $now;
 		$state['updated_at']             = $now;
 
