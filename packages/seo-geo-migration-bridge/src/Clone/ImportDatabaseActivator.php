@@ -20,7 +20,7 @@ use wpdb;
  * control plane needed to verify or roll back the swap.
  */
 final class ImportDatabaseActivator {
-	private const MAX_CONTROL_PLANE_BYTES  = 2097152;
+	private const MAX_CONTROL_PLANE_BYTES = 2097152;
 	private const MAX_NEW_RUNTIME_OPTIONS = 32;
 
 	/**
@@ -313,10 +313,10 @@ final class ImportDatabaseActivator {
 			return $this->block( $job_id, $state, 'database-activation-options-baseline-invalid', false );
 		}
 
-		$state['tables']                    = $tables;
-		$state['control_options']           = $controls;
-		$state['options_baseline_max_id']   = $options_high_water;
-		$state['updated_at']                = gmdate( DATE_ATOM );
+		$state['tables']                  = $tables;
+		$state['control_options']         = $controls;
+		$state['options_baseline_max_id'] = $options_high_water;
+		$state['updated_at']              = gmdate( DATE_ATOM );
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
@@ -371,7 +371,7 @@ final class ImportDatabaseActivator {
 	 * @return array<string,mixed>|null Journal after reconciliation or null.
 	 */
 	public function reconcile_verified_rollback( string $job_id ): ?array {
-		$state = $this->store->get( $job_id );
+		$state  = $this->store->get( $job_id );
 		$import = $this->import_state->get( $job_id );
 		if (
 			! is_array( $state )
@@ -400,8 +400,8 @@ final class ImportDatabaseActivator {
 			if ( ! is_array( $table ) ) {
 				return null;
 			}
-			$staging = (string) ( $table['staging_table'] ?? '' );
-			$count = $this->row_count( $staging );
+			$staging  = (string) ( $table['staging_table'] ?? '' );
+			$count    = $this->row_count( $staging );
 			$expected = (int) ( $table['row_count'] ?? -1 );
 			if ( null === $count ) {
 				return null;
@@ -436,13 +436,13 @@ final class ImportDatabaseActivator {
 			}
 		}
 
-		$now = gmdate( DATE_ATOM );
-		$state['status'] = 'rolled-back';
-		$state['database_swapped'] = false;
+		$now                         = gmdate( DATE_ATOM );
+		$state['status']             = 'rolled-back';
+		$state['database_swapped']   = false;
 		$state['rollback_available'] = false;
-		$state['blockers'] = array( 'database-activation-verification-failed', 'database-rollback-staging-row-count-drift' );
-		$state['rolled_back_at'] = $now;
-		$state['updated_at'] = $now;
+		$state['blockers']           = array( 'database-activation-verification-failed', 'database-rollback-staging-row-count-drift' );
+		$state['rolled_back_at']     = $now;
+		$state['updated_at']         = $now;
 
 		return $this->store->save( $job_id, $state ) ? $this->store->get( $job_id ) : null;
 	}
@@ -747,14 +747,14 @@ final class ImportDatabaseActivator {
 			return false;
 		}
 
-		$production = $this->import_state->get( (string) ( $state['job_id'] ?? '' ) );
+		$production    = $this->import_state->get( (string) ( $state['job_id'] ?? '' ) );
 		$is_production = is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' );
-		$options = (string) ( $state['options_target'] ?? '' );
+		$options       = (string) ( $state['options_target'] ?? '' );
 
 		foreach ( $state['tables'] as $table ) {
-			$target = (string) ( $table['target_table'] ?? '' );
+			$target   = (string) ( $table['target_table'] ?? '' );
 			$expected = (int) ( $table['row_count'] ?? -1 );
-			$count = $this->row_count( $target );
+			$count    = $this->row_count( $target );
 			if ( null === $count ) {
 				return false;
 			}
@@ -785,8 +785,8 @@ final class ImportDatabaseActivator {
 			}
 		}
 
-		$blog_public   = $this->option_row( $options, 'blog_public', $columns );
-		$plugins       = $this->option_row( $options, 'active_plugins', $columns );
+		$blog_public = $this->option_row( $options, 'blog_public', $columns );
+		$plugins     = $this->option_row( $options, 'active_plugins', $columns );
 		if ( null === $blog_public || ( ! $is_production && '0' !== $blog_public['option_value'] ) || null === $plugins ) {
 			return false;
 		}
