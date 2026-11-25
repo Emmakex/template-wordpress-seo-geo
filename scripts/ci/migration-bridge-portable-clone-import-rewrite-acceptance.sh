@@ -792,6 +792,13 @@ if ( ! $import_store->save( $job_id, $import_before_production_probe ) || true !
 	throw new RuntimeException( 'Bounded production options growth must preserve verification and baseline IDs.' );
 }
 
+// Restore the exact sandbox candidate count before testing file promotion,
+// which deliberately enforces stricter no-growth sandbox requirements.
+foreach ( $rollback_extra_names as $extra_name ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic CI options-growth probe cleanup.
+	$wpdb->delete( $wpdb->options, array( 'option_name' => $extra_name ), array( '%s' ) );
+}
+
 // Four new options must never cause reverse rename to be mistaken for a
 // failed physical rollback. Keep the candidate blocked for reactivation.
 // 10E.2A.4.6.3: build same-filesystem candidates, promote all active roots,
@@ -862,6 +869,15 @@ $promotion_upload_sentinel_after_hash = is_file( $promotion_upload_sentinel )
 	: false;
 $promotion_bridge_restored = is_file( trailingslashit( WP_PLUGIN_DIR ) . $bridge_plugin );
 $promotion_theme_restored  = is_dir( trailingslashit( get_theme_root() ) . $destination_stylesheet );
+
+// Recreate four runtime options for the rollback-drift regression after
+// completing the strict sandbox promotion/verification assertions.
+foreach ( $rollback_extra_names as $extra_name ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic CI rollback-drift insertion.
+	if ( false === $wpdb->insert( $wpdb->options, array( 'option_name' => $extra_name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
+		throw new RuntimeException( 'Could not reproduce rollback runtime options drift.' );
+	}
+}
 
 $activation_rollback = $activator->rollback( $job_id );
 if (
