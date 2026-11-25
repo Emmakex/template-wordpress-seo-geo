@@ -391,7 +391,7 @@ final class ImportDatabaseActivator {
 		}
 
 		$option_drift = 0;
-		$tables = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
+		$tables       = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
 		if ( array() === $tables ) {
 			return null;
 		}
