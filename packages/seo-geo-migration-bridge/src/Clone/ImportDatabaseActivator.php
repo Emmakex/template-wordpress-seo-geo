@@ -20,7 +20,8 @@ use wpdb;
  * control plane needed to verify or roll back the swap.
  */
 final class ImportDatabaseActivator {
-	private const MAX_CONTROL_PLANE_BYTES = 2097152;
+	private const MAX_CONTROL_PLANE_BYTES  = 2097152;
+	private const MAX_NEW_RUNTIME_OPTIONS = 32;
 
 	/**
 	 * Workspace-backed activation journal.
@@ -304,9 +305,18 @@ final class ImportDatabaseActivator {
 			$tables[ $index ]['row_count'] = $count;
 		}
 
-		$state['tables']          = $tables;
-		$state['control_options'] = $controls;
-		$state['updated_at']      = gmdate( DATE_ATOM );
+		// Freeze the options auto-increment high-water mark after staging
+		// overlays. WordPress can append bounded new options during the swap;
+		// pre-existing option IDs must not disappear.
+		$options_high_water = $this->options_high_water( (string) $state['options_staging'] );
+		if ( null === $options_high_water || 0 === $options_high_water ) {
+			return $this->block( $job_id, $state, 'database-activation-options-baseline-invalid', false );
+		}
+
+		$state['tables']                    = $tables;
+		$state['control_options']           = $controls;
+		$state['options_baseline_max_id']   = $options_high_water;
+		$state['updated_at']                = gmdate( DATE_ATOM );
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
@@ -737,14 +747,28 @@ final class ImportDatabaseActivator {
 			return false;
 		}
 
+		$production = $this->import_state->get( (string) ( $state['job_id'] ?? '' ) );
+		$is_production = is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' );
+		$options = (string) ( $state['options_target'] ?? '' );
+
 		foreach ( $state['tables'] as $table ) {
-			$count = $this->row_count( (string) $table['target_table'] );
-			if ( null === $count || $count !== (int) $table['row_count'] ) {
+			$target = (string) ( $table['target_table'] ?? '' );
+			$expected = (int) ( $table['row_count'] ?? -1 );
+			$count = $this->row_count( $target );
+			if ( null === $count ) {
 				return false;
+			}
+			if ( $count !== $expected ) {
+				if (
+					! $is_production
+					|| $target !== $options
+					|| ! $this->bounded_options_growth( $options, $expected, $count, (int) ( $state['options_baseline_max_id'] ?? 0 ) )
+				) {
+					return false;
+				}
 			}
 		}
 
-		$options = (string) ( $state['options_target'] ?? '' );
 		$columns = $this->table_columns( $options );
 		if ( array() === $columns ) {
 			return false;
@@ -763,8 +787,6 @@ final class ImportDatabaseActivator {
 
 		$blog_public   = $this->option_row( $options, 'blog_public', $columns );
 		$plugins       = $this->option_row( $options, 'active_plugins', $columns );
-		$production    = $this->import_state->get( (string) ( $state['job_id'] ?? '' ) );
-		$is_production = is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' );
 		if ( null === $blog_public || ( ! $is_production && '0' !== $blog_public['option_value'] ) || null === $plugins ) {
 			return false;
 		}
@@ -775,6 +797,51 @@ final class ImportDatabaseActivator {
 			: 'seo-geo-migration-bridge/seo-geo-migration-bridge.php';
 
 		return is_array( $list ) && in_array( $bridge, $list, true );
+	}
+
+	/**
+	 * Freeze the largest existing option ID before the table swap.
+	 *
+	 * @param string $options_table Validated staging options table.
+	 */
+	private function options_high_water( string $options_table ): ?int {
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb || ! $this->valid_table_name( $options_table ) ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only exact staging options high-water mark.
+		$maximum = $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(option_id) FROM %i', $options_table ) );
+		return is_numeric( $maximum ) ? max( 0, (int) $maximum ) : null;
+	}
+
+	/**
+	 * Accept only a small number of new production options with IDs above
+	 * the frozen maximum; all original option IDs must still be present.
+	 * Other tables and sandbox imports always require exact row counts.
+	 *
+	 * @param string $table   Activated options table.
+	 * @param int    $expected Frozen row count.
+	 * @param int    $actual   Current row count.
+	 * @param int    $maximum  Frozen maximum option_id before the swap.
+	 */
+	private function bounded_options_growth( string $table, int $expected, int $actual, int $maximum ): bool {
+		global $wpdb;
+		if (
+			! $wpdb instanceof wpdb
+			|| ! $this->valid_table_name( $table )
+			|| 0 >= $maximum
+			|| $actual <= $expected
+			|| $actual - $expected > self::MAX_NEW_RUNTIME_OPTIONS
+		) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only bounded baseline identity check during database activation.
+		$baseline = $wpdb->get_var(
+			$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE option_id <= %d', $table, $maximum )
+		);
+		return is_numeric( $baseline ) && (int) $baseline === $expected;
 	}
 
 	/**
