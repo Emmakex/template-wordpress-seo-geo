@@ -829,11 +829,60 @@ $promotion_upload_sentinel_after_hash = is_file( $promotion_upload_sentinel )
 $promotion_bridge_restored = is_file( trailingslashit( WP_PLUGIN_DIR ) . $bridge_plugin );
 $promotion_theme_restored  = is_dir( trailingslashit( get_theme_root() ) . $destination_stylesheet );
 
+// Simulate four WordPress options created while the migrated database is
+// active. They must NOT make a physically successful reverse rename look as
+// though imported tables are still live. The candidate remains blocked.
+$rollback_extra_names = array();
+for ( $extra_index = 1; $extra_index <= 4; ++$extra_index ) {
+	$name = '_migration_ci_rollback_extra_' . (string) $extra_index;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic test-only post-activation insertion.
+	if ( false === $wpdb->insert( $wpdb->options, array( 'option_name' => $name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
+		throw new RuntimeException( 'Could not simulate post-activation WordPress options.' );
+	}
+	$rollback_extra_names[] = $name;
+}
+
 $activation_rollback = $activator->rollback( $job_id );
-if ( ! is_array( $activation_rollback ) || 'rolled-back' !== ( $activation_rollback['status'] ?? null ) ) {
-	throw new RuntimeException( 'Database activation rollback failed: ' . wp_json_encode( $activation_rollback ) );
+if (
+	! is_array( $activation_rollback )
+	|| 'rolled-back' !== ( $activation_rollback['status'] ?? null )
+	|| true === ( $activation_rollback['database_swapped'] ?? true )
+	|| ! in_array( 'database-rollback-staging-row-count-drift', $activation_rollback['blockers'] ?? array(), true )
+) {
+	throw new RuntimeException( 'Database rollback must prove physical recovery and preserve staging drift blocker: ' . wp_json_encode( $activation_rollback ) );
 }
 $active_after_activation_rollback = get_option( $active_sentinel_name );
+
+// Reproduce the stale legacy journal observed on Emmake: physical layout
+// already restored but journal still reads blocked/swapped=true. Recovery
+// must touch only the external journal and keep the candidate blocked.
+$legacy_journal = $activation_rollback;
+$legacy_journal['status'] = 'blocked';
+$legacy_journal['database_swapped'] = true;
+$legacy_journal['rollback_available'] = true;
+$legacy_journal['blockers'] = array( 'database-rollback-verification-failed' );
+$activation_store = new ImportDatabaseActivationStateStore();
+if ( ! $activation_store->save( $job_id, $legacy_journal ) ) {
+	throw new RuntimeException( 'Could not stage legacy rollback journal fixture.' );
+}
+$reconciled = $activator->reconcile_verified_rollback( $job_id );
+if (
+	! is_array( $reconciled )
+	|| 'rolled-back' !== ( $reconciled['status'] ?? null )
+	|| true === ( $reconciled['database_swapped'] ?? true )
+	|| true === ( $reconciled['rollback_available'] ?? true )
+	|| ! in_array( 'database-rollback-staging-row-count-drift', $reconciled['blockers'] ?? array(), true )
+	|| null !== $activator->reconcile_verified_rollback( $job_id )
+) {
+	throw new RuntimeException( 'Legacy recovery must be one-shot, guarded and remain non-reactivatable.' );
+}
+
+// Remove synthetic *staging* additions after completing the recovery
+// regression, preserving the original fixture for negative URL tests.
+foreach ( $rollback_extra_names as $extra_name ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic CI fixture-only cleanup.
+	$wpdb->delete( $options_staging, array( 'option_name' => $extra_name ), array( '%s' ) );
+}
 
 // The fixture source options table did not originally contain these activation
 // overlay rows. Remove them after rollback so the later negative rewrite case
