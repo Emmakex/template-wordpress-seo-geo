@@ -767,10 +767,14 @@ if ( 0 >= (int) ( $activation['options_baseline_max_id'] ?? 0 ) ) {
 	throw new RuntimeException( 'Activation did not freeze options high-water mark.' );
 }
 $rollback_extra_names = array();
+// The fixture uses an explicitly keyed options table without AUTO_INCREMENT.
+// Simulate the production auto-increment ID, rather than inserting ID 0.
+$next_option_id = (int) $wpdb->get_var( "SELECT MAX(option_id) FROM {$q_active_options}" );
 for ( $extra_index = 1; $extra_index <= 4; ++$extra_index ) {
 	$name = '_migration_ci_rollback_extra_' . (string) $extra_index;
+	++$next_option_id;
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic test-only post-activation insertion.
-	if ( false === $wpdb->insert( $wpdb->options, array( 'option_name' => $name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
+	if ( false === $wpdb->insert( $wpdb->options, array( 'option_id' => $next_option_id, 'option_name' => $name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
 		throw new RuntimeException( 'Could not simulate post-activation WordPress options.' );
 	}
 	$rollback_extra_names[] = $name;
@@ -872,9 +876,11 @@ $promotion_theme_restored  = is_dir( trailingslashit( get_theme_root() ) . $dest
 
 // Recreate four runtime options for the rollback-drift regression after
 // completing the strict sandbox promotion/verification assertions.
+$next_option_id = (int) $wpdb->get_var( "SELECT MAX(option_id) FROM {$q_active_options}" );
 foreach ( $rollback_extra_names as $extra_name ) {
+	++$next_option_id;
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic CI rollback-drift insertion.
-	if ( false === $wpdb->insert( $wpdb->options, array( 'option_name' => $extra_name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
+	if ( false === $wpdb->insert( $wpdb->options, array( 'option_id' => $next_option_id, 'option_name' => $extra_name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
 		throw new RuntimeException( 'Could not reproduce rollback runtime options drift.' );
 	}
 }
