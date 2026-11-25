@@ -865,7 +865,23 @@ $activation_store = new ImportDatabaseActivationStateStore();
 if ( ! $activation_store->save( $job_id, $legacy_journal ) ) {
 	throw new RuntimeException( 'Could not stage legacy rollback journal fixture.' );
 }
+// The journal repair is intentionally available only for an explicitly
+// authorized production import. Temporarily set that fixture policy without
+// issuing any activation, then restore it immediately after the assertion.
+$import_store = new ImportStateStore();
+$import_before_reconcile = $import_store->get( $job_id );
+if ( ! is_array( $import_before_reconcile ) ) {
+	throw new RuntimeException( 'Fixture import state missing before reconcile.' );
+}
+$import_reconcile = $import_before_reconcile;
+$import_reconcile['destination_policy'] = 'replace-production';
+if ( ! $import_store->save( $job_id, $import_reconcile ) ) {
+	throw new RuntimeException( 'Could not authorize synthetic reconciliation contract.' );
+}
 $reconciled = $activator->reconcile_verified_rollback( $job_id );
+if ( ! $import_store->save( $job_id, $import_before_reconcile ) ) {
+	throw new RuntimeException( 'Could not restore fixture policy after reconciliation.' );
+}
 if (
 	! is_array( $reconciled )
 	|| 'rolled-back' !== ( $reconciled['status'] ?? null )
