@@ -139,6 +139,7 @@ final class ImportDatabaseActivationStateStore {
 			'control_options'        => $controls,
 			'options_target'         => $this->table_name( $state['options_target'] ?? '' ),
 			'options_staging'        => $this->table_name( $state['options_staging'] ?? '' ),
+			'options_baseline_max_id' => max( 0, (int) ( $state['options_baseline_max_id'] ?? 0 ) ),
 			'database_swapped'       => true === ( $state['database_swapped'] ?? false ),
 			'rollback_available'     => true === ( $state['rollback_available'] ?? false ),
 			'active_files_untouched' => true === ( $state['active_files_untouched'] ?? true ),
