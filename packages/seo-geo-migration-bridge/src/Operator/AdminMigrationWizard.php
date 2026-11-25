@@ -14,9 +14,12 @@ use SeoGeo\MigrationBridge\Clone\AdminCloneDeliveryController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneDatabaseExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneFileExportController;
 use SeoGeo\MigrationBridge\Clone\AdminCloneInventoryController;
+use SeoGeo\MigrationBridge\Clone\AdminCloneImportController;
 use SeoGeo\MigrationBridge\Clone\CloneInventoryStore;
 use SeoGeo\MigrationBridge\Clone\CloneJobStore;
 use SeoGeo\MigrationBridge\Clone\ImportFilePromotionStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportPayloadStateStore;
+use SeoGeo\MigrationBridge\Clone\ImportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneHandoffReportStateStore;
 use SeoGeo\MigrationBridge\Clone\LocalCloneFilePromotionStateStore;
 use SeoGeo\MigrationBridge\Clone\PackageStateStore;
@@ -104,6 +107,15 @@ final class AdminMigrationWizard {
 		}
 		$baseline_ready = true === ( $operator_status['baseline']['available'] ?? false );
 		$checkpoint     = '' !== $job_id ? MigrationWizardNavigator::next( $job ) : null;
+		$import_state   = 'import' === $operation && '' !== $job_id ? ( new ImportStateStore() )->get( $job_id ) : null;
+		$auto_import    = is_array( $import_state )
+			&& 'replace-production' === ( $import_state['destination_policy'] ?? '' )
+			&& 0 < (int) ( $import_state['archive_bytes'] ?? 0 )
+			&& in_array( (string) ( $import_state['status'] ?? '' ), array( 'preflight-ready', 'payload-verified' ), true );
+		$payload_state  = 'import' === $operation && '' !== $job_id ? ( new ImportPayloadStateStore() )->get( $job_id ) : null;
+		$show_upload    = 'import' === $operation && '' !== $job_id && ! is_array( $payload_state )
+			&& ! in_array( (string) ( $job['status'] ?? '' ), array( 'failed-terminal', 'cancelled' ), true );
+		$has_archive    = is_array( $import_state ) && 0 < (int) ( $import_state['archive_bytes'] ?? 0 );
 		$anchor         = '' === $job_id && ! $baseline_ready
 			? '#seo-geo-baseline-capture-form'
 			: ( is_array( $checkpoint ) ? '#' . $checkpoint['anchor'] : '#seo-geo-clone-workflow' );
@@ -130,9 +142,8 @@ final class AdminMigrationWizard {
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
 					<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneController::ACTION ); ?>">
 					<?php wp_nonce_field( AdminCloneController::NONCE_ACTION ); ?>
-					<button class="button" type="submit" name="clone_operation" value="export"><?php echo esc_html( $copy->text( 'clone_export_button' ) ); ?></button>
-					<button class="button" type="submit" name="clone_operation" value="local-clone"><?php echo esc_html( $copy->text( 'clone_local_button' ) ); ?></button>
-					<button class="button" type="submit" name="clone_operation" value="import"><?php echo esc_html( $copy->text( 'clone_import_button' ) ); ?></button>
+					<button class="button button-primary button-hero" type="submit" name="clone_operation" value="export"><?php echo esc_html( $copy->text( 'wizard_primary_export' ) ); ?></button>
+					<button class="button button-primary button-hero" type="submit" name="clone_operation" value="import"><?php echo esc_html( $copy->text( 'wizard_primary_import' ) ); ?></button>
 			</form>
 			<?php if ( 0 < count( $jobs ) ) : ?>
 				<form method="get" action="<?php echo esc_url( admin_url( 'tools.php' ) ); ?>" style="margin:16px 0;">
@@ -161,8 +172,10 @@ final class AdminMigrationWizard {
 				<p><strong><?php echo esc_html( $copy->text( 'wizard_current_job' ) ); ?></strong>
 					<?php echo esc_html( $copy->text( 'wizard_job_' . str_replace( '-', '_', $operation ) ) ); ?>
 					· <?php echo esc_html( $copy->text( 'wizard_state_' . str_replace( '-', '_', (string) ( $job['status'] ?? '' ) ) ) ); ?>
-					· <strong><?php echo esc_html( $copy->text( 'wizard_batch' ) ); ?></strong>
-					<?php echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total ); ?>
+					<?php if ( 'local-clone' === $operation ) : ?>
+						· <strong><?php echo esc_html( $copy->text( 'wizard_batch' ) ); ?></strong>
+						<?php echo esc_html( null === $total ? (string) $done : $done . ' / ' . (string) (int) $total ); ?>
+					<?php endif; ?>
 				</p>
 				<?php if ( in_array( $job['status'] ?? '', array( 'failed-retryable', 'failed-terminal', 'paused' ), true ) ) : ?>
 					<p class="notice notice-warning inline"><?php echo esc_html( $copy->text( 'wizard_attention' ) ); ?></p>
@@ -170,6 +183,26 @@ final class AdminMigrationWizard {
 			<?php else : ?>
 				<p><?php echo esc_html( $copy->text( 'wizard_empty' ) ); ?></p>
 			<?php endif; ?>
+			<?php if ( $show_upload ) : ?>
+				<section aria-labelledby="seo-geo-simple-import-heading" style="border:1px solid #c3c4c7;border-radius:4px;padding:16px;margin:16px 0;">
+					<h3 id="seo-geo-simple-import-heading"><?php echo esc_html( $copy->text( 'wizard_primary_import' ) ); ?></h3>
+					<p class="notice notice-warning inline" role="alert"><strong><?php echo esc_html( $copy->text( 'clone_import_external_backup_warning' ) ); ?></strong></p>
+					<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="<?php echo esc_attr( AdminCloneImportController::ACTION ); ?>">
+						<input type="hidden" name="clone_job_id" value="<?php echo esc_attr( $job_id ); ?>">
+						<?php wp_nonce_field( AdminCloneImportController::NONCE_ACTION . ':' . $job_id ); ?>
+						<p><label for="seo-geo-simple-import-package"><strong><?php echo esc_html( $copy->text( 'clone_import_upload_label' ) ); ?></strong></label></p>
+						<input type="file" id="seo-geo-simple-import-package" name="clone_package" accept=".zip,application/zip" <?php echo $has_archive ? '' : 'required'; ?>>
+						<?php if ( ! $has_archive ) : ?>
+							<input type="hidden" name="import_destination_policy" value="replace-production">
+						<?php endif; ?>
+						<p class="description"><?php echo esc_html( $copy->text( 'clone_import_production_not_activated' ) ); ?></p>
+						<?php submit_button( $copy->text( $has_archive ? 'clone_import_revalidate' : 'clone_import_validate' ), 'primary', 'submit', false ); ?>
+					</form>
+				</section>
+			<?php endif; ?>
+			<details style="margin:12px 0;">
+				<summary style="cursor:pointer;font-weight:600;"><?php echo esc_html( $copy->text( 'wizard_technical_details' ) ); ?></summary>
 			<ol style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding-left:0;list-style:none;">
 				<?php foreach ( $steps as $step ) : ?>
 					<li style="padding:14px;border:1px solid #c3c4c7;border-radius:4px;">
@@ -204,7 +237,10 @@ final class AdminMigrationWizard {
 					</p>
 				</div>
 			<?php endif; ?>
-			<?php if ( 'export' === $operation ) : ?>
+			</details>
+			<?php if ( $auto_import ) : ?>
+				<?php AdminOperatorScreen::render_auto_import_panel( $job_id ); ?>
+			<?php elseif ( 'export' === $operation ) : ?>
 				<?php $auto = AdminAutoExportController::snapshot( $job ); ?>
 				<div
 					data-seo-geo-auto-export
@@ -256,8 +292,9 @@ final class AdminMigrationWizard {
 				</form>
 			<?php endif; ?>
 			<p>
-				<a class="button" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( $button_text ); ?></a>
-				<a class="button" href="<?php echo esc_url( admin_url( 'tools.php?page=seo-geo-reset-rebuild' ) ); ?>"><?php echo esc_html( $copy->text( 'wizard_rescue' ) ); ?></a>
+				<?php if ( ! $auto_import ) : ?>
+					<a class="button" href="<?php echo esc_url( $advanced_url ); ?>"><?php echo esc_html( $button_text ); ?></a>
+				<?php endif; ?>
 			</p>
 			<p class="description"><?php echo esc_html( $copy->text( 'wizard_cutover_notice' ) ); ?></p>
 		</section>

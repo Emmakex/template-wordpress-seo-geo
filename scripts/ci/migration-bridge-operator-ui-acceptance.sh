@@ -362,6 +362,12 @@ assert 'data-auto-progress' in export_ui
 assert 'data-auto-pause disabled' in export_ui
 assert "Start / resume automatic export" in export_ui
 assert 'data-seo-geo-auto-export' not in import_ui
+assert 'id="seo-geo-simple-import-heading"' in import_ui
+assert 'name="clone_package"' in import_ui
+assert 'name="import_destination_policy" value="replace-production"' in import_ui
+assert 'value="seo_geo_migration_clone_import_preflight"' in import_ui
+assert 'enctype="multipart/form-data"' in import_ui
+assert 'name="clone_package"' not in export_ui
 assert 'data-seo-geo-auto-export' in paused_ui
 assert 'data-auto-run ' in paused_ui and "disabled=" in paused_ui
 assert 'name="action" value="seo_geo_migration_clone_inventory"' not in export_ui
@@ -434,6 +440,7 @@ for required in (
     assert required in es
 
 assert 'name="clone_operation" value="export"' in en
+assert en.count('class="button button-primary button-hero"') >= 2
 assert 'name="clone_operation" value="local-clone"' in en
 assert 'name="clone_operation" value="import"' in en
 assert 'name="clone_operation" value="export"' in es
@@ -447,11 +454,17 @@ assert 'clone-wizard-fixture-000001' in export_ui
 assert 'value="clone-wizard-fixture-000001"' in export_ui
 assert "Export" in export_ui
 assert 'id="seo-geo-simple-heading"' in en
-assert "WordPress migration: simple view" in en
+assert "WordPress migration: Export / Import" in en
+assert "Export full website to ZIP" in en
+assert "Import website from ZIP" in en
+assert "Technical stages and checkpoints" in en
 assert 'id="seo-geo-advanced-controls"' in en
 assert 'Advanced migration controls and technical details' in en
 assert 'id="seo-geo-simple-heading"' in es
-assert "Migración WordPress: vista sencilla" in es
+assert "Migración WordPress: Exportar / Importar" in es
+assert "Exportar web completa a ZIP" in es
+assert "Importar web desde ZIP" in es
+assert "Etapas y comprobaciones técnicas" in es
 assert 'id="seo-geo-advanced-controls"' in es
 assert "Controles avanzados y detalles técnicos de migración" in es
 

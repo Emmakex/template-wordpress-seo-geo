@@ -277,6 +277,16 @@ final class ImportFilePromoter {
 			return $this->block( $job_id, $state, 'file-promotion-runtime-assets-not-ready' );
 		}
 
+		$import = $this->import_state->get( $job_id );
+		if (
+			'candidate-ready' === $state['status']
+			&& is_array( $import )
+			&& 'replace-production' === ( $import['destination_policy'] ?? '' )
+			&& ! $this->preserve_current_bridge( $state )
+		) {
+			return $this->block( $job_id, $state, 'file-promotion-bridge-preservation-failed' );
+		}
+
 		$state['status'] = 'promoting';
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
@@ -365,6 +375,8 @@ final class ImportFilePromoter {
 		$processed_files = 0;
 		$processed_bytes = 0;
 		$operations      = 0;
+		$import          = $this->import_state->get( $job_id );
+		$production      = is_array( $import ) && 'replace-production' === ( $import['destination_policy'] ?? '' );
 
 		while ( $processed_files < $batch_files && $operations < self::MAX_ENTRY_OPERATIONS ) {
 			$root_index = (int) $state['root_index'];
@@ -394,9 +406,11 @@ final class ImportFilePromoter {
 				$state['pending_dirs'] = $pending;
 			}
 
-			$current_dir = (string) $state['current_dir'];
-			$active_dir  = $this->join_path( (string) $root['active_path'], $current_dir );
-			$entries     = scandir( $active_dir, SCANDIR_SORT_ASCENDING );
+			$current_dir   = (string) $state['current_dir'];
+			$plugins_stage = $production && 'plugins' === ( $root['id'] ?? '' );
+			$active_dir    = $this->join_path( (string) $root['active_path'], $current_dir );
+			$inspect_dir   = $plugins_stage ? $this->join_path( (string) $root['staging_path'], $current_dir ) : $active_dir;
+			$entries       = scandir( $inspect_dir, SCANDIR_SORT_ASCENDING );
 			if ( false === $entries ) {
 				return $this->rollback_internal( $job_id, $state, 'file-promotion-active-read-failed' );
 			}
@@ -408,14 +422,15 @@ final class ImportFilePromoter {
 					continue;
 				}
 				++$operations;
-				$relative = '' === $current_dir ? $entry : $current_dir . '/' . $entry;
-				$active   = $this->join_path( (string) $root['active_path'], $relative );
-				$staging  = $this->join_path( (string) $root['staging_path'], $relative );
+				$relative  = '' === $current_dir ? $entry : $current_dir . '/' . $entry;
+				$active    = $this->join_path( (string) $root['active_path'], $relative );
+				$staging   = $this->join_path( (string) $root['staging_path'], $relative );
+				$protected = $plugins_stage && ( 'seo-geo-migration-bridge' === $relative || str_starts_with( $relative, 'seo-geo-migration-bridge/' ) );
 
 				if ( is_link( $active ) || is_link( $staging ) ) {
 					return $this->rollback_internal( $job_id, $state, 'file-promotion-active-symlink' );
 				}
-				if ( is_dir( $active ) ) {
+				if ( $protected ? is_dir( $staging ) : is_dir( $active ) ) {
 					if ( ! is_dir( $staging ) ) {
 						return $this->rollback_internal( $job_id, $state, 'file-promotion-active-extra-directory' );
 					}
@@ -432,11 +447,11 @@ final class ImportFilePromoter {
 					}
 					continue;
 				}
-				if ( ! is_file( $active ) || ! is_file( $staging ) ) {
+				if ( ( ! $protected && ! is_file( $active ) ) || ! is_file( $staging ) ) {
 					return $this->rollback_internal( $job_id, $state, 'file-promotion-active-file-missing' );
 				}
 
-				$active_info  = $this->file_info( $active );
+				$active_info  = $this->file_info( $protected ? $staging : $active );
 				$staging_info = $this->file_info( $staging );
 				if (
 					null === $active_info
@@ -550,12 +565,17 @@ final class ImportFilePromoter {
 			$expected_bytes += (int) $root['byte_count'];
 		}
 
+		$import        = $this->import_state->get( $job_id );
+		$bridge_intact = ! is_array( $import )
+			|| 'replace-production' !== ( $import['destination_policy'] ?? '' )
+			|| $this->production_bridge_intact( $state );
 		if (
 			(int) $state['verify_file_count'] !== $expected_files
 			|| (int) $state['verify_byte_count'] !== $expected_bytes
 			|| ! $this->same_hash( $state['active_fingerprint'] ?? '', $state['file_fingerprint'] ?? '' )
 			|| ! $this->runtime_ready( $job_id, $state )
 			|| ! $this->runtime_matches( $job_id, $state['runtime_target'] ?? array() )
+			|| ! $bridge_intact
 		) {
 			return $this->rollback_internal( $job_id, $state, 'file-promotion-final-integrity-failed' );
 		}
@@ -687,6 +707,11 @@ final class ImportFilePromoter {
 			return false;
 		}
 
+		$production = $this->import_state->get( $job_id );
+		if ( is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' ) ) {
+			return ImportProductionGate::ready( $job_id, $production ) && $this->options_runtime_schema_ready();
+		}
+
 		$import = $this->private_same_server_import( $job_id );
 		if ( is_array( $import ) ) {
 			$options = $this->private_same_server_options_table( $import );
@@ -805,6 +830,70 @@ final class ImportFilePromoter {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Keep the installed Migration Bridge code across replacement of the plugin root.
+	 *
+	 * Only candidate files are edited. Source ZIP hashes have already been verified.
+	 *
+	 * @param array<string,mixed> $state Candidate-ready promotion state.
+	 */
+	private function preserve_current_bridge( array $state ): bool {
+		foreach ( is_array( $state['roots'] ?? null ) ? $state['roots'] : array() as $root ) {
+			if ( ! is_array( $root ) || 'plugins' !== ( $root['id'] ?? '' ) ) {
+				continue;
+			}
+
+			$source = trailingslashit( wp_normalize_path( WP_PLUGIN_DIR ) ) . 'seo-geo-migration-bridge';
+			$target = trailingslashit( wp_normalize_path( (string) ( $root['candidate_path'] ?? '' ) ) ) . 'seo-geo-migration-bridge';
+
+			return $this->workspace->replace_promotion_candidate_bridge( $source, $target );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Verify Bridge contents against the original destination plugin left by rename.
+	 *
+	 * @param array<string,mixed> $state Promoted roots.
+	 */
+	private function production_bridge_intact( array $state ): bool {
+		foreach ( is_array( $state['roots'] ?? null ) ? $state['roots'] : array() as $root ) {
+			if ( ! is_array( $root ) || 'plugins' !== ( $root['id'] ?? '' ) ) {
+				continue;
+			}
+
+			$old = $this->join_path( (string) $root['rollback_path'], 'seo-geo-migration-bridge' );
+			$new = $this->join_path( (string) $root['active_path'], 'seo-geo-migration-bridge' );
+			if ( ! is_dir( $old ) || ! is_dir( $new ) || is_link( $old ) || is_link( $new ) ) {
+				return false;
+			}
+
+			$iterator = new \RecursiveIteratorIterator(
+				new \RecursiveDirectoryIterator( $old, \FilesystemIterator::SKIP_DOTS ),
+				\RecursiveIteratorIterator::SELF_FIRST
+			);
+			foreach ( $iterator as $file ) {
+				if ( $file->isLink() ) {
+					return false;
+				}
+				$relative = substr( $file->getPathname(), strlen( untrailingslashit( $old ) ) + 1 );
+				$dest     = $this->join_path( $new, $relative );
+				if ( $file->isDir() ) {
+					if ( ! is_dir( $dest ) ) {
+						return false;
+					}
+				} elseif ( ! is_file( $dest ) || hash_file( 'sha256', $file->getPathname() ) !== hash_file( 'sha256', $dest ) ) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

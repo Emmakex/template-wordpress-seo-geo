@@ -19,7 +19,9 @@ final class ImportDatabaseRestorer {
 	public const MAX_BATCH_ROWS     = 500;
 	public const DEFAULT_BATCH_ROWS = 100;
 
-	private const MAX_TABLES = 1000;
+	private const MAX_TABLES          = 1000;
+	private const MAX_SQL_BATCH_ROWS  = 100;
+	private const MAX_SQL_BATCH_BYTES = 524288;
 
 	/**
 	 * Database restore state.
@@ -268,6 +270,109 @@ final class ImportDatabaseRestorer {
 	}
 
 	/**
+	 * Recover only a verified Wordfence MEMORY-schema terminal rejection.
+	 *
+	 * No source payload, completed staging table or production table is changed.
+	 * Requires a fresh preflight and a missing current staging table before
+	 * clearing the one precisely matched terminal blocker.
+	 *
+	 * @param string $job_id Existing blocked import job ID.
+	 * @return array<string,mixed>|null Resumed state, or null if unsafe.
+	 */
+	public function resume_wordfence_memory_schema( string $job_id ): ?array {
+		$job   = $this->jobs->get( $job_id );
+		$state = $this->store->get( $job_id );
+		if (
+			! is_array( $job )
+			|| ! is_array( $state )
+			|| 'import' !== ( $job['operation'] ?? '' )
+			|| 'failed-terminal' !== ( $job['status'] ?? '' )
+			|| 'import-database-schema-unsupported' !== ( $job['error_code'] ?? '' )
+			|| 'blocked' !== ( $state['status'] ?? '' )
+			|| 'schema' !== ( $state['stage'] ?? '' )
+			|| array( 'import-database-schema-unsupported' ) !== ( $state['blockers'] ?? null )
+			|| true !== ( $state['active_tables_untouched'] ?? false )
+			|| (int) ( $state['table_index'] ?? -1 ) !== (int) ( $state['tables_completed'] ?? -2 )
+			|| 0 !== (int) ( $state['chunk_index'] ?? -1 )
+			|| 0 !== (int) ( $state['chunk_row_offset'] ?? -1 )
+			|| 0 !== (int) ( $state['table_rows_restored'] ?? -1 )
+		) {
+			return null;
+		}
+
+		$bundle = $this->database_manifest( $job_id );
+		if (
+			null === $bundle
+			|| ! $this->same_hash( $bundle['sha256'], $state['database_manifest_sha256'] ?? '' )
+		) {
+			return null;
+		}
+
+		$tables = is_array( $bundle['manifest']['tables'] ?? null ) ? array_values( $bundle['manifest']['tables'] ) : array();
+		$index  = (int) $state['table_index'];
+		$meta   = $tables[ $index ] ?? null;
+		$prefix = (string) ( $state['source_prefix'] ?? '' );
+		$table  = $prefix . 'wfls_role_counts';
+		if (
+			'' === $prefix
+			|| ! is_array( $meta )
+			|| ! $this->table_manifest_valid( $meta, $prefix )
+			|| ( $meta['name'] ?? '' ) !== $table
+			|| ( $state['current_source_table'] ?? '' ) !== $table
+			|| $this->target_table( $table, $prefix, (string) $state['destination_prefix'] ) !== ( $state['current_target_table'] ?? '' )
+		) {
+			return null;
+		}
+
+		$staging = $this->staging_table( (string) $state['staging_namespace'], $table );
+		if (
+			'' === $staging
+			|| ( $state['current_staging_table'] ?? '' ) !== $staging
+			|| $this->table_exists( $staging )
+		) {
+			return null;
+		}
+
+		$schema = is_array( $meta['schema'] ?? null ) ? $meta['schema'] : array();
+		$path   = is_string( $schema['path'] ?? null ) ? $schema['path'] : '';
+		$info   = $this->workspace->import_extracted_file_info( $job_id, $path );
+		$sql    = $this->workspace->read_import_extracted_file( $job_id, $path );
+		if (
+			'' === $path
+			|| ! is_array( $info )
+			|| ! is_string( $sql )
+			|| (int) ( $schema['bytes'] ?? -1 ) !== (int) $info['bytes']
+			|| ! $this->same_hash( $schema['sha256'] ?? '', $info['sha256'] )
+			|| 1 !== preg_match( '/\\bENGINE\\s*=\\s*MEMORY\\b/i', $sql )
+			|| null === $this->staging_create_sql( $sql, $staging, $table, $prefix )
+			|| null === $this->runtime_guard( $job_id, $state )
+		) {
+			return null;
+		}
+
+		$next               = $state;
+		$next['status']     = 'running';
+		$next['blockers']   = array();
+		$next['updated_at'] = gmdate( DATE_ATOM );
+		if ( ! $this->store->save( $job_id, $next ) ) {
+			return null;
+		}
+
+		$transition = $this->jobs->transition( $job_id, 'active' );
+		$confirmed  = $this->jobs->get( $job_id );
+		if (
+			! is_array( $transition )
+			|| ! is_array( $confirmed )
+			|| 'active' !== ( $confirmed['status'] ?? '' )
+		) {
+			$this->store->save( $job_id, $state );
+			return null;
+		}
+
+		return $this->store->get( $job_id );
+	}
+
+	/**
 	 * Advance one bounded database staging-restore batch.
 	 *
 	 * @param string $job_id    Clone job identifier.
@@ -374,7 +479,7 @@ final class ImportDatabaseRestorer {
 			return $this->block( $job_id, $state, 'import-database-schema-integrity-failed', false );
 		}
 
-		$create_sql = $this->staging_create_sql( $sql, $staging_table );
+		$create_sql = $this->staging_create_sql( $sql, $staging_table, $source_table, (string) $state['source_prefix'] );
 		if ( null === $create_sql ) {
 			return $this->block( $job_id, $state, 'import-database-schema-unsupported', false );
 		}
@@ -477,15 +582,13 @@ final class ImportDatabaseRestorer {
 			return $this->block( $job_id, $state, 'import-database-transaction-start-failed', true );
 		}
 
-		foreach ( $decoded as $row ) {
-			$formats = array_fill( 0, count( $row ), '%s' );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Writes only to deterministic job-owned staging table; target tables remain untouched.
-			if ( false === $wpdb->insert( $staging_table, $row, $formats ) ) {
-				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-				wp_cache_delete( ImportDatabaseStateStore::OPTION_NAME, 'options' );
+		// Submit bounded multi-row INSERTs instead of one SQL round trip per row.
+		// All writes remain inside the existing staging-only transaction.
+		if ( ! $this->insert_rows_grouped( $wpdb, $staging_table, $columns, $decoded ) ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			wp_cache_delete( ImportDatabaseStateStore::OPTION_NAME, 'options' );
 
-				return $this->block( $job_id, $state, 'import-database-row-insert-failed', true );
-			}
+			return $this->block( $job_id, $state, 'import-database-row-insert-failed', true );
 		}
 
 		$inserted                    = count( $decoded );
@@ -527,6 +630,105 @@ final class ImportDatabaseRestorer {
 		);
 
 		return $this->store->get( $job_id );
+	}
+
+	/**
+	 * Restore decoded source rows with bounded prepared, multi-value INSERTs.
+	 *
+	 * Keep the existing transaction and resume checkpoint as the only commit
+	 * authority. This method never writes to an active production table.
+	 *
+	 * @param wpdb   $wpdb          WordPress database connection.
+	 * @param string $staging_table Verified job-owned table name.
+	 * @param array  $columns       Source column names in package order.
+	 * @param array  $rows          Binary-safe decoded rows.
+	 * @phpstan-param list<string> $columns
+	 * @phpstan-param list<array<string,mixed>> $rows
+	 */
+	private function insert_rows_grouped( wpdb $wpdb, string $staging_table, array $columns, array $rows ): bool {
+		if ( ! $this->valid_staging_table( $staging_table ) || array() === $columns || array() === $rows ) {
+			return false;
+		}
+
+		$quoted_columns = array();
+		foreach ( $columns as $column ) {
+			if ( '' === $column || 64 < strlen( $column ) || 1 === preg_match( '/[\\x00-\\x1F\\x7F]/', $column ) ) {
+				return false;
+			}
+			$quoted_columns[] = $this->quote_identifier( $column );
+		}
+
+		$prefix = 'INSERT INTO ' . $this->quote_identifier( $staging_table )
+			. ' (' . implode( ', ', $quoted_columns ) . ') VALUES ';
+		$groups = array();
+		$params = array();
+		$bytes  = 0;
+
+		foreach ( $rows as $row ) {
+			$values     = array();
+			$row_params = array();
+			$row_bytes  = 0;
+			foreach ( $columns as $column ) {
+				if ( ! array_key_exists( $column, $row ) ) {
+					return false;
+				}
+				$value = $row[ $column ];
+				if ( null === $value ) {
+					$values[] = 'NULL';
+				} elseif ( is_string( $value ) ) {
+					$values[]     = '%s';
+					$row_params[] = $value;
+					$row_bytes   += strlen( $value );
+				} else {
+					return false;
+				}
+			}
+
+			// Limit SQL statement size and placeholder count on shared hosting.
+			// One oversized source row is still handled by its own prepared INSERT.
+			if (
+				array() !== $groups
+				&& ( self::MAX_SQL_BATCH_ROWS <= count( $groups ) || self::MAX_SQL_BATCH_BYTES < $bytes + $row_bytes )
+			) {
+				if ( ! $this->flush_grouped_insert( $wpdb, $prefix, $groups, $params ) ) {
+					return false;
+				}
+				$groups = array();
+				$params = array();
+				$bytes  = 0;
+			}
+
+			$groups[] = '(' . implode( ', ', $values ) . ')';
+			foreach ( $row_params as $value ) {
+				$params[] = $value;
+			}
+			$bytes += $row_bytes;
+		}
+
+		return $this->flush_grouped_insert( $wpdb, $prefix, $groups, $params );
+	}
+
+	/**
+	 * Execute one parameterized INSERT while the caller's transaction is active.
+	 *
+	 * @param wpdb   $wpdb   WordPress database connection.
+	 * @param string $prefix Verified staging table and quoted column identifiers.
+	 * @param array  $groups SQL value-placeholder groups.
+	 * @param array  $params Raw non-null source values.
+	 * @phpstan-param list<string> $groups
+	 * @phpstan-param list<string> $params
+	 */
+	private function flush_grouped_insert( wpdb $wpdb, string $prefix, array $groups, array $params ): bool {
+		$sql = $prefix . implode( ', ', $groups );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Every value placeholder receives a prepared argument; SQL identifier fragments are quoted and restricted to isolated staging tables.
+		$prepared = array() === $params ? $sql : $wpdb->prepare( $sql, $params );
+		if ( ! is_string( $prepared ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Parameterized INSERT into validated job-owned staging table only, inside a bounded InnoDB transaction.
+		$inserted = $wpdb->query( $prepared );
+		return false !== $inserted && count( $groups ) === $inserted;
 	}
 
 	/**
@@ -894,17 +1096,43 @@ final class ImportDatabaseRestorer {
 	/**
 	 * Build a safe CREATE TABLE statement for the job-owned staging table.
 	 *
-	 * @param string $source_sql   Extracted SHOW CREATE TABLE statement.
+	 * @param string $source_sql    Extracted SHOW CREATE TABLE statement.
 	 * @param string $staging_table Job-owned staging table.
+	 * @param string $source_table  Exact table from the verified package manifest.
+	 * @param string $source_prefix Verified source WordPress prefix.
 	 */
-	private function staging_create_sql( string $source_sql, string $staging_table ): ?string {
+	private function staging_create_sql(
+		string $source_sql,
+		string $staging_table,
+		string $source_table,
+		string $source_prefix
+	): ?string {
 		$sql = trim( $source_sql );
 		if (
 			! $this->valid_staging_table( $staging_table )
 			|| 1 !== preg_match( '/^CREATE\s+TABLE\s+/i', $sql )
 			|| 1 === preg_match( '/\b(?:FOREIGN\s+KEY|REFERENCES)\b/i', $sql )
-			|| 1 !== preg_match( '/\bENGINE\s*=\s*InnoDB\b/i', $sql )
 		) {
+			return null;
+		}
+
+		// Wordfence's transient role-count cache uses MEMORY. Its documented
+		// InnoDB fallback is safe for transactional staging and keeps all rows.
+		// Never enable generic nontransactional schemas or HASH-only indexes.
+		if (
+			$source_table === $source_prefix . 'wfls_role_counts'
+			&& '' !== $source_prefix
+			&& 1 === preg_match( '/\bENGINE\s*=\s*MEMORY\b/i', $sql )
+			&& 0 === preg_match( '/\bUSING\s+HASH\b/i', $sql )
+		) {
+			$normalized = preg_replace( '/\bENGINE\s*=\s*MEMORY\b/i', 'ENGINE=InnoDB', $sql, 1 );
+			if ( ! is_string( $normalized ) ) {
+				return null;
+			}
+			$sql = $normalized;
+		}
+
+		if ( 1 !== preg_match( '/\bENGINE\s*=\s*InnoDB\b/i', $sql ) ) {
 			return null;
 		}
 

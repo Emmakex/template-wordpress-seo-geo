@@ -400,6 +400,8 @@ source scripts/ci/migration-bridge-parity-acceptance.sh
 source scripts/ci/migration-bridge-cutover-acceptance.sh
 source scripts/ci/migration-bridge-report-acceptance.sh
 source scripts/ci/migration-bridge-operator-ui-acceptance.sh
+source scripts/ci/migration-bridge-production-destination-acceptance.sh
+source scripts/ci/migration-bridge-production-policy-acceptance.sh
 source scripts/ci/migration-bridge-clone-reset-acceptance.sh
 source scripts/ci/migration-bridge-corporate-bootstrap-acceptance.sh
 source scripts/ci/migration-bridge-clean-home-acceptance.sh

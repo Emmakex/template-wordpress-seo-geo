@@ -21,6 +21,7 @@ use wpdb;
  */
 final class ImportDatabaseActivator {
 	private const MAX_CONTROL_PLANE_BYTES = 2097152;
+	private const MAX_NEW_RUNTIME_OPTIONS = 32;
 
 	/**
 	 * Workspace-backed activation journal.
@@ -283,6 +284,15 @@ final class ImportDatabaseActivator {
 			return $this->block( $job_id, $state, 'database-activation-options-overlay-failed', false );
 		}
 
+		$production = $this->import_state->get( $job_id );
+		if (
+			is_array( $production )
+			&& 'replace-production' === ( $production['destination_policy'] ?? '' )
+			&& ! ( new ImportProductionAdminKeeper() )->apply( $job_id, (array) $state['tables'] )
+		) {
+			return $this->block( $job_id, $state, 'database-activation-admin-session-restore-failed', false );
+		}
+
 		$tables = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
 		foreach ( $tables as $index => $table ) {
 			if ( ! is_array( $table ) ) {
@@ -295,9 +305,18 @@ final class ImportDatabaseActivator {
 			$tables[ $index ]['row_count'] = $count;
 		}
 
-		$state['tables']          = $tables;
-		$state['control_options'] = $controls;
-		$state['updated_at']      = gmdate( DATE_ATOM );
+		// Freeze the options auto-increment high-water mark after staging
+		// overlays. WordPress can append bounded new options during the swap;
+		// pre-existing option IDs must not disappear.
+		$options_high_water = $this->options_high_water( (string) $state['options_staging'] );
+		if ( null === $options_high_water || 0 === $options_high_water ) {
+			return $this->block( $job_id, $state, 'database-activation-options-baseline-invalid', false );
+		}
+
+		$state['tables']                  = $tables;
+		$state['control_options']         = $controls;
+		$state['options_baseline_max_id'] = $options_high_water;
+		$state['updated_at']              = gmdate( DATE_ATOM );
 		if ( ! $this->store->save( $job_id, $state ) ) {
 			return null;
 		}
@@ -341,6 +360,94 @@ final class ImportDatabaseActivator {
 	}
 
 	/**
+	 * Reconcile one previously blocked journal after a reverse table swap.
+	 *
+	 * This operation changes only the private recovery journal. It requires
+	 * the *entire* original table layout to have returned, all controls to
+	 * match, and the only staging drift to be bounded extra options rows.
+	 * It deliberately keeps a blocker: a drifted candidate is NOT reusable.
+	 *
+	 * @param string $job_id Blocked production import job.
+	 * @return array<string,mixed>|null Journal after reconciliation or null.
+	 */
+	public function reconcile_verified_rollback( string $job_id ): ?array {
+		$state  = $this->store->get( $job_id );
+		$import = $this->import_state->get( $job_id );
+		if (
+			! is_array( $state )
+			|| ! is_array( $import )
+			|| 'replace-production' !== ( $import['destination_policy'] ?? '' )
+			|| 'blocked' !== ( $state['status'] ?? '' )
+			|| true !== ( $state['database_swapped'] ?? false )
+			|| array( 'database-rollback-verification-failed' ) !== ( $state['blockers'] ?? null )
+			|| 'prepared' !== $this->layout( $state )
+		) {
+			return null;
+		}
+
+		$expected_options = (string) ( $state['options_staging'] ?? '' );
+		if ( '' === $expected_options ) {
+			return null;
+		}
+
+		$option_drift = 0;
+		$tables       = is_array( $state['tables'] ?? null ) ? $state['tables'] : array();
+		if ( array() === $tables ) {
+			return null;
+		}
+
+		foreach ( $tables as $table ) {
+			if ( ! is_array( $table ) ) {
+				return null;
+			}
+			$staging  = (string) ( $table['staging_table'] ?? '' );
+			$count    = $this->row_count( $staging );
+			$expected = (int) ( $table['row_count'] ?? -1 );
+			if ( null === $count ) {
+				return null;
+			}
+			if ( $count !== $expected ) {
+				if ( $staging !== $expected_options || $count <= $expected || $count - $expected > 16 || 0 !== $option_drift ) {
+					return null;
+				}
+				$option_drift = $count - $expected;
+			}
+		}
+
+		if ( 0 === $option_drift ) {
+			return null;
+		}
+
+		$columns = $this->table_columns( $expected_options );
+		if ( array() === $columns || array() === ( $state['control_options'] ?? array() ) ) {
+			return null;
+		}
+		foreach ( $state['control_options'] as $control ) {
+			if ( ! is_array( $control ) || ! is_string( $control['name'] ?? null ) ) {
+				return null;
+			}
+			$row = $this->option_row( $expected_options, $control['name'], $columns );
+			if (
+				null === $row
+				|| (int) ( $control['byte_count'] ?? -1 ) !== strlen( $row['option_value'] )
+				|| ! hash_equals( (string) ( $control['sha256'] ?? '' ), hash( 'sha256', $row['option_value'] ) )
+			) {
+				return null;
+			}
+		}
+
+		$now                         = gmdate( DATE_ATOM );
+		$state['status']             = 'rolled-back';
+		$state['database_swapped']   = false;
+		$state['rollback_available'] = false;
+		$state['blockers']           = array( 'database-activation-verification-failed', 'database-rollback-staging-row-count-drift' );
+		$state['rolled_back_at']     = $now;
+		$state['updated_at']         = $now;
+
+		return $this->store->save( $job_id, $state ) ? $this->store->get( $job_id ) : null;
+	}
+
+	/**
 	 * Apply the wp_options control-plane overlay transactionally to staging.
 	 *
 	 * @param string $job_id  Child import job identifier.
@@ -371,6 +478,8 @@ final class ImportDatabaseActivator {
 			return null;
 		}
 
+		$production    = $this->import_state->get( $job_id );
+		$is_production = is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' );
 		$control_names = array(
 			CloneJobStore::OPTION_NAME,
 			ImportStateStore::OPTION_NAME,
@@ -386,9 +495,12 @@ final class ImportDatabaseActivator {
 			'stylesheet',
 		);
 
-		$preserved = array();
-		$total     = 0;
-		foreach ( array_merge( $control_names, $runtime_names ) as $name ) {
+		$preserved       = array();
+		$total           = 0;
+		$protected_names = $is_production
+			? array_merge( $control_names, $runtime_names, array( 'blog_public' ) )
+			: array_merge( $control_names, $runtime_names );
+		foreach ( $protected_names as $name ) {
 			$row = $this->option_row( $active, $name, $active_columns );
 			if ( null === $row ) {
 				return null;
@@ -434,7 +546,9 @@ final class ImportDatabaseActivator {
 				$row['autoload']
 			);
 		}
-		$ok = $ok && $this->upsert_option( $staging, $staging_columns, 'blog_public', '0', 'no' );
+		if ( 'replace-production' !== (string) ( $production['destination_policy'] ?? '' ) ) {
+			$ok = $ok && $this->upsert_option( $staging, $staging_columns, 'blog_public', '0', 'no' );
+		}
 
 		if ( ! $ok ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Rolls back only the staging-options overlay transaction.
@@ -598,9 +712,15 @@ final class ImportDatabaseActivator {
 			return $this->block( $job_id, $state, 'database-rollback-atomic-rename-failed', true );
 		}
 
-		if ( 'prepared' !== $this->layout( $state ) || ! $this->staging_counts_match( $state ) ) {
+		// Physical layout and staging content are different recovery contracts.
+		// WordPress may append options while the candidate database is active.
+		// Once reverse rename succeeds, never report the imported DB as active
+		// merely because the *staging* row count drifted. Retain a blocker so
+		// this candidate cannot be silently activated a second time.
+		if ( 'prepared' !== $this->layout( $state ) ) {
 			return $this->block( $job_id, $state, 'database-rollback-verification-failed', true );
 		}
+		$staging_drift = ! $this->staging_counts_match( $state );
 
 		$now                             = gmdate( DATE_ATOM );
 		$state['status']                 = 'rolled-back';
@@ -608,7 +728,9 @@ final class ImportDatabaseActivator {
 		$state['rollback_available']     = false;
 		$state['active_files_untouched'] = true;
 		$state['handoff_ready']          = false;
-		$state['blockers']               = array( $reason );
+		$state['blockers']               = $staging_drift
+			? array( $reason, 'database-rollback-staging-row-count-drift' )
+			: array( $reason );
 		$state['rolled_back_at']         = $now;
 		$state['updated_at']             = $now;
 
@@ -625,14 +747,28 @@ final class ImportDatabaseActivator {
 			return false;
 		}
 
+		$production    = $this->import_state->get( (string) ( $state['job_id'] ?? '' ) );
+		$is_production = is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' );
+		$options       = (string) ( $state['options_target'] ?? '' );
+
 		foreach ( $state['tables'] as $table ) {
-			$count = $this->row_count( (string) $table['target_table'] );
-			if ( null === $count || $count !== (int) $table['row_count'] ) {
+			$target   = (string) ( $table['target_table'] ?? '' );
+			$expected = (int) ( $table['row_count'] ?? -1 );
+			$count    = $this->row_count( $target );
+			if ( null === $count ) {
 				return false;
+			}
+			if ( $count !== $expected ) {
+				if (
+					! $is_production
+					|| $target !== $options
+					|| ! $this->bounded_options_growth( $options, $expected, $count, (int) ( $state['options_baseline_max_id'] ?? 0 ) )
+				) {
+					return false;
+				}
 			}
 		}
 
-		$options = (string) ( $state['options_target'] ?? '' );
 		$columns = $this->table_columns( $options );
 		if ( array() === $columns ) {
 			return false;
@@ -651,7 +787,7 @@ final class ImportDatabaseActivator {
 
 		$blog_public = $this->option_row( $options, 'blog_public', $columns );
 		$plugins     = $this->option_row( $options, 'active_plugins', $columns );
-		if ( null === $blog_public || '0' !== $blog_public['option_value'] || null === $plugins ) {
+		if ( null === $blog_public || ( ! $is_production && '0' !== $blog_public['option_value'] ) || null === $plugins ) {
 			return false;
 		}
 
@@ -661,6 +797,51 @@ final class ImportDatabaseActivator {
 			: 'seo-geo-migration-bridge/seo-geo-migration-bridge.php';
 
 		return is_array( $list ) && in_array( $bridge, $list, true );
+	}
+
+	/**
+	 * Freeze the largest existing option ID before the table swap.
+	 *
+	 * @param string $options_table Validated staging options table.
+	 */
+	private function options_high_water( string $options_table ): ?int {
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb || ! $this->valid_table_name( $options_table ) ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only exact staging options high-water mark.
+		$maximum = $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(option_id) FROM %i', $options_table ) );
+		return is_numeric( $maximum ) ? max( 0, (int) $maximum ) : null;
+	}
+
+	/**
+	 * Accept only a small number of new production options with IDs above
+	 * the frozen maximum; all original option IDs must still be present.
+	 * Other tables and sandbox imports always require exact row counts.
+	 *
+	 * @param string $table   Activated options table.
+	 * @param int    $expected Frozen row count.
+	 * @param int    $actual   Current row count.
+	 * @param int    $maximum  Frozen maximum option_id before the swap.
+	 */
+	private function bounded_options_growth( string $table, int $expected, int $actual, int $maximum ): bool {
+		global $wpdb;
+		if (
+			! $wpdb instanceof wpdb
+			|| ! $this->valid_table_name( $table )
+			|| 0 >= $maximum
+			|| $actual <= $expected
+			|| $actual - $expected > self::MAX_NEW_RUNTIME_OPTIONS
+		) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only bounded baseline identity check during database activation.
+		$baseline = $wpdb->get_var(
+			$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE option_id <= %d', $table, $maximum )
+		);
+		return is_numeric( $baseline ) && (int) $baseline === $expected;
 	}
 
 	/**
@@ -1001,6 +1182,11 @@ final class ImportDatabaseActivator {
 		global $wpdb;
 		if ( ! $wpdb instanceof wpdb ) {
 			return false;
+		}
+
+		$production = $this->import_state->get( $job_id );
+		if ( is_array( $production ) && 'replace-production' === ( $production['destination_policy'] ?? '' ) ) {
+			return ImportProductionGate::ready( $job_id, $production );
 		}
 
 		$import = $this->private_same_server_import( $job_id );

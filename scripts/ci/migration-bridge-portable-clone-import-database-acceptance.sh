@@ -167,33 +167,36 @@ $build_archive = static function ( string $source_job_id, string $engine = 'Inno
 	$source_prefix,
 	$source_table
 ): array {
+	$fixture_table = 'MEMORY' === $engine && str_contains( $source_job_id, '-source-memory-' )
+		? $source_prefix . 'wfls_role_counts' : $source_table;
 	$workspace->cleanup( $source_job_id );
 	$workspace->delete_delivery_archive( $source_job_id );
 
-	$table_dir = 'database/tables/' . substr( hash( 'sha256', $source_table ), 0, 20 );
-	$schema_sql = 'CREATE TABLE `' . $source_table . '` ('
+	$table_dir = 'database/tables/' . substr( hash( 'sha256', $fixture_table ), 0, 20 );
+	$schema_sql = 'CREATE TABLE `' . $fixture_table . '` ('
 		. '`id` bigint unsigned NOT NULL, '
-		. '`title` varchar(190) NOT NULL, '
+		. '`title` varchar(190) NULL, '
 		. 'PRIMARY KEY (`id`)) ENGINE=' . $engine . ' DEFAULT CHARSET=utf8mb4;' . "\n";
 	$schema = $workspace->write( $source_job_id, $table_dir . '/schema.sql', $schema_sql );
 	if ( ! is_array( $schema ) ) {
 		throw new RuntimeException( 'Could not write database schema fixture.' );
 	}
 
+	$mixed_values = str_contains( $source_job_id, '-source-good-' );
 	$chunk_rows = array(
 		array(
 			$encode_row( array( '1', 'alpha' ) ),
-			$encode_row( array( '2', 'beta' ) ),
+			$encode_row( array( '2', $mixed_values ? null : 'beta' ) ),
 		),
 		array(
-			$encode_row( array( '3', 'gamma' ) ),
+			$encode_row( array( '3', $mixed_values ? "O'Reilly 100% test" : 'gamma' ) ),
 		),
 	);
 	$chunks = array();
 	foreach ( $chunk_rows as $index => $rows ) {
 		$chunk = array(
 			'schema_version'   => 1,
-			'table'            => $source_table,
+			'table'            => $fixture_table,
 			'strategy'         => 'primary-key',
 			'cursor_column'    => 'id',
 			'cursor_start_b64' => '',
@@ -224,8 +227,8 @@ $build_archive = static function ( string $source_job_id, string $engine = 'Inno
 
 	$table_meta = array(
 		'schema_version' => 1,
-		'name'           => $source_table,
-		'slug'           => substr( hash( 'sha256', $source_table ), 0, 20 ),
+		'name'           => $fixture_table,
+		'slug'           => substr( hash( 'sha256', $fixture_table ), 0, 20 ),
 		'schema'         => array(
 			'path'   => $table_dir . '/schema.sql',
 			'bytes'  => (int) $schema['bytes'],
@@ -453,7 +456,22 @@ $run_database = static function ( string $job_id, int $batch_rows = 1 ) use ( $r
 
 $good_archive = $build_archive( 'clone-import-db-source-good-0001', 'InnoDB' );
 $prepare_import( 'clone-import-db-good-0001', $good_archive );
-$good = $run_database( 'clone-import-db-good-0001', 1 );
+// Exercise two prepared values rows in a single bounded INSERT, followed by
+// a separate chunk and its independent checkpoint.
+$grouped_sql_seen = false;
+$observe_query = static function ( string $query ) use ( &$grouped_sql_seen ): string {
+	if (
+		str_starts_with( $query, 'INSERT INTO ' )
+		&& str_contains( $query, ') VALUES (' )
+		&& str_contains( $query, '), (' )
+	) {
+		$grouped_sql_seen = true;
+	}
+	return $query;
+};
+add_filter( 'query', $observe_query );
+$good = $run_database( 'clone-import-db-good-0001', 2 );
+remove_filter( 'query', $observe_query );
 
 $good_namespace = (string) ( $good['staging_namespace'] ?? '' );
 $good_staging   = $good_namespace . substr( hash( 'sha256', $source_table ), 0, 16 );
@@ -479,6 +497,43 @@ $myisam_archive = $build_archive( 'clone-import-db-source-myisam-0001', 'MyISAM'
 $prepare_import( 'clone-import-db-myisam-0001', $myisam_archive );
 $myisam = $restorer->advance( 'clone-import-db-myisam-0001', 1 );
 
+// Wordfence role-count MEMORY schema is an explicitly supported exception.
+// Its staging table must be InnoDB and restore the same rows. A terminal job
+// from the prior version must resume only after strict eligibility checks.
+$memory_archive = $build_archive( 'clone-import-db-source-memory-0001', 'MEMORY' );
+$prepare_import( 'clone-import-db-memory-0001', $memory_archive );
+$memory_job = 'clone-import-db-memory-0001';
+$memory_initial = $restorer->start( $memory_job );
+if ( ! is_array( $memory_initial ) ) {
+	throw new RuntimeException( 'Wordfence MEMORY fixture could not initialize.' );
+}
+$memory_source_table  = $source_prefix . 'wfls_role_counts';
+$memory_staging_table = (string) $memory_initial['staging_namespace'] . substr( hash( 'sha256', $memory_source_table ), 0, 16 );
+$blocked_memory       = $memory_initial;
+$blocked_memory['status']                = 'blocked';
+$blocked_memory['stage']                 = 'schema';
+$blocked_memory['current_source_table']  = $memory_source_table;
+$blocked_memory['current_target_table']  = $wpdb->prefix . 'wfls_role_counts';
+$blocked_memory['current_staging_table'] = $memory_staging_table;
+$blocked_memory['blockers']              = array( 'import-database-schema-unsupported' );
+if (
+	! ( new ImportDatabaseStateStore() )->save( $memory_job, $blocked_memory )
+	|| ! is_array( $jobs->transition( $memory_job, 'failed-terminal', 'import-database-schema-unsupported' ) )
+) {
+	throw new RuntimeException( 'Wordfence fixture terminal checkpoint was not persisted.' );
+}
+$memory_recovered = $restorer->resume_wordfence_memory_schema( $memory_job );
+$memory           = is_array( $memory_recovered ) ? $run_database( $memory_job, 2 ) : null;
+$memory_quoted = chr( 96 ) . $memory_staging_table . chr( 96 );
+$memory_table_status = $wpdb->get_row( $wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $memory_staging_table ), ARRAY_A );
+$memory_rows = $wpdb->get_results( "SELECT id, title FROM {$memory_quoted} ORDER BY id ASC", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Test-only deterministic staging table.
+$memory_second_resume_denied = null === $restorer->resume_wordfence_memory_schema( $memory_job );
+
+// A non-Wordfence MEMORY table remains unsupported: no generic engine bypass.
+$generic_memory_archive = $build_archive( 'clone-import-db-source-generic-memory-0001', 'MEMORY' );
+$prepare_import( 'clone-import-db-generic-memory-0001', $generic_memory_archive );
+$generic_memory = $restorer->advance( 'clone-import-db-generic-memory-0001', 1 );
+
 $active_after_all = $active_snapshot();
 
 $autoload = $wpdb->get_var(
@@ -491,6 +546,7 @@ $autoload = $wpdb->get_var(
 echo wp_json_encode(
 	array(
 		'good'                     => $good,
+		'grouped_sql_seen'         => $grouped_sql_seen,
 		'good_staging_table'       => $good_staging,
 		'staging_rows'             => $staging_rows,
 		'active_before'            => $active_before,
@@ -500,6 +556,12 @@ echo wp_json_encode(
 		'drift_first'              => $drift_first,
 		'drift_blocked'            => $drift_blocked,
 		'myisam'                   => $myisam,
+		'memory'                   => $memory,
+		'memory_recovered'         => $memory_recovered,
+		'memory_engine'            => is_array( $memory_table_status ) ? $memory_table_status['Engine'] ?? '' : '',
+		'memory_rows'              => $memory_rows,
+		'memory_second_resume_denied' => $memory_second_resume_denied,
+		'generic_memory'           => $generic_memory,
 		'database_state_autoload'  => $autoload,
 		'controller_registered'    => false !== has_action( 'admin_post_' . AdminCloneImportDatabaseController::ACTION ),
 		'public_controller_absent' => false === has_action( 'admin_post_nopriv_' . AdminCloneImportDatabaseController::ACTION ),
@@ -513,6 +575,8 @@ foreach (
 		'clone-import-db-good-0001',
 		'clone-import-db-drift-0001',
 		'clone-import-db-myisam-0001',
+		'clone-import-db-memory-0001',
+		'clone-import-db-generic-memory-0001',
 	) as $import_job
 ) {
 	$namespace = $wpdb->prefix . 'sgm_' . substr( hash( 'sha256', $import_job ), 0, 10 ) . '_';
@@ -539,6 +603,10 @@ foreach (
 		'clone-import-db-source-good-0001',
 		'clone-import-db-source-drift-0001',
 		'clone-import-db-source-myisam-0001',
+		'clone-import-db-memory-0001',
+		'clone-import-db-generic-memory-0001',
+		'clone-import-db-source-memory-0001',
+		'clone-import-db-source-generic-memory-0001',
 	) as $cleanup_job
 ) {
 	$workspace->cleanup( $cleanup_job );
@@ -570,6 +638,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
 good = payload["good"]
+assert payload["grouped_sql_seen"] is True
 assert good["status"] == "complete"
 assert good["stage"] == "complete"
 assert good["table_count"] == 1
@@ -582,8 +651,8 @@ assert re.fullmatch(r"[A-Za-z0-9_]{1,64}", payload["good_staging_table"])
 
 assert payload["staging_rows"] == [
     {"id": "1", "title": "alpha"},
-    {"id": "2", "title": "beta"},
-    {"id": "3", "title": "gamma"},
+    {"id": "2", "title": None},
+    {"id": "3", "title": "O'Reilly 100% test"},
 ]
 expected_active = [{"id": "999", "title": "active-sentinel"}]
 assert payload["active_before"] == expected_active
@@ -603,6 +672,18 @@ assert myisam["status"] == "blocked"
 assert "import-database-schema-unsupported" in myisam["blockers"]
 assert myisam["rows_restored"] == 0
 assert myisam["active_tables_untouched"] is True
+
+memory = payload["memory"]
+assert payload["memory_recovered"]["status"] == "running"
+assert memory["status"] == "complete"
+assert memory["tables_completed"] == 1
+assert memory["rows_restored"] == 3
+assert payload["memory_engine"].lower() == "innodb"
+assert len(payload["memory_rows"]) == 3
+assert payload["memory_second_resume_denied"] is True
+generic_memory = payload["generic_memory"]
+assert generic_memory["status"] == "blocked"
+assert "import-database-schema-unsupported" in generic_memory["blockers"]
 
 assert payload["database_state_autoload"] in ("off", "no", "auto-off")
 assert payload["controller_registered"] is True

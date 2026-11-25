@@ -760,6 +760,68 @@ $activation_plugins = is_string( $activation_plugins_raw ) && is_serialized( $ac
 $bridge_plugin = plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' );
 $activation_bridge_active = is_array( $activation_plugins ) && in_array( $bridge_plugin, $activation_plugins, true );
 
+// The candidate options table may grow during an active WordPress request.
+// Verify that production-specific bounded additions are acceptable only if
+// all baseline IDs remain and the protected option hashes still match.
+if ( 0 >= (int) ( $activation['options_baseline_max_id'] ?? 0 ) ) {
+	throw new RuntimeException( 'Activation did not freeze options high-water mark.' );
+}
+$rollback_extra_names = array();
+// The fixture uses an explicitly keyed options table without AUTO_INCREMENT.
+// Simulate the production auto-increment ID, rather than inserting ID 0.
+$next_option_id = (int) $wpdb->get_var( "SELECT MAX(option_id) FROM {$q_active_options}" );
+for ( $extra_index = 1; $extra_index <= 4; ++$extra_index ) {
+	$name = '_migration_ci_rollback_extra_' . (string) $extra_index;
+	++$next_option_id;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic test-only post-activation insertion.
+	if ( false === $wpdb->insert( $wpdb->options, array( 'option_id' => $next_option_id, 'option_name' => $name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
+		throw new RuntimeException( 'Could not simulate post-activation WordPress options.' );
+	}
+	$rollback_extra_names[] = $name;
+}
+
+$import_store = new ImportStateStore();
+$import_before_production_probe = $import_store->get( $job_id );
+if ( ! is_array( $import_before_production_probe ) ) {
+	throw new RuntimeException( 'Missing source import for options-growth probe.' );
+}
+$import_production_probe = $import_before_production_probe;
+$import_production_probe['destination_policy'] = 'replace-production';
+if ( ! $import_store->save( $job_id, $import_production_probe ) ) {
+	throw new RuntimeException( 'Cannot set synthetic options-growth production policy.' );
+}
+// The synthetic policy change also alters an imported protected option;
+// align ONLY the in-memory probe control hash, never the immutable journal.
+$probe_activation = $activation;
+foreach ( $probe_activation['control_options'] as &$probe_control ) {
+	if ( ImportStateStore::OPTION_NAME !== ( $probe_control['name'] ?? '' ) ) {
+		continue;
+	}
+	$probe_value = $wpdb->get_var(
+		$wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $wpdb->options, ImportStateStore::OPTION_NAME )
+	);
+	if ( ! is_string( $probe_value ) ) {
+		throw new RuntimeException( 'Synthetic protected option not available.' );
+	}
+	$probe_control['sha256'] = hash( 'sha256', $probe_value );
+	$probe_control['byte_count'] = strlen( $probe_value );
+}
+unset( $probe_control );
+$verify_activation_method = new ReflectionMethod( ImportDatabaseActivator::class, 'verify_activated' );
+$growth_accepted = $verify_activation_method->invoke( $activator, $probe_activation );
+if ( ! $import_store->save( $job_id, $import_before_production_probe ) || true !== $growth_accepted ) {
+	throw new RuntimeException( 'Bounded production options growth must preserve verification and baseline IDs.' );
+}
+
+// Restore the exact sandbox candidate count before testing file promotion,
+// which deliberately enforces stricter no-growth sandbox requirements.
+foreach ( $rollback_extra_names as $extra_name ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic CI options-growth probe cleanup.
+	$wpdb->delete( $wpdb->options, array( 'option_name' => $extra_name ), array( '%s' ) );
+}
+
+// Four new options must never cause reverse rename to be mistaken for a
+// failed physical rollback. Keep the candidate blocked for reactivation.
 // 10E.2A.4.6.3: build same-filesystem candidates, promote all active roots,
 // verify the final target, enable handoff, then prove explicit filesystem rollback.
 $promotion_prepared = $promoter->prepare( $job_id );
@@ -829,11 +891,88 @@ $promotion_upload_sentinel_after_hash = is_file( $promotion_upload_sentinel )
 $promotion_bridge_restored = is_file( trailingslashit( WP_PLUGIN_DIR ) . $bridge_plugin );
 $promotion_theme_restored  = is_dir( trailingslashit( get_theme_root() ) . $destination_stylesheet );
 
+// Recreate four runtime options for the rollback-drift regression after
+// completing the strict sandbox promotion/verification assertions.
+$next_option_id = (int) $wpdb->get_var( "SELECT MAX(option_id) FROM {$q_active_options}" );
+foreach ( $rollback_extra_names as $extra_name ) {
+	++$next_option_id;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic CI rollback-drift insertion.
+	if ( false === $wpdb->insert( $wpdb->options, array( 'option_id' => $next_option_id, 'option_name' => $extra_name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
+		throw new RuntimeException( 'Could not reproduce rollback runtime options drift.' );
+	}
+}
+
 $activation_rollback = $activator->rollback( $job_id );
-if ( ! is_array( $activation_rollback ) || 'rolled-back' !== ( $activation_rollback['status'] ?? null ) ) {
-	throw new RuntimeException( 'Database activation rollback failed: ' . wp_json_encode( $activation_rollback ) );
+if (
+	! is_array( $activation_rollback )
+	|| 'rolled-back' !== ( $activation_rollback['status'] ?? null )
+	|| true === ( $activation_rollback['database_swapped'] ?? true )
+	|| ! in_array( 'database-rollback-staging-row-count-drift', $activation_rollback['blockers'] ?? array(), true )
+) {
+	throw new RuntimeException( 'Database rollback must prove physical recovery and preserve staging drift blocker: ' . wp_json_encode( $activation_rollback ) );
 }
 $active_after_activation_rollback = get_option( $active_sentinel_name );
+
+// Reproduce the stale legacy journal observed on Emmake: physical layout
+// already restored but journal still reads blocked/swapped=true. Recovery
+// must touch only the external journal and keep the candidate blocked.
+$legacy_journal = $activation_rollback;
+$legacy_journal['status'] = 'blocked';
+$legacy_journal['database_swapped'] = true;
+$legacy_journal['rollback_available'] = true;
+$legacy_journal['blockers'] = array( 'database-rollback-verification-failed' );
+// The synthetic fixture may have rewritten control-plane values during its
+// extra production-policy probe. Freeze the currently valid staging hashes,
+// matching the observed Emmake evidence of 11/11 protected values intact.
+foreach ( $legacy_journal['control_options'] as &$legacy_control ) {
+	$control_value = $wpdb->get_var(
+		$wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $options_staging, $legacy_control['name'] )
+	);
+	if ( ! is_string( $control_value ) ) {
+		throw new RuntimeException( 'Legacy control option missing in synthetic candidate.' );
+	}
+	$legacy_control['sha256'] = hash( 'sha256', $control_value );
+	$legacy_control['byte_count'] = strlen( $control_value );
+}
+unset( $legacy_control );
+$activation_store = new ImportDatabaseActivationStateStore();
+if ( ! $activation_store->save( $job_id, $legacy_journal ) ) {
+	throw new RuntimeException( 'Could not stage legacy rollback journal fixture.' );
+}
+// The journal repair is intentionally available only for an explicitly
+// authorized production import. Temporarily set that fixture policy without
+// issuing any activation, then restore it immediately after the assertion.
+$import_store = new ImportStateStore();
+$import_before_reconcile = $import_store->get( $job_id );
+if ( ! is_array( $import_before_reconcile ) ) {
+	throw new RuntimeException( 'Fixture import state missing before reconcile.' );
+}
+$import_reconcile = $import_before_reconcile;
+$import_reconcile['destination_policy'] = 'replace-production';
+if ( ! $import_store->save( $job_id, $import_reconcile ) ) {
+	throw new RuntimeException( 'Could not authorize synthetic reconciliation contract.' );
+}
+$reconciled = $activator->reconcile_verified_rollback( $job_id );
+if ( ! $import_store->save( $job_id, $import_before_reconcile ) ) {
+	throw new RuntimeException( 'Could not restore fixture policy after reconciliation.' );
+}
+if (
+	! is_array( $reconciled )
+	|| 'rolled-back' !== ( $reconciled['status'] ?? null )
+	|| true === ( $reconciled['database_swapped'] ?? true )
+	|| true === ( $reconciled['rollback_available'] ?? true )
+	|| ! in_array( 'database-rollback-staging-row-count-drift', $reconciled['blockers'] ?? array(), true )
+	|| null !== $activator->reconcile_verified_rollback( $job_id )
+) {
+	throw new RuntimeException( 'Legacy recovery must be one-shot, guarded and remain non-reactivatable: ' . wp_json_encode( array( 'result' => is_array( $reconciled ) ? array( 'status' => $reconciled['status'] ?? null, 'blockers' => $reconciled['blockers'] ?? null, 'swapped' => $reconciled['database_swapped'] ?? null ) : null, 'journal' => ( $activation_store->get( $job_id ) )['status'] ?? null ) ) );
+}
+
+// Remove synthetic *staging* additions after completing the recovery
+// regression, preserving the original fixture for negative URL tests.
+foreach ( $rollback_extra_names as $extra_name ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic CI fixture-only cleanup.
+	$wpdb->delete( $options_staging, array( 'option_name' => $extra_name ), array( '%s' ) );
+}
 
 // The fixture source options table did not originally contain these activation
 // overlay rows. Remove them after rollback so the later negative rewrite case

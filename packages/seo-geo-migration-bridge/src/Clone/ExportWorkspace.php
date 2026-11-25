@@ -667,6 +667,81 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Mirror trusted installed Bridge files into a candidate root only.
+	 *
+	 * @param string $source Installed plugin directory.
+	 * @param string $target Candidate plugin directory.
+	 */
+	public function replace_promotion_candidate_bridge( string $source, string $target ): bool {
+		if (
+			! is_dir( $source )
+			|| is_link( $source )
+			|| is_link( $target )
+			|| 'seo-geo-migration-bridge' !== basename( $source )
+			|| 'seo-geo-migration-bridge' !== basename( $target )
+			|| ! str_contains( wp_normalize_path( dirname( $target ) ), '-candidate-' )
+			|| ! is_dir( dirname( $target ) )
+		) {
+			return false;
+		}
+
+		if ( is_dir( $target ) ) {
+			$existing = new \RecursiveIteratorIterator(
+				new \RecursiveDirectoryIterator( $target, \FilesystemIterator::SKIP_DOTS ),
+				\RecursiveIteratorIterator::CHILD_FIRST
+			);
+			foreach ( $existing as $item ) {
+				if ( $item->isLink() ) {
+					return false;
+				}
+				$path = $item->getPathname();
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir,WordPress.WP.AlternativeFunctions.unlink_unlink,WordPress.WP.AlternativeFunctions.file_system_operations_unlink -- Candidate-only directory reset.
+				if ( $item->isDir() ? ! rmdir( $path ) : ! unlink( $path ) ) {
+					return false;
+				}
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Candidate-only directory reset.
+			if ( ! rmdir( $target ) ) {
+				return false;
+			}
+		}
+
+		if ( ! wp_mkdir_p( $target ) ) {
+			return false;
+		}
+
+		$source = untrailingslashit( $source );
+		$items  = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator( $source, \FilesystemIterator::SKIP_DOTS ),
+			\RecursiveIteratorIterator::SELF_FIRST
+		);
+		foreach ( $items as $item ) {
+			if ( $item->isLink() ) {
+				return false;
+			}
+			$relative = substr( $item->getPathname(), strlen( $source ) + 1 );
+			$dest     = wp_normalize_path( untrailingslashit( $target ) . '/' . ltrim( $relative, '/' ) );
+			if ( $item->isDir() ) {
+				if ( ! wp_mkdir_p( $dest ) ) {
+					return false;
+				}
+				continue;
+			}
+			if (
+				! $item->isFile()
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_copy -- Verified copy into a candidate-only plugin tree.
+				|| ! copy( $item->getPathname(), $dest )
+				|| hash_file( 'sha256', $item->getPathname() ) !== hash_file( 'sha256', $dest )
+			) {
+				return false;
+			}
+		}
+
+		return is_file( wp_normalize_path( untrailingslashit( $target ) . '/seo-geo-migration-bridge.php' ) );
+	}
+
+
+	/**
 	 * Rename one deterministic same-filesystem promotion path.
 	 *
 	 * @param string $from Existing source path.
@@ -1070,19 +1145,37 @@ final class ExportWorkspace {
 	}
 
 	/**
+	 * Return the protected private archive path without hashing it again.
+	 *
+	 * ImportPayloadVerifier verifies the full archive SHA-256 before each
+	 * extraction batch; subsequent list/extract calls in that same request use
+	 * this filesystem-safe path to avoid repeating the full digest.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 */
+	private function import_archive_path( string $job_id ): ?string {
+		$path = $this->absolute_path( $job_id, 'import/package.zip', false );
+		return null !== $path && is_file( $path ) && is_readable( $path ) && ! is_link( $path )
+			? $path
+			: null;
+	}
+
+	/**
 	 * Return bounded archive-entry metadata for the staged Portable Clone ZIP.
 	 *
 	 * @param string $job_id Clone job identifier.
 	 * @return list<array{name:string,size:int,folder:bool}>
 	 */
 	public function import_archive_entries( string $job_id ): array {
-		$info = $this->import_archive_info( $job_id );
-		if ( null === $info || ! $this->load_pclzip() ) {
+		$path = $this->import_archive_path( $job_id );
+		if ( null === $path || ! $this->load_pclzip() ) {
 			return array();
 		}
 
+		// Hash of the full ZIP is checked by the verifier before each batch.
+		// Listing the same ZIP does not need an additional 60 MB SHA-256 read.
 		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip is loaded explicitly above.
-		$archive = new \PclZip( $info['path'] );
+		$archive = new \PclZip( $path );
 		$list    = $archive->listContent();
 		if ( ! is_array( $list ) ) {
 			return array();
@@ -1111,23 +1204,55 @@ final class ExportWorkspace {
 	}
 
 	/**
-	 * Extract one already-preflighted archive file into the private import root.
+	 * Extract one already-preflighted archive file into private import storage.
+	 *
+	 * Retains the single-file API for saved sandbox jobs while delegating to the
+	 * same batch engine used by the automatic production importer.
 	 *
 	 * @param string $job_id Clone job identifier.
 	 * @param string $name   Exact archive-relative file path.
 	 * @return array{path:string,bytes:int,sha256:string}|null
 	 */
 	public function extract_import_archive_entry( string $job_id, string $name ): ?array {
-		$relative = $this->normalize_archive_relative( $name );
-		$archive  = $this->import_archive_info( $job_id );
-		$root     = $this->import_extraction_root( $job_id );
-		if (
-			'' === $relative
-			|| str_ends_with( $relative, '/' )
-			|| null === $archive
-			|| null === $root
-			|| ! $this->load_pclzip()
-		) {
+		$results = $this->extract_import_archive_entries( $job_id, array( $name ) );
+		return is_array( $results ) ? ( $results[0] ?? null ) : null;
+	}
+
+	/**
+	 * Extract a bounded set of validated archive entries in ONE PclZip pass.
+	 *
+	 * Previous behavior opened and scanned the full ZIP separately for every
+	 * entry, potentially thousands of times. The original preflight and
+	 * archive-identity checks remain in ImportPayloadVerifier. This method only
+	 * writes to the same protected, job-owned private extraction root.
+	 *
+	 * @param string $job_id Clone job identifier.
+	 * @param array  $names  Exact, preflighted ZIP entry names; files only.
+	 * @phpstan-param list<mixed> $names
+	 * @return list<array{path:string,bytes:int,sha256:string}>|null
+	 */
+	public function extract_import_archive_entries( string $job_id, array $names ): ?array {
+		if ( array() === $names || 500 < count( $names ) ) {
+			return null;
+		}
+
+		$seen      = array();
+		$relatives = array();
+		foreach ( $names as $name ) {
+			if ( ! is_string( $name ) ) {
+				return null;
+			}
+			$relative = $this->normalize_archive_relative( $name );
+			if ( '' === $relative || str_ends_with( $relative, '/' ) || isset( $seen[ $relative ] ) ) {
+				return null;
+			}
+			$seen[ $relative ] = true;
+			$relatives[]       = $relative;
+		}
+
+		$archive_path = $this->import_archive_path( $job_id );
+		$root         = $this->import_extraction_root( $job_id );
+		if ( null === $archive_path || null === $root || ! $this->load_pclzip() ) {
 			return null;
 		}
 
@@ -1137,39 +1262,45 @@ final class ExportWorkspace {
 			return null;
 		}
 
-		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip is loaded explicitly above.
-		$zip = new \PclZip( $archive['path'] );
-		// WordPress Core PclZip exposes variadic extraction options not represented by the static stub.
-		$result = $zip->extract( $by_name, $name, $path, untrailingslashit( $root ) ); // @phpstan-ignore arguments.count
-		if ( ! is_array( $result ) || array() === $result ) {
+		// PclZip accepts an array of selected names. One archive scan now
+		// handles the whole bounded batch, including nested file paths.
+		// phpcs:ignore PHPCompatibility.Classes.NewClasses.pclzipFound -- WordPress Core PclZip loaded above.
+		$zip = new \PclZip( $archive_path );
+		// WordPress Core PclZip uses variadic options absent from the static stub.
+		$extracted = $zip->extract( $by_name, $names, $path, untrailingslashit( $root ) ); // @phpstan-ignore arguments.count
+		if ( ! is_array( $extracted ) || array() === $extracted ) {
 			return null;
 		}
 
-		$absolute = trailingslashit( $root ) . $relative;
-		$absolute = wp_normalize_path( $absolute );
-		if (
-			! str_starts_with( $absolute, trailingslashit( wp_normalize_path( $root ) ) )
-			|| ! is_file( $absolute )
-			|| ! is_readable( $absolute )
-			|| is_link( $absolute )
-		) {
-			return null;
+		$results = array();
+		$prefix  = trailingslashit( wp_normalize_path( $root ) );
+		foreach ( $relatives as $relative ) {
+			$absolute = wp_normalize_path( $prefix . $relative );
+			if (
+				! str_starts_with( $absolute, $prefix )
+				|| ! is_file( $absolute )
+				|| ! is_readable( $absolute )
+				|| is_link( $absolute )
+			) {
+				return null;
+			}
+
+			$bytes = filesize( $absolute );
+			$hash  = hash_file( 'sha256', $absolute );
+			if ( false === $bytes || false === $hash ) {
+				return null;
+			}
+
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Job-owned private payload.
+			@chmod( $absolute, 0600 );
+			$results[] = array(
+				'path'   => $relative,
+				'bytes'  => (int) $bytes,
+				'sha256' => $hash,
+			);
 		}
 
-		$bytes = filesize( $absolute );
-		$hash  = hash_file( 'sha256', $absolute );
-		if ( false === $bytes || false === $hash ) {
-			return null;
-		}
-
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Best-effort restrictive extracted payload permissions.
-		@chmod( $absolute, 0600 );
-
-		return array(
-			'path'   => $relative,
-			'bytes'  => (int) $bytes,
-			'sha256' => $hash,
-		);
+		return $results;
 	}
 
 	/**
