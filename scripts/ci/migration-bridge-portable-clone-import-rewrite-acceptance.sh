@@ -760,6 +760,40 @@ $activation_plugins = is_string( $activation_plugins_raw ) && is_serialized( $ac
 $bridge_plugin = plugin_basename( SEO_GEO_MIGRATION_BRIDGE_DIR . 'seo-geo-migration-bridge.php' );
 $activation_bridge_active = is_array( $activation_plugins ) && in_array( $bridge_plugin, $activation_plugins, true );
 
+// The candidate options table may grow during an active WordPress request.
+// Verify that production-specific bounded additions are acceptable only if
+// all baseline IDs remain and the protected option hashes still match.
+if ( 0 >= (int) ( $activation['options_baseline_max_id'] ?? 0 ) ) {
+	throw new RuntimeException( 'Activation did not freeze options high-water mark.' );
+}
+$rollback_extra_names = array();
+for ( $extra_index = 1; $extra_index <= 4; ++$extra_index ) {
+	$name = '_migration_ci_rollback_extra_' . (string) $extra_index;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic test-only post-activation insertion.
+	if ( false === $wpdb->insert( $wpdb->options, array( 'option_name' => $name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
+		throw new RuntimeException( 'Could not simulate post-activation WordPress options.' );
+	}
+	$rollback_extra_names[] = $name;
+}
+
+$import_store = new ImportStateStore();
+$import_before_production_probe = $import_store->get( $job_id );
+if ( ! is_array( $import_before_production_probe ) ) {
+	throw new RuntimeException( 'Missing source import for options-growth probe.' );
+}
+$import_production_probe = $import_before_production_probe;
+$import_production_probe['destination_policy'] = 'replace-production';
+if ( ! $import_store->save( $job_id, $import_production_probe ) ) {
+	throw new RuntimeException( 'Cannot set synthetic options-growth production policy.' );
+}
+$verify_activation_method = new ReflectionMethod( ImportDatabaseActivator::class, 'verify_activated' );
+$growth_accepted = $verify_activation_method->invoke( $activator, $activation );
+if ( ! $import_store->save( $job_id, $import_before_production_probe ) || true !== $growth_accepted ) {
+	throw new RuntimeException( 'Bounded production options growth must preserve verification and baseline IDs.' );
+}
+
+// Four new options must never cause reverse rename to be mistaken for a
+// failed physical rollback. Keep the candidate blocked for reactivation.
 // 10E.2A.4.6.3: build same-filesystem candidates, promote all active roots,
 // verify the final target, enable handoff, then prove explicit filesystem rollback.
 $promotion_prepared = $promoter->prepare( $job_id );
@@ -828,19 +862,6 @@ $promotion_upload_sentinel_after_hash = is_file( $promotion_upload_sentinel )
 	: false;
 $promotion_bridge_restored = is_file( trailingslashit( WP_PLUGIN_DIR ) . $bridge_plugin );
 $promotion_theme_restored  = is_dir( trailingslashit( get_theme_root() ) . $destination_stylesheet );
-
-// Simulate four WordPress options created while the migrated database is
-// active. They must NOT make a physically successful reverse rename look as
-// though imported tables are still live. The candidate remains blocked.
-$rollback_extra_names = array();
-for ( $extra_index = 1; $extra_index <= 4; ++$extra_index ) {
-	$name = '_migration_ci_rollback_extra_' . (string) $extra_index;
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Synthetic test-only post-activation insertion.
-	if ( false === $wpdb->insert( $wpdb->options, array( 'option_name' => $name, 'option_value' => 'test', 'autoload' => 'no' ) ) ) {
-		throw new RuntimeException( 'Could not simulate post-activation WordPress options.' );
-	}
-	$rollback_extra_names[] = $name;
-}
 
 $activation_rollback = $activator->rollback( $job_id );
 if (
