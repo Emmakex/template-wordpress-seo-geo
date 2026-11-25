@@ -790,8 +790,25 @@ $import_production_probe['destination_policy'] = 'replace-production';
 if ( ! $import_store->save( $job_id, $import_production_probe ) ) {
 	throw new RuntimeException( 'Cannot set synthetic options-growth production policy.' );
 }
+// The synthetic policy change also alters an imported protected option;
+// align ONLY the in-memory probe control hash, never the immutable journal.
+$probe_activation = $activation;
+foreach ( $probe_activation['control_options'] as &$probe_control ) {
+	if ( ImportStateStore::OPTION_NAME !== ( $probe_control['name'] ?? '' ) ) {
+		continue;
+	}
+	$probe_value = $wpdb->get_var(
+		$wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $wpdb->options, ImportStateStore::OPTION_NAME )
+	);
+	if ( ! is_string( $probe_value ) ) {
+		throw new RuntimeException( 'Synthetic protected option not available.' );
+	}
+	$probe_control['sha256'] = hash( 'sha256', $probe_value );
+	$probe_control['byte_count'] = strlen( $probe_value );
+}
+unset( $probe_control );
 $verify_activation_method = new ReflectionMethod( ImportDatabaseActivator::class, 'verify_activated' );
-$growth_accepted = $verify_activation_method->invoke( $activator, $activation );
+$growth_accepted = $verify_activation_method->invoke( $activator, $probe_activation );
 if ( ! $import_store->save( $job_id, $import_before_production_probe ) || true !== $growth_accepted ) {
 	throw new RuntimeException( 'Bounded production options growth must preserve verification and baseline IDs.' );
 }
