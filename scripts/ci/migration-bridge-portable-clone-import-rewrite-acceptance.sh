@@ -921,6 +921,20 @@ $legacy_journal['status'] = 'blocked';
 $legacy_journal['database_swapped'] = true;
 $legacy_journal['rollback_available'] = true;
 $legacy_journal['blockers'] = array( 'database-rollback-verification-failed' );
+// The synthetic fixture may have rewritten control-plane values during its
+// extra production-policy probe. Freeze the currently valid staging hashes,
+// matching the observed Emmake evidence of 11/11 protected values intact.
+foreach ( $legacy_journal['control_options'] as &$legacy_control ) {
+	$control_value = $wpdb->get_var(
+		$wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $options_staging, $legacy_control['name'] )
+	);
+	if ( ! is_string( $control_value ) ) {
+		throw new RuntimeException( 'Legacy control option missing in synthetic candidate.' );
+	}
+	$legacy_control['sha256'] = hash( 'sha256', $control_value );
+	$legacy_control['byte_count'] = strlen( $control_value );
+}
+unset( $legacy_control );
 $activation_store = new ImportDatabaseActivationStateStore();
 if ( ! $activation_store->save( $job_id, $legacy_journal ) ) {
 	throw new RuntimeException( 'Could not stage legacy rollback journal fixture.' );
@@ -950,7 +964,7 @@ if (
 	|| ! in_array( 'database-rollback-staging-row-count-drift', $reconciled['blockers'] ?? array(), true )
 	|| null !== $activator->reconcile_verified_rollback( $job_id )
 ) {
-	throw new RuntimeException( 'Legacy recovery must be one-shot, guarded and remain non-reactivatable.' );
+	throw new RuntimeException( 'Legacy recovery must be one-shot, guarded and remain non-reactivatable: ' . wp_json_encode( array( 'result' => is_array( $reconciled ) ? array( 'status' => $reconciled['status'] ?? null, 'blockers' => $reconciled['blockers'] ?? null, 'swapped' => $reconciled['database_swapped'] ?? null ) : null, 'journal' => ( $activation_store->get( $job_id ) )['status'] ?? null ) ) );
 }
 
 // Remove synthetic *staging* additions after completing the recovery
